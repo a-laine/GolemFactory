@@ -1,0 +1,7 @@
+Old English Text MT{
+	texture : "Old English Text MT.png";
+	font : "Old English Text MT.txt";
+	begin : 32 ;
+	end : 380 ;
+	default : 35 ;
+}

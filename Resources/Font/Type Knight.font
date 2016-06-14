@@ -1,0 +1,7 @@
+Type Knight{
+	texture : "Type Knight.png";
+	font : "Type Knight.txt";
+	begin : 32 ;
+	end : 127 ;
+	default : 35 ;
+}

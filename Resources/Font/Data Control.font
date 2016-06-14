@@ -1,0 +1,7 @@
+Data Control{
+	texture : "Data Control.png";
+	font : "Data Control.txt";
+	begin : 32 ;
+	end : 127 ;
+	default : 35 ;
+}

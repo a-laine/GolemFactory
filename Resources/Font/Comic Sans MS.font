@@ -1,0 +1,7 @@
+Comic Sans MS{
+	texture : "Comic Sans MS.png";
+	font : "Comic Sans MS.txt";
+	begin : 32 ;
+	end : 380 ;
+	default : 35 ;
+}

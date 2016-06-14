@@ -1,0 +1,7 @@
+Symbol{
+	texture : "Symbol.png";
+	font : "Symbol.txt";
+	begin : 32 ;
+	end : 296 ;
+	default : 35 ;
+}

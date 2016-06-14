@@ -1,0 +1,7 @@
+Courier 10 BT{
+	texture : "Courier 10 BT.png";
+	font : "Courier 10 BT.txt";
+	begin : 32 ;
+	end : 325 ;
+	default : 35 ;
+}
