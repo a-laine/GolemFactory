@@ -90,7 +90,7 @@ void Camera::animate(float elapseTime,bool goForw,bool goBack,bool goLeft,bool g
 
     mutex.unlock();
 }
-glm::mat4 Camera::getModelViewMatrix()
+glm::mat4 Camera::getViewMatrix()
 {
 	glm::mat4 m;
     mutex.lock();

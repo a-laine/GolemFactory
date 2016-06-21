@@ -1,0 +1,17 @@
+#version 440
+
+layout(triangles,equal_spacing,cw) in;
+
+in vec3 tcPosition[];
+in mat4 tcProjModMatrix[];
+
+//layout (location = 1) uniform float displacementFactor = 0;
+
+void main()
+{
+	vec3 tePosition = gl_TessCoord.x*tcPosition[0] + 
+					  gl_TessCoord.y*tcPosition[1] + 
+					  gl_TessCoord.z*tcPosition[2];
+    gl_Position = tcProjModMatrix[0]*vec4(tePosition, 1);
+}
+

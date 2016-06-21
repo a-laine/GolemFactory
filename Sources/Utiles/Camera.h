@@ -37,7 +37,7 @@ class Camera
         void animate(float elapseTime,bool goForw = false,bool goBack = false,
                      bool goLeft = false,   bool goRight = false,
                      bool option1 = false,      bool option2 = false);
-		glm::mat4 getModelViewMatrix();
+		glm::mat4 getViewMatrix();
         void move(glm::dvec3 v);
 
         void pause();
