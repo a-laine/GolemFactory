@@ -29,7 +29,7 @@ class Camera
         //
 
         //  Default
-        Camera();
+        Camera(float screenRatio = 1.0f);
         ~Camera();
         //
 
@@ -38,7 +38,7 @@ class Camera
                      bool goLeft = false,   bool goRight = false,
                      bool option1 = false,      bool option2 = false);
 		glm::mat4 getViewMatrix();
-        void move(glm::dvec3 v);
+        void move(glm::vec3 v);
 
         void pause();
         void play();
@@ -47,23 +47,23 @@ class Camera
         //  Set/get functions
         void setMode(CameraMode mode);
         void setSpeed(float s);
-        void setRadiusMin(double r);
-        void setRadiusMax(double r);
-        void setRadius(double r);
-        void setAllRadius(double r,double rmin,double rmax);
-        void setPosition(glm::dvec3 pos);
-        void setOrientation(glm::dvec3 orientation);
-        void setTarget(glm::dvec3 target);
+        void setRadiusMin(float r);
+        void setRadiusMax(float r);
+        void setRadius(float r);
+        void setAllRadius(float r, float rmin, float rmax);
+        void setPosition(glm::vec3 pos);
+        void setOrientation(glm::vec3 orientation);
+        void setTarget(glm::vec3 target);
         void setFrustrumAngleVertical(float angle);
         void setFrustrumAngleHorizontal(float angle);
         void setSensitivity(float sens);
 
         CameraMode getMode();
-		glm::dvec3 getTarget();
-		glm::dvec3 getLeft();
-		glm::dvec3 getForward();
-		glm::dvec3 getVertical();
-		glm::dvec3 getPosition();
+		glm::vec3 getTarget();
+		glm::vec3 getLeft();
+		glm::vec3 getForward();
+		glm::vec3 getVertical();
+		glm::vec3 getPosition();
         float getSpeed();
         double getRadiusMin();
         double getRadiusMax();
@@ -75,7 +75,7 @@ class Camera
 
     private:
         //  Private functions
-        void vectorsFromAngles(glm::dvec3 target = glm::dvec3(0,0,0));
+        void vectorsFromAngles(glm::vec3 target = glm::vec3(0,0,0));
         void anglesFromVectors();
         void boundingRadius();
         //
@@ -84,14 +84,14 @@ class Camera
         uint8_t configuration;
         Mutex mutex;
 
-		glm::dvec3 position,
-                   forward,
-                   left,
-                   vertical;
+		glm::vec3 position,
+                  forward,
+                  left,
+                  vertical;
 
-        double radius,
-               radiusMin,
-               radiusMax;
+        float radius,
+              radiusMin,
+              radiusMax;
 
         float sensivity,
               speedMag,

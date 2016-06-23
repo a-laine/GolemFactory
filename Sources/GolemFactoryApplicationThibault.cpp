@@ -13,7 +13,7 @@
 #include "Utiles/Camera.h"
 #include "Resources/ResourceManager.h"
 
-#define GRID_SIZE 20
+#define GRID_SIZE 100
 #define GRID_ELEMENT_SIZE 1.0f
 
 // prototypes
@@ -21,81 +21,69 @@ GLFWwindow* initGLFW();
 void initGLEW(int verbose = 1);
 void initializeGrid();
 
-
 // utiles
 static void errorCallback(int error, const char* description) { std::cerr << "GLFW ERROR : " << description << std::endl; }
 
-
 // global variables
-GLuint gridBuffer[2];
-
-static const GLfloat g_vertex_buffer_data[] =
-{
-	-1.0f, -1.0f, 0.0f,
-	1.0f, -1.0f, 0.0f,
-	0.0f,  1.0f, 0.0f,
-};
-GLuint triangle;
-void dummyTriangleInit()
-{
-	glGenBuffers(1, &triangle);
-	glBindBuffer(GL_ARRAY_BUFFER, triangle);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
-}
-
+GLuint gridVAO;
+float* vertexBufferGrid;
+uint16_t* indexBufferGrid;
 
 // program
 int main()
 {
+	// init window and opengl
 	GLFWwindow* window = initGLFW();
-	initGLEW();
-	//initializeGrid();
+	initGLEW(0);
 
+	// Init Event handler
 	EventHandler::getInstance()->addWindow(window);
 	EventHandler::getInstance()->reload("C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/", "RPG Key mapping");
-	//EventHandler::getInstance()->reload("C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/", "RPG Key mapping");
 	EventHandler::getInstance()->setCursorMode(false);
-
+	
+	// Init Resources manager and load default shader
 	ResourceManager::getInstance()->setRepository("C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/");
 	Shader* defaultShader = ResourceManager::getInstance()->getShader("default");
+	if (!defaultShader) { std::cout << "loading default shader fail" << std::endl;  return -1;}
+	
+	glm::mat4 projection, view, model;
+	GLuint projectionLoc = glGetUniformLocation(defaultShader->getProgram(), "p");
+	GLuint viewLoc = glGetUniformLocation(defaultShader->getProgram(), "v");
+	GLuint modelLoc = glGetUniformLocation(defaultShader->getProgram(), "m");
+	model = glm::mat4(1.0);
 
-	GLuint M, V, P;
-	if (defaultShader)
-	{
-		defaultShader->enable();
-		M = glGetUniformLocation(defaultShader->getProgram(), "m");
-		V = glGetUniformLocation(defaultShader->getProgram(), "v");
-		P = glGetUniformLocation(defaultShader->getProgram(), "p");
-		glm::mat4 modelMatrix = glm::mat4(1.0f);
-		glUniformMatrix4fv(M, 1, GL_FALSE, &modelMatrix[0][0]);
-	}
+	// init camera
 	Camera camera;
+
+	// init triangle
+	initializeGrid();
+
+	// init loop time tracking
 	double startTime, elapseTime = 16;
 
-	std::cout << "end init" << std::endl;
-	glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
+	std::cout << "game loop initiated" << std::endl;
 	while (!glfwWindowShouldClose(window))
 	{
 		// begin loop
 		startTime = glfwGetTime();
 
-		defaultShader->enable();
 		// bind matrix
-		glm::mat4 viewMatrix = camera.getViewMatrix();
-		glUniformMatrix4fv(V, 1, GL_FALSE, &viewMatrix[0][0]);
+		view = camera.getViewMatrix();
+		int width, height;
+		glfwGetWindowSize(window,&width,&height);
+		projection = glm::perspective(45.f,(float)width/height,0.1f,100.f);
+		defaultShader->enable();
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &model[0][0]);
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
+		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, &projection[0][0]);
 
-		int width = 1, height = 1;
-		glfwGetWindowSize(window, &width, &height);
-		glm::mat4 projectionMatrix = glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), (float)width / (float)height, 0.1f, 100.0f);
-		glUniformMatrix4fv(P, 1, GL_FALSE, &projectionMatrix[0][0]);
-
-		// draw grid
+		//draw grid
+		glBindVertexArray(gridVAO);
 		glEnableVertexAttribArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER, gridBuffer[0]);
-		glVertexPointer(3, GL_FLOAT, 6 * sizeof(float), ((float*)NULL + (3)));
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gridBuffer[1]);
-		glDrawElements(GL_TRIANGLES, GRID_SIZE*GRID_SIZE, GL_UNSIGNED_INT, 0);
+		glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, 0, NULL );
+		glDrawElements( GL_TRIANGLES, 6*GRID_SIZE*GRID_SIZE, GL_UNSIGNED_SHORT, NULL );
 		glDisableVertexAttribArray(0);
+		glBindVertexArray(0);
 
 		//  handle events
 		EventHandler::getInstance()->handleEvent();
@@ -110,11 +98,12 @@ int main()
 			default: break;
 			}
 		}
+
 		//Animate camera
 		camera.animate((float)elapseTime,
-			EventHandler::getInstance()->isActivated(FORWARD), EventHandler::getInstance()->isActivated(BACKWARD),
-			EventHandler::getInstance()->isActivated(LEFT), EventHandler::getInstance()->isActivated(RIGHT),
-			EventHandler::getInstance()->isActivated(RUN), EventHandler::getInstance()->isActivated(SNEAKY));
+			EventHandler::getInstance()->isActivated(FORWARD),	EventHandler::getInstance()->isActivated(BACKWARD),
+			EventHandler::getInstance()->isActivated(LEFT),		EventHandler::getInstance()->isActivated(RIGHT),
+			EventHandler::getInstance()->isActivated(RUN),		EventHandler::getInstance()->isActivated(SNEAKY));
 
 		// End loop
 		glfwSwapBuffers(window);
@@ -170,10 +159,10 @@ void initGLEW(int verbose)
 	std::cout << "        GLSL version : " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
 }
 
-
 void initializeGrid()
 {
-	float vertexBufferGrid[3 * (GRID_SIZE + 1)*(GRID_SIZE + 1)];
+	// generate grid vertex buffer
+	vertexBufferGrid = new float[3 * (GRID_SIZE + 1)*(GRID_SIZE + 1)];
 	for (int i = 0; i < GRID_SIZE + 1; i++)
 		for (int j = 0; j < GRID_SIZE + 1; j++)
 		{
@@ -182,22 +171,31 @@ void initializeGrid()
 			vertexBufferGrid[3 * (i*(GRID_SIZE + 1) + j) + 2] = 0;
 		}
 
-	uint16_t indexBufferGrid[6 * GRID_SIZE*GRID_SIZE];
+	indexBufferGrid = new uint16_t[6 * GRID_SIZE*GRID_SIZE];
 	for (int i = 0; i < GRID_SIZE; i++)
 		for (int j = 0; j < GRID_SIZE; j++)
 		{
-			indexBufferGrid[6 * (i*GRID_SIZE + j) + 0] = i*(GRID_SIZE + 1) + j;
-			indexBufferGrid[6 * (i*GRID_SIZE + j) + 1] = (i + 1)*(GRID_SIZE + 1) + j;
-			indexBufferGrid[6 * (i*GRID_SIZE + j) + 2] = i*(GRID_SIZE + 1) + (j + 1);
+			indexBufferGrid[6 * (i*GRID_SIZE + j) + 0] = i*(GRID_SIZE + 1) + j + (GRID_SIZE + 1);
+			indexBufferGrid[6 * (i*GRID_SIZE + j) + 1] = i*(GRID_SIZE + 1) + j;
+			indexBufferGrid[6 * (i*GRID_SIZE + j) + 2] = i*(GRID_SIZE + 1) + j + 1;
 
-			indexBufferGrid[6 * (i*GRID_SIZE + j) + 3] = (i + 1)*(GRID_SIZE + 1) + j;
-			indexBufferGrid[6 * (i*GRID_SIZE + j) + 4] = (i + 1)*(GRID_SIZE + 1) + (j + 1);
-			indexBufferGrid[6 * (i*GRID_SIZE + j) + 5] = i*(GRID_SIZE + 1) + (j + 1);
+			indexBufferGrid[6 * (i*GRID_SIZE + j) + 3] = i*(GRID_SIZE + 1) + j + (GRID_SIZE + 1);
+			indexBufferGrid[6 * (i*GRID_SIZE + j) + 4] = i*(GRID_SIZE + 1) + j + (GRID_SIZE + 1) + 1;
+			indexBufferGrid[6 * (i*GRID_SIZE + j) + 5] = i*(GRID_SIZE + 1) + j + 1;
 		}
 
-	glGenBuffers(2, gridBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, gridBuffer[0]);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertexBufferGrid), vertexBufferGrid, GL_STATIC_DRAW);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gridBuffer[1]);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indexBufferGrid), indexBufferGrid, GL_STATIC_DRAW);
+	// initialize VAO
+	glGenVertexArrays(1, &gridVAO);
+	glBindVertexArray(gridVAO);
+
+	GLuint vertexbuffer;
+	glGenBuffers(1, &vertexbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+	glBufferData(GL_ARRAY_BUFFER, 3 * (GRID_SIZE + 1)*(GRID_SIZE + 1) * sizeof(float), vertexBufferGrid, GL_STATIC_DRAW);
+
+	GLuint arraybuffer;
+	glGenBuffers(1, &arraybuffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, arraybuffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * GRID_SIZE*GRID_SIZE * sizeof(unsigned short), indexBufferGrid, GL_STATIC_DRAW);
+	glBindVertexArray(0);
 }

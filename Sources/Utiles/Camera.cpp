@@ -3,20 +3,20 @@
 #define M_PI 3.14159265358979323846264338327
 
 //  Default
-Camera::Camera()
+Camera::Camera(float screenRatio)
 {
     configuration = FREEFLY;
 
-    position = glm::dvec3(0,-10,18);
-    forward  = glm::dvec3(0,0,1)- position;
+    position = glm::vec3(0,-10,18);
+    forward  = glm::vec3(0,0,1)- position;
 
     teta = 0;           phi = 0;
     sensivity = 0.2f;    speedMag = 0.003f; // = 3m/ms
     radius = 3;         radiusMin = 1;
     radiusMax = 10;
-	frustrumAngleHorizontal = (float)M_PI / 6.0;
-	frustrumAngleVertical = (float)M_PI / 6.0;
-
+	frustrumAngleVertical = 30.0f;
+	frustrumAngleHorizontal = screenRatio*frustrumAngleVertical;
+	
     anglesFromVectors();
     vectorsFromAngles();
 }
@@ -32,7 +32,7 @@ void Camera::animate(float elapseTime,bool goForw,bool goBack,bool goLeft,bool g
     mutex.lock();
 
     float tmpSpeed = speedMag;
-	glm::dvec3 direction;
+	glm::vec3 direction(0.,0.,0.);
 
     switch(configuration&MODE_MASK)
     {
@@ -51,8 +51,8 @@ void Camera::animate(float elapseTime,bool goForw,bool goBack,bool goLeft,bool g
             if(option2) tmpSpeed /= 10.f;
             if(option1) tmpSpeed *= 10.f;
 
-            position += glm::normalize(direction)*(double)elapseTime*(double)tmpSpeed;
-
+			if (direction.x || direction.z || direction.z)
+				position += glm::normalize(direction)*elapseTime*tmpSpeed;
             break;
 
         case CINEMATIC:
@@ -82,8 +82,9 @@ void Camera::animate(float elapseTime,bool goForw,bool goBack,bool goLeft,bool g
 			if (goLeft) direction += left;
 			if (goRight) direction -= left;
 
-            position += glm::normalize(direction)*(double)elapseTime*(double)tmpSpeed;
-            break;
+			if (direction.x || direction.z || direction.z)
+				position += glm::normalize(direction)*elapseTime*tmpSpeed;
+			break;
 
         default: break;
     }
@@ -94,16 +95,15 @@ glm::mat4 Camera::getViewMatrix()
 {
 	glm::mat4 m;
     mutex.lock();
-	m = glm::lookAt(position, position + forward, glm::dvec3(0, 0, 1));
+	m = glm::lookAt(position, position + forward, glm::vec3(0, 0, 1));
     mutex.unlock();
 	return m;
 }
-void Camera::move(glm::dvec3 v)
+void Camera::move(glm::vec3 v)
 {
-	glm::dvec3 p = v + getPosition();
+	glm::vec3 p = v + getPosition();
     setPosition(p);
 }
-
 
 void Camera::pause()
 {
@@ -146,28 +146,28 @@ void Camera::setSpeed(float s)
     speedMag = s;
     mutex.unlock();
 }
-void Camera::setRadiusMin(double r)
+void Camera::setRadiusMin(float r)
 {
     mutex.lock();
     radiusMin = r;
     boundingRadius();
     mutex.unlock();
 }
-void Camera::setRadiusMax(double r)
+void Camera::setRadiusMax(float r)
 {
     mutex.lock();
     radiusMax = r;
     boundingRadius();
     mutex.unlock();
 }
-void Camera::setRadius(double r)
+void Camera::setRadius(float r)
 {
     mutex.lock();
     radius = r;
     boundingRadius();
     mutex.unlock();
 }
-void Camera::setAllRadius(double r,double rmin,double rmax)
+void Camera::setAllRadius(float r, float rmin, float rmax)
 {
     mutex.lock();
     radius = r;
@@ -176,12 +176,12 @@ void Camera::setAllRadius(double r,double rmin,double rmax)
     boundingRadius();
     mutex.unlock();
 }
-void Camera::setPosition(glm::dvec3 pos)
+void Camera::setPosition(glm::vec3 pos)
 {
     mutex.lock();
     if((configuration&MODE_MASK)==TRACKBALL)
     {
-		glm::dvec3 target = position + radius*forward;
+		glm::vec3 target = position + radius*forward;
         position += pos;
         forward = target - position;
         radius = forward.length();
@@ -194,7 +194,7 @@ void Camera::setPosition(glm::dvec3 pos)
     else position = pos;
     mutex.unlock();
 }
-void Camera::setOrientation(glm::dvec3 orientation)
+void Camera::setOrientation(glm::vec3 orientation)
 {
     mutex.lock();
     forward = glm::normalize(orientation);
@@ -202,7 +202,7 @@ void Camera::setOrientation(glm::dvec3 orientation)
     vectorsFromAngles();
     mutex.unlock();
 }
-void Camera::setTarget(glm::dvec3 target)
+void Camera::setTarget(glm::vec3 target)
 {
     mutex.lock();
     forward = target-position;
@@ -242,42 +242,42 @@ Camera::CameraMode Camera::getMode()
     mutex.unlock();
     return m;
 }
-glm::dvec3 Camera::getTarget()
+glm::vec3 Camera::getTarget()
 {
-	glm::dvec3 v;
+	glm::vec3 v;
     mutex.lock();
     if((configuration&MODE_MASK) == TRACKBALL) v = position + radius*forward;
     else v = position + forward;
     mutex.unlock();
     return v;
 }
-glm::dvec3 Camera::getLeft()
+glm::vec3 Camera::getLeft()
 {
-	glm::dvec3 l;
+	glm::vec3 l;
     mutex.lock();
     l = left;
     mutex.unlock();
     return l;
 }
-glm::dvec3 Camera::getForward()
+glm::vec3 Camera::getForward()
 {
-	glm::dvec3 f;
+	glm::vec3 f;
     mutex.lock();
     f = forward;
     mutex.unlock();
     return f;
 }
-glm::dvec3 Camera::getVertical()
+glm::vec3 Camera::getVertical()
 {
-	glm::dvec3 v;
+	glm::vec3 v;
     mutex.lock();
     v = vertical;
     mutex.unlock();
     return v;
 }
-glm::dvec3 Camera::getPosition()
+glm::vec3 Camera::getPosition()
 {
-	glm::dvec3 p;
+	glm::vec3 p;
     mutex.lock();
     p = position;
     mutex.unlock();
@@ -342,33 +342,36 @@ float Camera::getSensitivity()
 //
 
 //  Private functions
-void Camera::vectorsFromAngles(glm::dvec3 target)
+void Camera::vectorsFromAngles(glm::vec3 target)
 {
     if(phi>180.f) phi -= 360.f;
     else if(phi < -180.f) phi += 360.f;
     if(teta>89.f) teta = 89.f;
     else if(teta < -89.f) teta = -89.f;
 
+	float radTeta = glm::radians(teta);
+	float radPhi = glm::radians(phi);
+
     switch(configuration&MODE_MASK)
     {
         case FREEFLY: case ISOMETRIC:
-			forward.x = cos(teta*M_PI / 180.)*cos(phi*M_PI / 180.);
-			forward.y = cos(teta*M_PI / 180.)*sin(phi*M_PI / 180.);
-			forward.z = sin(teta*M_PI / 180.);
+			forward.x = cos(radTeta)*cos(radPhi);
+			forward.y = cos(radTeta)*sin(radPhi);
+			forward.z = sin(radTeta);
             break;
 
         case TRACKBALL:
-			forward.x = cos(teta*M_PI / 180.)*cos(phi*M_PI / 180.);
-			forward.y = cos(teta*M_PI / 180.)*sin(phi*M_PI / 180.);
-			forward.z = sin(teta*M_PI / 180.);
+			forward.x = cos(radTeta)*cos(radPhi);
+			forward.y = cos(radTeta)*sin(radPhi);
+			forward.z = sin(radTeta);
             position = target - radius*forward;
             break;
 
         default: break;
     }
 
-	//left = glm::normalize((glm::dvec3(0, 0, 1) ^ forward));
-	//vertical = glm::normalize(forward^left);
+	left = glm::normalize(glm::cross(glm::vec3(0, 0, 1), forward));
+	vertical = glm::normalize(glm::cross(forward, left));
 }
 void Camera::anglesFromVectors()
 {
