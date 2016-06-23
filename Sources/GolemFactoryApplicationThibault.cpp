@@ -29,6 +29,20 @@ static void errorCallback(int error, const char* description) { std::cerr << "GL
 // global variables
 GLuint gridBuffer[2];
 
+static const GLfloat g_vertex_buffer_data[] =
+{
+	-1.0f, -1.0f, 0.0f,
+	1.0f, -1.0f, 0.0f,
+	0.0f,  1.0f, 0.0f,
+};
+GLuint triangle;
+void dummyTriangleInit()
+{
+	glGenBuffers(1, &triangle);
+	glBindBuffer(GL_ARRAY_BUFFER, triangle);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
+}
+
 
 // program
 int main()
@@ -44,6 +58,7 @@ int main()
 
 	ResourceManager::getInstance()->setRepository("C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/");
 	Shader* defaultShader = ResourceManager::getInstance()->getShader("default");
+
 	GLuint M, V, P;
 	if (defaultShader)
 	{
@@ -58,12 +73,13 @@ int main()
 	double startTime, elapseTime = 16;
 
 	std::cout << "end init" << std::endl;
-
+	glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
 	while (!glfwWindowShouldClose(window))
 	{
 		// begin loop
 		startTime = glfwGetTime();
 
+		defaultShader->enable();
 		// bind matrix
 		glm::mat4 viewMatrix = camera.getViewMatrix();
 		glUniformMatrix4fv(V, 1, GL_FALSE, &viewMatrix[0][0]);
@@ -74,15 +90,12 @@ int main()
 		glUniformMatrix4fv(P, 1, GL_FALSE, &projectionMatrix[0][0]);
 
 		// draw grid
+		glEnableVertexAttribArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, gridBuffer[0]);
 		glVertexPointer(3, GL_FLOAT, 6 * sizeof(float), ((float*)NULL + (3)));
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gridBuffer[1]);
-
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glEnableClientState(GL_COLOR_ARRAY);
 		glDrawElements(GL_TRIANGLES, GRID_SIZE*GRID_SIZE, GL_UNSIGNED_INT, 0);
-		glDisableClientState(GL_COLOR_ARRAY);
-		glDisableClientState(GL_VERTEX_ARRAY);
+		glDisableVertexAttribArray(0);
 
 		//  handle events
 		EventHandler::getInstance()->handleEvent();
@@ -121,8 +134,12 @@ GLFWwindow* initGLFW()
 		exit(EXIT_FAILURE);
 
 	glfwSetErrorCallback(errorCallback);
+	glfwWindowHint(GLFW_SAMPLES, 4);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
 	GLFWwindow*window = glfwCreateWindow(640, 480, "Golem Factory v1.0", NULL, NULL);
 	if (!window)
 	{
@@ -152,6 +169,7 @@ void initGLEW(int verbose)
 	std::cout << "        Renderer name : " << glGetString(GL_RENDERER) << std::endl;
 	std::cout << "        GLSL version : " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
 }
+
 
 void initializeGrid()
 {

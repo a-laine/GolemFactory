@@ -7,8 +7,8 @@ Camera::Camera()
 {
     configuration = FREEFLY;
 
-    position = glm::dvec3(0,-1,1.8);
-    forward  = glm::dvec3(0,1,0);
+    position = glm::dvec3(0,-10,18);
+    forward  = glm::dvec3(0,0,1)- position;
 
     teta = 0;           phi = 0;
     sensivity = 0.2f;    speedMag = 0.003f; // = 3m/ms

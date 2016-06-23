@@ -23,12 +23,12 @@ Shader::Shader(std::string path,std::string shaderName) : ResourceVirtual(path,s
 
     //  Vertex shader
     try { tmpName = path + shaderMap["vertex"].toString(); }
-    catch(std::exception& e) { std::cerr<<"fail parse vertex shader name"<<std::endl; tmpName = path + "default.vs"; }
+    catch(std::exception& e) { std::cerr<<"fail to parse vertex shader name"<<std::endl; tmpName = path + "default.vs"; }
     if(!loadShader(VERTEX_SH,loadSource(tmpName),vertexShader)) return;
 
     //  Fragment shader
     try { tmpName = path + shaderMap["fragment"].toString(); }
-    catch(std::exception& e) { std::cerr<<"fail parse fragment shader name"<<std::endl; tmpName = path + "default.fs"; }
+    catch(std::exception& e) { std::cerr<<"fail to parse fragment shader name"<<std::endl; tmpName = path + "default.fs"; }
     if(!loadShader(FRAGMENT_SH,loadSource(tmpName),fragmentShader)) { glDeleteShader(vertexShader); return; }
 
     //  Program
@@ -175,7 +175,17 @@ bool Shader::loadShader(ShaderType shaderType,char* source,GLuint& shader)
         char *log = new char[logsize];
         glGetShaderInfoLog(shader, logsize, &logsize, log);
 
-        std::cout<<log<<std::endl;
+		std::cerr << "\n\nERROR : when compiling ";
+		switch (shaderType)
+		{
+			case VERTEX_SH:     std::cerr << "vertex";					break;
+			case GEOMETRIC_SH:  std::cerr << "geometry";				break;
+			case FRAGMENT_SH:   std::cerr << "fragment";				break;
+			case TESS_EVAL_SH:  std::cerr << "tesselation evaluation";	break;
+			case TESS_CONT_SH:  std::cerr << "tesselation control";		break;
+			default: break;
+		}
+		std::cout << "shader\n\n" << log << std::endl << std::endl;
 
         delete[] log;
         delete[] source;
