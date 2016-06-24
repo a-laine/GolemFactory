@@ -9,6 +9,10 @@
 #include <limits>
 #include <glm/glm.hpp>
 
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
 class MeshLoader
 {
     public:
@@ -21,10 +25,10 @@ class MeshLoader
 
         //  Public functions
         static int loadMesh(std::string file,
-                            std::vector<vertexAttributes>& data,
-                            std::vector<unsigned int>& faces,
-                            uint8_t& vertexSize,
-                            uint8_t& offNor,uint8_t& offTex,uint8_t& offWeight,uint8_t& offColor);
+							std::vector<glm::vec3>& vertices,
+							std::vector<glm::vec3>& normales,
+							std::vector<glm::vec3>& color,
+							std::vector<unsigned int>& faces);
         //
 
     private:

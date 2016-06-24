@@ -1,6 +1,8 @@
 #pragma once
 
 #include <vector>
+#include <GL/glew.h>
+
 #include <glm/glm.hpp>
 
 #include "ResourceVirtual.h"
@@ -10,30 +12,10 @@ class Mesh : public ResourceVirtual
 {
     public:
         //  Miscellaneous
-        enum MeshConfiguration
-        {
-            VALID = 1<<0            //!< The valid flag position
-        };
-
         struct Face{
             unsigned int vertex1;
             unsigned int vertex2;
             unsigned int vertex3;
-        };
-
-        enum AttributeType
-        {
-            MATRIX_44,
-            FLOAT,
-            INT,
-            TEXTURE
-        };
-        struct Attribute
-        {
-            AttributeType type;
-            int location;
-            int size;
-            void* data;
         };
         //
 
@@ -41,26 +23,22 @@ class Mesh : public ResourceVirtual
         Mesh(std::string path,std::string meshName);
         ~Mesh();
 
+		void draw();
         bool isValid() const;
         //
 
         //  Set/get functions
-        void addAttribute(AttributeType t,int l,int s,void* d);
-
         unsigned int getNumberVertices() const;
         unsigned int getNumberFaces() const;
         //
 
         //  Attributes
         uint8_t configuration;
-        std::vector<Attribute> attributeSummary;
-        std::vector<MeshLoader::vertexAttributes> data;
-        std::vector<unsigned int> faces;
+		GLuint vao,vertexbuffer,arraybuffer;
 
-        uint8_t sizeofVertex;
-        uint8_t offsetNormal;
-        uint8_t offsetTexture;
-        uint8_t offsetWeight;
-        uint8_t offsetColor;
+        std::vector<glm::vec3> vertices;
+		std::vector<glm::vec3> normales;
+		std::vector<glm::vec3> color;
+        std::vector<unsigned int> faces;
         //
 };

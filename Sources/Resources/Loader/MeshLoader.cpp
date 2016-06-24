@@ -2,31 +2,47 @@
 
 //  Public functions
 int MeshLoader::loadMesh(std::string file,
-                         std::vector<vertexAttributes>& data,
-                         std::vector<unsigned int>& faces,
-                         uint8_t& vertexSize,
-                         uint8_t& offNor,uint8_t& offTex,uint8_t& offWeight,uint8_t& offColor)
+						 std::vector<glm::vec3>& vertices,
+						 std::vector<glm::vec3>& normales,
+						 std::vector<glm::vec3>& color,
+						 std::vector<unsigned int>& faces)
 {
-    std::vector<glm::vec3> pos;
-    std::vector<glm::vec3> nor;
-    std::vector<glm::vec2> tex;
-    std::vector<glm::vec3> weight;
-    std::vector<glm::u8vec3> color;
-    std::vector<Vertex> vertex;
-    int i = 0;
+    std::vector<glm::vec3> v;
+    std::vector<glm::vec3> n;
+    std::vector<glm::vec3> c;
+	std::vector<unsigned int> f;
 
-    switch(getExtension(file))
-    {
-        case OBJ:
-            i = loadObj(file,pos,nor,tex,vertex);
-            if(i == 0) optimizeMesh(pos,nor,tex,weight,color,vertex,data,faces,vertexSize,offNor,offTex,offWeight,offColor);
-            break;
-        default:
-            std::cerr<<"MeshLoader : Unable to load mesh."<<std::endl;
-            std::cerr<<"             File extension not supported."<<std::endl;
-            return 1;
-    }
-    return i;
+	Assimp::Importer importer;
+	const aiScene* scene = importer.ReadFile(file.c_str(),
+		aiProcess_CalcTangentSpace | aiProcess_Triangulate | aiProcess_JoinIdenticalVertices | aiProcess_SortByPType);
+	if (!scene) { std::cerr << "ERROR : loading mesh : " << file << "\ncould not open file" << std::endl; return 1; }
+
+	for (int i = 0; i < scene->mNumMeshes; i++)
+	{
+		aiMesh* mesh = scene->mMeshes[i];
+		for (int j = 0; j < mesh->mNumFaces; j++)
+		{
+			const aiFace& face = mesh->mFaces[j];
+			for (int k = 0; k < 3; k++)
+			{
+				faces.push_back(face.mIndices[k]);
+
+				aiVector3D pos = mesh->mVertices[face.mIndices[k]];
+				vertices.push_back(glm::vec3(pos.x,pos.y,pos.z));
+
+				std::cout << glm::vec3(pos.x, pos.y, pos.z).z << std::endl;
+
+				//aiVector3D normal = (mesh->HasNormals() ? mesh->mNormals[face.mIndices[k]] : aiVector3D(0.0f, 0.0f, 0.0f));
+				//normales.push_back(glm::vec3(normal.x, normal.y, normal.z));
+
+				//color.push_back(glm::vec3(1.0,1.0,1.0));
+			}
+		}
+	}
+
+
+
+	return 0;
 }
 //
 

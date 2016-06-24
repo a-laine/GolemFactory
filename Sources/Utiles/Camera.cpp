@@ -7,7 +7,7 @@ Camera::Camera(float screenRatio)
 {
     configuration = FREEFLY;
 
-    position = glm::vec3(0,-10,18);
+    position = glm::vec3(0,-10,5);
     forward  = glm::vec3(0,0,1)- position;
 
     teta = 0;           phi = 0;

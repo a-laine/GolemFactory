@@ -13,16 +13,13 @@
 #include "Utiles/Camera.h"
 #include "Resources/ResourceManager.h"
 
-#define GRID_SIZE 100
-#define GRID_ELEMENT_SIZE 1.0f
+#define GRID_SIZE 20
+#define GRID_ELEMENT_SIZE 3.0f
 
 // prototypes
 GLFWwindow* initGLFW();
 void initGLEW(int verbose = 1);
 void initializeGrid();
-
-// utiles
-static void errorCallback(int error, const char* description) { std::cerr << "GLFW ERROR : " << description << std::endl; }
 
 // global variables
 GLuint gridVAO;
@@ -34,7 +31,7 @@ int main()
 {
 	// init window and opengl
 	GLFWwindow* window = initGLFW();
-	initGLEW(0);
+	initGLEW();
 
 	// Init Event handler
 	EventHandler::getInstance()->addWindow(window);
@@ -43,15 +40,19 @@ int main()
 	
 	// Init Resources manager and load default shader
 	ResourceManager::getInstance()->setRepository("C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/");
-	Shader* defaultShader = ResourceManager::getInstance()->getShader("default");
-	if (!defaultShader) { std::cout << "loading default shader fail" << std::endl;  return -1;}
+	Shader* gridShader = ResourceManager::getInstance()->getShader("wiredGrid");
+	if (!gridShader) { std::cout << "loading default shader fail" << std::endl;  return -1;}
 	
 	glm::mat4 projection, view, model;
-	GLuint projectionLoc = glGetUniformLocation(defaultShader->getProgram(), "p");
-	GLuint viewLoc = glGetUniformLocation(defaultShader->getProgram(), "v");
-	GLuint modelLoc = glGetUniformLocation(defaultShader->getProgram(), "m");
+	GLuint projectionLoc = glGetUniformLocation(gridShader->getProgram(), "p");
+	GLuint viewLoc = glGetUniformLocation(gridShader->getProgram(), "v");
+	GLuint modelLoc = glGetUniformLocation(gridShader->getProgram(), "m");
 	model = glm::mat4(1.0);
 
+	// loading cube
+	Mesh* testCube = ResourceManager::getInstance()->getMesh("cube2.obj");
+	if (!testCube) { std::cout << "loading cube fail" << std::endl;  return -1; }
+	
 	// init camera
 	Camera camera;
 
@@ -72,7 +73,7 @@ int main()
 		int width, height;
 		glfwGetWindowSize(window,&width,&height);
 		projection = glm::perspective(45.f,(float)width/height,0.1f,100.f);
-		defaultShader->enable();
+		gridShader->enable();
 		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &model[0][0]);
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
 		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, &projection[0][0]);
@@ -85,6 +86,8 @@ int main()
 		glDisableVertexAttribArray(0);
 		glBindVertexArray(0);
 
+		testCube->draw();
+
 		//  handle events
 		EventHandler::getInstance()->handleEvent();
 		std::vector<EventEnum> v;
@@ -93,9 +96,9 @@ int main()
 		{
 			switch (v[i])
 			{
-			case QUIT: glfwSetWindowShouldClose(window, GL_TRUE); break;
-			case CHANGE_CURSOR_MODE: EventHandler::getInstance()->setCursorMode(!EventHandler::getInstance()->getCursorMode()); break;
-			default: break;
+				case QUIT: glfwSetWindowShouldClose(window, GL_TRUE); break;
+				case CHANGE_CURSOR_MODE: EventHandler::getInstance()->setCursorMode(!EventHandler::getInstance()->getCursorMode()); break;
+				default: break;
 			}
 		}
 
@@ -117,6 +120,7 @@ int main()
 }
 
 // functions implementation
+static void errorCallback(int error, const char* description) { std::cerr << "GLFW ERROR : " << description << std::endl; }
 GLFWwindow* initGLFW()
 {
 	if (!glfwInit())
@@ -166,8 +170,8 @@ void initializeGrid()
 	for (int i = 0; i < GRID_SIZE + 1; i++)
 		for (int j = 0; j < GRID_SIZE + 1; j++)
 		{
-			vertexBufferGrid[3 * (i*(GRID_SIZE + 1) + j) + 0] = i - (GRID_SIZE * GRID_ELEMENT_SIZE) / 2;
-			vertexBufferGrid[3 * (i*(GRID_SIZE + 1) + j) + 1] = j - (GRID_SIZE * GRID_ELEMENT_SIZE) / 2;
+			vertexBufferGrid[3 * (i*(GRID_SIZE + 1) + j) + 0] = GRID_ELEMENT_SIZE*i - (GRID_SIZE * GRID_ELEMENT_SIZE) / 2;
+			vertexBufferGrid[3 * (i*(GRID_SIZE + 1) + j) + 1] = GRID_ELEMENT_SIZE*j - (GRID_SIZE * GRID_ELEMENT_SIZE) / 2;
 			vertexBufferGrid[3 * (i*(GRID_SIZE + 1) + j) + 2] = 0;
 		}
 
