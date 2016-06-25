@@ -1,5 +1,6 @@
 #include "ResourceManager.h"
 
+
 //  Default
 ResourceManager::ResourceManager(std::string path)
 {
@@ -8,7 +9,7 @@ ResourceManager::ResourceManager(std::string path)
     defaultTexture = "10points.png";
     defaultFont = "Comic Sans MS";
     defaultShader = "default";
-    defaultMesh = "Rock1.obj";
+    defaultMesh = "cube2.obj";
 }
 ResourceManager::~ResourceManager()
 {
@@ -76,33 +77,33 @@ void ResourceManager::clearGarbage()
 
 Mesh* ResourceManager::getMesh(std::string name)
 {
-    if(name == "default") name = defaultMesh;
+	if (name == "default") name = defaultMesh;
     Mesh* resource = nullptr;
     mutexList.lock();
 
-    auto it=meshList.find(name);
-    if(it!=meshList.end())
+	auto it = meshList.find(name);
+	if (it != meshList.end())
     {
         resource = it->second;
         resource->count++;
     }
     mutexList.unlock();
-    if(resource) return resource;
+	if (resource) return resource;
 
-    resource = new Mesh(repository+"Meshes/",name);
-    if(resource && resource->isValid())
+	resource = new Mesh(repository + "Meshes/", name);
+	if (resource && resource->isValid())
     {
         mutexList.lock();
         meshList[name] = resource;
         mutexList.unlock();
         resource->count++;
     }
-    else if(name != defaultMesh)
+	else if (name != defaultMesh)
     {
         if(resource) delete resource;
-        resource = getMesh(defaultMesh);
+		resource = getMesh(defaultMesh);
     }
-    else if(resource)
+	else if (resource)
     {
         delete resource;
         resource = nullptr;

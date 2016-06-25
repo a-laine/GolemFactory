@@ -1,13 +1,16 @@
 #include "Mesh.h"
 
 //  Default
-Mesh::Mesh(std::string path,std::string meshName) :
-    ResourceVirtual(path,meshName,ResourceVirtual::MESH)
+Mesh::Mesh(std::string path,std::string meshName) : ResourceVirtual(path,meshName,ResourceVirtual::MESH), configuration(0x00)
 {
     std::string file = path + meshName;
 	int i = MeshLoader::loadMesh(file, vertices, normales, color, faces);
-	if (!i) configuration |= 0x01;
-	else return;
+	if (i) return;
+	configuration |= 0x01;
+
+	//std::cout << meshName << " sucsessfuly loaded : \n";
+	//std::cout << "     vertices : " << vertices.size() << std::endl;
+	//std::cout << "     faces : " << faces.size() << std::endl;
 
 	// initialize VBO
 	glGenBuffers(1, &vertexbuffer);

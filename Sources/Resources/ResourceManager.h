@@ -1,6 +1,8 @@
 #pragma once
 
 #include <vector>
+#include <map>
+#include <string>
 
 #include "Utiles/Singleton.h"
 #include "Utiles/Mutex.h"

@@ -2,6 +2,7 @@
 //
 
 #include <iostream>
+#include <time.h>
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -13,18 +14,41 @@
 #include "Utiles/Camera.h"
 #include "Resources/ResourceManager.h"
 
-#define GRID_SIZE 20
+#define GRID_SIZE 100
 #define GRID_ELEMENT_SIZE 3.0f
 
 // prototypes
 GLFWwindow* initGLFW();
 void initGLEW(int verbose = 1);
 void initializeGrid();
+void initializeForestScene();
 
 // global variables
 GLuint gridVAO,gridVBO;
 float* vertexBufferGrid;
 uint16_t* indexBufferGrid;
+
+
+class Instance {
+	public:
+		Instance(std::string meshName)
+		{
+			mesh = ResourceManager::getInstance()->getMesh(meshName);
+		}
+		~Instance()
+		{
+			ResourceManager::getInstance()->release(mesh);
+		}
+
+		glm::mat4 modelMatrix;
+		Mesh* mesh;
+};
+
+std::vector<Instance*> rockList;
+std::vector<Instance*> pineTreeList;
+
+
+
 
 // program
 int main()
@@ -49,17 +73,14 @@ int main()
 	
 	//	model view and projection matrix
 	glm::mat4 projection, view, model;
-	model = glm::translate(glm::mat4(1.0),glm::vec3(0,0,1));
+	model = glm::rotate(model, glm::radians(90.f), glm::vec3(1, 0, 0));
 
-	// loading cube
-	Mesh* testCube = ResourceManager::getInstance()->getMesh("cube2.obj");
-	if (!testCube) { std::cout << "loading cube fail" << std::endl;  return -1; }
-	
 	// init camera
 	Camera camera;
 
 	// init triangle
 	initializeGrid();
+	initializeForestScene();
 
 	// init loop time tracking
 	double startTime, elapseTime = 16;
@@ -75,7 +96,7 @@ int main()
 		view = camera.getViewMatrix();
 		int width, height;
 		glfwGetWindowSize(window,&width,&height);
-		projection = glm::perspective(45.f,(float)width/height,0.1f,100.f);
+		projection = glm::perspective(45.f,(float)width/height,0.1f,1000.f);
 		gridShader->enable();
 		gridShader->loadUniformMatrix(&glm::mat4(1.0)[0][0], &view[0][0], &projection[0][0]);
 
@@ -85,8 +106,17 @@ int main()
 
 		//	draw test cube
 		defaultShader->enable();
-		defaultShader->loadUniformMatrix(&model[0][0], &view[0][0], &projection[0][0]);
-		testCube->draw();
+
+		for (int i = 0; i < rockList.size(); i++)
+		{
+			defaultShader->loadUniformMatrix(&rockList[i]->modelMatrix[0][0], &view[0][0], &projection[0][0]);
+			rockList[i]->mesh->draw();
+		}
+		for (int i = 0; i < pineTreeList.size(); i++)
+		{
+			defaultShader->loadUniformMatrix(&pineTreeList[i]->modelMatrix[0][0], &view[0][0], &projection[0][0]);
+			pineTreeList[i]->mesh->draw();
+		}
 
 		//  handle events
 		EventHandler::getInstance()->handleEvent();
@@ -211,4 +241,35 @@ void initializeGrid()
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, arraybuffer);
 
 	glBindVertexArray(0);
+}
+void initializeForestScene()
+{
+	srand(time(NULL));
+	for (int i = 0; i < GRID_SIZE; i++)
+		for (int j = 0; j < GRID_SIZE; j++)
+		{
+			int r = rand() % 100;
+			glm::mat4 model = glm::translate(glm::mat4(1.0),
+											 glm::vec3( GRID_ELEMENT_SIZE*i - (GRID_SIZE * GRID_ELEMENT_SIZE) / 2 + ((rand() % 10) / 5.f - 1.f),
+														GRID_ELEMENT_SIZE*j - (GRID_SIZE * GRID_ELEMENT_SIZE) / 2 + ((rand() % 10) / 5.f - 1.f),
+														0));
+			float s = (0.5f + (rand()%100)/100.f);
+			model = glm::scale(model, glm::vec3(s, s, s));
+			model = glm::rotate(model, glm::radians(90.f), glm::vec3(1, 0, 0));
+
+			if (r < 5)
+			{
+				Instance* ins = new Instance("Rock1.obj");
+				rockList.push_back(ins);
+				ins->modelMatrix = model;
+			}
+			else if (r < 80)
+			{
+				Instance* ins = new Instance("PineTree.obj");
+				pineTreeList.push_back(ins);
+				ins->modelMatrix = model;
+			}
+		}
+	std::cout << "Tree count : " << pineTreeList.size() << std::endl;
+	std::cout << "Rock count : " << rockList.size() << std::endl;
 }

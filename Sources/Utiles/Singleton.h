@@ -20,7 +20,7 @@ class Singleton
     protected :
         //  Default
         Singleton() {};
-        Singleton(Singleton&){};
+        Singleton(Singleton&) = delete;
         ~Singleton() {};
         //
 
