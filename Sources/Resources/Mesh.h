@@ -11,14 +11,6 @@
 class Mesh : public ResourceVirtual
 {
     public:
-        //  Miscellaneous
-        struct Face{
-            unsigned int vertex1;
-            unsigned int vertex2;
-            unsigned int vertex3;
-        };
-        //
-
         //  Default
         Mesh(std::string path,std::string meshName);
         ~Mesh();
@@ -34,7 +26,7 @@ class Mesh : public ResourceVirtual
 
         //  Attributes
         uint8_t configuration;
-		GLuint vao,vertexbuffer,arraybuffer;
+		GLuint vao,vertexbuffer,arraybuffer,colorBuffer,normalBuffer;
 
         std::vector<glm::vec3> vertices;
 		std::vector<glm::vec3> normales;

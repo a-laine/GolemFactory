@@ -1,12 +1,9 @@
 #version 330
 
 // input
-//uniform vec3 lightDirection_cameraSpace;
-//uniform sampler2D tex;
-
-//in vec2 textureCoord;
-//in vec4 fragmentColor;
-//in vec3 fragmentNormal;
+in vec3 lightDirectionCameraSpace;
+in vec3 fragmentNormal;
+in vec3 fragmentColor;
 
 // output
 layout (location = 0) out vec3 fragColor;
@@ -15,8 +12,8 @@ layout (location = 0) out vec3 fragColor;
 // program
 void main()
 {
-    fragColor = vec3(1.0,0.5,0.0);
-	//fragColor = fragmentColor * dot(fragmentNormal,lightDirection_cameraSpace) * texture2D(tex,textureCoord);
+	float costeta = clamp( dot(normalize(fragmentNormal), normalize(lightDirectionCameraSpace)), 0,1 );
+	fragColor = fragmentColor * (0.7*costeta +0.3);
 }
 
 

@@ -78,6 +78,14 @@ Shader::Shader(std::string path,std::string shaderName) : ResourceVirtual(path,s
         delete[] log;
     }
 
+	//	get default matrix attribute location
+	if (glIsProgram(program))
+	{
+		projectionLoc = glGetUniformLocation(program, "p");
+		viewLoc = glGetUniformLocation(program, "v");
+		modelLoc = glGetUniformLocation(program, "m");
+	}
+
     //  Binding texture to sample
     glUseProgram(program);
     try
@@ -105,6 +113,19 @@ bool Shader::isValid() const { return glIsProgram(program); }
 
 //  Public functions
 void Shader::enable() { glUseProgram(program); }
+void Shader::loadUniformMatrix(char matrix, float* matrixPointer)
+{
+	if(matrix == 'm') glUniformMatrix4fv(modelLoc, 1, GL_FALSE, matrixPointer);
+	else if (matrix == 'v') glUniformMatrix4fv(viewLoc, 1, GL_FALSE, matrixPointer);
+	else if (matrix == 'p') glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, matrixPointer);
+	else std::cout << "ERROR : wrong matrix char id (accepted value : m,v,p)" << std::endl;
+}
+void Shader::loadUniformMatrix(float* model, float* view, float* projection)
+{
+	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, model);
+	glUniformMatrix4fv(viewLoc, 1, GL_FALSE, view);
+	glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, projection);
+}
 GLuint Shader::getProgram() const { return program; }
 int Shader::getTextureCount() const { return textureCount; }
 GLuint Shader::getShaderID(ShaderType shaderType) const

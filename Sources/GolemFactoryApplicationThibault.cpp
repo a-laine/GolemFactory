@@ -22,7 +22,7 @@ void initGLEW(int verbose = 1);
 void initializeGrid();
 
 // global variables
-GLuint gridVAO;
+GLuint gridVAO,gridVBO;
 float* vertexBufferGrid;
 uint16_t* indexBufferGrid;
 
@@ -35,19 +35,21 @@ int main()
 
 	// Init Event handler
 	EventHandler::getInstance()->addWindow(window);
-	EventHandler::getInstance()->reload("C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/", "RPG Key mapping");
+	//EventHandler::getInstance()->reload("C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/", "RPG Key mapping");
+	EventHandler::getInstance()->reload("C:/Users/Thibault/Documents/Github/GolemFactory/Resources/", "RPG Key mapping");
 	EventHandler::getInstance()->setCursorMode(false);
 	
-	// Init Resources manager and load default shader
-	ResourceManager::getInstance()->setRepository("C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/");
+	// Init Resources manager and load some default shader
+	//ResourceManager::getInstance()->setRepository("C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/");
+	ResourceManager::getInstance()->setRepository("C:/Users/Thibault/Documents/Github/GolemFactory/Resources/");
 	Shader* gridShader = ResourceManager::getInstance()->getShader("wiredGrid");
-	if (!gridShader) { std::cout << "loading default shader fail" << std::endl;  return -1;}
+	if (!gridShader) { std::cout << "loading grid shader fail" << std::endl;  return -1;}
+	Shader* defaultShader = ResourceManager::getInstance()->getShader("default");
+	if (!defaultShader) { std::cout << "loading default shader fail" << std::endl;  return -1; }
 	
+	//	model view and projection matrix
 	glm::mat4 projection, view, model;
-	GLuint projectionLoc = glGetUniformLocation(gridShader->getProgram(), "p");
-	GLuint viewLoc = glGetUniformLocation(gridShader->getProgram(), "v");
-	GLuint modelLoc = glGetUniformLocation(gridShader->getProgram(), "m");
-	model = glm::mat4(1.0);
+	model = glm::translate(glm::mat4(1.0),glm::vec3(0,0,1));
 
 	// loading cube
 	Mesh* testCube = ResourceManager::getInstance()->getMesh("cube2.obj");
@@ -67,6 +69,7 @@ int main()
 	{
 		// begin loop
 		startTime = glfwGetTime();
+		glEnable(GL_DEPTH_TEST);
 
 		// bind matrix
 		view = camera.getViewMatrix();
@@ -74,18 +77,15 @@ int main()
 		glfwGetWindowSize(window,&width,&height);
 		projection = glm::perspective(45.f,(float)width/height,0.1f,100.f);
 		gridShader->enable();
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, &model[0][0]);
-		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, &view[0][0]);
-		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, &projection[0][0]);
+		gridShader->loadUniformMatrix(&glm::mat4(1.0)[0][0], &view[0][0], &projection[0][0]);
 
-		//draw grid
+		//	draw grid
 		glBindVertexArray(gridVAO);
-		glEnableVertexAttribArray(0);
-		glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, 0, NULL );
 		glDrawElements( GL_TRIANGLES, 6*GRID_SIZE*GRID_SIZE, GL_UNSIGNED_SHORT, NULL );
-		glDisableVertexAttribArray(0);
-		glBindVertexArray(0);
 
+		//	draw test cube
+		defaultShader->enable();
+		defaultShader->loadUniformMatrix(&model[0][0], &view[0][0], &projection[0][0]);
 		testCube->draw();
 
 		//  handle events
@@ -114,12 +114,13 @@ int main()
 		elapseTime = 1000.0*(glfwGetTime() - startTime);
 	}
 
+	//	end
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	return 0;
 }
 
-// functions implementation
+//	functions implementation
 static void errorCallback(int error, const char* description) { std::cerr << "GLFW ERROR : " << description << std::endl; }
 GLFWwindow* initGLFW()
 {
@@ -165,7 +166,7 @@ void initGLEW(int verbose)
 
 void initializeGrid()
 {
-	// generate grid vertex buffer
+	//	generate grid vertex buffer
 	vertexBufferGrid = new float[3 * (GRID_SIZE + 1)*(GRID_SIZE + 1)];
 	for (int i = 0; i < GRID_SIZE + 1; i++)
 		for (int j = 0; j < GRID_SIZE + 1; j++)
@@ -188,10 +189,7 @@ void initializeGrid()
 			indexBufferGrid[6 * (i*GRID_SIZE + j) + 5] = i*(GRID_SIZE + 1) + j + 1;
 		}
 
-	// initialize VAO
-	glGenVertexArrays(1, &gridVAO);
-	glBindVertexArray(gridVAO);
-
+	//	initialize VBO
 	GLuint vertexbuffer;
 	glGenBuffers(1, &vertexbuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
@@ -201,5 +199,16 @@ void initializeGrid()
 	glGenBuffers(1, &arraybuffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, arraybuffer);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * GRID_SIZE*GRID_SIZE * sizeof(unsigned short), indexBufferGrid, GL_STATIC_DRAW);
+	
+	//	initialize VAO
+	glGenVertexArrays(1, &gridVAO);
+	glBindVertexArray(gridVAO);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray(0);
+	
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, arraybuffer);
+
 	glBindVertexArray(0);
 }
