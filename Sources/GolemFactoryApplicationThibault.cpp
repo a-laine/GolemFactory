@@ -13,6 +13,7 @@
 #include "Events/EventHandler.h"
 #include "Utiles/Camera.h"
 #include "Resources/ResourceManager.h"
+#include "Instances/InstanceManager.h"
 
 #define GRID_SIZE 100
 #define GRID_ELEMENT_SIZE 3.0f
@@ -29,25 +30,8 @@ float* vertexBufferGrid;
 uint16_t* indexBufferGrid;
 
 
-class Instance {
-	public:
-		Instance(std::string meshName)
-		{
-			mesh = ResourceManager::getInstance()->getMesh(meshName);
-		}
-		~Instance()
-		{
-			ResourceManager::getInstance()->release(mesh);
-		}
-
-		glm::mat4 modelMatrix;
-		Mesh* mesh;
-};
-
-std::vector<Instance*> rockList;
-std::vector<Instance*> pineTreeList;
-
-
+std::vector<InstanceDrawable*> rockList;
+std::vector<InstanceDrawable*> pineTreeList;
 
 
 // program
@@ -106,17 +90,12 @@ int main()
 
 		//	draw test cube
 		defaultShader->enable();
+		defaultShader->loadUniformMatrix(&glm::mat4(1.0)[0][0], &view[0][0], &projection[0][0]);
 
 		for (int i = 0; i < rockList.size(); i++)
-		{
-			defaultShader->loadUniformMatrix(&rockList[i]->modelMatrix[0][0], &view[0][0], &projection[0][0]);
-			rockList[i]->mesh->draw();
-		}
+			rockList[i]->draw(defaultShader);
 		for (int i = 0; i < pineTreeList.size(); i++)
-		{
-			defaultShader->loadUniformMatrix(&pineTreeList[i]->modelMatrix[0][0], &view[0][0], &projection[0][0]);
-			pineTreeList[i]->mesh->draw();
-		}
+			pineTreeList[i]->draw(defaultShader);
 
 		//  handle events
 		EventHandler::getInstance()->handleEvent();
@@ -249,27 +228,31 @@ void initializeForestScene()
 		for (int j = 0; j < GRID_SIZE; j++)
 		{
 			int r = rand() % 100;
-			glm::mat4 model = glm::translate(glm::mat4(1.0),
-											 glm::vec3( GRID_ELEMENT_SIZE*i - (GRID_SIZE * GRID_ELEMENT_SIZE) / 2 + ((rand() % 10) / 5.f - 1.f),
-														GRID_ELEMENT_SIZE*j - (GRID_SIZE * GRID_ELEMENT_SIZE) / 2 + ((rand() % 10) / 5.f - 1.f),
-														0));
+			glm::vec3 p(GRID_ELEMENT_SIZE*i - (GRID_SIZE * GRID_ELEMENT_SIZE) / 2 + ((rand() % 10) / 5.f - 1.f),
+						GRID_ELEMENT_SIZE*j - (GRID_SIZE * GRID_ELEMENT_SIZE) / 2 + ((rand() % 10) / 5.f - 1.f),
+						0);
 			float s = (0.5f + (rand()%100)/100.f);
-			model = glm::scale(model, glm::vec3(s, s, s));
-			model = glm::rotate(model, glm::radians(90.f), glm::vec3(1, 0, 0));
 
 			if (r < 5)
 			{
-				Instance* ins = new Instance("Rock1.obj");
-				rockList.push_back(ins);
-				ins->modelMatrix = model;
+				InstanceDrawable* ins = InstanceManager::getInstance()->getInstanceDrawable("Rock1.obj");
+				if (ins)
+				{
+					rockList.push_back(ins);
+					ins->setPosition(p);
+				}
 			}
-			else if (r < 80)
+			else if (r < 60)
 			{
-				Instance* ins = new Instance("PineTree.obj");
-				pineTreeList.push_back(ins);
-				ins->modelMatrix = model;
+				InstanceDrawable* ins = InstanceManager::getInstance()->getInstanceDrawable("PineTree.obj");
+				if(ins)
+				{
+					pineTreeList.push_back(ins);
+					ins->setPosition(p);
+				}
 			}
 		}
 	std::cout << "Tree count : " << pineTreeList.size() << std::endl;
 	std::cout << "Rock count : " << rockList.size() << std::endl;
+	std::cout << "Instance count : " << InstanceManager::getInstance()->getNumberOfInstances() << std::endl;
 }
