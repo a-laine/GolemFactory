@@ -7,10 +7,7 @@ Mesh::Mesh(std::string path,std::string meshName) : ResourceVirtual(path,meshNam
 	int i = MeshLoader::loadMesh(file, vertices, normales, color, faces);
 	if (i) return;
 	configuration |= 0x01;
-
-	//std::cout << meshName << " sucsessfuly loaded : \n";
-	//std::cout << "     vertices : " << vertices.size() << std::endl;
-	//std::cout << "     faces : " << faces.size() << std::endl;
+	computeBoundingBoxDimension();
 
 	// initialize VBO
 	glGenBuffers(1, &vertexbuffer);
@@ -72,4 +69,25 @@ bool Mesh::isValid() const { return configuration&0x01; }
 //  Set/get functions
 unsigned int Mesh::getNumberVertices() const{return vertices.size();}
 unsigned int Mesh::getNumberFaces() const{return faces.size();}
+//
+
+//	Protected functions
+void Mesh::computeBoundingBoxDimension()
+{
+	sizeX = glm::vec2(0, 0);
+	sizeY = glm::vec2(0, 0);
+	sizeZ = glm::vec2(0, 0);
+
+	for (int i = 0; i < vertices.size(); i++)
+	{
+		sizeX.x = std::min(sizeX.x, vertices[i].x);
+		sizeX.y = std::max(sizeX.y, vertices[i].x);
+
+		sizeY.x = std::min(sizeY.x, vertices[i].y);
+		sizeY.y = std::max(sizeY.y, vertices[i].y);
+
+		sizeZ.x = std::min(sizeZ.x, vertices[i].z);
+		sizeZ.y = std::max(sizeZ.y, vertices[i].z);
+	}
+}
 //

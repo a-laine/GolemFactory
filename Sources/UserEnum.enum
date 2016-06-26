@@ -4,7 +4,7 @@ BACKWARD,
 LEFT,
 RIGHT,
 
-//  playable character event,
+//  playable character event, (be careful ZOOM event is not working)
 ACTION,
 USE1,
 USE2,

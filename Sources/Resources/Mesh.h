@@ -32,5 +32,12 @@ class Mesh : public ResourceVirtual
 		std::vector<glm::vec3> normales;
 		std::vector<glm::vec3> color;
         std::vector<unsigned int> faces;
+
+		glm::vec2 sizeX, sizeY, sizeZ;
         //
+
+	protected:
+		//	Protected functions
+		void computeBoundingBoxDimension();
+		//
 };

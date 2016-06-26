@@ -17,11 +17,18 @@ void InstanceDrawable::draw(Shader* shaderToUse)
 {
 	if (!shaderToUse || !mesh) return;
 
-	glm::mat4 model = glm::translate(glm::mat4(1.0),position);
+	glm::mat4 model(1.0);
+	model = glm::translate(model,position);
 	model = glm::scale(model, size);
+	model = model * rotationMatrix;
 	model = glm::rotate(model, glm::radians(90.f), glm::vec3(1, 0, 0));
 
 	shaderToUse->loadUniformMatrix('m',&model[0][0]);
 	mesh->draw();
+}
+
+void InstanceDrawable::setOrientation(glm::mat4 m)
+{
+	rotationMatrix = m;
 }
 //

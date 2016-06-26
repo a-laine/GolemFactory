@@ -2,6 +2,7 @@
 //
 
 #include <iostream>
+#include <list>
 #include <time.h>
 
 #include <GL/glew.h>
@@ -30,8 +31,7 @@ float* vertexBufferGrid;
 uint16_t* indexBufferGrid;
 
 
-std::vector<InstanceDrawable*> rockList;
-std::vector<InstanceDrawable*> pineTreeList;
+std::list<std::pair<int,InstanceDrawable*> > instanceList;
 
 
 // program
@@ -74,13 +74,18 @@ int main()
 	{
 		// begin loop
 		startTime = glfwGetTime();
+		int width, height;
+		glfwGetWindowSize(window,&width,&height);
+		float angle = camera.getFrustrumAngleVertical() + EventHandler::getInstance()->getScrollingRelative().y;
+		if (angle > 70.f) angle = 70.f;
+		else if (angle < 3) angle = 3.f;
+		camera.setFrustrumAngleVertical(angle);
+		camera.setFrustrumAngleHorizontalFromScreenRatio((float)width / height);
 		glEnable(GL_DEPTH_TEST);
 
 		// bind matrix
 		view = camera.getViewMatrix();
-		int width, height;
-		glfwGetWindowSize(window,&width,&height);
-		projection = glm::perspective(45.f,(float)width/height,0.1f,1000.f);
+		projection = glm::perspective(glm::radians(angle),(float)width/height,0.1f,1000.f);
 		gridShader->enable();
 		gridShader->loadUniformMatrix(&glm::mat4(1.0)[0][0], &view[0][0], &projection[0][0]);
 
@@ -88,14 +93,15 @@ int main()
 		glBindVertexArray(gridVAO);
 		glDrawElements( GL_TRIANGLES, 6*GRID_SIZE*GRID_SIZE, GL_UNSIGNED_SHORT, NULL );
 
-		//	draw test cube
+		//	draw instance list
 		defaultShader->enable();
 		defaultShader->loadUniformMatrix(&glm::mat4(1.0)[0][0], &view[0][0], &projection[0][0]);
 
-		for (int i = 0; i < rockList.size(); i++)
-			rockList[i]->draw(defaultShader);
-		for (int i = 0; i < pineTreeList.size(); i++)
-			pineTreeList[i]->draw(defaultShader);
+		for (auto it = instanceList.begin(); it != instanceList.end(); it++)
+			it->first = (int) glm::length(it->second->getPosition() - camera.getPosition());
+		instanceList.sort();
+		for (auto it = instanceList.begin(); it != instanceList.end(); it++)
+			if(it->first>-2 && it->first<300) it->second->draw(defaultShader);
 
 		//  handle events
 		EventHandler::getInstance()->handleEvent();
@@ -232,27 +238,25 @@ void initializeForestScene()
 						GRID_ELEMENT_SIZE*j - (GRID_SIZE * GRID_ELEMENT_SIZE) / 2 + ((rand() % 10) / 5.f - 1.f),
 						0);
 			float s = (0.5f + (rand()%100)/100.f);
+			glm::mat4 a = glm::rotate(glm::mat4(1.0), glm::radians((rand() % 3600) / 10.f), glm::vec3(0, 0, 1));
+			InstanceDrawable* ins = nullptr;
 
-			if (r < 5)
+			if (r < 20)
 			{
-				InstanceDrawable* ins = InstanceManager::getInstance()->getInstanceDrawable("Rock1.obj");
-				if (ins)
-				{
-					rockList.push_back(ins);
-					ins->setPosition(p);
-				}
+				s *= 0.3f;
+				ins = InstanceManager::getInstance()->getInstanceDrawable("Rock1.obj");
 			}
-			else if (r < 60)
+			else if (r < 80)
+				ins = InstanceManager::getInstance()->getInstanceDrawable("PineTree.obj");
+			
+			if (ins)
 			{
-				InstanceDrawable* ins = InstanceManager::getInstance()->getInstanceDrawable("PineTree.obj");
-				if(ins)
-				{
-					pineTreeList.push_back(ins);
-					ins->setPosition(p);
-				}
+				ins->setPosition(p);
+				ins->setSize(glm::vec3(s,s,s));
+				ins->setOrientation(a);
+				std::pair<int, InstanceDrawable*> elem(0, ins);
+				instanceList.insert(instanceList.end(),elem);
 			}
 		}
-	std::cout << "Tree count : " << pineTreeList.size() << std::endl;
-	std::cout << "Rock count : " << rockList.size() << std::endl;
 	std::cout << "Instance count : " << InstanceManager::getInstance()->getNumberOfInstances() << std::endl;
 }

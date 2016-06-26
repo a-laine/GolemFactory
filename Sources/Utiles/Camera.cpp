@@ -14,16 +14,13 @@ Camera::Camera(float screenRatio)
     sensivity = 0.2f;    speedMag = 0.003f; // = 3m/ms
     radius = 3;         radiusMin = 1;
     radiusMax = 10;
-	frustrumAngleVertical = 30.0f;
+	frustrumAngleVertical = 45.0f;
 	frustrumAngleHorizontal = screenRatio*frustrumAngleVertical;
 	
     anglesFromVectors();
     vectorsFromAngles();
 }
-Camera::~Camera()
-{
-    
-}
+Camera::~Camera() {}
 //
 
 //  Public functions
@@ -226,6 +223,12 @@ void Camera::setFrustrumAngleHorizontal(float angle)
     frustrumAngleHorizontal = angle;
     mutex.unlock();
 }
+void Camera::setFrustrumAngleHorizontalFromScreenRatio(float screenratio)
+{
+	mutex.lock();
+	frustrumAngleHorizontal = screenratio*frustrumAngleVertical;
+	mutex.unlock();
+}
 void Camera::setSensitivity(float sens)
 {
     mutex.lock();
@@ -291,25 +294,25 @@ float Camera::getSpeed()
     mutex.unlock();
     return s;
 }
-double Camera::getRadiusMin()
+float Camera::getRadiusMin()
 {
-    double r;
+	float r;
     mutex.lock();
     r = radiusMin;
     mutex.unlock();
     return r;
 }
-double Camera::getRadiusMax()
+float Camera::getRadiusMax()
 {
-    double r;
+	float r;
     mutex.lock();
     r = radiusMax;
     mutex.unlock();
     return r;
 }
-double Camera::getRadius()
+float Camera::getRadius()
 {
-    double r;
+	float r;
     mutex.lock();
     r = radius;
     mutex.unlock();

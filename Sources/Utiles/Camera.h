@@ -56,6 +56,7 @@ class Camera
         void setTarget(glm::vec3 target);
         void setFrustrumAngleVertical(float angle);
         void setFrustrumAngleHorizontal(float angle);
+		void setFrustrumAngleHorizontalFromScreenRatio(float screenratio);
         void setSensitivity(float sens);
 
         CameraMode getMode();
@@ -65,9 +66,9 @@ class Camera
 		glm::vec3 getVertical();
 		glm::vec3 getPosition();
         float getSpeed();
-        double getRadiusMin();
-        double getRadiusMax();
-        double getRadius();
+		float getRadiusMin();
+		float getRadiusMax();
+		float getRadius();
         float getFrustrumAngleVertical();
         float getFrustrumAngleHorizontal();
         float getSensitivity();

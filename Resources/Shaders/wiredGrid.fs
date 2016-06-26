@@ -18,8 +18,8 @@ void main()
 {
 	if(barycentricCoord.x < 0.1)
 		fragColor = vec4(0.937,0.894,0.690,1.0);
-	else
-		fragColor = 0.3*vec4(0.937,0.894,0.690,1.0);
+	else discard;
+		//fragColor = 0.3*vec4(0.937,0.894,0.690,1.0);
 	//fragColor = fragmentColor * dot(fragmentNormal,lightDirection_cameraSpace) * texture2D(tex,textureCoord);
 }
 

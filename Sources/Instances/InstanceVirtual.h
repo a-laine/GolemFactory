@@ -22,7 +22,7 @@ class InstanceVirtual
 
 		//	Set/Get functions
 		void setPosition(glm::vec3 p);
-		void setSize(glm::vec3 p);
+		void setSize(glm::vec3 s);
 
 		glm::vec3 getPosition();
 		glm::vec3 getSize();
