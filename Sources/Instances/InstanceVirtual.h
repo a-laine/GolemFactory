@@ -31,8 +31,9 @@ class InstanceVirtual
 	protected:
 		// Attributes
 		uint32_t id;
-		glm::vec3 position, size;
-		std::atomic_uint count; //!< The number of clients pointing the instance.
+		std::atomic_uint count;		//!< The number of clients pointing the instance.
+		
+		glm::vec3 position, size;	//!< 
 		//
 };
 

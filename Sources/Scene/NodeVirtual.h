@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <algorithm>
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 
@@ -15,9 +16,9 @@ class NodeVirtual
 		//  Miscellaneous
 		enum NodeDivisionFlags
 		{
-			X = 0x0000FF,	dX = 0,
+			X = 0xFF0000,	dX = 16,
 			Y = 0x00FF00,	dY = 8,
-			Z = 0xFF0000,	dZ = 16
+			Z = 0x0000FF,	dZ = 0
 		};
 		//
 
@@ -26,12 +27,20 @@ class NodeVirtual
 		virtual ~NodeVirtual();
 		//
 
+		//	Debug
+		void print(int lvl);
+		//
+
 		//	Public functions
 		int getNbFils(int level = -1);
 		bool isLastBranch();
 
-		virtual void addObject(InstanceVirtual* obj);
+		virtual bool addObject(InstanceVirtual* obj);
 		virtual bool removeObject(InstanceVirtual* obj);
+		virtual void getInstanceList(std::vector<std::pair<int, InstanceVirtual*> >& list);
+
+		virtual void split();
+		virtual void merge();
 		//
 
 		//Set/Get functions
@@ -57,6 +66,11 @@ class NodeVirtual
 
 		std::vector<InstanceVirtual*> instanceList;
 		unsigned int division;
+		//
+
+		//
+		static glm::vec3 camPosition, camDirection, camVertical, camLeft;
+		static float camVerticalAngle, camHorizontalAngle;
 		//
 };
 

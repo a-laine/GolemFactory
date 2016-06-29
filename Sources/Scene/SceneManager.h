@@ -11,17 +11,26 @@
 
 
 
-class SceneManager : public Singleton<ResourceManager>
+class SceneManager : public Singleton<SceneManager>
 {
-	friend class Singleton<ResourceManager>;
+	friend class Singleton<SceneManager>;
 
 	public:
 		//  Public functions
+		void addStaticObject(InstanceVirtual* obj);
+		bool removeObject(InstanceVirtual* obj);
+		//
 
+		//	Debug
+		void print();
 		//
 
 		//  Set/get functions
+		void setCameraAttributes(glm::vec3 position, glm::vec3 direction, glm::vec3 vertical, glm::vec3 left, float verticalAngle, float horizontalAngle);
+		void setViewDistance(float distance,int depth);
+
 		void getInstanceList(std::vector<std::pair<int, InstanceVirtual*> >& list);
+		std::vector<float> getMaxViewDistanceStack();
 		//
 
 	private:
@@ -32,5 +41,6 @@ class SceneManager : public Singleton<ResourceManager>
 
 		//  Attributes
 		std::vector<NodeVirtual*> world;
+		std::vector<float> viewMaxDistance;
 		//
 };

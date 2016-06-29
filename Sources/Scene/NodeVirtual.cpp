@@ -1,8 +1,23 @@
 #include "NodeVirtual.h"
 
+//	static attributes initialization
+glm::vec3 NodeVirtual::camPosition = glm::vec3(0, 0, 0);
+glm::vec3 NodeVirtual::camDirection = glm::vec3(1, 0, 0);
+glm::vec3 NodeVirtual::camVertical = glm::vec3(0, 0, 1);
+glm::vec3 NodeVirtual::camLeft = glm::vec3(0, 1, 0);
+float NodeVirtual::camVerticalAngle = 45;
+float NodeVirtual::camHorizontalAngle = 45;
+//
+
+
 //	Default
-NodeVirtual::NodeVirtual(NodeVirtual* p, unsigned int d) : parent(p),division(d)
+NodeVirtual::NodeVirtual(NodeVirtual* p, unsigned int d) : parent(p)
 {
+	if (!(d&X)) d |= 0x01 << dX;
+	if (!(d&Y)) d |= 0x01 << dY;
+	if (!(d&Z)) d |= 0x01 << dZ;
+	division = d;
+
 	position = glm::vec3(0, 0, 0);
 	size = glm::vec3(1, 1, 1);
 }
@@ -12,9 +27,32 @@ NodeVirtual::~NodeVirtual()
 		InstanceManager::getInstance()->release(instanceList[i]);
 	instanceList.clear();
 
+	merge();
+}
+//
+
+//
+void NodeVirtual::print(int lvl)
+{
+	//	check if node intersect frustrum
+	glm::vec3 p = position - camPosition;
+	float forwardFloat = glm::dot(p, camDirection) + std::abs(size.x*camDirection.x)/2 + abs(size.y*camDirection.y)/2 + abs(size.z*camDirection.z)/2;
+	if (forwardFloat < 0) return;
+	
+	float maxAbsoluteDimension = 0;// (std::max)(size.x, (std::max)(size.y, size.z)) / 2;
+	float maxTangentDimension = std::abs(size.x*camLeft.x)/2 + abs(size.y*camLeft.y)/2 + abs(size.z*camLeft.z)/2;
+	if (glm::dot(p, camLeft) - maxTangentDimension > std::abs(forwardFloat)*std::tan(glm::radians(camHorizontalAngle)) + maxAbsoluteDimension) return;
+
+	maxTangentDimension = std::abs(size.x*camVertical.x)/2 + abs(size.y*camVertical.y)/2 + abs(size.z*camVertical.z)/2;
+	if (glm::dot(p, camVertical) - maxTangentDimension > std::abs(forwardFloat)*std::tan(glm::radians(camVerticalAngle)) + maxAbsoluteDimension) return;
+
+	//	dummy debug
+	for (int i = 0; i < lvl; i++)
+		std::cout << "  ";
+	std::cout << (unsigned int) this << std::endl;
+
 	for (unsigned int i = 0; i < children.size(); i++)
-		delete children[i];
-	children.clear();
+		children[i]->print(lvl + 1);
 }
 //
 
@@ -26,9 +64,21 @@ bool NodeVirtual::isLastBranch()
 	return false;
 }
 
-void NodeVirtual::addObject(InstanceVirtual* obj)
+bool NodeVirtual::addObject(InstanceVirtual* obj)
 {
-	if (obj) instanceList.push_back(obj);
+	if (!obj) return false;
+	glm::vec3 s = obj->getSize();
+	if (s.x < 0.1*size.x && s.y < 0.1*size.y && s.z < 0.1*size.z)
+	{
+		int key = getChildrenKey(obj->getPosition());
+		if (key < 0) return false;
+		else return children[key]->addObject(obj);
+	}
+	else
+	{
+		instanceList.push_back(obj);
+		return true;
+	}
 }
 bool NodeVirtual::removeObject(InstanceVirtual* obj)
 {
@@ -39,6 +89,53 @@ bool NodeVirtual::removeObject(InstanceVirtual* obj)
 		else return false;
 	}
 	return true;
+}
+void NodeVirtual::getInstanceList(std::vector<std::pair<int, InstanceVirtual*> >& list)
+{
+	//	check if not in frustrum
+	glm::vec3 p = camPosition - position;
+	if (glm::dot(p, camDirection) < 0) return;
+	if (std::abs(glm::dot(p, camLeft)) < std::tan(glm::radians(camHorizontalAngle))) return;
+	if (std::abs(glm::dot(p, camVertical)) < std::tan(glm::radians(camVerticalAngle))) return;
+	
+	//	give personnal instance and continue with recursive call on children
+	for (unsigned int i = 0; i < instanceList.size(); i++)
+		list.push_back(std::pair<int, InstanceVirtual*>(glm::length(p),instanceList[i]));
+
+	for (unsigned int i = 0; i < children.size(); i++)
+		children[i]->getInstanceList(list);
+}
+
+
+void NodeVirtual::split()
+{
+	if (!children.empty())return;
+	int xChild = (division&X) >> dX;
+	int yChild = (division&Y) >> dY;
+	int zChild = (division&Z) >> dZ;
+
+	for (int i = 0; i < xChild; i++)
+	{
+		float xpos = position.x - size.x / 2 + size.x / xChild / 2 + i*size.x / xChild;
+		for (int j = 0; j < yChild; j++)
+		{
+			float ypos = position.y - size.y / 2 + size.y / yChild / 2 + j*size.y / yChild;
+			for (int k = 0; k < zChild; k++)
+			{
+				float zpos = position.z - size.z / 2 + size.z / zChild / 2 + k*size.z / zChild;
+				NodeVirtual* n = new NodeVirtual(this,division);
+					n->setPosition(glm::vec3(xpos,ypos,zpos));
+					n->setSize(glm::vec3(size.x / xChild, size.y / yChild, size.z / zChild));
+					children.push_back(n);
+			}
+		}
+	}
+}
+void NodeVirtual::merge()
+{
+	for (unsigned int i = 0; i < children.size(); i++)
+		delete children[i];
+	children.clear();
 }
 //
 
@@ -105,6 +202,6 @@ int NodeVirtual::getChildrenKey(glm::vec3 p) const
 	if (z >= zChild)
 		return -1;
 
-	return yChild*xChild*z + xChild*y + x;
+	return zChild*yChild*x + zChild*y + z;
 }
 //

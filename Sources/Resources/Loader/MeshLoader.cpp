@@ -12,7 +12,7 @@ int MeshLoader::loadMesh(std::string file,
 	if (!scene) { std::cerr << "ERROR : loading mesh : " << file << "\ncould not open file" << std::endl; return 1; }
 
 	unsigned int facesOffset = 0;	//	needed to pack multiple object in the same mesh
-	glm::vec3 meshColor = glm::vec3(1.0, 1.0, 1.0);
+	glm::vec3 meshColor = glm::vec3(1.0, 1.0, 1.0);// 0.1137f, 0.5137f, 0.1333f);
 	for (int i = 0; i < scene->mNumMeshes; i++)
 	{
 		aiMesh* mesh = scene->mMeshes[i];

@@ -15,6 +15,7 @@
 #include "Utiles/Camera.h"
 #include "Resources/ResourceManager.h"
 #include "Instances/InstanceManager.h"
+#include "Scene\SceneManager.h"
 
 #define GRID_SIZE 100
 #define GRID_ELEMENT_SIZE 3.0f
@@ -30,9 +31,7 @@ GLuint gridVAO,gridVBO;
 float* vertexBufferGrid;
 uint16_t* indexBufferGrid;
 
-
 std::list<std::pair<int,InstanceDrawable*> > instanceList;
-
 
 // program
 int main()
@@ -43,13 +42,13 @@ int main()
 
 	// Init Event handler
 	EventHandler::getInstance()->addWindow(window);
-	//EventHandler::getInstance()->reload("C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/", "RPG Key mapping");
-	EventHandler::getInstance()->reload("C:/Users/Thibault/Documents/Github/GolemFactory/Resources/", "RPG Key mapping");
+	EventHandler::getInstance()->reload("C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/", "RPG Key mapping");
+	//EventHandler::getInstance()->reload("C:/Users/Thibault/Documents/Github/GolemFactory/Resources/", "RPG Key mapping");
 	EventHandler::getInstance()->setCursorMode(false);
 	
 	// Init Resources manager and load some default shader
-	//ResourceManager::getInstance()->setRepository("C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/");
-	ResourceManager::getInstance()->setRepository("C:/Users/Thibault/Documents/Github/GolemFactory/Resources/");
+	ResourceManager::getInstance()->setRepository("C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/");
+	//ResourceManager::getInstance()->setRepository("C:/Users/Thibault/Documents/Github/GolemFactory/Resources/");
 	Shader* gridShader = ResourceManager::getInstance()->getShader("wiredGrid");
 	if (!gridShader) { std::cout << "loading grid shader fail" << std::endl;  return -1;}
 	Shader* defaultShader = ResourceManager::getInstance()->getShader("default");
@@ -64,7 +63,14 @@ int main()
 
 	// init triangle
 	initializeGrid();
-	initializeForestScene();
+	//initializeForestScene();
+	InstanceDrawable* Dummy = InstanceManager::getInstance()->getInstanceDrawable("cube2.obj");
+		Dummy->setPosition(glm::vec3(0,0,0));
+		Dummy->setSize(glm::vec3(50,50,5));
+		std::pair<int, InstanceDrawable*> elem(0, Dummy);
+		instanceList.insert(instanceList.end(), elem);
+
+	SceneManager::getInstance()->print();
 
 	// init loop time tracking
 	double startTime, elapseTime = 16;
@@ -81,6 +87,8 @@ int main()
 		else if (angle < 3) angle = 3.f;
 		camera.setFrustrumAngleVertical(angle);
 		camera.setFrustrumAngleHorizontalFromScreenRatio((float)width / height);
+		SceneManager::getInstance()->setCameraAttributes(	camera.getPosition(), camera.getForward(), camera.getVertical(), camera.getLeft(),
+															camera.getFrustrumAngleVertical(), camera.getFrustrumAngleVertical());
 		glEnable(GL_DEPTH_TEST);
 
 		// bind matrix
@@ -94,6 +102,9 @@ int main()
 		glDrawElements( GL_TRIANGLES, 6*GRID_SIZE*GRID_SIZE, GL_UNSIGNED_SHORT, NULL );
 
 		//	draw instance list
+
+		SceneManager::getInstance()->print();
+
 		defaultShader->enable();
 		defaultShader->loadUniformMatrix(&glm::mat4(1.0)[0][0], &view[0][0], &projection[0][0]);
 
@@ -130,6 +141,7 @@ int main()
 	}
 
 	//	end
+	std::cout << "ending game" << std::endl;
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	return 0;
@@ -244,10 +256,10 @@ void initializeForestScene()
 			if (r < 20)
 			{
 				s *= 0.3f;
-				ins = InstanceManager::getInstance()->getInstanceDrawable("Rock1.obj");
+				ins = InstanceManager::getInstance()->getInstanceDrawable("rock1.obj");
 			}
 			else if (r < 80)
-				ins = InstanceManager::getInstance()->getInstanceDrawable("PineTree.obj");
+				ins = InstanceManager::getInstance()->getInstanceDrawable("firTree1.obj");
 			
 			if (ins)
 			{
