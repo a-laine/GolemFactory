@@ -31,7 +31,7 @@ GLuint gridVAO,gridVBO;
 float* vertexBufferGrid;
 uint16_t* indexBufferGrid;
 
-std::list<std::pair<int,InstanceDrawable*> > instanceList;
+std::vector<std::pair<int,InstanceVirtual*> > instanceList;
 
 // program
 int main()
@@ -61,17 +61,12 @@ int main()
 	// init camera
 	Camera camera;
 
-	// init triangle
+	// init scene
+	SceneManager::getInstance()->setWorldPosition(glm::vec3(0,0,25));
+	SceneManager::getInstance()->setWorldSize(glm::vec3(GRID_SIZE*GRID_ELEMENT_SIZE, GRID_SIZE*GRID_ELEMENT_SIZE, 50));
 	initializeGrid();
-	//initializeForestScene();
-	InstanceDrawable* Dummy = InstanceManager::getInstance()->getInstanceDrawable("cube2.obj");
-		Dummy->setPosition(glm::vec3(0,0,0));
-		Dummy->setSize(glm::vec3(50,50,5));
-		std::pair<int, InstanceDrawable*> elem(0, Dummy);
-		instanceList.insert(instanceList.end(), elem);
-
-	SceneManager::getInstance()->print();
-
+	initializeForestScene();
+	
 	// init loop time tracking
 	double startTime, elapseTime = 16;
 
@@ -87,8 +82,6 @@ int main()
 		else if (angle < 3) angle = 3.f;
 		camera.setFrustrumAngleVertical(angle);
 		camera.setFrustrumAngleHorizontalFromScreenRatio((float)width / height);
-		SceneManager::getInstance()->setCameraAttributes(	camera.getPosition(), camera.getForward(), camera.getVertical(), camera.getLeft(),
-															camera.getFrustrumAngleVertical(), camera.getFrustrumAngleVertical());
 		glEnable(GL_DEPTH_TEST);
 
 		// bind matrix
@@ -101,18 +94,21 @@ int main()
 		glBindVertexArray(gridVAO);
 		glDrawElements( GL_TRIANGLES, 6*GRID_SIZE*GRID_SIZE, GL_UNSIGNED_SHORT, NULL );
 
+		//	get instance list
+		SceneManager::getInstance()->setCameraAttributes(camera.getPosition(), camera.getForward(), camera.getVertical(), camera.getLeft(),
+			camera.getFrustrumAngleVertical(), camera.getFrustrumAngleVertical());
+		instanceList.clear();
+		SceneManager::getInstance()->getInstanceList(instanceList);
+		std::sort(instanceList.begin(), instanceList.end());
+
 		//	draw instance list
-
-		SceneManager::getInstance()->print();
-
 		defaultShader->enable();
 		defaultShader->loadUniformMatrix(&glm::mat4(1.0)[0][0], &view[0][0], &projection[0][0]);
-
 		for (auto it = instanceList.begin(); it != instanceList.end(); it++)
-			it->first = (int) glm::length(it->second->getPosition() - camera.getPosition());
-		instanceList.sort();
-		for (auto it = instanceList.begin(); it != instanceList.end(); it++)
-			if(it->first>-2 && it->first<300) it->second->draw(defaultShader);
+		{
+			if (InstanceDrawable* d = dynamic_cast<InstanceDrawable*>(it->second))
+				d->draw(defaultShader);
+		}
 
 		//  handle events
 		EventHandler::getInstance()->handleEvent();
@@ -133,6 +129,9 @@ int main()
 			EventHandler::getInstance()->isActivated(FORWARD),	EventHandler::getInstance()->isActivated(BACKWARD),
 			EventHandler::getInstance()->isActivated(LEFT),		EventHandler::getInstance()->isActivated(RIGHT),
 			EventHandler::getInstance()->isActivated(RUN),		EventHandler::getInstance()->isActivated(SNEAKY));
+
+		//	Debug
+		std::cout << 1000.f*(glfwGetTime() - startTime) << std::endl;
 
 		// End loop
 		glfwSwapBuffers(window);
@@ -241,6 +240,7 @@ void initializeGrid()
 }
 void initializeForestScene()
 {
+	int fail = 0;
 	srand(time(NULL));
 	for (int i = 0; i < GRID_SIZE; i++)
 		for (int j = 0; j < GRID_SIZE; j++)
@@ -266,9 +266,11 @@ void initializeForestScene()
 				ins->setPosition(p);
 				ins->setSize(glm::vec3(s,s,s));
 				ins->setOrientation(a);
-				std::pair<int, InstanceDrawable*> elem(0, ins);
-				instanceList.insert(instanceList.end(),elem);
+
+				if(!SceneManager::getInstance()->addStaticObject(ins))
+					fail++;
 			}
 		}
 	std::cout << "Instance count : " << InstanceManager::getInstance()->getNumberOfInstances() << std::endl;
+	std::cout << "Insert fail : " << fail << std::endl;
 }

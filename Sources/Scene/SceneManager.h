@@ -17,7 +17,7 @@ class SceneManager : public Singleton<SceneManager>
 
 	public:
 		//  Public functions
-		void addStaticObject(InstanceVirtual* obj);
+		bool addStaticObject(InstanceVirtual* obj);
 		bool removeObject(InstanceVirtual* obj);
 		//
 
@@ -28,6 +28,8 @@ class SceneManager : public Singleton<SceneManager>
 		//  Set/get functions
 		void setCameraAttributes(glm::vec3 position, glm::vec3 direction, glm::vec3 vertical, glm::vec3 left, float verticalAngle, float horizontalAngle);
 		void setViewDistance(float distance,int depth);
+		void setWorldSize(glm::vec3 size);
+		void setWorldPosition(glm::vec3 position);
 
 		void getInstanceList(std::vector<std::pair<int, InstanceVirtual*> >& list);
 		std::vector<float> getMaxViewDistanceStack();

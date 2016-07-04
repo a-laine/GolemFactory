@@ -5,6 +5,9 @@
 InstanceDrawable::InstanceDrawable(std::string meshName) : InstanceVirtual()
 {
 	mesh = ResourceManager::getInstance()->getMesh(meshName);
+	bbsize.x = mesh->sizeX.y - mesh->sizeX.x;
+	bbsize.y = mesh->sizeY.y - mesh->sizeY.x;
+	bbsize.z = mesh->sizeZ.y - mesh->sizeZ.x;
 }
 InstanceDrawable::~InstanceDrawable()
 {

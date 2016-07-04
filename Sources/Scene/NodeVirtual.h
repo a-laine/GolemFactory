@@ -57,6 +57,7 @@ class NodeVirtual
 		//	Protected functions
 		uint8_t getLevel() const;
 		int getChildrenKey(glm::vec3 p) const;
+		int isInFrustrum() const;
 		//
 
 		//Attributes
@@ -66,6 +67,8 @@ class NodeVirtual
 
 		std::vector<InstanceVirtual*> instanceList;
 		unsigned int division;
+
+		InstanceDrawable* debuginstance;
 		//
 
 		//

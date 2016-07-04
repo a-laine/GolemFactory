@@ -26,6 +26,7 @@ class InstanceVirtual
 
 		glm::vec3 getPosition();
 		glm::vec3 getSize();
+		glm::vec3 getBBSize();
 		//
 		
 	protected:
@@ -33,7 +34,7 @@ class InstanceVirtual
 		uint32_t id;
 		std::atomic_uint count;		//!< The number of clients pointing the instance.
 		
-		glm::vec3 position, size;	//!< 
+		glm::vec3 position, size, bbsize;
 		//
 };
 
