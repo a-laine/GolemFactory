@@ -1,4 +1,5 @@
 #include <stdexcept>
+#include <cstring>
 
 #include "Texture.h"
 #include "Utiles/Parser/Reader.h"

@@ -2,7 +2,6 @@
 
 #include <GL/glew.h>
 #include <fstream>
-#include <windows.h>
 #include <glm/glm.hpp>
 
 #include "ResourceVirtual.h"

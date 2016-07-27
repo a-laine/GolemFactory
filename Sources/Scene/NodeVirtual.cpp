@@ -44,7 +44,7 @@ void NodeVirtual::print(int lvl)
 	//	dummy debug
 	for (int i = 0; i < lvl; i++)
 		std::cout << "  ";
-	std::cout << (unsigned int) this << ' ' << instanceList.size() << std::endl;
+	std::cout <<  this << ' ' << instanceList.size() << std::endl;
 
 	for (unsigned int i = 0; i < children.size(); i++)
 		children[i]->print(lvl + 1);

@@ -36,3 +36,9 @@ CMakeLists.txt
 CMakeCache.txt
 CMakeFiles/*
 *.cmake
+
+
+
+#others
+bin/
+

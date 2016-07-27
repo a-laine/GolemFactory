@@ -383,6 +383,6 @@ void Camera::anglesFromVectors()
 }
 void Camera::boundingRadius()
 {
-	radius = max(min(radius, radiusMax), radiusMin);
+	radius = std::max(std::min(radius, radiusMax), radiusMin);
 }
 //

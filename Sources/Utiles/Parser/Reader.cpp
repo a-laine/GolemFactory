@@ -334,7 +334,7 @@ void sconvert(Variant* var, std::string& value, int base=10, bool isFloat=false)
         }
         else
         {
-            *var = num;
+            *var = (int64_t) num;
         }
     }
 }
