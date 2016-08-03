@@ -42,13 +42,13 @@ int main()
 
 	// Init Event handler
 	EventHandler::getInstance()->addWindow(window);
-	EventHandler::getInstance()->reload("C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/", "RPG Key mapping");
-	//EventHandler::getInstance()->reload("C:/Users/Thibault/Documents/Github/GolemFactory/Resources/", "RPG Key mapping");
+	//EventHandler::getInstance()->reload("C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/", "RPG Key mapping");
+	EventHandler::getInstance()->reload("C:/Users/Thibault/Documents/Github/GolemFactory/Resources/", "RPG Key mapping");
 	EventHandler::getInstance()->setCursorMode(false);
 	
 	// Init Resources manager and load some default shader
-	ResourceManager::getInstance()->setRepository("C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/");
-	//ResourceManager::getInstance()->setRepository("C:/Users/Thibault/Documents/Github/GolemFactory/Resources/");
+	//ResourceManager::getInstance()->setRepository("C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/");
+	ResourceManager::getInstance()->setRepository("C:/Users/Thibault/Documents/Github/GolemFactory/Resources/");
 	Shader* gridShader = ResourceManager::getInstance()->getShader("wiredGrid");
 	if (!gridShader) { std::cout << "loading grid shader fail" << std::endl;  return -1;}
 	Shader* defaultShader = ResourceManager::getInstance()->getShader("default");
@@ -131,7 +131,7 @@ int main()
 			EventHandler::getInstance()->isActivated(RUN),		EventHandler::getInstance()->isActivated(SNEAKY));
 
 		//	Debug
-		std::cout << 1000.f*(glfwGetTime() - startTime) << std::endl;
+		//std::cout << 1000.f*(glfwGetTime() - startTime) << std::endl;
 
 		// End loop
 		glfwSwapBuffers(window);
@@ -259,7 +259,7 @@ void initializeForestScene()
 				ins = InstanceManager::getInstance()->getInstanceDrawable("rock1.obj");
 			}
 			else if (r < 80)
-				ins = InstanceManager::getInstance()->getInstanceDrawable("firTree1.obj");
+				ins = InstanceManager::getInstance()->getInstanceDrawable("firTree1.gfmesh");
 			
 			if (ins)
 			{
