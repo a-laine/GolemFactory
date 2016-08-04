@@ -15,9 +15,7 @@ int MeshLoader::loadMesh(std::string file,
 			return -1;
 		else if (loader.pack(&vertices,&normales,&color,nullptr,nullptr,&faces))
 			return -2;
-		//else return 0;
-
-		exit(0);
+		return 0;
 	}
 	else
 	{

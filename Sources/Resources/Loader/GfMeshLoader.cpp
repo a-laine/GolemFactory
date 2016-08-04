@@ -25,7 +25,7 @@ int GfMeshLoader::load(std::string file)
 		if (line.size() == 0) continue;				//	empty line
 		else if (line.find("#") == 0) continue;		//	comment line
 		std::stringstream lineStream(line);			//	pack stream in string
-		removeWhiteSpace(line);						// remove white space
+		removeWhiteSpaceAndComment(line);			// remove white space
 		
 		if (line.find("vn") != std::string::npos)		//	vertex normal
 		{
@@ -71,14 +71,22 @@ int GfMeshLoader::load(std::string file)
 			lineStream.ignore(2);
 			int validLine = 0;
 			std::vector<unsigned int> index;
+
 			for (int i = 0; i < 3; i++)
 			{
 				std::string vertexIndexList;
-				std::stringstream lineStream(line);
 				std::getline(lineStream, vertexIndexList, ' ');
+				std::stringstream lineStream2(vertexIndexList);
 
-				//	TODO :
-				//	ajouter la fin de la fonction de parssing
+				for (int j = 0; j < rankCount; j++)
+				{
+					vertexIndexList.clear();
+					std::getline(lineStream2, vertexIndexList, '/');
+					if (lineStream2.eof() && j!=4 && !validLine)
+						validLine = 1;
+					else if(attributesFlags&(1<<j))
+						index.push_back(atoi(vertexIndexList.c_str()));
+				}
 			}
 
 			//	analyse parsing result
@@ -86,17 +94,23 @@ int GfMeshLoader::load(std::string file)
 				faces.insert(faces.end(), index.begin(), index.end());
 			else
 			{
-				if (errorCode == 0)	//	first parsing error
-				{
+				if (errorCode == 0)	//	first parsing error : print error header
 					std::cerr << "ERROR : loading mesh : " << file << "\nparsing error at lines : " << std::endl;
+				std::cerr << "    line " << lineNumber << " : ";
+				switch (validLine)
+				{
+					case 1:  std::cerr << "wrong number of argument per vertex" << std::endl;	break;
+					default: std::cerr << "unknown error ! BSOD required !" << std::endl;		break;
 				}
-				std::cerr << "    line " << lineNumber << std::endl;
 				errorCode = -2;
 			}
 		}
+		else std::cerr << "useless line ? : " << lineNumber << std::endl;
 	}
+	if (errorCode)	//	parsing finish : print error log signature
+		std::cerr << "refer to the documentation for help" << std::endl;
 
-	std::cout << "file succesfully loaded !!" << std::endl;
+	std::cout << "file " << (errorCode ? "loaded but errors occur (see error log for details)":"succesfully loaded !!") << std::endl;
 	std::cout << "  vertice position : " << vertices.size() << std::endl;
 	std::cout << "  texture coord : " << texture.size() << std::endl;
 	std::cout << "  vertice normals : " << normales.size() << std::endl;
@@ -119,7 +133,7 @@ int GfMeshLoader::pack(
 //
 
 //	Private functions
-void GfMeshLoader::removeWhiteSpace(std::string& input)
+void GfMeshLoader::removeWhiteSpaceAndComment(std::string& input)
 {
 	for (std::string::iterator it = input.begin(); it != input.end(); it++)
 	{
@@ -129,6 +143,8 @@ void GfMeshLoader::removeWhiteSpace(std::string& input)
 			if (*std::prev(it) == *it)				//	previous is also a space
 				it = input.erase(std::prev(it));	//	erase previous char
 		}
+		else if (*it == '#')						//	erase all comment (the rest of the string)
+			it = std::prev(input.erase(it,input.end()));
 	}
 }
 //

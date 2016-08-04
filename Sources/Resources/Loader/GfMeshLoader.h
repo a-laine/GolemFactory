@@ -26,13 +26,21 @@ class GfMeshLoader
 
 	protected:
 		//	Miscellaneous
+		enum flagsRanks {
+			rankCount = 5,
+			rankVertices = 0,
+			rankNormals  = 1,
+			rankColors   = 2,
+			rankTextures = 3,
+			rankWeights  = 4
+		};
 		enum flags {
 			none = 0,
-			hasVertices = (1 << 0),
-			hasNormals  = (1 << 1),
-			hasColors   = (1 << 2),
-			hasTextures = (1 << 3),
-			hasWeights  = (1 << 4)
+			hasVertices = (1 << rankVertices),
+			hasNormals  = (1 << rankNormals),
+			hasColors   = (1 << rankColors),
+			hasTextures = (1 << rankTextures),
+			hasWeights  = (1 << rankWeights)
 		};
 		//
 
@@ -47,7 +55,7 @@ class GfMeshLoader
 
 	private:
 		//	Private functions
-		void removeWhiteSpace(std::string& input);
+		void removeWhiteSpaceAndComment(std::string& input);
 		//
 };
 
