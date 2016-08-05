@@ -24,7 +24,7 @@ void main()
 {
 	gl_Position = p*v*m * vec4(position,1);
 	fragmentNormal = (v*m * vec4(normal,0.0)).xyz;
-	fragmentColor = vertexcolor;
+	fragmentColor = 2.0*vertexcolor;
 	
 	vec3 eyeDirectionCameraSpace = - ( v*m * vec4(position,1)).xyz;
 	vec3 lightPositionCameraSpace = (v * lightCoordinateWorldSpace).xyz;

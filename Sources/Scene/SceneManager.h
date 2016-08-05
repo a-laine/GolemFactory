@@ -9,8 +9,6 @@
 #include "NodeVirtual.h"
 
 
-
-
 class SceneManager : public Singleton<SceneManager>
 {
 	friend class Singleton<SceneManager>;

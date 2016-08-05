@@ -1,10 +1,18 @@
 #pragma once
 
+#include <vector>
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <iostream>
+#include <set>
+#include <limits>
+
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
-#include "GfMeshLoader.h"
+#include <glm/glm.hpp>
 
 class MeshLoader
 {

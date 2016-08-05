@@ -12,10 +12,7 @@
 
 #include "Utiles/System.h"
 #include "Events/EventHandler.h"
-#include "Utiles/Camera.h"
-#include "Resources/ResourceManager.h"
-#include "Instances/InstanceManager.h"
-#include "Scene\SceneManager.h"
+#include "Renderer/Renderer.h"
 
 #define GRID_SIZE 100
 #define GRID_ELEMENT_SIZE 3.0f
@@ -23,15 +20,8 @@
 // prototypes
 GLFWwindow* initGLFW();
 void initGLEW(int verbose = 1);
-void initializeGrid();
 void initializeForestScene();
 
-// global variables
-GLuint gridVAO,gridVBO;
-float* vertexBufferGrid;
-uint16_t* indexBufferGrid;
-
-std::vector<std::pair<int,InstanceVirtual*> > instanceList;
 
 // program
 int main()
@@ -49,22 +39,17 @@ int main()
 	// Init Resources manager and load some default shader
 	//ResourceManager::getInstance()->setRepository("C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/");
 	ResourceManager::getInstance()->setRepository("C:/Users/Thibault/Documents/Github/GolemFactory/Resources/");
-	Shader* gridShader = ResourceManager::getInstance()->getShader("wiredGrid");
-	if (!gridShader) { std::cout << "loading grid shader fail" << std::endl;  return -1;}
-	Shader* defaultShader = ResourceManager::getInstance()->getShader("default");
-	if (!defaultShader) { std::cout << "loading default shader fail" << std::endl;  return -1; }
 	
-	//	model view and projection matrix
-	glm::mat4 projection, view, model;
-	model = glm::rotate(model, glm::radians(90.f), glm::vec3(1, 0, 0));
-
-	// init camera
+	// Init Renderer;
 	Camera camera;
+	Renderer::getInstance()->setCamera(&camera);
+	Renderer::getInstance()->setWindow(window);
+	Renderer::getInstance()->setDefaultShader(ResourceManager::getInstance()->getShader("default"));
+	Renderer::getInstance()->initializeGrid(GRID_SIZE, GRID_ELEMENT_SIZE);
 
 	// init scene
 	SceneManager::getInstance()->setWorldPosition(glm::vec3(0,0,25));
 	SceneManager::getInstance()->setWorldSize(glm::vec3(GRID_SIZE*GRID_ELEMENT_SIZE, GRID_SIZE*GRID_ELEMENT_SIZE, 50));
-	initializeGrid();
 	initializeForestScene();
 	
 	// init loop time tracking
@@ -82,33 +67,9 @@ int main()
 		else if (angle < 3) angle = 3.f;
 		camera.setFrustrumAngleVertical(angle);
 		camera.setFrustrumAngleHorizontalFromScreenRatio((float)width / height);
-		glEnable(GL_DEPTH_TEST);
 
-		// bind matrix
-		view = camera.getViewMatrix();
-		projection = glm::perspective(glm::radians(angle),(float)width/height,0.1f,1000.f);
-		gridShader->enable();
-		gridShader->loadUniformMatrix(&glm::mat4(1.0)[0][0], &view[0][0], &projection[0][0]);
-
-		//	draw grid
-		glBindVertexArray(gridVAO);
-		glDrawElements( GL_TRIANGLES, 6*GRID_SIZE*GRID_SIZE, GL_UNSIGNED_SHORT, NULL );
-
-		//	get instance list
-		SceneManager::getInstance()->setCameraAttributes(camera.getPosition(), camera.getForward(), camera.getVertical(), camera.getLeft(),
-			camera.getFrustrumAngleVertical(), camera.getFrustrumAngleVertical());
-		instanceList.clear();
-		SceneManager::getInstance()->getInstanceList(instanceList);
-		std::sort(instanceList.begin(), instanceList.end());
-
-		//	draw instance list
-		defaultShader->enable();
-		defaultShader->loadUniformMatrix(&glm::mat4(1.0)[0][0], &view[0][0], &projection[0][0]);
-		for (auto it = instanceList.begin(); it != instanceList.end(); it++)
-		{
-			if (InstanceDrawable* d = dynamic_cast<InstanceDrawable*>(it->second))
-				d->draw(defaultShader);
-		}
+		// Render frame
+		Renderer::getInstance()->render();
 
 		//  handle events
 		EventHandler::getInstance()->handleEvent();
@@ -131,7 +92,7 @@ int main()
 			EventHandler::getInstance()->isActivated(RUN),		EventHandler::getInstance()->isActivated(SNEAKY));
 
 		//	Debug
-		//std::cout << 1000.f*(glfwGetTime() - startTime) << std::endl;
+		std::cout << 1000.f*(glfwGetTime() - startTime) << std::endl;
 
 		// End loop
 		glfwSwapBuffers(window);
@@ -190,54 +151,6 @@ void initGLEW(int verbose)
 	std::cout << "        GLSL version : " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
 }
 
-void initializeGrid()
-{
-	//	generate grid vertex buffer
-	vertexBufferGrid = new float[3 * (GRID_SIZE + 1)*(GRID_SIZE + 1)];
-	for (int i = 0; i < GRID_SIZE + 1; i++)
-		for (int j = 0; j < GRID_SIZE + 1; j++)
-		{
-			vertexBufferGrid[3 * (i*(GRID_SIZE + 1) + j) + 0] = GRID_ELEMENT_SIZE*i - (GRID_SIZE * GRID_ELEMENT_SIZE) / 2;
-			vertexBufferGrid[3 * (i*(GRID_SIZE + 1) + j) + 1] = GRID_ELEMENT_SIZE*j - (GRID_SIZE * GRID_ELEMENT_SIZE) / 2;
-			vertexBufferGrid[3 * (i*(GRID_SIZE + 1) + j) + 2] = 0;
-		}
-
-	indexBufferGrid = new uint16_t[6 * GRID_SIZE*GRID_SIZE];
-	for (int i = 0; i < GRID_SIZE; i++)
-		for (int j = 0; j < GRID_SIZE; j++)
-		{
-			indexBufferGrid[6 * (i*GRID_SIZE + j) + 0] = i*(GRID_SIZE + 1) + j + (GRID_SIZE + 1);
-			indexBufferGrid[6 * (i*GRID_SIZE + j) + 1] = i*(GRID_SIZE + 1) + j;
-			indexBufferGrid[6 * (i*GRID_SIZE + j) + 2] = i*(GRID_SIZE + 1) + j + 1;
-
-			indexBufferGrid[6 * (i*GRID_SIZE + j) + 3] = i*(GRID_SIZE + 1) + j + (GRID_SIZE + 1);
-			indexBufferGrid[6 * (i*GRID_SIZE + j) + 4] = i*(GRID_SIZE + 1) + j + (GRID_SIZE + 1) + 1;
-			indexBufferGrid[6 * (i*GRID_SIZE + j) + 5] = i*(GRID_SIZE + 1) + j + 1;
-		}
-
-	//	initialize VBO
-	GLuint vertexbuffer;
-	glGenBuffers(1, &vertexbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-	glBufferData(GL_ARRAY_BUFFER, 3 * (GRID_SIZE + 1)*(GRID_SIZE + 1) * sizeof(float), vertexBufferGrid, GL_STATIC_DRAW);
-
-	GLuint arraybuffer;
-	glGenBuffers(1, &arraybuffer);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, arraybuffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * GRID_SIZE*GRID_SIZE * sizeof(unsigned short), indexBufferGrid, GL_STATIC_DRAW);
-	
-	//	initialize VAO
-	glGenVertexArrays(1, &gridVAO);
-	glBindVertexArray(gridVAO);
-
-	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-	glEnableVertexAttribArray(0);
-	
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, arraybuffer);
-
-	glBindVertexArray(0);
-}
 void initializeForestScene()
 {
 	int fail = 0;
@@ -249,17 +162,12 @@ void initializeForestScene()
 			glm::vec3 p(GRID_ELEMENT_SIZE*i - (GRID_SIZE * GRID_ELEMENT_SIZE) / 2 + ((rand() % 10) / 5.f - 1.f),
 						GRID_ELEMENT_SIZE*j - (GRID_SIZE * GRID_ELEMENT_SIZE) / 2 + ((rand() % 10) / 5.f - 1.f),
 						0);
-			float s = (0.5f + (rand()%100)/100.f);
+			float s = 1.f + 0.2*((rand() % 100) / 50.f - 1.f);
 			glm::mat4 a = glm::rotate(glm::mat4(1.0), glm::radians((rand() % 3600) / 10.f), glm::vec3(0, 0, 1));
 			InstanceDrawable* ins = nullptr;
 
-			if (r < 20)
-			{
-				s *= 0.3f;
-				ins = InstanceManager::getInstance()->getInstanceDrawable("rock1.obj");
-			}
-			else if (r < 80)
-				ins = InstanceManager::getInstance()->getInstanceDrawable("firTree1.gfmesh");
+			if (r < 20)      ins = InstanceManager::getInstance()->getInstanceDrawable("rock1.obj");
+			else if (r < 80) ins = InstanceManager::getInstance()->getInstanceDrawable("firTree1.obj");
 			
 			if (ins)
 			{

@@ -24,7 +24,6 @@ void InstanceDrawable::draw(Shader* shaderToUse)
 	model = glm::translate(model,position);
 	model = glm::scale(model, size);
 	model = model * rotationMatrix;
-	model = glm::rotate(model, glm::radians(90.f), glm::vec3(1, 0, 0));
 
 	shaderToUse->loadUniformMatrix('m',&model[0][0]);
 	mesh->draw();

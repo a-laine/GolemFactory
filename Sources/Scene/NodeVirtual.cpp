@@ -72,11 +72,9 @@ bool NodeVirtual::addObject(InstanceVirtual* obj)
 	else
 	{
 		instanceList.push_back(obj);
-		std::cout << std::endl;
 		return true;
 	}
 	instanceList.push_back(obj);
-	std::cout << std::endl;
 	return true;
 }
 bool NodeVirtual::removeObject(InstanceVirtual* obj)
