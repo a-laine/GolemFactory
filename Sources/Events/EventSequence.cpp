@@ -14,7 +14,7 @@ bool EventSequence::isActivated() const {return false;}
 bool EventSequence::check(InputType call,int key,int action)
 {
     if(action == GLFW_RELEASE) return false;
-    float time = glfwGetTime();
+	float time = (float)glfwGetTime();
 
     if(call!=inputList[state].first.callback || key!=inputList[state].first.key || (state && time-lastCheckTime>timeout)) //wrong touch or timeout
     {

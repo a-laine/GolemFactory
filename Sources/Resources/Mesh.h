@@ -2,7 +2,6 @@
 
 #include <vector>
 #include <GL/glew.h>
-
 #include <glm/glm.hpp>
 
 #include "ResourceVirtual.h"
@@ -13,7 +12,15 @@ class Mesh : public ResourceVirtual
     public:
         //  Default
         Mesh(std::string path,std::string meshName);
+		Mesh();
         ~Mesh();
+		//
+
+		//	Public functions
+		void computeBoundingBoxDimension();
+
+		void initializeVBO();
+		void initializeVAO();
 
 		void draw();
         bool isValid() const;
@@ -35,9 +42,4 @@ class Mesh : public ResourceVirtual
 
 		glm::vec2 sizeX, sizeY, sizeZ;
         //
-
-	protected:
-		//	Protected functions
-		void computeBoundingBoxDimension();
-		//
 };

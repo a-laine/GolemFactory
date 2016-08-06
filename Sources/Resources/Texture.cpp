@@ -37,7 +37,7 @@ Texture::Texture(std::string path,std::string textureName,uint8_t conf) :
         ImageLoader::freeImage(image);
         if(!glIsTexture(texture)) return;
 
-        size.x = x; size.y = y; size.z = 0;
+        size.x = (float)x; size.y = (float)y; size.z = 0.f;
     }
     else    //  Texture type is not 2D or not specify
     {
@@ -47,7 +47,7 @@ Texture::Texture(std::string path,std::string textureName,uint8_t conf) :
 
         try { Reader::parseFile(v, path + textureName + extension);
               tmp = &(v.getMap().begin()->second);                      }
-        catch(std::exception& e) {std::cout<<errorLog<<"parser error"<<std::endl;return;}
+        catch(std::exception&) {std::cout<<errorLog<<"parser error"<<std::endl;return;}
         Variant& textureInfo = *tmp;
 
         //  Configuration
@@ -78,17 +78,17 @@ Texture::Texture(std::string path,std::string textureName,uint8_t conf) :
                 if(!textureData) throw std::runtime_error("fail loading 2D texture");
                 dataEnd = textureData;
 
-                size.x = x;
-                size.y = y;
-                size.z = 0;
+                size.x = (float)x;
+                size.y = (float)y;
+                size.z = 0.f;
             }
             else if(textureInfo["texture"].getType()==Variant::ARRAY && textureInfo["texture"][0].getType()==Variant::STRING)//texture=["a.png","b.png"];
             {
                 configuration &= ~TYPE_MASK;
                 configuration |= TEXTURE_3D;
-                size.x = textureInfo["width"].toInt();
-                size.y = textureInfo["height"].toInt();
-                size.z = (int) textureInfo["texture"].size();
+                size.x = (float)textureInfo["width"].toInt();
+                size.y = (float)textureInfo["height"].toInt();
+                size.z = (float) textureInfo["texture"].size();
 
                 textureData = new uint8_t[4*(int)(size.x*size.y*size.z)];
                 if(!textureData) throw std::runtime_error("fail init texture ptr");
@@ -111,9 +111,11 @@ Texture::Texture(std::string path,std::string textureName,uint8_t conf) :
             }
             else if(textureInfo["texture"].getType()==Variant::ARRAY && textureInfo["texture"][0].getType()==Variant::STRING)//texture=[0,0,0,255 , 255,0,0,255];
             {
-                unsigned int n = size.x = textureInfo["width"].toInt();
-                if((configuration&TYPE_MASK)==TEXTURE_2D) {size.y = textureInfo["height"].toInt(); n *= (int)size.y;}
-                if((configuration&TYPE_MASK)==TEXTURE_3D) {size.z = textureInfo["depth"].toInt();  n *= (int)size.z;}
+                unsigned int n = textureInfo["width"].toInt();
+				size.x = (float)n;
+                if((configuration&TYPE_MASK)==TEXTURE_2D) { size.y = (float)textureInfo["height"].toInt(); n *= textureInfo["height"].toInt(); }
+                if((configuration&TYPE_MASK)==TEXTURE_3D) { size.z = (float)textureInfo["depth"].toInt();  n *= textureInfo["depth"].toInt();  }
+
                 textureData = new uint8_t[4*n];
                 if(!textureData) throw std::runtime_error("error allocation array");
                 dataEnd = textureData;
@@ -139,19 +141,19 @@ Texture::Texture(std::string path,std::string textureName,uint8_t conf) :
         {
             case TEXTURE_1D:
                 glBindTexture(GL_TEXTURE_1D,texture);
-                glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, size.x,
+                glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, (int)size.x,
                              0, GL_RGBA, GL_UNSIGNED_BYTE, textureData );
                 if(configuration&USE_MIPMAP) glGenerateMipmap(GL_TEXTURE_1D);
                 break;
             case TEXTURE_2D:
                 glBindTexture(GL_TEXTURE_2D,texture);
-                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, size.x, size.y,
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, (int)size.x, (int)size.y,
                              0, GL_RGBA, GL_UNSIGNED_BYTE, textureData);
                 if(configuration&USE_MIPMAP) glGenerateMipmap(GL_TEXTURE_2D);
                 break;
             case TEXTURE_3D:
                 glBindTexture(GL_TEXTURE_3D,texture);
-                glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA, size.z, size.x, size.y,
+                glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA, (int)size.z, (int)size.x, (int)size.y,
                              0, GL_RGBA, GL_UNSIGNED_BYTE, textureData );
                 if(configuration&USE_MIPMAP) glGenerateMipmap(GL_TEXTURE_3D);
                 break;

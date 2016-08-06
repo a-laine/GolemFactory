@@ -233,6 +233,6 @@ int NodeVirtual::isInFrustrum() const
 	maxTangentDimension = std::abs(size.x*camVertical.x) / 2 + abs(size.y*camVertical.y) / 2 + abs(size.z*camVertical.z) / 2;
 	if (std::abs(glm::dot(p, camVertical)) - maxTangentDimension > std::abs(forwardFloat)*std::tan(glm::radians(camVerticalAngle)) + maxAbsoluteDimension) return std::numeric_limits<int>::lowest();
 
-	return glm::length(p);
+	return (int)glm::length(p);
 }
 //

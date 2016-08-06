@@ -3,16 +3,17 @@
 #include <iostream>
 
 #include <GL/glew.h>
+
+#include "Utiles/Mutex.h"
+
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
-#include "Utiles/Singleton.h"
 #include "Utiles/Camera.h"
+#include "Utiles/Singleton.h"
 #include "Resources/ResourceManager.h"
 #include "Instances/InstanceManager.h"
 #include "Scene/SceneManager.h"
-
-
 
 class Renderer : public Singleton<Renderer>
 {

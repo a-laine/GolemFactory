@@ -6,6 +6,10 @@ ResourceVirtual::ResourceVirtual(std::string path,std::string resourceName,Resou
 {
     count = 0;
 }
+ResourceVirtual::ResourceVirtual(ResourceType resourceType) :type(resourceType)
+{
+	count = 0;
+}
 ResourceVirtual::~ResourceVirtual(){}
 //
 

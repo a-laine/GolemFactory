@@ -30,14 +30,15 @@ void Camera::animate(float elapseTime,bool goForw,bool goBack,bool goLeft,bool g
 
     float tmpSpeed = speedMag;
 	glm::vec3 direction(0.,0.,0.);
+	float tmpSensitivity = sensivity*frustrumAngleVertical / 45.f;
 
     switch(configuration&MODE_MASK)
     {
         case FREEFLY:
             if(!EventHandler::getInstance()->getCursorMode())
             {
-                phi  -= sensivity*EventHandler::getInstance()->getCursorPositionRelative().x;
-                teta -= sensivity*EventHandler::getInstance()->getCursorPositionRelative().y;
+                phi  -= tmpSensitivity*EventHandler::getInstance()->getCursorPositionRelative().x;
+                teta -= tmpSensitivity*EventHandler::getInstance()->getCursorPositionRelative().y;
                 vectorsFromAngles();
             }
             if(goForw) direction += forward;
@@ -58,8 +59,8 @@ void Camera::animate(float elapseTime,bool goForw,bool goBack,bool goLeft,bool g
         case TRACKBALL:
             if(!EventHandler::getInstance()->getCursorMode())
             {
-                phi  -= sensivity*EventHandler::getInstance()->getCursorPositionRelative().x;
-                teta -= sensivity*EventHandler::getInstance()->getCursorPositionRelative().y;
+                phi  -= tmpSensitivity*EventHandler::getInstance()->getCursorPositionRelative().x;
+                teta -= tmpSensitivity*EventHandler::getInstance()->getCursorPositionRelative().y;
                 vectorsFromAngles();
             }
             break;
@@ -67,8 +68,8 @@ void Camera::animate(float elapseTime,bool goForw,bool goBack,bool goLeft,bool g
         case ISOMETRIC:
             if(option2)
             {
-                phi  -= sensivity*EventHandler::getInstance()->getCursorPositionRelative().x;
-                teta -= sensivity*EventHandler::getInstance()->getCursorPositionRelative().y;
+                phi  -= tmpSensitivity*EventHandler::getInstance()->getCursorPositionRelative().x;
+                teta -= tmpSensitivity*EventHandler::getInstance()->getCursorPositionRelative().y;
                 vectorsFromAngles();
             }
 
@@ -181,7 +182,7 @@ void Camera::setPosition(glm::vec3 pos)
 		glm::vec3 target = position + radius*forward;
         position += pos;
         forward = target - position;
-        radius = forward.length();
+        radius = (float)forward.length();
 		forward = glm::normalize(forward);
 
         boundingRadius();
@@ -203,7 +204,7 @@ void Camera::setTarget(glm::vec3 target)
 {
     mutex.lock();
     forward = target-position;
-    radius = forward.length();
+    radius = (float)forward.length();
 	forward = glm::normalize(forward);
 
     boundingRadius();

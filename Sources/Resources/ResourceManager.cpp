@@ -220,6 +220,70 @@ Font* ResourceManager::getFont(std::string name)
     return resource;
 }
 
+
+bool ResourceManager::addMesh(Mesh* mesh)
+{
+	auto it = meshList.find(mesh->name);
+	if (it != meshList.end())
+	{
+		mesh->count++;
+	}
+	else
+	{
+		mutexList.lock();
+		meshList[mesh->name] = mesh;
+		mutexList.unlock();
+		mesh->count++;
+	}
+}
+bool ResourceManager::addTexture(Texture* texture)
+{
+	auto it = textureList.find(texture->name);
+	if (it != textureList.end())
+	{
+		texture->count++;
+	}
+	else
+	{
+		mutexList.lock();
+		textureList[texture->name] = texture;
+		mutexList.unlock();
+		texture->count++;
+	}
+}
+bool ResourceManager::addShader(Shader* shader)
+{
+	auto it = shaderList.find(shader->name);
+	if (it != shaderList.end())
+	{
+		shader->count++;
+	}
+	else
+	{
+		mutexList.lock();
+		shaderList[shader->name] = shader;
+		mutexList.unlock();
+		shader->count++;
+	}
+}
+bool ResourceManager::addFont(Font* font)
+{
+	auto it = fontList.find(font->name);
+	if (it != fontList.end())
+	{
+		font->count++;
+	}
+	else
+	{
+		mutexList.lock();
+		fontList[font->name] = font;
+		mutexList.unlock();
+		font->count++;
+	}
+}
+//
+
+//  Set/get functions
 unsigned int ResourceManager::getNumberOfRessources(ResourceVirtual::ResourceType type)
 {
     switch(type)

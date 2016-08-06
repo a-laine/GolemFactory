@@ -52,7 +52,7 @@ void Renderer::render()
 
 	//	get instance list
 	SceneManager::getInstance()->setCameraAttributes(camera->getPosition(), camera->getForward(), camera->getVertical(), camera->getLeft(),
-		camera->getFrustrumAngleVertical(), camera->getFrustrumAngleVertical());
+		camera->getFrustrumAngleVertical() / 2, camera->getFrustrumAngleVertical() / 2);
 	
 	std::vector<std::pair<int, InstanceVirtual*> > instanceList;
 	SceneManager::getInstance()->getInstanceList(instanceList);
@@ -89,8 +89,8 @@ void Renderer::initializeGrid(unsigned int gridSize, float elementSize)
 
 	//	generate grid vertex buffer
 	vertexBufferGrid = new float[3 * (gridSize + 1)*(gridSize + 1)];
-	for (int i = 0; i < gridSize + 1; i++)
-		for (int j = 0; j < gridSize + 1; j++)
+	for (unsigned int i = 0; i < gridSize + 1; i++)
+		for (unsigned int j = 0; j < gridSize + 1; j++)
 		{
 			vertexBufferGrid[3 * (i*(gridSize + 1) + j) + 0] = elementSize*i - (gridSize * elementSize) / 2;
 			vertexBufferGrid[3 * (i*(gridSize + 1) + j) + 1] = elementSize*j - (gridSize * elementSize) / 2;
@@ -98,8 +98,8 @@ void Renderer::initializeGrid(unsigned int gridSize, float elementSize)
 		}
 
 	indexBufferGrid = new uint16_t[6 * gridSize*gridSize];
-	for (int i = 0; i < gridSize; i++)
-		for (int j = 0; j < gridSize; j++)
+	for (unsigned int i = 0; i < gridSize; i++)
+		for (unsigned int j = 0; j < gridSize; j++)
 		{
 			indexBufferGrid[6 * (i*gridSize + j) + 0] = i*(gridSize + 1) + j + (gridSize + 1);
 			indexBufferGrid[6 * (i*gridSize + j) + 1] = i*(gridSize + 1) + j;

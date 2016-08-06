@@ -14,17 +14,35 @@ class Mutex
         //
 
         //  Default
-		Mutex() { InitializeCriticalSection(&_M_mutex); };
-		~Mutex() { DeleteCriticalSection(&_M_mutex); };
+		Mutex()
+		{
+			InitializeCriticalSection(&_M_mutex);
+		};
+		~Mutex()
+		{
+			DeleteCriticalSection(&_M_mutex);
+		};
         Mutex(const Mutex&) = delete;
         Mutex& operator=(const Mutex&) = delete;
         //
 
         //  Public functions
-        void lock() { EnterCriticalSection(&_M_mutex); }
-        bool try_lock() { return TryEnterCriticalSection(&_M_mutex); }
-        void unlock() { LeaveCriticalSection(&_M_mutex); }
-        native_handle_type native_handle() { return &_M_mutex; }
+        void lock()
+		{
+			EnterCriticalSection(&_M_mutex);
+		}
+        bool try_lock()
+		{
+			return TryEnterCriticalSection(&_M_mutex) == TRUE;
+		}
+        void unlock()
+		{
+			LeaveCriticalSection(&_M_mutex);
+		}
+        native_handle_type native_handle()
+		{
+			return &_M_mutex;
+		}
         //
 
     protected:

@@ -148,9 +148,9 @@ bool EventHandlerImpl::getRepeatMode()
 }
 bool EventHandlerImpl::getTextInput()
 {
-    bool b;
+	bool b;
     mutex.lock();
-    b = configuration&TEXTIN;
+	b = (configuration&TEXTIN) != 0;
     mutex.unlock();
     return b;
 }
@@ -158,15 +158,15 @@ bool EventHandlerImpl::getCursorMode()
 {
     bool b;
     mutex.lock();
-    b = !(configuration&CURSOR_DISABLE);
+    b = (configuration&CURSOR_DISABLE) == 0;
     mutex.unlock();
     return b;
 }
 bool EventHandlerImpl::getChordPriority()
 {
-    bool b;
+	bool b;
     mutex.lock();
-    b = configuration&CHORD_HIGH_PRIORITY;
+	b = (configuration&CHORD_HIGH_PRIORITY) != 0;
     mutex.unlock();
     return b;
 }

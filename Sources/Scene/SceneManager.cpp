@@ -10,7 +10,7 @@ SceneManager::SceneManager()
 		n->split();
 	world.push_back(n);
 
-	for (int i = 0; i < world[0]->children.size(); i++)
+	for (unsigned int i = 0; i < world[0]->children.size(); i++)
 		world[0]->children[i]->split();
 }
 SceneManager::~SceneManager()
@@ -80,7 +80,7 @@ void SceneManager::setViewDistance(float distance,int depth)
 	//	compute distance stack
 	viewMaxDistance.clear();
 	for (int i = 0; i < depth; i++)
-		viewMaxDistance.push_back(distance/pow(2,i));
+		viewMaxDistance.push_back(distance/(float)pow(2,i));
 }
 void SceneManager::setWorldSize(glm::vec3 size)
 {

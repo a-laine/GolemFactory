@@ -4,13 +4,14 @@
 #include <vector>
 #include <algorithm>
 
+#include "Utiles/Mutex.h"
+
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
 #include "Event.h"
 #include "EventSequence.h"
 #include "Utiles/Singleton.h"
-#include "Utiles/Mutex.h"
 
 class EventHandlerImpl
 {

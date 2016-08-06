@@ -18,12 +18,12 @@ Font::Font(std::string path,std::string fontName) : ResourceVirtual(path,fontNam
 
     try { Reader::parseFile(v, path + fontName + extension);
           tmp = &(v.getMap().begin()->second);                 }
-    catch(std::exception& e) {std::cout<<"\tfail load file: "<<path + fontName + extension<<std::endl;return;}
+    catch(std::exception&) {std::cout<<"\tfail load file: "<<path + fontName + extension<<std::endl;return;}
     Variant& fontInfo = *tmp;
 
     std::string textureFile;
     try { textureFile = path + fontInfo["texture"].toString(); }
-    catch(std::exception& e) {std::cout<<"\tfail extract texture name"<<std::endl;return;}
+    catch(std::exception&) {std::cout<<"\tfail extract texture name"<<std::endl;return;}
 
     //  Loading the image
     int x,y,n;
@@ -45,22 +45,22 @@ Font::Font(std::string path,std::string fontName) : ResourceVirtual(path,fontNam
     //  Read file header
     std::string arrayFile;
     try { arrayFile = path + fontInfo["font"].toString(); }
-    catch(std::exception& e) {clear(); std::cout<<"\tfail extract array char"<<std::endl;return;}
+    catch(std::exception&) {clear(); std::cout<<"\tfail extract array char"<<std::endl;return;}
 
     std::ifstream file(arrayFile.c_str(), std::ios::in);
 	if(!file){clear(); std::cout<<"\tfail load array char file"<<std::endl;return;}
 
 	//  Parse info & allocate array
-    size.x = x; size.y = y;
+    size.x = (float)x; size.y = (float)y;
 
 	try { begin = fontInfo["begin"].toInt(); }
-    catch(std::exception& e) { begin = 0; }
+    catch(std::exception&) { begin = 0; }
 
     try { end = fontInfo["end"].toInt(); }
-    catch(std::exception& e) { end = 512; }
+    catch(std::exception&) { end = 512; }
 
     try { defaultChar = fontInfo["default"].toInt(); }
-    catch(std::exception& e) { defaultChar = begin; }
+    catch(std::exception&) { defaultChar = begin; }
     if(defaultChar>end) defaultChar = begin;
 
 	charTable = new Patch[end-begin+1];
@@ -72,7 +72,7 @@ Font::Font(std::string path,std::string fontName) : ResourceVirtual(path,fontNam
 	glm::u16vec2 c1,c2;
 	while(getline(file, line))
     {
-	    if(sscanf(line.c_str(), "%hu = {%hu, %hu, %hu, %hu}",&i,&c1.x,&c1.y,&c2.x,&c2.y)== 5)
+	    if(sscanf_s(line.c_str(), "%hu = {%hu, %hu, %hu, %hu}",&i,&c1.x,&c1.y,&c2.x,&c2.y)== 5)
         {
             charTable[i-begin].corner1.x = c1.x/size.x;
             charTable[i-begin].corner1.y = c1.y/size.y;
@@ -91,7 +91,7 @@ Font::~Font()
 
 bool Font::isValid() const
 {
-    return (bool)glIsTexture(texture);
+    return glIsTexture(texture) != 0;
 }
 //
 

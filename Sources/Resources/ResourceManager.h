@@ -27,6 +27,11 @@ class ResourceManager : public Singleton<ResourceManager>
         Texture* getTexture2D(std::string name,uint8_t conf = 0x00);
         Shader* getShader(std::string name);
         Font* getFont(std::string name);
+
+		bool addMesh(Mesh* mesh);
+		bool addTexture(Texture* texture);
+		bool addShader(Shader* shader);
+		bool addFont(Font* font);
         //
 
         //  Set/get functions

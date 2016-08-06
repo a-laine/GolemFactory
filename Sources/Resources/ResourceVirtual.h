@@ -24,6 +24,7 @@ class ResourceVirtual
 
         //  Default
         ResourceVirtual(std::string path,std::string resourceName = "unknown",ResourceType resourceType = NONE);
+		ResourceVirtual(ResourceType resourceType = NONE);
         virtual ~ResourceVirtual();
 
         virtual bool isValid() const;

@@ -1,14 +1,13 @@
 #pragma once
 
 #include <atomic>
+#include <cmath>
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <cmath>
-  
-#include "../Events/EventHandler.h"
-#include "Mutex.h"
 
+#include "Mutex.h"
+#include "../Events/EventHandler.h"
 
 class Camera
 {

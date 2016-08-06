@@ -4,15 +4,15 @@
 #include <iostream>
 #include <list>
 #include <time.h>
-
 #include <GL/glew.h>
-#include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 
 #include "Utiles/System.h"
 #include "Events/EventHandler.h"
 #include "Renderer/Renderer.h"
+
+#include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 #define GRID_SIZE 100
 #define GRID_ELEMENT_SIZE 3.0f
@@ -154,7 +154,7 @@ void initGLEW(int verbose)
 void initializeForestScene()
 {
 	int fail = 0;
-	srand(time(NULL));
+	srand((unsigned int)time(NULL));
 	for (int i = 0; i < GRID_SIZE; i++)
 		for (int j = 0; j < GRID_SIZE; j++)
 		{
@@ -162,7 +162,7 @@ void initializeForestScene()
 			glm::vec3 p(GRID_ELEMENT_SIZE*i - (GRID_SIZE * GRID_ELEMENT_SIZE) / 2 + ((rand() % 10) / 5.f - 1.f),
 						GRID_ELEMENT_SIZE*j - (GRID_SIZE * GRID_ELEMENT_SIZE) / 2 + ((rand() % 10) / 5.f - 1.f),
 						0);
-			float s = 1.f + 0.2*((rand() % 100) / 50.f - 1.f);
+			float s = 1.f + 0.2f*((rand() % 100) / 50.f - 1.f);
 			glm::mat4 a = glm::rotate(glm::mat4(1.0), glm::radians((rand() % 3600) / 10.f), glm::vec3(0, 0, 1));
 			InstanceDrawable* ins = nullptr;
 

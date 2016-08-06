@@ -1,7 +1,5 @@
 #pragma once
 
-
-
 #ifndef USE_STRING_EVENT_TYPE
     #include "EventHandlerEnum.h"
     typedef EventHandlerEnum EventHandler;

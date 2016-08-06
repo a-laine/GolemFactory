@@ -18,17 +18,17 @@ Shader::Shader(std::string path,std::string shaderName) : ResourceVirtual(path,s
 
     try { Reader::parseFile(v, path + shaderName + extension);
           tmp = &(v.getMap().begin()->second);                       }
-    catch(std::exception& e) { return; }
+    catch(std::exception&) { return; }
     Variant& shaderMap = *tmp;
 
     //  Vertex shader
     try { tmpName = path + shaderMap["vertex"].toString(); }
-    catch(std::exception& e) { std::cerr<<"fail to parse vertex shader name"<<std::endl; tmpName = path + "default.vs"; }
+    catch(std::exception&) { std::cerr<<"fail to parse vertex shader name"<<std::endl; tmpName = path + "default.vs"; }
     if(!loadShader(VERTEX_SH,loadSource(tmpName),vertexShader)) return;
 
     //  Fragment shader
     try { tmpName = path + shaderMap["fragment"].toString(); }
-    catch(std::exception& e) { std::cerr<<"fail to parse fragment shader name"<<std::endl; tmpName = path + "default.fs"; }
+    catch(std::exception&) { std::cerr<<"fail to parse fragment shader name"<<std::endl; tmpName = path + "default.fs"; }
     if(!loadShader(FRAGMENT_SH,loadSource(tmpName),fragmentShader)) { glDeleteShader(vertexShader); return; }
 
     //  Program
@@ -41,21 +41,21 @@ Shader::Shader(std::string path,std::string shaderName) : ResourceVirtual(path,s
         tmpName = path + shaderMap["geometry"].toString();
          if(loadShader(GEOMETRIC_SH,loadSource(tmpName),geometricShader))
             glAttachShader(program,geometricShader);                         }
-    catch(std::exception& e){}
+    catch(std::exception&){}
 
     //  Tessellation evaluation shader
     try {
         tmpName = path + shaderMap["evaluation"].toString();
         if(loadShader(TESS_EVAL_SH,loadSource(tmpName),tessEvalShader))
             glAttachShader(program,tessEvalShader);                         }
-    catch(std::exception& e){}
+    catch(std::exception&){}
 
     //  Tessellation control shader
     try {
         tmpName = path + shaderMap["control"].toString();
         if(loadShader(TESS_CONT_SH,loadSource(tmpName),tessControlShader))
             glAttachShader(program,tessControlShader);                         }
-    catch(std::exception& e){}
+    catch(std::exception&){}
 
     //  Linking program
     glLinkProgram(program);
@@ -90,7 +90,7 @@ Shader::Shader(std::string path,std::string shaderName) : ResourceVirtual(path,s
     glUseProgram(program);
     try
     {
-        textureCount = shaderMap["textures"].size();
+        textureCount = (uint8_t)shaderMap["textures"].size();
         GLuint location;
         for(int i=0;i<textureCount;i++)
         {
@@ -99,7 +99,7 @@ Shader::Shader(std::string path,std::string shaderName) : ResourceVirtual(path,s
             glUniform1i(location,i);
         }
     }
-    catch(std::exception& e) { textureCount = 0; }
+    catch(std::exception&) { textureCount = 0; }
     glUseProgram(0);
 }
 Shader::~Shader()
@@ -107,7 +107,7 @@ Shader::~Shader()
     glDeleteProgram(program);
 }
 
-bool Shader::isValid() const { return glIsProgram(program); }
+bool Shader::isValid() const { return glIsProgram(program) != 0; }
 //
 
 
@@ -145,12 +145,12 @@ bool Shader::useShaderType(ShaderType shaderType) const
 {
     switch(shaderType)
     {
-        case VERTEX_SH:     return glIsShader(vertexShader);
-        case GEOMETRIC_SH:  return glIsShader(geometricShader);
-        case FRAGMENT_SH:   return glIsShader(fragmentShader);
-        case PROGRAM_SH:    return glIsShader(program);
-        case TESS_EVAL_SH:  return glIsShader(tessEvalShader);
-        case TESS_CONT_SH:  return glIsShader(tessControlShader);
+        case VERTEX_SH:     return glIsShader(vertexShader) != 0;
+        case GEOMETRIC_SH:  return glIsShader(geometricShader) != 0;
+        case FRAGMENT_SH:   return glIsShader(fragmentShader) != 0;
+        case PROGRAM_SH:    return glIsShader(program) != 0;
+        case TESS_EVAL_SH:  return glIsShader(tessEvalShader) != 0;
+        case TESS_CONT_SH:  return glIsShader(tessControlShader) != 0;
         default:            return false;
     }
 }
@@ -220,8 +220,9 @@ bool Shader::loadShader(ShaderType shaderType,char* source,GLuint& shader)
 char* Shader::loadSource(std::string file)
 {
     // Open file
-    FILE *fi = fopen(file.c_str(), "r");
-    if(!fi)
+	FILE *fi;
+	errno_t errorCode = fopen_s(&fi, file.c_str(), "r");
+    if(errorCode != 0 || !fi)
     {
         std::cout<<"Impossible to open:\n"<<file<<std::endl;
         return NULL;

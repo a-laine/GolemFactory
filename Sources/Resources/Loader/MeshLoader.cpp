@@ -19,7 +19,7 @@ int MeshLoader::loadMesh(std::string file,
 
 		unsigned int facesOffset = 0;	//	needed to pack multiple object in the same mesh
 		glm::vec3 meshColor = glm::vec3(1.0, 1.0, 1.0);// 0.1137f, 0.5137f, 0.1333f);
-		for (int i = 0; i < scene->mNumMeshes; i++)
+		for (unsigned int i = 0; i < scene->mNumMeshes; i++)
 		{
 			// import material and pack into vertex color
 			aiMesh* mesh = scene->mMeshes[i];
@@ -32,13 +32,13 @@ int MeshLoader::loadMesh(std::string file,
 			}
 
 			//	import faces index
-			for (int j = 0; j < mesh->mNumFaces; j++)
+			for (unsigned int j = 0; j < mesh->mNumFaces; j++)
 				for (int k = 0; k < 3; k++)
 					faces.push_back(mesh->mFaces[j].mIndices[k] + facesOffset);
 			facesOffset += mesh->mNumVertices;
 
 			//	import vertex attributes
-			for (int j = 0; j < mesh->mNumVertices; j++)
+			for (unsigned int j = 0; j < mesh->mNumVertices; j++)
 			{
 				aiVector3D pos = mesh->mVertices[j];
 				vertices.push_back(glm::vec3(pos.x,pos.y,pos.z));

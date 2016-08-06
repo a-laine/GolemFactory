@@ -9,7 +9,6 @@
 
 #include "Resources/ResourceManager.h" 
 
-
 class InstanceVirtual
 {
 	friend class InstanceManager;

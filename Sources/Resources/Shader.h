@@ -1,8 +1,8 @@
 #pragma once
 
-#include <GL/glew.h>
 #include <fstream>
 #include <map>
+#include <GL/glew.h>
 
 #include "ResourceVirtual.h"
 

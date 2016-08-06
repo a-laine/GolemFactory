@@ -6,16 +6,22 @@ Event::~Event() {}
 //
 
 //  Public functions
-bool Event::isActivated() const {return configuration&ACTIVATED_FLAG;}
-bool Event::check(Input in,int action) { return check(in.callback,in.key,action); }
+bool Event::isActivated() const
+{
+	return (configuration&ACTIVATED_FLAG) != 0;
+}
+bool Event::check(Input in,int action)
+{
+	return check(in.callback,in.key,action);
+}
 bool Event::check(InputType call,int key,int action)
 {
     bool activated = true;
     for(unsigned int i=0;i<inputList.size();i++)
     {
         if(inputList[i].first.callback == call && inputList[i].first.key == key)
-            inputList[i].second = action;
-        activated = inputList[i].second && activated;
+            inputList[i].second = (action != 0);
+        activated = (inputList[i].second != 0) && activated;
     }
 
     bool upDown = false;
