@@ -52,7 +52,7 @@ void Renderer::render()
 
 	//	get instance list
 	SceneManager::getInstance()->setCameraAttributes(camera->getPosition(), camera->getForward(), camera->getVertical(), camera->getLeft(),
-		camera->getFrustrumAngleVertical() / 2, camera->getFrustrumAngleVertical() / 2);
+		camera->getFrustrumAngleVertical() / 1.6f, camera->getFrustrumAngleVertical() / 1.6f);
 	
 	std::vector<std::pair<int, InstanceVirtual*> > instanceList;
 	SceneManager::getInstance()->getInstanceList(instanceList);

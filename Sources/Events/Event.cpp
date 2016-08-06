@@ -16,6 +16,7 @@ bool Event::check(Input in,int action)
 }
 bool Event::check(InputType call,int key,int action)
 {
+	//	check if event is activated or not
     bool activated = true;
     for(unsigned int i=0;i<inputList.size();i++)
     {
@@ -24,12 +25,14 @@ bool Event::check(InputType call,int key,int action)
         activated = (inputList[i].second != 0) && activated;
     }
 
+	//	check for user event publication
     bool upDown = false;
-    if(!activated && (configuration&ACTIVATED_FLAG) && (configuration&UP_FLAG))
-        upDown = true;//send up
-    else if(action == 2 || (activated && (~configuration&ACTIVATED_FLAG) && (configuration&DOWN_FLAG)))
-        upDown = true;//send down
+    if(!activated && (configuration&ACTIVATED_FLAG) && (configuration&UP_FLAG))							//	publish user event for up
+        upDown = true;
+    else if(action == 2 || (activated && (~configuration&ACTIVATED_FLAG) && (configuration&DOWN_FLAG)))	//	publish user event for down
+        upDown = true;
 
+	//	change flag if needed
     if(activated) configuration |=  ACTIVATED_FLAG;
     else configuration &= ~ACTIVATED_FLAG;
 

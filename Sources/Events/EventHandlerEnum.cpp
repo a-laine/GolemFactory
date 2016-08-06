@@ -10,7 +10,7 @@ EventHandlerEnum::EventHandlerEnum(std::string path) : EventHandlerImpl(path)
     addEvent(QUIT,Event::KEY,GLFW_KEY_ESCAPE);
     loadKeyMapping("RPG key mapping");
 }
-EventHandlerEnum::~EventHandlerEnum(){}
+EventHandlerEnum::~EventHandlerEnum() {}
 //
 
 //  Public functions
@@ -20,22 +20,27 @@ void EventHandlerEnum::reload(std::string path, std::string file)
 	loadKeyMapping(path, file);
 }
 
-void EventHandlerEnum::loadKeyMapping(std::string file){loadKeyMapping(repository,file);}
+void EventHandlerEnum::loadKeyMapping(std::string file)
+{
+	loadKeyMapping(repository,file);
+}
 void EventHandlerEnum::loadKeyMapping(std::string path,std::string file)
 {
-    std::string line,name,tmp; int index,key;
-    std::map<Event*,EventEnum> eventMappingBuffer;
-    std::multimap<EventEnum,Event*> userMappingBuffer;
-    std::map<int,std::vector<Event*> > keyboardListenersBuffer;
-    std::map<int,std::vector<Event*> > mouseButtonListenersBuffer;
-    std::vector<Event*> charEnteredListenersBuffer;
-    std::vector<Event*> cursorPositionListenersBuffer;
+	//	initialize variable
+	std::string line, name, tmp;
+	int index, key;
+	std::map<Event*, EventEnum> eventMappingBuffer;
+	std::multimap<EventEnum, Event*> userMappingBuffer;
+	std::map<int, std::vector<Event*> > keyboardListenersBuffer;
+	std::map<int, std::vector<Event*> > mouseButtonListenersBuffer;
+	std::vector<Event*> charEnteredListenersBuffer;
+	std::vector<Event*> cursorPositionListenersBuffer;
     std::vector<Event*> cursorEnterListenersBuffer;
     std::vector<Event*> scrollingListenersBuffer;
     std::vector<Event*> dragAndDropListenersBuffer;
+	std::map<std::string, int> enumMap;
 
     //  Create map userEnum -> int
-    std::map<std::string,int> enumMap;
     std::ifstream enumFile(path + "../Sources/UserEnum.enum");
 	if (!enumFile.good() && path != "")
     {
@@ -55,6 +60,7 @@ void EventHandlerEnum::loadKeyMapping(std::string path,std::string file)
     index = 0;
     while(!enumFile.eof())
     {
+		std::getline(enumFile, line);
         std::getline(enumFile,line,',');
         line.erase(remove_if(line.begin(),line.end(),[](char x){return std::isspace(x);}),line.end());
         if(line.size() == 0) continue;          //empty line
@@ -226,12 +232,13 @@ bool EventHandlerEnum::isActivated(EventEnum eventName)
     auto it = userMapping.find(eventName);
     while(it!=userMapping.end() && it->first==eventName)
     {
-        if(it->second->isActivated()) {
+        if(it->second->isActivated())
+		{
             b = true;
-            break;                   }
+            break;
+		}
         ++it;
     }
-
     mutex.unlock();
     return b;
 }
@@ -298,10 +305,11 @@ void EventHandlerEnum::clear()
 //  Set/get functions
 unsigned int EventHandlerEnum::getNumberOfEvent()
 {
-    mutex.lock();
-    unsigned int nb = userMapping.size();
-    mutex.unlock();
-    return nb;
+	unsigned int nb;
+	mutex.lock();
+	nb = userMapping.size();
+	mutex.unlock();
+	return nb;
 }
 //
 

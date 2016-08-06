@@ -1,5 +1,11 @@
 #pragma once
 
+/*!
+*	\file EventHandlerEnum.h
+*	\brief Declaration of the EventHandlerEnum class.
+*	\author Thibault LAINE
+*/
+
 #include <map>
 #include <string>
 
@@ -7,6 +13,12 @@
 #include "EventHandlerImpl.h"
 #include "EventEnum.h"
 
+/** \class EventHandlerImpl
+*	\brief Second part of the event handler implementation.
+*
+*	The EventHandlerEnum use a user enum as type of user event.
+*
+*/
 class EventHandlerEnum : public EventHandlerImpl, public Singleton<EventHandlerEnum>
 {
     friend class Singleton<EventHandlerEnum>;

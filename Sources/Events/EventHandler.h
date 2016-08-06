@@ -1,5 +1,11 @@
 #pragma once
 
+/*!
+* \file EventHandler.h
+* \brief Define EventHandler type (as EventHandlerEnum or EventHandlerString).
+* \author Thibault LAINE
+*/
+
 #ifndef USE_STRING_EVENT_TYPE
     #include "EventHandlerEnum.h"
     typedef EventHandlerEnum EventHandler;
@@ -7,8 +13,8 @@
 
 #else
 	#error EventHandlerString not yet implemented
-    //#include "EventHandlerString.h"
-    //typedef EventHandlerString EventHandler;
-    //typedef std::string UserEventType;
+    #include "EventHandlerString.h"
+    typedef EventHandlerString EventHandler;
+    typedef std::string UserEventType;
 
 #endif // USE_STRING_EVENT_TYPE

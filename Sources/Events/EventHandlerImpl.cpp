@@ -9,17 +9,16 @@ EventHandlerImpl::EventHandlerImpl(std::string path)
 {
     configuration = 0x00;
     repository = path;
-    focusedWindow = nullptr;
+    //focusedWindow = nullptr;
     This = this;
     resizeCallback = nullptr;
 
-	glm::vec2 n = glm::vec2(0,0);
-    cursorPositionRelative = n;
-    cursorPositionRelativeBuffer = n;
-    cursorPositionAbsolute = n;
-    cursorPositionAbsoluteBuffer = n;
-    scrollingRelative = n;
-    scrollingRelativeBuffer = n;
+    cursorPositionRelative = glm::vec2(0, 0);
+    cursorPositionRelativeBuffer = glm::vec2(0, 0);
+    cursorPositionAbsolute = glm::vec2(0, 0);
+    cursorPositionAbsoluteBuffer = glm::vec2(0, 0);
+    scrollingRelative = glm::vec2(0, 0);
+    scrollingRelativeBuffer = glm::vec2(0, 0);
 }
 EventHandlerImpl::~EventHandlerImpl(){}
 //
@@ -29,6 +28,7 @@ void EventHandlerImpl::addWindow(GLFWwindow* window)
 {
     if(!window) return;
 
+	//	add window to the window list and set the window cursor
     mutex.lock();
     if(windowList.empty()) focusedWindow = window;
     windowList.push_back(window);
@@ -36,6 +36,7 @@ void EventHandlerImpl::addWindow(GLFWwindow* window)
     else glfwSetInputMode(window,GLFW_CURSOR,GLFW_CURSOR_NORMAL);
     mutex.unlock();
 
+	//	attach callback to the window
     glfwSetKeyCallback(window,EventHandlerImpl::keyCallback);
     glfwSetCharCallback(window,EventHandlerImpl::charCallback);
     glfwSetCursorPosCallback(window,EventHandlerImpl::cursorPositionCallback);
@@ -50,6 +51,8 @@ void EventHandlerImpl::addWindow(GLFWwindow* window)
 void EventHandlerImpl::removeWindow(GLFWwindow* window)
 {
     if(!window) return;
+
+	//	remove windo from list
     mutex.lock();
     auto it = std::find(windowList.begin(),windowList.end(),window);
     if(it==windowList.end())
@@ -60,6 +63,7 @@ void EventHandlerImpl::removeWindow(GLFWwindow* window)
     windowList.erase(it);
     mutex.unlock();
 
+	//	detach window callback
     glfwSetKeyCallback(window,NULL);
     glfwSetCharCallback(window,NULL);
     glfwSetCursorPosCallback(window,NULL);
@@ -74,20 +78,24 @@ void EventHandlerImpl::removeWindow(GLFWwindow* window)
 
 void EventHandlerImpl::handleEvent()
 {
+	//	init
     cursorPositionRelativeBuffer = glm::vec2(0,0);
     scrollingRelativeBuffer = glm::vec2(0,0);
 
+	//	process all event (call the callbacks)
     glfwPollEvents();
 
+	//	swap state to give access to the user
     mutex.lock();
-    swapFrameEventList();
-    cursorPositionRelative = cursorPositionRelativeBuffer;
-    cursorPositionAbsolute = cursorPositionAbsoluteBuffer;
-    scrollingRelative = scrollingRelativeBuffer;
+		swapFrameEventList();
+		cursorPositionRelative = cursorPositionRelativeBuffer;
+		cursorPositionAbsolute = cursorPositionAbsoluteBuffer;
+		scrollingRelative = scrollingRelativeBuffer;
     mutex.unlock();
 }
 void EventHandlerImpl::clear()
 {
+	//	Remove all event from queues
     keyboardListeners.clear();
     mouseButtonListeners.clear();
     charEnteredListeners.clear();
@@ -298,25 +306,42 @@ void EventHandlerImpl::removeEvent(Event* event)
 void EventHandlerImpl::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     if(!((This->configuration)&REPEAT) && action==GLFW_REPEAT) return;
+
     try
     {
-        bool chord = false;
         auto events = This->keyboardListeners.at(key);
-        for(unsigned int i=0;i<events.size();i++)
-        {
-            if((events[i]->configuration & Event::TYPE_MASK)==Event::CHORD && events[i]->check(Event::KEY,key,action))
-            {
-                chord = true;
-                This->emitUserEvent(events[i]);
-            }
-        }
-        if((This->configuration&CHORD_HIGH_PRIORITY) && chord) return;
-        for(unsigned int i=0;i<events.size();i++)
-        {
-            if((events[i]->configuration&Event::TYPE_MASK)!=Event::CHORD &&
-               events[i]->check(Event::KEY,key,action))
-                This->emitUserEvent(events[i]);
-        }
+		if ((This->configuration&CHORD_HIGH_PRIORITY))
+		{
+			//	first pass process chord
+			for(unsigned int i=0;i<events.size();i++)	
+			{
+				if ((events[i]->configuration & Event::TYPE_MASK) == Event::CHORD && events[i]->check(Event::KEY, key, action))
+					This->emitUserEvent(events[i]);
+			}
+
+			//	second pass process !chord
+			for(unsigned int i=0;i<events.size();i++)	
+			{
+				if ((events[i]->configuration&Event::TYPE_MASK) != Event::CHORD && events[i]->check(Event::KEY, key, action))
+					This->emitUserEvent(events[i]);
+			}
+		}
+		else 
+		{
+			//	first pass process !chord
+			for (unsigned int i = 0; i<events.size(); i++)
+			{
+				if ((events[i]->configuration&Event::TYPE_MASK) != Event::CHORD && events[i]->check(Event::KEY, key, action))
+					This->emitUserEvent(events[i]);
+			}
+
+			//	second pass process chord
+			for (unsigned int i = 0; i<events.size(); i++)
+			{
+				if ((events[i]->configuration & Event::TYPE_MASK) == Event::CHORD && events[i]->check(Event::KEY, key, action))
+					This->emitUserEvent(events[i]);
+			}
+		}
     }
     catch(std::out_of_range){}
 }
@@ -348,64 +373,112 @@ void EventHandlerImpl::cursorPositionCallback(GLFWwindow* window, double xpos, d
     This->cursorPositionAbsoluteBuffer.x = (float)xpos;
     This->cursorPositionAbsoluteBuffer.y = (float)ypos;
 
-    bool chord = false;
-    for(unsigned int i=0;i<This->cursorPositionListeners.size();i++)
-    {
-        if((This->cursorPositionListeners[i]->configuration&Event::TYPE_MASK)==Event::CHORD &&
-           This->cursorPositionListeners[i]->check(Event::CURSORPOS,-1,-1))
-        {
-            chord = true;
-            This->emitUserEvent(This->cursorPositionListeners[i]);
-        }
-    }
-    if((This->configuration&CHORD_HIGH_PRIORITY) && chord) return;
-    for(unsigned int i=0;i<This->cursorPositionListeners.size();i++)
-    {
-        if((This->cursorPositionListeners[i]->configuration&Event::TYPE_MASK)!=Event::CHORD &&
-           This->cursorPositionListeners[i]->check(Event::CURSORPOS,-1,-1))
-            This->emitUserEvent(This->cursorPositionListeners[i]);
-    }
+	if ((This->configuration&CHORD_HIGH_PRIORITY))
+	{
+		//	first pass process chord
+		for(unsigned int i=0;i<This->cursorPositionListeners.size();i++)
+		{
+			if((This->cursorPositionListeners[i]->configuration&Event::TYPE_MASK)==Event::CHORD && This->cursorPositionListeners[i]->check(Event::CURSORPOS,-1,-1))
+				This->emitUserEvent(This->cursorPositionListeners[i]);
+		}
+
+		//	second pass process !chord
+		for(unsigned int i=0;i<This->cursorPositionListeners.size();i++)
+		{
+			if((This->cursorPositionListeners[i]->configuration&Event::TYPE_MASK)!=Event::CHORD && This->cursorPositionListeners[i]->check(Event::CURSORPOS,-1,-1))
+				This->emitUserEvent(This->cursorPositionListeners[i]);
+		}
+	}
+	else
+	{
+		//	first pass process !chord
+		for (unsigned int i = 0; i<This->cursorPositionListeners.size(); i++)
+		{
+			if ((This->cursorPositionListeners[i]->configuration&Event::TYPE_MASK) != Event::CHORD && This->cursorPositionListeners[i]->check(Event::CURSORPOS, -1, -1))
+				This->emitUserEvent(This->cursorPositionListeners[i]);
+		}
+		
+		//	second pass process chord
+		for (unsigned int i = 0; i<This->cursorPositionListeners.size(); i++)
+		{
+			if ((This->cursorPositionListeners[i]->configuration&Event::TYPE_MASK) == Event::CHORD && This->cursorPositionListeners[i]->check(Event::CURSORPOS, -1, -1))
+				This->emitUserEvent(This->cursorPositionListeners[i]);
+		}
+	}
+    
 }
 void EventHandlerImpl::cursorEnterCallback(GLFWwindow* window, int entered)
 {
-    bool chord = false;
-    for(unsigned int i=0;i<This->cursorEnterListeners.size();i++)
-    {
-        if((This->cursorEnterListeners[i]->configuration&Event::TYPE_MASK)==Event::CHORD &&
-           This->cursorEnterListeners[i]->check(Event::CURSORENTER,entered,-1))
-        {
-            chord = true;
-            This->emitUserEvent(This->cursorEnterListeners[i]);
-        }
-    }
-    if((This->configuration&CHORD_HIGH_PRIORITY) && chord) return;
-    for(unsigned int i=0;i<This->cursorEnterListeners.size();i++)
-    {
-        if((This->cursorEnterListeners[i]->configuration&Event::TYPE_MASK)!=Event::CHORD &&
-           This->cursorEnterListeners[i]->check(Event::CURSORENTER,entered,-1))
-            This->emitUserEvent(This->cursorEnterListeners[i]);
-    }
+	if ((This->configuration&CHORD_HIGH_PRIORITY))
+	{
+		//	first pass process chord
+		for (unsigned int i = 0; i < This->cursorEnterListeners.size(); i++)
+		{
+			if ((This->cursorEnterListeners[i]->configuration&Event::TYPE_MASK) == Event::CHORD && This->cursorEnterListeners[i]->check(Event::CURSORENTER, entered, -1))
+				This->emitUserEvent(This->cursorEnterListeners[i]);
+		}
+
+		//	second pass process !chord
+		for (unsigned int i = 0; i < This->cursorEnterListeners.size(); i++)
+		{
+			if ((This->cursorEnterListeners[i]->configuration&Event::TYPE_MASK) != Event::CHORD && This->cursorEnterListeners[i]->check(Event::CURSORENTER, entered, -1))
+				This->emitUserEvent(This->cursorEnterListeners[i]);
+		}
+	}
+	else
+	{
+		//	first pass process !chord
+		for (unsigned int i = 0; i < This->cursorEnterListeners.size(); i++)
+		{
+			if ((This->cursorEnterListeners[i]->configuration&Event::TYPE_MASK) != Event::CHORD && This->cursorEnterListeners[i]->check(Event::CURSORENTER, entered, -1))
+				This->emitUserEvent(This->cursorEnterListeners[i]);
+		}
+
+		//	second pass process chord
+		for (unsigned int i = 0; i < This->cursorEnterListeners.size(); i++)
+		{
+			if ((This->cursorEnterListeners[i]->configuration&Event::TYPE_MASK) == Event::CHORD && This->cursorEnterListeners[i]->check(Event::CURSORENTER, entered, -1))
+				This->emitUserEvent(This->cursorEnterListeners[i]);
+		}
+	}
 }
 void EventHandlerImpl::mouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
 {
     try
     {
-        bool chord = false;
         auto events = This->mouseButtonListeners.at(button);
-        for(unsigned int i=0;i<events.size();i++)
-        {
-            if((events[i]->configuration&Event::TYPE_MASK)==Event::CHORD && events[i]->check(Event::MOUSEBUTTON,button,action))
-            {
-                chord = true;
-                This->emitUserEvent(events[i]);
-            }
-        }
-        if((This->configuration&CHORD_HIGH_PRIORITY) && chord) return;
-        for(unsigned int i=0;i<events.size();i++)
-        {
-            if((events[i]->configuration&Event::TYPE_MASK)!=Event::CHORD && events[i]->check(Event::MOUSEBUTTON,button,action))
-                This->emitUserEvent(events[i]);
-        }
+		if ((This->configuration&CHORD_HIGH_PRIORITY))
+		{
+			//	first pass process chord
+			for(unsigned int i=0;i<events.size();i++)
+			{
+				if((events[i]->configuration&Event::TYPE_MASK)==Event::CHORD && events[i]->check(Event::MOUSEBUTTON,button,action))
+					This->emitUserEvent(events[i]);
+			}
+
+			//	second pass process !chord
+			for(unsigned int i=0;i<events.size();i++)
+			{
+				if((events[i]->configuration&Event::TYPE_MASK)!=Event::CHORD && events[i]->check(Event::MOUSEBUTTON,button,action))
+					This->emitUserEvent(events[i]);
+			}
+		}
+		else
+		{
+			//	first pass process !chord
+			for (unsigned int i = 0; i<events.size(); i++)
+			{
+				if ((events[i]->configuration&Event::TYPE_MASK) != Event::CHORD && events[i]->check(Event::MOUSEBUTTON, button, action))
+					This->emitUserEvent(events[i]);
+			}
+
+			//	second pass process chord
+			for (unsigned int i = 0; i<events.size(); i++)
+			{
+				if ((events[i]->configuration&Event::TYPE_MASK) == Event::CHORD && events[i]->check(Event::MOUSEBUTTON, button, action))
+					This->emitUserEvent(events[i]);
+			}
+		}
     }
     catch(std::out_of_range){}
 }
@@ -414,50 +487,88 @@ void EventHandlerImpl::scrollingCallback(GLFWwindow* window, double xoffset, dou
     This->scrollingRelativeBuffer.x = (float)xoffset;
     This->scrollingRelativeBuffer.y = (float)yoffset;
 
-    bool chord = false;
-    for(unsigned int i=0;i<This->scrollingListeners.size();i++)
-    {
-        if((This->scrollingListeners[i]->configuration&Event::TYPE_MASK)==Event::CHORD &&
-           This->scrollingListeners[i]->check(Event::SCROLLING,-1,-1))
-        {
-            chord = true;
-            This->emitUserEvent(This->scrollingListeners[i]);
-        }
-    }
-    if((This->configuration&CHORD_HIGH_PRIORITY) && chord) return;
-    for(unsigned int i=0;i<This->scrollingListeners.size();i++)
-    {
-        if((This->scrollingListeners[i]->configuration&Event::TYPE_MASK)!=Event::CHORD &&
-           This->scrollingListeners[i]->check(Event::SCROLLING,-1,-1))
-            This->emitUserEvent(This->scrollingListeners[i]);
-    }
+	if ((This->configuration&CHORD_HIGH_PRIORITY))
+	{
+		//	first pass process chord
+		for(unsigned int i=0;i<This->scrollingListeners.size();i++)
+		{
+			if((This->scrollingListeners[i]->configuration&Event::TYPE_MASK)==Event::CHORD && This->scrollingListeners[i]->check(Event::SCROLLING,-1,-1))
+				This->emitUserEvent(This->scrollingListeners[i]);
+		}
+
+		//	second pass process !chord
+		for(unsigned int i=0;i<This->scrollingListeners.size();i++)
+		{
+			if((This->scrollingListeners[i]->configuration&Event::TYPE_MASK)!=Event::CHORD && This->scrollingListeners[i]->check(Event::SCROLLING,-1,-1))
+				This->emitUserEvent(This->scrollingListeners[i]);
+		}
+	}
+	else
+	{
+		//	first pass process !chord
+		for (unsigned int i = 0; i<This->scrollingListeners.size(); i++)
+		{
+			if ((This->scrollingListeners[i]->configuration&Event::TYPE_MASK) != Event::CHORD && This->scrollingListeners[i]->check(Event::SCROLLING, -1, -1))
+				This->emitUserEvent(This->scrollingListeners[i]);
+		}
+
+		//	second pass process chord
+		for (unsigned int i = 0; i<This->scrollingListeners.size(); i++)
+		{
+			if ((This->scrollingListeners[i]->configuration&Event::TYPE_MASK) == Event::CHORD && This->scrollingListeners[i]->check(Event::SCROLLING, -1, -1))
+				This->emitUserEvent(This->scrollingListeners[i]);
+		}
+	}
+    
 }
 void EventHandlerImpl::dropCallback(GLFWwindow* window, int count, const char** paths)
 {
-    bool chord = false;
-    for(unsigned int i=0;i<This->dragAndDropListeners.size();i++)
-    {
-        if((This->dragAndDropListeners[i]->configuration&Event::TYPE_MASK)==Event::CHORD &&
-           This->dragAndDropListeners[i]->check(Event::DRAGANDDROP,-1,-1))
-        {
-            chord = true;
-            This->emitUserEvent(This->dragAndDropListeners[i]);
-        }
-    }
-    if((This->configuration&CHORD_HIGH_PRIORITY) && chord) return;
-    for(unsigned int i=0;i<This->dragAndDropListeners.size();i++)
-    {
-        if((This->dragAndDropListeners[i]->configuration&Event::TYPE_MASK)!=Event::CHORD &&
-           This->dragAndDropListeners[i]->check(Event::DRAGANDDROP,-1,-1))
-            This->emitUserEvent(This->dragAndDropListeners[i]);
-    }
+	if ((This->configuration&CHORD_HIGH_PRIORITY))
+	{
+		//	first pass process chord
+		for(unsigned int i=0;i<This->dragAndDropListeners.size();i++)
+		{
+			if((This->dragAndDropListeners[i]->configuration&Event::TYPE_MASK)==Event::CHORD && This->dragAndDropListeners[i]->check(Event::DRAGANDDROP,-1,-1))
+				This->emitUserEvent(This->dragAndDropListeners[i]);
+		}
+
+		//	second pass process !chord
+		for(unsigned int i=0;i<This->dragAndDropListeners.size();i++)
+		{
+			if((This->dragAndDropListeners[i]->configuration&Event::TYPE_MASK)!=Event::CHORD && This->dragAndDropListeners[i]->check(Event::DRAGANDDROP,-1,-1))
+				This->emitUserEvent(This->dragAndDropListeners[i]);
+		}
+	}
+	else
+	{
+		//	first pass process !chord
+		for (unsigned int i = 0; i<This->dragAndDropListeners.size(); i++)
+		{
+			if ((This->dragAndDropListeners[i]->configuration&Event::TYPE_MASK) != Event::CHORD && This->dragAndDropListeners[i]->check(Event::DRAGANDDROP, -1, -1))
+				This->emitUserEvent(This->dragAndDropListeners[i]);
+		}
+
+		//	second pass process chord
+		for (unsigned int i = 0; i<This->dragAndDropListeners.size(); i++)
+		{
+			if ((This->dragAndDropListeners[i]->configuration&Event::TYPE_MASK) == Event::CHORD && This->dragAndDropListeners[i]->check(Event::DRAGANDDROP, -1, -1))
+				This->emitUserEvent(This->dragAndDropListeners[i]);
+		}
+	}
 }
 
 
 void EventHandlerImpl::windowFocusCallback(GLFWwindow* window, int focused)
 {
-    if(focused) This->focusedWindow = window;
-    else if(This->focusedWindow == window) This->focusedWindow = nullptr;
+	for (unsigned int i = 0; i < This->windowList.size(); i++)
+	{
+		if (glfwGetWindowAttrib(This->windowList[i], GLFW_FOCUSED))
+		{
+			This->focusedWindow = window;
+			return;
+		}
+	}
+	This->focusedWindow = nullptr;
 }
 void EventHandlerImpl::framebufferResizeCallback(GLFWwindow* window, int width, int height)
 {

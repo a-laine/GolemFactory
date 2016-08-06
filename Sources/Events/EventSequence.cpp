@@ -5,12 +5,15 @@ float EventSequence::timeout = 0.4f; //in second
 //
 
 //  Default
-EventSequence::EventSequence() : Event(Event::SEQUENCE),state(0),lastCheckTime(0){}
-EventSequence::~EventSequence(){}
+EventSequence::EventSequence() : Event(Event::SEQUENCE),state(0),lastCheckTime(0) {}
+EventSequence::~EventSequence() {}
 //
 
 //  Public functions
-bool EventSequence::isActivated() const {return false;}
+bool EventSequence::isActivated() const
+{
+	return false;
+}
 bool EventSequence::check(InputType call,int key,int action)
 {
     if(action == GLFW_RELEASE) return false;
@@ -25,7 +28,7 @@ bool EventSequence::check(InputType call,int key,int action)
     {
         state++;
         lastCheckTime = time;
-        if(state>=inputList.size())
+        if(state>=inputList.size())	//	end of sequence reached -> need a user event emission
         {
             state = 0;
             return true;
