@@ -32,8 +32,9 @@ int main()
 
 	// Init Event handler
 	EventHandler::getInstance()->addWindow(window);
-	//EventHandler::getInstance()->reload("C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/", "RPG Key mapping");
-	EventHandler::getInstance()->reload("C:/Users/Thibault/Documents/Github/GolemFactory/Resources/", "RPG Key mapping");
+	//EventHandler::getInstance()->setRepository("C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/");
+	EventHandler::getInstance()->setRepository("C:/Users/Thibault/Documents/Github/GolemFactory/Resources/");
+	EventHandler::getInstance()->loadKeyMapping("RPG Key mapping");
 	EventHandler::getInstance()->setCursorMode(false);
 	
 	// Init Resources manager and load some default shader

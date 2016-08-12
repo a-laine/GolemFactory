@@ -1,4 +1,4 @@
-Comic Sans MS{
+Comic Sans MS {
 	texture : "Comic Sans MS.png";
 	font : "Comic Sans MS.txt";
 	begin : 32 ;

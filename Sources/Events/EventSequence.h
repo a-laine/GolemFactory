@@ -65,12 +65,12 @@ class EventSequence : public Event
         //
 
         //  Attributes
-        static float timeout;	///	The timeout common to all sequence event
+        static float timeout;	//!<	The timeout common to all sequence event
         //
 
     protected:
         //  Attributes
-        uint8_t state;			///	The state of the sequence (which Input is needed for the next check)
-        float lastCheckTime;	///	The last check time (used to check if the input is reached in time or not)
+        uint8_t state;			//!<	The state of the sequence (which Input is needed for the next check)
+        float lastCheckTime;	//!<	The last check time (used to check if the input is reached in time or not)
         //
 };

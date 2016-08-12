@@ -9,6 +9,7 @@
 #include <map>
 #include <vector>
 #include <algorithm>
+#include <fstream>
 
 #include "Utiles/Mutex.h"
 
@@ -165,7 +166,7 @@ class EventHandlerImpl
 		*	\brief Change the directory of where to find event file configuration for key mapping loading
 		*	\param path : directory to find event file configuration
 		*/
-		virtual void setPath(std::string path) {};
+		virtual void setRepository(std::string path);
         //
 
     protected:
@@ -179,7 +180,8 @@ class EventHandlerImpl
             REPEAT = 1<<0,						//!< Repeat mode flag location
             TEXTIN = 1<<1,						//!< Text entry mode flag location
             CURSOR_DISABLE = 1<<2,				//!< Cursor visibility flag location
-            CHORD_HIGH_PRIORITY = 1<<3			//!< Chord priority flag location
+            CHORD_HIGH_PRIORITY = 1<<3,			//!< Chord priority flag location
+			FUTUR_USE = 1 << 4					//!< Flag used in herited class
         };
         //
 
@@ -221,7 +223,11 @@ class EventHandlerImpl
 		*	\brief Swap the double buffered user event list
 		*/
         virtual void swapFrameEventList(){};
-        //
+
+		/*!
+		*	\brief Useful function for parsing user defined enumeration file.
+		*/
+		virtual std::string openAndCleanCStyleFile(std::string fileName, std::string commentBlockEntry = "/*", std::string commentLineEntry = "//");
 
         //  Callbacks
 		/*!

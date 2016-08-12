@@ -1,43 +1,53 @@
+/*	THIS FILE MUST RESPECT THE C FILE STRUCTURE TO BE VALID
+ *
+ *	For that you just have to specify the interior of a structure like in C.
+ *	Comment block just like this one are supported and comment line too.
+ *  The parser is intentation independant.
+ *
+ *	One limitation : for an explicit value attribution place the value in the same line,
+ *  like "FORWARD = 1,". if not result is not guarantee.
+ *
+ */
+
 //  movement event,
+	FORWARD = 1,
+	BACKWARD,
+	LEFT,
+	RIGHT,
 
-FORWARD = 1,
-BACKWARD,
-LEFT,
-RIGHT,
+//  playable character event
+	ACTION,
+	USE1,
+	USE2,
+	CHANGE_MODE,
+	INVENTORY,
+	RUN,
+	SNEAKY,
+	JUMP,
+	ZOOM,	// not working yet
+	SALUT,
 
-//  playable character event, (be careful ZOOM event is not working)
-ACTION,
-USE1,
-USE2,
-CHANGE_MODE,
-INVENTORY,
-RUN,
-SNEAKY,
-JUMP,
-ZOOM,
-SALUT,
-
-//  valid cancel return,
-ESCAPE,
-DOUBLE_CLICK_LEFT,
-ENTER,
+//  menu action,
+	ESCAPE,
+	DOUBLE_CLICK_LEFT,
+	ENTER,
 
 //  use special item,
-SLOT0,
-SLOT1,
-SLOT2,
-SLOT3,
-SLOT4,
-SLOT5,
-SLOT6,
-SLOT7,
-SLOT8,
-SLOT9,
+	SLOT0,
+	SLOT1,
+	SLOT2,
+	SLOT3,
+	SLOT4,
+	SLOT5,
+	SLOT6,
+	SLOT7,
+	SLOT8,
+	SLOT9,
 
 //  miscellaneous,
-HELP,
-CHANGE_CURSOR_MODE,
-QUICKSAVE,
-QUICKLOAD,
-SCREENSHOT,
-QUIT,
+	HELP,
+	CHANGE_CURSOR_MODE,
+	QUICKSAVE,
+	QUICKLOAD,
+	SCREENSHOT,
+	QUIT,

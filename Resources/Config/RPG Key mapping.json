@@ -1,0 +1,188 @@
+DefaultRPGKeyMapping
+{
+	forward : {
+		eventPublished : "FORWARD";
+		configuration : "button";
+		listeningKey : [87];
+	};
+	backward : {
+		eventPublished : "BACKWARD";
+		configuration : "button";
+		listeningKey : [83];
+	};
+	left : {
+		eventPublished : "LEFT";
+		configuration : "button";
+		listeningKey : [65];
+	};
+	right : {
+		eventPublished : "RIGHT";
+		configuration : "button";
+		listeningKey : [68];
+	};
+	
+	
+	action : {
+		eventPublished : "ACTION";
+		configuration : ["button","down"];
+		listeningKey : [69];
+	};
+	useFirstHand : {
+		eventPublished : "USE1";
+		configuration : ["button","down"];
+		listeningMouse : [0];
+	};
+	useSecondHand : {
+		eventPublished : "USE2";
+		configuration : ["button","down"];
+		listeningMouse : [1];
+	};
+	changeModeKey1 : {
+		eventPublished : "CHANGE_MODE";
+		configuration : ["button","down"];
+		listeningMouse : [2];
+	};
+	changeModeKey2 : {
+		eventPublished : "CHANGE_MODE";
+		configuration : "button";
+		listeningKey : [81];
+	};
+	inventory1 : {
+		eventPublished : "INVENTORY";
+		configuration : ["button","down"];
+		listeningKey : [258];
+	};
+	inventory2 : {
+		eventPublished : "INVENTORY";
+		configuration : ["button","down"];
+		listeningKey : [73];
+	};
+	run : {
+		eventPublished : "RUN";
+		configuration : "button";
+		listeningKey : [340];
+	};
+	sneaky : {
+		eventPublished : "SNEAKY";
+		configuration : "button";
+		listeningKey : [341];
+	};
+	jump : {
+		eventPublished : "JUMP";
+		configuration : "button";
+		listeningKey : [32];
+	};
+	zoom : {
+		eventPublished : "ZOOM";
+		configuration : ["button","down"];
+		listeningScroll : true;
+	};
+	salut : {
+		eventPublished : "SALUT";
+		configuration : "chord";
+		listeningKey : [340,341];
+	};
+	
+	
+	escape : {
+		eventPublished : "ESCAPE";
+		configuration : ["button","down"];
+		listeningKey : [256];
+	};
+	doubleClick : {
+		eventPublished : "DOUBLE_CLICK_LEFT";
+		configuration : "sequence";
+		listeningKey : [0,0];
+	};
+	enter : {
+		eventPublished : "ENTER";
+		configuration : ["button","down"];
+		listeningKey : [257];
+	};
+	
+	
+	slot0 : {
+		eventPublished : "SLOT0";
+		configuration : ["button","down"];
+		listeningKey : [48];
+	};
+	slot1 : {
+		eventPublished : "SLOT1";
+		configuration : ["button","down"];
+		listeningKey : [49];
+	};
+	slot2 : {
+		eventPublished : "SLOT2";
+		configuration : ["button","down"];
+		listeningKey : [50];
+	};
+	slot3 : {
+		eventPublished : "SLOT3";
+		configuration : ["button","down"];
+		listeningKey : [51];
+	};
+	slot4 : {
+		eventPublished : "SLOT4";
+		configuration : ["button","down"];
+		listeningKey : [52];
+	};
+	slot5 : {
+		eventPublished : "SLOT5";
+		configuration : ["button","down"];
+		listeningKey : [53];
+	};
+	slot6 : {
+		eventPublished : "SLOT6";
+		configuration : ["button","down"];
+		listeningKey : [54];
+	};
+	slot7 : {
+		eventPublished : "SLOT7";
+		configuration : ["button","down"];
+		listeningKey : [55];
+	};
+	slot8 : {
+		eventPublished : "SLOT8";
+		configuration : ["button","down"];
+		listeningKey : [56];
+	};
+	slot9 : {
+		eventPublished : "SLOT9";
+		configuration : ["button","down"];
+		listeningKey : [57];
+	};
+	
+	
+	help : {
+		eventPublished : "HELP";
+		configuration : ["button","down"];
+		listeningKey : [290];
+	};
+	changeCursorMode : {
+		eventPublished : "CHANGE_CURSOR_MODE";
+		configuration : ["button","down"];
+		listeningKey : [291];
+	};
+	quicksave : {
+		eventPublished : "QUICKSAVE";
+		configuration : ["button","down"];
+		listeningKey : [295];
+	};
+	quickload : {
+		eventPublished : "QUICKLOAD";
+		configuration : ["button","down"];
+		listeningKey : [298];
+	};
+	screenshot : {
+		eventPublished : "SCREENSHOT";
+		configuration : ["button","down"];
+		listeningKey : [301];
+	};
+	
+	
+	quit : {
+		eventPublished : "QUIT";
+		configuration : ["button","down"];
+		listeningKey : [256];
+	};
+}

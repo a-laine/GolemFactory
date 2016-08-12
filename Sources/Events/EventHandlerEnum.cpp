@@ -1,34 +1,32 @@
 #include "EventHandlerEnum.h"
+#include "Utiles/Parser/Reader.h"
 
 #include <cctype>
-#include <fstream>
 #include <sstream>
 
 //  Default
 EventHandlerEnum::EventHandlerEnum(std::string path) : EventHandlerImpl(path)
 {
     addEvent(QUIT,Event::KEY,GLFW_KEY_ESCAPE);
-    loadKeyMapping("RPG key mapping");
 }
-EventHandlerEnum::~EventHandlerEnum() {}
+EventHandlerEnum::~EventHandlerEnum()
+{
+	clear();
+}
 //
 
 //  Public functions
-void EventHandlerEnum::reload(std::string path, std::string file)
-{
-	repository = path;
-	loadKeyMapping(path, file);
-}
-
 void EventHandlerEnum::loadKeyMapping(std::string file)
 {
 	loadKeyMapping(repository,file);
 }
-void EventHandlerEnum::loadKeyMapping(std::string path,std::string file)
+void EventHandlerEnum::loadKeyMapping(std::string path,std::string filename)
 {
+	if (filename.empty())
+		filename = "RPG key mapping";
+
 	//	initialize variable
 	std::string line, name, tmp;
-	int index, key;
 	std::map<Event*, EventEnum> eventMappingBuffer;
 	std::multimap<EventEnum, Event*> userMappingBuffer;
 	std::map<int, std::vector<Event*> > keyboardListenersBuffer;
@@ -40,177 +38,228 @@ void EventHandlerEnum::loadKeyMapping(std::string path,std::string file)
     std::vector<Event*> dragAndDropListenersBuffer;
 	std::map<std::string, int> enumMap;
 
-    //  Create map userEnum -> int
-    std::ifstream enumFile(path + "../Sources/UserEnum.enum");
-	if (!enumFile.good() && path != "")
-    {
-		std::cerr << "EventHandler : Unable to load key mapping:" << std::endl;
-		std::cerr << "               Fail to open event enumeration file :" << std::endl;
-		std::cerr << "               " << path + "../Sources/UserEnum.enum" << std::endl;
-        return;
-    }
-	else if (path == "")
+    //  Create map userEnum string to int map
 	{
-		std::cerr << "EventHandler : Unable to load key mapping:" << std::endl;
-		std::cerr << "               Fail to open event enumeration file" << std::endl;
-		std::cerr << "               Please check your repository path" << std::endl;
-		return;
+		std::string file = openAndCleanCStyleFile(path + "../Sources/UserEnum.enum");
+		if (file.empty()) return;
+		
+		int index = 0;
+		std::stringstream userEnumStream(file);
+		while (!userEnumStream.eof())
+		{
+			std::getline(userEnumStream, line, ',');
+			if (line.empty()) continue;
+
+			//	remove unrevelant char from line begining
+			auto it = line.begin();
+			while (std::isspace(*it))
+				it = line.erase(it);
+
+			//	extract key and value for map insertion
+			if (line.find('=') == std::string::npos)
+			{
+				name = line;
+				index++;
+			}
+			else
+			{
+				//	remove space from line
+				for (it = line.begin(); it != line.end(); it++)
+					if (std::isspace(*it)) it = std::prev(line.erase(it));
+				
+				//	extract name and value from line string
+				name.clear();
+				name.append(line.begin(), line.begin() + line.find('='));
+				tmp.clear();
+				tmp.append(line.begin() + line.find('=') + 1,line.end());
+				index = std::stoi(tmp, nullptr, 10);
+			}
+			enumMap[name] = index;
+		}
 	}
 
-    index = 0;
-    while(!enumFile.eof())
-    {
-		std::getline(enumFile, line);
-        std::getline(enumFile,line,',');
-        line.erase(remove_if(line.begin(),line.end(),[](char x){return std::isspace(x);}),line.end());
-        if(line.size() == 0) continue;          //empty line
-        else if(line.find("//") == 0) continue; //comment line
+	//	Parse user configuration file and instanciate associated event
+	{
+		//	load and parse file into variant structure
+		Variant v; Variant* tmpvariant;
+		try
+		{
+			Reader::parseFile(v, path + "Config/" + filename + ".json");
+			tmpvariant = &(v.getMap().begin()->second);
+		}
+		catch (std::exception&)
+		{
+			std::cerr << "EventHandler : Fail to open or parse file :" << std::endl;
+			std::cerr << "               " << path + "Config/" + filename + ".cfg" << std::endl;
+			return;
+		}
+		Variant& configMap = *tmpvariant;
 
-        if(line.find('=') == std::string::npos)
-        {
-            name = line;
-            index++;
-        }
-        else
-        {
-            std::stringstream lineStream(line);
-            std::getline(lineStream,name,'=');
-            std::getline(lineStream,tmp);
-            index = atoi(tmp.c_str());
-        }
-        enumMap[name] = index;
-    }
-    enumFile.close();
+		//	initialize parameters
+		Variant currentEvent;
+		Event* event;
+		uint8_t eventConfig;
+		bool errorHeaderPrinted = false;
 
-    //  Parse command file
-    std::ifstream configFile(path + "Config/" + file + ".cfg");
-	if (!configFile.good())
-    {
-		std::cerr << "EventHandler : Unable to load key mapping:" << std::endl;
-		std::cerr << "               Fail to open event config file :" << std::endl;
-		std::cerr << "               " << path + "Config/" + file + ".cfg" << std::endl;
-        return;
-    }
+		//	instanciate Event
+		for (auto it = configMap.getMap().begin(); it != configMap.getMap().end(); it++)
+		{
+			currentEvent = it->second;
 
-    while(!configFile.eof())
-    {
-        std::getline(configFile,line,';');
-        line.erase(remove_if(line.begin(),line.end(),[](char x){return std::isspace(x);}),line.end());
-        if(line.size() == 0) continue;          //empty line
-        else if(line.find("//") == 0) continue; //comment line
-        std::stringstream lineStream(line);
+			//  extract name
+			try
+			{
+				name.clear();
+				name = currentEvent["eventPublished"].toString();
+				if(enumMap.find(name) == enumMap.end()) throw std::logic_error("unknown publisher declared");
+			}
+			catch (std::exception& e)
+			{
+				if (!errorHeaderPrinted) { errorHeaderPrinted = true; std::cerr << "EventHandler : Errors occurs in loading key mapping :" << std::endl; }
+				std::cerr << "               Event '" << it->first <<"' : " << e.what() << std::endl;
+			}
+			if (name.empty()) continue;
 
-        //  extract NAME & config byte
-        std::getline(lineStream,name,',');
-            if(lineStream.eof()) continue;
-        std::getline(lineStream,tmp,',');
-            if(lineStream.eof()) continue;
-            index = atoi(tmp.c_str());
+			//  extract configuration
+			try
+			{
+				eventConfig = 0x00;
+				if (currentEvent["configuration"].getType() == Variant::STRING)
+				{
+					tmp = currentEvent["configuration"].toString();
+					if (tmp == "button")  eventConfig = (Event::EventType) Event::BUTTON;
+					else if (tmp == "chord")  eventConfig = (Event::EventType) Event::CHORD;
+					else if (tmp == "sequence")  eventConfig = (Event::EventType) Event::SEQUENCE;
+					else if (tmp == "gesture")  throw std::logic_error("event type not supported");
+					else throw std::logic_error("unknown type event");
+				}
+				else if (currentEvent["configuration"].getType() == Variant::ARRAY)
+				{
+					for (auto it2 = currentEvent["configuration"].getArray().begin(); it2 != currentEvent["configuration"].getArray().end(); it2++)
+					{
+						tmp = it2->toString();
+						if (tmp == "button")  eventConfig |= (Event::EventType) Event::BUTTON;
+						else if (tmp == "chord")  eventConfig |= (Event::EventType) Event::CHORD;
+						else if (tmp == "sequence")  eventConfig |= (Event::EventType) Event::SEQUENCE;
+						else if (tmp == "up" || tmp == "released")  eventConfig |= (Event::EventType) Event::UP_FLAG;
+						else if (tmp == "down" || tmp == "pressed")  eventConfig |= (Event::EventType) Event::DOWN_FLAG;
+						else if (tmp == "gesture")  throw std::logic_error("event type not supported");
+						else throw std::logic_error("unknown type event");
+					}
+					if((eventConfig & Event::TYPE_MASK) > Event::SEQUENCE) throw std::logic_error("invalid configuration combination");
+				}
+			}
+			catch (std::exception& e)
+			{
+				if (!errorHeaderPrinted) { errorHeaderPrinted = true; std::cerr << "EventHandler : Errors occurs in loading key mapping :" << std::endl; }
+				std::cerr << "               Event '" << it->first << "' : " << e.what() << std::endl;
+				eventConfig = 0x00;
+			}
+			if (!eventConfig) continue;
 
-        Event* event;
-        if((index&Event::TYPE_MASK) == Event::SEQUENCE)
-        {
-            std::pair<EventEnum,Event*> p;
-                p.first = (EventEnum)enumMap[name];
-                p.second = new EventSequence();
-            auto it = userMappingBuffer.insert(p);
-            event = it->second;
-            eventMappingBuffer[event] = p.first;
-        }
-        else if((index&Event::TYPE_MASK) == Event::GESTURE)
-        {
-            std::cerr<<"EventHandler : GESTURE event type not yet implemented :"<<std::endl;
-            std::cerr<<"               \'"<<name<<"\' not added to the event list."<<std::endl;
-            continue;
-        }
-        else
-        {
-            std::pair<EventEnum,Event*> p;
-                p.first = (EventEnum)enumMap[name];
-                p.second = new Event((uint8_t)index);
-            auto it = userMappingBuffer.insert(p);
-            event = it->second;
-            eventMappingBuffer[event] = p.first;
-        }
+			//	check if valid event before instanciate
+			if (currentEvent.getMap().find("listeningKey") == currentEvent.getMap().end()       && currentEvent.getMap().find("listeningMouse") == currentEvent.getMap().end()        &&
+				currentEvent.getMap().find("listeningScroll") == currentEvent.getMap().end()	&& currentEvent.getMap().find("listeningText") == currentEvent.getMap().end()         &&
+				currentEvent.getMap().find("listeningCursorPos") == currentEvent.getMap().end() && currentEvent.getMap().find("listeningCursorEntred") == currentEvent.getMap().end() &&
+				currentEvent.getMap().find("listeningDragDrop") == currentEvent.getMap().end())
+			{
+				if (!errorHeaderPrinted) { errorHeaderPrinted = true; std::cerr << "EventHandler : Errors occurs in loading key mapping :" << std::endl; }
+				std::cerr << "               Event '" << it->first << "' : no listening callback defined" << std::endl;
+				continue;
+			}
+			else
+			{
+				switch (eventConfig & Event::TYPE_MASK)
+				{
+					case Event::SEQUENCE: event = new EventSequence(); break;
+					default: event = new Event(eventConfig); break;
+				}
+				userMappingBuffer.insert(std::pair<EventEnum, Event*>((EventEnum)enumMap[name], event));
+				eventMappingBuffer[event] = (EventEnum)enumMap[name];
+			}
 
-        //  Process keyboard input
-        std::getline(lineStream,tmp,',');
-            if(lineStream.eof()) continue;
-            index = atoi(tmp.c_str());
-        for(int i=0;i<index;i++)
-        {
-            std::getline(lineStream,tmp,',');
-                if(lineStream.eof()) continue;
-                key = atoi(tmp.c_str());
-            event->addInput(Event::KEY,key);
-            auto it = std::find(keyboardListenersBuffer[key].begin(),keyboardListenersBuffer[key].end(),event);
-            if(it==keyboardListenersBuffer[key].end()) keyboardListenersBuffer[key].insert(keyboardListenersBuffer[key].end(),event);
-        }
+			//	Attach keyboard input
+			try
+			{
+				for (auto it2 = currentEvent["listeningKey"].getArray().begin(); it2 != currentEvent["listeningKey"].getArray().end(); it2++)
+				{
+					int key = it2->toInt();
+					event->addInput(Event::KEY, key);
+					auto it3 = std::find(keyboardListenersBuffer[key].begin(), keyboardListenersBuffer[key].end(), event);
+					if (it3 == keyboardListenersBuffer[key].end()) keyboardListenersBuffer[key].insert(keyboardListenersBuffer[key].end(), event);
+				}
+			}
+			catch (std::exception&) {}
 
-        //  Process mouse input
-        std::getline(lineStream,tmp,',');
-            if(lineStream.eof()) continue;
-            index = atoi(tmp.c_str());
-        for(int i=0;i<index;i++)
-        {
-            std::getline(lineStream,tmp,',');
-                if(lineStream.eof()) continue;
-                key = atoi(tmp.c_str());
-            event->addInput(Event::MOUSEBUTTON,key);
-            auto it = std::find(mouseButtonListenersBuffer[key].begin(),mouseButtonListenersBuffer[key].end(),event);
-            if(it==mouseButtonListenersBuffer[key].end()) mouseButtonListenersBuffer[key].insert(mouseButtonListenersBuffer[key].end(),event);
-        }
+			//	Attach mouse input
+			try
+			{
+				for (auto it2 = currentEvent["listeningMouse"].getArray().begin(); it2 != currentEvent["listeningMouse"].getArray().end(); it2++)
+				{
+					int key = it2->toInt();
+					event->addInput(Event::MOUSEBUTTON, key);
+					auto it3 = std::find(mouseButtonListenersBuffer[key].begin(), mouseButtonListenersBuffer[key].end(), event);
+					if (it3 == mouseButtonListenersBuffer[key].end()) mouseButtonListenersBuffer[key].insert(mouseButtonListenersBuffer[key].end(), event);
+				}
+			}
+			catch (std::exception&) {}
 
-        //  Process scrolling
-        std::getline(lineStream,tmp,',');
-            if(lineStream.eof()) continue;
-            index = atoi(tmp.c_str());
-        if(index)
-        {
-            event->addInput(Event::SCROLLING,-1);
-            scrollingListenersBuffer.push_back(event);
-        }
+			//	Attach scrolling input
+			try
+			{
+				if (currentEvent["listeningScroll"].toBool())
+				{
+					event->addInput(Event::SCROLLING, -1);
+					scrollingListenersBuffer.push_back(event);
+				}
+			}
+			catch (std::exception&) {}
 
-        //  Process char enter
-        std::getline(lineStream,tmp,',');
-            if(lineStream.eof()) continue;
-            index = atoi(tmp.c_str());
-        if(index)
-        {
-            event->addInput(Event::CHAR,-1);
-            charEnteredListenersBuffer.push_back(event);
-        }
+			//	Attach text input
+			try
+			{
+				if (currentEvent["listeningText"].toBool())
+				{
+					event->addInput(Event::CHAR, -1);
+					scrollingListenersBuffer.push_back(event);
+				}
+			}
+			catch (std::exception&) {}
 
-        //  Process cursor pos
-        std::getline(lineStream,tmp,',');
-            if(lineStream.eof()) continue;
-            index = atoi(tmp.c_str());
-        if(index)
-        {
-            event->addInput(Event::CURSORPOS,-1);
-            cursorPositionListenersBuffer.push_back(event);
-        }
+			//	Attach cursor position input
+			try
+			{
+				if (currentEvent["listeningCursorPos"].toBool())
+				{
+					event->addInput(Event::CURSORPOS, -1);
+					scrollingListenersBuffer.push_back(event);
+				}
+			}
+			catch (std::exception&) {}
 
-        //  Process cursor enter
-        std::getline(lineStream,tmp,',');
-            if(lineStream.eof()) continue;
-            index = atoi(tmp.c_str());
-        if(index)
-        {
-            event->addInput(Event::CURSORENTER,-1);
-            cursorEnterListenersBuffer.push_back(event);
-        }
+			//	Attach cursor entred input
+			try
+			{
+				if (currentEvent["listeningCursorEntred"].toBool())
+				{
+					event->addInput(Event::CURSORENTER, -1);
+					scrollingListenersBuffer.push_back(event);
+				}
+			}
+			catch (std::exception&) {}
 
-        //  Process drag & drop
-        std::getline(lineStream,tmp,',');
-            index = atoi(tmp.c_str());
-        if(index)
-        {
-            event->addInput(Event::DRAGANDDROP,-1);
-            dragAndDropListenersBuffer.push_back(event);
-        }
-    }
-    configFile.close();
+			//	Attach cursor drag and drop input
+			try
+			{
+				if (currentEvent["listeningDragDrop"].toBool())
+				{
+					event->addInput(Event::DRAGANDDROP, -1);
+					scrollingListenersBuffer.push_back(event);
+				}
+			}
+			catch (std::exception&) {}
+		}
+	}
 
     //  Swap list content
     mutex.lock();
