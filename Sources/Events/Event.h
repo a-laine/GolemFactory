@@ -1,10 +1,10 @@
 #pragma once
 
 /*!
-*	\file Event.h
-*	\brief Declaration of the Event class.
-*	\author Thibault LAINE
-*/
+ *	\file Event.h
+ *	\brief Declaration of the Event class.
+ *	\author Thibault LAINE
+ */
 
 #include <iostream>
 #include <vector>
@@ -25,12 +25,12 @@ class Event
     public:
         //  Miscellaneous
 		/*!
-		*	\enum EventType
-		*	\brief Used to diferenciate event type.
-		*
-		*	Use this to generate a configuration byte for an Event
-		*
-		*/
+		 *	\enum EventType
+		 *	\brief Used to diferenciate event type.
+		 *
+		 *	Use this to generate a configuration byte for an Event
+		 *
+		 */
         enum EventType
         {
             BUTTON = 1,					//!< Event type button from keyboard or mouse
@@ -66,9 +66,9 @@ class Event
         };
 
 		/*!
-		*	\struct Input
-		*	\brief An input for event. Regroup an input type and a key code (or button code)
-		*/
+		 *	\struct Input
+		 *	\brief An input for event. Regroup an input type and a key code (or button code)
+		 */
         struct Input
         {
             InputType callback;			//!< The type of callback related to the input. For more info see #InputType.
@@ -78,9 +78,9 @@ class Event
 
         //  Default
 		/*!
-		*  \brief Constructor
-		*  \param config : the event configuration (see #configuration.)
-		*/
+		 *  \brief Constructor
+		 *  \param config : the event configuration (see #configuration.)
+		 */
         Event(uint8_t config = 0x00);
 
 		/*!
@@ -91,25 +91,25 @@ class Event
 
         //  Public functions
 		/*!
-		*	\brief Function to check if the event is actualy activated.
-		*
-		*	Simply extract the activated flag from the configuration byte.
-		*
-		*	\return true if activated, false otherwise
-		*/
+		 *	\brief Function to check if the event is actualy activated.
+		 *
+		 *	Simply extract the activated flag from the configuration byte.
+		 *
+		 *	\return true if activated, false otherwise
+		 */
         virtual bool isActivated() const;
 
 		/*!
-		*	\brief Update function called by the EventHandler.
-		*
-		*	If the event is configured with an UP_FLAG, the EventHandler will publish a user event when this event becomes activated.
-		*	If the event is configured with an DOWN_FLAG, the EventHandler will publish a user event when this event becomes unactivated.
-		*
-		*	\param call : Type of the callback that generate this update
-		*	\param key : The key code of the input
-		*	\param action : A second parameter of the input (ex : for a button it's for pressed/released)
-		*	\return true if a user event publish is needed (up/down flags in #configuration. byte), false otherwise
-		*/
+		 *	\brief Update function called by the EventHandler.
+		 *
+		 *	If the event is configured with an UP_FLAG, the EventHandler will publish a user event when this event becomes activated.
+		 *	If the event is configured with an DOWN_FLAG, the EventHandler will publish a user event when this event becomes unactivated.
+		 *
+		 *	\param call : Type of the callback that generate this update
+		 *	\param key : The key code of the input
+		 *	\param action : A second parameter of the input (ex : for a button it's for pressed/released)
+		 *	\return true if a user event publish is needed (up/down flags in #configuration. byte), false otherwise
+		 */
         virtual bool check(InputType call,int key,int action);
 
 		/*!

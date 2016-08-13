@@ -1,6 +1,5 @@
 #include "Camera.h"
 
-#define M_PI 3.14159265358979323846264338327
 
 //  Default
 Camera::Camera(float screenRatio)
@@ -26,12 +25,13 @@ Camera::~Camera() {}
 //  Public functions
 void Camera::animate(float elapseTime,bool goForw,bool goBack,bool goLeft,bool goRight,bool option1,bool option2)
 {
+	//	begin
     mutex.lock();
-
     float tmpSpeed = speedMag;
 	glm::vec3 direction(0.,0.,0.);
 	float tmpSensitivity = sensivity*frustrumAngleVertical / 45.f;
 
+	//	move camera
     switch(configuration&MODE_MASK)
     {
         case FREEFLY:
@@ -41,19 +41,16 @@ void Camera::animate(float elapseTime,bool goForw,bool goBack,bool goLeft,bool g
                 teta -= tmpSensitivity*EventHandler::getInstance()->getCursorPositionRelative().y;
                 vectorsFromAngles();
             }
-            if(goForw) direction += forward;
-            if(goBack) direction -= forward;
-            if(goLeft) direction += left;
-            if(goRight) direction -= left;
+			if (goForw) direction += forward;
+			if (goBack) direction -= forward;
+			if (goLeft) direction += left;
+            if (goRight) direction -= left;
 
-            if(option2) tmpSpeed /= 10.f;
-            if(option1) tmpSpeed *= 10.f;
+			if (option2) tmpSpeed /= 10.f;
+			if (option1) tmpSpeed *= 10.f;
 
 			if (direction.x || direction.z || direction.z)
 				position += glm::normalize(direction)*elapseTime*tmpSpeed;
-            break;
-
-        case CINEMATIC:
             break;
 
         case TRACKBALL:
@@ -73,7 +70,8 @@ void Camera::animate(float elapseTime,bool goForw,bool goBack,bool goLeft,bool g
                 vectorsFromAngles();
             }
 
-            if(option1) tmpSpeed *= 10.f;
+			if (option2) tmpSpeed /= 10.f;
+			if (option1) tmpSpeed *= 10.f;
 
 			if (goForw) direction += glm::normalize(glm::dvec3(forward.x, forward.y, 0));
 			if (goBack) direction -= glm::normalize(glm::dvec3(forward.x, forward.y, 0));
@@ -87,6 +85,7 @@ void Camera::animate(float elapseTime,bool goForw,bool goBack,bool goLeft,bool g
         default: break;
     }
 
+	//	end
     mutex.unlock();
 }
 glm::mat4 Camera::getViewMatrix()
@@ -97,25 +96,10 @@ glm::mat4 Camera::getViewMatrix()
     mutex.unlock();
 	return m;
 }
-void Camera::move(glm::vec3 v)
+void Camera::translate(glm::vec3 v)
 {
 	glm::vec3 p = v + getPosition();
     setPosition(p);
-}
-
-void Camera::pause()
-{
-    mutex.lock();
-    if((configuration&MODE_MASK) == TRACKBALL)
-        configuration &= ~PLAY;
-    mutex.unlock();
-}
-void Camera::play()
-{
-    mutex.lock();
-    if((configuration&MODE_MASK) == TRACKBALL)
-        configuration |= PLAY;
-    mutex.unlock();
 }
 //
 
@@ -125,17 +109,6 @@ void Camera::setMode(CameraMode mode)
     mutex.lock();
     configuration &= ~MODE_MASK;
     configuration |= mode;
-
-    switch(mode)
-    {
-        case CINEMATIC:
-            configuration |= PLAY;
-            break;
-
-        default:
-            configuration &= ~PLAY;
-            break;
-    }
     mutex.unlock();
 }
 void Camera::setSpeed(float s)
@@ -348,6 +321,7 @@ float Camera::getSensitivity()
 //  Private functions
 void Camera::vectorsFromAngles(glm::vec3 target)
 {
+	//	initialization pass
     if(phi>180.f) phi -= 360.f;
     else if(phi < -180.f) phi += 360.f;
     if(teta>89.f) teta = 89.f;
@@ -356,6 +330,7 @@ void Camera::vectorsFromAngles(glm::vec3 target)
 	float radTeta = glm::radians(teta);
 	float radPhi = glm::radians(phi);
 
+	//	compute vector
     switch(configuration&MODE_MASK)
     {
         case FREEFLY: case ISOMETRIC:
@@ -379,8 +354,8 @@ void Camera::vectorsFromAngles(glm::vec3 target)
 }
 void Camera::anglesFromVectors()
 {
-	teta = (float) atan2(forward.z, sqrt(forward.x*forward.x + forward.y*forward.y))*180 / (float)M_PI;
-	phi = (float) atan2(forward.y, forward.x)*180 / (float)M_PI;
+	teta = (float) (atan2(forward.z, sqrt(forward.x*forward.x + forward.y*forward.y))*180. / glm::pi<double>());
+	phi = (float) (atan2(forward.y, forward.x)*180. / glm::pi<double>());
 }
 void Camera::boundingRadius()
 {
