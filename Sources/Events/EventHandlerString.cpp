@@ -1,82 +1,41 @@
-#include "EventHandlerEnum.h"
+#include "EventHandlerString.h"
 #include "Utiles/Parser/Reader.h"
 
 #include <cctype>
 #include <sstream>
 
 //  Default
-EventHandlerEnum::EventHandlerEnum(std::string path) : EventHandlerImpl(path)
+EventHandlerString::EventHandlerString(std::string path) : EventHandlerImpl(path)
 {
-    addEvent(QUIT,Event::KEY,GLFW_KEY_ESCAPE);
+	addEvent("QUIT", Event::KEY, GLFW_KEY_ESCAPE);
 }
-EventHandlerEnum::~EventHandlerEnum()
+EventHandlerString::~EventHandlerString()
 {
 	clear();
 }
 //
 
 //  Public functions
-void EventHandlerEnum::loadKeyMapping(std::string file)
+void EventHandlerString::loadKeyMapping(std::string file)
 {
-	loadKeyMapping(repository,file);
+	loadKeyMapping(repository, file);
 }
-void EventHandlerEnum::loadKeyMapping(std::string path,std::string filename)
+void EventHandlerString::loadKeyMapping(std::string path, std::string filename)
 {
 	if (filename.empty())
 		filename = "RPG key mapping";
 
 	//	initialize variable
 	std::string line, name, tmp;
-	std::map<Event*, EventEnum> eventMappingBuffer;
-	std::multimap<EventEnum, Event*> userMappingBuffer;
+	std::map<Event*, std::string> eventMappingBuffer;
+	std::multimap<std::string, Event*> userMappingBuffer;
 	std::map<int, std::vector<Event*> > keyboardListenersBuffer;
 	std::map<int, std::vector<Event*> > mouseButtonListenersBuffer;
 	std::vector<Event*> charEnteredListenersBuffer;
 	std::vector<Event*> cursorPositionListenersBuffer;
-    std::vector<Event*> cursorEnterListenersBuffer;
-    std::vector<Event*> scrollingListenersBuffer;
-    std::vector<Event*> dragAndDropListenersBuffer;
-	std::map<std::string, int> enumMap;
-
-    //  Create map userEnum string to int map
-	{
-		std::string file = openAndCleanCStyleFile(path + "../Sources/UserEnum.enum");
-		if (file.empty()) return;
-		
-		int index = 0;
-		std::stringstream userEnumStream(file);
-		while (!userEnumStream.eof())
-		{
-			std::getline(userEnumStream, line, ',');
-			if (line.empty()) continue;
-
-			//	remove unrevelant char from line begining
-			auto it = line.begin();
-			while (std::isspace(*it))
-				it = line.erase(it);
-
-			//	extract key and value for map insertion
-			if (line.find('=') == std::string::npos)
-			{
-				name = line;
-				index++;
-			}
-			else
-			{
-				//	remove space from line
-				for (it = line.begin(); it != line.end(); it++)
-					if (std::isspace(*it)) it = std::prev(line.erase(it));
-				
-				//	extract name and value from line string
-				name.clear();
-				name.append(line.begin(), line.begin() + line.find('='));
-				tmp.clear();
-				tmp.append(line.begin() + line.find('=') + 1,line.end());
-				index = std::stoi(tmp, nullptr, 10);
-			}
-			enumMap[name] = index;
-		}
-	}
+	std::vector<Event*> cursorEnterListenersBuffer;
+	std::vector<Event*> scrollingListenersBuffer;
+	std::vector<Event*> dragAndDropListenersBuffer;
 
 	//	Parse user configuration file and instanciate associated event
 	{
@@ -111,12 +70,11 @@ void EventHandlerEnum::loadKeyMapping(std::string path,std::string filename)
 			{
 				name.clear();
 				name = currentEvent["eventPublished"].toString();
-				if(enumMap.find(name) == enumMap.end()) throw std::logic_error("unknown publisher declared");
 			}
 			catch (std::exception& e)
 			{
 				if (!errorHeaderPrinted) { errorHeaderPrinted = true; std::cerr << "EventHandler : Errors occurs in loading key mapping :" << std::endl; }
-				std::cerr << "               Event '" << it->first <<"' : " << e.what() << std::endl;
+				std::cerr << "               Event '" << it->first << "' : " << e.what() << std::endl;
 			}
 			if (name.empty()) continue;
 
@@ -146,7 +104,7 @@ void EventHandlerEnum::loadKeyMapping(std::string path,std::string filename)
 						else if (tmp == "gesture")  throw std::logic_error("event type not supported");
 						else throw std::logic_error("unknown type event");
 					}
-					if((eventConfig & Event::TYPE_MASK) > Event::SEQUENCE) throw std::logic_error("invalid configuration combination");
+					if ((eventConfig & Event::TYPE_MASK) > Event::SEQUENCE) throw std::logic_error("invalid configuration combination");
 				}
 			}
 			catch (std::exception& e)
@@ -158,8 +116,8 @@ void EventHandlerEnum::loadKeyMapping(std::string path,std::string filename)
 			if (!eventConfig) continue;
 
 			//	check if valid event before instanciate
-			if (currentEvent.getMap().find("listeningKey") == currentEvent.getMap().end()       && currentEvent.getMap().find("listeningMouse") == currentEvent.getMap().end()        &&
-				currentEvent.getMap().find("listeningScroll") == currentEvent.getMap().end()	&& currentEvent.getMap().find("listeningText") == currentEvent.getMap().end()         &&
+			if (currentEvent.getMap().find("listeningKey") == currentEvent.getMap().end() && currentEvent.getMap().find("listeningMouse") == currentEvent.getMap().end() &&
+				currentEvent.getMap().find("listeningScroll") == currentEvent.getMap().end() && currentEvent.getMap().find("listeningText") == currentEvent.getMap().end() &&
 				currentEvent.getMap().find("listeningCursorPos") == currentEvent.getMap().end() && currentEvent.getMap().find("listeningCursorEntred") == currentEvent.getMap().end() &&
 				currentEvent.getMap().find("listeningDragDrop") == currentEvent.getMap().end())
 			{
@@ -175,14 +133,14 @@ void EventHandlerEnum::loadKeyMapping(std::string path,std::string filename)
 					case Event::SEQUENCE: event = new EventSequence(); break;
 					default: event = new Event(eventConfig); break;
 				}
-				if (!event)
+				if(!event)
 				{
 					if (!errorHeaderPrinted) { errorHeaderPrinted = true; std::cerr << "EventHandler : Errors occurs in loading key mapping :" << std::endl; }
 					std::cerr << "               Event '" << it->first << "' : error instancing" << std::endl;
 					continue;
 				}
-				userMappingBuffer.insert(std::pair<EventEnum, Event*>((EventEnum)enumMap[name], event));
-				eventMappingBuffer[event] = (EventEnum)enumMap[name];
+				userMappingBuffer.insert(std::pair<std::string, Event*>(name, event));
+				eventMappingBuffer[event] = name;
 			}
 
 			//	Attach keyboard input
@@ -268,125 +226,122 @@ void EventHandlerEnum::loadKeyMapping(std::string path,std::string filename)
 		}
 	}
 
-    //  Swap list content
+	//  Swap list content
 	clear();
-    mutex.lock();
+	mutex.lock();
 		eventMapping.swap(eventMappingBuffer);
-        userMapping.swap(userMappingBuffer);
-        keyboardListeners.swap(keyboardListenersBuffer);
-        mouseButtonListeners.swap(mouseButtonListenersBuffer);
-        charEnteredListeners.swap(charEnteredListenersBuffer);
-        cursorPositionListeners.swap(cursorPositionListenersBuffer);
-        cursorEnterListeners.swap(cursorEnterListenersBuffer);
-        scrollingListeners.swap(scrollingListenersBuffer);
-        dragAndDropListeners.swap(dragAndDropListenersBuffer);
-    mutex.unlock();
+		userMapping.swap(userMappingBuffer);
+		keyboardListeners.swap(keyboardListenersBuffer);
+		mouseButtonListeners.swap(mouseButtonListenersBuffer);
+		charEnteredListeners.swap(charEnteredListenersBuffer);
+		cursorPositionListeners.swap(cursorPositionListenersBuffer);
+		cursorEnterListeners.swap(cursorEnterListenersBuffer);
+		scrollingListeners.swap(scrollingListenersBuffer);
+		dragAndDropListeners.swap(dragAndDropListenersBuffer);
+	mutex.unlock();
 }
-bool EventHandlerEnum::isActivated(EventEnum eventName)
+bool EventHandlerString::isActivated(std::string eventName)
 {
-    bool b = false;
-    mutex.lock();
-    auto it = userMapping.find(eventName);
-    while(it!=userMapping.end() && it->first==eventName)
-    {
-        if(it->second->isActivated())
+	bool b = false;
+	mutex.lock();
+	auto it = userMapping.find(eventName);
+	while (it != userMapping.end() && it->first == eventName)
+	{
+		if (it->second->isActivated())
 		{
-            b = true;
-            break;
+			b = true;
+			break;
 		}
-        ++it;
-    }
-    mutex.unlock();
-    return b;
+		++it;
+	}
+	mutex.unlock();
+	return b;
 }
 
-void EventHandlerEnum::getFrameEvent(std::vector<EventEnum>& buffer)
+void EventHandlerString::getFrameEvent(std::vector<std::string>& buffer)
 {
-    mutex.lock();
-    buffer.insert(buffer.end(),frameEvent.begin(),frameEvent.end());
-    configuration |= CLEAR_EVENT_LIST;
-    mutex.unlock();
+	mutex.lock();
+	buffer.insert(buffer.end(), frameEvent.begin(), frameEvent.end());
+	configuration |= CLEAR_EVENT_LIST;
+	mutex.unlock();
 }
-void EventHandlerEnum::addFrameEvent(EventEnum literalEvent)
+void EventHandlerString::addFrameEvent(std::string literalEvent)
 {
-    mutex.lock();
-    frameEvent.insert(frameEvent.end(),literalEvent);
-    mutex.unlock();
-}
-
-void EventHandlerEnum::addEvent(EventEnum eventName,Event::InputType call,int key,uint8_t config)
-{
-    mutex.lock();
-    std::pair<EventEnum,Event*> p;
-        p.first = eventName;
-        p.second = new Event(config);
-        p.second->addInput(call,key);
-    auto it = userMapping.insert(p);
-    Event* event = it->second;
-    eventMapping[event] = eventName;
-    EventHandlerImpl::addEvent(event,call,key);
-    mutex.unlock();
-}
-void EventHandlerEnum::removeEvent(EventEnum eventName)
-{
-    mutex.lock();
-    try
-    {
-        auto it = userMapping.find(eventName);
-        if(it!=userMapping.end())
-        {
-            EventHandlerImpl::removeEvent(it->second);
-            eventMapping.erase(it->second);
-            delete it->second;
-            userMapping.erase(it);
-        }
-    }
-    catch(std::out_of_range){}
-    mutex.unlock();
+	mutex.lock();
+	frameEvent.insert(frameEvent.end(), literalEvent);
+	mutex.unlock();
 }
 
-void EventHandlerEnum::clear()
+void EventHandlerString::addEvent(std::string eventName, Event::InputType call, int key, uint8_t config)
 {
-    mutex.lock();
-    eventMapping.clear();
-    frameEvent.clear();
-    EventHandlerImpl::clear();
-    for(auto it=userMapping.begin();it!=userMapping.end();it++)
-        delete it->second;
-    userMapping.clear();
-    configuration &= ~CLEAR_EVENT_LIST;
-    mutex.unlock();
+	mutex.lock();
+	Event* event = new Event(config);
+	event->addInput(call, key);
+	auto it = userMapping.insert(std::pair<std::string, Event*>(eventName,event));
+	eventMapping[event] = eventName;
+	EventHandlerImpl::addEvent(event, call, key);
+	mutex.unlock();
+}
+void EventHandlerString::removeEvent(std::string eventName)
+{
+	mutex.lock();
+	try
+	{
+		auto it = userMapping.find(eventName);
+		if (it != userMapping.end())
+		{
+			EventHandlerImpl::removeEvent(it->second);
+			eventMapping.erase(it->second);
+			delete it->second;
+			userMapping.erase(it);
+		}
+	}
+	catch (std::out_of_range) {}
+	mutex.unlock();
+}
+
+void EventHandlerString::clear()
+{
+	mutex.lock();
+	eventMapping.clear();
+	frameEvent.clear();
+	EventHandlerImpl::clear();
+	for (auto it = userMapping.begin(); it != userMapping.end(); it++)
+		delete it->second;
+	userMapping.clear();
+	configuration &= ~CLEAR_EVENT_LIST;
+	mutex.unlock();
 }
 //
 
 //  Set/get functions
-unsigned int EventHandlerEnum::getNumberOfEvent()
+unsigned int EventHandlerString::getNumberOfEvent()
 {
 	unsigned int nb;
 	mutex.lock();
-	nb = userMapping.size();
+	nb = keyboardListeners.size();
 	mutex.unlock();
 	return nb;
 }
 //
 
 //  Private functions
-void EventHandlerEnum::emitUserEvent(Event* event)
+void EventHandlerString::emitUserEvent(Event* event)
 {
-    if(event) frameEventBuffer.insert(frameEventBuffer.end(),eventMapping[event]);
+	if (event) frameEventBuffer.insert(frameEventBuffer.end(), eventMapping[event]);
 }
-void EventHandlerEnum::swapFrameEventList()
+void EventHandlerString::swapFrameEventList()
 {
-    if(configuration&CLEAR_EVENT_LIST)
-    {
-        frameEvent.swap(frameEventBuffer);
-        frameEventBuffer.clear();
-        configuration &= ~CLEAR_EVENT_LIST;
-    }
-    else
-    {
-        frameEvent.insert(frameEvent.end(),frameEventBuffer.begin(),frameEventBuffer.end());
-        frameEventBuffer.clear();
-    }
+	if (configuration&CLEAR_EVENT_LIST)
+	{
+		frameEvent.swap(frameEventBuffer);
+		frameEventBuffer.clear();
+		configuration &= ~CLEAR_EVENT_LIST;
+	}
+	else
+	{
+		frameEvent.insert(frameEvent.end(), frameEventBuffer.begin(), frameEventBuffer.end());
+		frameEventBuffer.clear();
+	}
 }
 //

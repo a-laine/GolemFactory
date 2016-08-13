@@ -35,7 +35,7 @@ int main()
 	//EventHandler::getInstance()->setRepository("C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/");
 	EventHandler::getInstance()->setRepository("C:/Users/Thibault/Documents/Github/GolemFactory/Resources/");
 	EventHandler::getInstance()->loadKeyMapping("RPG Key mapping");
-	EventHandler::getInstance()->setCursorMode(false);
+	EventHandler::getInstance()->setCursorMode(true);
 	
 	// Init Resources manager and load some default shader
 	//ResourceManager::getInstance()->setRepository("C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/");
@@ -74,16 +74,12 @@ int main()
 
 		//  handle events
 		EventHandler::getInstance()->handleEvent();
-		std::vector<EventEnum> v;
+		std::vector<UserEventType> v;
 		EventHandler::getInstance()->getFrameEvent(v);
 		for (unsigned int i = 0; i<v.size(); i++)
 		{
-			switch (v[i])
-			{
-				case QUIT: glfwSetWindowShouldClose(window, GL_TRUE); break;
-				case CHANGE_CURSOR_MODE: EventHandler::getInstance()->setCursorMode(!EventHandler::getInstance()->getCursorMode()); break;
-				default: break;
-			}
+			if(v[i] == QUIT) glfwSetWindowShouldClose(window, GL_TRUE);
+			else if(v[i] == CHANGE_CURSOR_MODE) EventHandler::getInstance()->setCursorMode(!EventHandler::getInstance()->getCursorMode());
 		}
 
 		//Animate camera

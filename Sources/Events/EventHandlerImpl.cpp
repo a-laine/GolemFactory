@@ -9,7 +9,6 @@ EventHandlerImpl::EventHandlerImpl(std::string path)
 {
     configuration = 0x00;
     repository = path;
-    //focusedWindow = nullptr;
     This = this;
     resizeCallback = nullptr;
 
@@ -444,7 +443,7 @@ void EventHandlerImpl::keyCallback(GLFWwindow* window, int key, int scancode, in
 
     try
     {
-        auto events = This->keyboardListeners.at(key);
+        auto events = This->keyboardListeners.at(key); 
 		if ((This->configuration&CHORD_HIGH_PRIORITY))
 		{
 			//	first pass process chord
