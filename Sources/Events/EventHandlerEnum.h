@@ -13,7 +13,7 @@
 #include "EventHandlerImpl.h"
 #include "EventEnum.h"
 
-/** \class EventHandlerImpl
+/** \class EventHandlerEnum
 *	\brief Second part of the event handler implementation.
 *
 *	The EventHandlerEnum use a user enum as type of user event.

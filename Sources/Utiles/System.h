@@ -1,9 +1,14 @@
 #pragma once
 
-// OS Macro definition
+/*!
+*	\file System.h
+*	\brief Golem Factory OS macro definition,
+*	\author Aurelien LAINE
+*/
+
 #if   defined(_WIN32)
     #define GF_OS_WINDOWS
-	#define NOMINMAX
+	#define NOMINMAX		//!< if not declared on windows plateforme collision occur with STL min and max functions
 
 #elif defined(__APPLE__) && defined(__MACH__)
     #define GF_OS_MACOS

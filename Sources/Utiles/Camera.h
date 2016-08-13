@@ -1,5 +1,11 @@
 #pragma once
 
+/*!
+ *	\file Camera.h
+ *	\brief Declaration of the Camera class.
+ *	\author Thibault LAINE
+ */
+
 #include <atomic>
 #include <cmath>
 #include <GL/glew.h>

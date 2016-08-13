@@ -6,7 +6,7 @@ std::string Shader::extension = ".shader";
 //
 
 //  Default
-Shader::Shader(std::string path,std::string shaderName) : ResourceVirtual(path,shaderName,ResourceVirtual::SHADER)
+Shader::Shader(std::string path, std::string shaderName) : ResourceVirtual(shaderName, ResourceVirtual::SHADER)
 {
     //  Initialization
     vertexShader = 0;       fragmentShader = 0;

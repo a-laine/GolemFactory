@@ -1,7 +1,7 @@
 #include "Mesh.h"
 
 //  Default
-Mesh::Mesh(std::string path,std::string meshName) : ResourceVirtual(path,meshName,ResourceVirtual::MESH), configuration(0x00)
+Mesh::Mesh(std::string path, std::string meshName) : ResourceVirtual(meshName, ResourceVirtual::MESH), configuration(0x00)
 {
     std::string file = path + meshName;
 	if (MeshLoader::loadMesh(file, vertices, normales, color, faces)) return;

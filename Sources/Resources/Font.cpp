@@ -8,7 +8,7 @@ std::string Font::extension = ".Font";
 //
 
 //  Default
-Font::Font(std::string path,std::string fontName) : ResourceVirtual(path,fontName,ResourceVirtual::FONT)
+Font::Font(std::string path, std::string fontName) : ResourceVirtual(fontName, ResourceVirtual::FONT)
 {
     //  Initialization
     texture = 0;

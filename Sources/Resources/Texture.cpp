@@ -10,8 +10,7 @@ std::string Texture::extension = ".texture";
 //
 
 //  Default
-Texture::Texture(std::string path,std::string textureName,uint8_t conf) :
-    ResourceVirtual(path,textureName,ResourceVirtual::TEXTURE),configuration(conf)
+Texture::Texture(std::string path, std::string textureName, uint8_t conf) : ResourceVirtual(textureName, ResourceVirtual::TEXTURE), configuration(conf)
 {
     //  Initialization
     texture = 0;

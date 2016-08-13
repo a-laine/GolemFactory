@@ -1,9 +1,9 @@
 #pragma once
 
 /*!
-* \file Event.h
-* \brief Declaration of the Event class.
-* \author Thibault LAINE
+*	\file Event.h
+*	\brief Declaration of the Event class.
+*	\author Thibault LAINE
 */
 
 #include <iostream>
@@ -15,7 +15,7 @@
 /** \class Event
  * \brief Base class for event implementation.
  *
- *  The EventHandler manage Event object in an efficent way to catch user input.
+ *	The EventHandler manage Event object in an efficent way to catch user input.
  *  An Event can be attached to several user input to generate complex event, for example double click or combo sequence.
  *  This is a virtual class so special Event is inherited from this class
  *
@@ -25,8 +25,8 @@ class Event
     public:
         //  Miscellaneous
 		/*!
-		* \enum EventType
-		* \brief Used to diferenciate event type.
+		*	\enum EventType
+		*	\brief Used to diferenciate event type.
 		*
 		*	Use this to generate a configuration byte for an Event
 		*
@@ -66,8 +66,8 @@ class Event
         };
 
 		/*!
-		* \struct Input
-		* \brief An input for event. Regroup an input type and a key code (or button code)
+		*	\struct Input
+		*	\brief An input for event. Regroup an input type and a key code (or button code)
 		*/
         struct Input
         {

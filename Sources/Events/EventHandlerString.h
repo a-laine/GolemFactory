@@ -1,11 +1,23 @@
 #pragma once
 
+/*!
+* \file Event.h
+* \brief Declaration of the EventHandlerString class.
+* \author Thibault LAINE
+*/
+
 #include <map>
 #include <string>
 
 #include "Utiles/Singleton.h"
 #include "EventHandlerImpl.h"
 
+/** \class EventHandlerString
+*	\brief Second part of the event handler implementation.
+*
+*	The EventHandlerString use std::string as type of user event.
+*
+*/
 class EventHandlerString : public EventHandlerImpl, public Singleton<EventHandlerString>
 {
 	friend class Singleton<EventHandlerString>;
