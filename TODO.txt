@@ -22,19 +22,14 @@ Scene manager:
 	* add the map structure to populate a huge map with several tree just around the camera.
 	* add support to change depth of these tree, depending on camera position
 	* change this class to make it totaly thread safe !
+	* add support of instance hierarchy :
+	  two way possible :
+		- getInstance function only return parent (and the renderer has to get child by himself)
+		- getInstance function return parent and children with all instance have an absolute position/orientation
+		  (so the renderer don't have to compute them)
 
-
-
-
-
-
-
-
-
-
-
-
-
+Instance manager :
+	* add support of instance hierarchy (parent <-> child)
 
 
 
@@ -90,7 +85,7 @@ Animation manager:
 				{
 					call the function animate(elapsedTime)
 					call a function of the physics engine to correct the skeleton pose (depending on terrain, or environment for example)
-					// in a ideal world it is in the physics engine that the instance position and speed are updated (depending on contact point with ground, ...)
+					// in a ideal world it is in the physics engine that the instance position and speed are updated (depending on contact point with ground, etc...)
 				}
 
 => for the "Animation controllers" described in book it's performed here by the InteligenceManager class (which regroup the behaviour of instances)
