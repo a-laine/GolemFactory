@@ -72,7 +72,7 @@ Font::Font(std::string path, std::string fontName) : ResourceVirtual(fontName, R
 	glm::u16vec2 c1,c2;
 	while(getline(file, line))
     {
-	    if(sscanf_s(line.c_str(), "%hu = {%hu, %hu, %hu, %hu}",&i,&c1.x,&c1.y,&c2.x,&c2.y)== 5)
+	    if(sscanf(line.c_str(), "%hu = {%hu, %hu, %hu, %hu}",&i,&c1.x,&c1.y,&c2.x,&c2.y)== 5)
         {
             charTable[i-begin].corner1.x = c1.x/size.x;
             charTable[i-begin].corner1.y = c1.y/size.y;

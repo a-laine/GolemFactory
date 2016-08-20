@@ -221,8 +221,8 @@ char* Shader::loadSource(std::string file)
 {
     // Open file
 	FILE *fi;
-	errno_t errorCode = fopen_s(&fi, file.c_str(), "r");
-    if(errorCode != 0 || !fi)
+	fi = fopen(file.c_str(), "r");
+    if(!fi || !fi)
     {
         std::cout<<"Impossible to open:\n"<<file<<std::endl;
         return NULL;
