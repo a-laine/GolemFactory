@@ -15,6 +15,9 @@ __/\\\\\\\\\\\\\\\_______/\\\\\_______/\\\\\\\\\\\\__________/\\\\\______
 
 
 LITTLE TODO
+Shader, font passer c++11
+
+
 
 Scene manager:
 	* change NodeVirtual* sons[] container list into a thread safe forward list.
