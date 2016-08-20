@@ -47,8 +47,7 @@ class Shader : public ResourceVirtual
 
     private:
         //  Private functions
-        bool loadShader(ShaderType shaderType,char* source,GLuint& shader); //!< Load a shader in a specific place, with a specific source code
-        char* loadSource(std::string file);             //!< Simple load source in string function
+        bool loadShader(ShaderType shaderType, std::string filename,GLuint& shader); //!< Load a shader in a specific place, with a specific source code defined in filename
         //
 
         //  Attributes

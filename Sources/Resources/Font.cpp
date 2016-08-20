@@ -64,7 +64,12 @@ Font::Font(std::string path, std::string fontName) : ResourceVirtual(fontName, R
     if(defaultChar>end) defaultChar = begin;
 
 	charTable = new Patch[end-begin+1];
-	if(!charTable){clear(); std::cout<<"\tfail init patch array"<<std::endl;return;}
+	if(!charTable)
+	{
+		clear();
+		std::cout<<"\tfail init patch array"<<std::endl;
+		return;
+	}
 
 	//  Load coordinate array
 	std::string line;
@@ -72,14 +77,31 @@ Font::Font(std::string path, std::string fontName) : ResourceVirtual(fontName, R
 	glm::u16vec2 c1,c2;
 	while(getline(file, line))
     {
-	    if(sscanf(line.c_str(), "%hu = {%hu, %hu, %hu, %hu}",&i,&c1.x,&c1.y,&c2.x,&c2.y)== 5)
+		//	remove all char, juste keeping numbers separated by space
+		for (std::string::iterator it = line.begin(); it != line.end();)
+		{
+			if ((*it > '9' || *it < '0') && *it != ' ') it = line.erase(it);
+			else it++;
+		}
+
+		//	parsing
+		std::stringstream convertor(line);
+		convertor >> i >> c1.x >> c1.y >> c2.x >> c2.y;
+
+		//	analyse parsing result
+	    if(!convertor.fail())
         {
             charTable[i-begin].corner1.x = c1.x/size.x;
             charTable[i-begin].corner1.y = c1.y/size.y;
             charTable[i-begin].corner2.x = c2.x/size.x;
             charTable[i-begin].corner2.y = c2.y/size.y;
         }
-        else {clear(); std::cout<<"\terror extracting patch line: "<<line<<std::endl;return;}
+        else
+		{
+			clear();
+			std::cout<<"\terror extracting patch line: "<< line<<std::endl;
+			return;
+		}
     }
 }
 Font::~Font()
@@ -105,10 +127,10 @@ Font::Patch Font::getPatch(char c)
 //
 
 //  Set/get functions
-char Font::getDefaultChar(){return (char)defaultChar;}
-char Font::getBeginChar(){return (char)begin;}
-char Font::getEndChar(){return (char)end;}
-int Font::getArraySize(){return end-begin+1;}
+char Font::getDefaultChar() { return (char)defaultChar; }
+char Font::getBeginChar() { return (char)begin; }
+char Font::getEndChar() { return (char)end; }
+int Font::getArraySize() { return end - begin + 1; }
 //
 
 //  Private functions

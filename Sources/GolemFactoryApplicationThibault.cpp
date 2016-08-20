@@ -1,4 +1,4 @@
-// Golem Factory 1.0.cpp : définit le point d'entrée pour l'application console.
+// Golem Factory 1.0.cpp : define consol application entry point
 //
 
 #include <iostream>
@@ -9,8 +9,6 @@
 #include "Utiles/System.h"
 #include "Events/EventHandler.h"
 #include "Renderer/Renderer.h"
-
-#include "Utiles/SafeFoxwardList.h"
 
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -28,47 +26,22 @@ void initializeForestScene();
 // program
 int main()
 {
-	SafeFowardList<int> testList;
-	for (int i = 0; i < 10; i++)
-	{
-		//testList.push_back(i);
-	}
-
-	for (SafeFowardList<int>::iterator it = testList.begin(); it != testList.end(); it++)
-	{
-		std::cout << *it << it.itNode->thread << std::endl;
-	}
-
-	testList.clear();
-
-
-
-
-	exit(0);
-
-
-
-
-
-
-
-
 	// init window and opengl
 	GLFWwindow* window = initGLFW();
 	initGLEW();
 
 	// Init Event handler
 	EventHandler::getInstance()->addWindow(window);
-	//EventHandler::getInstance()->setRepository("C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/");
+	EventHandler::getInstance()->setRepository("C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/");
 	//EventHandler::getInstance()->setRepository("C:/Users/Thibault/Documents/Github/GolemFactory/Resources/");
-	EventHandler::getInstance()->setRepository("Resources/");
+	//EventHandler::getInstance()->setRepository("Resources/");
 	EventHandler::getInstance()->loadKeyMapping("RPG Key mapping");
 	EventHandler::getInstance()->setCursorMode(false);
 	
 	// Init Resources manager and load some default shader
-	ResourceManager::getInstance()->setRepository("Resources/");
-	//ResourceManager::getInstance()->setRepository("C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/");
+	ResourceManager::getInstance()->setRepository("C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/");
 	//ResourceManager::getInstance()->setRepository("C:/Users/Thibault/Documents/Github/GolemFactory/Resources/");
+	//ResourceManager::getInstance()->setRepository("Resources/");
 	
 	// Init Renderer;
 	Camera camera;

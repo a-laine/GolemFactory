@@ -16,20 +16,23 @@ Shader::Shader(std::string path, std::string shaderName) : ResourceVirtual(shade
     Variant v; Variant* tmp = NULL;
     std::string tmpName;
 
-    try { Reader::parseFile(v, path + shaderName + extension);
-          tmp = &(v.getMap().begin()->second);                       }
+    try
+	{
+		Reader::parseFile(v, path + shaderName + extension);
+		tmp = &(v.getMap().begin()->second);
+	}
     catch(std::exception&) { return; }
     Variant& shaderMap = *tmp;
 
     //  Vertex shader
     try { tmpName = path + shaderMap["vertex"].toString(); }
     catch(std::exception&) { std::cerr<<"fail to parse vertex shader name"<<std::endl; tmpName = path + "default.vs"; }
-    if(!loadShader(VERTEX_SH,loadSource(tmpName),vertexShader)) return;
+    if(!loadShader(VERTEX_SH,tmpName,vertexShader)) return;
 
     //  Fragment shader
     try { tmpName = path + shaderMap["fragment"].toString(); }
     catch(std::exception&) { std::cerr<<"fail to parse fragment shader name"<<std::endl; tmpName = path + "default.fs"; }
-    if(!loadShader(FRAGMENT_SH,loadSource(tmpName),fragmentShader)) { glDeleteShader(vertexShader); return; }
+    if(!loadShader(FRAGMENT_SH,tmpName,fragmentShader)) { glDeleteShader(vertexShader); return; }
 
     //  Program
     program = glCreateProgram();
@@ -37,24 +40,30 @@ Shader::Shader(std::string path, std::string shaderName) : ResourceVirtual(shade
     glAttachShader(program,fragmentShader);
 
     //  Geometry shader
-    try {
-        tmpName = path + shaderMap["geometry"].toString();
-         if(loadShader(GEOMETRIC_SH,loadSource(tmpName),geometricShader))
-            glAttachShader(program,geometricShader);                         }
+    try
+	{
+		tmpName = path + shaderMap["geometry"].toString();
+		if(loadShader(GEOMETRIC_SH,tmpName,geometricShader))
+			glAttachShader(program,geometricShader); 
+	}
     catch(std::exception&){}
 
     //  Tessellation evaluation shader
-    try {
+    try
+	{
         tmpName = path + shaderMap["evaluation"].toString();
-        if(loadShader(TESS_EVAL_SH,loadSource(tmpName),tessEvalShader))
-            glAttachShader(program,tessEvalShader);                         }
+        if(loadShader(TESS_EVAL_SH,tmpName,tessEvalShader))
+            glAttachShader(program,tessEvalShader);
+	}
     catch(std::exception&){}
 
     //  Tessellation control shader
-    try {
+    try
+	{
         tmpName = path + shaderMap["control"].toString();
-        if(loadShader(TESS_CONT_SH,loadSource(tmpName),tessControlShader))
-            glAttachShader(program,tessControlShader);                         }
+        if(loadShader(TESS_CONT_SH,tmpName,tessControlShader))
+            glAttachShader(program,tessControlShader);
+	}
     catch(std::exception&){}
 
     //  Linking program
@@ -158,10 +167,25 @@ bool Shader::useShaderType(ShaderType shaderType) const
 
 
 //  Private functions
-bool Shader::loadShader(ShaderType shaderType,char* source,GLuint& shader)
+bool Shader::loadShader(ShaderType shaderType, std::string fileName,GLuint& shader)
 {
-    if(!source) std::cerr<<"no source"<<std::endl;
-    if(!source) return false;
+	std::string source;
+	std::ifstream file(fileName);
+	if (!file.good())
+	{
+		std::cerr << "Shader resource : Fail to open file :" << std::endl;
+		return false;
+	}
+	else
+	{
+		source.assign((std::istreambuf_iterator<char>(file)), (std::istreambuf_iterator<char>()));
+		file.close();
+		if (source.empty())
+		{
+			std::cerr << "Shader resource : File was sucessfully opened but is empty !" << std::endl;
+			return false;
+		}
+	}
 
     // Generate ID from OpenGL
     switch(shaderType)
@@ -179,7 +203,6 @@ bool Shader::loadShader(ShaderType shaderType,char* source,GLuint& shader)
     if(!shader)
     {
         std::cout<<"Fail to create shader of type("<<(int)shaderType<<')'<<std::endl;
-        delete[] source;
         return false;
     }
 
@@ -209,39 +232,10 @@ bool Shader::loadShader(ShaderType shaderType,char* source,GLuint& shader)
 		std::cout << "shader\n\n" << log << std::endl << std::endl;
 
         delete[] log;
-        delete[] source;
         return false;
     }
 
     // End
-    delete[] source;
     return true;
-}
-char* Shader::loadSource(std::string file)
-{
-    // Open file
-	FILE *fi;
-	fi = fopen(file.c_str(), "r");
-    if(!fi || !fi)
-    {
-        std::cout<<"Impossible to open:\n"<<file<<std::endl;
-        return NULL;
-    }
-    fseek(fi, 0, SEEK_END);
-    long size = ftell(fi);
-    rewind(fi);
-
-    // Import file in char*
-    char *source = new char[size+1];
-    if(!source)
-    {
-        std::cout<<"Memory allocation error"<<std::endl;
-        fclose(fi);
-        return NULL;
-    }
-    size = fread(source,sizeof(char),size,fi);
-    source[size] = '\0';
-    fclose(fi);
-    return source;
 }
 //
