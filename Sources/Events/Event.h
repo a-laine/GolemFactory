@@ -12,7 +12,7 @@
 #include <string>
 
 
-/** \class Event
+/*! \class Event
  * \brief Base class for event implementation.
  *
  *	The EventHandler manage Event object in an efficent way to catch user input.

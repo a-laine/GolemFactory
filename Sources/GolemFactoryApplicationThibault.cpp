@@ -10,6 +10,8 @@
 #include "Events/EventHandler.h"
 #include "Renderer/Renderer.h"
 
+#include "Utiles/SafeFoxwardList.h"
+
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -26,6 +28,31 @@ void initializeForestScene();
 // program
 int main()
 {
+	SafeFowardList<int> testList;
+	for (int i = 0; i < 10; i++)
+	{
+		//testList.push_back(i);
+	}
+
+	for (SafeFowardList<int>::iterator it = testList.begin(); it != testList.end(); it++)
+	{
+		std::cout << *it << it.itNode->thread << std::endl;
+	}
+
+	testList.clear();
+
+
+
+
+	exit(0);
+
+
+
+
+
+
+
+
 	// init window and opengl
 	GLFWwindow* window = initGLFW();
 	initGLEW();
