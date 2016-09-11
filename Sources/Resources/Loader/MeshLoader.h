@@ -22,6 +22,17 @@ class MeshLoader
 							std::vector<glm::vec3>& vertices,
 							std::vector<glm::vec3>& normales,
 							std::vector<glm::vec3>& color,
-							std::vector<unsigned int>& faces);
+							std::vector<unsigned int>& faces,
+							bool& hasSkeleton);
         //
+
+	private:
+		//	Private functions
+		static int loadGfMesh(std::string file,
+							  std::vector<glm::vec3>& vertices,
+							  std::vector<glm::vec3>& normales,
+							  std::vector<glm::vec3>& color,
+							  std::vector<unsigned int>& faces,
+							  bool& hasSkeleton);
+		//
 };

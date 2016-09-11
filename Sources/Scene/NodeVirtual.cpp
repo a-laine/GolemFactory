@@ -93,24 +93,11 @@ void NodeVirtual::getInstanceList(std::vector<std::pair<int, InstanceVirtual*> >
 	int distance = isInFrustrum();
 	if (distance == std::numeric_limits<int>::lowest()) return;
 
-	/*
-	debuginstance->setPosition(position);
-	debuginstance->setSize(0.4f*size);
-
-	if (children.empty())
-		list.push_back(std::pair<int, InstanceVirtual*>(distance, debuginstance));
-	else
-	{
-		for (unsigned int i = 0; i < children.size(); i++)
-			children[i]->getInstanceList(list);
-	}
-	return;
-	*/
-
 	//	give personnal instance and continue with recursive call on children
+	//list.push_back(std::pair<int, InstanceVirtual*>(distance, debuginstance));
+
 	for (unsigned int i = 0; i < instanceList.size(); i++)
 		list.push_back(std::pair<int, InstanceVirtual*>(distance,instanceList[i]));
-
 	for (unsigned int i = 0; i < children.size(); i++)
 		children[i]->getInstanceList(list);
 }
@@ -154,11 +141,13 @@ void NodeVirtual::setPosition(glm::vec3 p)
 	for (unsigned int i = 0; i < children.size(); i++)
 		children[i]->setPosition(children[i]->position - position + p);
 	position = p;
+	debuginstance->setPosition(glm::vec3(p.x, p.y, getLevel()));
 }
 void NodeVirtual::setPosition(float x, float y, float z) { setPosition(glm::vec3(x,y,z)); }
 void NodeVirtual::setSize(glm::vec3 s)
 {
 	size = s;
+	debuginstance->setSize(glm::vec3(0.4*s.x, 0.4*s.y, 0.2));
 
 	if (children.empty()) return;
 	int xChild = (division&X) >> dX;

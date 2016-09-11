@@ -53,7 +53,10 @@ int main()
 	// init scene
 	SceneManager::getInstance()->setWorldPosition(glm::vec3(0,0,25));
 	SceneManager::getInstance()->setWorldSize(glm::vec3(GRID_SIZE*GRID_ELEMENT_SIZE, GRID_SIZE*GRID_ELEMENT_SIZE, 50));
-	initializeForestScene();
+	//initializeForestScene();
+	InstanceDrawable* ins  = InstanceManager::getInstance()->getInstanceDrawable("bob_lamp_update.md5mesh");
+	ins->setPosition(glm::vec3(0,0,0));
+	SceneManager::getInstance()->addStaticObject(ins);
 	
 	// init loop time tracking
 	double startTime, elapseTime = 16;

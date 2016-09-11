@@ -4,7 +4,8 @@
 Mesh::Mesh(std::string path, std::string meshName) : ResourceVirtual(meshName, ResourceVirtual::MESH), configuration(0x00)
 {
     std::string file = path + meshName;
-	if (MeshLoader::loadMesh(file, vertices, normales, color, faces)) return;
+	bool hasSkeleton;
+	if (MeshLoader::loadMesh(file, vertices, normales, color, faces, hasSkeleton)) return;
 	configuration |= 0x01;
 	computeBoundingBoxDimension();
 
@@ -77,7 +78,7 @@ void Mesh::draw()
 }
 bool Mesh::isValid() const
 {
-	if (configuration & 0x01)
+	if (configuration & VALID)
 		return glIsBuffer(vertexbuffer) && glIsBuffer(normalBuffer) && glIsBuffer(colorBuffer) && glIsBuffer(arraybuffer) && glIsVertexArray(vao);
 	else return false;
 }

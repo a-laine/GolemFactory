@@ -10,6 +10,14 @@
 class Mesh : public ResourceVirtual
 {
     public:
+		//  Miscellaneous
+		enum ConfigurationFlags
+		{
+			VALID = 1 << 0,
+			HAS_SKELETON = 1 << 1
+		};
+		//
+
         //  Default
         Mesh(std::string path,std::string meshName);
 		Mesh();

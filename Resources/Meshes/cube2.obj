@@ -1,5 +1,8 @@
 # Blender3D v249 OBJ File: untitled.blend
 # www.blender3d.org
+
+mtllib cube2.mtl
+usemtl default
 o cube
  
 v -1.0 -1.0 -1.0
