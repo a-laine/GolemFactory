@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vector>
 #include <fstream>
 #include <sstream>
 #include <GL/glew.h>
@@ -11,9 +12,10 @@ class Font : public ResourceVirtual
 {
     public:
         //  Miscellaneous
-        struct Patch{
-            glm::vec2 corner1; //!< Upper left char corner coordinates.
-			glm::vec2 corner2; //!< Bottom right char corner coordinates.
+        struct Patch
+		{
+            glm::vec2 corner1;			//!< Upper left char corner coordinates.
+			glm::vec2 corner2;			//!< Bottom right char corner coordinates.
         };
         //
 
@@ -37,7 +39,7 @@ class Font : public ResourceVirtual
 
         //  Attributes
         GLuint texture;                 //!< Texture Id
-		glm::vec2 size;                //!< Texture size
+		glm::vec2 size;					//!< Texture size
         static std::string extension;   //!< Default extension used for infos files
         //
 
@@ -48,6 +50,6 @@ class Font : public ResourceVirtual
 
         //  Attributes
         unsigned short int begin,end,defaultChar;   //!< Some index info
-        Patch* charTable;               //!< Coordinates of every char in texture
+		std::vector<Patch> charTable;               //!< Coordinates of every char in texture
         //
 };

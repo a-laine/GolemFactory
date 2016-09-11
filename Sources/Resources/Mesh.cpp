@@ -85,8 +85,8 @@ bool Mesh::isValid() const
 //
 
 //  Set/get functions
-unsigned int Mesh::getNumberVertices() const{return vertices.size();}
-unsigned int Mesh::getNumberFaces() const{return faces.size();}
+unsigned int Mesh::getNumberVertices() const { return vertices.size(); }
+unsigned int Mesh::getNumberFaces() const { return faces.size(); }
 //
 
 //	Protected functions

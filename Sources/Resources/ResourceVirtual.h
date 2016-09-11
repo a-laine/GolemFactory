@@ -9,6 +9,8 @@
 #include <string>
 #include <iostream>
 #include <atomic>
+#include <algorithm>
+#include <fstream>
 
 /** \class ResourceVirtual
  *	\brief Base class for resource implementation.
@@ -37,7 +39,8 @@ class ResourceVirtual
             MESH = 3,       //!< Mesh
             SOUND = 4,      //!< Sound and music
             ANIMATION = 5,  //!< Animation
-            FONT = 6        //!< Font
+            FONT = 6,       //!< Font
+			SKELETON = 7	//!< Skeleton
         };
         //
 
@@ -76,7 +79,11 @@ class ResourceVirtual
         //
 
     protected:
-        // Attributes
+        //	Attributes
         std::atomic_uint count; //!< The number of clients using the resource.
         //
+
+		//	Protected functions
+		std::string openAndCleanCStyleFile(std::string fileName, std::string commentBlockEntry = "/*", std::string commentLineEntry = "//");
+		//
 };

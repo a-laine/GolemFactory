@@ -21,7 +21,7 @@
 GLFWwindow* initGLFW();
 void initGLEW(int verbose = 1);
 void initializeForestScene();
-
+//
 
 // program
 int main()
@@ -32,16 +32,17 @@ int main()
 
 	// Init Event handler
 	EventHandler::getInstance()->addWindow(window);
-	EventHandler::getInstance()->setRepository("C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/");
-	//EventHandler::getInstance()->setRepository("C:/Users/Thibault/Documents/Github/GolemFactory/Resources/");
+	//EventHandler::getInstance()->setRepository("C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/");
+	EventHandler::getInstance()->setRepository("C:/Users/Thibault/Documents/Github/GolemFactory/Resources/");
 	//EventHandler::getInstance()->setRepository("Resources/");
 	EventHandler::getInstance()->loadKeyMapping("RPG Key mapping");
 	EventHandler::getInstance()->setCursorMode(false);
 	
 	// Init Resources manager and load some default shader
-	ResourceManager::getInstance()->setRepository("C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/");
-	//ResourceManager::getInstance()->setRepository("C:/Users/Thibault/Documents/Github/GolemFactory/Resources/");
+	//ResourceManager::getInstance()->setRepository("C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/");
+	ResourceManager::getInstance()->setRepository("C:/Users/Thibault/Documents/Github/GolemFactory/Resources/");
 	//ResourceManager::getInstance()->setRepository("Resources/");
+	ResourceManager::getInstance()->getFont("default");
 	
 	// Init Renderer;
 	Camera camera;
@@ -54,7 +55,7 @@ int main()
 	SceneManager::getInstance()->setWorldPosition(glm::vec3(0,0,25));
 	SceneManager::getInstance()->setWorldSize(glm::vec3(GRID_SIZE*GRID_ELEMENT_SIZE, GRID_SIZE*GRID_ELEMENT_SIZE, 50));
 	//initializeForestScene();
-	InstanceDrawable* ins  = InstanceManager::getInstance()->getInstanceDrawable("bob_lamp_update.md5mesh");
+	InstanceDrawable* ins  = InstanceManager::getInstance()->getInstanceDrawable("cube2.obj");
 	ins->setPosition(glm::vec3(0,0,0));
 	SceneManager::getInstance()->addStaticObject(ins);
 	
@@ -108,6 +109,7 @@ int main()
 	glfwTerminate();
 	return 0;
 }
+//
 
 //	functions implementation
 static void errorCallback(int error, const char* description) { std::cerr << "GLFW ERROR : " << description << std::endl; }
@@ -184,3 +186,4 @@ void initializeForestScene()
 	std::cout << "Instance count : " << InstanceManager::getInstance()->getNumberOfInstances() << std::endl;
 	std::cout << "Insert fail : " << fail << std::endl;
 }
+//

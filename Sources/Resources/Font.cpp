@@ -12,23 +12,46 @@ Font::Font(std::string path, std::string fontName) : ResourceVirtual(fontName, R
 {
     //  Initialization
     texture = 0;
-    charTable = nullptr;
     Variant v;
     Variant* tmp = NULL;
 
-    try { Reader::parseFile(v, path + fontName + extension);
-          tmp = &(v.getMap().begin()->second);                 }
-    catch(std::exception&) {std::cout<<"\tfail load file: "<<path + fontName + extension<<std::endl;return;}
+	//	Extract root variant from file
+    try
+	{
+		Reader::parseFile(v, path + fontName + extension);
+        tmp = &(v.getMap().begin()->second);
+	}
+    catch(std::exception&)
+	{
+		std::cerr << "Font : Fail to load file :" << std::endl;
+		std::cerr << "       " << path + fontName + extension << std::endl;
+		return;
+	}
     Variant& fontInfo = *tmp;
 
+	//	Extract texture name
     std::string textureFile;
-    try { textureFile = path + fontInfo["texture"].toString(); }
-    catch(std::exception&) {std::cout<<"\tfail extract texture name"<<std::endl;return;}
+    try
+	{
+		textureFile = path + fontInfo["texture"].toString();
+	}
+    catch(std::exception&) 
+	{
+		std::cerr << "Font : Fail to extract texture name from file :" << std::endl;
+		std::cerr << "       " << path + fontName + extension << std::endl;
+		return;
+	}
 
     //  Loading the image
     int x,y,n;
     uint8_t* image = ImageLoader::loadFromFile(textureFile,x,y,n,ImageLoader::RGB_ALPHA);
-    if(!image) {std::cout<<"\tfail loading font texture image"<<std::endl;return;}
+    if(!image)
+	{
+		std::cerr << "Font : Fail to load texture image." << std::endl;
+		std::cerr << "       Error occur in file :" << std::endl;
+		std::cerr << "       " << path + fontName + extension << std::endl;
+		return;
+	}
 
     //  Generate opengl texture
     glGenTextures(1, &texture);
@@ -40,17 +63,35 @@ Font::Font(std::string path, std::string fontName) : ResourceVirtual(fontName, R
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glBindTexture(GL_TEXTURE_2D,0);
     ImageLoader::freeImage(image);
-    if(!glIsTexture(texture)) {std::cout<<"\tfail load texture"<<std::endl;return;}
+    if(!glIsTexture(texture))
+	{
+		std::cerr << "Font : Fail to load texture image." << std::endl;
+		std::cerr << "       Error occur in file :" << std::endl;
+		std::cerr << "       " << path + fontName + extension << std::endl;
+		return;
+	}
 
-    //  Read file header
+    //  Extract and prepare file array for parsing
     std::string arrayFile;
-    try { arrayFile = path + fontInfo["font"].toString(); }
-    catch(std::exception&) {clear(); std::cout<<"\tfail extract array char"<<std::endl;return;}
+    try
+	{
+		arrayFile = openAndCleanCStyleFile(path + fontInfo["font"].toString());
+	}
+    catch(std::exception&)
+	{
+		clear();
+		std::cerr << "Font : Fail to extract array char :" << std::endl;
+		std::cerr << "       " << path + fontName + extension << std::endl;
+		return;
+	}
+	if(arrayFile.empty()) 
+	{
+		clear();
+		std::cerr << "Font : Empty array char :" << std::endl;
+		return;
+	}
 
-    std::ifstream file(arrayFile.c_str(), std::ios::in);
-	if(!file){clear(); std::cout<<"\tfail load array char file"<<std::endl;return;}
-
-	//  Parse info & allocate array
+	//  Parse patches infos
     size.x = (float)x; size.y = (float)y;
 
 	try { begin = fontInfo["begin"].toInt(); }
@@ -62,52 +103,68 @@ Font::Font(std::string path, std::string fontName) : ResourceVirtual(fontName, R
     try { defaultChar = fontInfo["default"].toInt(); }
     catch(std::exception&) { defaultChar = begin; }
     if(defaultChar>end) defaultChar = begin;
-
-	charTable = new Patch[end-begin+1];
-	if(!charTable)
-	{
-		clear();
-		std::cout<<"\tfail init patch array"<<std::endl;
-		return;
-	}
+	charTable.assign(end - begin + 1, Patch());
 
 	//  Load coordinate array
 	std::string line;
-	unsigned short int i;
 	glm::u16vec2 c1,c2;
-	while(getline(file, line))
-    {
-		//	remove all char, juste keeping numbers separated by space
-		for (std::string::iterator it = line.begin(); it != line.end();)
+	bool errorOccured = false;
+	unsigned int index = 0;
+	unsigned int lineCount;
+	std::stringstream arrayFileStream(arrayFile);
+	while (!arrayFileStream.eof())
+	{
+		//	get next line
+		std::getline(arrayFileStream, line);
+		lineCount++;
+
+		//	remove unrevelant char and replace coma by space
+		for (auto it = line.begin(); it != line.end();)
 		{
-			if ((*it > '9' || *it < '0') && *it != ' ') it = line.erase(it);
+			if(*it == ' ' || *it == '=' || *it == '}')
+				it = line.erase(it);
+			else if (*it == ',' || *it == '{')
+			{
+				*it = ' ';
+				it++;
+			}
 			else it++;
 		}
+		if (line.empty()) continue;
 
 		//	parsing
 		std::stringstream convertor(line);
-		convertor >> i >> c1.x >> c1.y >> c2.x >> c2.y;
+		convertor >> index >> c1.x >> c1.y >> c2.x >> c2.y;
 
-		//	analyse parsing result
-	    if(!convertor.fail())
-        {
-            charTable[i-begin].corner1.x = c1.x/size.x;
-            charTable[i-begin].corner1.y = c1.y/size.y;
-            charTable[i-begin].corner2.x = c2.x/size.x;
-            charTable[i-begin].corner2.y = c2.y/size.y;
-        }
-        else
+		if (!convertor.fail())
 		{
-			clear();
-			std::cout<<"\terror extracting patch line: "<< line<<std::endl;
-			return;
+			charTable[index - begin].corner1.x = c1.x / size.x;
+			charTable[index - begin].corner1.y = c1.y / size.y;
+			charTable[index - begin].corner2.x = c2.x / size.x;
+			charTable[index - begin].corner2.y = c2.y / size.y;
 		}
-    }
+		else
+		{
+			if (errorOccured)
+			{
+				std::cerr << "Font : Error in parsing file :" << std::endl;
+				std::cerr << "       " << path + fontName + extension << std::endl;
+			}
+			std::cerr << "       At line : "<< lineCount << std::endl;
+			errorOccured = true;
+		}
+	}
+	if (errorOccured)
+	{
+		std::cerr << "       For more info check file in cause at specified lines!" << std::endl;
+		clear();
+		return;
+	}
+	charTable.shrink_to_fit();
 }
 Font::~Font()
 {
     if(glIsTexture(texture)) glDeleteTextures(1,&texture);
-    if(charTable) delete[] charTable;
 }
 
 
@@ -136,9 +193,9 @@ int Font::getArraySize() { return end - begin + 1; }
 //  Private functions
 void Font::clear()
 {
-    if(glIsTexture(texture)) glDeleteTextures(1,&texture);
+    if(glIsTexture(texture))
+		glDeleteTextures(1,&texture);
     texture = 0;
-    if(charTable) delete[] charTable;
-    charTable = nullptr;
+    charTable.clear();
 }
 //
