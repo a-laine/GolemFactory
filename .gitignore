@@ -41,4 +41,6 @@ CMakeFiles/*
 
 #others
 bin/
+Debug/
+Release/
 
