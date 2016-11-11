@@ -4,7 +4,7 @@
 #include "Loader/ImageLoader.h"
 
 //  Static attributes
-std::string Font::extension = ".Font";
+std::string Font::extension = ".font";
 //
 
 //  Default
