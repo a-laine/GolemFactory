@@ -17,17 +17,14 @@ class Skeleton : public ResourceVirtual
 			VALID = 1 << 0
 		};
 
-		struct Bone
-		{
-			unsigned int parent;
-			std::vector<unsigned int> children;
-		};
-
-		struct BonePose
+		struct Joint
 		{
 			glm::vec3 position;
 			glm::fquat orientation;
-			glm::vec3 size;
+
+			unsigned int parent;
+			std::vector<unsigned int> sons;
+			std::string name;
 		};
 		//
 
@@ -37,10 +34,8 @@ class Skeleton : public ResourceVirtual
 		//
 
 		//	Public functions
-		void addBone(const Bone& b);
-		void addBone(unsigned int parent,unsigned int nbChildren, unsigned int* children);
-
 		bool isValid() const;
+		void debug();
 		//
 
 		//	Attributes
@@ -50,6 +45,11 @@ class Skeleton : public ResourceVirtual
 	protected:
 		//	Attributes
 		uint8_t configuration;
-		std::vector<Bone> boneList;
+		unsigned int root;
+		std::vector<Joint> jointList;
+		//
+
+		//
+		void printJoint(unsigned int joint,int depth);
 		//
 };

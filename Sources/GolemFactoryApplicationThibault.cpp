@@ -28,7 +28,7 @@ int main()
 {
 	// init window and opengl
 	GLFWwindow* window = initGLFW();
-	initGLEW();
+	initGLEW(0);
 
 	// Init Event handler
 	EventHandler::getInstance()->addWindow(window);
@@ -55,6 +55,10 @@ int main()
 	SceneManager::getInstance()->setWorldPosition(glm::vec3(0,0,25));
 	SceneManager::getInstance()->setWorldSize(glm::vec3(GRID_SIZE*GRID_ELEMENT_SIZE, GRID_SIZE*GRID_ELEMENT_SIZE, 50));
 	//initializeForestScene();
+
+	Skeleton* s = new Skeleton("C:/Users/Thibault/Documents/Github/GolemFactory/Resources/Skeletons/","dummy");
+	s->debug();
+
 	InstanceDrawable* ins  = InstanceManager::getInstance()->getInstanceDrawable("cube2.obj");
 	ins->setPosition(glm::vec3(0,0,0));
 	SceneManager::getInstance()->addStaticObject(ins);
@@ -145,7 +149,7 @@ void initGLEW(int verbose)
 		glfwTerminate();
 		exit(-1);
 	}
-	std::cout << "GLEW init success" << std::endl;
+	if (verbose) std::cout << "GLEW init success" << std::endl;
 	if (verbose < 1) return;
 
 	std::cout << "Status: GLEW version : " << glewGetString(GLEW_VERSION) << std::endl;

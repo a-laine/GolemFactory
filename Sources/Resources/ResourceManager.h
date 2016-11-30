@@ -11,6 +11,7 @@
 #include "Shader.h"
 #include "Font.h"
 #include "Mesh.h"
+#include "Skeleton.h"
 
 class ResourceManager : public Singleton<ResourceManager>
 {
