@@ -22,9 +22,9 @@ void InstanceDrawable::draw(Shader* shaderToUse)
 
 	glm::mat4 model(1.0);
 	model = glm::translate(model,position);
-	model = glm::scale(model, size);
 	model = model * rotationMatrix;
-
+	model = glm::scale(model, size);
+	
 	shaderToUse->loadUniformMatrix('m',&model[0][0]);
 	mesh->draw();
 }

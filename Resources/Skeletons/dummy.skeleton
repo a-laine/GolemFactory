@@ -7,14 +7,14 @@ Dummy
 	
 	head :
 	{
-		position : [0.0,0.0,0.1];
+		position : [0.0,0.0,0.8];
 		orientation : [1.0,0.0,0.0,0.0];
 		parent : "chest";
 	};
 	
 	legRight :
 	{
-		position : [0.0,0.1,-1.0];
+		position : [0.0,0.3,-0.8];
 		orientation : [1.0,0.0,0.0,0.0];
 		parent : "chest";
 		sons : "tibiasRight";
@@ -22,7 +22,7 @@ Dummy
 	
 	tibiasRight :
 	{
-		position : [0.0,0.0,-1.0];
+		position : [0.0,0.0,-0.8];
 		orientation : [1.0,0.0,0.0,0.0];
 		parent : "legRight";
 		sons : "footRight";
@@ -30,14 +30,14 @@ Dummy
 	
 	footRight :
 	{
-		position : [0.0,0.0,-1.0];
+		position : [0.0,0.0,-0.8];
 		orientation : [1.0,0.0,0.0,0.0];
 		parent : "tibiasRight";
 	};
 	
 	legLeft :
 	{
-		position : [0.0,-0.1,-1.0];
+		position : [0.0,-0.3,-0.8];
 		orientation : [1.0,0.0,0.0,0.0];
 		parent : "chest";
 		sons : "tibiasLeft";
@@ -45,7 +45,7 @@ Dummy
 	
 	tibiasLeft :
 	{
-		position : [0.0,0.0,-1.0];
+		position : [0.0,0.0,-0.8];
 		orientation : [1.0,0.0,0.0,0.0];
 		parent : "legLeft";
 		sons : "footLeft";
@@ -53,14 +53,14 @@ Dummy
 	
 	footLeft :
 	{
-		position : [0.0,0.0,-1.0];
+		position : [0.0,0.0,-0.8];
 		orientation : [1.0,0.0,0.0,0.0];
 		parent : "tibiasLeft";
 	};
 	
 	armRight :
 	{
-		position : [0.0,0.1,0.0];
+		position : [0.0,0.3,0.0];
 		orientation : [1.0,0.0,0.0,0.0];
 		parent : "chest";
 		sons : "forearmRight";
@@ -68,7 +68,7 @@ Dummy
 	
 	forearmRight :
 	{
-		position : [0.0,1.0,0.0];
+		position : [0.0,0.8,0.0];
 		orientation : [1.0,0.0,0.0,0.0];
 		parent : "armRight";
 		sons : "handRight";
@@ -76,14 +76,14 @@ Dummy
 	
 	handRight :
 	{
-		position : [0.0,1.0,0.0];
+		position : [0.0,0.8,0.0];
 		orientation : [1.0,0.0,0.0,0.0];
 		parent : "forearmRight";
 	};
 	
 	armLeft :
 	{
-		position : [0.0,-0.1,0.0];
+		position : [0.0,-0.3,0.0];
 		orientation : [1.0,0.0,0.0,0.0];
 		parent : "chest";
 		sons : "forearmLeft";
@@ -91,7 +91,7 @@ Dummy
 	
 	forearmLeft :
 	{
-		position : [0.0,-1.0,0.0];
+		position : [0.0,-0.8,0.0];
 		orientation : [1.0,0.0,0.0,0.0];
 		parent : "armLeft";
 		sons : "handLeft";
@@ -99,7 +99,7 @@ Dummy
 	
 	handLeft :
 	{
-		position : [0.0,-1.0,0.0];
+		position : [0.0,-0.8,0.0];
 		orientation : [1.0,0.0,0.0,0.0];
 		parent : "forearmLeft";
 	};

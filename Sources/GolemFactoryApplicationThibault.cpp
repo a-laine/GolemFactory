@@ -13,6 +13,8 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/rotate_vector.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 #define GRID_SIZE 100
 #define GRID_ELEMENT_SIZE 3.0f
@@ -22,6 +24,12 @@ GLFWwindow* initGLFW();
 void initGLEW(int verbose = 1);
 void initializeForestScene();
 //
+
+
+//
+void generateRagdoll(Skeleton* s);
+//
+
 
 // program
 int main()
@@ -46,6 +54,7 @@ int main()
 	
 	// Init Renderer;
 	Camera camera;
+		camera.setPosition(glm::vec3(-3,0,3));
 	Renderer::getInstance()->setCamera(&camera);
 	Renderer::getInstance()->setWindow(window);
 	Renderer::getInstance()->setDefaultShader(ResourceManager::getInstance()->getShader("default"));
@@ -54,15 +63,11 @@ int main()
 	// init scene
 	SceneManager::getInstance()->setWorldPosition(glm::vec3(0,0,25));
 	SceneManager::getInstance()->setWorldSize(glm::vec3(GRID_SIZE*GRID_ELEMENT_SIZE, GRID_SIZE*GRID_ELEMENT_SIZE, 50));
-	//initializeForestScene();
 
 	Skeleton* s = new Skeleton("C:/Users/Thibault/Documents/Github/GolemFactory/Resources/Skeletons/","dummy");
 	s->debug();
+	generateRagdoll(s);
 
-	InstanceDrawable* ins  = InstanceManager::getInstance()->getInstanceDrawable("cube2.obj");
-	ins->setPosition(glm::vec3(0,0,0));
-	SceneManager::getInstance()->addStaticObject(ins);
-	
 	// init loop time tracking
 	double startTime, elapseTime = 16;
 
@@ -191,3 +196,38 @@ void initializeForestScene()
 	std::cout << "Insert fail : " << fail << std::endl;
 }
 //
+
+//
+void createBone(Skeleton* s, unsigned int joint, glm::vec3 parentPosition)
+{
+	InstanceDrawable* ins = InstanceManager::getInstance()->getInstanceDrawable("cube2.obj");
+	if (!ins) return;
+
+	if (joint != s->root)
+	{
+		ins->setPosition(parentPosition + 0.5f * s->jointList[joint].position);
+		ins->setSize(glm::vec3(0.1, 0.1, 0.48f * glm::length(s->jointList[joint].position)));
+		glm::vec3 v = glm::normalize(s->jointList[joint].position);
+		if (glm::dot(v, glm::vec3(0, 0, 1)) != 1.f)
+			//ins->setOrientation(glm::orientation(-v, glm::vec3(0,0,1)));
+			s->jointList[joint].orientation = glm::quat_cast(glm::orientation(-v, glm::vec3(0, 0, 1)));
+	}
+	else
+	{
+		ins->setSize(glm::vec3(0, 0, 0));
+		ins->setPosition(parentPosition);
+	}
+	SceneManager::getInstance()->addStaticObject(ins);
+
+	for (unsigned int i = 0; i < s->jointList[joint].sons.size(); i++)
+		createBone(s, s->jointList[joint].sons[i], parentPosition + s->jointList[joint].position);
+}
+void generateRagdoll(Skeleton* s)
+{
+	std::cout << InstanceManager::getInstance()->getNumberOfInstances() << std::endl;
+	createBone(s, s->root, glm::vec3(0, 0, 3));
+
+	std::cout << InstanceManager::getInstance()->getNumberOfInstances()<< std::endl;
+}
+//
+

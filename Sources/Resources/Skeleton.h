@@ -42,7 +42,7 @@ class Skeleton : public ResourceVirtual
 		static std::string extension;
 		//
 
-	protected:
+	//protected:
 		//	Attributes
 		uint8_t configuration;
 		unsigned int root;
