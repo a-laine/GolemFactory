@@ -6,7 +6,7 @@ std::string Skeleton::extension = ".skeleton";
 //
 
 //	Default
-Skeleton::Skeleton(std::string path, std::string skeletonName) : ResourceVirtual(skeletonName, ResourceVirtual::MESH), configuration(0x00)
+Skeleton::Skeleton(std::string path, std::string skeletonName) : ResourceVirtual(skeletonName, ResourceVirtual::SKELETON), configuration(0x00)
 {
 	Variant v; Variant* tmp = NULL;
 	std::string tmpName;
@@ -49,7 +49,6 @@ Skeleton::Skeleton(std::string path, std::string skeletonName) : ResourceVirtual
 		//	add joint to joint list
 		jointList.push_back(j);
 	}
-	//std::cout << "number of joint imported : " << jointList.size() << std::endl;
 
 	//	second pass : construct hierarchy
 	root = jointList.size() + 1;
@@ -99,7 +98,6 @@ Skeleton::Skeleton(std::string path, std::string skeletonName) : ResourceVirtual
 			else return;
 		}
 	}
-	//std::cout << "founded root index : " << root << std::endl;
 
 	if (root < jointList.size())
 	{

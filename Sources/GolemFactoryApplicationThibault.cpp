@@ -65,13 +65,8 @@ int main()
 	SceneManager::getInstance()->setWorldPosition(glm::vec3(0,0,25));
 	SceneManager::getInstance()->setWorldSize(glm::vec3(GRID_SIZE*GRID_ELEMENT_SIZE, GRID_SIZE*GRID_ELEMENT_SIZE, 50));
 
-	//Skeleton* s = new Skeleton("C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/Skeletons/","dummy");
-	//Skeleton* s = new Skeleton("C:/Users/Thibault/Documents/Github/GolemFactory/Resources/Skeletons/", "dummy");
-	//s->debug();
-	//generateRagdoll(s);
-
-	//InstanceDrawable* firtree = InstanceManager::getInstance()->getInstanceDrawable("firTree1.obj");
-	//firtree->setShader(ResourceManager::getInstance()->getShader("tree"));
+	//generateRagdoll(ResourceManager::getInstance()->getSkeleton("default"));
+	//InstanceDrawable* firtree = InstanceManager::getInstance()->getInstanceDrawable("firTree1.obj","tree");
 	//SceneManager::getInstance()->addStaticObject(firtree);
 
 	initializeForestScene();

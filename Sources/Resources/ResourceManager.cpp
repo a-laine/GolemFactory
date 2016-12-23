@@ -10,6 +10,7 @@ ResourceManager::ResourceManager(std::string path)
     defaultFont = "Comic Sans MS";
     defaultShader = "default";
     defaultMesh = "cube2.obj";
+	defaultSkeleton = "test";
 }
 ResourceManager::~ResourceManager()
 {
@@ -28,6 +29,10 @@ ResourceManager::~ResourceManager()
     for(auto element : meshList)
         delete element.second;
     meshList.clear();
+
+	for (auto element : skeletonList)
+		delete element.second;
+	skeletonList.clear();
 
     clearGarbage();
 }
@@ -48,16 +53,17 @@ void ResourceManager::release(ResourceVirtual* resource)
         mutexList.lock();
         switch(resource->type)
         {
-            case ResourceVirtual::FONT:     fontList.erase(resource->name);
-            case ResourceVirtual::SHADER:   shaderList.erase(resource->name);
-            case ResourceVirtual::TEXTURE:  textureList.erase(resource->name);
-            case ResourceVirtual::MESH:     meshList.erase(resource->name);
+			case ResourceVirtual::FONT:     fontList.erase(resource->name);		break;
+            case ResourceVirtual::SHADER:   shaderList.erase(resource->name);	break;
+            case ResourceVirtual::TEXTURE:  textureList.erase(resource->name);	break;
+            case ResourceVirtual::MESH:     meshList.erase(resource->name);		break;
+			case ResourceVirtual::SKELETON:	skeletonList.erase(resource->name);	break;
             default: break;
         }
         mutexList.unlock();
 
         mutexGarbage.lock();
-        garbage.insert(garbage.end(),resource);
+        garbage.insert(garbage.end(), resource);
         mutexGarbage.unlock();
     }
 }
@@ -69,8 +75,8 @@ void ResourceManager::clearGarbage()
     garbage.swap(garbageCopy);
     mutexGarbage.unlock();
 
-    for(unsigned int i=0;i<garbageCopy.size();i++)
-        if(garbageCopy[i]) delete garbageCopy[i];
+	for (unsigned int i = 0; i < garbageCopy.size(); i++)
+		if (garbageCopy[i]) delete garbageCopy[i];
     garbageCopy.clear();
 }
 
@@ -219,6 +225,41 @@ Font* ResourceManager::getFont(std::string name)
     }
     return resource;
 }
+Skeleton* ResourceManager::getSkeleton(std::string name)
+{
+	if (name == "default") name = defaultSkeleton;
+	Skeleton* resource = nullptr;
+
+	mutexList.lock();
+	auto it = skeletonList.find(name);
+	if (it != skeletonList.end())
+	{
+		resource = it->second;
+		resource->count++;
+	}
+	mutexList.unlock();
+	if (resource) return resource;
+
+	resource = new Skeleton(repository + "Skeletons/", name);
+	if (resource && resource->isValid())
+	{
+		mutexList.lock();
+		skeletonList[name] = resource;
+		resource->count++;
+		mutexList.unlock();
+	}
+	else if (name != defaultSkeleton)
+	{
+		if (resource) delete resource;
+		resource = getSkeleton(defaultSkeleton);
+	}
+	else if (resource)
+	{
+		delete resource;
+		resource = nullptr;
+	}
+	return resource;
+}
 
 
 bool ResourceManager::addMesh(Mesh* mesh)
@@ -281,6 +322,21 @@ bool ResourceManager::addFont(Font* font)
 		font->count++;
 	}
 }
+bool ResourceManager::addSkeleton(Skeleton* skeleton)
+{
+	auto it = skeletonList.find(skeleton->name);
+	if (it != skeletonList.end())
+	{
+		skeleton->count++;
+	}
+	else
+	{
+		mutexList.lock();
+		skeletonList[skeleton->name] = skeleton;
+		mutexList.unlock();
+		skeleton->count++;
+	}
+}
 //
 
 //  Set/get functions
@@ -292,7 +348,8 @@ unsigned int ResourceManager::getNumberOfRessources(ResourceVirtual::ResourceTyp
         case ResourceVirtual::MESH:     return meshList.size();
         case ResourceVirtual::SHADER:   return shaderList.size();
         case ResourceVirtual::TEXTURE:  return textureList.size();
-        default: return fontList.size()+shaderList.size()+textureList.size()+meshList.size();
+		case ResourceVirtual::SKELETON:	return skeletonList.size();
+		default: return fontList.size() + shaderList.size() + textureList.size() + meshList.size() + skeletonList.size();
     }
 }
 std::string ResourceManager::getDefaultName(ResourceVirtual::ResourceType type)
@@ -303,6 +360,7 @@ std::string ResourceManager::getDefaultName(ResourceVirtual::ResourceType type)
         case ResourceVirtual::SHADER:   return defaultShader;
         case ResourceVirtual::TEXTURE:  return defaultTexture;
         case ResourceVirtual::MESH:     return defaultMesh;
+		case ResourceVirtual::SKELETON:	return defaultSkeleton;
         default: return "";
     }
 }
@@ -310,9 +368,11 @@ void ResourceManager::setDefaultName(ResourceVirtual::ResourceType type,std::str
 {
     switch(type)
     {
-        case ResourceVirtual::FONT:     defaultFont = name;
-        case ResourceVirtual::SHADER:   defaultShader = name;
-        case ResourceVirtual::TEXTURE:  defaultTexture = name;
+		case ResourceVirtual::FONT:     defaultFont = name;			break;
+        case ResourceVirtual::SHADER:   defaultShader = name;		break;
+        case ResourceVirtual::TEXTURE:  defaultTexture = name;		break;
+		case ResourceVirtual::MESH:		defaultMesh = name;			break;
+		case ResourceVirtual::SKELETON:	defaultSkeleton = name;		break;
         default: break;
     }
 }

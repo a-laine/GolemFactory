@@ -19,10 +19,7 @@ InstanceDrawable::~InstanceDrawable()
 //
 
 //	Public functions
-void InstanceDrawable::setOrientation(glm::mat4 m)
-{
-	rotationMatrix = m;
-}
+void InstanceDrawable::setOrientation(glm::mat4 m){ rotationMatrix = m; }
 void InstanceDrawable::setShader(std::string shaderName)
 {
 	ResourceManager::getInstance()->release(shader);
@@ -47,14 +44,8 @@ void InstanceDrawable::setMesh(Mesh* m)
 }
 
 
-Shader* InstanceDrawable::getShader() const
-{
-	return shader;
-}
-Mesh* InstanceDrawable::getMesh() const
-{
-	return mesh;
-}
+Shader* InstanceDrawable::getShader() const { return shader; }
+Mesh* InstanceDrawable::getMesh() const { return mesh; }
 glm::mat4 InstanceDrawable::getModelMatrix() const
 {
 	glm::mat4 model(1.0);
