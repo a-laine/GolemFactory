@@ -16,12 +16,11 @@
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-#define GRID_SIZE 100
+#define GRID_SIZE 300
 #define GRID_ELEMENT_SIZE 3.0f
 
 // prototypes
 GLFWwindow* initGLFW();
-void initGLEW(int verbose = 1);
 void initializeForestScene();
 //
 
@@ -30,40 +29,41 @@ void initializeForestScene();
 void generateRagdoll(Skeleton* s);
 //
 
+std::string resourceRepository = "C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/";
+//std::string resourceRepository = "C:/Users/Thibault/Documents/Github/GolemFactory/Resources/";
+//std::string resourceRepository = "Resources/";
 
 // program
 int main()
 {
 	// init window and opengl
 	GLFWwindow* window = initGLFW();
-	initGLEW(0);
+	Renderer::getInstance()->initGLEW(0);
 
 	// Init Event handler
 	EventHandler::getInstance()->addWindow(window);
-	EventHandler::getInstance()->setRepository("C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/");
-	//EventHandler::getInstance()->setRepository("C:/Users/Thibault/Documents/Github/GolemFactory/Resources/");
-	//EventHandler::getInstance()->setRepository("Resources/");
+	EventHandler::getInstance()->setRepository(resourceRepository);
 	EventHandler::getInstance()->loadKeyMapping("RPG Key mapping");
 	EventHandler::getInstance()->setCursorMode(false);
 	
 	// Init Resources manager and load some default shader
-	ResourceManager::getInstance()->setRepository("C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/");
-	//ResourceManager::getInstance()->setRepository("C:/Users/Thibault/Documents/Github/GolemFactory/Resources/");
-	//ResourceManager::getInstance()->setRepository("Resources/");
-	ResourceManager::getInstance()->getFont("default");
+	ResourceManager::getInstance()->setRepository(resourceRepository);
+
+	InstanceManager::getInstance()->setMaxNumberOfInstances(200000);
 	
 	// Init Renderer;
 	Camera camera;
 		camera.setPosition(glm::vec3(-3,0,3));
 	Renderer::getInstance()->setCamera(&camera);
 	Renderer::getInstance()->setWindow(window);
-	//Renderer::getInstance()->setDefaultShader(ResourceManager::getInstance()->getShader("default"));
 	Renderer::getInstance()->initializeGrid(GRID_SIZE, GRID_ELEMENT_SIZE);
 	ResourceManager::getInstance()->getShader("tree");
 
 	// init scene
 	SceneManager::getInstance()->setWorldPosition(glm::vec3(0,0,25));
 	SceneManager::getInstance()->setWorldSize(glm::vec3(GRID_SIZE*GRID_ELEMENT_SIZE, GRID_SIZE*GRID_ELEMENT_SIZE, 50));
+
+	//Animation* anim = new Animation(resourceRepository + "Animation/","walk");
 
 	//generateRagdoll(ResourceManager::getInstance()->getSkeleton("default"));
 	//InstanceDrawable* firtree = InstanceManager::getInstance()->getInstanceDrawable("firTree1.obj","tree");
@@ -80,7 +80,7 @@ int main()
 		// begin loop
 		startTime = glfwGetTime();
 		int width, height;
-		glfwGetWindowSize(window,&width,&height);
+		glfwGetWindowSize(window, &width, &height);
 		float angle = camera.getFrustrumAngleVertical() + EventHandler::getInstance()->getScrollingRelative().y;
 		if (angle > 70.f) angle = 70.f;
 		else if (angle < 3) angle = 3.f;
@@ -107,7 +107,7 @@ int main()
 			EventHandler::getInstance()->isActivated(RUN),		EventHandler::getInstance()->isActivated(SNEAKY)    );
 
 		//	Debug
-		//std::cout << 1000.f*(glfwGetTime() - startTime) << std::endl;
+		std::cout << 1000.f*(glfwGetTime() - startTime) << std::endl;
 
 		// End loop
 		glfwSwapBuffers(window);
@@ -147,25 +147,6 @@ GLFWwindow* initGLFW()
 	glfwSwapInterval(1);
 	return window;
 }
-void initGLEW(int verbose)
-{
-	glewExperimental = GL_TRUE;
-	GLenum err = glewInit();
-	if (GLEW_OK != err)
-	{
-		std::cerr << "ERROR : " << glewGetErrorString(err) << std::endl;
-		glfwTerminate();
-		exit(-1);
-	}
-	if (verbose) std::cout << "GLEW init success" << std::endl;
-	if (verbose < 1) return;
-
-	std::cout << "Status: GLEW version : " << glewGetString(GLEW_VERSION) << std::endl;
-	std::cout << "        OpenGL version : " << glGetString(GL_VERSION) << std::endl;
-	std::cout << "        OpenGL implementation vendor : " << glGetString(GL_VENDOR) << std::endl;
-	std::cout << "        Renderer name : " << glGetString(GL_RENDERER) << std::endl;
-	std::cout << "        GLSL version : " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
-}
 
 void initializeForestScene()
 {
@@ -181,6 +162,7 @@ void initializeForestScene()
 			if (r < 20)
 			{
 				meshName = "rock1.obj";
+				shaderName = "default";
 			}
 			else if (r < 80)
 			{
@@ -188,7 +170,7 @@ void initializeForestScene()
 				shaderName = "tree";
 			}
 			else continue;
-
+			
 			glm::vec3 p(GRID_ELEMENT_SIZE*i - (GRID_SIZE * GRID_ELEMENT_SIZE) / 2 + ((rand() % 10) / 5.f - 1.f),
 						GRID_ELEMENT_SIZE*j - (GRID_SIZE * GRID_ELEMENT_SIZE) / 2 + ((rand() % 10) / 5.f - 1.f),
 						0);
@@ -251,10 +233,7 @@ void createBone(Skeleton* s, unsigned int joint, glm::vec3 parentPosition)
 }
 void generateRagdoll(Skeleton* s)
 {
-	std::cout << InstanceManager::getInstance()->getNumberOfInstances() << std::endl;
 	createBone(s, s->root, glm::vec3(0, 0, 3));
-
-	std::cout << InstanceManager::getInstance()->getNumberOfInstances()<< std::endl;
 }
 //
 

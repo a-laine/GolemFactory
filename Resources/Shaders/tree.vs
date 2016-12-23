@@ -24,13 +24,13 @@ vec4 lightCoordinateWorldSpace = vec4(1000,200,1500,1);
 // program
 void main()
 {
-	vec3 tmp = position + position.z * wind.xyz;
+	vec4 tmp = model * vec4(position, 1.0) ;
 	
-	gl_Position = projection * view * model * vec4(tmp,1);
+	gl_Position = projection * view * (tmp + position.z * wind);
 	fragmentNormal = (view * model * vec4(normal,0.0)).xyz;
 	fragmentColor = 2.0 * vertexcolor;
 	
-	vec3 eyeDirectionCameraSpace = - ( view * model * vec4(tmp, 1.0)).xyz;
+	vec3 eyeDirectionCameraSpace = - ( view * tmp).xyz;
 	vec3 lightPositionCameraSpace = (view * lightCoordinateWorldSpace).xyz;
 	lightDirectionCameraSpace = lightPositionCameraSpace + eyeDirectionCameraSpace;
 }

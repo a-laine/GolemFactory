@@ -21,6 +21,7 @@ class Renderer : public Singleton<Renderer>
 
 	public:
 		//  Public functions
+		void initGLEW(int verbose = 1);
 		void render();
 		
 		void setGridVisible(bool enable);
@@ -58,9 +59,9 @@ class Renderer : public Singleton<Renderer>
 		unsigned int vboGridSize;
 		GLuint gridVAO, vertexbuffer, arraybuffer;
 		float* vertexBufferGrid;
-		uint16_t* indexBufferGrid;
+		uint32_t* indexBufferGrid;
 
-		float dummy;
+		double dummy;
 		//
 };
 

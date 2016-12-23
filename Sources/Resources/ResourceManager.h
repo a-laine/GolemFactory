@@ -12,6 +12,9 @@
 #include "Font.h"
 #include "Mesh.h"
 #include "Skeleton.h"
+#include "Animation.h"
+
+
 
 class ResourceManager : public Singleton<ResourceManager>
 {

@@ -29,6 +29,26 @@ Renderer::~Renderer()
 //
 
 //  Public functions
+void Renderer::initGLEW(int verbose)
+{
+	glewExperimental = GL_TRUE;
+	GLenum err = glewInit();
+	if (GLEW_OK != err)
+	{
+		std::cerr << "ERROR : " << glewGetErrorString(err) << std::endl;
+		glfwTerminate();
+		exit(-1);
+	}
+	if (verbose) std::cout << "GLEW init success" << std::endl;
+	if (verbose < 1) return;
+
+	std::cout << "Status: GLEW version : " << glewGetString(GLEW_VERSION) << std::endl;
+	std::cout << "        OpenGL version : " << glGetString(GL_VERSION) << std::endl;
+	std::cout << "        OpenGL implementation vendor : " << glGetString(GL_VENDOR) << std::endl;
+	std::cout << "        Renderer name : " << glGetString(GL_RENDERER) << std::endl;
+	std::cout << "        GLSL version : " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
+}
+
 void Renderer::render()
 {
 	if (!window || !camera) return;
@@ -54,7 +74,7 @@ void Renderer::render()
 		loadMVPMatrix(gridShader, &glm::mat4(1.0)[0][0], &view[0][0], &projection[0][0]);
 
 		glBindVertexArray(gridVAO);
-		glDrawElements(GL_TRIANGLES, vboGridSize, GL_UNSIGNED_SHORT, NULL);
+		glDrawElements(GL_TRIANGLES, vboGridSize, GL_UNSIGNED_INT, NULL);
 	}
 
 	//	get instance list
@@ -67,11 +87,8 @@ void Renderer::render()
 
 	//	draw instance list
 	Shader* shaderToUse;
-	int loc;
-	glm::vec4 wind(0.1*sin(dummy), 0.0, 0.0, 0.0);
-
-
-	for (auto it = instanceList.begin(); it != instanceList.end(); it++)
+	unsigned int drawnInstance = 0;
+	for (auto it = instanceList.begin(); it != instanceList.end() && drawnInstance < 8000; it++, drawnInstance++)
 	{
 		if (InstanceDrawable* d = dynamic_cast<InstanceDrawable*>(it->second))
 		{
@@ -87,7 +104,12 @@ void Renderer::render()
 			loadMVPMatrix(shaderToUse, &d->getModelMatrix()[0][0], &view[0][0], &projection[0][0]);
 
 			int loc = shaderToUse->getUniformLocation("wind");
-			if (loc >= 0) glUniform4fv(loc, 1, &wind.x);
+			if (loc >= 0)
+			{
+				double phase = 0.05*d->getPosition().x + 0.05*d->getSize().z;
+				glm::vec4 wind(0.1 * sin(dummy + phase), 0.0, 0.0, 0.0);
+				glUniform4fv(loc, 1, &wind.x);
+			}
 
 			// Draw mesh
 			d->getMesh()->draw();
@@ -121,7 +143,7 @@ void Renderer::initializeGrid(unsigned int gridSize, float elementSize)
 			vertexBufferGrid[3 * (i*(gridSize + 1) + j) + 2] = 0;
 		}
 
-	indexBufferGrid = new uint16_t[6 * gridSize*gridSize];
+	indexBufferGrid = new uint32_t[6 * gridSize*gridSize];
 	for (unsigned int i = 0; i < gridSize; i++)
 		for (unsigned int j = 0; j < gridSize; j++)
 		{
@@ -143,7 +165,7 @@ void Renderer::initializeGrid(unsigned int gridSize, float elementSize)
 
 	glGenBuffers(1, &arraybuffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, arraybuffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * gridSize*gridSize * sizeof(unsigned short), indexBufferGrid, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * gridSize*gridSize * sizeof(unsigned int), indexBufferGrid, GL_STATIC_DRAW);
 
 	//	initialize VAO
 	glGenVertexArrays(1, &gridVAO);

@@ -1,0 +1,73 @@
+walk
+{
+	duration : 2.0;
+	blending : [false,				// chest
+					false,			// head
+					
+					false,			// legRight
+						false,		// tibiasRight
+							false,	// footRight
+							
+					false,			// legLeft
+						false,		// tibiasLeft
+							false,	// footLeft
+							
+					false,			// armRight
+						false,		// forearmRight
+							false,	// handRight
+							
+					false,			// armLeft
+						false,		// forearmLeft
+							false	// handLeft
+				];
+	keyPose : 
+	[
+		{	//	Key 0
+			timeKey : 0.0;
+			jointList : [
+				{  },																		// chest
+					{ position:[0.0,0.0,0.3]; orientation:[1.0,0.0,0.0,0.0]; },				// head
+					
+					{ position:[0.0,0.3,-0.8]; orientation:[1.0,0.0,0.0,0.0]; },			// legRight
+						{ position:[0.0,0.0,-0.8]; orientation:[1.0,0.0,0.0,0.0]; },		// tibiasRight
+							{ position:[0.0,0.0,-0.8]; orientation:[1.0,0.0,0.0,0.0]; },	// footRight
+					
+					{ position:[0.0,-0.3,-0.8]; orientation:[1.0,0.0,0.0,0.0]; },			// legLeft
+						{ position:[0.0,0.0,-0.8]; orientation:[1.0,0.0,0.0,0.0]; },		// tibiasLeft
+							{ position:[0.0,0.0,-0.8]; orientation:[1.0,0.0,0.0,0.0]; },	// footLeft
+							
+					{ position:[0.0,0.3,0.0]; orientation:[1.0,0.0,0.0,0.0]; },				// armRight
+						{ position:[0.0,0.8,0.0]; orientation:[1.0,0.0,0.0,0.0]; },			// forearmRight
+							{ position:[0.0,0.8,0.0]; orientation:[1.0,0.0,0.0,0.0]; },		// handRight
+					
+					{ position:[0.0,-0.3,0.0]; orientation:[1.0,0.0,0.0,0.0]; },			// armLeft
+						{ position:[0.0,-0.8,0.0]; orientation:[1.0,0.0,0.0,0.0]; },		// forearmLeft
+							{ position:[0.0,-0.8,0.0]; orientation:[1.0,0.0,0.0,0.0]; } 	// handLeft
+			];
+		},
+		
+		{	//	Key 1
+			timeKey : 1.0;
+			jointList : [
+				{  },																		// chest
+					{ position:[0.0,0.0,0.3]; orientation:[1.0,0.0,0.0,0.0]; },				// head
+					
+					{ position:[0.0,0.3,-0.8]; orientation:[1.0,0.0,0.0,0.0]; },			// legRight
+						{ position:[0.0,0.0,-0.8]; orientation:[1.0,0.0,0.0,0.0]; },		// tibiasRight
+							{ position:[0.0,0.0,-0.8]; orientation:[1.0,0.0,0.0,0.0]; },	// footRight
+					
+					{ position:[0.0,-0.3,-0.8]; orientation:[1.0,0.0,0.0,0.0]; },			// legLeft
+						{ position:[0.0,0.0,-0.8]; orientation:[1.0,0.0,0.0,0.0]; },		// tibiasLeft
+							{ position:[0.0,0.0,-0.8]; orientation:[1.0,0.0,0.0,0.0]; },	// footLeft
+							
+					{ position:[0.0,0.3,0.0]; orientation:[1.0,0.0,0.0,0.0]; },				// armRight
+						{ position:[0.0,0.8,0.0]; orientation:[1.0,0.0,0.0,0.0]; },			// forearmRight
+							{ position:[0.0,0.8,0.0]; orientation:[1.0,0.0,0.0,0.0]; },		// handRight
+					
+					{ position:[0.0,-0.3,0.0]; orientation:[1.0,0.0,0.0,0.0]; },			// armLeft
+						{ position:[0.0,-0.8,0.0]; orientation:[1.0,0.0,0.0,0.0]; },		// forearmLeft
+							{ position:[0.0,-0.8,0.0]; orientation:[1.0,0.0,0.0,0.0]; } 	// handLeft
+			];
+		},
+	];
+}
