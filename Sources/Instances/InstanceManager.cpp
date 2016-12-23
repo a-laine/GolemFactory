@@ -2,7 +2,7 @@
 
 
 //  Default
-InstanceManager::InstanceManager(unsigned int maximum) : maxInstance(maximum)
+InstanceManager::InstanceManager(unsigned int maximum) : maxInstance(maximum), nbInstance(0)
 {
 	maxInstance = ((maximum >> 5) + 1) << 5;
 	summary.assign(maxInstance >> 5, 0);
@@ -83,9 +83,9 @@ void InstanceManager::clearGarbage()
 	garbageCopy.clear();
 }
 
-InstanceDrawable* InstanceManager::getInstanceDrawable(std::string meshName)
+InstanceDrawable* InstanceManager::getInstanceDrawable(std::string meshName, std::string shaderName)
 {
-	InstanceDrawable* ins = new InstanceDrawable(meshName);
+	InstanceDrawable* ins = new InstanceDrawable(meshName, shaderName);
 	if (!ins || !add(ins))
 	{
 		if(ins) delete ins;

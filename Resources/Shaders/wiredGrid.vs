@@ -7,9 +7,9 @@ layout(location = 0) in vec3 position;
 //in vec3 weight;
 //in vec4 vertexcolor;
 
-uniform mat4 m; // model matrix (has to be present at this location)
-uniform mat4 v; // view matrix
-uniform mat4 p; // projection matrix
+uniform mat4 model; 	// model matrix (has to be present at this location)
+uniform mat4 view; 		// view matrix
+uniform mat4 projection;// projection matrix
 
 // output
 //out vec2 textureCoord;
@@ -19,8 +19,8 @@ uniform mat4 p; // projection matrix
 // program
 void main()
 {
-	gl_Position = p*v*m * vec4(position,1);
-	//fragmentNormal = (v*m * vec4(normal,0.0)).xyz;
+	gl_Position = projection * view * model * vec4(position, 1.0);
+	//fragmentNormal = (view*model * vec4(normal,0.0)).xyz;
 	//textureCoord = texture;
 	//fragmentColor = vertexcolor;
 }

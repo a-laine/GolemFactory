@@ -21,7 +21,7 @@ class InstanceManager : public Singleton<InstanceManager>
 		void release(InstanceVirtual* ins);
 		void clearGarbage();
 
-		InstanceDrawable* getInstanceDrawable(std::string meshName);
+		InstanceDrawable* getInstanceDrawable(std::string meshName = "default", std::string shaderName = "default");
 		//
 
 		//  Set/get functions

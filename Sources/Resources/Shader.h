@@ -32,13 +32,13 @@ class Shader : public ResourceVirtual
 
         //  Public functions
         void enable();
-		void loadUniformMatrix(float* model, float* view, float* projection);
-		void loadUniformMatrix(char matrix,float* matrixPointer);
 
         GLuint getProgram() const;
         int getTextureCount() const;
         GLuint getShaderID(ShaderType shaderType) const;
-        bool useShaderType(ShaderType shaderType) const;
+		bool useShaderType(ShaderType shaderType) const;
+
+		int getUniformLocation(std::string uniform);
         //
 
         //  Attributes
@@ -59,7 +59,5 @@ class Shader : public ResourceVirtual
                 program;                                //!< Program opengl id
         uint8_t textureCount;                           //!< The number of texture use by the program
         std::map<std::string,GLuint> attributesLocation;//!< The shader attribute map with their opengl location
-
-		GLuint projectionLoc, viewLoc, modelLoc;
         //
 };

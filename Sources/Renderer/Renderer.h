@@ -44,6 +44,10 @@ class Renderer : public Singleton<Renderer>
 		~Renderer();
 		//
 
+		//	Protected functions
+		void loadMVPMatrix(Shader* shader, float* model, float* view, float* projection) const;
+		//
+
 		//  Attributes
 		GLFWwindow* window;
 		Camera* camera;
@@ -55,6 +59,8 @@ class Renderer : public Singleton<Renderer>
 		GLuint gridVAO, vertexbuffer, arraybuffer;
 		float* vertexBufferGrid;
 		uint16_t* indexBufferGrid;
+
+		float dummy;
 		//
 };
 

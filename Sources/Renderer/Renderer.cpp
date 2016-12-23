@@ -14,6 +14,8 @@ Renderer::Renderer()
 	gridShader = nullptr;
 	vertexBufferGrid = nullptr;
 	indexBufferGrid = nullptr;
+
+	dummy = 0.0;
 }
 Renderer::~Renderer()
 {
@@ -31,6 +33,10 @@ void Renderer::render()
 {
 	if (!window || !camera) return;
 
+	dummy += 0.016;
+	if (dummy >= 6.28)
+		dummy = 0.0;
+
 	// bind matrix
 	glm::mat4 view = camera->getViewMatrix();
 
@@ -45,7 +51,8 @@ void Renderer::render()
 	if (drawGrid && gridShader && glIsVertexArray(gridVAO))
 	{
 		gridShader->enable();
-		gridShader->loadUniformMatrix(&glm::mat4(1.0)[0][0], &view[0][0], &projection[0][0]);
+		loadMVPMatrix(gridShader, &glm::mat4(1.0)[0][0], &view[0][0], &projection[0][0]);
+
 		glBindVertexArray(gridVAO);
 		glDrawElements(GL_TRIANGLES, vboGridSize, GL_UNSIGNED_SHORT, NULL);
 	}
@@ -59,14 +66,31 @@ void Renderer::render()
 	std::sort(instanceList.begin(), instanceList.end());
 
 	//	draw instance list
-	if (defaultShader)
+	Shader* shaderToUse;
+	int loc;
+	glm::vec4 wind(0.1*sin(dummy), 0.0, 0.0, 0.0);
+
+
+	for (auto it = instanceList.begin(); it != instanceList.end(); it++)
 	{
-		defaultShader->enable();
-		defaultShader->loadUniformMatrix(&glm::mat4(1.0)[0][0], &view[0][0], &projection[0][0]);
-		for (auto it = instanceList.begin(); it != instanceList.end(); it++)
+		if (InstanceDrawable* d = dynamic_cast<InstanceDrawable*>(it->second))
 		{
-			if (InstanceDrawable* d = dynamic_cast<InstanceDrawable*>(it->second))
-				d->draw(defaultShader);
+			// Get shader
+			if (defaultShader) shaderToUse = defaultShader;
+			else shaderToUse = d->getShader();
+			if (!shaderToUse) continue;
+
+			// Activate shader
+			shaderToUse->enable();
+
+			// Enable mvp matrix
+			loadMVPMatrix(shaderToUse, &d->getModelMatrix()[0][0], &view[0][0], &projection[0][0]);
+
+			int loc = shaderToUse->getUniformLocation("wind");
+			if (loc >= 0) glUniform4fv(loc, 1, &wind.x);
+
+			// Draw mesh
+			d->getMesh()->draw();
 		}
 	}
 }
@@ -134,6 +158,23 @@ void Renderer::initializeGrid(unsigned int gridSize, float elementSize)
 	glBindVertexArray(0);
 }
 //
+
+
+//	Protected functions
+void Renderer::loadMVPMatrix(Shader* shader, float* model, float* view, float* projection) const
+{
+	int loc = shader->getUniformLocation("model");
+	if (loc >= 0)
+		glUniformMatrix4fv(loc, 1, GL_FALSE, model);
+	loc = shader->getUniformLocation("view");
+	if (loc >= 0)
+		glUniformMatrix4fv(loc, 1, GL_FALSE, view);
+	loc = shader->getUniformLocation("projection");
+	if (loc >= 0)
+		glUniformMatrix4fv(loc, 1, GL_FALSE, projection);
+}
+//
+
 
 //  Set/get functions
 void Renderer::setCamera(Camera* cam)

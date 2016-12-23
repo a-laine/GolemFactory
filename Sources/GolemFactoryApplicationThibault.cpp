@@ -40,15 +40,15 @@ int main()
 
 	// Init Event handler
 	EventHandler::getInstance()->addWindow(window);
-	//EventHandler::getInstance()->setRepository("C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/");
-	EventHandler::getInstance()->setRepository("C:/Users/Thibault/Documents/Github/GolemFactory/Resources/");
+	EventHandler::getInstance()->setRepository("C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/");
+	//EventHandler::getInstance()->setRepository("C:/Users/Thibault/Documents/Github/GolemFactory/Resources/");
 	//EventHandler::getInstance()->setRepository("Resources/");
 	EventHandler::getInstance()->loadKeyMapping("RPG Key mapping");
 	EventHandler::getInstance()->setCursorMode(false);
 	
 	// Init Resources manager and load some default shader
-	//ResourceManager::getInstance()->setRepository("C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/");
-	ResourceManager::getInstance()->setRepository("C:/Users/Thibault/Documents/Github/GolemFactory/Resources/");
+	ResourceManager::getInstance()->setRepository("C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/");
+	//ResourceManager::getInstance()->setRepository("C:/Users/Thibault/Documents/Github/GolemFactory/Resources/");
 	//ResourceManager::getInstance()->setRepository("Resources/");
 	ResourceManager::getInstance()->getFont("default");
 	
@@ -57,16 +57,24 @@ int main()
 		camera.setPosition(glm::vec3(-3,0,3));
 	Renderer::getInstance()->setCamera(&camera);
 	Renderer::getInstance()->setWindow(window);
-	Renderer::getInstance()->setDefaultShader(ResourceManager::getInstance()->getShader("default"));
+	//Renderer::getInstance()->setDefaultShader(ResourceManager::getInstance()->getShader("default"));
 	Renderer::getInstance()->initializeGrid(GRID_SIZE, GRID_ELEMENT_SIZE);
+	ResourceManager::getInstance()->getShader("tree");
 
 	// init scene
 	SceneManager::getInstance()->setWorldPosition(glm::vec3(0,0,25));
 	SceneManager::getInstance()->setWorldSize(glm::vec3(GRID_SIZE*GRID_ELEMENT_SIZE, GRID_SIZE*GRID_ELEMENT_SIZE, 50));
 
-	Skeleton* s = new Skeleton("C:/Users/Thibault/Documents/Github/GolemFactory/Resources/Skeletons/","dummy");
-	s->debug();
-	generateRagdoll(s);
+	//Skeleton* s = new Skeleton("C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/Skeletons/","dummy");
+	//Skeleton* s = new Skeleton("C:/Users/Thibault/Documents/Github/GolemFactory/Resources/Skeletons/", "dummy");
+	//s->debug();
+	//generateRagdoll(s);
+
+	//InstanceDrawable* firtree = InstanceManager::getInstance()->getInstanceDrawable("firTree1.obj");
+	//firtree->setShader(ResourceManager::getInstance()->getShader("tree"));
+	//SceneManager::getInstance()->addStaticObject(firtree);
+
+	initializeForestScene();
 
 	// init loop time tracking
 	double startTime, elapseTime = 16;
@@ -167,30 +175,42 @@ void initGLEW(int verbose)
 void initializeForestScene()
 {
 	int fail = 0;
+	std::string meshName;
+	std::string shaderName;
 	srand((unsigned int)time(NULL));
+
 	for (int i = 0; i < GRID_SIZE; i++)
 		for (int j = 0; j < GRID_SIZE; j++)
 		{
 			int r = rand() % 100;
+			if (r < 20)
+			{
+				meshName = "rock1.obj";
+			}
+			else if (r < 80)
+			{
+				meshName = "firTree1.obj";
+				shaderName = "tree";
+			}
+			else continue;
+
 			glm::vec3 p(GRID_ELEMENT_SIZE*i - (GRID_SIZE * GRID_ELEMENT_SIZE) / 2 + ((rand() % 10) / 5.f - 1.f),
 						GRID_ELEMENT_SIZE*j - (GRID_SIZE * GRID_ELEMENT_SIZE) / 2 + ((rand() % 10) / 5.f - 1.f),
 						0);
 			float s = 1.f + 0.2f*((rand() % 100) / 50.f - 1.f);
 			glm::mat4 a = glm::rotate(glm::mat4(1.0), glm::radians((rand() % 3600) / 10.f), glm::vec3(0, 0, 1));
-			InstanceDrawable* ins = nullptr;
+			InstanceDrawable* ins = InstanceManager::getInstance()->getInstanceDrawable();
+			if (!ins) continue;
 
-			if (r < 20)      ins = InstanceManager::getInstance()->getInstanceDrawable("rock1.obj");
-			else if (r < 80) ins = InstanceManager::getInstance()->getInstanceDrawable("firTree1.obj");
+			ins->setMesh(meshName);
+			ins->setShader(shaderName);
 			
-			if (ins)
-			{
-				ins->setPosition(p);
-				ins->setSize(glm::vec3(s,s,s));
-				ins->setOrientation(a);
+			ins->setPosition(p);
+			ins->setSize(glm::vec3(s,s,s));
+			ins->setOrientation(a);
 
-				if(!SceneManager::getInstance()->addStaticObject(ins))
-					fail++;
-			}
+			if(!SceneManager::getInstance()->addStaticObject(ins))
+				fail++;
 		}
 	std::cout << "Instance count : " << InstanceManager::getInstance()->getNumberOfInstances() << std::endl;
 	std::cout << "Insert fail : " << fail << std::endl;
@@ -203,19 +223,31 @@ void createBone(Skeleton* s, unsigned int joint, glm::vec3 parentPosition)
 	InstanceDrawable* ins = InstanceManager::getInstance()->getInstanceDrawable("cube2.obj");
 	if (!ins) return;
 
-	if (joint != s->root)
+	if (joint == s->root)
 	{
-		ins->setPosition(parentPosition + 0.5f * s->jointList[joint].position);
-		ins->setSize(glm::vec3(0.1, 0.1, 0.48f * glm::length(s->jointList[joint].position)));
-		glm::vec3 v = glm::normalize(s->jointList[joint].position);
-		if (glm::dot(v, glm::vec3(0, 0, 1)) != 1.f)
-			//ins->setOrientation(glm::orientation(-v, glm::vec3(0,0,1)));
-			s->jointList[joint].orientation = glm::quat_cast(glm::orientation(-v, glm::vec3(0, 0, 1)));
+		ins->setSize(glm::vec3(0, 0, 0));
+		ins->setPosition(parentPosition);
 	}
 	else
 	{
 		ins->setSize(glm::vec3(0, 0, 0));
 		ins->setPosition(parentPosition);
+
+		ins->setPosition(parentPosition + 0.5f * s->jointList[joint].position);
+		ins->setSize(glm::vec3(0.1, 0.1, 0.48f * glm::length(s->jointList[joint].position)));
+		glm::vec3 v = glm::normalize(s->jointList[joint].position);
+		if (glm::dot(v, glm::vec3(0, 0, 1)) != 1.f)
+			ins->setOrientation(glm::orientation(-v, glm::vec3(0, 0, 1)));
+		//s->jointList[joint].orientation = glm::quat_cast(glm::orientation(-v, glm::vec3(0, 0, 1)));
+
+		if (s->jointList[joint].sons.empty())
+		{
+			InstanceDrawable* leaf = InstanceManager::getInstance()->getInstanceDrawable("icosphere.obj");
+
+			leaf->setSize(glm::vec3(0.3, 0.3, 0.3));
+			leaf->setPosition(parentPosition + s->jointList[joint].position);
+			SceneManager::getInstance()->addStaticObject(leaf);
+		}
 	}
 	SceneManager::getInstance()->addStaticObject(ins);
 
