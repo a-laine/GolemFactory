@@ -10,7 +10,7 @@ Camera::Camera(float screenRatio)
     forward  = glm::vec3(0,0,1)- position;
 
     teta = 0;           phi = 0;
-    sensivity = 0.2f;    speedMag = 0.003f; // = 3m/ms
+    sensivity = 0.2f;   speedMag = 0.003f; // = 3m/ms
     radius = 3;         radiusMin = 1;
     radiusMax = 10;
 	frustrumAngleVertical = 45.0f;

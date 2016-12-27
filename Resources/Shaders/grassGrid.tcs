@@ -1,0 +1,26 @@
+#version 440
+
+layout(vertices = 3) out;
+
+in vec3 vPosition[];
+in mat4 vMVPMatrix[];
+
+out vec3 tcPosition[];
+out mat4 tcMVPMatrix[];
+
+layout (location = 0) uniform float tessFactor = 1.0;
+
+void main()
+{
+	tcPosition[gl_InvocationID]  = vPosition[gl_InvocationID];
+	tcMVPMatrix[gl_InvocationID] = vMVPMatrix[gl_InvocationID];
+	
+	if (gl_InvocationID == 0)
+	{
+		gl_TessLevelInner[0] = tessFactor;
+		gl_TessLevelOuter[0] = tessFactor;
+		gl_TessLevelOuter[1] = tessFactor;
+		gl_TessLevelOuter[2] = tessFactor;
+	}
+}
+

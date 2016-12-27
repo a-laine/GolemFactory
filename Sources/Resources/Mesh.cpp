@@ -12,6 +12,18 @@ Mesh::Mesh(std::string path, std::string meshName) : ResourceVirtual(meshName, R
 	initializeVBO();
 	initializeVAO();
 }
+Mesh::Mesh(std::string meshName, std::vector<glm::vec3> verticesArray, std::vector<glm::vec3> normalesArray, std::vector<glm::vec3> colorArray, std::vector<unsigned int> facesArray)
+	: ResourceVirtual(meshName, ResourceVirtual::MESH), configuration(0x01)
+{
+	vertices = verticesArray;
+	normales = normalesArray;
+	color = colorArray;
+	faces = facesArray;
+
+	computeBoundingBoxDimension();
+	initializeVBO();
+	initializeVAO();
+}
 Mesh::Mesh() : ResourceVirtual(ResourceVirtual::MESH), configuration(0x00)
 {
 

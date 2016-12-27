@@ -1,0 +1,16 @@
+#version 440
+
+layout(triangles, equal_spacing,cw) in;
+
+in vec3 tcPosition[];
+in mat4 tcMVPMatrix[];
+
+
+void main()
+{
+	vec3 tePosition = gl_TessCoord.x * tcPosition[0] + 
+					  gl_TessCoord.y * tcPosition[1] + 
+					  gl_TessCoord.z * tcPosition[2] ;
+    gl_Position = tcMVPMatrix[0] * vec4(tePosition, 1);
+}
+

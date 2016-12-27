@@ -9,6 +9,7 @@
 #include "Utiles/System.h"
 #include "Events/EventHandler.h"
 #include "Renderer/Renderer.h"
+#include "Generators/HouseGenerator.h"
 
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -16,8 +17,8 @@
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-#define GRID_SIZE 300
-#define GRID_ELEMENT_SIZE 3.0f
+#define GRID_SIZE 100
+#define GRID_ELEMENT_SIZE 5.0f
 
 // prototypes
 GLFWwindow* initGLFW();
@@ -46,14 +47,13 @@ int main()
 	EventHandler::getInstance()->loadKeyMapping("RPG Key mapping");
 	EventHandler::getInstance()->setCursorMode(false);
 	
-	// Init Resources manager and load some default shader
+	// Init Resources manager & instance manager
 	ResourceManager::getInstance()->setRepository(resourceRepository);
-
-	InstanceManager::getInstance()->setMaxNumberOfInstances(200000);
+	InstanceManager::getInstance()->setMaxNumberOfInstances(1000000);
 	
 	// Init Renderer;
 	Camera camera;
-		camera.setPosition(glm::vec3(-3,0,3));
+		camera.setPosition(glm::vec3(-10,0,10));
 	Renderer::getInstance()->setCamera(&camera);
 	Renderer::getInstance()->setWindow(window);
 	Renderer::getInstance()->initializeGrid(GRID_SIZE, GRID_ELEMENT_SIZE);
@@ -62,17 +62,31 @@ int main()
 	// init scene
 	SceneManager::getInstance()->setWorldPosition(glm::vec3(0,0,25));
 	SceneManager::getInstance()->setWorldSize(glm::vec3(GRID_SIZE*GRID_ELEMENT_SIZE, GRID_SIZE*GRID_ELEMENT_SIZE, 50));
+	
+	
+		srand((unsigned int)time(NULL));
 
-	//Animation* anim = new Animation(resourceRepository + "Animation/","walk");
+		//InstanceDrawable* testTree = InstanceManager::getInstance()->getInstanceDrawable("firTree1.obj", "tree");
+		//testTree->setSize(glm::vec3(3, 3, 3));
+		//SceneManager::getInstance()->addStaticObject(testTree);
 
-	//generateRagdoll(ResourceManager::getInstance()->getSkeleton("default"));
-	//InstanceDrawable* firtree = InstanceManager::getInstance()->getInstanceDrawable("firTree1.obj","tree");
-	//SceneManager::getInstance()->addStaticObject(firtree);
 
-	initializeForestScene();
+		//Animation* anim = new Animation(resourceRepository + "Animation/","walk");
+
+		//generateRagdoll(ResourceManager::getInstance()->getSkeleton("default"));
+		//InstanceDrawable* firtree = InstanceManager::getInstance()->getInstanceDrawable("firTree1.obj","tree");
+		//SceneManager::getInstance()->addStaticObject(firtree);
+
+		initializeForestScene();
+		/*HouseGenerator hg;
+		auto house = hg.getHouse(0, 0, 25);
+		InstanceManager::getInstance()->add(house);
+		SceneManager::getInstance()->addStaticObject(house);*/
+		//return 0;
 
 	// init loop time tracking
 	double startTime, elapseTime = 16;
+	bool FPScam = false;
 
 	std::cout << "game loop initiated" << std::endl;
 	while (!glfwWindowShouldClose(window))
@@ -87,6 +101,14 @@ int main()
 		camera.setFrustrumAngleVertical(angle);
 		camera.setFrustrumAngleHorizontalFromScreenRatio((float)width / height);
 
+		if (FPScam)
+		{
+			glm::vec3 cp = camera.getPosition();
+				cp.z = 1.7f;
+			camera.setPosition(cp);
+		}
+
+
 		// Render frame
 		Renderer::getInstance()->render();
 
@@ -98,6 +120,7 @@ int main()
 		{
 			if(v[i] == QUIT) glfwSetWindowShouldClose(window, GL_TRUE);
 			else if(v[i] == CHANGE_CURSOR_MODE) EventHandler::getInstance()->setCursorMode(!EventHandler::getInstance()->getCursorMode());
+			else if (v[i] == ACTION) FPScam = !FPScam;
 		}
 
 		//Animate camera
@@ -107,7 +130,7 @@ int main()
 			EventHandler::getInstance()->isActivated(RUN),		EventHandler::getInstance()->isActivated(SNEAKY)    );
 
 		//	Debug
-		std::cout << 1000.f*(glfwGetTime() - startTime) << std::endl;
+		//std::cout << 1000.f*(glfwGetTime() - startTime) << std::endl;
 
 		// End loop
 		glfwSwapBuffers(window);
@@ -150,31 +173,96 @@ GLFWwindow* initGLFW()
 
 void initializeForestScene()
 {
+	// blue sky & green grass!!
+	glClearColor(0.6f, 0.85f, 0.91f, 0.f);
+	Renderer::getInstance()->setGridShader(ResourceManager::getInstance()->getShader("greenGrass"));
+
+	// init instance placement
 	int fail = 0;
 	std::string meshName;
 	std::string shaderName;
+	float sDispersion;
+	float sOffset;
 	srand((unsigned int)time(NULL));
 
+	// village
+	int vilageHouseCount = 0;
+	float villageRadius[] = {20.f, 30.f, 40.f};
+	for (int i = 0; i < 3; i++)
+	{
+		int houseCount = 5 + i;// *(rand() % 8);
+		vilageHouseCount += houseCount;
+		float angleOffset = 6.28f * ((rand() % 100) / 100.f);
+
+		for (int j = 0; j < houseCount; j++)
+		{
+			float radius = villageRadius[i] + 3.f * (((rand() % 100) / 50.f) - 1.f);
+			float angle = angleOffset + 6.28f * j / houseCount + ((((rand() % 100) / 50.f) - 1.f)) / houseCount;
+			
+			glm::mat4 a(1.0);
+			if(rand() % 2)
+				a = glm::rotate(a, 3.14f + angle /*+ 0.4f * ((((rand() % 100) / 50.f) - 1.f))*/, glm::vec3(0, 0, 1));
+			else
+				a = glm::rotate(a, angle /*+ 0.4f * ((((rand() % 100) / 50.f) - 1.f))*/, glm::vec3(0, 0, 1));
+			//a = glm::rotate(a, glm::radians(90.f), glm::vec3(1, 0, 0));
+
+			float s;
+			int r = rand() % 100;
+			if (r<70)
+			{
+				meshName = "MedievalHouse1.obj";
+				s = 0.01f;
+			}
+			else
+			{
+				meshName = "Farmhouse.obj";
+				s = 0.254f;
+			}
+
+			HouseGenerator hg;
+			auto house = hg.getHouse(0, 0, 25);
+			InstanceManager::getInstance()->add(house);
+
+			//InstanceDrawable* house = InstanceManager::getInstance()->getInstanceDrawable(meshName, "default");
+			//house->setSize(glm::vec3(s, s, s));
+			house->setPosition(glm::vec3(radius * cos(angle), radius * sin(angle), 0.0));
+			InstanceDrawable* d = dynamic_cast<InstanceDrawable*>(house);
+				d->setOrientation(glm::rotate(glm::mat4(1.0), 1.57f + angle, glm::vec3(0, 0, 1)));
+			SceneManager::getInstance()->addStaticObject(house);
+		}
+	}
+
+	// forest
 	for (int i = 0; i < GRID_SIZE; i++)
 		for (int j = 0; j < GRID_SIZE; j++)
 		{
 			int r = rand() % 100;
+			
 			if (r < 20)
 			{
 				meshName = "rock1.obj";
 				shaderName = "default";
+				sDispersion = 0.4f;
+				sOffset = 1.f;
 			}
 			else if (r < 80)
 			{
 				meshName = "firTree1.obj";
 				shaderName = "tree";
+				sDispersion = 0.2f;
+				sOffset = 1.7f;
 			}
 			else continue;
 			
-			glm::vec3 p(GRID_ELEMENT_SIZE*i - (GRID_SIZE * GRID_ELEMENT_SIZE) / 2 + ((rand() % 10) / 5.f - 1.f),
-						GRID_ELEMENT_SIZE*j - (GRID_SIZE * GRID_ELEMENT_SIZE) / 2 + ((rand() % 10) / 5.f - 1.f),
+			glm::vec3 p(GRID_ELEMENT_SIZE*i - (GRID_SIZE * GRID_ELEMENT_SIZE) / 2 + GRID_ELEMENT_SIZE * ((rand() % 10) / 20.f - 0.25f),
+						GRID_ELEMENT_SIZE*j - (GRID_SIZE * GRID_ELEMENT_SIZE) / 2 + GRID_ELEMENT_SIZE * ((rand() % 10) / 20.f - 0.25f),
 						0);
-			float s = 1.f + 0.2f*((rand() % 100) / 50.f - 1.f);
+
+			if (glm::length(p) < 10 * GRID_ELEMENT_SIZE)
+				continue;
+				
+
+			float s = sOffset + sDispersion * ((rand() % 100) / 50.f - 1.f);
 			glm::mat4 a = glm::rotate(glm::mat4(1.0), glm::radians((rand() % 3600) / 10.f), glm::vec3(0, 0, 1));
 			InstanceDrawable* ins = InstanceManager::getInstance()->getInstanceDrawable();
 			if (!ins) continue;
@@ -189,7 +277,10 @@ void initializeForestScene()
 			if(!SceneManager::getInstance()->addStaticObject(ins))
 				fail++;
 		}
+
+	//	debug
 	std::cout << "Instance count : " << InstanceManager::getInstance()->getNumberOfInstances() << std::endl;
+	std::cout << "House count : " << vilageHouseCount  << std::endl;
 	std::cout << "Insert fail : " << fail << std::endl;
 }
 //

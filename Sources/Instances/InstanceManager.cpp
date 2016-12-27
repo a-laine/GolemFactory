@@ -29,7 +29,7 @@ InstanceVirtual* InstanceManager::add(InstanceVirtual* ins)
 	if (index == std::numeric_limits<uint32_t>::max())
 	{
 		mutexList.unlock();
-		std::cerr << "no id available" << std::endl;
+		//std::cerr << "no id available" << std::endl;
 		return nullptr;
 	}
 	instanceList[index] = ins;

@@ -242,7 +242,7 @@ bool Shader::loadShader(ShaderType shaderType, std::string fileName,GLuint& shad
 			case TESS_CONT_SH:  std::cerr << "tesselation control";		break;
 			default: break;
 		}
-		std::cout << "shader\n\n" << log << std::endl << std::endl;
+		std::cout << " shader\n\n" << log << std::endl << std::endl;
 
         delete[] log;
         return false;

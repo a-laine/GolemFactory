@@ -32,7 +32,8 @@ class Renderer : public Singleton<Renderer>
 		//  Set/get functions
 		void setCamera(Camera* cam);
 		void setWindow(GLFWwindow* win);
-		void setDefaultShader(Shader* shad);
+		void setDefaultShader(Shader* s);
+		void setGridShader(Shader* s);
 		
 		Camera* getCamera();
 		GLFWwindow* getWindow();

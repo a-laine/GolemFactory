@@ -62,7 +62,7 @@ void Renderer::render()
 
 	int width, height;
 	glfwGetWindowSize(window, &width, &height);
-	glm::mat4 projection = glm::perspective(glm::radians(camera->getFrustrumAngleVertical()), (float)width / height, 0.1f, 1000.f);
+	glm::mat4 projection = glm::perspective(glm::radians(camera->getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f);
 	
 	// opengl state
 	glEnable(GL_DEPTH_TEST);
@@ -108,6 +108,7 @@ void Renderer::render()
 			{
 				double phase = 0.05*d->getPosition().x + 0.05*d->getSize().z;
 				glm::vec4 wind(0.1 * sin(dummy + phase), 0.0, 0.0, 0.0);
+				//glm::vec4 wind(0, 0, 0, 0);
 				glUniform4fv(loc, 1, &wind.x);
 			}
 
@@ -207,10 +208,19 @@ void Renderer::setWindow(GLFWwindow* win)
 {
 	window = win;
 }
-void Renderer::setDefaultShader(Shader* shad)
+void Renderer::setDefaultShader(Shader* s)
 {
-	defaultShader = shad;
+	ResourceManager::getInstance()->release(defaultShader);
+	if (s) defaultShader = ResourceManager::getInstance()->getShader(s->name);
+	else defaultShader = nullptr;
 }
+void Renderer::setGridShader(Shader* s)
+{
+	ResourceManager::getInstance()->release(gridShader);
+	if (s) gridShader = ResourceManager::getInstance()->getShader(s->name);
+	else gridShader = nullptr;
+}
+
 
 Camera* Renderer::getCamera()
 {

@@ -33,11 +33,11 @@ class ResourceManager : public Singleton<ResourceManager>
         Font* getFont(std::string name);
 		Skeleton* getSkeleton(std::string name);
 
-		bool addMesh(Mesh* mesh);
-		bool addTexture(Texture* texture);
-		bool addShader(Shader* shader);
-		bool addFont(Font* font);
-		bool addSkeleton(Skeleton* skeleton);
+		void addMesh(Mesh* mesh);
+		void addTexture(Texture* texture);
+		void addShader(Shader* shader);
+		void addFont(Font* font);
+		void addSkeleton(Skeleton* skeleton);
         //
 
         //  Set/get functions

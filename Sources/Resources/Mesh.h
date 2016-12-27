@@ -19,7 +19,8 @@ class Mesh : public ResourceVirtual
 		//
 
         //  Default
-        Mesh(std::string path,std::string meshName);
+		Mesh(std::string path, std::string meshName);
+		Mesh(std::string meshName, std::vector<glm::vec3> verticesArray, std::vector<glm::vec3> normalesArray, std::vector<glm::vec3> colorArray, std::vector<unsigned int> facesArray);
 		Mesh();
         ~Mesh();
 		//

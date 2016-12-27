@@ -262,7 +262,7 @@ Skeleton* ResourceManager::getSkeleton(std::string name)
 }
 
 
-bool ResourceManager::addMesh(Mesh* mesh)
+void ResourceManager::addMesh(Mesh* mesh)
 {
 	auto it = meshList.find(mesh->name);
 	if (it != meshList.end())
@@ -277,7 +277,7 @@ bool ResourceManager::addMesh(Mesh* mesh)
 		mesh->count++;
 	}
 }
-bool ResourceManager::addTexture(Texture* texture)
+void ResourceManager::addTexture(Texture* texture)
 {
 	auto it = textureList.find(texture->name);
 	if (it != textureList.end())
@@ -292,7 +292,7 @@ bool ResourceManager::addTexture(Texture* texture)
 		texture->count++;
 	}
 }
-bool ResourceManager::addShader(Shader* shader)
+void ResourceManager::addShader(Shader* shader)
 {
 	auto it = shaderList.find(shader->name);
 	if (it != shaderList.end())
@@ -307,7 +307,7 @@ bool ResourceManager::addShader(Shader* shader)
 		shader->count++;
 	}
 }
-bool ResourceManager::addFont(Font* font)
+void ResourceManager::addFont(Font* font)
 {
 	auto it = fontList.find(font->name);
 	if (it != fontList.end())
@@ -322,7 +322,7 @@ bool ResourceManager::addFont(Font* font)
 		font->count++;
 	}
 }
-bool ResourceManager::addSkeleton(Skeleton* skeleton)
+void ResourceManager::addSkeleton(Skeleton* skeleton)
 {
 	auto it = skeletonList.find(skeleton->name);
 	if (it != skeletonList.end())
