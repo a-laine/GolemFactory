@@ -72,13 +72,18 @@ class HouseGenerator
 
 		//  Protected functions
 		inline void initHouseField(unsigned int newSize);
-		bool addBlocks(int px, int py, int pz, int sx, int sy, int sz, unsigned int blockType = 0);
-		void addBlocksNoCheck(int px, int py, int pz, int sx, int sy, int sz, unsigned int blockType = 0);
-		inline void constructMesh();
-		inline void optimizeMesh();
+		
 
-		void pushMesh(Mesh* m, glm::vec3 p, glm::vec3 o, glm::vec3 s = glm::vec3(1.f, 1.f,1.f));
-		void pushGround(float px1, float py1, float pz1, float px2, float py2, float pz2, glm::vec3 color);
+		inline void createBlocs(int superficy);
+			bool soustractBlock(int superficy, int testIndex);
+			bool freePlace(int px, int py, int pz, int sx, int sy, int sz);
+			int adjacentBlock(int px, int py, int pz, int sx, int sy);
+			void addBlocks(int px, int py, int pz, int sx, int sy, int sz, unsigned int blockType = 0);
+		inline void constructMesh();
+			void pushMesh(Mesh* m, glm::vec3 p, glm::vec3 o, glm::vec3 s = glm::vec3(1.f, 1.f,1.f));
+			void pushGround(float px1, float py1, float pz1, float px2, float py2, float pz2, glm::vec3 color);
+		
+		inline void optimizeMesh();
 		//
 
         //  Attributes
@@ -92,5 +97,7 @@ class HouseGenerator
 		std::vector<unsigned int> facesArray;
 
 		std::map<std::string, Mesh*> assetLibrary;
+		std::vector<glm::ivec3> blockLibrary;
+		std::vector<glm::ivec3> blockList;
 		//
 };

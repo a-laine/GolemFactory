@@ -113,18 +113,6 @@ class Event
         virtual bool check(InputType call,int key,int action);
 
 		/*!
-		*	\brief Update function called by the EventHandler.
-		*
-		*	If the event is configured with an UP_FLAG, the EventHandler will publish a user event when this event becomes activated.
-		*	If the event is configured with an DOWN_FLAG, the EventHandler will publish a user event when this event becomes unactivated.
-		*
-		*	\param in : The Input responsible of this update
-		*	\param action : A second parameter of the input (ex : for a button it's for pressed/released)
-		*	\return true if a user event publish is needed (up/down flags in #configuration. byte), false otherwise
-		*/
-        virtual bool check(Input in,int action);
-
-		/*!
 		*	\brief Attach an input to the event.
 		*
 		*	An Event can be attached to several user input to generate complex event, for example double click or combo sequence.

@@ -7,11 +7,11 @@ SceneManager::SceneManager()
 	NodeVirtual* n = new NodeVirtual(nullptr,0x040401);
 		n->setPosition(0,0,0);
 		n->setSize(glm::vec3(100,100,10));
-		n->split();
+		//n->split();
 	world.push_back(n);
 
-	for (unsigned int i = 0; i < world[0]->children.size(); i++)
-		world[0]->children[i]->split();
+	//for (unsigned int i = 0; i < world[0]->children.size(); i++)
+		//world[0]->children[i]->split();
 }
 SceneManager::~SceneManager()
 {
@@ -38,7 +38,7 @@ bool SceneManager::addStaticObject(InstanceVirtual* obj)
 }
 bool SceneManager::removeObject(InstanceVirtual* obj)
 {
-	
+	return world[0]->removeObject(obj);
 }
 //
 

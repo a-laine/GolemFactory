@@ -581,19 +581,20 @@ void EventHandlerImpl::mouseButtonCallback(GLFWwindow* window, int button, int a
     try
     {
         auto events = This->mouseButtonListeners.at(button);
-		if ((This->configuration&CHORD_HIGH_PRIORITY))
+
+		if ((This->configuration & CHORD_HIGH_PRIORITY))
 		{
 			//	first pass process chord
 			for(unsigned int i=0;i<events.size();i++)
 			{
-				if((events[i]->configuration&Event::TYPE_MASK)==Event::CHORD && events[i]->check(Event::MOUSEBUTTON,button,action))
+				if ((events[i]->configuration&Event::TYPE_MASK) == Event::CHORD && events[i]->check(Event::MOUSEBUTTON, button, action))
 					This->emitUserEvent(events[i]);
 			}
 
 			//	second pass process !chord
-			for(unsigned int i=0;i<events.size();i++)
+			for (unsigned int i = 0; i < events.size(); i++)
 			{
-				if((events[i]->configuration&Event::TYPE_MASK)!=Event::CHORD && events[i]->check(Event::MOUSEBUTTON,button,action))
+				if ((events[i]->configuration&Event::TYPE_MASK) != Event::CHORD && events[i]->check(Event::MOUSEBUTTON, button, action))
 					This->emitUserEvent(events[i]);
 			}
 		}

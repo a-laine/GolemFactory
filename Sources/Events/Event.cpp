@@ -10,10 +10,6 @@ bool Event::isActivated() const
 {
 	return (configuration&ACTIVATED_FLAG) != 0;
 }
-bool Event::check(Input in,int action)
-{
-	return check(in.callback,in.key,action);
-}
 bool Event::check(InputType call,int key,int action)
 {
 	//	check if event is activated or not

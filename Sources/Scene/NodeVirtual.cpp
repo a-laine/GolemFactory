@@ -62,8 +62,7 @@ bool NodeVirtual::isLastBranch()
 bool NodeVirtual::addObject(InstanceVirtual* obj)
 {
 	if (!obj) return false;
-	glm::vec3 s = glm::vec3(obj->getSize().x*obj->getBBSize().x, obj->getSize().y*obj->getBBSize().y, obj->getSize().z*obj->getBBSize().z);
-	if (s.x < 0.1*size.x && s.y < 0.1*size.y && s.z < 0.1*size.z && !children.empty())
+	if (glm::length(obj->getBBSize()) < 0.1f * glm::length(size) && !children.empty())
 	{
 		int key = getChildrenKey(obj->getPosition());
 		if (key < 0) return false;
@@ -79,7 +78,14 @@ bool NodeVirtual::addObject(InstanceVirtual* obj)
 }
 bool NodeVirtual::removeObject(InstanceVirtual* obj)
 {
-	if (obj) 
+	if (!obj) return false;
+	if (glm::length(obj->getBBSize()) < 0.1f * glm::length(size) && !children.empty())
+	{
+		int key = getChildrenKey(obj->getPosition());
+		if (key < 0) return false;
+		else return children[key]->removeObject(obj);
+	}
+	else
 	{
 		auto it = std::find(instanceList.begin(), instanceList.end(), obj);
 		if (it != instanceList.end()) instanceList.erase(it);

@@ -181,6 +181,7 @@ void EventHandlerEnum::loadKeyMapping(std::string path,std::string filename)
 					std::cerr << "               Event '" << it->first << "' : error instancing" << std::endl;
 					continue;
 				}
+
 				userMappingBuffer.insert(std::pair<EventEnum, Event*>((EventEnum)enumMap[name], event));
 				eventMappingBuffer[event] = (EventEnum)enumMap[name];
 			}

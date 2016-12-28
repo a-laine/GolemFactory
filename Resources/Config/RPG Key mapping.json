@@ -92,7 +92,7 @@ DefaultRPGKeyMapping
 	doubleClick : {
 		eventPublished : "DOUBLE_CLICK_LEFT";
 		configuration : "sequence";
-		listeningKey : [0,0];
+		listeningMouse : [0,0];
 	};
 	enter : {
 		eventPublished : "ENTER";

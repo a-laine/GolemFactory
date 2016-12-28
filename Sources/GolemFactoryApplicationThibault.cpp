@@ -121,6 +121,19 @@ int main()
 			if(v[i] == QUIT) glfwSetWindowShouldClose(window, GL_TRUE);
 			else if(v[i] == CHANGE_CURSOR_MODE) EventHandler::getInstance()->setCursorMode(!EventHandler::getInstance()->getCursorMode());
 			else if (v[i] == ACTION) FPScam = !FPScam;
+			else if (v[i] == DOUBLE_CLICK_LEFT)
+			{
+				if (!SceneManager::getInstance()->removeObject(house))
+					std::cout << "fail remove instance from scene" << std::endl;
+				InstanceManager::getInstance()->release(house);
+				if(house) delete house;
+				house = nullptr;
+
+				srand((unsigned int)time(NULL));
+				house = hg.getHouse(rand(), 50, 70);
+				InstanceManager::getInstance()->add(house);
+				SceneManager::getInstance()->addStaticObject(house);
+			}
 		}
 
 		//Animate camera
