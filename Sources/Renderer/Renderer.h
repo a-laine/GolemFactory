@@ -47,7 +47,8 @@ class Renderer : public Singleton<Renderer>
 		//
 
 		//	Protected functions
-		void loadMVPMatrix(Shader* shader, float* model, float* view, float* projection) const;
+		void loadMVPMatrix(Shader* shader, const float* model, const float* view, const float* projection) const;
+		void drawInstanceContainer(InstanceContainer* ins, const glm::mat4& view, const glm::mat4& projection, const glm::mat4& model);
 		//
 
 		//  Attributes

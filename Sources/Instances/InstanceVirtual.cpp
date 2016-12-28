@@ -1,10 +1,7 @@
 #include "InstanceVirtual.h"
 
 //  Default
-InstanceVirtual::InstanceVirtual() : position(0,0,0), size(1,1,1), bbsize(0, 0, 0)
-{
-	count = 0;
-}
+InstanceVirtual::InstanceVirtual() : count(0), position(0.f, 0.f, 0.f), size(1.f, 1.f, 1.f), orientation(1.f) {}
 InstanceVirtual::~InstanceVirtual() {}
 //
 
@@ -12,8 +9,19 @@ InstanceVirtual::~InstanceVirtual() {}
 //	Set/Get functions
 void InstanceVirtual::setPosition(glm::vec3 p) { position = p; }
 void InstanceVirtual::setSize(glm::vec3 s) { size = s; }
+void InstanceVirtual::setOrientation(glm::mat4 m) { orientation = m; }
 
-glm::vec3 InstanceVirtual::getPosition() { return position; }
-glm::vec3 InstanceVirtual::getSize() { return size; }
-glm::vec3 InstanceVirtual::getBBSize() { return size; }
+glm::vec3 InstanceVirtual::getPosition() const{ return position; }
+glm::vec3 InstanceVirtual::getSize() const  { return size; }
+glm::mat4 InstanceVirtual::getOrientation() const { return orientation; }
+
+glm::mat4 InstanceVirtual::getModelMatrix() const
+{
+	glm::mat4 model(1.0);
+	model = glm::translate(model, position);
+	model = model * orientation;
+	model = glm::scale(model, size);
+	return model;
+}
+glm::vec3 InstanceVirtual::getBBSize() { return glm::vec3(0.f, 0.f, 0.f); }
 //

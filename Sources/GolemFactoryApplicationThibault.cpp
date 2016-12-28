@@ -18,7 +18,7 @@
 #include <glm/gtc/quaternion.hpp>
 
 #define GRID_SIZE 100
-#define GRID_ELEMENT_SIZE 5.0f
+#define GRID_ELEMENT_SIZE 1.0f
 
 // prototypes
 GLFWwindow* initGLFW();
@@ -77,11 +77,11 @@ int main()
 		//InstanceDrawable* firtree = InstanceManager::getInstance()->getInstanceDrawable("firTree1.obj","tree");
 		//SceneManager::getInstance()->addStaticObject(firtree);
 
-		initializeForestScene();
-		/*HouseGenerator hg;
+		//initializeForestScene();
+		HouseGenerator hg;
 		auto house = hg.getHouse(0, 0, 25);
 		InstanceManager::getInstance()->add(house);
-		SceneManager::getInstance()->addStaticObject(house);*/
+		SceneManager::getInstance()->addStaticObject(house);
 		//return 0;
 
 	// init loop time tracking

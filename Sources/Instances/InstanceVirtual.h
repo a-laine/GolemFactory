@@ -12,6 +12,7 @@
 class InstanceVirtual
 {
 	friend class InstanceManager;
+	friend class InstanceContainer;
 
 	public:
 		//  Default
@@ -22,10 +23,14 @@ class InstanceVirtual
 		//	Set/Get functions
 		void setPosition(glm::vec3 p);
 		void setSize(glm::vec3 s);
+		void setOrientation(glm::mat4 m);
 
-		glm::vec3 getPosition();
-		glm::vec3 getSize();
-		glm::vec3 getBBSize();
+		glm::vec3 getPosition() const;
+		glm::vec3 getSize() const;
+		glm::mat4 getOrientation() const;
+
+		glm::mat4 getModelMatrix() const;
+		virtual glm::vec3 getBBSize();
 		//
 		
 	protected:
@@ -33,7 +38,7 @@ class InstanceVirtual
 		uint32_t id;
 		std::atomic_uint count;		//!< The number of clients pointing the instance.
 		
-		glm::vec3 position, size, bbsize;
+		glm::vec3 position, size;
+		glm::mat4 orientation;
 		//
 };
-

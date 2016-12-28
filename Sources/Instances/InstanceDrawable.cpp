@@ -6,11 +6,6 @@ InstanceDrawable::InstanceDrawable(std::string meshName, std::string shaderName)
 {
 	mesh = ResourceManager::getInstance()->getMesh(meshName);
 	shader = ResourceManager::getInstance()->getShader(shaderName);
-	if (!mesh) return;
-
-	bbsize.x = mesh->sizeX.y - mesh->sizeX.x;
-	bbsize.y = mesh->sizeY.y - mesh->sizeY.x;
-	bbsize.z = mesh->sizeZ.y - mesh->sizeZ.x;
 }
 InstanceDrawable::~InstanceDrawable()
 {
@@ -19,7 +14,6 @@ InstanceDrawable::~InstanceDrawable()
 //
 
 //	Public functions
-void InstanceDrawable::setOrientation(glm::mat4 m){ rotationMatrix = m; }
 void InstanceDrawable::setShader(std::string shaderName)
 {
 	ResourceManager::getInstance()->release(shader);
@@ -44,14 +38,14 @@ void InstanceDrawable::setMesh(Mesh* m)
 }
 
 
+glm::vec3 InstanceDrawable::getBBSize() const
+{
+	if (!mesh) return glm::vec3(0.f, 0.f, 0.f);
+	else return glm::vec3(mesh->sizeX.y - mesh->sizeX.x, mesh->sizeY.y - mesh->sizeY.x, mesh->sizeZ.y - mesh->sizeZ.x);
+	{
+
+	}
+}
 Shader* InstanceDrawable::getShader() const { return shader; }
 Mesh* InstanceDrawable::getMesh() const { return mesh; }
-glm::mat4 InstanceDrawable::getModelMatrix() const
-{
-	glm::mat4 model(1.0);
-		model = glm::translate(model, position);
-		model = model * rotationMatrix;
-		model = glm::scale(model, size);
-	return model;
-}
 //

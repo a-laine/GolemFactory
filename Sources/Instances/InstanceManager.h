@@ -7,6 +7,7 @@
 #include "Utiles/Mutex.h"
 #include "InstanceVirtual.h"
 #include "InstanceDrawable.h"
+#include "InstanceContainer.h"
 
 
 class InstanceManager : public Singleton<InstanceManager>
@@ -22,6 +23,7 @@ class InstanceManager : public Singleton<InstanceManager>
 		void clearGarbage();
 
 		InstanceDrawable* getInstanceDrawable(std::string meshName = "default", std::string shaderName = "default");
+		InstanceContainer* getInstanceContainer();
 		//
 
 		//  Set/get functions

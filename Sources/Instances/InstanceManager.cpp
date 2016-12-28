@@ -93,6 +93,16 @@ InstanceDrawable* InstanceManager::getInstanceDrawable(std::string meshName, std
 	}
 	return ins;
 }
+InstanceContainer* InstanceManager::getInstanceContainer()
+{
+	InstanceContainer* ins = new InstanceContainer();
+	if (!ins || !add(ins))
+	{
+		if (ins) delete ins;
+		return nullptr;
+	}
+	return ins;
+}
 //
 
 

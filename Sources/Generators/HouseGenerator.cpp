@@ -1,13 +1,12 @@
 #include "HouseGenerator.h"
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/rotate_vector.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 //  Attributes
-float HouseGenerator::floorHeight = 2.5f;
-glm::vec3 HouseGenerator::wallColor = glm::vec3(0.36f, 0.23f, 0.15f);
-glm::vec3 HouseGenerator::woodColor = glm::vec3(0.24f, 0.15f, 0.10f);
-glm::vec3 HouseGenerator::doorColor = glm::vec3(0.36f, 0.23f, 0.15f);
-glm::vec3 HouseGenerator::glassColor = glm::vec3(0.59f, 0.78f, 0.81f);
-glm::vec3 HouseGenerator::roofColor = glm::vec3(0.49f, 0.31f, 0.20f);
+glm::vec3 HouseGenerator::stoneColor = glm::vec3(0.2f, 0.2f, 0.2f);
 //
 
 
@@ -17,6 +16,11 @@ HouseGenerator::HouseGenerator()
 	houseField = nullptr;
 	houseFieldSize = 0;
 	houseFieldFloor = 0;
+
+	assetLibrary["wall"] = ResourceManager::getInstance()->getMesh("House/HouseWall.obj");
+	assetLibrary["corner"] = ResourceManager::getInstance()->getMesh("House/HouseCorner.obj");
+	assetLibrary["door"] = ResourceManager::getInstance()->getMesh("House/HouseDoor.obj");
+	assetLibrary["window"] = ResourceManager::getInstance()->getMesh("House/HouseWindow.obj");
 }
 HouseGenerator::~HouseGenerator()
 {
@@ -49,7 +53,6 @@ InstanceVirtual* HouseGenerator::getHouse(unsigned int seed, int density, int pr
 	std::string houseName = "house" + std::to_string(seed) + 'd' + std::to_string(density) + 'p' + std::to_string(prosperity);
 	unsigned int superficy = std::max((prosperity / 5) * (prosperity / 5) + (rand() % prosperity), 15);
 	
-	/*
 	std::cout << "House name" << houseName << std::endl;
 	std::cout << "   seed : " << seed << std::endl;
 	std::cout << "   density : " << density << std::endl;
@@ -57,12 +60,13 @@ InstanceVirtual* HouseGenerator::getHouse(unsigned int seed, int density, int pr
 	std::cout << "   house field size : " << houseFieldSize << std::endl;
 	std::cout << "   house field floor count : " << houseFieldFloor << std::endl;
 	std::cout << "   superficy : " << superficy << std::endl;
-	*/
+	
 
 	// Add dummy bloc for test house generator
 	int ox = houseFieldSize / 2;
 	int oy = houseFieldSize / 2;
 	int oz = 0;
+
 	addBlocksNoCheck(ox - 4, oy,     oz, 4, 4, 1, 1);		// house empty
 	addBlocksNoCheck(ox,     oy - 1, oz, 6, 7, 2, 1);		// house empty
 	addBlocksNoCheck(ox + 6, oy,     oz, 4, 4, 1, 1);		// house empty
@@ -82,10 +86,13 @@ InstanceVirtual* HouseGenerator::getHouse(unsigned int seed, int density, int pr
 
 
 	//	Construct Mesh
-	Mesh* m = constructMesh(houseName);
-	//std::cout << "   vertex count : " << m->getNumberVertices() << std::endl;
-	//std::cout << "   faces count : " << m->getNumberFaces() << std::endl;
-	ResourceManager::getInstance()->addMesh(m);
+	constructMesh();
+	optimizeMesh();
+
+	std::cout << "   vertex count : " << verticesArray.size() << std::endl;
+	std::cout << "   faces count : " << facesArray.size() << std::endl;
+
+	ResourceManager::getInstance()->addMesh(new Mesh(houseName, verticesArray, normalesArray, colorArray, facesArray));
 	return new InstanceDrawable(houseName);
 }
 //
@@ -170,11 +177,12 @@ void HouseGenerator::addBlocksNoCheck(int px, int py, int pz, int sx, int sy, in
 				houseField[k][i][j].voxelType = blockType;
 			}
 }
-inline Mesh* HouseGenerator::constructMesh(std::string meshName)
+inline void HouseGenerator::constructMesh()
 {	
 	float ox = houseFieldSize / 2.f + 0.5f;
 	float oy = houseFieldSize / 2.f + 0.5f;
-	float oz = 0.0f;
+	float oz = 0.1f;
+	Mesh* meshToPush = nullptr;
 
 	for (unsigned int k = 0; k < houseFieldFloor; k++)
 	{
@@ -185,25 +193,19 @@ inline Mesh* HouseGenerator::constructMesh(std::string meshName)
 				if (houseField[k][i][j].available) continue;
 
 				//	Ground quad
-				pushHQuad(i - ox, j - oy, floorHeight * k + oz, i + 1 - ox, j + 1 - oy, floorHeight * k + oz, wallColor);
+				pushGround(i - ox, j - oy, 2.5f * k + oz, i + 1 - ox, j + 1 - oy, 2.5f * k + oz, stoneColor);
 
 				//	right wall
 				if (i + 1 < houseFieldSize && houseField[k][i+1][j].available)
 				{
 					switch (houseField[k][i][j].voxelType)
 					{
-						case HouseEmpty:
-							pushVQuad( i + 1 - ox, j - oy, floorHeight * k + oz, i + 1 - ox, j + 1 - oy, floorHeight * (k + 1) + oz, wallColor);
-							break;
-						case Door:
-							pushDoor(  i + 1 - ox, j - oy,     i + 1 - ox, j + 1 - oy, floorHeight * k + oz, wallColor);
-							break;
-						case Window:
-							pushWindow(i + 1 - ox, j - oy, i + 1 - ox, j + 1 - oy,     floorHeight * k + oz, wallColor);
-							break;
-						default:
-							break;
+						case HouseEmpty: meshToPush = assetLibrary["wall"]; break;
+						case Door: meshToPush = assetLibrary["door"]; break;
+						case Window: meshToPush = assetLibrary["window"]; break;
+						default: meshToPush = nullptr; break;
 					}
+					pushMesh(meshToPush, glm::vec3(i + 1 - ox, j + 0.5f - oy, oz + 2.5f * k), glm::vec3(0.f, -1.f, 0.f));
 				}
 
 				//	left wall
@@ -211,18 +213,12 @@ inline Mesh* HouseGenerator::constructMesh(std::string meshName)
 				{
 					switch (houseField[k][i][j].voxelType)
 					{
-						case HouseEmpty:
-							pushVQuad (i - ox, j + 1 - oy, floorHeight * (k + 1) + oz, i - ox, j - oy, floorHeight * k + oz, wallColor);
-							break;
-						case Door:
-							pushDoor(  i - ox, j - oy,     i - ox, j + 1 - oy, floorHeight * k + oz, wallColor);
-							break;
-						case Window:
-							pushWindow(i - ox, j + 1 - oy, i - ox, j - oy,     floorHeight * k + oz, wallColor);
-							break;
-						default:
-							break;
+						case HouseEmpty: meshToPush = assetLibrary["wall"]; break;
+						case Door: meshToPush = assetLibrary["door"]; break;
+						case Window: meshToPush = assetLibrary["window"]; break;
+						default: meshToPush = nullptr; break;
 					}
+					pushMesh(meshToPush, glm::vec3(i - ox, j + 0.5f - oy, oz + 2.5f*k), glm::vec3(0.f, 1.f, 0.f));
 				}
 					
 				//	lower wall
@@ -230,18 +226,12 @@ inline Mesh* HouseGenerator::constructMesh(std::string meshName)
 				{
 					switch (houseField[k][i][j].voxelType)
 					{
-						case HouseEmpty:
-							pushVQuad(i - ox, j + 1 - oy, floorHeight * k + oz, i + 1 - ox, j + 1 - oy, floorHeight * (k + 1) + oz, wallColor);
-							break;
-						case Door:
-							pushDoor(i + 1 - ox, j + 1 - oy, i - ox, j + 1 - oy, floorHeight * k + oz, wallColor);
-							break;
-						case Window:
-							pushWindow(i - ox, j + 1 - oy, i + 1 - ox, j + 1 - oy, floorHeight * k + oz, wallColor);
-							break;
-						default:
-							break;
+						case HouseEmpty: meshToPush = assetLibrary["wall"]; break;
+						case Door: meshToPush = assetLibrary["door"]; break;
+						case Window: meshToPush = assetLibrary["window"]; break;
+						default: meshToPush = nullptr; break;
 					}
+					pushMesh(meshToPush, glm::vec3(i + 0.5f - ox, j + 1 - oy, oz + 2.5f*k), glm::vec3(1.f, 0.f, 0.f));
 				}
 
 				//	upper wall
@@ -249,37 +239,98 @@ inline Mesh* HouseGenerator::constructMesh(std::string meshName)
 				{
 					switch (houseField[k][i][j].voxelType)
 					{
-						case HouseEmpty:
-							pushVQuad(i + 1 - ox, j - oy, floorHeight * k + oz, i - ox, j - oy, floorHeight * (k + 1) + oz, wallColor);
-							break;
-						case Door:
-							pushDoor(i + 1 - ox, j - oy, i - ox, j - oy, floorHeight * k + oz, wallColor);
-							break;
-						case Window:
-							pushWindow(i + 1 - ox, j - oy, i - ox, j - oy, floorHeight * k + oz, wallColor);
-							break;
-						default:
-							break;
+						case HouseEmpty: meshToPush = assetLibrary["wall"]; break;
+						case Door: meshToPush = assetLibrary["door"]; break;
+						case Window: meshToPush = assetLibrary["window"]; break;
+						default: meshToPush = nullptr; break;
 					}
+					pushMesh(meshToPush, glm::vec3(i + 0.5f - ox, j - oy, oz + 2.5f*k), glm::vec3(-1.f, 0.f, 0.f));
 				}
 
-				//	inner roof
-				if (k + 1 < houseFieldFloor && houseField[k + 1][i][j].available)
-					pushHQuad(i - ox, j - oy, floorHeight * (k + 1) + oz, i + 1 - ox, j + 1 - oy, floorHeight * (k + 1) + oz, wallColor);
-				else if (k + 1 == houseFieldFloor)
-					pushHQuad(i - ox, j - oy, floorHeight * (k + 1) + oz, i + 1 - ox, j + 1 - oy, floorHeight * (k + 1) + oz, wallColor);
+				//	corners
+				if (i + 1 < houseFieldSize && j + 1 < houseFieldSize && houseField[k][i + 1][j].available && houseField[k][i][j + 1].available)
+					pushMesh(assetLibrary["corner"], glm::vec3(i + 1 - ox, j + 1 - oy, oz + 2.5f * k), glm::vec3(1.f, 0.f, 0.f));
+				if (i - 1 >= 0 && j + 1 < houseFieldSize && houseField[k][i - 1][j].available && houseField[k][i][j + 1].available)
+					pushMesh(assetLibrary["corner"], glm::vec3(i - ox, j + 1 - oy, oz + 2.5f * k), glm::vec3(0.f, 1.f, 0.f));
+				if (i + 1 < houseFieldSize && j - 1 >= 0 && houseField[k][i + 1][j].available && houseField[k][i][j - 1].available)
+					pushMesh(assetLibrary["corner"], glm::vec3(i + 1 - ox, j - oy, oz + 2.5f * k), glm::vec3(0.f, -1.f, 0.f));
+				if (i - 1 >= 0 && j - 1 >= 0 && houseField[k][i - 1][j].available && houseField[k][i][j - 1].available)
+					pushMesh(assetLibrary["corner"], glm::vec3(i - ox, j - oy, oz + 2.5f * k), glm::vec3(-1.f, 0.f, 0.f));
 			}
 	}
+}
+inline void HouseGenerator::optimizeMesh()
+{
+	std::vector<glm::vec3> verticesBuffer;
+	std::vector<glm::vec3> normalesBuffer;
+	std::vector<glm::vec3> colorBuffer;
+	std::vector<unsigned int> facesBuffer;
 
-	pushRoofX(glm::vec3(-3, 1, 2.5f), glm::vec3(2, 2, 2), roofColor);
-	pushRoofX(glm::vec3( 7, 1, 2.5f), glm::vec3(2, 2, 2), roofColor);
-	pushRoofY(glm::vec3( 2, 1.5f, 5.f),  glm::vec3(3, 3.5f, 3), roofColor);
+	std::map<OrderedVertex, unsigned int> vertexAlias;
+	std::map<OrderedVertex, unsigned int>::iterator alias;
+	OrderedVertex current;
 
-	return new Mesh(meshName, verticesArray, normalesArray, colorArray, facesArray);
+	for (unsigned int i = 0; i < facesArray.size(); i++)
+	{
+		current.position = verticesArray[facesArray[i]];
+		current.normal = normalesArray[facesArray[i]];
+		current.color = colorArray[facesArray[i]];
+
+		alias  = vertexAlias.find(current);
+		if (alias == vertexAlias.end())
+		{
+			verticesBuffer.push_back(verticesArray[facesArray[i]]);
+			normalesBuffer.push_back(normalesArray[facesArray[i]]);
+			colorBuffer.push_back(colorArray[facesArray[i]]);
+			facesBuffer.push_back(vertexAlias.size());
+
+			vertexAlias[current] = vertexAlias.size();
+		}
+		else facesBuffer.push_back(alias->second);
+	}
+
+	verticesArray.swap(verticesBuffer);
+	normalesArray.swap(normalesBuffer);
+	colorArray.swap(colorBuffer);
+	facesArray.swap(facesBuffer);
 }
 
+void HouseGenerator::pushMesh(Mesh* m, glm::vec3 p, glm::vec3 o, glm::vec3 s)
+{
+	if (!m) return;
+	unsigned int facesStart = verticesArray.size();
 
-void HouseGenerator::pushHQuad(float px1, float py1, float pz1, float px2, float py2, float pz2, glm::vec3 color)
+	//	Compute orientation matrix
+	glm::mat4 orientation(1.f);
+	if (glm::dot(o, glm::vec3(0.f, 1.f, 0.f)) == -1.f)
+		orientation = glm::rotate(glm::mat4(1.f), glm::pi<float>(), glm::vec3(0.f, 0.f, 1.f));
+	else
+		orientation = glm::orientation(o, glm::vec3(0.f, 1.f, 0.f));
+
+	//	Compute mesh model matrix
+	glm::mat4 model = glm::translate(glm::mat4(1.f), p);
+	model = model * orientation;
+	model = glm::scale(model, 0.8f * s);
+
+	//	push modified data
+	for (unsigned int i = 0; i < m->vertices.size(); i++)
+	{
+		glm::vec4 v = model * glm::vec4(m->vertices[i], 1.f);
+		verticesArray.push_back(glm::vec3(v.x, v.y, v.z));
+	}
+	for (unsigned int i = 0; i < m->normales.size(); i++)
+	{
+		glm::vec4 v = orientation * glm::vec4(m->normales[i], 1.f);
+		normalesArray.push_back(glm::vec3(v.x, v.y, v.z));
+	}
+	for (unsigned int i = 0; i < m->color.size(); i++)
+		colorArray.push_back(m->color[i]);
+
+	for (unsigned int i = 0; i < m->faces.size(); i++)
+		facesArray.push_back(facesStart + m->faces[i]);
+}
+
+void HouseGenerator::pushGround(float px1, float py1, float pz1, float px2, float py2, float pz2, glm::vec3 color)
 {
 	verticesArray.push_back(glm::vec3(px1, py1, pz1));
 	verticesArray.push_back(glm::vec3(px2, py1, (pz1 + pz2) / 2.f));
@@ -288,465 +339,6 @@ void HouseGenerator::pushHQuad(float px1, float py1, float pz1, float px2, float
 
 	glm::vec3 n = glm::cross(glm::normalize(glm::vec3(px2 - px1, py2 - py1, pz2 - pz1)),
 							 glm::normalize(glm::vec3(0.f, py2 - py1, (pz1 + pz2) / 2.f)));
-	normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);
-	colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 2); facesArray.push_back(verticesArray.size() - 1);
-}
-void HouseGenerator::pushVQuad(float px1, float py1, float pz1, float px2, float py2, float pz2, glm::vec3 color)
-{
-	verticesArray.push_back(glm::vec3(px1, py1, pz1));
-	verticesArray.push_back(glm::vec3(px2, py2, pz1));
-	verticesArray.push_back(glm::vec3(px2, py2, pz2));
-	verticesArray.push_back(glm::vec3(px1, py1, pz2));
-
-	glm::vec3 n = glm::cross(glm::normalize(glm::vec3(px2 - px1, py2 - py1, pz2 - pz1)),
-		glm::normalize(glm::vec3(0.f, 0.f, 1.f)));
-	normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);
-	colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 2); facesArray.push_back(verticesArray.size() - 1);
-}
-void HouseGenerator::pushDoor(float px1, float py1, float px2, float py2, float pz, glm::vec3 color)
-{
-	glm::vec3 orig(px1, py1, pz);
-	glm::vec3 h = glm::vec3(px2 - px1, py2 - py1, 0.0f);		//	local horizontal vector
-	glm::vec3 v = glm::normalize(glm::vec3(0.0f, 0.0f, 1.f));	//	local vertical
-	glm::vec3 t = glm::cross(v, h);
-
-	//	wall
-		verticesArray.push_back(orig + 0.00f * h + 0.00f * v);
-		verticesArray.push_back(orig + 0.05f * h + 0.00f * v);
-		verticesArray.push_back(orig + 0.05f * h + 1.90f * v);
-		verticesArray.push_back(orig + 0.00f * h + 1.90f * v);
-
-		normalesArray.push_back(t);  normalesArray.push_back(t);  normalesArray.push_back(t);  normalesArray.push_back(t);
-		colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color);
-		facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);
-		facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 2); facesArray.push_back(verticesArray.size() - 1);
-		//
-		verticesArray.push_back(orig + 0.95f * h + 0.00f * v);
-		verticesArray.push_back(orig + 1.00f * h + 0.00f * v);
-		verticesArray.push_back(orig + 1.00f * h + 1.90f * v);
-		verticesArray.push_back(orig + 0.95f * h + 1.90f * v);
-
-		normalesArray.push_back(t);  normalesArray.push_back(t);  normalesArray.push_back(t);  normalesArray.push_back(t);
-		colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color);
-		facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);
-		facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 2); facesArray.push_back(verticesArray.size() - 1);
-		//
-		verticesArray.push_back(orig + 0.00f * h + 2.00f * v);
-		verticesArray.push_back(orig + 1.00f * h + 2.00f * v);
-		verticesArray.push_back(orig + 1.00f * h + floorHeight * v);
-		verticesArray.push_back(orig + 0.00f * h + floorHeight * v);
-
-		normalesArray.push_back(t);  normalesArray.push_back(t);  normalesArray.push_back(t);  normalesArray.push_back(t);
-		colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color);
-		facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);
-		facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 2); facesArray.push_back(verticesArray.size() - 1);
-	
-	//	door
-		verticesArray.push_back(orig + 0.10f * h + 0.00f * v);
-		verticesArray.push_back(orig + 0.90f * h + 0.00f * v);
-		verticesArray.push_back(orig + 0.90f * h + 1.90f * v);
-		verticesArray.push_back(orig + 0.10f * h + 1.90f * v);
-
-		normalesArray.push_back(t);  normalesArray.push_back(t);  normalesArray.push_back(t);  normalesArray.push_back(t);
-		colorArray.push_back(doorColor); colorArray.push_back(doorColor); colorArray.push_back(doorColor); colorArray.push_back(doorColor);
-		facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);
-		facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 2); facesArray.push_back(verticesArray.size() - 1);
-
-	//	wood part
-		pushBox(orig + 0.5f * h   + 1.95f * v, 0.5f * h   + 0.1f * t  + 0.05f * v,  woodColor);
-		pushBox(orig + 0.075f * h + 0.95f * v, 0.025f * h + 0.07f * t + 0.95f * v,  woodColor);
-		pushBox(orig + 0.925f * h + 0.95f * v, 0.025f * h + 0.07f * t + 0.95f * v,  woodColor);
-		pushBox(orig + 0.8f * h   + 1.00f * v, 0.025f * h + 0.05f * t + 0.025f * v, glm::vec3(0.1f, 0.1f, 0.1f));
-}
-void HouseGenerator::pushWindow(float px1, float py1, float px2, float py2, float pz, glm::vec3 color)
-{
-	glm::vec3 orig(px1, py1, pz);
-	glm::vec3 h = glm::vec3(px2 - px1, py2 - py1, 0.0f);		//	local horizontal vector
-	glm::vec3 v = glm::normalize(glm::vec3(0.0f, 0.0f, 1.f));	//	local vertical
-	glm::vec3 t = glm::cross(h, v);
-
-	//	wall
-		verticesArray.push_back(orig + 0.00f * h + 0.00f * v);
-		verticesArray.push_back(orig + 1.00f * h + 0.00f * v);
-		verticesArray.push_back(orig + 1.00f * h + 0.90f * v);
-		verticesArray.push_back(orig + 0.00f * h + 0.90f * v);
-
-		normalesArray.push_back(t);  normalesArray.push_back(t);  normalesArray.push_back(t);  normalesArray.push_back(t);
-		colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color);
-		facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);
-		facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 2); facesArray.push_back(verticesArray.size() - 1);
-		//
-		verticesArray.push_back(orig + 0.00f * h + 2.10f * v);
-		verticesArray.push_back(orig + 1.00f * h + 2.10f * v);
-		verticesArray.push_back(orig + 1.00f * h + 2.50f * v);
-		verticesArray.push_back(orig + 0.00f * h + 2.50f * v);
-
-		normalesArray.push_back(t);  normalesArray.push_back(t);  normalesArray.push_back(t);  normalesArray.push_back(t);
-		colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color);
-		facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);
-		facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 2); facesArray.push_back(verticesArray.size() - 1);
-		//
-		verticesArray.push_back(orig + 0.00f * h  + 1.00f * v);
-		verticesArray.push_back(orig + 0.025f * h + 1.00f * v);
-		verticesArray.push_back(orig + 0.025f * h + 2.00f * v);
-		verticesArray.push_back(orig + 0.00f * h  + 2.00f * v);
-
-		normalesArray.push_back(t);  normalesArray.push_back(t);  normalesArray.push_back(t);  normalesArray.push_back(t);
-		colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color);
-		facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);
-		facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 2); facesArray.push_back(verticesArray.size() - 1);
-		//
-		verticesArray.push_back(orig + 0.975f * h + 1.00f * v);
-		verticesArray.push_back(orig + 1.00f * h  + 1.00f * v);
-		verticesArray.push_back(orig + 1.00f * h  + 2.00f * v);
-		verticesArray.push_back(orig + 0.975f * h + 2.00f * v);
-
-		normalesArray.push_back(t);  normalesArray.push_back(t);  normalesArray.push_back(t);  normalesArray.push_back(t);
-		colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color);
-		facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);
-		facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 2); facesArray.push_back(verticesArray.size() - 1);
-
-	//	wood
-		pushBox(orig + 0.5f * h + 0.95f * v, 0.5f * h   + 0.10f * t + 0.05f * v, woodColor);
-		pushBox(orig + 0.5f * h + 2.05f * v, 0.5f * h   + 0.10f * t + 0.05f * v, woodColor);
-		pushBox(orig + 0.05f * h + 1.5f * v, 0.025f * h + 0.07f * t + 0.50f * v, woodColor);
-		pushBox(orig + 0.95f * h + 1.5f * v, 0.025f * h + 0.07f * t + 0.50f * v, woodColor);
-
-		pushBox(orig + 0.125f * h + 1.5f * v, 0.05f * h + 0.02f * t + 0.50f * v, woodColor);
-		pushBox(orig + 0.875f * h + 1.5f * v, 0.05f * h + 0.02f * t + 0.50f * v, woodColor);
-		pushBox(orig + 0.5f * h + 1.5f * v, 0.05f * h + 0.02f * t + 0.50f * v, woodColor);
-
-		pushBox(orig + 0.5f * h + 1.35f * v, 0.35f * h + 0.02f * t + 0.05f * v, woodColor);
-		pushBox(orig + 0.5f * h + 1.65f * v, 0.35f * h + 0.02f * t + 0.05f * v, woodColor);
-		pushBox(orig + 0.5f * h + 1.975f * v, 0.35f * h + 0.02f * t + 0.025f * v, woodColor);
-		pushBox(orig + 0.5f * h + 1.025f * v, 0.35f * h + 0.02f * t + 0.025f * v, woodColor);
-
-	//	glass
-		verticesArray.push_back(orig + 0.875f * h + 1.05f * v);
-		verticesArray.push_back(orig + 0.15f * h + 1.05f * v);
-		verticesArray.push_back(orig + 0.15f * h + 2.05f * v);
-		verticesArray.push_back(orig + 0.875f * h + 2.05f * v);
-
-		normalesArray.push_back(t);		  normalesArray.push_back(t);		normalesArray.push_back(t);		  normalesArray.push_back(t);
-		colorArray.push_back(glassColor); colorArray.push_back(glassColor); colorArray.push_back(glassColor); colorArray.push_back(glassColor);
-		facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);
-		facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 2); facesArray.push_back(verticesArray.size() - 1);
-}
-void HouseGenerator::pushBox(glm::vec3 position, glm::vec3 size, glm::vec3 color)
-{
-	verticesArray.push_back(position + glm::vec3(-size.x, -size.y, -size.z));
-	verticesArray.push_back(position + glm::vec3(-size.x,  size.y, -size.z));
-	verticesArray.push_back(position + glm::vec3(-size.x,  size.y,  size.z));
-	verticesArray.push_back(position + glm::vec3(-size.x, -size.y,  size.z));
-
-	normalesArray.push_back(glm::vec3(-1.f, 0.0f,0.0f));		normalesArray.push_back(glm::vec3(-1.f, 0.0f, 0.0f));
-	normalesArray.push_back(glm::vec3(-1.f, 0.0f, 0.0f));		normalesArray.push_back(glm::vec3(-1.f, 0.0f, 0.0f));
-	colorArray.push_back(color); colorArray.push_back(color);	colorArray.push_back(color); colorArray.push_back(color);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 2); facesArray.push_back(verticesArray.size() - 1);
-	//
-	verticesArray.push_back(position + glm::vec3(size.x, -size.y, -size.z));
-	verticesArray.push_back(position + glm::vec3(size.x, size.y, -size.z));
-	verticesArray.push_back(position + glm::vec3(size.x, size.y, size.z));
-	verticesArray.push_back(position + glm::vec3(size.x, -size.y, size.z));
-
-	normalesArray.push_back(glm::vec3(1.f, 0.0f, 0.0f));		normalesArray.push_back(glm::vec3(1.f, 0.0f, 0.0f));
-	normalesArray.push_back(glm::vec3(1.f, 0.0f, 0.0f));		normalesArray.push_back(glm::vec3(1.f, 0.0f, 0.0f));
-	colorArray.push_back(color); colorArray.push_back(color);	colorArray.push_back(color); colorArray.push_back(color);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 2); facesArray.push_back(verticesArray.size() - 1);
-	//
-	verticesArray.push_back(position + glm::vec3(-size.x, size.y, -size.z));
-	verticesArray.push_back(position + glm::vec3( size.x, size.y, -size.z));
-	verticesArray.push_back(position + glm::vec3( size.x, size.y, size.z));
-	verticesArray.push_back(position + glm::vec3(-size.x, size.y, size.z));
-
-	normalesArray.push_back(glm::vec3(0.f, 1.0f, 0.0f));		normalesArray.push_back(glm::vec3(0.f, 1.0f, 0.0f));
-	normalesArray.push_back(glm::vec3(0.f, 1.0f, 0.0f));		normalesArray.push_back(glm::vec3(0.f, 1.0f, 0.0f));
-	colorArray.push_back(color); colorArray.push_back(color);	colorArray.push_back(color); colorArray.push_back(color);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 2); facesArray.push_back(verticesArray.size() - 1);
-	//
-	verticesArray.push_back(position + glm::vec3(-size.x, -size.y, -size.z));
-	verticesArray.push_back(position + glm::vec3( size.x, -size.y, -size.z));
-	verticesArray.push_back(position + glm::vec3( size.x, -size.y,  size.z));
-	verticesArray.push_back(position + glm::vec3(-size.x, -size.y,  size.z));
-
-	normalesArray.push_back(glm::vec3(0.f, -1.0f, 0.0f));		normalesArray.push_back(glm::vec3(0.f, -1.0f, 0.0f));
-	normalesArray.push_back(glm::vec3(0.f, -1.0f, 0.0f));		normalesArray.push_back(glm::vec3(0.f, -1.0f, 0.0f));
-	colorArray.push_back(color); colorArray.push_back(color);	colorArray.push_back(color); colorArray.push_back(color);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 2); facesArray.push_back(verticesArray.size() - 1);
-	//
-	verticesArray.push_back(position + glm::vec3(-size.x,  size.y, size.z));
-	verticesArray.push_back(position + glm::vec3( size.x,  size.y, size.z));
-	verticesArray.push_back(position + glm::vec3( size.x, -size.y, size.z));
-	verticesArray.push_back(position + glm::vec3(-size.x, -size.y, size.z));
-
-	normalesArray.push_back(glm::vec3(0.f, 0.0f, 1.0f));		normalesArray.push_back(glm::vec3(0.f, 0.0f, 1.0f));
-	normalesArray.push_back(glm::vec3(0.f, 0.0f, 1.0f));		normalesArray.push_back(glm::vec3(0.f, 0.0f, 1.0f));
-	colorArray.push_back(color); colorArray.push_back(color);	colorArray.push_back(color); colorArray.push_back(color);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 2); facesArray.push_back(verticesArray.size() - 1);
-	//
-	verticesArray.push_back(position + glm::vec3(-size.x,  size.y, -size.z));
-	verticesArray.push_back(position + glm::vec3( size.x,  size.y, -size.z));
-	verticesArray.push_back(position + glm::vec3( size.x, -size.y, -size.z));
-	verticesArray.push_back(position + glm::vec3(-size.x, -size.y, -size.z));
-
-	normalesArray.push_back(glm::vec3(0.f, 0.0f, -1.0f));		normalesArray.push_back(glm::vec3(0.f, 0.0f, -1.0f));
-	normalesArray.push_back(glm::vec3(0.f, 0.0f, -1.0f));		normalesArray.push_back(glm::vec3(0.f, 0.0f, -1.0f));
-	colorArray.push_back(color); colorArray.push_back(color);	colorArray.push_back(color); colorArray.push_back(color);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 2); facesArray.push_back(verticesArray.size() - 1);
-}
-
-
-void HouseGenerator::pushRoofX(glm::vec3 position, glm::vec3 size, glm::vec3 color)
-{
-	verticesArray.push_back(position + glm::vec3(-size.x, -size.y, 0));
-	verticesArray.push_back(position + glm::vec3( size.x, -size.y, 0));
-	verticesArray.push_back(position + glm::vec3( size.x,  0,  size.z));
-	verticesArray.push_back(position + glm::vec3(-size.x,  0,  size.z));
-
-	glm::vec3 n = glm::normalize(glm::vec3(0.f, size.z, size.y));
-	normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);
-	colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 2); facesArray.push_back(verticesArray.size() - 1);
-	//
-	verticesArray.push_back(position + glm::vec3(-size.x, size.y, 0));
-	verticesArray.push_back(position + glm::vec3( size.x, size.y, 0));
-	verticesArray.push_back(position + glm::vec3( size.x, 0, size.z));
-	verticesArray.push_back(position + glm::vec3(-size.x, 0, size.z));
-
-	n = glm::normalize(glm::vec3(0.f, -size.z, size.y));
-	normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);
-	colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 2); facesArray.push_back(verticesArray.size() - 1);
-	//	out upper
-	verticesArray.push_back(position + glm::vec3(-size.x, -size.y, 0));
-	verticesArray.push_back(position + glm::vec3( size.x, -size.y, 0));
-	verticesArray.push_back(position + glm::vec3( size.x, -size.y - 0.3f, 0));
-	verticesArray.push_back(position + glm::vec3(-size.x, -size.y - 0.3f, 0));
-
-	n = glm::normalize(glm::vec3(0.f, 0.f, -1.f));
-	normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);
-	colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 2); facesArray.push_back(verticesArray.size() - 1);
-	//	out lower
-	verticesArray.push_back(position + glm::vec3(-size.x, size.y, 0));
-	verticesArray.push_back(position + glm::vec3( size.x, size.y, 0));
-	verticesArray.push_back(position + glm::vec3( size.x, size.y + 0.3f, 0));
-	verticesArray.push_back(position + glm::vec3(-size.x, size.y + 0.3f, 0));
-
-	n = glm::normalize(glm::vec3(0.f, 0.f, -1.f));
-	normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);
-	colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 2); facesArray.push_back(verticesArray.size() - 1);
-	//	side upper down
-	verticesArray.push_back(position + glm::vec3(-size.x, -size.y - 0.1f, 0.2f));
-	verticesArray.push_back(position + glm::vec3( size.x, -size.y - 0.1f, 0.2f));
-	verticesArray.push_back(position + glm::vec3( size.x, -0.2f, size.z + 0.1f));
-	verticesArray.push_back(position + glm::vec3(-size.x, -0.2f, size.z + 0.1f));
-
-	n = glm::normalize(glm::vec3(0.f, size.z, size.y));
-	normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);
-	colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 2); facesArray.push_back(verticesArray.size() - 1);
-	//	side lower down
-	verticesArray.push_back(position + glm::vec3(-size.x, size.y + 0.1f, 0.2f));
-	verticesArray.push_back(position + glm::vec3( size.x, size.y + 0.1f, 0.2f));
-	verticesArray.push_back(position + glm::vec3( size.x, 0.2f, size.z + 0.1f));
-	verticesArray.push_back(position + glm::vec3(-size.x, 0.2f, size.z + 0.1f));
-
-	n = glm::normalize(glm::vec3(0.f, -size.z, size.y));
-	normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);
-	colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 2); facesArray.push_back(verticesArray.size() - 1);
-	//	Top
-	verticesArray.push_back(position + glm::vec3(-size.x, -0.2f, size.z + 0.1f));
-	verticesArray.push_back(position + glm::vec3( size.x, -0.2f, size.z + 0.1f));
-	verticesArray.push_back(position + glm::vec3( size.x, 0.2f,  size.z + 0.1f));
-	verticesArray.push_back(position + glm::vec3(-size.x, 0.2f,  size.z + 0.1f));
-
-	n = glm::vec3(0.f, 0.f, 1.f);
-	normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);
-	colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 2); facesArray.push_back(verticesArray.size() - 1);
-	//
-	verticesArray.push_back(position + glm::vec3(-size.x, -size.y - 0.3f, 0.0f));
-	verticesArray.push_back(position + glm::vec3( size.x, -size.y - 0.3f, 0.0f));
-	verticesArray.push_back(position + glm::vec3( size.x, -size.y - 0.3f, 0.2f));
-	verticesArray.push_back(position + glm::vec3(-size.x, -size.y - 0.3f, 0.2f));
-
-	n = glm::vec3(0.f, -1.f, 0.f);
-	normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);
-	colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 2); facesArray.push_back(verticesArray.size() - 1);
-	//
-	verticesArray.push_back(position + glm::vec3(-size.x, size.y + 0.3f, 0.0f));
-	verticesArray.push_back(position + glm::vec3( size.x, size.y + 0.3f, 0.0f));
-	verticesArray.push_back(position + glm::vec3( size.x, size.y + 0.3f, 0.2f));
-	verticesArray.push_back(position + glm::vec3(-size.x, size.y + 0.3f, 0.2f));
-
-	n = glm::vec3(0.f, 1.f, 0.f);
-	normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);
-	colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 2); facesArray.push_back(verticesArray.size() - 1);
-	//
-	verticesArray.push_back(position + glm::vec3(-size.x, -size.y - 0.3f, 0.2f));
-	verticesArray.push_back(position + glm::vec3( size.x, -size.y - 0.3f, 0.2f));
-	verticesArray.push_back(position + glm::vec3( size.x, -size.y - 0.1f, 0.2f));
-	verticesArray.push_back(position + glm::vec3(-size.x, -size.y - 0.1f, 0.2f));
-
-	n = glm::vec3(0.f, 0.f, 1.f);
-	normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);
-	colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 2); facesArray.push_back(verticesArray.size() - 1);
-	//
-	verticesArray.push_back(position + glm::vec3(-size.x, size.y + 0.3f, 0.2f));
-	verticesArray.push_back(position + glm::vec3( size.x, size.y + 0.3f, 0.2f));
-	verticesArray.push_back(position + glm::vec3( size.x, size.y + 0.1f, 0.2f));
-	verticesArray.push_back(position + glm::vec3(-size.x, size.y + 0.1f, 0.2f));
-
-	n = glm::vec3(0.f, 0.f, 1.f);
-	normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);
-	colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 2); facesArray.push_back(verticesArray.size() - 1);
-}
-void HouseGenerator::pushRoofY(glm::vec3 position, glm::vec3 size, glm::vec3 color)
-{
-	verticesArray.push_back(position + glm::vec3(-size.x, -size.y, 0));
-	verticesArray.push_back(position + glm::vec3(-size.x,  size.y, 0));
-	verticesArray.push_back(position + glm::vec3( 0,       size.y, size.z));
-	verticesArray.push_back(position + glm::vec3( 0,      -size.y, size.z));
-
-	glm::vec3 n = glm::normalize(glm::vec3(-size.z, 0.f, size.y));
-	normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);
-	colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 2); facesArray.push_back(verticesArray.size() - 1);
-	//
-	verticesArray.push_back(position + glm::vec3( size.x, -size.y, 0));
-	verticesArray.push_back(position + glm::vec3( size.x,  size.y, 0));
-	verticesArray.push_back(position + glm::vec3( 0, size.y, size.z));
-	verticesArray.push_back(position + glm::vec3( 0, -size.y, size.z));
-
-	n = glm::normalize(glm::vec3(size.z, 0.f, size.y));
-	normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);
-	colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 2); facesArray.push_back(verticesArray.size() - 1);
-	//	out upper
-	verticesArray.push_back(position + glm::vec3(-size.x, -size.y, 0));
-	verticesArray.push_back(position + glm::vec3(-size.x, size.y, 0));
-	verticesArray.push_back(position + glm::vec3(-size.x - 0.3f, size.y, 0));
-	verticesArray.push_back(position + glm::vec3(-size.x - 0.3f, -size.y, 0));
-
-	n = glm::normalize(glm::vec3(0.f, 0.f, -1.f));
-	normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);
-	colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 2); facesArray.push_back(verticesArray.size() - 1);
-	//	out lower
-	verticesArray.push_back(position + glm::vec3(size.x, -size.y, 0));
-	verticesArray.push_back(position + glm::vec3(size.x, size.y, 0));
-	verticesArray.push_back(position + glm::vec3(size.x + 0.3f, size.y, 0));
-	verticesArray.push_back(position + glm::vec3(size.x + 0.3f, -size.y, 0));
-
-	n = glm::normalize(glm::vec3(0.f, 0.f, -1.f));
-	normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);
-	colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 2); facesArray.push_back(verticesArray.size() - 1);
-	//	side upper down
-	verticesArray.push_back(position + glm::vec3(-size.x - 0.1f,-size.y, 0.2f));
-	verticesArray.push_back(position + glm::vec3(-size.x- 0.1f,size.y , 0.2f));
-	verticesArray.push_back(position + glm::vec3(-0.2f,  size.y, size.z + 0.1f));
-	verticesArray.push_back(position + glm::vec3(-0.2f, -size.y, size.z + 0.1f));
-
-	n = glm::normalize(glm::vec3(-size.z, 0.f, size.y));
-	normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);
-	colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 2); facesArray.push_back(verticesArray.size() - 1);
-	//	side lower down
-	verticesArray.push_back(position + glm::vec3( size.x + 0.1f, -size.y, 0.2f));
-	verticesArray.push_back(position + glm::vec3( size.x + 0.1f, size.y, 0.2f));
-	verticesArray.push_back(position + glm::vec3( 0.2f, size.y, size.z + 0.1f));
-	verticesArray.push_back(position + glm::vec3( 0.2f, -size.y, size.z + 0.1f));
-
-	n = glm::normalize(glm::vec3(size.z, 0.f, size.y));
-	normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);
-	colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 2); facesArray.push_back(verticesArray.size() - 1);
-	//	Top
-	verticesArray.push_back(position + glm::vec3(-0.2f, -size.y, size.z + 0.1f));
-	verticesArray.push_back(position + glm::vec3(-0.2f,  size.y, size.z + 0.1f));
-	verticesArray.push_back(position + glm::vec3( 0.2f,  size.y, size.z + 0.1f));
-	verticesArray.push_back(position + glm::vec3( 0.2f, -size.y, size.z + 0.1f));
-
-	n = glm::vec3(0.f, 0.f, 1.f);
-	normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);
-	colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 2); facesArray.push_back(verticesArray.size() - 1);
-	//
-	verticesArray.push_back(position + glm::vec3(-size.x - 0.3f, -size.y, 0.0f));
-	verticesArray.push_back(position + glm::vec3(-size.x - 0.3f,  size.y, 0.0f));
-	verticesArray.push_back(position + glm::vec3(-size.x - 0.3f,  size.y, 0.2f));
-	verticesArray.push_back(position + glm::vec3(-size.x - 0.3f, -size.y, 0.2f));
-
-	n = glm::vec3(-1.f, 0.f, 0.f);
-	normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);
-	colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 2); facesArray.push_back(verticesArray.size() - 1);
-	//
-	verticesArray.push_back(position + glm::vec3(size.x + 0.3f, -size.y, 0.0f));
-	verticesArray.push_back(position + glm::vec3(size.x + 0.3f,  size.y, 0.0f));
-	verticesArray.push_back(position + glm::vec3(size.x + 0.3f,  size.y, 0.2f));
-	verticesArray.push_back(position + glm::vec3(size.x + 0.3f, -size.y, 0.2f));
-
-	n = glm::vec3(1.f, 0.f, 0.f);
-	normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);
-	colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 2); facesArray.push_back(verticesArray.size() - 1);
-	//
-	verticesArray.push_back(position + glm::vec3(-size.x - 0.3f, -size.y, 0.2f));
-	verticesArray.push_back(position + glm::vec3(-size.x - 0.3f,  size.y, 0.2f));
-	verticesArray.push_back(position + glm::vec3(-size.x - 0.1f,  size.y, 0.2f));
-	verticesArray.push_back(position + glm::vec3(-size.x - 0.1f, -size.y, 0.2f));
-
-	n = glm::vec3(0.f, 0.f, 1.f);
-	normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);
-	colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 2); facesArray.push_back(verticesArray.size() - 1);
-	//
-	verticesArray.push_back(position + glm::vec3(size.x + 0.3f,-size.y, 0.2f));
-	verticesArray.push_back(position + glm::vec3(size.x + 0.3f, size.y, 0.2f));
-	verticesArray.push_back(position + glm::vec3(size.x + 0.1f, size.y, 0.2f));
-	verticesArray.push_back(position + glm::vec3(size.x + 0.1f,-size.y, 0.2f));
-
-	n = glm::vec3(0.f, 0.f, 1.f);
 	normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);
 	colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color);
 	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);

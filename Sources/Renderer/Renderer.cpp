@@ -53,9 +53,9 @@ void Renderer::render()
 {
 	if (!window || !camera) return;
 
+	// dummy animation timeline
 	dummy += 0.016;
-	if (dummy >= 6.28)
-		dummy = 0.0;
+	if (dummy >= 6.28) dummy = 0.0;
 
 	// bind matrix
 	glm::mat4 view = camera->getViewMatrix();
@@ -96,8 +96,6 @@ void Renderer::render()
 			if (defaultShader) shaderToUse = defaultShader;
 			else shaderToUse = d->getShader();
 			if (!shaderToUse) continue;
-
-			// Activate shader
 			shaderToUse->enable();
 
 			// Enable mvp matrix
@@ -108,13 +106,14 @@ void Renderer::render()
 			{
 				double phase = 0.05*d->getPosition().x + 0.05*d->getSize().z;
 				glm::vec4 wind(0.1 * sin(dummy + phase), 0.0, 0.0, 0.0);
-				//glm::vec4 wind(0, 0, 0, 0);
 				glUniform4fv(loc, 1, &wind.x);
 			}
 
 			// Draw mesh
 			d->getMesh()->draw();
 		}
+		else if (InstanceContainer* d = dynamic_cast<InstanceContainer*>(it->second))
+			drawInstanceContainer(d, view, projection, glm::mat4(1.f));
 	}
 }
 
@@ -184,7 +183,7 @@ void Renderer::initializeGrid(unsigned int gridSize, float elementSize)
 
 
 //	Protected functions
-void Renderer::loadMVPMatrix(Shader* shader, float* model, float* view, float* projection) const
+void Renderer::loadMVPMatrix(Shader* shader, const float* model, const float* view, const float* projection) const
 {
 	int loc = shader->getUniformLocation("model");
 	if (loc >= 0)
@@ -195,6 +194,29 @@ void Renderer::loadMVPMatrix(Shader* shader, float* model, float* view, float* p
 	loc = shader->getUniformLocation("projection");
 	if (loc >= 0)
 		glUniformMatrix4fv(loc, 1, GL_FALSE, projection);
+}
+void Renderer::drawInstanceContainer(InstanceContainer* ins, const glm::mat4& view, const glm::mat4& projection, const glm::mat4& model)
+{
+	glm::mat4 modelMatrix = model * ins->getModelMatrix();
+	auto instanceList = ins->getChildList();
+	for (auto it = instanceList.begin(); it != instanceList.end(); it++)
+	{
+		if (InstanceDrawable* d = dynamic_cast<InstanceDrawable*>(*it))
+		{
+			// Get shader
+			Shader* shaderToUse;
+			if (defaultShader) shaderToUse = defaultShader;
+			else shaderToUse = d->getShader();
+			if (!shaderToUse) continue;
+			shaderToUse->enable();
+
+			// Enable mvp matrix
+			loadMVPMatrix(shaderToUse, &(modelMatrix * d->getModelMatrix())[0][0], &view[0][0], &projection[0][0]);
+			d->getMesh()->draw();
+		}
+		else if (InstanceContainer* d = dynamic_cast<InstanceContainer*>(*it))
+			drawInstanceContainer(d, view, projection, glm::mat4(1.f));
+	}
 }
 //
 

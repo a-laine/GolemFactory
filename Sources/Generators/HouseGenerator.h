@@ -5,9 +5,9 @@
 #include <utility>
 #include <string>
 
-
 #include "Resources/ResourceManager.h"
 #include "Instances/InstanceManager.h"
+
 
 class HouseGenerator
 {
@@ -22,12 +22,7 @@ class HouseGenerator
         //
 
 		//  Attributes
-		static float floorHeight;
-		static glm::vec3 wallColor;
-		static glm::vec3 woodColor;
-		static glm::vec3 doorColor;
-		static glm::vec3 roofColor;
-		static glm::vec3 glassColor;
+		static glm::vec3 stoneColor;
 		//
 	
 	protected:
@@ -44,22 +39,46 @@ class HouseGenerator
 			bool available;
 			unsigned int voxelType;
 		};
+		struct OrderedVertex
+		{
+			glm::vec3 position;
+			glm::vec3 normal;
+			glm::vec3 color;
+
+			int inf(const glm::vec3& l, const glm::vec3& r) const
+			{
+				//	return 1 if equals, 2 if l < r and 3 if l > r
+				if (l.x != r.x) return (l.x < r.x ? 2 : 3);
+				if (l.y != r.y) return (l.y < r.y ? 2 : 3);
+				if (l.z != r.z) return (l.z < r.z ? 2 : 3);
+				return 1;
+			}
+			bool operator< (const OrderedVertex& r) const
+			{
+				int res = inf(position, r.position);
+				if (res == 2) return true;
+				if (res == 3) return false;
+				
+				res = inf(normal, r.normal);
+				if (res == 2) return true;
+				if (res == 3) return false;
+
+				res = inf(color, r.color);
+				if (res == 2) return true;
+				return false;
+			};
+		};
 		//
 
 		//  Protected functions
 		inline void initHouseField(unsigned int newSize);
 		bool addBlocks(int px, int py, int pz, int sx, int sy, int sz, unsigned int blockType = 0);
 		void addBlocksNoCheck(int px, int py, int pz, int sx, int sy, int sz, unsigned int blockType = 0);
-		inline Mesh* constructMesh(std::string meshName);
+		inline void constructMesh();
+		inline void optimizeMesh();
 
-		void pushHQuad(float px1, float py1, float pz1, float px2, float py2, float pz2, glm::vec3 color);
-		void pushVQuad(float px1, float py1, float pz1, float px2, float py2, float pz2, glm::vec3 color);
-		void pushDoor(float px1, float py1, float px2, float py2, float pz, glm::vec3 color);
-		void pushWindow(float px1, float py1, float px2, float py2, float pz, glm::vec3 color);
-		void pushBox(glm::vec3 position, glm::vec3 size, glm::vec3 color);
-
-		void pushRoofX(glm::vec3 position, glm::vec3 size, glm::vec3 color);
-		void pushRoofY(glm::vec3 position, glm::vec3 size, glm::vec3 color);
+		void pushMesh(Mesh* m, glm::vec3 p, glm::vec3 o, glm::vec3 s = glm::vec3(1.f, 1.f,1.f));
+		void pushGround(float px1, float py1, float pz1, float px2, float py2, float pz2, glm::vec3 color);
 		//
 
         //  Attributes
@@ -71,5 +90,7 @@ class HouseGenerator
 		std::vector<glm::vec3> normalesArray;
 		std::vector<glm::vec3> colorArray;
 		std::vector<unsigned int> facesArray;
+
+		std::map<std::string, Mesh*> assetLibrary;
 		//
 };
