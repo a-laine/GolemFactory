@@ -4,6 +4,8 @@
 #include <vector>
 #include <utility>
 #include <string>
+#include <random>
+#include <algorithm>
 
 #include "Resources/ResourceManager.h"
 #include "Instances/InstanceManager.h"
@@ -76,9 +78,10 @@ class HouseGenerator
 
 		inline void createBlocs(int superficy);
 			bool soustractBlock(int superficy, int testIndex);
-			bool freePlace(int px, int py, int pz, int sx, int sy, int sz);
-			int adjacentBlock(int px, int py, int pz, int sx, int sy);
-			void addBlocks(int px, int py, int pz, int sx, int sy, int sz, unsigned int blockType = 0);
+			bool freePlace(const glm::ivec3& p, const glm::ivec3& s) const;
+			int adjacentBlock(const glm::ivec3& p, const glm::ivec3& s) const;
+			glm::ivec3 optimizeAdjacent(const glm::ivec3& p, const glm::ivec3& s) const;
+			void addBlocks(glm::ivec3 p, glm::ivec3 s, unsigned int blockType = 0);
 		inline void constructMesh();
 			void pushMesh(Mesh* m, glm::vec3 p, glm::vec3 o, glm::vec3 s = glm::vec3(1.f, 1.f,1.f));
 			void pushGround(float px1, float py1, float pz1, float px2, float py2, float pz2, glm::vec3 color);
@@ -99,5 +102,8 @@ class HouseGenerator
 		std::map<std::string, Mesh*> assetLibrary;
 		std::vector<glm::ivec3> blockLibrary;
 		std::vector<glm::ivec3> blockList;
+		std::vector<glm::ivec3> availableBlockPosition;
+
+		std::mt19937 randomEngine;
 		//
 };

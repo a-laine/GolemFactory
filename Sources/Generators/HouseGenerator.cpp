@@ -58,9 +58,10 @@ InstanceVirtual* HouseGenerator::getHouse(unsigned int seed, int density, int pr
 		prosperity = density / 3 + (rand() % 100);
 		if (prosperity > 100) prosperity = 100;
 	}
-	initHouseField(std::max(prosperity, 10));
+	initHouseField(std::max(prosperity, 30));
 	std::string houseName = "house" + std::to_string(seed) + 'd' + std::to_string(density) + 'p' + std::to_string(prosperity);
 	unsigned int superficy = std::max((prosperity / 5) * (prosperity / 5) + (rand() % prosperity), 15);
+	randomEngine.seed(seed);
 
 	//	Debug
 	std::cout << "House name" << houseName << std::endl;
@@ -76,20 +77,27 @@ InstanceVirtual* HouseGenerator::getHouse(unsigned int seed, int density, int pr
 	
 	int ox = houseFieldSize / 2;
 	int oy = houseFieldSize / 2;
-	srand(seed);
 
 	for (unsigned int i = 0; i < blockList.size(); i++)
-	{
-		for (int j = 0; j < 1000; j++)
+	{ 
+		//	construct the available position list & shuffle it
+		availableBlockPosition.clear();
+		int safeOffset = 10;
+		for (int i = safeOffset; i < (int)houseFieldSize - safeOffset; i++)
+			for (int j = safeOffset; j < (int)houseFieldSize - safeOffset; j++)
+				if (houseField[0][i][j].available) availableBlockPosition.push_back(glm::ivec3(i, j, 0));
+		std::shuffle(availableBlockPosition.begin(), availableBlockPosition.end(), randomEngine);
+
+		//	try to place block
+		for (auto it = availableBlockPosition.begin(); it != availableBlockPosition.end(); it++)
 		{
-			int x = (rand() % (houseFieldSize - 4) + 2);
-			int y = (rand() % (houseFieldSize - 4) + 2);
-			if (!freePlace(x, y, 0, blockList[i].x, blockList[i].y, blockList[i].z)) continue;
-			if (i != 0 && adjacentBlock(x, y, 0, blockList[i].x, blockList[i].y) < 3) continue;
+			if (!freePlace(*it, blockList[i])) continue;
+			if (i != 0 && adjacentBlock(*it, blockList[i]) < 3) continue;
 			else
 			{
-				addBlocks(x, y, 0, blockList[i].x, blockList[i].y, blockList[i].z, 1);
-				j = 1000;
+				glm::ivec3 finalPos = optimizeAdjacent(*it, blockList[i]);
+				addBlocks(finalPos, blockList[i], 1);
+				break;
 			}
 		}
 	}
@@ -139,6 +147,7 @@ inline void HouseGenerator::initHouseField(unsigned int newSize)
 
 	//	Clear house block list available for construction
 	blockList.clear();
+	availableBlockPosition.clear();
 
 	//	Delete last house field
 	if (newSize != houseFieldSize && houseField)
@@ -175,39 +184,64 @@ inline void HouseGenerator::initHouseField(unsigned int newSize)
 			for (unsigned int j = 0; j < houseFieldSize; j++)
 				houseField[k][i][j] = dummy;
 }
-bool HouseGenerator::freePlace(int px, int py, int pz, int sx, int sy, int sz)
+bool HouseGenerator::freePlace(const glm::ivec3& p, const glm::ivec3& s) const
 {
 	//	Check out of range
-	if (px < 0 || py < 0 || pz < 0)
+	if (p.x < 0 || p.y < 0 || p.z < 0)
 		return false;
-	else if (px + sx > (int)houseFieldSize - 2 || py + sy > (int)houseFieldSize - 2 || pz + sz > (int)houseFieldFloor)
+	else if (p.x + s.x > (int)houseFieldSize - 2 || p.y + s.y > (int)houseFieldSize - 2 || p.z + s.z > (int)houseFieldFloor)
 		return false;
 
 	//	Check available
-	for (int k = pz; k < pz + sz; k++)
-		for (int i = px; i < px + sx; i++)
-			for (int j = py; j < py + sy; j++)
+	for (int k = p.z; k < p.z + s.z; k++)
+		for (int i = p.x; i < p.x + s.x; i++)
+			for (int j = p.y; j < p.y + s.y; j++)
 				if(!houseField[k][i][j].available) return false;
 	return true;
 }
-int HouseGenerator::adjacentBlock(int px, int py, int pz, int sx, int sy)
+int HouseGenerator::adjacentBlock(const glm::ivec3& p, const glm::ivec3& s) const
 {
 	int blockCount = 0;
-	for (int i = px; i < px + sx; i++)
-		if (!houseField[pz][i][py - 1].available) blockCount++;
-	for (int i = px; i < px + sx; i++)
-		if (!houseField[pz][i][py + sy].available) blockCount++;
-	for (int i = py; i < py + sy; i++)
-		if (!houseField[pz][px - 1][i].available) blockCount++;
-	for (int i = py; i < py + sy; i++)
-		if (!houseField[pz][px + sx][i].available) blockCount++;
+	for (int i = p.x; i < p.x + s.x; i++)
+		if (!houseField[p.z][i][p.y - 1].available) blockCount++;
+	for (int i = p.x; i < p.x + s.x; i++)
+		if (!houseField[p.z][i][p.y + s.y].available) blockCount++;
+	for (int i = p.y; i < p.y + s.y; i++)
+		if (!houseField[p.z][p.x - 1][i].available) blockCount++;
+	for (int i = p.y; i < p.y + s.y; i++)
+		if (!houseField[p.z][p.x + s.x][i].available) blockCount++;
 	return blockCount;
 }
-void HouseGenerator::addBlocks(int px, int py, int pz, int sx, int sy, int sz, unsigned int blockType)
+glm::ivec3 HouseGenerator::optimizeAdjacent(const glm::ivec3& p, const glm::ivec3& s) const
 {
-	for (int k = pz; k < pz + sz; k++)
-		for (int i = px; i < px + sx; i++)
-			for (int j = py; j < py + sy; j++)
+	const int gradSize = 7;
+	int offset = (gradSize - 1) / 2;
+	int rate[gradSize][gradSize];
+	for (int i = 0; i < gradSize; i++)
+		for (int j = 0; j < gradSize; j++)
+		{
+			if(freePlace(p + glm::ivec3(offset - i, offset - j, 0), s))
+				rate[i][j] = adjacentBlock(p + glm::ivec3(offset - i, offset - j, 0), s);
+			else rate[i][j] = 0;
+		}
+
+	int maxi = 0; int maxj = 0;
+	for (int i = 0; i < gradSize; i++)
+		for (int j = 0; j < gradSize; j++)
+		{
+			if (rate[i][j] > rate[maxi][maxj])
+			{
+				maxi = i;
+				maxj = j;
+			}
+		}
+	return p + glm::ivec3(offset - maxi, offset - maxj, 0);
+}
+void HouseGenerator::addBlocks(glm::ivec3 p, glm::ivec3 s, unsigned int blockType)
+{
+	for (int k = p.z; k < p.z + s.z; k++)
+		for (int i = p.x; i < p.x + s.x; i++)
+			for (int j = p.y; j < p.y + s.y; j++)
 			{
 				houseField[k][i][j].available = false;
 				houseField[k][i][j].voxelType = blockType;

@@ -79,7 +79,7 @@ int main()
 
 		//initializeForestScene();
 		HouseGenerator hg;
-		auto house = hg.getHouse(0, 0, 25);
+		auto house = hg.getHouse(14930, 50, 70);
 		InstanceManager::getInstance()->add(house);
 		SceneManager::getInstance()->addStaticObject(house);
 		//return 0;
