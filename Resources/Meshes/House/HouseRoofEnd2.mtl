@@ -1,0 +1,12 @@
+# Blender MTL File: 'HouseRoofEnd2.blend'
+# Material Count: 1
+
+newmtl Wood
+Ns 96.078431
+Ka 1.000000 1.000000 1.000000
+Kd 0.155694 0.079919 0.026484
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.000000
+d 1.000000
+illum 2

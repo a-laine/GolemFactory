@@ -10,6 +10,7 @@ InstanceDrawable::InstanceDrawable(std::string meshName, std::string shaderName)
 InstanceDrawable::~InstanceDrawable()
 {
 	ResourceManager::getInstance()->release(mesh);
+	ResourceManager::getInstance()->release(shader);
 }
 //
 

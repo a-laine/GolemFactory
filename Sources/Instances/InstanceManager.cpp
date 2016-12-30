@@ -23,6 +23,8 @@ InstanceManager::~InstanceManager()
 //  Public functions
 InstanceVirtual* InstanceManager::add(InstanceVirtual* ins)
 {
+	if (!ins) return nullptr;
+
 	//  assign instance to founded slot
 	mutexList.lock();
 	uint32_t index = getAvalibleId();

@@ -17,7 +17,7 @@
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-#define GRID_SIZE 100
+#define GRID_SIZE 70
 #define GRID_ELEMENT_SIZE 1.0f
 
 // prototypes
@@ -79,7 +79,7 @@ int main()
 
 		//initializeForestScene();
 		HouseGenerator hg;
-		auto house = hg.getHouse(14930, 50, 70);
+		auto house = hg.getHouse(949333985, 0, 25);
 		InstanceManager::getInstance()->add(house);
 		SceneManager::getInstance()->addStaticObject(house);
 		//return 0;
@@ -89,8 +89,22 @@ int main()
 	bool FPScam = false;
 
 	std::cout << "game loop initiated" << std::endl;
+
+	int frame = 0; int inst = 0;
+	std::mt19937 randomEngine;
+
 	while (!glfwWindowShouldClose(window))
 	{
+		//frame++;
+		if (frame > 4)
+		{
+			frame = 0;
+			inst++;
+			std::cout << inst << std::endl;
+			EventHandler::getInstance()->addFrameEvent(DOUBLE_CLICK_LEFT);
+		}
+
+
 		// begin loop
 		startTime = glfwGetTime();
 		int width, height;
@@ -126,11 +140,8 @@ int main()
 				if (!SceneManager::getInstance()->removeObject(house))
 					std::cout << "fail remove instance from scene" << std::endl;
 				InstanceManager::getInstance()->release(house);
-				if(house) delete house;
-				house = nullptr;
 
-				srand((unsigned int)time(NULL));
-				house = hg.getHouse(rand(), 50, 70);
+				house = hg.getHouse(randomEngine(), 0, 100);
 				InstanceManager::getInstance()->add(house);
 				SceneManager::getInstance()->addStaticObject(house);
 			}
@@ -141,6 +152,10 @@ int main()
 			EventHandler::getInstance()->isActivated(FORWARD),	EventHandler::getInstance()->isActivated(BACKWARD),
 			EventHandler::getInstance()->isActivated(LEFT),		EventHandler::getInstance()->isActivated(RIGHT),
 			EventHandler::getInstance()->isActivated(RUN),		EventHandler::getInstance()->isActivated(SNEAKY)    );
+
+		//	clear garbages
+		InstanceManager::getInstance()->clearGarbage();
+		ResourceManager::getInstance()->clearGarbage();
 
 		//	Debug
 		//std::cout << 1000.f*(glfwGetTime() - startTime) << std::endl;
@@ -153,6 +168,8 @@ int main()
 
 	//	end
 	std::cout << "ending game" << std::endl;
+	InstanceManager::getInstance()->clearGarbage();
+	ResourceManager::getInstance()->clearGarbage();
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	return 0;

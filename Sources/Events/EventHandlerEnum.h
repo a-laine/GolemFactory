@@ -146,6 +146,7 @@ class EventHandlerEnum : public EventHandlerImpl, public Singleton<EventHandlerE
         std::map<Event*,EventEnum> eventMapping;		//!< Container for assosiate Event object -> user event
         std::multimap<EventEnum,Event*> userMapping;	//!< Container for assosiate user event -> Event object
         std::vector<EventEnum> frameEvent;				//!< The list of all event occured and non treated yet
+		std::vector<EventEnum> specialAddedEvent;
         std::vector<EventEnum> frameEventBuffer;		//!< A buffer used for thread safe uses
         //
 };

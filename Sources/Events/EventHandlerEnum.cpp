@@ -311,7 +311,7 @@ void EventHandlerEnum::getFrameEvent(std::vector<EventEnum>& buffer)
 void EventHandlerEnum::addFrameEvent(EventEnum literalEvent)
 {
     mutex.lock();
-    frameEvent.insert(frameEvent.end(),literalEvent);
+	specialAddedEvent.insert(specialAddedEvent.end(),literalEvent);
     mutex.unlock();
 }
 
@@ -381,7 +381,9 @@ void EventHandlerEnum::swapFrameEventList()
     if(configuration&CLEAR_EVENT_LIST)
     {
         frameEvent.swap(frameEventBuffer);
+		frameEvent.insert(frameEvent.end(), specialAddedEvent.begin(), specialAddedEvent.end());
         frameEventBuffer.clear();
+		specialAddedEvent.clear();
         configuration &= ~CLEAR_EVENT_LIST;
     }
     else

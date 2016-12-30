@@ -10,16 +10,18 @@ EventSequence::~EventSequence() {}
 //
 
 //  Public functions
-bool EventSequence::isActivated() const
-{
-	return false;
-}
-bool EventSequence::check(InputType call,int key,int action)
+bool EventSequence::isActivated() const { return false; }
+bool EventSequence::check(InputType call, int key, int action)
 {
     if(action == GLFW_RELEASE) return false;
 	float time = (float)glfwGetTime();
 
-	if (call != inputList[state].first.callback || key != inputList[state].first.key || (state && time - lastCheckTime > timeout)) //wrong touch or timeout
+	//	reset state if timeout occur
+	if(time - lastCheckTime > timeout)
+		state = 0;
+	lastCheckTime = time;
+
+	if (call != inputList[state].first.callback || key != inputList[state].first.key) //wrong touch
     {
         state = 0;
         return false;
@@ -27,13 +29,11 @@ bool EventSequence::check(InputType call,int key,int action)
     else //good touch && good timing
     {
         state++;
-        lastCheckTime = time;
-		if (state >= inputList.size())	//	end of sequence reached -> need a user event emission
-        {
-            state = 0;
-            return true;
-        }
-        else return false;
+		if (state < inputList.size()) return false;
+
+		//	end of sequence reached -> need a user event emission
+		state = 0;
+		return true;
     }
 }
 //

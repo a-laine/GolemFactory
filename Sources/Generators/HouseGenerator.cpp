@@ -7,6 +7,7 @@
 
 //  Attributes
 glm::vec3 HouseGenerator::stoneColor = glm::vec3(0.2f, 0.2f, 0.2f);
+glm::vec3 HouseGenerator::groundRoof = glm::vec3(0.32f, 0.16f, 0.05f);
 //
 
 
@@ -21,6 +22,13 @@ HouseGenerator::HouseGenerator()
 	assetLibrary["corner"] = ResourceManager::getInstance()->getMesh("House/HouseCorner.obj");
 	assetLibrary["door"] = ResourceManager::getInstance()->getMesh("House/HouseDoor.obj");
 	assetLibrary["window"] = ResourceManager::getInstance()->getMesh("House/HouseWindow.obj");
+
+	assetLibrary["roof1"] = ResourceManager::getInstance()->getMesh("House/HouseRoof1.obj");
+	assetLibrary["roof2"] = ResourceManager::getInstance()->getMesh("House/HouseRoof2.obj");
+	assetLibrary["roofend1"] = ResourceManager::getInstance()->getMesh("House/HouseRoofEnd1.obj");
+	assetLibrary["roofend2"] = ResourceManager::getInstance()->getMesh("House/HouseRoofEnd2.obj");
+	assetLibrary["roofend3"] = ResourceManager::getInstance()->getMesh("House/HouseRoofEnd3.obj");
+	assetLibrary["roofend4"] = ResourceManager::getInstance()->getMesh("House/HouseRoofEnd4.obj");
 
 	blockLibrary.push_back(glm::ivec3(8, 5, 3));	// 120 m²
 	blockLibrary.push_back(glm::ivec3(8, 5, 2));	// 80 m²
@@ -51,20 +59,19 @@ HouseGenerator::~HouseGenerator()
 InstanceVirtual* HouseGenerator::getHouse(unsigned int seed, int density, int prosperity)
 {
 	// initialize
-	if (density < 0)
-		density = (rand() % 100);
-	if (prosperity < 0)
+	if (density < 0) density = (randomEngine() % 100);
+	if (prosperity <= 0)
 	{
-		prosperity = density / 3 + (rand() % 100);
+		prosperity = std::max(density / 3 + (int)(randomEngine() % 100), 1);
 		if (prosperity > 100) prosperity = 100;
 	}
-	initHouseField(std::max(prosperity, 30));
+	initHouseField(std::max(prosperity, 30), density);
 	std::string houseName = "house" + std::to_string(seed) + 'd' + std::to_string(density) + 'p' + std::to_string(prosperity);
-	unsigned int superficy = std::max((prosperity / 5) * (prosperity / 5) + (rand() % prosperity), 15);
 	randomEngine.seed(seed);
+	int superficy =  std::max((prosperity / 5) * (prosperity / 5) + (int)(randomEngine() % prosperity), 15);
 
 	//	Debug
-	std::cout << "House name" << houseName << std::endl;
+	std::cout << houseName << std::endl;
 	std::cout << "   seed : " << seed << std::endl;
 	std::cout << "   density : " << density << std::endl;
 	std::cout << "   prosperity : " << prosperity << std::endl;
@@ -72,72 +79,28 @@ InstanceVirtual* HouseGenerator::getHouse(unsigned int seed, int density, int pr
 	std::cout << "   house field floor count : " << houseFieldFloor << std::endl;
 	std::cout << "   superficy : " << superficy << std::endl;
 
-	//	generate block list used for constructions
-	createBlocs(superficy);
-	
-	int ox = houseFieldSize / 2;
-	int oy = houseFieldSize / 2;
+	//	generate house
+	createAndPlaceBlocks(superficy);
+	constructHouseMesh();
 
-	for (unsigned int i = 0; i < blockList.size(); i++)
-	{ 
-		//	construct the available position list & shuffle it
-		availableBlockPosition.clear();
-		int safeOffset = 10;
-		for (int i = safeOffset; i < (int)houseFieldSize - safeOffset; i++)
-			for (int j = safeOffset; j < (int)houseFieldSize - safeOffset; j++)
-				if (houseField[0][i][j].available) availableBlockPosition.push_back(glm::ivec3(i, j, 0));
-		std::shuffle(availableBlockPosition.begin(), availableBlockPosition.end(), randomEngine);
+	createAndPlaceRoof();
+	constructRoofMesh();
 
-		//	try to place block
-		for (auto it = availableBlockPosition.begin(); it != availableBlockPosition.end(); it++)
-		{
-			if (!freePlace(*it, blockList[i])) continue;
-			if (i != 0 && adjacentBlock(*it, blockList[i]) < 3) continue;
-			else
-			{
-				glm::ivec3 finalPos = optimizeAdjacent(*it, blockList[i]);
-				addBlocks(finalPos, blockList[i], 1);
-				break;
-			}
-		}
-	}
-
-	// Add dummy bloc for test house generator
-	
-
-	/*
-	addBlocks(ox - 4, oy,     oz, 4, 4, 1, 1);		// house empty
-	addBlocks(ox,     oy - 1, oz, 6, 7, 2, 1);		// house empty
-	addBlocks(ox + 6, oy,     oz, 4, 4, 1, 1);		// house empty
-
-	addBlocks(ox + 3, oy + 5, oz, 1, 1, 1, 2);		// house door
-
-	addBlocks(ox + 1, oy + 5, oz, 1, 1, 1, 3);		// house window
-	addBlocks(ox + 7, oy,     oz, 1, 1, 1, 3);		// house window
-	addBlocks(ox + 7, oy + 3, oz, 1, 1, 1, 3);		// house window
-	addBlocks(ox + 9, oy + 2, oz, 1, 1, 1, 3);		// house window
-	addBlocks(ox - 2, oy,     oz, 1, 1, 1, 3);		// house window
-	addBlocks(ox - 2, oy + 3, oz, 1, 1, 1, 3);		// house window
-	addBlocks(ox - 4, oy + 2, oz, 1, 1, 1, 3);		// house window
-	addBlocks(ox + 1, oy + 5, oz + 1, 1, 1, 1, 3);	// house window
-	addBlocks(ox + 4, oy + 5, oz + 1, 1, 1, 1, 3);	// house window
-	addBlocks(ox + 4, oy - 1, oz + 1, 1, 1, 1, 3);	// house window
-	*/
-
-	//	Construct Mesh
-	constructMesh();
 	optimizeMesh();
 
 	std::cout << "   vertex count : " << verticesArray.size() << std::endl;
 	std::cout << "   faces count : " << facesArray.size() << std::endl;
 
-	ResourceManager::getInstance()->addMesh(new Mesh(houseName, verticesArray, normalesArray, colorArray, facesArray));
-	return new InstanceDrawable(houseName);
+	Mesh* mesh = new Mesh(houseName, verticesArray, normalesArray, colorArray, facesArray);
+	ResourceManager::getInstance()->addMesh(mesh);
+	InstanceDrawable* house = new InstanceDrawable(houseName);
+	ResourceManager::getInstance()->release(mesh);
+	return house;
 }
 //
 
 //  Protected functions
-inline void HouseGenerator::initHouseField(unsigned int newSize)
+inline void HouseGenerator::initHouseField(unsigned int newSize, int density)
 {
 	//  Clear mesh temp variable
 	verticesArray.clear();
@@ -147,6 +110,7 @@ inline void HouseGenerator::initHouseField(unsigned int newSize)
 
 	//	Clear house block list available for construction
 	blockList.clear();
+	roofBlockList.clear();
 	availableBlockPosition.clear();
 
 	//	Delete last house field
@@ -166,7 +130,7 @@ inline void HouseGenerator::initHouseField(unsigned int newSize)
 	if (newSize != houseFieldSize)
 	{
 		houseFieldSize = newSize;
-		houseFieldFloor = 1 + newSize / 25;
+		houseFieldFloor = 1 + std::max(1, (int)(newSize / 25 * (density / 200.f + 0.5f)));
 
 		houseField = new HouseVoxel**[houseFieldFloor];
 		for (unsigned int j = 0; j < houseFieldFloor; j++)
@@ -184,12 +148,64 @@ inline void HouseGenerator::initHouseField(unsigned int newSize)
 			for (unsigned int j = 0; j < houseFieldSize; j++)
 				houseField[k][i][j] = dummy;
 }
+
+
+inline void HouseGenerator::createAndPlaceBlocks(const int& superficy)
+{
+	//	generate block list used for constructions
+	for (unsigned int i = 0; i < blockLibrary.size(); i++)
+		if (soustractBlock(superficy, i)) break;
+
+	//	place block
+	const int safeOffset = 10;
+	for (unsigned int i = 0; i < blockList.size(); i++)
+	{
+		//	construct the available position list & shuffle it
+		availableBlockPosition.clear();
+		for (int i = safeOffset; i < (int)houseFieldSize - safeOffset; i++)
+			for (int j = safeOffset; j < (int)houseFieldSize - safeOffset; j++)
+				if (houseField[0][i][j].available) availableBlockPosition.push_back(glm::ivec3(i, j, 0));
+		std::shuffle(availableBlockPosition.begin(), availableBlockPosition.end(), randomEngine);
+
+		//	try to place block
+		for (auto it = availableBlockPosition.begin(); it != availableBlockPosition.end(); it++)
+		{
+			if (!freePlace(*it, blockList[i])) continue;
+			if (i != 0 && adjacentBlock(*it, blockList[i]) < 3) continue;
+			else
+			{
+				glm::ivec3 finalPos = optimizeAdjacent(*it, blockList[i]);
+				addBlocks(finalPos, blockList[i], 1);
+				break;
+			}
+		}
+	}
+}
+bool HouseGenerator::soustractBlock(int superficy, int testIndex)
+{
+	if (blockLibrary[testIndex].z >= (int)houseFieldFloor) return false;
+
+	int s = superficy - blockLibrary[testIndex].x * blockLibrary[testIndex].y * blockLibrary[testIndex].z;
+	if (s < 0) return false;
+	else if (s < 3)
+	{
+		blockList.push_back(blockLibrary[testIndex]);
+		return true;
+	}
+	else
+	{
+		blockList.push_back(blockLibrary[testIndex]);
+		for (unsigned int i = testIndex; i < blockLibrary.size(); i++)
+			if (soustractBlock(s, i)) return true;
+		return false;
+	}
+}
 bool HouseGenerator::freePlace(const glm::ivec3& p, const glm::ivec3& s) const
 {
 	//	Check out of range
 	if (p.x < 0 || p.y < 0 || p.z < 0)
 		return false;
-	else if (p.x + s.x > (int)houseFieldSize - 2 || p.y + s.y > (int)houseFieldSize - 2 || p.z + s.z > (int)houseFieldFloor)
+	else if (p.x + s.x >= (int)houseFieldSize || p.y + s.y >= (int)houseFieldSize || p.z + s.z >= (int)houseFieldFloor)
 		return false;
 
 	//	Check available
@@ -220,8 +236,8 @@ glm::ivec3 HouseGenerator::optimizeAdjacent(const glm::ivec3& p, const glm::ivec
 	for (int i = 0; i < gradSize; i++)
 		for (int j = 0; j < gradSize; j++)
 		{
-			if(freePlace(p + glm::ivec3(offset - i, offset - j, 0), s))
-				rate[i][j] = adjacentBlock(p + glm::ivec3(offset - i, offset - j, 0), s);
+			if(freePlace(p + glm::ivec3(i - offset, j - offset, 0), s))
+				rate[i][j] = adjacentBlock(p + glm::ivec3(i - offset, j - offset, 0), s);
 			else rate[i][j] = 0;
 		}
 
@@ -235,7 +251,7 @@ glm::ivec3 HouseGenerator::optimizeAdjacent(const glm::ivec3& p, const glm::ivec
 				maxj = j;
 			}
 		}
-	return p + glm::ivec3(offset - maxi, offset - maxj, 0);
+	return p + glm::ivec3(maxi - offset, maxj - offset, 0);
 }
 void HouseGenerator::addBlocks(glm::ivec3 p, glm::ivec3 s, unsigned int blockType)
 {
@@ -249,33 +265,7 @@ void HouseGenerator::addBlocks(glm::ivec3 p, glm::ivec3 s, unsigned int blockTyp
 }
 
 
-inline void HouseGenerator::createBlocs(int superficy)
-{
-	for (unsigned int i = 0; i < blockLibrary.size(); i++)
-		if (soustractBlock(superficy, i)) break;
-}
-bool HouseGenerator::soustractBlock(int superficy, int testIndex)
-{
-	if (blockLibrary[testIndex].z >= (int)houseFieldFloor) return false;
-
-	int s = superficy - blockLibrary[testIndex].x * blockLibrary[testIndex].y * blockLibrary[testIndex].z;
-	if (s < 0) return false;
-	else if (s < 3)
-	{
-		blockList.push_back(blockLibrary[testIndex]);
-		return true;
-	}
-	else
-	{
-		blockList.push_back(blockLibrary[testIndex]);
-		for (unsigned int i = testIndex; i < blockLibrary.size(); i++)
-			if (soustractBlock(s, i)) return true;
-		return false;
-	}
-}
-
-
-inline void HouseGenerator::constructMesh()
+inline void HouseGenerator::constructHouseMesh()
 {	
 	float ox = houseFieldSize / 2.f + 0.5f;
 	float oy = houseFieldSize / 2.f + 0.5f;
@@ -283,14 +273,12 @@ inline void HouseGenerator::constructMesh()
 	Mesh* meshToPush = nullptr;
 
 	for (unsigned int k = 0; k < houseFieldFloor; k++)
-	{
-		//	house
 		for (unsigned int i = 0; i < houseFieldSize; i++)
 			for (unsigned int j = 0; j < houseFieldSize; j++)
 			{
 				if (houseField[k][i][j].available) continue;
 
-				//	Ground quad
+				//	Ground quad or debug roof
 				pushGround(i - ox, j - oy, 2.5f * k + oz, i + 1 - ox, j + 1 - oy, 2.5f * k + oz, stoneColor);
 
 				//	right wall
@@ -346,18 +334,20 @@ inline void HouseGenerator::constructMesh()
 				}
 
 				//	corners
-				if (i + 1 < houseFieldSize && j + 1 < houseFieldSize && houseField[k][i + 1][j].available && houseField[k][i][j + 1].available)
-					pushMesh(assetLibrary["corner"], glm::vec3(i + 1 - ox, j + 1 - oy, oz + 2.5f * k), glm::vec3(1.f, 0.f, 0.f));
-				if (i - 1 >= 0 && j + 1 < houseFieldSize && houseField[k][i - 1][j].available && houseField[k][i][j + 1].available)
-					pushMesh(assetLibrary["corner"], glm::vec3(i - ox, j + 1 - oy, oz + 2.5f * k), glm::vec3(0.f, 1.f, 0.f));
-				if (i + 1 < houseFieldSize && j - 1 >= 0 && houseField[k][i + 1][j].available && houseField[k][i][j - 1].available)
-					pushMesh(assetLibrary["corner"], glm::vec3(i + 1 - ox, j - oy, oz + 2.5f * k), glm::vec3(0.f, -1.f, 0.f));
-				if (i - 1 >= 0 && j - 1 >= 0 && houseField[k][i - 1][j].available && houseField[k][i][j - 1].available)
-					pushMesh(assetLibrary["corner"], glm::vec3(i - ox, j - oy, oz + 2.5f * k), glm::vec3(-1.f, 0.f, 0.f));
+				if (houseField[k][i][j].voxelType != Roof)
+				{
+					if (i + 1 < houseFieldSize && j + 1 < houseFieldSize && houseField[k][i + 1][j].available && houseField[k][i][j + 1].available)
+						pushMesh(assetLibrary["corner"], glm::vec3(i + 1 - ox, j + 1 - oy, oz + 2.5f * k), glm::vec3(1.f, 0.f, 0.f));
+					if (i - 1 >= 0 && j + 1 < houseFieldSize && houseField[k][i - 1][j].available && houseField[k][i][j + 1].available)
+						pushMesh(assetLibrary["corner"], glm::vec3(i - ox, j + 1 - oy, oz + 2.5f * k), glm::vec3(0.f, 1.f, 0.f));
+					if (i + 1 < houseFieldSize && j - 1 >= 0 && houseField[k][i + 1][j].available && houseField[k][i][j - 1].available)
+						pushMesh(assetLibrary["corner"], glm::vec3(i + 1 - ox, j - oy, oz + 2.5f * k), glm::vec3(0.f, -1.f, 0.f));
+					if (i - 1 >= 0 && j - 1 >= 0 && houseField[k][i - 1][j].available && houseField[k][i][j - 1].available)
+						pushMesh(assetLibrary["corner"], glm::vec3(i - ox, j - oy, oz + 2.5f * k), glm::vec3(-1.f, 0.f, 0.f));
+				}
 			}
-	}
 }
-void HouseGenerator::pushMesh(Mesh* m, glm::vec3 p, glm::vec3 o, glm::vec3 s)
+void HouseGenerator::pushMesh(Mesh* m, const glm::vec3& p, const glm::vec3& o, const glm::vec3& s)
 {
 	if (!m) return;
 	unsigned int facesStart = verticesArray.size();
@@ -371,8 +361,8 @@ void HouseGenerator::pushMesh(Mesh* m, glm::vec3 p, glm::vec3 o, glm::vec3 s)
 
 	//	Compute mesh model matrix
 	glm::mat4 model = glm::translate(glm::mat4(1.f), p);
-	model = model * orientation;
 	model = glm::scale(model, s);
+	model = model * orientation;
 
 	//	push modified data
 	for (unsigned int i = 0; i < m->vertices.size(); i++)
@@ -404,6 +394,252 @@ void HouseGenerator::pushGround(float px1, float py1, float pz1, float px2, floa
 	colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color);
 	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);
 	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 2); facesArray.push_back(verticesArray.size() - 1);
+}
+
+
+inline void HouseGenerator::createAndPlaceRoof()
+{
+	glm::ivec3 origin = findRoofSeed();
+	glm::ivec3 size;
+	while (origin.x >= 0)
+	{
+		size = glm::ivec3(1, 1, 1);
+		growRoofSeed(origin, size);
+		addBlocks(origin, size, Roof);
+		roofBlockList.push_back(std::pair<glm::ivec3, glm::ivec3>(origin, size));
+		origin = findRoofSeed();
+	}
+}
+glm::ivec3 HouseGenerator::findRoofSeed() const
+{
+	for (unsigned int k = 0; k < houseFieldFloor; k++)
+		for (unsigned int i = 0; i < houseFieldSize; i++)
+			for (unsigned int j = 0; j < houseFieldSize; j++)
+			{
+				if (houseField[k][i][j].available) continue;
+				else if (houseField[k][i][j].voxelType == Roof) continue;
+
+				if (k + 1 == houseFieldFloor || houseField[k + 1][i][j].available)
+					return glm::ivec3(i, j, k + 1);
+			}
+	return glm::ivec3(-1, -1, -1);
+}
+void HouseGenerator::growRoofSeed(glm::ivec3& p, glm::ivec3& s)
+{
+	bool improvement = false;
+	float result = 1.f;
+
+	for (int i = 0; i < 100; i++)
+	{
+		if (benchmarkRoof(p, s + glm::ivec3(1, 0, 0)) > result)
+		{
+			s = s + glm::ivec3(1, 0, 0);
+			result = benchmarkRoof(p, s);
+			improvement = true;
+		}
+		if (benchmarkRoof(p, s + glm::ivec3(0, 1, 0)) > result)
+		{
+			s = s + glm::ivec3(0, 1, 0);
+			result = benchmarkRoof(p, s);
+			improvement = true;
+		}
+
+		if (benchmarkRoof(p - glm::ivec3(1, 0, 0), s + glm::ivec3(1, 0, 0)) > result)
+		{
+			p = p - glm::ivec3(1, 0, 0);
+			s = s + glm::ivec3(1, 0, 0);
+			result = benchmarkRoof(p, s);
+			improvement = true;
+		}
+		if (benchmarkRoof(p - glm::ivec3(0, 1, 0), s + glm::ivec3(0, 1, 0)) > result)
+		{
+			p = p - glm::ivec3(0, 1, 0);
+			s = s + glm::ivec3(0, 1, 0);
+			result = benchmarkRoof(p, s);
+			improvement = true;
+		}
+		if (!improvement) break;
+		improvement = false;
+	}
+}
+float HouseGenerator::benchmarkRoof(glm::ivec3 p, glm::ivec3 s)
+{
+	float coveredBlockMark = 1.f;
+	float uncoveredBlockMark = 2.f;
+	float result = 0.f;
+
+	for (int i = p.x; i < p.x + s.x; i++)
+		for (int j = p.y; j < p.y + s.y; j++)
+		{
+			if (!houseField[p.z][i][j].available || houseField[p.z - 1][i][j].voxelType == Roof) return 0.f;
+			if (houseField[p.z - 1][i][j].available) result -= p.z * uncoveredBlockMark;
+			else result += coveredBlockMark;
+		}
+	return result;
+}
+
+
+inline void HouseGenerator::constructRoofMesh()
+{
+	float ox = houseFieldSize / 2.f + 0.5f;
+	float oy = houseFieldSize / 2.f + 0.5f;
+	float oz = 0.1f;
+
+	for (unsigned int k = 0; k < houseFieldFloor; k++)
+		for (unsigned int i = 0; i < houseFieldSize; i++)
+			for (unsigned int j = 0; j < houseFieldSize; j++)
+			{
+				if (houseField[k][i][j].available) continue;
+
+				//	Ground roof
+				if (houseField[k][i][j].voxelType == Roof)
+					pushGround(i - ox, j - oy, 2.5f * k + oz, i + 1 - ox, j + 1 - oy, 2.5f * k + oz, groundRoof);
+			}
+
+	for (unsigned int i = 0; i < roofBlockList.size(); i++)
+	{
+		roofSlope(roofBlockList[i].first, roofBlockList[i].second);
+		roofEnd(roofBlockList[i].first, roofBlockList[i].second);
+	}
+}
+void HouseGenerator::roofSlope(const glm::ivec3& p, const glm::ivec3& s)
+{
+	glm::vec3 houseOrigin(houseFieldSize / 2.f, houseFieldSize / 2.f, 0.1f);
+	glm::vec3 tmp;
+	if (s.y > s.x)
+	{
+		for (int i = 0; i < s.x / 2; i++)
+			for (int j = p.y; j < p.y + s.y; j++)
+			{
+				tmp = glm::vec3(p.x + i - houseOrigin.x - 0.5f, j - houseOrigin.y, i + 2.5f * p.z + houseOrigin.z);
+				pushMesh(assetLibrary["roof1"], tmp, glm::vec3(0.f, 1.f, 0.f));
+
+				tmp = glm::vec3(p.x + s.x - i - houseOrigin.x - 0.5f, j - houseOrigin.y, i + 2.5f * p.z + houseOrigin.z);
+				pushMesh(assetLibrary["roof1"], tmp, glm::vec3(0.f, -1.f, 0.f));
+			}
+		if (s.x % 2)
+		{
+			for (int j = p.y; j < p.y + s.y; j++)
+			{
+				tmp = glm::vec3(p.x + s.x / 2 + 1 - houseOrigin.x - 0.5f, j - houseOrigin.y, s.x / 2 + 2.5f * p.z + houseOrigin.z);
+				pushMesh(assetLibrary["roof2"], tmp, glm::vec3(0.f, -1.f, 0.f));
+			}
+		}
+	}
+	else
+	{
+		for (int i = p.x; i < p.x + s.x; i++)
+			for (int j = 0; j < s.y / 2; j++)
+			{
+				tmp = glm::vec3(i - houseOrigin.x, p.y + j - houseOrigin.y - 0.5f, j + 2.5f * p.z + houseOrigin.z);
+				pushMesh(assetLibrary["roof1"], tmp, glm::vec3(-1.f, 0.f, 0.f));
+
+				tmp = glm::vec3(i - houseOrigin.x, p.y + s.y - j - houseOrigin.y - 0.5f, j + 2.5f * p.z + houseOrigin.z);
+				pushMesh(assetLibrary["roof1"], tmp, glm::vec3(1.f, 0.f, 0.f));
+			}
+		if (s.y % 2)
+		{
+			for (int i = p.x; i < p.x + s.x; i++)
+			{
+				tmp = glm::vec3(i - houseOrigin.x, p.y + s.y / 2 + 1 - houseOrigin.y - 0.5f, s.y / 2 + 2.5f * p.z + houseOrigin.z);
+				pushMesh(assetLibrary["roof2"], tmp, glm::vec3(1.f, 0.f, 0.f));
+			}
+		}
+	}
+}
+void HouseGenerator::roofEnd(const glm::ivec3& p, const glm::ivec3& s)
+{
+	glm::vec3 houseOrigin(houseFieldSize / 2.f, houseFieldSize / 2.f, 0.1f);
+	glm::vec3 tmp;
+
+	if (s.y > s.x)
+	{
+		//	front end
+		for (int i = 0; i < s.x / 2; i++)
+		{
+			if (houseField[p.z][p.x + i][p.y - 1].available)
+			{
+				tmp = glm::vec3(p.x + i - houseOrigin.x - 0.5f, p.y - 0.5f - houseOrigin.y, i + 2.5f * p.z + houseOrigin.z);
+				pushMesh(assetLibrary["roofend1"], tmp, glm::vec3(0.f, 1.f, 0.f));
+			}
+			if (houseField[p.z][p.x + s.x - 1 - i][p.y - 1].available)
+			{
+				tmp = glm::vec3(p.x + s.x - i - houseOrigin.x - 0.5f, p.y - 0.5f - houseOrigin.y, i + 2.5f * p.z + houseOrigin.z);
+				pushMesh(assetLibrary["roofend4"], tmp, glm::vec3(0.f, 1.f, 0.f));
+			}
+		}
+		for (int i = 0; i < s.x / 2; i++)
+		{
+			if (houseField[p.z][p.x + i][p.y + s.y].available)
+			{
+				tmp = glm::vec3(p.x + i - houseOrigin.x - 0.5f, p.y + s.y - 0.5f - houseOrigin.y, i + 2.5f * p.z + houseOrigin.z);
+				pushMesh(assetLibrary["roofend4"], tmp, glm::vec3(0.f, -1.f, 0.f));
+			}
+			if (houseField[p.z][p.x + s.x - 1 - i][p.y + s.y].available)
+			{
+				tmp = glm::vec3(p.x + s.x - i - houseOrigin.x - 0.5f, p.y + s.y - 0.5f - houseOrigin.y, i + 2.5f * p.z + houseOrigin.z);
+				pushMesh(assetLibrary["roofend1"], tmp, glm::vec3(0.f, -1.f, 0.f));
+			}
+		}
+
+		//	slope end border
+		for (int j = p.y; j < p.y + s.y; j++)
+		{
+			if (!houseField[p.z][p.x - 1][j].available) continue;
+			tmp = glm::vec3(p.x - 0.5f - houseOrigin.x, j - houseOrigin.y, 2.5f * p.z + houseOrigin.z);
+			pushMesh(assetLibrary["roofend3"], tmp, glm::vec3(0.f, 1.f, 0.f));
+		}
+		for (int j = p.y; j < p.y + s.y; j++)
+		{
+			if (!houseField[p.z][p.x + s.x][j].available) continue;
+			tmp = glm::vec3(p.x + s.x - 0.5f - houseOrigin.x, j - houseOrigin.y, 2.5f * p.z + houseOrigin.z);
+			pushMesh(assetLibrary["roofend3"], tmp, glm::vec3(0.f, -1.f, 0.f));
+		}
+	}
+	else
+	{
+		//	front end
+		for (int j = 0; j < s.y / 2; j++)
+		{
+			if (houseField[p.z][p.x - 1][p.y + j].available)
+			{
+				tmp = glm::vec3(p.x - 0.5f - houseOrigin.x, p.y + j - houseOrigin.y - 0.5f, j + 2.5f * p.z + houseOrigin.z);
+				pushMesh(assetLibrary["roofend4"], tmp, glm::vec3(1.f, 0.f, 0.f));
+			}
+			if (houseField[p.z][p.x - 1][p.y + s.y - 1 - j].available)
+			{
+				tmp = glm::vec3(p.x - 0.5f - houseOrigin.x, p.y + s.y - j - houseOrigin.y - 0.5f, j + 2.5f * p.z + houseOrigin.z);
+				pushMesh(assetLibrary["roofend1"], tmp, glm::vec3(1.f, 0.f, 0.f));
+			}
+		}
+		for (int j = 0; j < s.y / 2; j++)
+		{
+			if (houseField[p.z][p.x + s.x][p.y + j].available)
+			{
+				tmp = glm::vec3(p.x + s.x - 0.5f - houseOrigin.x, p.y + j - houseOrigin.y - 0.5f, j + 2.5f * p.z + houseOrigin.z);
+				pushMesh(assetLibrary["roofend1"], tmp, glm::vec3(-1.f, 0.f, 0.f));
+			}
+			if (houseField[p.z][p.x + s.x][p.y + s.y - 1 - j].available)
+			{
+				tmp = glm::vec3(p.x + s.x - 0.5f - houseOrigin.x, p.y + s.y - j - houseOrigin.y - 0.5f, j + 2.5f * p.z + houseOrigin.z);
+				pushMesh(assetLibrary["roofend4"], tmp, glm::vec3(-1.f, 0.f, 0.f));
+			}
+		}
+
+		//	slope end border
+		for (int i = p.x; i < p.x + s.x; i++)
+		{
+			if (!houseField[p.z][i][p.y - 1].available) continue;
+			tmp = glm::vec3(i - houseOrigin.x, p.y - 0.5f - houseOrigin.y, 2.5f * p.z + houseOrigin.z);
+			pushMesh(assetLibrary["roofend3"], tmp, glm::vec3(-1.f, 0.f, 0.f));
+		}
+		for (int i = p.x; i < p.x + s.x; i++)
+		{
+			if (!houseField[p.z][i][p.y + s.y].available) continue;
+			tmp = glm::vec3(i - houseOrigin.x, p.y + s.y - 0.5f - houseOrigin.y, 2.5f * p.z + houseOrigin.z);
+			pushMesh(assetLibrary["roofend3"], tmp, glm::vec3(1.f, 0.f, 0.f));
+		}
+	}
 }
 
 
