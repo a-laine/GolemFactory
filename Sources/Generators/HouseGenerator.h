@@ -26,22 +26,32 @@ class HouseGenerator
 		//  Attributes
 		static glm::vec3 stoneColor;
 		static glm::vec3 groundRoof;
+		static const int massiveRadius;
+		static const int adjacentOptiRadius;
 		//
 	
 	protected:
 		//  Miscellaneous
-		enum VoxelType
+		enum HouseType
 		{
 			None = 0,
 			HouseEmpty,
 			Door,
-			Window,
-			Roof
+			Window
+		};
+		enum RoofType
+		{
+			Slope_xp,
+			Slope_xm,
+			Slope_yp,
+			Slope_ym
 		};
 		struct HouseVoxel
 		{
 			bool available;
-			unsigned int voxelType;
+			unsigned int houseType;
+			unsigned int roofType;
+			unsigned int blockReference;
 		};
 		struct OrderedVertex
 		{
@@ -75,22 +85,24 @@ class HouseGenerator
 		//
 
 		//  Protected functions
-		inline void initHouseField(unsigned int newSize, int density);
+		void initHouseField(const int& newSize, const int& density, const int& prosperity);
+		
+		bool searchBlockPartition(const int& superficy, const int& testIndex);
+		bool freePlace(const glm::ivec3& p, const glm::ivec3& s) const;
+		bool supportedBlock(const glm::ivec3& p, const glm::ivec3& s) const;
+		bool massiveStruct(const glm::ivec3& p, const glm::ivec3& s) const;
+		int adjacentBlock(const glm::ivec3& p, const glm::ivec3& s) const;
+		glm::ivec3 optimizeAdjacent(const glm::ivec3& p, const glm::ivec3& s) const;
+		void addHouseBlocks(const glm::ivec3& p, const glm::ivec3& s, const unsigned int& houseType, const unsigned int& blockReference);
+
+
+			
 		//
-		inline void createAndPlaceBlocks(const int& superficy);
-			bool soustractBlock(int superficy, int testIndex);
-			bool freePlace(const glm::ivec3& p, const glm::ivec3& s) const;
-			int adjacentBlock(const glm::ivec3& p, const glm::ivec3& s) const;
-			glm::ivec3 optimizeAdjacent(const glm::ivec3& p, const glm::ivec3& s) const;
-			void addBlocks(glm::ivec3 p, glm::ivec3 s, unsigned int blockType = 0);
-		//
-		inline void constructHouseMesh();
+		void constructHouseMesh();
 			void pushMesh(Mesh* m, const glm::vec3& p, const glm::vec3& o, const glm::vec3& s = glm::vec3(1.f, 1.f,1.f));
 			void pushGround(float px1, float py1, float pz1, float px2, float py2, float pz2, glm::vec3 color);
 		//
 		inline void createAndPlaceRoof();
-			glm::ivec3 findRoofSeed() const;
-			void growRoofSeed(glm::ivec3& p, glm::ivec3& s);
 			float benchmarkRoof(glm::ivec3 p, glm::ivec3 s);
 		//
 		inline void constructRoofMesh();
@@ -104,6 +116,7 @@ class HouseGenerator
 		unsigned int houseFieldSize;
 		unsigned int houseFieldFloor;
 		HouseVoxel*** houseField;
+		glm::vec3 houseOrigin;
 
 		std::vector<glm::vec3> verticesArray;
 		std::vector<glm::vec3> normalesArray;
@@ -112,7 +125,7 @@ class HouseGenerator
 
 		std::map<std::string, Mesh*> assetLibrary;
 		std::vector<glm::ivec3> blockLibrary;
-		std::vector<glm::ivec3> blockList;
+		std::vector<std::pair<glm::ivec3, glm::ivec3> > blockList;
 		std::vector<glm::ivec3> availableBlockPosition;
 		std::vector<std::pair<glm::ivec3, glm::ivec3> > roofBlockList;
 

@@ -79,7 +79,7 @@ int main()
 
 		//initializeForestScene();
 		HouseGenerator hg;
-		auto house = hg.getHouse(949333985, 0, 25);
+		auto house = hg.getHouse(949333985, 0, 100);
 		InstanceManager::getInstance()->add(house);
 		SceneManager::getInstance()->addStaticObject(house);
 		//return 0;
@@ -96,11 +96,11 @@ int main()
 	while (!glfwWindowShouldClose(window))
 	{
 		//frame++;
-		if (frame > 4)
+		if (frame > 30)
 		{
 			frame = 0;
 			inst++;
-			std::cout << inst << std::endl;
+			//std::cout << inst << std::endl;
 			EventHandler::getInstance()->addFrameEvent(DOUBLE_CLICK_LEFT);
 		}
 
@@ -141,7 +141,9 @@ int main()
 					std::cout << "fail remove instance from scene" << std::endl;
 				InstanceManager::getInstance()->release(house);
 
+				double time = glfwGetTime();
 				house = hg.getHouse(randomEngine(), 0, 100);
+				std::cout << 1000.f*(glfwGetTime() - time) << std::endl;
 				InstanceManager::getInstance()->add(house);
 				SceneManager::getInstance()->addStaticObject(house);
 			}
