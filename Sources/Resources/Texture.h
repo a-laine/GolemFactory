@@ -29,7 +29,7 @@ class Texture : public ResourceVirtual
         //
 
         //  Default
-        Texture(std::string path,std::string fontName,uint8_t conf = 0x0);
+		Texture(const std::string& path, const std::string& fontName, uint8_t conf = 0x0);
         ~Texture();
 
         bool isValid() const;

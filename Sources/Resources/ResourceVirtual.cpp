@@ -1,7 +1,7 @@
 #include "ResourceVirtual.h"
 
 //  Default
-ResourceVirtual::ResourceVirtual(std::string resourceName,ResourceType resourceType) : name(resourceName),type(resourceType)
+ResourceVirtual::ResourceVirtual(const std::string& resourceName, ResourceType resourceType) : name(resourceName),type(resourceType)
 {
     count = 0;
 }

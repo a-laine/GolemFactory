@@ -2,15 +2,11 @@
 
 
 //  Default
-ResourceManager::ResourceManager(std::string path)
+ResourceManager::ResourceManager(const std::string& path) :
+	repository(path),defaultTexture("10points.png"),defaultFont("Comic Sans MS"),
+	defaultShader("default"),defaultMesh("cube2.obj"),defaultSkeleton("test")
 {
-    repository = path;
-
-    defaultTexture = "10points.png";
-    defaultFont = "Comic Sans MS";
-    defaultShader = "default";
-    defaultMesh = "cube2.obj";
-	defaultSkeleton = "test";
+    
 }
 ResourceManager::~ResourceManager()
 {
@@ -153,7 +149,7 @@ Texture* ResourceManager::getTexture(std::string name,uint8_t conf)
 
     return resource;
 }
-Texture* ResourceManager::getTexture2D(std::string name,uint8_t conf) {return getTexture(name,conf|Texture::TEXTURE_2D);}
+Texture* ResourceManager::getTexture2D(const std::string& name,uint8_t conf) {return getTexture(name,conf|Texture::TEXTURE_2D);}
 Shader* ResourceManager::getShader(std::string name)
 {
     if(name == "default") name = defaultShader;

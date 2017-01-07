@@ -34,7 +34,7 @@ class EventHandlerEnum : public EventHandlerImpl, public Singleton<EventHandlerE
 		*
 		*	\param file : The key mapping configuration file to load.
 		*/
-        void loadKeyMapping(std::string file);
+        void loadKeyMapping(const std::string& file);
 
         /*!
 		*	\brief Load a new key mapping configuration.
@@ -47,7 +47,7 @@ class EventHandlerEnum : public EventHandlerImpl, public Singleton<EventHandlerE
 		*	\param path : The new repository location of key mapping configuration files.
 		*	\param file : The key mapping configuration file to load.
 		*/
-		void loadKeyMapping(std::string path,std::string file);
+		void loadKeyMapping(const std::string& path,std::string file);
 
 		/*!
 		*	\brief Verify if an event is actually activated or not.
@@ -122,7 +122,7 @@ class EventHandlerEnum : public EventHandlerImpl, public Singleton<EventHandlerE
 		*	\brief Constructor
 		*	\param path : the directory to find event file configuration
 		*/
-        EventHandlerEnum(std::string path = "Resources/");
+        EventHandlerEnum(const std::string& path = "Resources/");
 
 		/*!
 		*	\brief Destructor

@@ -1,7 +1,7 @@
 #include "InstanceVirtual.h"
 
 //  Default
-InstanceVirtual::InstanceVirtual() : count(0), position(0.f, 0.f, 0.f), size(1.f, 1.f, 1.f), orientation(1.f) {}
+InstanceVirtual::InstanceVirtual() : id(0), count(0), position(0.f, 0.f, 0.f), size(1.f, 1.f, 1.f), orientation(1.f) {}
 InstanceVirtual::~InstanceVirtual() {}
 //
 

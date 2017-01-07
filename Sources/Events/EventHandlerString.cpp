@@ -5,7 +5,7 @@
 #include <sstream>
 
 //  Default
-EventHandlerString::EventHandlerString(std::string path) : EventHandlerImpl(path)
+EventHandlerString::EventHandlerString(const std::string& path) : EventHandlerImpl(path)
 {
 	addEvent("QUIT", Event::KEY, GLFW_KEY_ESCAPE);
 }
@@ -16,11 +16,11 @@ EventHandlerString::~EventHandlerString()
 //
 
 //  Public functions
-void EventHandlerString::loadKeyMapping(std::string file)
+void EventHandlerString::loadKeyMapping(const std::string& file)
 {
 	loadKeyMapping(repository, file);
 }
-void EventHandlerString::loadKeyMapping(std::string path, std::string filename)
+void EventHandlerString::loadKeyMapping(const std::string& path, std::string filename)
 {
 	if (filename.empty())
 		filename = "RPG key mapping";

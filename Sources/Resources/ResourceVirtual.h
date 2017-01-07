@@ -50,7 +50,7 @@ class ResourceVirtual
 		 *  \param resourceName : the resource name
 		 *	\param resourceType : the resource type
 		 */
-        ResourceVirtual(std::string resourceName = "unknown", ResourceType resourceType = NONE);
+        ResourceVirtual(const std::string& resourceName = "unknown", ResourceType resourceType = NONE);
 
 		/*!
 		 *  \brief Constructor

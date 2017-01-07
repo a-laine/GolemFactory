@@ -10,7 +10,7 @@ std::string Texture::extension = ".texture";
 //
 
 //  Default
-Texture::Texture(std::string path, std::string textureName, uint8_t conf) : ResourceVirtual(textureName, ResourceVirtual::TEXTURE), configuration(conf)
+Texture::Texture(const std::string& path, const std::string& textureName, uint8_t conf) : ResourceVirtual(textureName, ResourceVirtual::TEXTURE), configuration(conf)
 {
     //  Initialization
     texture = 0;
@@ -50,15 +50,23 @@ Texture::Texture(std::string path, std::string textureName, uint8_t conf) : Reso
         Variant& textureInfo = *tmp;
 
         //  Configuration
-        try { if(textureInfo["type"].toString() == "D3")      configuration = TEXTURE_1D;
-              else if(textureInfo["type"].toString() == "D2") configuration = TEXTURE_2D;
-              else if(textureInfo["type"].toString() == "D3") configuration = TEXTURE_3D;
-              else throw std::string("Texture::Texture : unknown texture type");                        }
+        try
+		{
+			if(textureInfo["type"].toString() == "D1")      configuration = TEXTURE_1D;
+			else if(textureInfo["type"].toString() == "D2") configuration = TEXTURE_2D;
+			else if(textureInfo["type"].toString() == "D3") configuration = TEXTURE_3D;
+			else throw std::string("Texture::Texture : unknown texture type");
+		}
         catch(std::exception& e){std::cout<<errorLog<<e.what()<<std::endl;return;}
 
-        try{if(textureInfo["mipmap"].toBool()) configuration |= USE_MIPMAP;}      catch(std::exception){}
-        try{if(textureInfo["minnearest"].toBool()) configuration |= MIN_NEAREST;} catch(std::exception){}
-        try{if(textureInfo["magnearest"].toBool()) configuration |= MAG_NEAREST;} catch(std::exception){}
+		try { if (textureInfo["mipmap"].toBool()) configuration |= USE_MIPMAP; }
+		catch (std::exception) {}
+
+		try { if (textureInfo["minnearest"].toBool()) configuration |= MIN_NEAREST; }
+		catch (std::exception) {}
+
+		try { if (textureInfo["magnearest"].toBool()) configuration |= MAG_NEAREST; }
+		catch (std::exception) {}
 
         try { if(textureInfo["wrap"].toString() == "repeat")      configuration |= WRAP_REPEAT;
               else if(textureInfo["wrap"].toString() == "mirror") configuration |= WRAP_MIRROR;  }
@@ -73,8 +81,8 @@ Texture::Texture(std::string path, std::string textureName, uint8_t conf) : Reso
             if((configuration&TYPE_MASK)==TEXTURE_2D && textureInfo["texture"].getType()==Variant::STRING)//texture="a.png";
             {
                 int x,y,n;
-                textureData = ImageLoader::loadFromFile(path + textureInfo["texture"].toString(),x,y,n,ImageLoader::RGB_ALPHA);
-                if(!textureData) throw std::runtime_error("fail loading 2D texture");
+				textureData = ImageLoader::loadFromFile(path + textureInfo["texture"].toString(), x, y, n, ImageLoader::RGB_ALPHA);
+				if (!textureData) throw std::runtime_error("fail loading 2D texture");
                 dataEnd = textureData;
 
                 size.x = (float)x;
@@ -85,11 +93,11 @@ Texture::Texture(std::string path, std::string textureName, uint8_t conf) : Reso
             {
                 configuration &= ~TYPE_MASK;
                 configuration |= TEXTURE_3D;
-                size.x = (float)textureInfo["width"].toInt();
+				size.x = (float)textureInfo["width"].toInt();
                 size.y = (float)textureInfo["height"].toInt();
-                size.z = (float) textureInfo["texture"].size();
+                size.z = (float)textureInfo["texture"].size();
 
-                textureData = new uint8_t[4*(int)(size.x*size.y*size.z)];
+				textureData = new uint8_t[4 * (int)(size.x * size.y * size.z)];
                 if(!textureData) throw std::runtime_error("fail init texture ptr");
                 dataEnd = textureData;
 
@@ -98,31 +106,31 @@ Texture::Texture(std::string path, std::string textureName, uint8_t conf) : Reso
 
                 for(unsigned int i=0;i<textureInfo["texture"].size();i++)
                 {
-                    image = ImageLoader::loadFromFile(path+textureInfo["texture"][i].toString(),x,y,n,ImageLoader::RGB_ALPHA);
-                    if(!image)
-                        throw std::runtime_error("fail loading 3D texture");
-                    else if(x!=(int)size.x || y!=(int)size.y)
-                        throw std::runtime_error("wrong 2D texture size in 3D texture layer description");
-                    memcpy(dataEnd,image,4*x*y);
-                    dataEnd += 4*x*y;
+					image = ImageLoader::loadFromFile(path + textureInfo["texture"][i].toString(), x, y, n, ImageLoader::RGB_ALPHA);
+					if (!image)
+						throw std::runtime_error("fail loading 3D texture");
+					else if (x != (int)size.x || y != (int)size.y)
+						throw std::runtime_error("wrong 2D texture size in 3D texture layer description");
+					memcpy(dataEnd, image, 4 * x * y);
+					dataEnd += 4 * x * y;
                     ImageLoader::freeImage(image);
                 }
             }
-            else if(textureInfo["texture"].getType()==Variant::ARRAY && textureInfo["texture"][0].getType()==Variant::STRING)//texture=[0,0,0,255 , 255,0,0,255];
+            else if(textureInfo["texture"].getType()==Variant::ARRAY && textureInfo["texture"][0].getType()==Variant::INT)//texture=[0,0,0,255 , 255,0,0,255];
             {
                 unsigned int n = textureInfo["width"].toInt();
 				size.x = (float)n;
-                if((configuration&TYPE_MASK)==TEXTURE_2D) { size.y = (float)textureInfo["height"].toInt(); n *= textureInfo["height"].toInt(); }
-                if((configuration&TYPE_MASK)==TEXTURE_3D) { size.z = (float)textureInfo["depth"].toInt();  n *= textureInfo["depth"].toInt();  }
+				if ((configuration&TYPE_MASK) == TEXTURE_2D) { size.y = (float)textureInfo["height"].toInt(); n *= textureInfo["height"].toInt(); }
+				if ((configuration&TYPE_MASK) == TEXTURE_3D) { size.z = (float)textureInfo["depth"].toInt();  n *= textureInfo["depth"].toInt(); }
 
                 textureData = new uint8_t[4*n];
-                if(!textureData) throw std::runtime_error("error allocation array");
+				if (!textureData) throw std::runtime_error("error allocation array");
                 dataEnd = textureData;
 
-                for(unsigned int i=0;i<textureInfo["texture"].size();i++)
+				for (unsigned int i = 0; i < textureInfo["texture"].size(); i++)
                 {
-                    if(i>=4*n) throw std::runtime_error("invalid width, height, depth");
-                    textureData[i] = (uint8_t) (textureInfo["texture"][0].toInt());
+					if (i >= 4 * n) throw std::runtime_error("invalid width, height, depth");
+					textureData[i] = (uint8_t)(textureInfo["texture"][0].toInt());
                 }
             }
             else throw std::runtime_error("fail to parse file description");
@@ -209,7 +217,7 @@ Texture::~Texture()
     glDeleteTextures(1,&texture);
 }
 
-bool Texture::isValid() const { return true; glIsTexture(texture); }
+bool Texture::isValid() const { return glIsTexture(texture); }
 //
 
 //  Set/get functions

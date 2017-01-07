@@ -28,7 +28,7 @@ class ResourceManager : public Singleton<ResourceManager>
 
         Mesh* getMesh(std::string name);
         Texture* getTexture(std::string name, uint8_t conf = 0x00);
-        Texture* getTexture2D(std::string name, uint8_t conf = 0x00);
+        Texture* getTexture2D(const std::string& name, uint8_t conf = 0x00);
         Shader* getShader(std::string name);
         Font* getFont(std::string name);
 		Skeleton* getSkeleton(std::string name);
@@ -49,8 +49,8 @@ class ResourceManager : public Singleton<ResourceManager>
 
     private:
         //  Default
-        ResourceManager(std::string path = "");			//!< Default constructor.
-        ~ResourceManager();								//!< Default destructor.
+        ResourceManager(const std::string& path = "Resources/");	//!< Default constructor.
+        ~ResourceManager();											//!< Default destructor.
         //
 
         //  Attributes

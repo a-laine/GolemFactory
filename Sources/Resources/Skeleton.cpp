@@ -6,7 +6,7 @@ std::string Skeleton::extension = ".skeleton";
 //
 
 //	Default
-Skeleton::Skeleton(std::string path, std::string skeletonName) : ResourceVirtual(skeletonName, ResourceVirtual::SKELETON), configuration(0x00)
+Skeleton::Skeleton(const std::string& path, const std::string& skeletonName) : ResourceVirtual(skeletonName, ResourceVirtual::SKELETON), configuration(0x00)
 {
 	Variant v; Variant* tmp = NULL;
 	std::string tmpName;

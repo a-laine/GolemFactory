@@ -24,7 +24,7 @@ class Shader : public ResourceVirtual
         //
 
         //  Default
-        Shader(std::string path,std::string shaderName);
+        Shader(const std::string& path, const std::string& shaderName);
         ~Shader();
 
         bool isValid() const;
@@ -38,7 +38,8 @@ class Shader : public ResourceVirtual
         GLuint getShaderID(ShaderType shaderType) const;
 		bool useShaderType(ShaderType shaderType) const;
 
-		int getUniformLocation(std::string uniform);
+		int getUniformLocation(const std::string& uniform);
+		std::string getUniformType(const std::string& uniform);
         //
 
         //  Attributes
@@ -58,6 +59,7 @@ class Shader : public ResourceVirtual
                 tessEvalShader,                         //!< Tesselation evaluation shader opengl id
                 program;                                //!< Program opengl id
         uint8_t textureCount;                           //!< The number of texture use by the program
-        std::map<std::string,GLuint> attributesLocation;//!< The shader attribute map with their opengl location
+        std::map<std::string,GLuint> attributesLocation;	//!< The shader attribute map with their opengl location
+		std::map<std::string, std::string> attributesType;	//!< 
         //
 };

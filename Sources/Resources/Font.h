@@ -20,7 +20,7 @@ class Font : public ResourceVirtual
         //
 
         //  Default
-        Font(std::string path,std::string fontName);
+        Font(const std::string& path, const std::string& fontName);
         ~Font();
 
         bool isValid() const;

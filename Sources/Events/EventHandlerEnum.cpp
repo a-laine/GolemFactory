@@ -5,7 +5,7 @@
 #include <sstream>
 
 //  Default
-EventHandlerEnum::EventHandlerEnum(std::string path) : EventHandlerImpl(path)
+EventHandlerEnum::EventHandlerEnum(const std::string& path) : EventHandlerImpl(path)
 {
     addEvent(QUIT,Event::KEY,GLFW_KEY_ESCAPE);
 }
@@ -16,11 +16,11 @@ EventHandlerEnum::~EventHandlerEnum()
 //
 
 //  Public functions
-void EventHandlerEnum::loadKeyMapping(std::string file)
+void EventHandlerEnum::loadKeyMapping(const std::string& file)
 {
 	loadKeyMapping(repository,file);
 }
-void EventHandlerEnum::loadKeyMapping(std::string path,std::string filename)
+void EventHandlerEnum::loadKeyMapping(const std::string& path,std::string filename)
 {
 	if (filename.empty())
 		filename = "RPG key mapping";

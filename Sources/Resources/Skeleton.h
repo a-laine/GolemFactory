@@ -16,7 +16,6 @@ class Skeleton : public ResourceVirtual
 		{
 			VALID = 1 << 0
 		};
-
 		struct Joint
 		{
 			glm::vec3 position;
@@ -29,7 +28,7 @@ class Skeleton : public ResourceVirtual
 		//
 
 		//	Default
-		Skeleton(std::string path, std::string skeletonName);
+		Skeleton(const std::string& path, const std::string& skeletonName);
 		~Skeleton();
 		//
 

@@ -87,12 +87,12 @@ int main()
 		//return 0;
 
 	// init loop time tracking
-	double startTime, elapseTime = 16;
+	double elapseTime = 16.;
 	bool FPScam = false;
 
 	std::cout << "game loop initiated" << std::endl;
 
-	int frame = 0; int inst = 0;
+	int frame = 0;
 	std::mt19937 randomEngine;
 
 	while (!glfwWindowShouldClose(window))
@@ -101,14 +101,11 @@ int main()
 		if (frame > 30)
 		{
 			frame = 0;
-			inst++;
-			//std::cout << inst << std::endl;
 			EventHandler::getInstance()->addFrameEvent(DOUBLE_CLICK_LEFT);
 		}
 
-
 		// begin loop
-		startTime = glfwGetTime();
+		double startTime = glfwGetTime();
 		int width, height;
 		glfwGetWindowSize(window, &width, &height);
 		float angle = camera.getFrustrumAngleVertical() + EventHandler::getInstance()->getScrollingRelative().y;

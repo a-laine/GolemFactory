@@ -6,7 +6,7 @@ std::string Shader::extension = ".shader";
 //
 
 //  Default
-Shader::Shader(std::string path, std::string shaderName) : ResourceVirtual(shaderName, ResourceVirtual::SHADER)
+Shader::Shader(const std::string& path, const std::string& shaderName) : ResourceVirtual(shaderName, ResourceVirtual::SHADER)
 {
     //  Initialization
     vertexShader = 0;       fragmentShader = 0;
@@ -104,6 +104,7 @@ Shader::Shader(std::string path, std::string shaderName) : ResourceVirtual(shade
 					uniformType = it->second.toString();
 					uniformLocation = glGetUniformLocation(program, uniformName.c_str());
 					attributesLocation[uniformName] = uniformLocation;
+					attributesType[uniformName] = uniformType;
 					if (uniformLocation > 100)
 						std::cout << "\t"<<name<<" : warnning in loading "<<uniformName<<" variable location" << std::endl;
 				}
@@ -169,12 +170,19 @@ bool Shader::useShaderType(ShaderType shaderType) const
     }
 }
 
-int Shader::getUniformLocation(std::string uniform)
+int Shader::getUniformLocation(const std::string& uniform)
 {
 	auto it = attributesLocation.find(uniform);
 	if (it != attributesLocation.end())
 		return (int) it->second;
 	else return -1;
+}
+std::string Shader::getUniformType(const std::string& uniform)
+{
+	auto it = attributesType.find(uniform);
+	if (it != attributesType.end())
+		return it->second;
+	else return "";
 }
 //
 

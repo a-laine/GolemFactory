@@ -8,7 +8,7 @@ std::string Font::extension = ".font";
 //
 
 //  Default
-Font::Font(std::string path, std::string fontName) : ResourceVirtual(fontName, ResourceVirtual::FONT)
+Font::Font(const std::string& path, const std::string& fontName) : ResourceVirtual(fontName, ResourceVirtual::FONT)
 {
     //  Initialization
     texture = 0;
@@ -110,7 +110,7 @@ Font::Font(std::string path, std::string fontName) : ResourceVirtual(fontName, R
 	glm::u16vec2 c1,c2;
 	bool errorOccured = false;
 	unsigned int index = 0;
-	unsigned int lineCount;
+	unsigned int lineCount = 0;
 	std::stringstream arrayFileStream(arrayFile);
 	while (!arrayFileStream.eof())
 	{

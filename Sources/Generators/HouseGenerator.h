@@ -32,25 +32,17 @@ class HouseGenerator
 	
 	protected:
 		//  Miscellaneous
-		enum HouseType
+		enum HouseTypeBlock
 		{
 			None = 0,
-			HouseEmpty,
+			House,
 			Door,
 			Window
 		};
-		enum RoofType
-		{
-			Slope_xp,
-			Slope_xm,
-			Slope_yp,
-			Slope_ym
-		};
 		struct HouseVoxel
 		{
-			bool available;
-			unsigned int houseType;
-			unsigned int roofType;
+			int house;
+			int roof;
 			unsigned int blockReference;
 		};
 		struct OrderedVertex
@@ -89,11 +81,12 @@ class HouseGenerator
 		
 		bool searchBlockPartition(const int& superficy, const int& testIndex);
 		bool freePlace(const glm::ivec3& p, const glm::ivec3& s) const;
+		bool freePlace(const unsigned int& i, const unsigned int& j, const unsigned int& k) const;
 		bool supportedBlock(const glm::ivec3& p, const glm::ivec3& s) const;
 		bool massiveStruct(const glm::ivec3& p, const glm::ivec3& s) const;
 		int adjacentBlock(const glm::ivec3& p, const glm::ivec3& s) const;
 		glm::ivec3 optimizeAdjacent(const glm::ivec3& p, const glm::ivec3& s) const;
-		void addHouseBlocks(const glm::ivec3& p, const glm::ivec3& s, const unsigned int& houseType, const unsigned int& blockReference);
+		void addHouseBlocks(const glm::ivec3& p, const glm::ivec3& s, const int& houseType, const unsigned int& blockReference);
 
 
 			

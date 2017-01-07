@@ -5,13 +5,9 @@ EventHandlerImpl* EventHandlerImpl::This = nullptr;
 //
 
 //  Default
-EventHandlerImpl::EventHandlerImpl(std::string path)
+EventHandlerImpl::EventHandlerImpl(const std::string& path) : configuration(0x00), repository(path), focusedWindow(nullptr), resizeCallback(nullptr)
 {
-    configuration = 0x00;
-    repository = path;
     This = this;
-    resizeCallback = nullptr;
-
     cursorPositionRelative = glm::vec2(0, 0);
     cursorPositionRelativeBuffer = glm::vec2(0, 0);
     cursorPositionAbsolute = glm::vec2(0, 0);

@@ -1,33 +1,30 @@
 #include "Mesh.h"
 
 //  Default
-Mesh::Mesh(std::string path, std::string meshName) : ResourceVirtual(meshName, ResourceVirtual::MESH), configuration(0x00)
+Mesh::Mesh(const std::string& path, const std::string& meshName) : ResourceVirtual(meshName, ResourceVirtual::MESH), configuration(0x00)
 {
-    std::string file = path + meshName;
 	bool hasSkeleton;
-	if (MeshLoader::loadMesh(file, vertices, normales, color, faces, hasSkeleton)) return;
+	if (MeshLoader::loadMesh(path + meshName, vertices, normales, color, faces, hasSkeleton)) return;
 	configuration |= 0x01;
 	computeBoundingBoxDimension();
 
 	initializeVBO();
 	initializeVAO();
 }
-Mesh::Mesh(std::string meshName, std::vector<glm::vec3> verticesArray, std::vector<glm::vec3> normalesArray, std::vector<glm::vec3> colorArray, std::vector<unsigned int> facesArray)
-	: ResourceVirtual(meshName, ResourceVirtual::MESH), configuration(0x01)
+Mesh::Mesh( const std::string& meshName,
+			const std::vector<glm::vec3>& verticesArray,
+			const std::vector<glm::vec3>& normalesArray,
+			const std::vector<glm::vec3>& colorArray,
+			const std::vector<unsigned int>& facesArray)
+	: ResourceVirtual(meshName, ResourceVirtual::MESH), configuration(0x01),
+	vertices(verticesArray), normales(normalesArray),
+	color(colorArray), faces(facesArray)
 {
-	vertices = verticesArray;
-	normales = normalesArray;
-	color = colorArray;
-	faces = facesArray;
-
 	computeBoundingBoxDimension();
 	initializeVBO();
 	initializeVAO();
 }
-Mesh::Mesh() : ResourceVirtual(ResourceVirtual::MESH), configuration(0x00)
-{
-
-}
+Mesh::Mesh() : ResourceVirtual(ResourceVirtual::MESH), configuration(0x00) {}
 Mesh::~Mesh()
 {
 	vertices.clear();
