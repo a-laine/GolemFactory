@@ -4,9 +4,9 @@
 SceneManager::SceneManager()
 {
 	setViewDistance(100, 2);
-	NodeVirtual* n = new NodeVirtual(nullptr,0x040401);
-		n->setPosition(0,0,0);
-		n->setSize(glm::vec3(100,100,10));
+	NodeVirtual* n = new NodeVirtual(nullptr, 0x040401);
+		n->setPosition(glm::vec3(0.f, 0.f, 0.f));
+		n->setSize(glm::vec3(100.f, 100.f, 10.f));
 		//n->split();
 	world.push_back(n);
 

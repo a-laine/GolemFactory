@@ -84,8 +84,8 @@ class Event
         Event(uint8_t config = 0x00);
 
 		/*!
-		*  \brief Destructor
-		*/
+		 *  \brief Destructor
+		 */
         virtual ~Event();
         //
 

@@ -29,7 +29,6 @@ NodeVirtual::~NodeVirtual()
 		InstanceManager::getInstance()->release(instanceList[i]);
 	instanceList.clear();
 	InstanceManager::getInstance()->release(debuginstance);
-
 	merge();
 }
 //
@@ -52,8 +51,8 @@ void NodeVirtual::print(int lvl)
 //
 
 //	Public functions
-int NodeVirtual::getNbFils(int level) { return children.size(); }
-bool NodeVirtual::isLastBranch()
+int NodeVirtual::getChildrenCount() const { return children.size(); }
+bool NodeVirtual::isLastBranch() const
 {
 	if (!children.empty() && children[0]->children.empty()) return true;
 	return false;
@@ -70,11 +69,10 @@ bool NodeVirtual::addObject(InstanceVirtual* obj)
 	}
 	else
 	{
+		obj->count++;
 		instanceList.push_back(obj);
 		return true;
 	}
-	instanceList.push_back(obj);
-	return true;
 }
 bool NodeVirtual::removeObject(InstanceVirtual* obj)
 {
@@ -88,10 +86,14 @@ bool NodeVirtual::removeObject(InstanceVirtual* obj)
 	else
 	{
 		auto it = std::find(instanceList.begin(), instanceList.end(), obj);
-		if (it != instanceList.end()) instanceList.erase(it);
+		if (it != instanceList.end()) 
+		{
+			InstanceManager::getInstance()->release(*it);
+			instanceList.erase(it);
+			return true;
+		}
 		else return false;
 	}
-	return true;
 }
 void NodeVirtual::getInstanceList(std::vector<std::pair<int, InstanceVirtual*> >& list)
 {
@@ -149,7 +151,6 @@ void NodeVirtual::setPosition(glm::vec3 p)
 	position = p;
 	debuginstance->setPosition(glm::vec3(p.x, p.y, getLevel()));
 }
-void NodeVirtual::setPosition(float x, float y, float z) { setPosition(glm::vec3(x,y,z)); }
 void NodeVirtual::setSize(glm::vec3 s)
 {
 	size = s;
@@ -176,10 +177,9 @@ void NodeVirtual::setSize(glm::vec3 s)
 		}
 	}
 }
-void NodeVirtual::setSize(float x, float y, float z) { setSize(glm::vec3(x, y, z)); }
 
-glm::vec3 NodeVirtual::getPosition() { return position; }
-glm::vec3 NodeVirtual::getSize() { return size; }
+glm::vec3 NodeVirtual::getPosition() const { return position; }
+glm::vec3 NodeVirtual::getSize() const { return size; }
 //
 
 //	Protected functions

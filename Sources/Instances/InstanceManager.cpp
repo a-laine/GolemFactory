@@ -114,7 +114,7 @@ void InstanceManager::setReallocSize(uint8_t size) { reallocSize = size; }
 void InstanceManager::reserveInstanceSize(unsigned int size)
 {
 	size = std::max(((size >> 5) + 1) << 5, maxInstance.load());
-	if (size>instanceList.size())
+	if (size > instanceList.size())
 	{
 		mutexList.lock();
 		summary.resize((size >> 5), 0);
