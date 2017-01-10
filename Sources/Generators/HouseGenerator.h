@@ -20,14 +20,13 @@ class HouseGenerator
         //
 
         //  Public functions
-		InstanceVirtual* getHouse(unsigned int seed, int density = -1, int prosperity = -1);
+		InstanceVirtual* getHouse(unsigned int seed, int _density = -1, int _prosperity = -1);
         //
 
 		//  Attributes
 		static glm::vec3 stoneColor;
 		static glm::vec3 groundRoof;
 		static const int massiveRadius;
-		static const int adjacentOptiRadius;
 		//
 	
 	protected:
@@ -42,8 +41,18 @@ class HouseGenerator
 		struct HouseVoxel
 		{
 			int house;
+			int blockReference;
+
 			int roof;
-			unsigned int blockReference;
+			int roofReference;
+		};
+		struct markedPosition
+		{
+			float mark;
+			glm::ivec3 position;
+			glm::ivec3 size;
+			bool operator<(const markedPosition& mp) { return mark < mp.mark; }
+			markedPosition(float m, glm::ivec3 p, glm::ivec3 s) : mark(m), position(p), size(s) {}
 		};
 		struct OrderedVertex
 		{
@@ -77,35 +86,45 @@ class HouseGenerator
 		//
 
 		//  Protected functions
-		void initHouseField(const int& newSize, const int& density, const int& prosperity);
-		
-		bool searchBlockPartition(const int& superficy, const int& testIndex);
-		bool freePlace(const glm::ivec3& p, const glm::ivec3& s) const;
-		bool freePlace(const unsigned int& i, const unsigned int& j, const unsigned int& k) const;
-		bool supportedBlock(const glm::ivec3& p, const glm::ivec3& s) const;
-		bool massiveStruct(const glm::ivec3& p, const glm::ivec3& s) const;
-		int adjacentBlock(const glm::ivec3& p, const glm::ivec3& s) const;
-		glm::ivec3 optimizeAdjacent(const glm::ivec3& p, const glm::ivec3& s) const;
-		void addHouseBlocks(const glm::ivec3& p, const glm::ivec3& s, const int& houseType, const unsigned int& blockReference);
-
-
-			
-		//
+		void initHouseField(const int& newSize);
+		void createAndPlaceHouseBlock();
+		void createAndPlaceRoofBlock();
 		void constructHouseMesh();
-			void pushMesh(Mesh* m, const glm::vec3& p, const glm::vec3& o, const glm::vec3& s = glm::vec3(1.f, 1.f,1.f));
-			void pushGround(float px1, float py1, float pz1, float px2, float py2, float pz2, glm::vec3 color);
+		void constructRoofMesh();
+		void optimizeMesh();
+
+
+
+		bool searchBlockPartition(const int& superficy, const int& testIndex);
+		bool freePlace(const unsigned int& i, const unsigned int& j, const unsigned int& k) const;
+		bool freeFloor(const unsigned int& k) const;
+		glm::ivec3 getRandomPosition(const int& safeOffset, const int& maxZ = 0);
+
+		void markAll(const glm::ivec3& p, const glm::ivec3& s);
+		float markFree(const glm::ivec3& p, const glm::ivec3& s) const;
+		float markSupport(const glm::ivec3& p, const glm::ivec3& s) const;
+		float markAdjacent(const glm::ivec3& p, const glm::ivec3& s) const;
+		float markMassive(const glm::ivec3& p, const glm::ivec3& s) const;
+
+		void addHouseBlocks(const glm::ivec3& p, const glm::ivec3& s, const int& houseType, const unsigned int& blockReference);
+		void updateAvailableBlockPosition(const glm::ivec3& p, const glm::ivec3& s);
+
+
+		void pushMesh(Mesh* m, const glm::vec3& p, const glm::vec3& o, const glm::vec3& s = glm::vec3(1.f, 1.f,1.f));
+		void pushGround(float px1, float py1, float pz1, float px2, float py2, float pz2, glm::vec3 color);
+		
 		//
-		inline void createAndPlaceRoof();
+		/*inline void createAndPlaceRoof();
 			float benchmarkRoof(glm::ivec3 p, glm::ivec3 s);
 		//
 		inline void constructRoofMesh();
 			void roofSlope(const glm::ivec3& p, const glm::ivec3& s);
-			void roofEnd(const glm::ivec3& p, const glm::ivec3& s);
-		//
-		inline void optimizeMesh();
-		//
+			void roofEnd(const glm::ivec3& p, const glm::ivec3& s);*/
+
+
 
         //  Attributes
+		int density, prosperity, superficy;
 		unsigned int houseFieldSize;
 		unsigned int houseFieldFloor;
 		HouseVoxel*** houseField;
@@ -118,8 +137,11 @@ class HouseGenerator
 
 		std::map<std::string, Mesh*> assetLibrary;
 		std::vector<glm::ivec3> blockLibrary;
+
 		std::vector<std::pair<glm::ivec3, glm::ivec3> > blockList;
-		std::vector<glm::ivec3> availableBlockPosition;
+		std::list<glm::ivec3> availableBlockPosition;
+		std::list<markedPosition> benchmarkPosition;
+
 		std::vector<std::pair<glm::ivec3, glm::ivec3> > roofBlockList;
 
 		std::mt19937 randomEngine;

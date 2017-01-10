@@ -217,7 +217,7 @@ Texture::~Texture()
     glDeleteTextures(1,&texture);
 }
 
-bool Texture::isValid() const { return glIsTexture(texture); }
+bool Texture::isValid() const { return glIsTexture(texture) != 0; }
 //
 
 //  Set/get functions

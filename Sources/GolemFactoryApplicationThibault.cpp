@@ -65,23 +65,9 @@ int main()
 	SceneManager::getInstance()->setWorldPosition(glm::vec3(0,0,25));
 	SceneManager::getInstance()->setWorldSize(glm::vec3(GRID_SIZE*GRID_ELEMENT_SIZE, GRID_SIZE*GRID_ELEMENT_SIZE, 50));
 	
-	
-		srand((unsigned int)time(NULL));
-
-		//InstanceDrawable* testTree = InstanceManager::getInstance()->getInstanceDrawable("firTree1.obj", "tree");
-		//testTree->setSize(glm::vec3(3, 3, 3));
-		//SceneManager::getInstance()->addStaticObject(testTree);
-
-
-		//Animation* anim = new Animation(resourceRepository + "Animation/","walk");
-
-		//generateRagdoll(ResourceManager::getInstance()->getSkeleton("default"));
-		//InstanceDrawable* firtree = InstanceManager::getInstance()->getInstanceDrawable("firTree1.obj","tree");
-		//SceneManager::getInstance()->addStaticObject(firtree);
-
 		//initializeForestScene();
 		HouseGenerator hg;
-		auto house = hg.getHouse(949333985, 0, 100);
+		auto house = hg.getHouse(0, 100, 70);
 		InstanceManager::getInstance()->add(house);
 		SceneManager::getInstance()->addStaticObject(house);
 		//return 0;
@@ -141,7 +127,7 @@ int main()
 				InstanceManager::getInstance()->release(house);
 
 				double time = glfwGetTime();
-				house = hg.getHouse(randomEngine(), 0, 100);
+				house = hg.getHouse(randomEngine(), 100, 70);
 				std::cout << 1000.f*(glfwGetTime() - time) << std::endl;
 				InstanceManager::getInstance()->add(house);
 				SceneManager::getInstance()->addStaticObject(house);
