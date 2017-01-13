@@ -67,7 +67,7 @@ int main()
 	
 		//initializeForestScene();
 		HouseGenerator hg;
-		auto house = hg.getHouse(0, 100, 70);
+		auto house = hg.getHouse(0, 99, 99);
 		InstanceManager::getInstance()->add(house);
 		SceneManager::getInstance()->addStaticObject(house);
 		//return 0;
@@ -127,7 +127,7 @@ int main()
 				InstanceManager::getInstance()->release(house);
 
 				double time = glfwGetTime();
-				house = hg.getHouse(randomEngine(), 100, 70);
+				house = hg.getHouse(randomEngine(), 99, 99);
 				std::cout << 1000.f*(glfwGetTime() - time) << std::endl;
 				InstanceManager::getInstance()->add(house);
 				SceneManager::getInstance()->addStaticObject(house);

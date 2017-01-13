@@ -125,8 +125,8 @@ class HouseGenerator
 
         //  Attributes
 		int density, prosperity, superficy;
-		unsigned int houseFieldSize;
-		unsigned int houseFieldFloor;
+		int houseFieldSize;
+		int houseFieldFloor;
 		HouseVoxel*** houseField;
 		glm::vec3 houseOrigin;
 
