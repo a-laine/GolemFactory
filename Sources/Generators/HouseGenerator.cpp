@@ -7,7 +7,7 @@
 
 //  Attributes
 glm::vec3 HouseGenerator::stoneColor = glm::vec3(0.2f, 0.2f, 0.2f);
-const int HouseGenerator::massiveRadius = 4;
+const int HouseGenerator::massiveRadius = 3;
 //
 
 //  Default
@@ -22,18 +22,32 @@ HouseGenerator::HouseGenerator()
 
 	assetLibrary["debug"] = ResourceManager::getInstance()->getMesh("cube2.obj");
 
+	//	House mesh
 	assetLibrary["wall"] = ResourceManager::getInstance()->getMesh("House/HouseWall.obj");
 	assetLibrary["corner"] = ResourceManager::getInstance()->getMesh("House/HouseCorner.obj");
 	assetLibrary["door"] = ResourceManager::getInstance()->getMesh("House/HouseDoor.obj");
 	assetLibrary["window"] = ResourceManager::getInstance()->getMesh("House/HouseWindow.obj");
 
-	assetLibrary["roof1"] = ResourceManager::getInstance()->getMesh("House/HouseRoof1.obj");
-	assetLibrary["roof2"] = ResourceManager::getInstance()->getMesh("House/HouseRoof2.obj");
-	assetLibrary["roofend1"] = ResourceManager::getInstance()->getMesh("House/HouseRoofEnd1.obj");
-	assetLibrary["roofend2"] = ResourceManager::getInstance()->getMesh("House/HouseRoofEnd2.obj");
-	assetLibrary["roofend3"] = ResourceManager::getInstance()->getMesh("House/HouseRoofEnd3.obj");
-	assetLibrary["roofend4"] = ResourceManager::getInstance()->getMesh("House/HouseRoofEnd4.obj");
+	//	Roof slope meshes
+	assetLibrary["pic"] = ResourceManager::getInstance()->getMesh("House/HouseRoofPic.obj");
+	assetLibrary["slope"] = ResourceManager::getInstance()->getMesh("House/HouseRoofSlope.obj");
+	assetLibrary["inner"] = ResourceManager::getInstance()->getMesh("House/HouseRoofDualSlopeInner.obj");
+	assetLibrary["outter"] = ResourceManager::getInstance()->getMesh("House/HouseRoofDualSlopeOutter.obj");
+	
 
+	//	Roof top meshes
+	assetLibrary["top"] = ResourceManager::getInstance()->getMesh("House/HouseRoofTop.obj");
+	assetLibrary["topEnd"] = ResourceManager::getInstance()->getMesh("House/HouseRoofTopSlope.obj");
+	assetLibrary["topAngle"] = ResourceManager::getInstance()->getMesh("House/HouseRoofTopAngle.obj");
+	assetLibrary["topTee"] = ResourceManager::getInstance()->getMesh("House/HouseRoofTopTee.obj");
+
+	//	Roof top meshes
+	assetLibrary["slopeTop"] = ResourceManager::getInstance()->getMesh("House/HouseRoofSlopeTop.obj");
+	assetLibrary["topDualSlope"] = ResourceManager::getInstance()->getMesh("House/HouseRoofTopDualSlope.obj");
+	assetLibrary["topDualSlope2"] = ResourceManager::getInstance()->getMesh("House/HouseRoofTopDualSlope2.obj");
+	assetLibrary["dualTopDualSlope"] = ResourceManager::getInstance()->getMesh("House/HouseRoofDualTopDualSlope.obj");
+
+	//	Elementary blocks
 	blockLibrary.push_back(glm::ivec3(8, 5, 3));	// 120 m²
 	blockLibrary.push_back(glm::ivec3(8, 5, 2));	// 80 m²
 	blockLibrary.push_back(glm::ivec3(6, 4, 3));	// 72 m²
@@ -45,6 +59,9 @@ HouseGenerator::HouseGenerator()
 }
 HouseGenerator::~HouseGenerator()
 {
+	for (auto it = assetLibrary.begin(); it != assetLibrary.end(); it++)
+		ResourceManager::getInstance()->release(it->second);
+
 	if (houseField)
 	{
 		for (int j = 0; j < houseFieldFloor; j++)
@@ -77,6 +94,7 @@ InstanceVirtual* HouseGenerator::getHouse(unsigned int seed, int d, int p)
 	
 
 	//	generate house
+	//createAndPlaceDebugHouseBlock(1);
 	createAndPlaceHouseBlock();
 	constructHouseMesh();
 
@@ -160,6 +178,57 @@ void HouseGenerator::initHouseField(const int& newSize)
 	std::cout << "   house field floor count : " << houseFieldFloor << std::endl;
 	std::cout << "   superficy : " << superficy << std::endl;
 }
+void HouseGenerator::createAndPlaceDebugHouseBlock(int config)
+{
+	if (config == 1)
+	{
+		addHouseBlocks(glm::ivec3(50, 50, 0), glm::ivec3(17, 7, houseFieldFloor - 1), HouseTypeBlock::House, 0);
+		addHouseBlocks(glm::ivec3(50, 57, 0), glm::ivec3(7,  3, houseFieldFloor - 1), HouseTypeBlock::House, 1);
+		addHouseBlocks(glm::ivec3(60, 57, 0), glm::ivec3(7,  3, houseFieldFloor - 1), HouseTypeBlock::House, 2);
+		addHouseBlocks(glm::ivec3(50, 60, 0), glm::ivec3(17, 7, houseFieldFloor - 1), HouseTypeBlock::House, 3);
+
+		addHouseBlocks(glm::ivec3(67, 57, 0), glm::ivec3(4, 3, houseFieldFloor - 1), HouseTypeBlock::House, 4);
+		addHouseBlocks(glm::ivec3(57, 67, 0), glm::ivec3(3, 4, houseFieldFloor - 1), HouseTypeBlock::House, 5);
+		addHouseBlocks(glm::ivec3(46, 57, 0), glm::ivec3(4, 3, houseFieldFloor - 1), HouseTypeBlock::House, 6);
+		addHouseBlocks(glm::ivec3(57, 46, 0), glm::ivec3(3, 4, houseFieldFloor - 1), HouseTypeBlock::House, 7);
+
+		addHouseBlocks(glm::ivec3(50, 43, 0), glm::ivec3(17, 3, houseFieldFloor - 1), HouseTypeBlock::House, 8);
+		addHouseBlocks(glm::ivec3(50, 70, 0), glm::ivec3(17, 3, houseFieldFloor - 1), HouseTypeBlock::House, 9);
+		addHouseBlocks(glm::ivec3(43, 50, 0), glm::ivec3(3, 17, houseFieldFloor - 1), HouseTypeBlock::House, 10);
+		addHouseBlocks(glm::ivec3(70, 50, 0), glm::ivec3(3, 17, houseFieldFloor - 1), HouseTypeBlock::House, 11);
+	}
+	else
+	{
+		addHouseBlocks(glm::ivec3(54, 54, 0), glm::ivec3(5, 5, 1), HouseTypeBlock::House, 0);
+		addHouseBlocks(glm::ivec3(56, 52, 0), glm::ivec3(3, 2, 1), HouseTypeBlock::House, 0);
+		addHouseBlocks(glm::ivec3(59, 56, 0), glm::ivec3(2, 3, 1), HouseTypeBlock::House, 0);
+		addHouseBlocks(glm::ivec3(52, 56, 0), glm::ivec3(2, 3, 1), HouseTypeBlock::House, 0);
+		addHouseBlocks(glm::ivec3(54, 59, 0), glm::ivec3(3, 2, 1), HouseTypeBlock::House, 0);
+
+		addHouseBlocks(glm::ivec3(41, 54, 0), glm::ivec3(5, 5, 1), HouseTypeBlock::House, 0);
+		addHouseBlocks(glm::ivec3(41, 52, 0), glm::ivec3(3, 2, 1), HouseTypeBlock::House, 0);
+		addHouseBlocks(glm::ivec3(39, 56, 0), glm::ivec3(2, 3, 1), HouseTypeBlock::House, 0);
+		addHouseBlocks(glm::ivec3(46, 56, 0), glm::ivec3(2, 3, 1), HouseTypeBlock::House, 0);
+		addHouseBlocks(glm::ivec3(43, 59, 0), glm::ivec3(3, 2, 1), HouseTypeBlock::House, 0);
+
+
+		addHouseBlocks(glm::ivec3(54, 41, 0), glm::ivec3(5, 5, 1), HouseTypeBlock::House, 0);
+		addHouseBlocks(glm::ivec3(56, 46, 0), glm::ivec3(3, 2, 1), HouseTypeBlock::House, 0);
+		addHouseBlocks(glm::ivec3(59, 41, 0), glm::ivec3(2, 3, 1), HouseTypeBlock::House, 0);
+		addHouseBlocks(glm::ivec3(52, 41, 0), glm::ivec3(2, 3, 1), HouseTypeBlock::House, 0);
+		addHouseBlocks(glm::ivec3(54, 39, 0), glm::ivec3(3, 2, 1), HouseTypeBlock::House, 0);
+
+		addHouseBlocks(glm::ivec3(41, 41, 0), glm::ivec3(5, 5, 1), HouseTypeBlock::House, 0);
+		addHouseBlocks(glm::ivec3(41, 46, 0), glm::ivec3(3, 2, 1), HouseTypeBlock::House, 0);
+		addHouseBlocks(glm::ivec3(39, 41, 0), glm::ivec3(2, 3, 1), HouseTypeBlock::House, 0);
+		addHouseBlocks(glm::ivec3(46, 41, 0), glm::ivec3(2, 3, 1), HouseTypeBlock::House, 0);
+		addHouseBlocks(glm::ivec3(43, 39, 0), glm::ivec3(3, 2, 1), HouseTypeBlock::House, 0);
+	}
+
+	houseOrigin.x = 50;
+	houseOrigin.y = 50;
+	houseOrigin.z = 0.1f;
+}
 void HouseGenerator::createAndPlaceHouseBlock()
 {
 	//	generate block list used for constructions
@@ -236,89 +305,28 @@ void HouseGenerator::createAndPlaceHouseBlock()
 				{
 					houseField[k][i][j].house = HouseTypeBlock::None;
 					houseField[k][i][j].blockReference = -1;
+					houseField[k][i][j].roofReference = -1;
+					houseField[k][i][j].roof = -1;
 				}
 			}
 }
 void HouseGenerator::createAndPlaceRoofBlock()
 {
-	//	simple merge roof
-	for (unsigned int i = 0; i < blockList.size(); i++)
-	{
-		bool mergeSuccess = false;
-		int floor = blockList[i].first.z + blockList[i].second.z - 1;
-		for (unsigned int j = 0; j < roofBlockList.size(); j++)
-		{
-			if (floor != roofBlockList[j].first.z + roofBlockList[j].second.z - 1) break;
-
-			if (blockList[i].first.x == roofBlockList[j].first.x && blockList[i].second.x == roofBlockList[j].second.x)
+	const int offset = 10;
+	for (int k = 0; k < houseFieldFloor - 1; k++)
+		for (int i = 1; i < houseFieldSize - 1; i++)
+			for (int j = 1; j < houseFieldSize - 1; j++)
 			{
-				if(roofBlockList[j].first.y + roofBlockList[j].second.y == blockList[i].first.y)
-				{
-					//	augment roof size
-					roofBlockList[j].second.y += blockList[i].second.y;
-					mergeSuccess = true;
-				}
-				else if (blockList[i].first.y + blockList[i].second.y == roofBlockList[j].first.y)
-				{
-					//	augment roof size
-					roofBlockList[j].first.y  -= blockList[i].second.y;
-					roofBlockList[j].second.y += blockList[i].second.y;
-					mergeSuccess = true;
-				}
+				if (freePlace(i, j, k)) continue;
+				int r = massiveRadius + offset;
+				for (int l = -massiveRadius - offset; l <= massiveRadius + offset; l++)
+					for (int m = -massiveRadius - offset; m <= massiveRadius + offset; m++)
+					{
+						if (freePlace(i + l, j + m, k))
+							r = std::min(r, std::max(std::abs(l), std::abs(m)) - 1);
+					}
+				houseField[k][i][j].roof = r;
 			}
-			else if (blockList[i].first.y == roofBlockList[j].first.y && blockList[i].second.y == roofBlockList[j].second.y)
-			{
-				if (roofBlockList[j].first.x + roofBlockList[j].second.x == blockList[i].first.x)
-				{
-					//	augment roof size
-					roofBlockList[j].second.x += blockList[i].second.x;
-					mergeSuccess = true;
-				}
-				else if (blockList[i].first.x + blockList[i].second.x == roofBlockList[j].first.x)
-				{
-					//	augment roof size
-					roofBlockList[j].first.x  -= blockList[i].second.x;
-					roofBlockList[j].second.x += blockList[i].second.x;
-					mergeSuccess = true;
-				}
-			}
-
-			if (mergeSuccess)
-			{
-				//	update roof reference
-				for (int k = blockList[i].first.z; k < blockList[i].first.z + blockList[i].second.z; k++)
-					for (int l = blockList[i].first.x; l < blockList[i].first.x + blockList[i].second.x; l++)
-						for (int m = blockList[i].first.y; m < blockList[i].first.y + blockList[i].second.y; m++)
-							houseField[k][l][m].roofReference = j;
-				break;
-			}
-		}
-		if (!mergeSuccess) roofBlockList.push_back(std::pair<glm::ivec3, glm::ivec3>(blockList[i].first, blockList[i].second));
-	}
-
-	//	Place V roof
-	for (unsigned int m = 0; m < roofBlockList.size(); m++)
-	{
-		for (int i = 0; i < roofBlockList[m].second.x; i++)
-			for (int j = 0; j < roofBlockList[m].second.y; j++)
-			{
-				int k = roofBlockList[m].first.z + roofBlockList[m].second.z - 1;
-				if (k + 1 < houseFieldFloor && houseField[k + 1][roofBlockList[m].first.x + i][roofBlockList[m].first.y + j].house != HouseTypeBlock::None) continue;
-
-				if (roofBlockList[m].second.x > roofBlockList[m].second.y)
-				{
-					if(j < roofBlockList[m].second.y / 2) houseField[k][roofBlockList[m].first.x + i][roofBlockList[m].first.y + j].roof = j;
-					else if ((roofBlockList[m].second.y % 2) && j == roofBlockList[m].second.y / 2) houseField[k][roofBlockList[m].first.x + i][roofBlockList[m].first.y + j].roof = roofBlockList[m].second.y / 2;
-					else  houseField[k][roofBlockList[m].first.x + i][roofBlockList[m].first.y + j].roof = roofBlockList[m].second.y - j - 1;
-				}
-				else
-				{
-					if (i < roofBlockList[m].second.x / 2) houseField[k][roofBlockList[m].first.x + i][roofBlockList[m].first.y + j].roof = i;
-					else if ((roofBlockList[m].second.x % 2) && i == roofBlockList[m].second.x / 2) houseField[k][roofBlockList[m].first.x + i][roofBlockList[m].first.y + j].roof = roofBlockList[m].second.x / 2;
-					else  houseField[k][roofBlockList[m].first.x + i][roofBlockList[m].first.y + j].roof = roofBlockList[m].second.x - i - 1;
-				}
-			}
-	}
 }
 void HouseGenerator::constructHouseMesh()
 {
@@ -403,20 +411,172 @@ void HouseGenerator::constructRoofMesh()
 		for (int i = 1; i < houseFieldSize - 1; i++)
 			for (int j = 1; j < houseFieldSize - 1; j++)
 			{
-				if (houseField[k][i][j].roof < 0) continue;
-				if (roofBlockList[houseField[k][i][j].roofReference].second.x > roofBlockList[houseField[k][i][j].roofReference].second.y)
+				char north = getRelativePosRoof(houseField[k][i][j].roof, i, j - 1, k);
+				char south = getRelativePosRoof(houseField[k][i][j].roof, i, j + 1, k);
+				char west  = getRelativePosRoof(houseField[k][i][j].roof, i + 1, j, k);
+				char east   = getRelativePosRoof(houseField[k][i][j].roof, i - 1, j, k);
+
+				char northEast = getRelativePosRoof(houseField[k][i][j].roof, i - 1, j - 1, k);
+				char southEast = getRelativePosRoof(houseField[k][i][j].roof, i - 1, j + 1, k);
+				char northWest = getRelativePosRoof(houseField[k][i][j].roof, i + 1, j - 1, k);
+				char southWest = getRelativePosRoof(houseField[k][i][j].roof, i + 1, j + 1, k);
+
+				if (houseField[k][i][j].roof < 0)
 				{
 
 				}
-				else
+				else if (k + 1 < houseFieldFloor && houseField[k + 1][i][j].house == HouseTypeBlock::None)
 				{
+					glm::vec3 p = glm::vec3(i + 0.5f - houseOrigin.x, j + 0.5f - houseOrigin.y, houseOrigin.z + 2.5f * k + houseField[k][i][j].roof);
 
+					///	Pic
+					if (north == '-' && south == '-' && east == '-' && west == '-')
+						pushMesh(assetLibrary["pic"], glm::vec3(i + 0.5f - houseOrigin.x, j + 0.5f - houseOrigin.y, houseOrigin.z + 2.5f * k + houseField[k][i][j].roof), glm::vec3(1.f, 0.f, 0.f));
+					
+					///	Merge-part two top & two slope
+					else if (north == '0' && south == '0' && east == '0' && west == '0' && northEast == '-' && (northWest == '0' || northWest == '+') && southEast == '-' && southWest == '-')
+						pushMesh(assetLibrary["dualTopDualSlope"], p, glm::vec3(-1.f, 0.f, 0.f));
+					else if (north == '0' && south == '0' && east == '0' && west == '0' && (northEast == '0' || northEast == '+') && northWest == '-' && southEast == '-' && southWest == '-')
+						pushMesh(assetLibrary["dualTopDualSlope"], p, glm::vec3(0.f, 1.f, 0.f));
+					else if (north == '0' && south == '0' && east == '0' && west == '0' && northEast == '-' && northWest == '-' && (southEast == '0' || southEast == '+') && southWest == '-')
+						pushMesh(assetLibrary["dualTopDualSlope"], p, glm::vec3(1.f, 0.f, 0.f));
+					else if (north == '0' && south == '0' && east == '0' && west == '0' && northEast == '-' && northWest == '-' && southEast == '-' && (southWest == '0' || southWest == '+'))
+						pushMesh(assetLibrary["dualTopDualSlope"], p, glm::vec3(0.f, -1.f, 0.f));
+					
+					///	Merge-part one top & two slope
+					else if (north == '0' && south == '0' && east == '-' && west == '0' && (northWest == '0' || northWest == '+') && southEast == '-' && southWest == '-')
+						pushMesh(assetLibrary["topDualSlope2"], p, glm::vec3(0.f, 1.f, 0.f));
+					else if (north == '0' && south == '-' && east == '0' && west == '0' && (northEast == '0' || northEast == '+') && southWest == '-' && northWest == '-')
+						pushMesh(assetLibrary["topDualSlope2"], p, glm::vec3(1.f, 0.f, 0.f));
+					else if (north == '0' && south == '0' && east == '0' && west == '-' && (southEast == '0' || southEast == '+') && northEast == '-' && northWest == '-')
+						pushMesh(assetLibrary["topDualSlope2"], p, glm::vec3(0.f, -1.f, 0.f));
+					else if (north == '-' && south == '0' && east == '0' && west == '0' && (southWest == '0' || southWest == '+') && northEast == '-' && southEast == '-')
+						pushMesh(assetLibrary["topDualSlope2"], p, glm::vec3(-1.f, 0.f, 0.f));
+
+					else if (north == '0' && south == '0' && east == '0' && west == '-' && (northEast == '0' || northEast == '+') && southEast == '-' && southWest == '-')
+						pushMesh(assetLibrary["topDualSlope"], p, glm::vec3(0.f, 1.f, 0.f));
+					else if (north == '-' && south == '0' && east == '0' && west == '0' && (southEast == '0' || southEast == '+') && northWest == '-' && southWest == '-')
+						pushMesh(assetLibrary["topDualSlope"], p, glm::vec3(1.f, 0.f, 0.f));
+					else if (north == '0' && south == '0' && east == '-' && west == '0' && (southWest == '0' || southWest == '+') && northWest == '-' && northEast == '-')
+						pushMesh(assetLibrary["topDualSlope"], p, glm::vec3(0.f, -1.f, 0.f));
+					else if (north == '0' && south == '-' && east == '0' && west == '0' && (northWest == '0' || northWest == '+') && southEast == '-' && northEast == '-')
+						pushMesh(assetLibrary["topDualSlope"], p, glm::vec3(-1.f, 0.f, 0.f));
+
+					///	Top tee
+					else if (north == '0' && south == '0' && east == '0' && west == '-' && southEast == '-' && northEast == '-')
+						pushMesh(assetLibrary["topTee"], p, glm::vec3(0.f, 1.f, 0.f));
+					else if (north == '0' && south == '-' && east == '0' && west == '0' && northEast == '-' && northWest == '-')
+						pushMesh(assetLibrary["topTee"], p, glm::vec3(-1.f, 0.f, 0.f));
+					else if (north == '0' && south == '0' && east == '-' && west == '0' && northWest == '-' && southWest == '-')
+						pushMesh(assetLibrary["topTee"], p, glm::vec3(0.f, -1.f, 0.f));
+					else if (north == '-' && south == '0' && east == '0' && west == '0' && southWest == '-' && southEast == '-')
+						pushMesh(assetLibrary["topTee"], p, glm::vec3(1.f, 0.f, 0.f));
+
+					///	Merge-part top slope
+					else if ((north == '0' || north == '+') && south == '0' && east == '0' && west == '0' && southWest == '-' && southEast == '-')
+						pushMesh(assetLibrary["slopeTop"], p, glm::vec3(1.f, 0.f, 0.f));
+					else if (north == '0' && south == '0' && (east == '0' || east == '+') && west == '0' && southWest == '-' && northWest == '-')
+						pushMesh(assetLibrary["slopeTop"], p, glm::vec3(0.f, -1.f, 0.f));
+					else if (north == '0' && (south == '0' || south == '+') && east == '0' && west == '0' && northEast == '-' && northWest == '-')
+						pushMesh(assetLibrary["slopeTop"], p, glm::vec3(-1.f, 0.f, 0.f));
+					else if (north == '0' && south == '0' && east == '0' && (west == '0' || west == '+') && northEast == '-' && southEast == '-')
+						pushMesh(assetLibrary["slopeTop"], p, glm::vec3(0.f, 1.f, 0.f));
+
+					///	Top angles
+					else if (north == '-' && south == '0' && east == '-' && west == '0' && northWest == '-' && southEast == '-' && southWest == '-')
+						pushMesh(assetLibrary["topAngle"], p, glm::vec3(0.f, -1.f, 0.f));
+					else if (north == '0' && south == '-' && east == '-' && west == '0' && northWest == '-' && northEast == '-' && southWest == '-')
+						pushMesh(assetLibrary["topAngle"], p, glm::vec3(-1.f, 0.f, 0.f));
+					else if (north == '0' && south == '-' && east == '0' && west == '-' && northWest == '-' && northEast == '-' && southEast == '-')
+						pushMesh(assetLibrary["topAngle"], p, glm::vec3(0.f, 1.f, 0.f));
+					else if (north == '-' && south == '0' && east == '0' && west == '-' && northEast == '-' && southEast == '-' && southWest == '-')
+						pushMesh(assetLibrary["topAngle"], p, glm::vec3(1.f, 0.f, 0.f));
+
+					///	Top end
+					else if (north == '0' && (south == '-' || south == '1') && (east == '-' || east == '1') && (west == '-' || west == '1'))
+						pushMesh(assetLibrary["topEnd"], p, glm::vec3(0.f, -1.f, 0.f));
+					else if ((north == '-' || north == '1') && (south == '-' || south == '1') && east == '0' && (west == '-' || west == '1'))
+						pushMesh(assetLibrary["topEnd"], p, glm::vec3(-1.f, 0.f, 0.f));
+					else if ((north == '-' || north == '1') && south == '0' && (east == '-' || east == '1') && (west == '-' || west == '1'))
+						pushMesh(assetLibrary["topEnd"], p, glm::vec3(0.f, 1.f, 0.f));
+					else if ((north == '-' || north == '1') && (south == '-' || south == '1') && (east == '-' || east == '1') && west == '0')
+						pushMesh(assetLibrary["topEnd"], p, glm::vec3(1.f, 0.f, 0.f));
+
+					///	Top
+					else if (north == '0' && south == '0' && east == '-' && west == '-')
+						pushMesh(assetLibrary["top"], p, glm::vec3(0.f, 1.f, 0.f));
+					else if (north == '-' && south == '-' && east == '0' && west == '0')
+						pushMesh(assetLibrary["top"], p, glm::vec3(1.f, 0.f, 0.f));
+
+					///	Dual slope outter
+					else if (north == '0' && (south == '-' || south == '1') && (east == '-' || east == '1') && west == '0' && (northWest == '0' || northWest == '+'))
+						pushMesh(assetLibrary["outter"], p, glm::vec3(1.f, 0.f, 0.f));
+					else if (north == '0' && (south == '-' || south == '1') && east == '0'  && (west == '-' || west == '1')&& (northEast == '0' || northEast == '+'))
+						pushMesh(assetLibrary["outter"], p, glm::vec3(0.f, -1.f, 0.f));
+					else if ((north == '-' || north == '1') && south == '0' && east == '0' && (west == '-' || west == '1') && (southEast == '0' || southEast == '+'))
+						pushMesh(assetLibrary["outter"], p, glm::vec3(-1.f, 0.f, 0.f));
+					else if ((north == '-' || north == '1') && south == '0' && (east == '-' || east == '1') && west == '0' && (southWest == '0' || southWest == '+'))
+						pushMesh(assetLibrary["outter"], p, glm::vec3(0.f, 1.f, 0.f));
+
+					///	Dual slope inner
+					else if ((north == '+' || north == '0') && south == '0' && east == '0' && (west == '+' || west == '0') && (southEast == '-' || southEast == '1'))
+						pushMesh(assetLibrary["inner"], p, glm::vec3(1.f, 0.f, 0.f));
+					else if ((north == '+' || north == '0') && south == '0' && (east == '+' || east == '0') && west == '0'  && (southWest == '-' || southWest == '1'))
+						pushMesh(assetLibrary["inner"], p, glm::vec3(0.f, -1.f, 0.f));
+					else if (north == '0' && (south == '+' || south == '0') && (east == '+' || east == '0') && west == '0' && (northWest == '-' || northWest == '1'))
+						pushMesh(assetLibrary["inner"], p, glm::vec3(-1.f, 0.f, 0.f));
+					else if (north == '0' && (south == '+' || south == '0') && east == '0' && (west == '+' || west == '0') && (northEast == '-' || northEast == '1'))
+						pushMesh(assetLibrary["inner"], p, glm::vec3(0.f, 1.f, 0.f));
+
+					///	Simple slope
+					else if ((north == '+' || north == '0') && (south == '-' || south == '1'))
+						pushMesh(assetLibrary["slope"], p, glm::vec3(1.f, 0.f, 0.f));
+					else if ((east == '-' || east == '1') && (west == '+' || west == '0'))
+						pushMesh(assetLibrary["slope"], p, glm::vec3(0.f, 1.f, 0.f));
+					else if ((north == '-' || north == '1') && (south == '+' || south == '0'))
+						pushMesh(assetLibrary["slope"], p, glm::vec3(-1.f, 0.f, 0.f));
+					else if ((east == '+' || east == '0') && (west == '-' || west == '1'))
+						pushMesh(assetLibrary["slope"], p, glm::vec3(0.f, -1.f, 0.f));
+
+					///	Error
+					else pushMesh(assetLibrary["debug"], glm::vec3(i + 0.5f - houseOrigin.x, j + 0.5f - houseOrigin.y, houseOrigin.z + 0.5f + 2.5f * k + houseField[k][i][j].roof), glm::vec3(1.f, 0.f, 0.f), glm::vec3(0.3f, 0.3f, 0.3f));
 				}
-
-				//if (houseField[k][i+1][j].roof < 0 || houseField[k][i][j].roof - houseField[k][i + 1][j].roof == -1)
-				//	pushMesh(assetLibrary["roof1"], glm::vec3(i + 1 - houseOrigin.x, j + 0.5f - houseOrigin.y, houseOrigin.z + 2.5f * k + houseField[k][i][j].roof), glm::vec3(0.f,-1.f, 0.f));
-				pushMesh(assetLibrary["debug"], glm::vec3(i + 0.5f - houseOrigin.x, j + 0.5f - houseOrigin.y, houseOrigin.z + 0.5f + 2.5f * k + houseField[k][i][j].roof), glm::vec3(1.f, 0.f, 0.f), glm::vec3(0.45f, 0.45f, 0.45f));
 			}
+}
+void HouseGenerator::optimizeMesh()
+{
+	std::vector<glm::vec3> verticesBuffer;
+	std::vector<glm::vec3> normalesBuffer;
+	std::vector<glm::vec3> colorBuffer;
+	std::vector<unsigned int> facesBuffer;
+
+	std::map<OrderedVertex, unsigned int> vertexAlias;
+	std::map<OrderedVertex, unsigned int>::iterator alias;
+	OrderedVertex current;
+
+	for (unsigned int i = 0; i < facesArray.size(); i++)
+	{
+		current.position = verticesArray[facesArray[i]];
+		current.normal = normalesArray[facesArray[i]];
+		current.color = colorArray[facesArray[i]];
+
+		alias = vertexAlias.find(current);
+		if (alias == vertexAlias.end())
+		{
+			verticesBuffer.push_back(verticesArray[facesArray[i]]);
+			normalesBuffer.push_back(normalesArray[facesArray[i]]);
+			colorBuffer.push_back(colorArray[facesArray[i]]);
+			facesBuffer.push_back(vertexAlias.size());
+
+			vertexAlias[current] = vertexAlias.size();
+		}
+		else facesBuffer.push_back(alias->second);
+	}
+
+	verticesArray.swap(verticesBuffer);
+	normalesArray.swap(normalesBuffer);
+	colorArray.swap(colorBuffer);
+	facesArray.swap(facesBuffer);
 }
 
 
@@ -602,7 +762,15 @@ void HouseGenerator::updateAvailableBlockPosition(const glm::ivec3& p, const glm
 	}
 }
 
-
+char HouseGenerator::getRelativePosRoof(const int& ref, const unsigned int& i, const unsigned int& j, const unsigned int& k) const
+{
+	int pos = houseField[k][i][j].roof;
+	if (pos < 0) return '1'; // out
+	else if (ref - pos == 0)  return '0';
+	else if (ref - pos == 1)  return '-';
+	else if (ref - pos == -1) return '+';
+	else return 'e';	// error
+}
 
 
 
@@ -659,237 +827,4 @@ void HouseGenerator::pushGround(float px1, float py1, float pz1, float px2, floa
 
 
 
-
-/*
-inline void HouseGenerator::createAndPlaceRoof()
-{
-	glm::ivec3 origin = findRoofSeed();
-	glm::ivec3 size;
-	while (origin.x >= 0)
-	{
-		size = glm::ivec3(1, 1, 1);
-		//growRoofSeed(origin, size);
-		//addBlocks(origin, size, Roof);
-		roofBlockList.push_back(std::pair<glm::ivec3, glm::ivec3>(origin, size));
-		origin = findRoofSeed();
-	}
-	
-}
-float HouseGenerator::benchmarkRoof(glm::ivec3 p, glm::ivec3 s)
-{
-	float coveredBlockMark = 1.f;
-	float uncoveredBlockMark = 2.f;
-	float result = 0.f;
-
-	for (int i = p.x; i < p.x + s.x; i++)
-		for (int j = p.y; j < p.y + s.y; j++)
-		{
-			//if (!houseField[p.z][i][j].available || houseField[p.z - 1][i][j].voxelType == Roof) return 0.f;
-			if (houseField[p.z - 1][i][j].available) result -= p.z * uncoveredBlockMark;
-			else result += coveredBlockMark;
-		}
-	return result;
-}
-
-
-inline void HouseGenerator::constructRoofMesh()
-{
-	float ox = houseFieldSize / 2.f + 0.5f;
-	float oy = houseFieldSize / 2.f + 0.5f;
-	float oz = 0.1f;
-
-	for (unsigned int k = 0; k < houseFieldFloor; k++)
-		for (unsigned int i = 0; i < houseFieldSize; i++)
-			for (unsigned int j = 0; j < houseFieldSize; j++)
-			{
-				if (houseField[k][i][j].available) continue;
-
-				//	Ground roof
-				//if (houseField[k][i][j].voxelType == Roof)
-				//	pushGround(i - ox, j - oy, 2.5f * k + oz, i + 1 - ox, j + 1 - oy, 2.5f * k + oz, groundRoof);
-			}
-
-	for (unsigned int i = 0; i < roofBlockList.size(); i++)
-	{
-		roofSlope(roofBlockList[i].first, roofBlockList[i].second);
-		roofEnd(roofBlockList[i].first, roofBlockList[i].second);
-	}
-}
-void HouseGenerator::roofSlope(const glm::ivec3& p, const glm::ivec3& s)
-{
-	glm::vec3 houseOrigin(houseFieldSize / 2.f, houseFieldSize / 2.f, 0.1f);
-	glm::vec3 tmp;
-	if (s.y > s.x)
-	{
-		for (int i = 0; i < s.x / 2; i++)
-			for (int j = p.y; j < p.y + s.y; j++)
-			{
-				tmp = glm::vec3(p.x + i - houseOrigin.x - 0.5f, j - houseOrigin.y, i + 2.5f * p.z + houseOrigin.z);
-				pushMesh(assetLibrary["roof1"], tmp, glm::vec3(0.f, 1.f, 0.f));
-
-				tmp = glm::vec3(p.x + s.x - i - houseOrigin.x - 0.5f, j - houseOrigin.y, i + 2.5f * p.z + houseOrigin.z);
-				pushMesh(assetLibrary["roof1"], tmp, glm::vec3(0.f, -1.f, 0.f));
-			}
-		if (s.x % 2)
-		{
-			for (int j = p.y; j < p.y + s.y; j++)
-			{
-				tmp = glm::vec3(p.x + s.x / 2 + 1 - houseOrigin.x - 0.5f, j - houseOrigin.y, s.x / 2 + 2.5f * p.z + houseOrigin.z);
-				pushMesh(assetLibrary["roof2"], tmp, glm::vec3(0.f, -1.f, 0.f));
-			}
-		}
-	}
-	else
-	{
-		for (int i = p.x; i < p.x + s.x; i++)
-			for (int j = 0; j < s.y / 2; j++)
-			{
-				tmp = glm::vec3(i - houseOrigin.x, p.y + j - houseOrigin.y - 0.5f, j + 2.5f * p.z + houseOrigin.z);
-				pushMesh(assetLibrary["roof1"], tmp, glm::vec3(-1.f, 0.f, 0.f));
-
-				tmp = glm::vec3(i - houseOrigin.x, p.y + s.y - j - houseOrigin.y - 0.5f, j + 2.5f * p.z + houseOrigin.z);
-				pushMesh(assetLibrary["roof1"], tmp, glm::vec3(1.f, 0.f, 0.f));
-			}
-		if (s.y % 2)
-		{
-			for (int i = p.x; i < p.x + s.x; i++)
-			{
-				tmp = glm::vec3(i - houseOrigin.x, p.y + s.y / 2 + 1 - houseOrigin.y - 0.5f, s.y / 2 + 2.5f * p.z + houseOrigin.z);
-				pushMesh(assetLibrary["roof2"], tmp, glm::vec3(1.f, 0.f, 0.f));
-			}
-		}
-	}
-}
-
-void HouseGenerator::roofEnd(const glm::ivec3& p, const glm::ivec3& s)
-{
-	glm::vec3 houseOrigin(houseFieldSize / 2.f, houseFieldSize / 2.f, 0.1f);
-	glm::vec3 tmp;
-
-	if (s.y > s.x)
-	{
-		//	front end
-		for (int i = 0; i < s.x / 2; i++)
-		{
-			if (houseField[p.z][p.x + i][p.y - 1].available)
-			{
-				tmp = glm::vec3(p.x + i - houseOrigin.x - 0.5f, p.y - 0.5f - houseOrigin.y, i + 2.5f * p.z + houseOrigin.z);
-				pushMesh(assetLibrary["roofend1"], tmp, glm::vec3(0.f, 1.f, 0.f));
-			}
-			if (houseField[p.z][p.x + s.x - 1 - i][p.y - 1].available)
-			{
-				tmp = glm::vec3(p.x + s.x - i - houseOrigin.x - 0.5f, p.y - 0.5f - houseOrigin.y, i + 2.5f * p.z + houseOrigin.z);
-				pushMesh(assetLibrary["roofend4"], tmp, glm::vec3(0.f, 1.f, 0.f));
-			}
-		}
-		for (int i = 0; i < s.x / 2; i++)
-		{
-			if (houseField[p.z][p.x + i][p.y + s.y].available)
-			{
-				tmp = glm::vec3(p.x + i - houseOrigin.x - 0.5f, p.y + s.y - 0.5f - houseOrigin.y, i + 2.5f * p.z + houseOrigin.z);
-				pushMesh(assetLibrary["roofend4"], tmp, glm::vec3(0.f, -1.f, 0.f));
-			}
-			if (houseField[p.z][p.x + s.x - 1 - i][p.y + s.y].available)
-			{
-				tmp = glm::vec3(p.x + s.x - i - houseOrigin.x - 0.5f, p.y + s.y - 0.5f - houseOrigin.y, i + 2.5f * p.z + houseOrigin.z);
-				pushMesh(assetLibrary["roofend1"], tmp, glm::vec3(0.f, -1.f, 0.f));
-			}
-		}
-
-		//	slope end border
-		for (int j = p.y; j < p.y + s.y; j++)
-		{
-			if (!houseField[p.z][p.x - 1][j].available) continue;
-			tmp = glm::vec3(p.x - 0.5f - houseOrigin.x, j - houseOrigin.y, 2.5f * p.z + houseOrigin.z);
-			pushMesh(assetLibrary["roofend3"], tmp, glm::vec3(0.f, 1.f, 0.f));
-		}
-		for (int j = p.y; j < p.y + s.y; j++)
-		{
-			if (!houseField[p.z][p.x + s.x][j].available) continue;
-			tmp = glm::vec3(p.x + s.x - 0.5f - houseOrigin.x, j - houseOrigin.y, 2.5f * p.z + houseOrigin.z);
-			pushMesh(assetLibrary["roofend3"], tmp, glm::vec3(0.f, -1.f, 0.f));
-		}
-	}
-	else
-	{
-		//	front end
-		for (int j = 0; j < s.y / 2; j++)
-		{
-			if (houseField[p.z][p.x - 1][p.y + j].available)
-			{
-				tmp = glm::vec3(p.x - 0.5f - houseOrigin.x, p.y + j - houseOrigin.y - 0.5f, j + 2.5f * p.z + houseOrigin.z);
-				pushMesh(assetLibrary["roofend4"], tmp, glm::vec3(1.f, 0.f, 0.f));
-			}
-			if (houseField[p.z][p.x - 1][p.y + s.y - 1 - j].available)
-			{
-				tmp = glm::vec3(p.x - 0.5f - houseOrigin.x, p.y + s.y - j - houseOrigin.y - 0.5f, j + 2.5f * p.z + houseOrigin.z);
-				pushMesh(assetLibrary["roofend1"], tmp, glm::vec3(1.f, 0.f, 0.f));
-			}
-		}
-		for (int j = 0; j < s.y / 2; j++)
-		{
-			if (houseField[p.z][p.x + s.x][p.y + j].available)
-			{
-				tmp = glm::vec3(p.x + s.x - 0.5f - houseOrigin.x, p.y + j - houseOrigin.y - 0.5f, j + 2.5f * p.z + houseOrigin.z);
-				pushMesh(assetLibrary["roofend1"], tmp, glm::vec3(-1.f, 0.f, 0.f));
-			}
-			if (houseField[p.z][p.x + s.x][p.y + s.y - 1 - j].available)
-			{
-				tmp = glm::vec3(p.x + s.x - 0.5f - houseOrigin.x, p.y + s.y - j - houseOrigin.y - 0.5f, j + 2.5f * p.z + houseOrigin.z);
-				pushMesh(assetLibrary["roofend4"], tmp, glm::vec3(-1.f, 0.f, 0.f));
-			}
-		}
-
-		//	slope end border
-		for (int i = p.x; i < p.x + s.x; i++)
-		{
-			if (!houseField[p.z][i][p.y - 1].available) continue;
-			tmp = glm::vec3(i - houseOrigin.x, p.y - 0.5f - houseOrigin.y, 2.5f * p.z + houseOrigin.z);
-			pushMesh(assetLibrary["roofend3"], tmp, glm::vec3(-1.f, 0.f, 0.f));
-		}
-		for (int i = p.x; i < p.x + s.x; i++)
-		{
-			if (!houseField[p.z][i][p.y + s.y].available) continue;
-			tmp = glm::vec3(i - houseOrigin.x, p.y + s.y - 0.5f - houseOrigin.y, 2.5f * p.z + houseOrigin.z);
-			pushMesh(assetLibrary["roofend3"], tmp, glm::vec3(1.f, 0.f, 0.f));
-		}
-	}
-}
-*/
-
-void HouseGenerator::optimizeMesh()
-{
-	std::vector<glm::vec3> verticesBuffer;
-	std::vector<glm::vec3> normalesBuffer;
-	std::vector<glm::vec3> colorBuffer;
-	std::vector<unsigned int> facesBuffer;
-
-	std::map<OrderedVertex, unsigned int> vertexAlias;
-	std::map<OrderedVertex, unsigned int>::iterator alias;
-	OrderedVertex current;
-
-	for (unsigned int i = 0; i < facesArray.size(); i++)
-	{
-		current.position = verticesArray[facesArray[i]];
-		current.normal = normalesArray[facesArray[i]];
-		current.color = colorArray[facesArray[i]];
-
-		alias  = vertexAlias.find(current);
-		if (alias == vertexAlias.end())
-		{
-			verticesBuffer.push_back(verticesArray[facesArray[i]]);
-			normalesBuffer.push_back(normalesArray[facesArray[i]]);
-			colorBuffer.push_back(colorArray[facesArray[i]]);
-			facesBuffer.push_back(vertexAlias.size());
-
-			vertexAlias[current] = vertexAlias.size();
-		}
-		else facesBuffer.push_back(alias->second);
-	}
-
-	verticesArray.swap(verticesBuffer);
-	normalesArray.swap(normalesBuffer);
-	colorArray.swap(colorBuffer);
-	facesArray.swap(facesBuffer);
-}
 //

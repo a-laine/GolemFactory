@@ -127,7 +127,7 @@ int main()
 				InstanceManager::getInstance()->release(house);
 
 				double time = glfwGetTime();
-				house = hg.getHouse(randomEngine(), 99, 99);
+				house = hg.getHouse(randomEngine()%10000, 99, 99);
 				std::cout << 1000.f*(glfwGetTime() - time) << std::endl;
 				InstanceManager::getInstance()->add(house);
 				SceneManager::getInstance()->addStaticObject(house);

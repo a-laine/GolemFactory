@@ -87,6 +87,7 @@ class HouseGenerator
 
 		//  Protected functions
 		void initHouseField(const int& newSize);
+		void createAndPlaceDebugHouseBlock(int config);
 		void createAndPlaceHouseBlock();
 		void createAndPlaceRoofBlock();
 		void constructHouseMesh();
@@ -109,8 +110,10 @@ class HouseGenerator
 		void addHouseBlocks(const glm::ivec3& p, const glm::ivec3& s, const int& houseType, const unsigned int& blockReference);
 		void updateAvailableBlockPosition(const glm::ivec3& p, const glm::ivec3& s);
 
+		char getRelativePosRoof(const int& ref, const unsigned int& i, const unsigned int& j, const unsigned int& k) const;
 
-		void pushMesh(Mesh* m, const glm::vec3& p, const glm::vec3& o, const glm::vec3& s = glm::vec3(1.f, 1.f,1.f));
+
+		void pushMesh(Mesh* m, const glm::vec3& p, const glm::vec3& o, const glm::vec3& s = glm::vec3(1.f, 1.f, 1.f));
 		void pushGround(float px1, float py1, float pz1, float px2, float py2, float pz2, glm::vec3 color);
 		
 		//
