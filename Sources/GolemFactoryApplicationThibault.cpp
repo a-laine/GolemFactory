@@ -17,8 +17,8 @@
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-#define GRID_SIZE 70
-#define GRID_ELEMENT_SIZE 1.0f
+#define GRID_SIZE 100
+#define GRID_ELEMENT_SIZE 6.0f
 
 // prototypes
 GLFWwindow* initGLFW();
@@ -65,11 +65,11 @@ int main()
 	SceneManager::getInstance()->setWorldPosition(glm::vec3(0,0,25));
 	SceneManager::getInstance()->setWorldSize(glm::vec3(GRID_SIZE*GRID_ELEMENT_SIZE, GRID_SIZE*GRID_ELEMENT_SIZE, 50));
 	
-		//initializeForestScene();
-		HouseGenerator hg;
-		auto house = hg.getHouse(0, 99, 99);
+		initializeForestScene();
+		/*HouseGenerator hg;
+		auto house = hg.getHouse(0, 20, 30);
 		InstanceManager::getInstance()->add(house);
-		SceneManager::getInstance()->addStaticObject(house);
+		SceneManager::getInstance()->addStaticObject(house);*/
 		//return 0;
 
 	// init loop time tracking
@@ -120,18 +120,18 @@ int main()
 			if(v[i] == QUIT) glfwSetWindowShouldClose(window, GL_TRUE);
 			else if(v[i] == CHANGE_CURSOR_MODE) EventHandler::getInstance()->setCursorMode(!EventHandler::getInstance()->getCursorMode());
 			else if (v[i] == ACTION) FPScam = !FPScam;
-			else if (v[i] == DOUBLE_CLICK_LEFT)
+			/*else if (v[i] == DOUBLE_CLICK_LEFT)
 			{
 				if (!SceneManager::getInstance()->removeObject(house))
 					std::cout << "fail remove instance from scene" << std::endl;
 				InstanceManager::getInstance()->release(house);
 
 				double time = glfwGetTime();
-				house = hg.getHouse(randomEngine()%10000, 99, 99);
+				house = hg.getHouse(randomEngine()%10000, 20, 30);
 				std::cout << 1000.f*(glfwGetTime() - time) << std::endl;
 				InstanceManager::getInstance()->add(house);
 				SceneManager::getInstance()->addStaticObject(house);
-			}
+			}*/
 		}
 
 		//Animate camera
@@ -200,14 +200,23 @@ void initializeForestScene()
 	std::string shaderName;
 	float sDispersion;
 	float sOffset;
+	HouseGenerator hg;
 	srand((unsigned int)time(NULL));
+
+	//	center tree
+	InstanceDrawable* bigTree = InstanceManager::getInstance()->getInstanceDrawable();
+	bigTree->setMesh("firTree1.obj");
+	bigTree->setShader("tree");
+	bigTree->setSize(glm::vec3(5.f, 5.f, 5.f));
+	SceneManager::getInstance()->addStaticObject(bigTree);
 
 	// village
 	int vilageHouseCount = 0;
 	float villageRadius[] = {20.f, 30.f, 40.f};
+	std::vector<glm::vec3> houseCircle;
 	for (int i = 0; i < 3; i++)
 	{
-		int houseCount = 5 + i;// *(rand() % 8);
+		int houseCount = 5 + i * 7;
 		vilageHouseCount += houseCount;
 		float angleOffset = 6.28f * ((rand() % 100) / 100.f);
 
@@ -218,33 +227,28 @@ void initializeForestScene()
 			
 			glm::mat4 a(1.0);
 			if(rand() % 2)
-				a = glm::rotate(a, 3.14f + angle /*+ 0.4f * ((((rand() % 100) / 50.f) - 1.f))*/, glm::vec3(0, 0, 1));
+				a = glm::rotate(a, 3.14f + angle + 0.4f * ((((rand() % 100) / 50.f) - 1.f)), glm::vec3(0, 0, 1));
 			else
-				a = glm::rotate(a, angle /*+ 0.4f * ((((rand() % 100) / 50.f) - 1.f))*/, glm::vec3(0, 0, 1));
-			//a = glm::rotate(a, glm::radians(90.f), glm::vec3(1, 0, 0));
-
-			float s;
-			int r = rand() % 100;
-			if (r<70)
-			{
-				meshName = "MedievalHouse1.obj";
-				s = 0.01f;
-			}
-			else
-			{
-				meshName = "Farmhouse.obj";
-				s = 0.254f;
-			}
-
-			HouseGenerator hg;
-			auto house = hg.getHouse(0, 0, 25);
+				a = glm::rotate(a, angle + 0.4f * ((((rand() % 100) / 50.f) - 1.f)), glm::vec3(0, 0, 1));
+			
+			InstanceDrawable* house = dynamic_cast<InstanceDrawable*>(hg.getHouse(rand(), 20, 30));
 			InstanceManager::getInstance()->add(house);
+			
+			glm::vec3 p = glm::vec3(radius * cos(angle), radius * sin(angle), house->getBSRadius());
+			house->setOrientation(glm::rotate(glm::mat4(1.0), 1.57f + angle, glm::vec3(0, 0, 1)));
 
-			//InstanceDrawable* house = InstanceManager::getInstance()->getInstanceDrawable(meshName, "default");
-			//house->setSize(glm::vec3(s, s, s));
-			house->setPosition(glm::vec3(radius * cos(angle), radius * sin(angle), 0.0));
-			InstanceDrawable* d = dynamic_cast<InstanceDrawable*>(house);
-				d->setOrientation(glm::rotate(glm::mat4(1.0), 1.57f + angle, glm::vec3(0, 0, 1)));
+			for (unsigned int k = 0; k < houseCircle.size(); k++)
+			{
+				float delta = glm::length(glm::vec3(houseCircle[k].x - p.x, houseCircle[k].y - p.y, 0.f));
+				if (delta < houseCircle[k].z + p.z - 0.5f)
+				{
+					p += (1.f + houseCircle[k].z + p.z - delta) * glm::normalize(glm::vec3(p.x - houseCircle[k].x, p.y - houseCircle[k].y, 0.f));
+					k = 0;
+				}
+			}
+
+			houseCircle.push_back(p);
+			house->setPosition(glm::vec3(p.x, p.y, 0.f));
 			SceneManager::getInstance()->addStaticObject(house);
 		}
 	}
@@ -275,7 +279,7 @@ void initializeForestScene()
 						GRID_ELEMENT_SIZE*j - (GRID_SIZE * GRID_ELEMENT_SIZE) / 2 + GRID_ELEMENT_SIZE * ((rand() % 10) / 20.f - 0.25f),
 						0);
 
-			if (glm::length(p) < 10 * GRID_ELEMENT_SIZE)
+			if (glm::length(p) < villageRadius[2] + 5.f * GRID_ELEMENT_SIZE)
 				continue;
 				
 

@@ -51,6 +51,12 @@ class InstanceDrawable : public InstanceVirtual
 		glm::vec3 getBBSize() const;
 
 		/*!
+		*  \brief Get bounding sphere radius of instance (depending on mesh bounding box)
+		*  \return the bounding sphere radius as a float.
+		*/
+		float getBSRadius() const;
+
+		/*!
 		 *  \brief Get shader used
 		 *  \return the shader used to draw instance
 		 */

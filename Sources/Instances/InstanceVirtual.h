@@ -103,6 +103,15 @@ class InstanceVirtual
 		 *  Actually the InstanceVirtual::getBBSize function return always a zero vector (a point object !).
 		 */
 		virtual glm::vec3 getBBSize();
+
+		/*!
+		*  \brief Get instance bounding sphere radius
+		*  \return the instance bounding sphere radius
+		*
+		*  This is a virtual function, so you have to implement it depending on your specific instance.
+		*  Actually the InstanceVirtual::getBSRadius function return always zero (a point object !).
+		*/
+		virtual float getBSRadius();
 		//
 		
 	protected:

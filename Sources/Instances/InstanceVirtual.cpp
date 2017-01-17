@@ -24,4 +24,5 @@ glm::mat4 InstanceVirtual::getModelMatrix() const
 	return model;
 }
 glm::vec3 InstanceVirtual::getBBSize() { return glm::vec3(0.f, 0.f, 0.f); }
+float InstanceVirtual::getBSRadius() { return 0.f; };
 //

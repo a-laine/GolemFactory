@@ -101,9 +101,9 @@ unsigned int Mesh::getNumberFaces() const { return faces.size(); }
 //	Protected functions
 void Mesh::computeBoundingBoxDimension()
 {
-	sizeX = glm::vec2(0, 0);
-	sizeY = glm::vec2(0, 0);
-	sizeZ = glm::vec2(0, 0);
+	sizeX = glm::vec2(std::numeric_limits<float>::max(), std::numeric_limits<float>::min());
+	sizeY = glm::vec2(std::numeric_limits<float>::max(), std::numeric_limits<float>::min());
+	sizeZ = glm::vec2(std::numeric_limits<float>::max(), std::numeric_limits<float>::min());
 
 	for (unsigned int i = 0; i < vertices.size(); i++)
 	{

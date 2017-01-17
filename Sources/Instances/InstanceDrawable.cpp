@@ -43,9 +43,12 @@ glm::vec3 InstanceDrawable::getBBSize() const
 {
 	if (!mesh) return glm::vec3(0.f, 0.f, 0.f);
 	else return glm::vec3(mesh->sizeX.y - mesh->sizeX.x, mesh->sizeY.y - mesh->sizeY.x, mesh->sizeZ.y - mesh->sizeZ.x);
-	{
-
-	}
+}
+float InstanceDrawable::getBSRadius() const
+{
+	return std::sqrtf(	(mesh->sizeX.y - mesh->sizeX.x)*(mesh->sizeX.y - mesh->sizeX.x) +
+						(mesh->sizeY.y - mesh->sizeY.x)*(mesh->sizeY.y - mesh->sizeY.x) +
+						(mesh->sizeZ.y - mesh->sizeZ.x)*(mesh->sizeZ.y - mesh->sizeZ.x)    ) * 0.5f;
 }
 Shader* InstanceDrawable::getShader() const { return shader; }
 Mesh* InstanceDrawable::getMesh() const { return mesh; }

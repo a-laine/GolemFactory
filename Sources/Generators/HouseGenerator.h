@@ -11,6 +11,13 @@
 #include "Instances/InstanceManager.h"
 
 
+/*
+	TODO :
+		- issue : bug in roof mesh generation : visible on house1612_99_99
+		- issue : bug in roof mesh generation : visible on house519_20_30
+*/
+
+
 class HouseGenerator
 {
     public:
@@ -36,7 +43,8 @@ class HouseGenerator
 			None = 0,
 			House,
 			Door,
-			Window
+			Window,
+			Fireplace
 		};
 		struct HouseVoxel
 		{
@@ -46,13 +54,13 @@ class HouseGenerator
 			int roof;
 			int roofReference;
 		};
-		struct markedPosition
+		struct MarkedPosition
 		{
 			float mark;
 			glm::ivec3 position;
 			glm::ivec3 size;
-			bool operator<(const markedPosition& mp) { return mark < mp.mark; }
-			markedPosition(float m, glm::ivec3 p, glm::ivec3 s) : mark(m), position(p), size(s) {}
+			bool operator<(const MarkedPosition& mp) { return mark < mp.mark; }
+			MarkedPosition(float m, glm::ivec3 p, glm::ivec3 s) : mark(m), position(p), size(s) {}
 		};
 		struct OrderedVertex
 		{
@@ -89,16 +97,17 @@ class HouseGenerator
 		void initHouseField(const int& newSize);
 		void createAndPlaceDebugHouseBlock(int config);
 		void createAndPlaceHouseBlock();
+		void createAndPlaceDecorationBlock();
 		void createAndPlaceRoofBlock();
 		void constructHouseMesh();
 		void constructRoofMesh();
 		void optimizeMesh();
 
 
-
 		bool searchBlockPartition(const int& superficy, const int& testIndex);
 		bool freePlace(const unsigned int& i, const unsigned int& j, const unsigned int& k) const;
 		bool freeFloor(const unsigned int& k) const;
+		bool markDecorative(const unsigned int& i, const unsigned int& j, const unsigned int& k) const;
 		glm::ivec3 getRandomPosition(const int& safeOffset, const int& maxZ = 0);
 
 		void markAll(const glm::ivec3& p, const glm::ivec3& s);
@@ -109,20 +118,12 @@ class HouseGenerator
 
 		void addHouseBlocks(const glm::ivec3& p, const glm::ivec3& s, const int& houseType, const unsigned int& blockReference);
 		void updateAvailableBlockPosition(const glm::ivec3& p, const glm::ivec3& s);
-
 		char getRelativePosRoof(const int& ref, const unsigned int& i, const unsigned int& j, const unsigned int& k) const;
-
 
 		void pushMesh(Mesh* m, const glm::vec3& p, const glm::vec3& o, const glm::vec3& s = glm::vec3(1.f, 1.f, 1.f));
 		void pushGround(float px1, float py1, float pz1, float px2, float py2, float pz2, glm::vec3 color);
 		
 		//
-		/*inline void createAndPlaceRoof();
-			float benchmarkRoof(glm::ivec3 p, glm::ivec3 s);
-		//
-		inline void constructRoofMesh();
-			void roofSlope(const glm::ivec3& p, const glm::ivec3& s);
-			void roofEnd(const glm::ivec3& p, const glm::ivec3& s);*/
 
 
 
@@ -143,7 +144,7 @@ class HouseGenerator
 
 		std::vector<std::pair<glm::ivec3, glm::ivec3> > blockList;
 		std::list<glm::ivec3> availableBlockPosition;
-		std::list<markedPosition> benchmarkPosition;
+		std::list<MarkedPosition> benchmarkPosition;
 
 		std::vector<std::pair<glm::ivec3, glm::ivec3> > roofBlockList;
 
