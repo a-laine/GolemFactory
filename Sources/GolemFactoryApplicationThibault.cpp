@@ -205,9 +205,10 @@ void initializeForestScene()
 
 	//	center tree
 	InstanceDrawable* bigTree = InstanceManager::getInstance()->getInstanceDrawable();
-	bigTree->setMesh("firTree1.obj");
-	bigTree->setShader("tree");
-	bigTree->setSize(glm::vec3(5.f, 5.f, 5.f));
+	bigTree->setMesh("peasant.obj");
+	bigTree->setShader("default");
+	bigTree->setSize(glm::vec3(1.1f, 1.1f, 1.1f));
+	//bigTree->setSize(glm::vec3(5.f, 5.f, 5.f));
 	SceneManager::getInstance()->addStaticObject(bigTree);
 
 	// village
