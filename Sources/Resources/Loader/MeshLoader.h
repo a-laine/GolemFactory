@@ -45,6 +45,9 @@ class MeshLoader
 		//	Private functions
 		void clear();
 		void readSceneHierarchy(const aiNode* node, int depth = 0);
-		void connectParent();
+		//
+
+		//
+		void printJoint(unsigned int joint, int depth);
 		//
 };

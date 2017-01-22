@@ -2,10 +2,7 @@
 
 //  Default
 MeshLoader::MeshLoader() {}
-MeshLoader::~MeshLoader()
-{
-	clear();
-}
+MeshLoader::~MeshLoader() { clear(); }
 //
 
 //  Public functions
@@ -26,12 +23,11 @@ int MeshLoader::loadMesh(std::string file)
 		const aiScene* scene = importer.ReadFile(file.c_str(), aiProcessPreset_TargetRealtime_MaxQuality);
 		if (!scene) { std::cerr << "ERROR : loading mesh : " << file << "\ncould not open file" << std::endl; return 1; }
 
-		unsigned int facesOffset = 0;	//	needed to pack multiple assimp object in the same mesh
-		glm::vec3 defaultColor(0.5f, 0.5f, 0.5f);
+		//	usefull parameters for next
+		unsigned int facesOffset = 0;
 		glm::vec3 meshColor;
-		bool bonesPass = false;
+		bool hasSkeleton = false;
 		std::vector<int> meshVertexOffset;
-		
 		for (unsigned int i = 0; i < scene->mNumMeshes; i++)
 		{
 			//	import material and pack into vertex color
@@ -43,7 +39,7 @@ int MeshLoader::loadMesh(std::string file)
 				m->Get(AI_MATKEY_NAME, nameStr);
 				std::string name(nameStr.C_Str());
 				if (name.find("JoinedMaterial") != std::string::npos)
-					meshColor = defaultColor;
+					meshColor = glm::vec3(0.5f, 0.5f, 0.5f);
 				else
 				{
 					aiColor3D color(0.f, 0.f, 0.f);
@@ -51,7 +47,7 @@ int MeshLoader::loadMesh(std::string file)
 					meshColor = glm::vec3(color.r, color.g, color.b);
 				}
 			}
-			else meshColor = defaultColor;
+			else meshColor = glm::vec3(0.5f, 0.5f, 0.5f);
 
 			//	import faces index
 			for (unsigned int j = 0; j < mesh->mNumFaces; j++)
@@ -73,11 +69,11 @@ int MeshLoader::loadMesh(std::string file)
 			}
 
 			//	demande a second pass to parse bone and skeleton
-			if (mesh->HasBones()) bonesPass = true;
+			if (mesh->HasBones()) hasSkeleton = true;
 		}
 
-
-		if (bonesPass)
+		//	Load skeleton
+		if (hasSkeleton)
 		{
 			//	create bone map
 			for (unsigned int i = 0; i < scene->mNumMeshes; i++)
@@ -123,8 +119,16 @@ int MeshLoader::loadMesh(std::string file)
 			}
 
 			//	read scene hierarchy for importing skeleton
+			joints.assign(boneMap.size(), Joint());
+			for (std::map<std::string, int>::iterator it = boneMap.begin(); it != boneMap.end(); it++)
+				joints[it->second].name = it->first;
 			if(scene->mRootNode) readSceneHierarchy(scene->mRootNode);
-			connectParent();
+			for (unsigned int i = 0; i < joints.size(); i++)
+				if (joints[i].parent == (unsigned int)-1) roots.push_back(i);
+
+			///	debug
+			//for (unsigned int i = 0; i < roots.size(); i++)
+			//	printJoint(roots[i], 0);
 		}
 
 
@@ -150,30 +154,38 @@ void MeshLoader::clear()
 }
 void MeshLoader::readSceneHierarchy(const aiNode* node, int depth)
 {
-	Joint joint;
-	std::string name(node->mName.C_Str());
+	int parentIndex = -1;
+	Joint* joint = nullptr;
+	for (unsigned int j = 0; j < joints.size(); j++)
+		if(joints[j].name == std::string(node->mName.C_Str()))
+		{
+			joint = &joints[j];
+			parentIndex = j;
+			break;
+		}
+
 	for (unsigned int i = 0; i < node->mNumChildren; i++)
 	{
-		std::string sonName(node->mChildren[i]->mName.C_Str());
-		if (boneMap.find(name) != boneMap.end() && boneMap.find(sonName) != boneMap.end())
-			joint.sons.push_back(boneMap[sonName]);
+		for (unsigned int j = 0; joint && j < joints.size(); j++)
+			if (joints[j].name == std::string(node->mChildren[i]->mName.C_Str()))
+			{
+				joint->sons.push_back(j);
+				joints[j].parent = parentIndex;
+				break;
+			}
 		readSceneHierarchy(node->mChildren[i], depth + 1);
 	}
-	if (boneMap.find(name) != boneMap.end()) joints.push_back(joint);
-}
-void MeshLoader::connectParent()
-{
-	for (unsigned int i = 0; i < joints.size(); i++)
-		joints[i].parent = -1;
-	for (unsigned int i = 0; i < joints.size(); i++)
-	{
-		for (unsigned int j = 0; j < joints[i].sons.size(); j++)
-			joints[joints[i].sons[j]].parent = i;
-	}
-	for (unsigned int i = 0; i < joints.size(); i++)
-		if(joints[i].parent == (unsigned int)-1) roots.push_back(i);
 }
 //
 
+//
+void MeshLoader::printJoint(unsigned int joint, int depth)
+{
+	for (int i = 0; i < depth; i++)
+		std::cout << "  ";
+	std::cout << joints[joint].name << std::endl;
 
-
+	for (unsigned int i = 0; i < joints[joint].sons.size(); i++)
+		printJoint(joints[joint].sons[i], depth + 1);
+}
+//

@@ -15,7 +15,8 @@ class Mesh : public ResourceVirtual
 		enum ConfigurationFlags
 		{
 			VALID = 1 << 0,
-			HAS_SKELETON = 1 << 1
+			HAS_SKELETON = 1 << 1,
+			IS_ANIMATABLE = 1 << 2
 		};
 		//
 
