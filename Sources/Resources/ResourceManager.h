@@ -11,8 +11,10 @@
 #include "Shader.h"
 #include "Font.h"
 #include "Mesh.h"
-#include "Skeleton.h"
+#include "MeshAnimated.h"
 #include "Animation.h"
+
+#include "Loader/MeshLoader.h"
 
 
 
@@ -31,13 +33,11 @@ class ResourceManager : public Singleton<ResourceManager>
         Texture* getTexture2D(const std::string& name, uint8_t conf = 0x00);
         Shader* getShader(std::string name);
         Font* getFont(std::string name);
-		Skeleton* getSkeleton(std::string name);
 
 		void addMesh(Mesh* mesh);
 		void addTexture(Texture* texture);
 		void addShader(Shader* shader);
 		void addFont(Font* font);
-		void addSkeleton(Skeleton* skeleton);
         //
 
         //  Set/get functions
@@ -62,13 +62,11 @@ class ResourceManager : public Singleton<ResourceManager>
         std::map<std::string, Font*> fontList;			//!< The fonts container.
         std::map<std::string, Shader*> shaderList;		//!< The shader container.
         std::map<std::string, Mesh*> meshList;			//!< The mesh container.
-		std::map<std::string, Skeleton*> skeletonList;	//!< The skeleton container.
 
         std::string repository;							//!< The repository path.
         std::string defaultTexture;						//!< The default texture name.
         std::string defaultFont;						//!< The default font name.
         std::string defaultShader;						//!< The default shader name.
         std::string defaultMesh;						//!< The default mesh name.
-		std::string defaultSkeleton;					//!< The default skeleton name.
         //
 };

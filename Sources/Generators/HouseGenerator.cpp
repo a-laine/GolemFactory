@@ -114,7 +114,6 @@ InstanceVirtual* HouseGenerator::getHouse(unsigned int seed, int d, int p)
 
 	//	end
 	Mesh* mesh = new Mesh(houseName, verticesArray, normalesArray, colorArray, facesArray);
-	//mesh->computeBoundingBoxDimension();
 	ResourceManager::getInstance()->addMesh(mesh);				//	add mesh to resources manager for instance creation
 	InstanceDrawable* house = new InstanceDrawable(houseName);	//	create instance
 	ResourceManager::getInstance()->release(mesh);				//	House generator release mesh pointer
@@ -923,8 +922,8 @@ void HouseGenerator::pushMesh(Mesh* m, const glm::vec3& p, const glm::vec3& o, c
 		glm::vec4 v = orientation * glm::vec4(m->normales[i], 1.f);
 		normalesArray.push_back(glm::vec3(v.x, v.y, v.z));
 	}
-	for (unsigned int i = 0; i < m->color.size(); i++)
-		colorArray.push_back(m->color[i]);
+	for (unsigned int i = 0; i < m->colors.size(); i++)
+		colorArray.push_back(m->colors[i]);
 
 	for (unsigned int i = 0; i < m->faces.size(); i++)
 		facesArray.push_back(facesStart + m->faces[i]);

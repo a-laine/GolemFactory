@@ -17,8 +17,8 @@
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-#define GRID_SIZE 100
-#define GRID_ELEMENT_SIZE 6.0f
+#define GRID_SIZE 10
+#define GRID_ELEMENT_SIZE 1.f
 
 // prototypes
 GLFWwindow* initGLFW();
@@ -27,7 +27,7 @@ void initializeForestScene();
 
 
 //
-void generateRagdoll(Skeleton* s);
+//void generateRagdoll(Skeleton* s);
 //
 
 
@@ -55,7 +55,7 @@ int main()
 	
 	// Init Renderer;
 	Camera camera;
-		camera.setPosition(glm::vec3(-10,0,10));
+		camera.setPosition(glm::vec3(-3,0,3));
 	Renderer::getInstance()->setCamera(&camera);
 	Renderer::getInstance()->setWindow(window);
 	Renderer::getInstance()->initializeGrid(GRID_SIZE, GRID_ELEMENT_SIZE);
@@ -65,12 +65,13 @@ int main()
 	SceneManager::getInstance()->setWorldPosition(glm::vec3(0,0,25));
 	SceneManager::getInstance()->setWorldSize(glm::vec3(GRID_SIZE*GRID_ELEMENT_SIZE, GRID_SIZE*GRID_ELEMENT_SIZE, 50));
 	
-		initializeForestScene();
-		/*HouseGenerator hg;
-		auto house = hg.getHouse(0, 20, 30);
-		InstanceManager::getInstance()->add(house);
-		SceneManager::getInstance()->addStaticObject(house);*/
-		//return 0;
+		//initializeForestScene();
+		InstanceDrawable* peasant = InstanceManager::getInstance()->getInstanceDrawable();
+		peasant->setMesh("Peasant7.dae");
+		peasant->setShader("default");
+		peasant->setSize(glm::vec3(0.01f, 0.01f, 0.01f));
+		peasant->setPosition(glm::vec3(0.f, 0.f, 0.94f));
+		SceneManager::getInstance()->addStaticObject(peasant);
 
 	// init loop time tracking
 	double elapseTime = 16.;
@@ -205,10 +206,9 @@ void initializeForestScene()
 
 	//	center tree
 	InstanceDrawable* bigTree = InstanceManager::getInstance()->getInstanceDrawable();
-	bigTree->setMesh("peasant.obj");
-	bigTree->setShader("default");
-	bigTree->setSize(glm::vec3(1.1f, 1.1f, 1.1f));
-	//bigTree->setSize(glm::vec3(5.f, 5.f, 5.f));
+	bigTree->setMesh("firTree1.obj");
+	bigTree->setShader("tree");
+	bigTree->setSize(glm::vec3(5.f, 5.f, 5.f));
 	SceneManager::getInstance()->addStaticObject(bigTree);
 
 	// village
@@ -308,6 +308,7 @@ void initializeForestScene()
 //
 
 //
+/*
 void createBone(Skeleton* s, unsigned int joint, glm::vec3 parentPosition)
 {
 	InstanceDrawable* ins = InstanceManager::getInstance()->getInstanceDrawable("cube2.obj");
@@ -348,5 +349,6 @@ void generateRagdoll(Skeleton* s)
 {
 	createBone(s, s->root, glm::vec3(0, 0, 3));
 }
+*/
 //
 

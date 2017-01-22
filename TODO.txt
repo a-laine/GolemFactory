@@ -37,6 +37,7 @@ Instance manager :
 
 
 ANIMATION MODULE (DESCRIPTION)
+view ThinMatrix tuto on youtube
 
 ResourceManager
 	* a Skeleton struct or class, it's not a shared resource but a struct to define a skeleton

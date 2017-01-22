@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <map>
 #include <string>
 #include <fstream>
 #include <sstream>
@@ -14,25 +15,36 @@
 
 #include <glm/glm.hpp>
 
+#include "../Joint.h"
+
 class MeshLoader
 {
     public:
+		//  Default
+		MeshLoader();
+		~MeshLoader();
+		//
+
         //  Public functions
-        static int loadMesh(std::string file,
-							std::vector<glm::vec3>& vertices,
-							std::vector<glm::vec3>& normales,
-							std::vector<glm::vec3>& color,
-							std::vector<unsigned int>& faces,
-							bool& hasSkeleton);
+        int loadMesh(std::string file);
         //
+
+		//	Attributes
+		std::vector<glm::vec3> vertices;
+		std::vector<glm::vec3> normales;
+		std::vector<glm::vec3> colors;
+		std::vector<glm::ivec3> bones;
+		std::vector<glm::vec3> weights;
+		std::vector<unsigned int> faces;
+
+		std::map<std::string, int> boneMap;
+		std::vector<unsigned int> roots;
+		std::vector<Joint> joints;
 
 	private:
 		//	Private functions
-		static int loadGfMesh(std::string file,
-							  std::vector<glm::vec3>& vertices,
-							  std::vector<glm::vec3>& normales,
-							  std::vector<glm::vec3>& color,
-							  std::vector<unsigned int>& faces,
-							  bool& hasSkeleton);
+		void clear();
+		void readSceneHierarchy(const aiNode* node, int depth = 0);
+		void connectParent();
 		//
 };

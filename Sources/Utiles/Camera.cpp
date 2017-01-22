@@ -49,7 +49,7 @@ void Camera::animate(float elapseTime,bool goForw,bool goBack,bool goLeft,bool g
 			if (option2) tmpSpeed /= 10.f;
 			if (option1) tmpSpeed *= 10.f;
 
-			if (direction.x || direction.z || direction.z)
+			if (direction.x || direction.y || direction.z)
 				position += glm::normalize(direction)*elapseTime*tmpSpeed;
             break;
 
@@ -78,7 +78,7 @@ void Camera::animate(float elapseTime,bool goForw,bool goBack,bool goLeft,bool g
 			if (goLeft) direction += left;
 			if (goRight) direction -= left;
 
-			if (direction.x || direction.z || direction.z)
+			if (direction.x || direction.y || direction.z)
 				position += glm::normalize(direction)*elapseTime*tmpSpeed;
 			break;
 

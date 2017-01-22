@@ -1,41 +1,25 @@
 #include "Mesh.h"
 
 //  Default
-Mesh::Mesh(const std::string& path, const std::string& meshName) : ResourceVirtual(meshName, ResourceVirtual::MESH), configuration(0x00)
-{
-	bool hasSkeleton;
-	if (MeshLoader::loadMesh(path + meshName, vertices, normales, color, faces, hasSkeleton)) return;
-	configuration |= 0x01;
-	computeBoundingBoxDimension();
-
-	initializeVBO();
-	initializeVAO();
-}
-Mesh::Mesh( const std::string& meshName,
-			const std::vector<glm::vec3>& verticesArray,
-			const std::vector<glm::vec3>& normalesArray,
-			const std::vector<glm::vec3>& colorArray,
-			const std::vector<unsigned int>& facesArray)
-	: ResourceVirtual(meshName, ResourceVirtual::MESH), configuration(0x01),
-	vertices(verticesArray), normales(normalesArray),
-	color(colorArray), faces(facesArray)
+Mesh::Mesh(const std::string& meshName) : ResourceVirtual(meshName, ResourceVirtual::MESH), configuration(0x00) {}
+Mesh::Mesh(const std::string& meshName, const std::vector<glm::vec3>& verticesArray, const std::vector<glm::vec3>& normalesArray, const std::vector<glm::vec3>& colorArray, const std::vector<unsigned int>& facesArray)
+	: ResourceVirtual(meshName, ResourceVirtual::MESH), configuration(VALID), vertices(verticesArray), normales(normalesArray), colors(colorArray), faces(facesArray)
 {
 	computeBoundingBoxDimension();
 	initializeVBO();
 	initializeVAO();
 }
-Mesh::Mesh() : ResourceVirtual(ResourceVirtual::MESH), configuration(0x00) {}
 Mesh::~Mesh()
 {
 	vertices.clear();
 	normales.clear();
-	color.clear();
+	colors.clear();
 	faces.clear();
 
-	glDeleteBuffers(1, &vertexbuffer);
-	glDeleteBuffers(1, &normalBuffer);
-	glDeleteBuffers(1, &colorBuffer);
-	glDeleteBuffers(1, &arraybuffer);
+	glDeleteBuffers(1, &verticesBuffer);
+	glDeleteBuffers(1, &normalsBuffer);
+	glDeleteBuffers(1, &colorsBuffer);
+	glDeleteBuffers(1, &facesBuffer);
 	glDeleteVertexArrays(1, &vao);
 }
 //
@@ -44,39 +28,40 @@ Mesh::~Mesh()
 //
 void Mesh::initializeVBO()
 {
-	glGenBuffers(1, &vertexbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+	glGenBuffers(1, &verticesBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, verticesBuffer);
 	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), vertices.data(), GL_STATIC_DRAW);
 
-	glGenBuffers(1, &normalBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, normalBuffer);
+	glGenBuffers(1, &normalsBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, normalsBuffer);
 	glBufferData(GL_ARRAY_BUFFER, normales.size() * sizeof(glm::vec3), normales.data(), GL_STATIC_DRAW);
 
-	glGenBuffers(1, &colorBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, colorBuffer);
-	glBufferData(GL_ARRAY_BUFFER, color.size() * sizeof(glm::vec3), color.data(), GL_STATIC_DRAW);
+	glGenBuffers(1, &colorsBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, colorsBuffer);
+	glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(glm::vec3), colors.data(), GL_STATIC_DRAW);
 
-	glGenBuffers(1, &arraybuffer);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, arraybuffer);
+	glGenBuffers(1, &facesBuffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, facesBuffer);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, faces.size() * sizeof(unsigned int), faces.data(), GL_STATIC_DRAW);
 }
 void Mesh::initializeVAO()
 {
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
+
 	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, verticesBuffer);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
 	glEnableVertexAttribArray(1);
-	glBindBuffer(GL_ARRAY_BUFFER, normalBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, normalsBuffer);
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
 	glEnableVertexAttribArray(2);
-	glBindBuffer(GL_ARRAY_BUFFER, colorBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, colorsBuffer);
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, arraybuffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, facesBuffer);
 	glBindVertexArray(0);
 }
 
@@ -85,17 +70,21 @@ void Mesh::draw()
 	glBindVertexArray(vao);
 	glDrawElements(GL_TRIANGLES, faces.size(), GL_UNSIGNED_INT, NULL);
 }
-bool Mesh::isValid() const
-{
-	if (configuration & VALID)
-		return glIsBuffer(vertexbuffer) && glIsBuffer(normalBuffer) && glIsBuffer(colorBuffer) && glIsBuffer(arraybuffer) && glIsVertexArray(vao);
-	else return false;
-}
 //
 
 //  Set/get functions
 unsigned int Mesh::getNumberVertices() const { return vertices.size(); }
 unsigned int Mesh::getNumberFaces() const { return faces.size(); }
+bool Mesh::isValid() const
+{
+	if (configuration & VALID)
+		return glIsBuffer(verticesBuffer) && glIsBuffer(normalsBuffer) && glIsBuffer(colorsBuffer) && glIsBuffer(facesBuffer) && glIsVertexArray(vao);
+	else return false;
+}
+bool Mesh::hasSkeleton() const
+{
+	return (configuration & HAS_SKELETON) != 0;
+}
 //
 
 //	Protected functions
