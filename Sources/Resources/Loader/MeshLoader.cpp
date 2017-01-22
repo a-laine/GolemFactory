@@ -28,6 +28,8 @@ int MeshLoader::loadMesh(std::string file)
 		glm::vec3 meshColor;
 		bool hasSkeleton = false;
 		std::vector<int> meshVertexOffset;
+		
+		//	Load mesh
 		for (unsigned int i = 0; i < scene->mNumMeshes; i++)
 		{
 			//	import material and pack into vertex color
@@ -125,12 +127,41 @@ int MeshLoader::loadMesh(std::string file)
 			if(scene->mRootNode) readSceneHierarchy(scene->mRootNode);
 			for (unsigned int i = 0; i < joints.size(); i++)
 				if (joints[i].parent == (unsigned int)-1) roots.push_back(i);
-
-			///	debug
-			//for (unsigned int i = 0; i < roots.size(); i++)
-			//	printJoint(roots[i], 0);
 		}
 
+		//	Load animation
+		for (unsigned int i = 0; i < scene->mNumAnimations; i++)
+		{
+			for (unsigned int j = 0; j < scene->mAnimations[i]->mNumChannels; j++)
+			{
+				std::string channel(scene->mAnimations[i]->mChannels[j]->mNodeName.data);
+				glm::vec3 p, s;
+				glm::fquat q;
+
+				for (unsigned int k = 0; k < scene->mAnimations[i]->mChannels[j]->mNumPositionKeys; k++)
+				{
+					p = glm::vec3(	scene->mAnimations[i]->mChannels[j]->mPositionKeys[k].mValue.x,
+									scene->mAnimations[i]->mChannels[j]->mPositionKeys[k].mValue.y,
+									scene->mAnimations[i]->mChannels[j]->mPositionKeys[k].mValue.z);
+					updateKeyFramePosition((float) scene->mAnimations[i]->mChannels[j]->mPositionKeys[k].mTime, boneMap[channel], p);
+				}
+				for (unsigned int k = 0; k < scene->mAnimations[i]->mChannels[j]->mNumRotationKeys; k++)
+				{
+					q = glm::fquat(	scene->mAnimations[i]->mChannels[j]->mRotationKeys[k].mValue.x,
+									scene->mAnimations[i]->mChannels[j]->mRotationKeys[k].mValue.y,
+									scene->mAnimations[i]->mChannels[j]->mRotationKeys[k].mValue.z,
+									scene->mAnimations[i]->mChannels[j]->mRotationKeys[k].mValue.w);
+					updateKeyFrameOrientation((float) scene->mAnimations[i]->mChannels[j]->mPositionKeys[k].mTime, boneMap[channel], q);
+				}
+				for (unsigned int k = 0; k < scene->mAnimations[i]->mChannels[j]->mNumRotationKeys; k++)
+				{
+					s = glm::vec3(	scene->mAnimations[i]->mChannels[j]->mPositionKeys[k].mValue.x,
+									scene->mAnimations[i]->mChannels[j]->mPositionKeys[k].mValue.y,
+									scene->mAnimations[i]->mChannels[j]->mPositionKeys[k].mValue.z);
+					updateKeyFrameScale((float) scene->mAnimations[i]->mChannels[j]->mPositionKeys[k].mTime, boneMap[channel], s);
+				}
+			}
+		}
 
 		importer.FreeScene();
 		return 0;
@@ -175,6 +206,35 @@ void MeshLoader::readSceneHierarchy(const aiNode* node, int depth)
 			}
 		readSceneHierarchy(node->mChildren[i], depth + 1);
 	}
+}
+int MeshLoader::searchKeyFrameIndex(const float& keyTime)
+{
+	//	Search keyFrame
+	for (unsigned int i = 0; i < animations.size(); i++)
+		if (animations[i].time == keyTime) return i;
+
+	//	keyFrame not found
+	int keyFrameIndex = animations.size();
+	KeyFrame kf;
+		kf.time = keyTime;
+		kf.poses.assign(joints.size(), JointPose());
+		animations.push_back(kf);
+	return keyFrameIndex;
+}
+void MeshLoader::updateKeyFramePosition(const float& keyTime, const int& joint, const glm::vec3& p)
+{
+	int keyFrameIndex = searchKeyFrameIndex(keyTime);
+	animations[keyFrameIndex].poses[joint].position = p;
+}
+void MeshLoader::updateKeyFrameOrientation(const float& keyTime, const int& joint, const glm::fquat& q)
+{
+	int keyFrameIndex = searchKeyFrameIndex(keyTime);
+	animations[keyFrameIndex].poses[joint].orientation = q;
+}
+void MeshLoader::updateKeyFrameScale(const float& keyTime, const int& joint, const glm::vec3& s)
+{
+	int keyFrameIndex = searchKeyFrameIndex(keyTime);
+	animations[keyFrameIndex].poses[joint].scale = s;
 }
 //
 

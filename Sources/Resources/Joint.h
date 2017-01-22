@@ -11,10 +11,20 @@
 struct Joint
 {
 	Joint() { parent = -1; name = "unknown joint"; };
-	glm::vec3 position;
-	glm::fquat orientation;
-
 	unsigned int parent;
 	std::vector<unsigned int> sons;
 	std::string name;
+};
+
+struct JointPose
+{
+	glm::vec3 position;
+	glm::fquat orientation;
+	glm::vec3 scale;
+};
+
+struct KeyFrame
+{
+	float time;
+	std::vector<JointPose> poses;
 };

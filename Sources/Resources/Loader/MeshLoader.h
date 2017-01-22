@@ -41,13 +41,19 @@ class MeshLoader
 		std::vector<unsigned int> roots;
 		std::vector<Joint> joints;
 
+		std::vector<KeyFrame> animations;
+
 	private:
 		//	Private functions
 		void clear();
 		void readSceneHierarchy(const aiNode* node, int depth = 0);
+		int searchKeyFrameIndex(const float& keyTime);
+		void updateKeyFramePosition(const float& keyTime, const int& joint, const glm::vec3& p);
+		void updateKeyFrameOrientation(const float& keyTime, const int& joint, const glm::fquat& q);
+		void updateKeyFrameScale(const float& keyTime, const int& joint, const glm::vec3& s);
 		//
 
-		//
+		//	Debug
 		void printJoint(unsigned int joint, int depth);
 		//
 };
