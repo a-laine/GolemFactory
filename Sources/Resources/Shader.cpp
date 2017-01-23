@@ -105,8 +105,11 @@ Shader::Shader(const std::string& path, const std::string& shaderName) : Resourc
 					uniformLocation = glGetUniformLocation(program, uniformName.c_str());
 					attributesLocation[uniformName] = uniformLocation;
 					attributesType[uniformName] = uniformType;
-					if (uniformLocation > 100)
-						std::cout << "\t"<<name<<" : warnning in loading "<<uniformName<<" variable location" << std::endl;
+					if (uniformLocation > GL_MAX_VERTEX_UNIFORM_COMPONENTS)
+					{
+						std::cout << "Shader : " << name << " : warnning in loading '" << uniformName << "' variable location : " << uniformLocation << std::endl;
+						std::cout << "maybe the variable is not used in shader." << std::endl;
+					}
 				}
 				catch(std::exception&){ std::cerr << "Shader resource : Fail in uniform loading" << std::endl; }
 			}

@@ -100,7 +100,7 @@ Mesh* ResourceManager::getMesh(std::string name)
 	MeshLoader ml;
 	ml.loadMesh(repository + "Meshes/" + name);
 	if (ml.roots.empty()) resource = new Mesh(name, ml.vertices, ml.normales, ml.colors, ml.faces);
-	else resource = new MeshAnimated(name, ml.vertices, ml.normales, ml.colors, ml.bones, ml.weights, ml.faces);
+	else resource = new MeshAnimated(name, !ml.animations.empty(), ml.vertices, ml.normales, ml.colors, ml.bones, ml.weights, ml.faces);
 
 	//	create skeleton if needed
 	if (!ml.roots.empty())

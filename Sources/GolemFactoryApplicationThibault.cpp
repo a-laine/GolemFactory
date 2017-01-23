@@ -66,9 +66,7 @@ int main()
 	SceneManager::getInstance()->setWorldSize(glm::vec3(GRID_SIZE*GRID_ELEMENT_SIZE, GRID_SIZE*GRID_ELEMENT_SIZE, 50));
 	
 		//initializeForestScene();
-		InstanceDrawable* peasant = InstanceManager::getInstance()->getInstanceDrawable();
-		peasant->setMesh("Peasant7.dae");
-		peasant->setShader("default");
+		InstanceDrawable* peasant = InstanceManager::getInstance()->getInstanceDrawable("Peasant8.dae", "skinning");
 		peasant->setSize(glm::vec3(0.01f, 0.01f, 0.01f));
 		peasant->setPosition(glm::vec3(0.f, 0.f, 0.94f));
 		SceneManager::getInstance()->addStaticObject(peasant);

@@ -25,14 +25,16 @@ bool Skeleton::isValid() const
 {
 	return roots.empty() || joints.empty();
 }
+std::vector<unsigned int> Skeleton::getRoots() const { return roots; }
+std::vector<Joint> Skeleton::getJointHierarchy() const { return joints; }
+//
+
+///	Debug
 void Skeleton::debug()
 {
 	for (unsigned int i = 0; i < roots.size(); i++)
 		printJoint(roots[i], 0);
 }
-//
-
-///	Debug
 void Skeleton::printJoint(unsigned int joint, int depth)
 {
 	for (int i = 0; i < depth; i++)

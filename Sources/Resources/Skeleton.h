@@ -17,6 +17,12 @@ class Skeleton : public ResourceVirtual
 
 		//	Public functions
 		bool isValid() const;
+
+		std::vector<unsigned int> getRoots() const;
+		std::vector<Joint> getJointHierarchy() const;
+		//
+
+		///	Debug
 		void debug();
 		//
 

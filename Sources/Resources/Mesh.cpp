@@ -85,6 +85,10 @@ bool Mesh::hasSkeleton() const
 {
 	return (configuration & HAS_SKELETON) != 0;
 }
+bool Mesh::isAnimable() const
+{
+	return (configuration & IS_ANIMABLE) != 0;
+}
 //
 
 //	Protected functions

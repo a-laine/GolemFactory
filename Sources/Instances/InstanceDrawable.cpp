@@ -2,10 +2,13 @@
 
 
 //  Default
-InstanceDrawable::InstanceDrawable(std::string meshName, std::string shaderName) : InstanceVirtual()
+InstanceDrawable::InstanceDrawable(std::string meshName, std::string shaderName) : InstanceVirtual(), skeleton(nullptr), animation(nullptr)
 {
 	mesh = ResourceManager::getInstance()->getMesh(meshName);
 	shader = ResourceManager::getInstance()->getShader(shaderName);
+
+	if (mesh->hasSkeleton()) skeleton = ResourceManager::getInstance()->getSkeleton(meshName);
+	if (mesh->isAnimable()) animation = ResourceManager::getInstance()->getAnimation(meshName);
 }
 InstanceDrawable::~InstanceDrawable()
 {
@@ -52,4 +55,6 @@ float InstanceDrawable::getBSRadius() const
 }
 Shader* InstanceDrawable::getShader() const { return shader; }
 Mesh* InstanceDrawable::getMesh() const { return mesh; }
+Skeleton* InstanceDrawable::getSkeleton() const { return skeleton; }
+Animation* InstanceDrawable::getAnimation() const { return animation; }
 //

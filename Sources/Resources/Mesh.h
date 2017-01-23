@@ -16,7 +16,7 @@ class Mesh : public ResourceVirtual
 		{
 			VALID = 1 << 0,
 			HAS_SKELETON = 1 << 1,
-			IS_ANIMATABLE = 1 << 2
+			IS_ANIMABLE = 1 << 2
 		};
 		//
 
@@ -40,6 +40,7 @@ class Mesh : public ResourceVirtual
         unsigned int getNumberFaces() const;
 		virtual bool isValid() const;
 		bool hasSkeleton() const;
+		bool isAnimable() const;
         //
 
 		//	Attributes
