@@ -2,9 +2,8 @@
 
 
 //  Default
-ResourceManager::ResourceManager(const std::string& path) :
-	repository(path),defaultTexture("10points.png"),defaultFont("Comic Sans MS"),
-	defaultShader("default"),defaultMesh("cube2.obj")
+ResourceManager::ResourceManager(const std::string& path)
+	: repository(path), defaultTexture("10points.png"), defaultFont("Comic Sans MS"), defaultShader("default"), defaultMesh("cube2.obj"), defaultSkeleton("default"), defaultAnimation("default")
 {
     
 }
@@ -26,6 +25,14 @@ ResourceManager::~ResourceManager()
         delete element.second;
     meshList.clear();
 
+	for (auto element : skeletonList)
+		delete element.second;
+	skeletonList.clear();
+
+	for (auto element : animationList)
+		delete element.second;
+	animationList.clear();
+
     clearGarbage();
 }
 //
@@ -37,13 +44,13 @@ void ResourceManager::setRepository(std::string path)
 }
 void ResourceManager::release(ResourceVirtual* resource)
 {
-    if(!resource) return;
-    resource->count--;
+	if (!resource) return;
+	resource->count--;
 
-    if(resource->count<=0)
+	if (resource->count <= 0)
     {
         mutexList.lock();
-        switch(resource->type)
+		switch (resource->type)
         {
 			case ResourceVirtual::FONT:     fontList.erase(resource->name);		break;
             case ResourceVirtual::SHADER:   shaderList.erase(resource->name);	break;
@@ -54,7 +61,7 @@ void ResourceManager::release(ResourceVirtual* resource)
         mutexList.unlock();
 
         mutexGarbage.lock();
-        garbage.insert(garbage.end(), resource);
+		garbage.insert(garbage.end(), resource);
         mutexGarbage.unlock();
     }
 }
@@ -63,7 +70,7 @@ void ResourceManager::clearGarbage()
     std::vector<ResourceVirtual*> garbageCopy;
 
     mutexGarbage.lock();
-    garbage.swap(garbageCopy);
+	garbage.swap(garbageCopy);
     mutexGarbage.unlock();
 
 	for (unsigned int i = 0; i < garbageCopy.size(); i++)
@@ -92,8 +99,32 @@ Mesh* ResourceManager::getMesh(std::string name)
 	//	load mesh with mesh loader
 	MeshLoader ml;
 	ml.loadMesh(repository + "Meshes/" + name);
-	if(ml.roots.empty()) resource = new Mesh(name, ml.vertices, ml.normales, ml.colors, ml.faces);
+	if (ml.roots.empty()) resource = new Mesh(name, ml.vertices, ml.normales, ml.colors, ml.faces);
 	else resource = new MeshAnimated(name, ml.vertices, ml.normales, ml.colors, ml.bones, ml.weights, ml.faces);
+
+	//	create skeleton if needed
+	if (!ml.roots.empty())
+	{
+		Skeleton* skeleton = new Skeleton(name, ml.roots, ml.joints);
+		if (skeletonList.find(name) == skeletonList.end())
+		{
+			mutexList.lock();
+			skeletonList[name] = skeleton;
+			mutexList.unlock();
+		}
+	}
+
+	//	create animation if needed
+	if (!ml.animations.empty())
+	{
+		Animation* animation = new Animation(name, ml.animations);
+		if (animationList.find(name) == animationList.end())
+		{
+			mutexList.lock();
+			animationList[name] = animation;
+			mutexList.unlock();
+		}
+	}
 
 	//	verify if mesh is successfully loaded
 	if (resource && resource->isValid())
@@ -224,6 +255,77 @@ Font* ResourceManager::getFont(std::string name)
     }
     return resource;
 }
+Skeleton* ResourceManager::getSkeleton(std::string name)
+{
+	Skeleton*resource = nullptr;
+	mutexList.lock();
+
+	//	search mesh in resources containers
+	auto it = skeletonList.find(name);
+	if (it != skeletonList.end())
+	{
+		resource = it->second;
+		resource->count++;
+	}
+	mutexList.unlock();
+	if (resource) return resource;
+
+	resource = new Skeleton(repository + "Skeleton/", name);
+	if (resource && resource->isValid())
+	{
+		mutexList.lock();
+		skeletonList[name] = resource;
+		resource->count++;
+		mutexList.unlock();
+	}
+	else if (name != defaultFont)
+	{
+		if (resource) delete resource;
+		resource = getSkeleton(defaultFont);
+	}
+	else if (resource)
+	{
+		delete resource;
+		resource = nullptr;
+	}
+	return resource;
+}
+Animation* ResourceManager::getAnimation(std::string name)
+{
+	Animation*resource = nullptr;
+	mutexList.lock();
+
+	//	search mesh in resources containers
+	auto it = animationList.find(name);
+	if (it != animationList.end())
+	{
+		resource = it->second;
+		resource->count++;
+	}
+	mutexList.unlock();
+	if (resource) return resource;
+
+	resource = new Animation(repository + "Skeleton/", name);
+	if (resource && resource->isValid())
+	{
+		mutexList.lock();
+		animationList[name] = resource;
+		resource->count++;
+		mutexList.unlock();
+	}
+	else if (name != defaultFont)
+	{
+		if (resource) delete resource;
+		resource = getAnimation(defaultFont);
+	}
+	else if (resource)
+	{
+		delete resource;
+		resource = nullptr;
+	}
+	return resource;
+}
+
 
 void ResourceManager::addMesh(Mesh* mesh)
 {
@@ -292,21 +394,25 @@ unsigned int ResourceManager::getNumberOfRessources(ResourceVirtual::ResourceTyp
 {
     switch(type)
     {
-        case ResourceVirtual::FONT:     return fontList.size();
-        case ResourceVirtual::MESH:     return meshList.size();
-        case ResourceVirtual::SHADER:   return shaderList.size();
-        case ResourceVirtual::TEXTURE:  return textureList.size();
-		default: return fontList.size() + shaderList.size() + textureList.size() + meshList.size();
+        case ResourceVirtual::FONT:			return fontList.size();
+        case ResourceVirtual::MESH:			return meshList.size();
+        case ResourceVirtual::SHADER:		return shaderList.size();
+        case ResourceVirtual::TEXTURE:		return textureList.size();
+		case ResourceVirtual::ANIMATION:	return animationList.size();
+		case ResourceVirtual::SKELETON:		return skeletonList.size();
+		default: return fontList.size() + shaderList.size() + textureList.size() + meshList.size() + animationList.size() + skeletonList.size();
     }
 }
 std::string ResourceManager::getDefaultName(ResourceVirtual::ResourceType type)
 {
     switch(type)
     {
-        case ResourceVirtual::FONT:     return defaultFont;
-        case ResourceVirtual::SHADER:   return defaultShader;
-        case ResourceVirtual::TEXTURE:  return defaultTexture;
-        case ResourceVirtual::MESH:     return defaultMesh;
+        case ResourceVirtual::FONT:			return defaultFont;
+        case ResourceVirtual::SHADER:		return defaultShader;
+        case ResourceVirtual::TEXTURE:		return defaultTexture;
+        case ResourceVirtual::MESH:			return defaultMesh;
+		case ResourceVirtual::ANIMATION:	return defaultAnimation;
+		case ResourceVirtual::SKELETON:		return defaultSkeleton;
         default: return "";
     }
 }
@@ -314,10 +420,12 @@ void ResourceManager::setDefaultName(ResourceVirtual::ResourceType type,std::str
 {
     switch(type)
     {
-		case ResourceVirtual::FONT:     defaultFont = name;			break;
-        case ResourceVirtual::SHADER:   defaultShader = name;		break;
-        case ResourceVirtual::TEXTURE:  defaultTexture = name;		break;
-		case ResourceVirtual::MESH:		defaultMesh = name;			break;
+		case ResourceVirtual::FONT:			defaultFont = name;			break;
+        case ResourceVirtual::SHADER:		defaultShader = name;		break;
+        case ResourceVirtual::TEXTURE:		defaultTexture = name;		break;
+		case ResourceVirtual::MESH:			defaultMesh = name;			break;
+		case ResourceVirtual::ANIMATION:	defaultAnimation = name;	break;
+		case ResourceVirtual::SKELETON:		defaultSkeleton = name;		break;
         default: break;
     }
 }

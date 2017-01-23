@@ -10,14 +10,22 @@
 
 struct Joint
 {
-	Joint() { parent = -1; name = "unknown joint"; };
+	Joint();
+
 	unsigned int parent;
 	std::vector<unsigned int> sons;
+
+	glm::vec3 offsetPosition;
+	glm::fquat offsetOrientation;
+	glm::vec3 offsetScale;
+
 	std::string name;
 };
 
 struct JointPose
 {
+	JointPose();
+
 	glm::vec3 position;
 	glm::fquat orientation;
 	glm::vec3 scale;

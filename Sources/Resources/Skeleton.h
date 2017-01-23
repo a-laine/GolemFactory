@@ -2,32 +2,15 @@
 
 #include <vector>
 #include <GL/glew.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/quaternion.hpp>
 
 #include "ResourceVirtual.h"
-#include "Loader/MeshLoader.h"
+#include "Joint.h"
 
 class Skeleton : public ResourceVirtual
 {
 	public:
-		//  Miscellaneous
-		enum ConfigurationFlags
-		{
-			VALID = 1 << 0
-		};
-		struct Joint
-		{
-			glm::vec3 position;
-			glm::fquat orientation;
-
-			unsigned int parent;
-			std::vector<unsigned int> sons;
-			std::string name;
-		};
-		//
-
 		//	Default
+		Skeleton(const std::string& skeletonName, const std::vector<unsigned int>& rootsList, const std::vector<Joint>& jointsList);
 		Skeleton(const std::string& path, const std::string& skeletonName);
 		~Skeleton();
 		//
@@ -38,17 +21,16 @@ class Skeleton : public ResourceVirtual
 		//
 
 		//	Attributes
-		static std::string extension;
+		static std::string extension;   //!< Default extension
 		//
 
-	//protected:
+	protected:
 		//	Attributes
-		uint8_t configuration;
-		unsigned int root;
-		std::vector<Joint> jointList;
+		std::vector<unsigned int> roots;
+		std::vector<Joint> joints;
 		//
 
-		//
+		///	Debug
 		void printJoint(unsigned int joint,int depth);
 		//
 };

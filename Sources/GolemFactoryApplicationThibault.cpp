@@ -80,7 +80,7 @@ int main()
 	std::cout << "game loop initiated" << std::endl;
 
 	int frame = 0;
-	std::mt19937 randomEngine;
+	//std::mt19937 randomEngine;
 
 	while (!glfwWindowShouldClose(window))
 	{

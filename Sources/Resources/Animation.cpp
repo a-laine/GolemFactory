@@ -2,34 +2,27 @@
 #include "Utiles/Parser/Reader.h"
 
 //  Static attributes
-std::string Animation::extension = ".anim";
+std::string Animation::extension = ".animation";
 //
 
-
 //  Default
-Animation::Animation(std::string path, std::string animationName) : ResourceVirtual(animationName, ResourceVirtual::ANIMATION)
+Animation::Animation(const std::string& animationName, const std::vector<KeyFrame>& animations)
+	: ResourceVirtual(animationName, ResourceVirtual::ANIMATION), timeLine(animations)
+{}
+
+Animation::Animation(const std::string& path, const std::string& animationName) : ResourceVirtual(animationName, ResourceVirtual::ANIMATION)
 {
-	//  Initialization
-	Variant v; Variant* tmp = NULL;
-	std::string tmpName;
-
-	try
-	{
-		Reader::parseFile(v, path + animationName + extension);
-		tmp = &(v.getMap().begin()->second);
-	}
-	catch (std::exception&) { return; }
-	Variant& animMap = *tmp;
-
-	std::cout << "toto" << std::endl;
+	std::cerr << "Animation loading in GF format not supported yet" << std::endl;
 }
 Animation::~Animation()
 {
 
 }
+//
 
+//	Public functions
 bool Animation::isValid() const
 {
-	return false;
+	return timeLine.empty();
 }
 //

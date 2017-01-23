@@ -122,7 +122,7 @@ int MeshLoader::loadMesh(std::string file)
 
 			//	read scene hierarchy for importing skeleton
 			joints.assign(boneMap.size(), Joint());
-			for (std::map<std::string, int>::iterator it = boneMap.begin(); it != boneMap.end(); it++)
+			for (std::map<std::string, int>::iterator it = boneMap.begin(); it != boneMap.end(); ++it)
 				joints[it->second].name = it->first;
 			if(scene->mRootNode) readSceneHierarchy(scene->mRootNode);
 			for (unsigned int i = 0; i < joints.size(); i++)
@@ -151,17 +151,38 @@ int MeshLoader::loadMesh(std::string file)
 									scene->mAnimations[i]->mChannels[j]->mRotationKeys[k].mValue.y,
 									scene->mAnimations[i]->mChannels[j]->mRotationKeys[k].mValue.z,
 									scene->mAnimations[i]->mChannels[j]->mRotationKeys[k].mValue.w);
-					updateKeyFrameOrientation((float) scene->mAnimations[i]->mChannels[j]->mPositionKeys[k].mTime, boneMap[channel], q);
+					updateKeyFrameOrientation((float) scene->mAnimations[i]->mChannels[j]->mRotationKeys[k].mTime, boneMap[channel], q);
 				}
 				for (unsigned int k = 0; k < scene->mAnimations[i]->mChannels[j]->mNumRotationKeys; k++)
 				{
-					s = glm::vec3(	scene->mAnimations[i]->mChannels[j]->mPositionKeys[k].mValue.x,
-									scene->mAnimations[i]->mChannels[j]->mPositionKeys[k].mValue.y,
-									scene->mAnimations[i]->mChannels[j]->mPositionKeys[k].mValue.z);
-					updateKeyFrameScale((float) scene->mAnimations[i]->mChannels[j]->mPositionKeys[k].mTime, boneMap[channel], s);
+					s = glm::vec3(	scene->mAnimations[i]->mChannels[j]->mScalingKeys[k].mValue.x,
+									scene->mAnimations[i]->mChannels[j]->mScalingKeys[k].mValue.y,
+									scene->mAnimations[i]->mChannels[j]->mScalingKeys[k].mValue.z);
+					updateKeyFrameScale((float) scene->mAnimations[i]->mChannels[j]->mScalingKeys[k].mTime, boneMap[channel], s);
 				}
 			}
 		}
+
+		///	Debug
+		/*for (unsigned int i = 0; i < joints.size(); i++)
+		{
+			std::cout << "joint : " << i << std::endl;
+			std::cout << "   p : " << joints[i].offsetPosition.x << ' ' << joints[i].offsetPosition.y << ' ' << joints[i].offsetPosition.z << std::endl;
+			std::cout << "   q : " << joints[i].offsetOrientation.w << ' ' << joints[i].offsetOrientation.x << ' ' << joints[i].offsetOrientation.y << ' ' << joints[i].offsetOrientation.z << std::endl;
+			std::cout << "   s : " << joints[i].offsetScale.x << ' ' << joints[i].offsetScale.y << ' ' << joints[i].offsetScale.z << std::endl;
+		}
+		for (unsigned int i = 0; i < animations.size(); i++)
+		{
+			std::cout << "time : " << animations[i].time << std::endl;
+			for (unsigned int j = 0; j < animations[i].poses.size(); j++)
+			{
+				std::cout << "   bone name : " << joints[j].name << std::endl;
+				JointPose jp = animations[i].poses[j];
+				std::cout << "      position : " << jp.position.x << ' ' << jp.position.y << ' ' << jp.position.z << std::endl;
+				std::cout << "      orientation : " << jp.orientation.w << ' ' << jp.orientation.x << ' ' << jp.orientation.y << ' ' << jp.orientation.z << std::endl;
+				std::cout << "      scale : " << jp.scale.x << ' ' << jp.scale.y << ' ' << jp.scale.z << std::endl;
+			}
+		}*/
 
 		importer.FreeScene();
 		return 0;
@@ -192,6 +213,16 @@ void MeshLoader::readSceneHierarchy(const aiNode* node, int depth)
 		{
 			joint = &joints[j];
 			parentIndex = j;
+
+			aiVector3D position;
+			aiQuaternion rotation;
+			aiVector3D scaling;
+
+			node->mTransformation.Decompose(scaling, rotation, position);
+			joint->offsetPosition = glm::vec3(position.x, position.y, position.z);
+			joint->offsetOrientation = glm::fquat(rotation.x, rotation.y, rotation.z, rotation.w);
+			joint->offsetScale = glm::vec3(scaling.x, scaling.y, scaling.z);
+
 			break;
 		}
 

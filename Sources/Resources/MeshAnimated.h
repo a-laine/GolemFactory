@@ -2,7 +2,6 @@
 
 #include <vector>
 #include <GL/glew.h>
-#include <glm/glm.hpp>
 
 #include "Mesh.h"
 #include "Joint.h"
@@ -35,8 +34,5 @@ class MeshAnimated : public Mesh
 
 		std::vector<glm::ivec3> bones;
 		std::vector<glm::vec3> weights;
-
-		unsigned int root;
-		std::vector<Joint> joints;
         //
 };

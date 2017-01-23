@@ -2,18 +2,17 @@
 
 
 //  Default
-MeshAnimated::MeshAnimated( const std::string& meshName, const std::vector<glm::vec3>& verticesArray, const std::vector<glm::vec3>& normalesArray,
-							const std::vector<glm::vec3>& colorArray, const std::vector<glm::ivec3>& bonesArray, const std::vector<glm::vec3>& weightsArray,
-							const std::vector<unsigned int>& facesArray)
-	: Mesh(meshName)
+MeshAnimated::MeshAnimated(const std::string& meshName, const std::vector<glm::vec3>& verticesArray, const std::vector<glm::vec3>& normalesArray,
+	const std::vector<glm::vec3>& colorArray, const std::vector<glm::ivec3>& bonesArray, const std::vector<glm::vec3>& weightsArray,
+	const std::vector<unsigned int>& facesArray)
+	: Mesh(meshName), bones(bonesArray), weights(weightsArray)
 {
 	configuration = VALID | HAS_SKELETON;
 	vertices = verticesArray;
 	normales = normalesArray;
 	colors = colorArray;
-	bones = bonesArray;
-	weights = weightsArray;
 	faces = facesArray;
+
 	computeBoundingBoxDimension();
 	initializeVBO();
 	initializeVAO();
