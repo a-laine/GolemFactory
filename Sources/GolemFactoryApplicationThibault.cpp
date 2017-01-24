@@ -31,9 +31,10 @@ void initializeForestScene();
 //
 
 
-std::string resourceRepository = "C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/";
-//std::string resourceRepository = "C:/Users/Thibault/Documents/Github/GolemFactory/Resources/";
+//std::string resourceRepository = "C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/";
+std::string resourceRepository = "C:/Users/Thibault/Documents/Github/GolemFactory/Resources/";
 //std::string resourceRepository = "Resources/";
+
 
 
 // program
@@ -55,7 +56,7 @@ int main()
 	
 	// Init Renderer;
 	Camera camera;
-		camera.setPosition(glm::vec3(-3,0,3));
+		camera.setPosition(glm::vec3(0,-3,3));
 	Renderer::getInstance()->setCamera(&camera);
 	Renderer::getInstance()->setWindow(window);
 	Renderer::getInstance()->initializeGrid(GRID_SIZE, GRID_ELEMENT_SIZE);
@@ -67,8 +68,8 @@ int main()
 	
 		//initializeForestScene();
 		InstanceDrawable* peasant = InstanceManager::getInstance()->getInstanceDrawable("Peasant8.dae", "skinning");
-		peasant->setSize(glm::vec3(0.1f, 0.1f, 0.1f));
-		//peasant->setPosition(glm::vec3(0.f, 0.f, 0.94f));
+		peasant->setSize(glm::vec3(0.01f, 0.01f, 0.01f));
+		peasant->setPosition(glm::vec3(0.f, 0.f, 0.94f));
 		SceneManager::getInstance()->addStaticObject(peasant);
 
 	// init loop time tracking

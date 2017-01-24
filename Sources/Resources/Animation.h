@@ -22,7 +22,7 @@ class Animation : public ResourceVirtual
 
 		//	Public functions
         bool isValid() const;
-		std::vector<glm::mat4x4> getBindPose(const std::vector<unsigned int>& roots, const std::vector<Joint>& hierarchy) const;
+		std::vector<glm::mat4x4> getBindPose(int frame, const std::vector<unsigned int>& roots, const std::vector<Joint>& hierarchy) const;
         //
 
 		//	Attributes
@@ -31,7 +31,7 @@ class Animation : public ResourceVirtual
 
     protected:
 		//	Protected functions
-		void computeBindPose(std::vector<glm::mat4x4>& pose, const glm::mat4x4& parentPose, unsigned int joint, const std::vector<Joint>& hierarchy, int depth = 0) const;
+		void computeBindPose(int frame, std::vector<glm::mat4>& pose, const glm::mat4& parentPose, unsigned int joint, const std::vector<Joint>& hierarchy, int depth = 0) const;
 		//
 
         //	Attributes

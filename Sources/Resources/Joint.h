@@ -13,13 +13,12 @@
 struct Joint
 {
 	Joint();
+	Joint(std::string n);
 
 	unsigned int parent;
 	std::vector<unsigned int> sons;
 
-	glm::vec3 offsetPosition;
-	glm::fquat offsetOrientation;
-	glm::vec3 offsetScale;
+	glm::mat4 offsetMatrix;
 
 	std::string name;
 };

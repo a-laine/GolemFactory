@@ -54,8 +54,10 @@ void Renderer::render()
 	if (!window || !camera) return;
 
 	// dummy animation timeline
-	dummy += 0.016;
-	if (dummy >= 6.28) dummy = 0.0;
+
+	//dummy += 0.16;
+	//if (dummy >= 6.28) dummy = 0.0;
+	if (dummy >= 22.) dummy = 0.0;
 
 	// bind matrix
 	glm::mat4 view = camera->getViewMatrix();
@@ -206,8 +208,12 @@ void Renderer::drawInstanceDrawable(InstanceDrawable* ins, const float* view, co
 				std::cout << m[0][i] << ' ' << m[1][i] << ' ' << m[2][i] << ' ' << m[3][i] << std::endl;
 			std::cout << std::endl;*/
 
+			std::vector<Joint> skeleton = skel->getJointHierarchy();
+			std::vector<glm::mat4> bonesPoses = anim->getBindPose((int) dummy, skel->getRoots(), skeleton);
+			
+			for (unsigned int i = 0; i < bonesPoses.size(); i++)
+				bonesPoses[i] = bonesPoses[i] * skeleton[i].offsetMatrix;
 
-			std::vector<glm::mat4x4> bonesPoses = anim->getBindPose(skel->getRoots(), skel->getJointHierarchy());
 			glUniformMatrix4fv(loc, bonesPoses.size(), FALSE, &bonesPoses[0][0][0]);
 		}
 	}

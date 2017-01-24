@@ -25,15 +25,17 @@ vec4 lightCoordinateWorldSpace = vec4(1000,200,1500,1);
 void main()
 {
 	// compute vertex position
-	mat4 boneTransform = skeleton[boneIDs[0]] * weights[0];
-	boneTransform += skeleton[boneIDs[1]] * weights[1];
-	boneTransform += skeleton[boneIDs[2]] * weights[2];
+	mat4 boneTransform = mat4(1.0);
+	if(boneIDs[0] >= 0) boneTransform += skeleton[boneIDs[0]] * weights[0];
+	if(boneIDs[1] >= 0) boneTransform += skeleton[boneIDs[1]] * weights[1];
+	if(boneIDs[2] >= 0) boneTransform += skeleton[boneIDs[2]] * weights[2];
 	vec4 transformPosition = boneTransform * vec4(position, 1.0);
 	
 	// end
 	gl_Position = projection * view * model * transformPosition;
 	fragmentNormal = (view * model * boneTransform * vec4(normal,0.0)).xyz;
-	fragmentColor = 2.0 * vertexcolor;
+	normalize(fragmentNormal);
+	fragmentColor = vertexcolor;
 	
 	vec3 eyeDirectionCameraSpace = - ( view * model * transformPosition).xyz;
 	vec3 lightPositionCameraSpace = (view * lightCoordinateWorldSpace).xyz;
