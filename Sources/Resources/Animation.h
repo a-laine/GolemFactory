@@ -31,7 +31,7 @@ class Animation : public ResourceVirtual
 
     protected:
 		//	Protected functions
-		void computeBindPose(std::vector<glm::mat4x4>& pose, const glm::mat4x4& parentPose, unsigned int joint, const std::vector<Joint>& hierarchy) const;
+		void computeBindPose(std::vector<glm::mat4x4>& pose, const glm::mat4x4& parentPose, unsigned int joint, const std::vector<Joint>& hierarchy, int depth = 0) const;
 		//
 
         //	Attributes

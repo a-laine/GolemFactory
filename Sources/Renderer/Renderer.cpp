@@ -201,6 +201,12 @@ void Renderer::drawInstanceDrawable(InstanceDrawable* ins, const float* view, co
 		Skeleton* skel = ins->getSkeleton();
 		if (anim && skel)
 		{
+			/*glm::mat4 m = ins->getModelMatrix();
+			for (int i = 0; i < 4; i++)
+				std::cout << m[0][i] << ' ' << m[1][i] << ' ' << m[2][i] << ' ' << m[3][i] << std::endl;
+			std::cout << std::endl;*/
+
+
 			std::vector<glm::mat4x4> bonesPoses = anim->getBindPose(skel->getRoots(), skel->getJointHierarchy());
 			glUniformMatrix4fv(loc, bonesPoses.size(), FALSE, &bonesPoses[0][0][0]);
 		}

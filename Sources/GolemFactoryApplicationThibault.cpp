@@ -31,8 +31,8 @@ void initializeForestScene();
 //
 
 
-//std::string resourceRepository = "C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/";
-std::string resourceRepository = "C:/Users/Thibault/Documents/Github/GolemFactory/Resources/";
+std::string resourceRepository = "C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/";
+//std::string resourceRepository = "C:/Users/Thibault/Documents/Github/GolemFactory/Resources/";
 //std::string resourceRepository = "Resources/";
 
 
@@ -67,8 +67,8 @@ int main()
 	
 		//initializeForestScene();
 		InstanceDrawable* peasant = InstanceManager::getInstance()->getInstanceDrawable("Peasant8.dae", "skinning");
-		peasant->setSize(glm::vec3(0.01f, 0.01f, 0.01f));
-		peasant->setPosition(glm::vec3(0.f, 0.f, 0.94f));
+		peasant->setSize(glm::vec3(0.1f, 0.1f, 0.1f));
+		//peasant->setPosition(glm::vec3(0.f, 0.f, 0.94f));
 		SceneManager::getInstance()->addStaticObject(peasant);
 
 	// init loop time tracking
