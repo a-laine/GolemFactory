@@ -38,6 +38,8 @@ class MeshLoader
 		std::vector<unsigned int> faces;
 
 		std::map<std::string, int> boneMap;
+
+		glm::mat4 globalMatrix;
 		std::vector<unsigned int> roots;
 		std::vector<Joint> joints;
 

@@ -19,7 +19,6 @@ struct Joint
 	std::vector<unsigned int> sons;
 
 	glm::mat4 offsetMatrix;
-
 	std::string name;
 };
 

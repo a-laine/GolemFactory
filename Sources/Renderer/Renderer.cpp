@@ -55,9 +55,8 @@ void Renderer::render()
 
 	// dummy animation timeline
 
-	//dummy += 0.16;
-	//if (dummy >= 6.28) dummy = 0.0;
-	if (dummy >= 22.) dummy = 0.0;
+	dummy += 0.16 / 3;
+	if (dummy >= 6.28) dummy = 0.0;
 
 	// bind matrix
 	glm::mat4 view = camera->getViewMatrix();
@@ -167,14 +166,11 @@ void Renderer::initializeGrid(unsigned int gridSize, float elementSize)
 void Renderer::loadMVPMatrix(Shader* shader, const float* model, const float* view, const float* projection) const
 {
 	int loc = shader->getUniformLocation("model");
-	if (loc >= 0)
-		glUniformMatrix4fv(loc, 1, GL_FALSE, model);
+	if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, model);
 	loc = shader->getUniformLocation("view");
-	if (loc >= 0)
-		glUniformMatrix4fv(loc, 1, GL_FALSE, view);
+	if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, view);
 	loc = shader->getUniformLocation("projection");
-	if (loc >= 0)
-		glUniformMatrix4fv(loc, 1, GL_FALSE, projection);
+	if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, projection);
 }
 void Renderer::drawInstanceDrawable(InstanceDrawable* ins, const float* view, const float* projection) const
 {
@@ -203,18 +199,18 @@ void Renderer::drawInstanceDrawable(InstanceDrawable* ins, const float* view, co
 		Skeleton* skel = ins->getSkeleton();
 		if (anim && skel)
 		{
-			/*glm::mat4 m = ins->getModelMatrix();
-			for (int i = 0; i < 4; i++)
-				std::cout << m[0][i] << ' ' << m[1][i] << ' ' << m[2][i] << ' ' << m[3][i] << std::endl;
-			std::cout << std::endl;*/
+			std::vector<glm::mat4> bonesPoses = anim->getBindPose((float)dummy, skel->roots, skel->joints);
 
-			std::vector<Joint> skeleton = skel->getJointHierarchy();
-			std::vector<glm::mat4> bonesPoses = anim->getBindPose((int) dummy, skel->getRoots(), skeleton);
-			
 			for (unsigned int i = 0; i < bonesPoses.size(); i++)
-				bonesPoses[i] = bonesPoses[i] * skeleton[i].offsetMatrix;
-
-			glUniformMatrix4fv(loc, bonesPoses.size(), FALSE, &bonesPoses[0][0][0]);
+			{
+				bonesPoses[i] = skel->joints[i].offsetMatrix;
+				//std::cout << i << std::endl;
+				//for (int j = 0; j < 4; j++)
+				//	std::cout << bonesPoses[i][0][j] << ' ' << bonesPoses[i][1][j] << ' ' << bonesPoses[i][2][j] << ' ' << bonesPoses[i][3][j] << std::endl;
+				//std::cout << std::endl;
+			}
+				
+			glUniformMatrix4fv(loc, bonesPoses.size(), FALSE, (float*)bonesPoses.data());
 		}
 	}
 

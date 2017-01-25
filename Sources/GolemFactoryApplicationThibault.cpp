@@ -31,8 +31,8 @@ void initializeForestScene();
 //
 
 
-//std::string resourceRepository = "C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/";
-std::string resourceRepository = "C:/Users/Thibault/Documents/Github/GolemFactory/Resources/";
+std::string resourceRepository = "C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/";
+//std::string resourceRepository = "C:/Users/Thibault/Documents/Github/GolemFactory/Resources/";
 //std::string resourceRepository = "Resources/";
 
 

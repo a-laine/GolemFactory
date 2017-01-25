@@ -6,8 +6,8 @@ std::string Skeleton::extension = ".skeleton";
 //
 
 //	Default
-Skeleton::Skeleton(const std::string& skeletonName, const std::vector<unsigned int>& rootsList, const std::vector<Joint>& jointsList)
-	: ResourceVirtual(skeletonName, ResourceVirtual::SKELETON), roots(rootsList), joints(jointsList)
+Skeleton::Skeleton(const std::string& skeletonName, const std::vector<unsigned int>& rootsList, const std::vector<Joint>& jointsList, const glm::mat4& globalMatrix)
+	: ResourceVirtual(skeletonName, ResourceVirtual::SKELETON), global(globalMatrix), roots(rootsList), joints(jointsList)
 {}
 
 Skeleton::Skeleton(const std::string& path, const std::string& skeletonName) : ResourceVirtual(skeletonName, ResourceVirtual::SKELETON)
@@ -25,8 +25,6 @@ bool Skeleton::isValid() const
 {
 	return roots.empty() || joints.empty();
 }
-std::vector<unsigned int> Skeleton::getRoots() const { return roots; }
-std::vector<Joint> Skeleton::getJointHierarchy() const { return joints; }
 //
 
 ///	Debug

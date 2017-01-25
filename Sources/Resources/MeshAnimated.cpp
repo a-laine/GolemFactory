@@ -46,7 +46,7 @@ void MeshAnimated::initializeVBO()
 	glGenBuffers(1, &bonesBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, bonesBuffer);
 	glBufferData(GL_ARRAY_BUFFER, bones.size() * sizeof(glm::ivec3), bones.data(), GL_STATIC_DRAW);
-
+	
 	glGenBuffers(1, &weightsBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, weightsBuffer);
 	glBufferData(GL_ARRAY_BUFFER, weights.size() * sizeof(glm::vec3), weights.data(), GL_STATIC_DRAW);
@@ -74,7 +74,7 @@ void MeshAnimated::initializeVAO()
 
 	glEnableVertexAttribArray(3);
 	glBindBuffer(GL_ARRAY_BUFFER, bonesBuffer);
-	glVertexAttribPointer(3, 3, GL_INT, GL_FALSE, 0, NULL);
+	glVertexAttribIPointer(3, 3, GL_INT, 0, NULL);
 	
 	glEnableVertexAttribArray(4);
 	glBindBuffer(GL_ARRAY_BUFFER, weightsBuffer);

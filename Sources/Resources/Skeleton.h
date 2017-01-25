@@ -8,18 +8,16 @@
 
 class Skeleton : public ResourceVirtual
 {
+	friend class Renderer;
 	public:
 		//	Default
-		Skeleton(const std::string& skeletonName, const std::vector<unsigned int>& rootsList, const std::vector<Joint>& jointsList);
+		Skeleton(const std::string& skeletonName, const std::vector<unsigned int>& rootsList, const std::vector<Joint>& jointsList, const glm::mat4& globalMatrix);
 		Skeleton(const std::string& path, const std::string& skeletonName);
 		~Skeleton();
 		//
 
 		//	Public functions
 		bool isValid() const;
-
-		std::vector<unsigned int> getRoots() const;
-		std::vector<Joint> getJointHierarchy() const;
 		//
 
 		///	Debug
@@ -32,6 +30,7 @@ class Skeleton : public ResourceVirtual
 
 	protected:
 		//	Attributes
+		glm::mat4 global;
 		std::vector<unsigned int> roots;
 		std::vector<Joint> joints;
 		//
