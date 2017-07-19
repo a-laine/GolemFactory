@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <atomic>
+#include <list>
 
 #include <GL/glew.h>
 #include <glm/glm.hpp>
@@ -31,13 +32,25 @@ class InstanceVirtual
 	friend class InstanceContainer;
 
 	public:
+		//  Miscellaneous
+		/*!
+		*	\enum InstanceType
+		*	\brief The type of the resources
+		*/
+		enum InstanceType
+		{
+			NONE = 0,       //!< Virtual
+			CONTAINER = 1,  //!< Texture
+			DRAWABLE = 2    //!< Shader
+		};
+
 		//  Default
 		/*!
 		 *  \brief Constructor
 		 *  
 		 *  Instance position is set to zero, size to one, and orientation matrix to identity
 		 */
-		InstanceVirtual();
+		InstanceVirtual(InstanceType instanceType = NONE);
 
 		/*!
 		 *  \brief Destructor
@@ -46,6 +59,9 @@ class InstanceVirtual
 		//
 
 		//	Set/Get functions
+		InstanceType getType() const;
+
+
 		/*!
 		 *  \brief Define instance position
 		 *  \param p : the new instance position
@@ -112,10 +128,17 @@ class InstanceVirtual
 		*  Actually the InstanceVirtual::getBSRadius function return always zero (a point object !).
 		*/
 		virtual float getBSRadius();
+
+		virtual Shader* getShader() const;
+		virtual Animation* getAnimation() const;
+		virtual Skeleton* getSkeleton() const;
+		virtual Mesh* getMesh() const;
+		virtual const std::list<InstanceVirtual*>& getChildList() const;
 		//
 		
 	protected:
 		// Attributes
+		InstanceType type;
 		uint32_t id;				//!< The unique identifying number to design instance
 		std::atomic_uint count;		//!< The number of clients pointing the instance.
 		

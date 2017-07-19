@@ -1,4 +1,5 @@
 #version 330
+#define MAX_SKELETON_BONE 32
 
 // input
 layout(location = 0) in vec3 position;
@@ -11,7 +12,8 @@ uniform mat4 model;			// model matrix (has to be present at this location)
 uniform mat4 view;			// view matrix
 uniform mat4 projection;	// projection matrix
 
-uniform mat4 skeleton[32]; // bone matrix
+uniform mat4 skeletonPose[MAX_SKELETON_BONE]; 	// bone matrix
+uniform mat4 bindPose[MAX_SKELETON_BONE]; 		// vertex to bone transformation matrix
 
 // output
 out vec3 lightDirectionCameraSpace;
@@ -25,9 +27,9 @@ void main()
 {
 	// compute vertex position
 	mat4 boneTransform = mat4(1.0);
-	if(boneIDs.x >= 0) boneTransform += skeleton[boneIDs.x] * weights.x;
-	/*if(boneIDs.y >= 0) boneTransform += skeleton[boneIDs.y] * weights.y;
-	if(boneIDs.z >= 0) boneTransform += skeleton[boneIDs.z] * weights.z;*/
+	if(boneIDs.x >= 0) boneTransform += skeletonPose[boneIDs.x] * bindPose[boneIDs.x] * weights.x;
+	if(boneIDs.y >= 0) boneTransform += skeletonPose[boneIDs.y] * bindPose[boneIDs.y] * weights.y;
+	if(boneIDs.z >= 0) boneTransform += skeletonPose[boneIDs.z] * bindPose[boneIDs.z] * weights.z;
 	vec4 transformPosition = boneTransform * vec4(position, 1.0);
 	
 	// end

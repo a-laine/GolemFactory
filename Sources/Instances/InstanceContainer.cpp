@@ -2,7 +2,7 @@
 
 
 //  Default
-InstanceContainer::InstanceContainer() : InstanceVirtual() {}
+InstanceContainer::InstanceContainer() : InstanceVirtual(InstanceVirtual::CONTAINER) {}
 InstanceContainer::~InstanceContainer()
 {
 	for (auto it = child.begin(); it != child.end(); it++)

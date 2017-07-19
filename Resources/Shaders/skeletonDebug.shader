@@ -1,9 +1,9 @@
-Skinning
+SkeletonDebug
 {
-	vertex :   "skinning.vs";
-	fragment : "skinning.fs";
+	vertex :   "skeletonDebug.vs";
+	fragment : "skeletonDebug.fs";
+	geometry : "skeletonDebug.gs";
 	
-	//  Geometry shader
 	//  Tessellation evaluation shader
 	//  Tessellation control shader
 	
@@ -13,6 +13,6 @@ Skinning
 		view : "mat4";
 		projection : "mat4";
 		skeletonPose : "mat4 array32";
-		bindPose : "mat4 array32";
+		//bindPose : "mat4 array32";
 	};
 }

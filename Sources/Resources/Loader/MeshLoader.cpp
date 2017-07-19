@@ -90,7 +90,13 @@ int MeshLoader::loadMesh(std::string file)
 					if (boneMap.find(boneName) == boneMap.end())
 					{
 						boneMap[boneName] = boneMap.size();
-						joints.push_back(Joint(boneName));
+
+						glm::mat4 offset;
+						for (int l = 0; l < 4; l++)
+							for (int m = 0; m < 4; m++)
+								offset[l][m] = scene->mMeshes[i]->mBones[j]->mOffsetMatrix[m][l];
+
+						joints.push_back(Joint(boneName, offset));
 					}
 				}
 
@@ -182,27 +188,26 @@ int MeshLoader::loadMesh(std::string file)
 			std::cout << "   q : " << joints[i].offsetOrientation.w << ' ' << joints[i].offsetOrientation.x << ' ' << joints[i].offsetOrientation.y << ' ' << joints[i].offsetOrientation.z << std::endl;
 			std::cout << "   s : " << joints[i].offsetScale.x << ' ' << joints[i].offsetScale.y << ' ' << joints[i].offsetScale.z << std::endl;
 		}*/
-		for (unsigned int i = 0; i < animations.size(); i++)
+		/*for (unsigned int i = 0; i < animations.size() && i<1; i++)
 		{
-			if (i<1)std::cout << "time : " << animations[i].time << std::endl;
+			std::cout << "time : " << animations[i].time << std::endl;
 			for (unsigned int j = 0; j < animations[i].poses.size(); j++)
 			{
-				if (i != 0)continue;
-				//std::cout << "   bone name : " << joints[j].name << std::endl;
-				/*JointPose jp = animations[i].poses[j];
+				std::cout << "   bone name : " << joints[j].name << std::endl;
+				JointPose jp = animations[i].poses[j];
 				glm::mat4 m = glm::translate(jp.position) * glm::toMat4(jp.orientation);
 
-				//if (i<1) std::cout << "      position : " << jp.position.x << ' ' << jp.position.y << ' ' << jp.position.z << std::endl;
-				//if (i<1) std::cout << "      orientation : " << jp.orientation.w << ' ' << jp.orientation.x << ' ' << jp.orientation.y << ' ' << jp.orientation.z << std::endl;
+				std::cout << "      position : " << jp.position.x << ' ' << jp.position.y << ' ' << jp.position.z << std::endl;
+				std::cout << "      orientation : " << jp.orientation.w << ' ' << jp.orientation.x << ' ' << jp.orientation.y << ' ' << jp.orientation.z << std::endl;
 
-				for (int i = 0; i < 4; i++)
-					std::cout << m[0][i] << ' ' << m[1][i] << ' ' << m[2][i] << ' ' << m[3][i] << std::endl;
-				std::cout << std::endl;*/
+				//for (int i = 0; i < 4; i++)
+				//	std::cout << "   " << m[0][i] << ' ' << m[1][i] << ' ' << m[2][i] << ' ' << m[3][i] << std::endl;
+				std::cout << std::endl;
 				//std::cout << "      scale : " << jp.scale.x << ' ' << jp.scale.y << ' ' << jp.scale.z << std::endl;
 			}
-		}
+		}*/
 
-		importer.FreeScene();
+		//importer.FreeScene();
 		return 0;
 	}
 }
@@ -236,7 +241,7 @@ void MeshLoader::readSceneHierarchy(const aiNode* node, int depth)
 
 			for (int l = 0; l < 4; l++)
 				for (int m = 0; m < 4; m++)
-					joint->offsetMatrix[l][m] = node->mTransformation[m][l];
+					joint->relativeBindTransform[l][m] = node->mTransformation[m][l];
 			break;
 		}
 

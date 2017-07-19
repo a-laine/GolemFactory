@@ -8,7 +8,9 @@ std::string Animation::extension = ".animation";
 //  Default
 Animation::Animation(const std::string& animationName, const std::vector<KeyFrame>& animations)
 	: ResourceVirtual(animationName, ResourceVirtual::ANIMATION), timeLine(animations)
-{}
+{
+	debugframe = 0;
+}
 
 Animation::Animation(const std::string& path, const std::string& animationName) : ResourceVirtual(animationName, ResourceVirtual::ANIMATION)
 {
@@ -25,34 +27,37 @@ bool Animation::isValid() const
 {
 	return timeLine.empty();
 }
-std::vector<glm::mat4> Animation::getBindPose(float frame, const std::vector<unsigned int>& roots, const std::vector<Joint>& hierarchy) const
+std::vector<glm::mat4> Animation::getBindPose(const std::vector<unsigned int>& roots, const std::vector<Joint>& hierarchy) const
 {
 	std::vector<glm::mat4> pose(timeLine[0].poses.size());
 	for (unsigned int i = 0; i < roots.size(); i++)
-		computeBindPose(frame, pose, glm::mat4(1.f), roots[i], hierarchy);
+		computeBindPose(pose, glm::mat4(1.f), roots[i], hierarchy);
+	return pose;
+}
+std::vector<glm::mat4> Animation::getPose(const std::vector<unsigned int>& roots, const std::vector<Joint>& hierarchy) const
+{
+	std::vector<glm::mat4> pose(timeLine[0].poses.size());
+	for (unsigned int i = 0; i < roots.size(); i++)
+		computePose(pose, glm::mat4(1.f), roots[i], hierarchy);
 	return pose;
 }
 //
 
 //	Protected functions
-void Animation::computeBindPose(float frame, std::vector<glm::mat4>& pose, const glm::mat4& parentPose, unsigned int joint, const std::vector<Joint>& hierarchy, int depth) const
+void Animation::computePose(std::vector<glm::mat4>& pose, const glm::mat4& parentPose, unsigned int joint, const std::vector<Joint>& hierarchy, int depth) const
 {
-	glm::mat4 t = glm::translate(timeLine[0].poses[joint].position);
-	glm::mat4 o = glm::toMat4(timeLine[0].poses[joint].orientation);
-	glm::mat4 s = glm::scale(timeLine[0].poses[joint].scale);
-	pose[joint] = parentPose;// *t*o*s;
+	glm::mat4 t = glm::translate(timeLine[debugframe].poses[joint].position);
+	glm::mat4 r = glm::toMat4(timeLine[debugframe].poses[joint].orientation);
+	glm::mat4 s = glm::scale(timeLine[debugframe].poses[joint].scale);
 
-	/*
-	for (int i = 0; i < 4; i++)
-	{
-		for (int j = 0; j < depth; j++)
-			std::cout << "  ";
-		std::cout << pose[joint][0][i] << ' ' << pose[joint][1][i] << ' ' << pose[joint][2][i] << ' ' << pose[joint][3][i] << std::endl;
-	}
-	std::cout << std::endl;
-	*/
+	pose[joint] = parentPose * t * r * s;
 
 	for (unsigned int i = 0; i < hierarchy[joint].sons.size(); i++)
-		computeBindPose(frame, pose, pose[joint], hierarchy[joint].sons[i], hierarchy, depth+1);
+		computePose(pose, pose[joint], hierarchy[joint].sons[i], hierarchy, depth + 1);
 }
-//
+void Animation::computeBindPose(std::vector<glm::mat4>& pose, const glm::mat4& parentPose, unsigned int joint, const std::vector<Joint>& hierarchy, int depth) const
+{
+	pose[joint] = hierarchy[joint].inverseLocalBindTransform;
+	for (unsigned int i = 0; i < hierarchy[joint].sons.size(); i++)
+		computeBindPose(pose, pose[joint], hierarchy[joint].sons[i], hierarchy, depth + 1);
+}

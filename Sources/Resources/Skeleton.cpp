@@ -8,7 +8,10 @@ std::string Skeleton::extension = ".skeleton";
 //	Default
 Skeleton::Skeleton(const std::string& skeletonName, const std::vector<unsigned int>& rootsList, const std::vector<Joint>& jointsList, const glm::mat4& globalMatrix)
 	: ResourceVirtual(skeletonName, ResourceVirtual::SKELETON), global(globalMatrix), roots(rootsList), joints(jointsList)
-{}
+{
+	for (unsigned int i = 0; i < roots.size(); i++)
+		computeLocalBindTransform(roots[i], glm::mat4(1.f));
+}
 
 Skeleton::Skeleton(const std::string& path, const std::string& skeletonName) : ResourceVirtual(skeletonName, ResourceVirtual::SKELETON)
 {
@@ -24,6 +27,16 @@ Skeleton::~Skeleton()
 bool Skeleton::isValid() const
 {
 	return roots.empty() || joints.empty();
+}
+//
+
+//	Private functions
+void Skeleton::computeLocalBindTransform(unsigned int joint, glm::mat4 localParentTransform)
+{
+	glm::mat4 m = localParentTransform * joints[joint].relativeBindTransform;
+	joints[joint].inverseLocalBindTransform = glm::inverse(m);
+	for (unsigned int i = 0; i < joints[joint].sons.size(); i++)
+		computeLocalBindTransform(joints[joint].sons[i], m);
 }
 //
 

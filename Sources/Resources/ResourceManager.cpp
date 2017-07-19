@@ -105,9 +105,9 @@ Mesh* ResourceManager::getMesh(std::string name)
 	//	create skeleton if needed
 	if (!ml.roots.empty())
 	{
-		Skeleton* skeleton = new Skeleton(name, ml.roots, ml.joints, ml.globalMatrix);
 		if (skeletonList.find(name) == skeletonList.end())
 		{
+			Skeleton* skeleton = new Skeleton(name, ml.roots, ml.joints, ml.globalMatrix);
 			mutexList.lock();
 			skeletonList[name] = skeleton;
 			mutexList.unlock();

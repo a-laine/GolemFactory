@@ -37,5 +37,8 @@ class Skeleton : public ResourceVirtual
 
 		///	Debug
 		void printJoint(unsigned int joint,int depth);
+
+		//
+		void computeLocalBindTransform(unsigned int joint, glm::mat4 localParentTransform);
 		//
 };

@@ -2,7 +2,7 @@
 
 
 //  Default
-InstanceDrawable::InstanceDrawable(std::string meshName, std::string shaderName) : InstanceVirtual(), skeleton(nullptr), animation(nullptr)
+InstanceDrawable::InstanceDrawable(std::string meshName, std::string shaderName) : InstanceVirtual(InstanceVirtual::DRAWABLE), skeleton(nullptr), animation(nullptr)
 {
 	mesh = ResourceManager::getInstance()->getMesh(meshName);
 	shader = ResourceManager::getInstance()->getShader(shaderName);

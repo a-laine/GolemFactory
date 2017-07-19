@@ -17,8 +17,8 @@
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-#define GRID_SIZE 10
-#define GRID_ELEMENT_SIZE 1.f
+#define GRID_SIZE 100
+#define GRID_ELEMENT_SIZE 5.f
 
 // prototypes
 GLFWwindow* initGLFW();
@@ -31,8 +31,8 @@ void initializeForestScene();
 //
 
 
-std::string resourceRepository = "C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/";
 //std::string resourceRepository = "C:/Users/Thibault/Documents/Github/GolemFactory/Resources/";
+std::string resourceRepository = "C:/Users/Thibault/Documents/Github/GolemFactory/Resources/";
 //std::string resourceRepository = "Resources/";
 
 
@@ -67,10 +67,25 @@ int main()
 	SceneManager::getInstance()->setWorldSize(glm::vec3(GRID_SIZE*GRID_ELEMENT_SIZE, GRID_SIZE*GRID_ELEMENT_SIZE, 50));
 	
 		//initializeForestScene();
-		InstanceDrawable* peasant = InstanceManager::getInstance()->getInstanceDrawable("Peasant8.dae", "skinning");
-		peasant->setSize(glm::vec3(0.01f, 0.01f, 0.01f));
+		InstanceDrawable* peasant = InstanceManager::getInstance()->getInstanceDrawable("Peasant8.dae", "skeletonDebug");
+		peasant->setSize(glm::vec3(0.01, 0.01, 0.01));
 		peasant->setPosition(glm::vec3(0.f, 0.f, 0.94f));
 		SceneManager::getInstance()->addStaticObject(peasant);
+
+		InstanceDrawable* peasant2 = InstanceManager::getInstance()->getInstanceDrawable("Peasant8.dae", "skinning");
+		peasant2->setSize(peasant->getSize());
+		peasant2->setPosition(peasant->getPosition());
+		//SceneManager::getInstance()->addStaticObject(peasant2);
+
+		/*glm::fquat q(-0.07f, 0.75f, 0.1f, 0.6f);
+		std::cout << "quaternion : " << q.w << ' ' << q.x << ' ' << q.y << ' ' << q.z << std::endl;
+
+		glm::mat4 m = glm::toMat4(q);
+		std::cout << "matrix : " << std::endl;
+		for (int k = 0; k < 4; k++)
+			std::cout << m[k][0] << ' ' << m[k][1] << ' ' << m[k][2] << ' ' << m[k][3] << ' ' << std::endl;*/
+
+
 
 	// init loop time tracking
 	double elapseTime = 16.;

@@ -12,13 +12,13 @@
 
 struct Joint
 {
-	Joint();
-	Joint(std::string n);
+	Joint(std::string n = "unknown joint", glm::mat4 offsetMatrix = glm::mat4(1.f));
 
 	unsigned int parent;
 	std::vector<unsigned int> sons;
 
-	glm::mat4 offsetMatrix;
+	glm::mat4 relativeBindTransform;
+	glm::mat4 inverseLocalBindTransform;
 	std::string name;
 };
 
