@@ -205,12 +205,11 @@ void Renderer::drawInstanceDrawable(InstanceVirtual* ins, const float* view, con
 		Skeleton* skel = ins->getSkeleton();
 		if (anim && skel)
 		{
-			if (dummy > 3)
+			if (dummy > 2)
 			{
 				dummy = 0.0;
 				anim->debugframe++;
 				anim->debugframe %= anim->timeLine.size();
-				std::cout << "animation : " << anim->debugframe << std::endl;
 			}
 
 			std::vector<glm::mat4> bonesPoses = anim->getPose(skel->roots, skel->joints);

@@ -13,7 +13,6 @@ uniform mat4 view;			// view matrix
 uniform mat4 projection;	// projection matrix
 
 uniform mat4 skeletonPose[MAX_SKELETON_BONE]; 	// bone matrix
-//uniform mat4 bindPose[MAX_SKELETON_BONE]; 		// vertex to bone transformation matrix
 
 // output
 out int boneID;
@@ -24,11 +23,11 @@ void main()
 {	
 	// compute most revelant bone ID
 	boneID = boneIDs.x;
-	if(boneIDs.y >= 0) boneID = boneIDs.y;
-	if(boneIDs.z >= 0) boneID = boneIDs.z;
+	if(weights.y > 0) boneID = boneIDs.y;
+	if(weights.z > 0) boneID = boneIDs.z;
 	
 	// compute joint position (bone position)
-	gl_Position = vec4(30.0 * vec3(skeletonPose[boneID][3][0] , skeletonPose[boneID][3][1] , skeletonPose[boneID][3][2]) , 1.0);
+	gl_Position = vec4(20 * vec3(skeletonPose[boneID][3][0] , skeletonPose[boneID][3][1] , skeletonPose[boneID][3][2]) , 1.0);
 	
 	// save matrix
 	PVM = projection * view * model;

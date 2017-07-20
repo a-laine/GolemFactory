@@ -15,7 +15,7 @@ class Animation : public ResourceVirtual
 	friend class Renderer;
     public:
         //  Default
-		Animation(const std::string& animationName, const std::vector<KeyFrame>& animations);
+		Animation(const std::string& animationName, const std::vector<KeyFrame>& keyFrames);
 		Animation(const std::string& path, const std::string& animationName);
         ~Animation();
 		//
@@ -35,8 +35,8 @@ class Animation : public ResourceVirtual
 
     protected:
 		//	Protected functions
-		void computeBindPose(std::vector<glm::mat4>& pose, const glm::mat4& parentPose, unsigned int joint, const std::vector<Joint>& hierarchy, int depth = 0) const;
-		void computePose(std::vector<glm::mat4>& pose, const glm::mat4& parentPose, unsigned int joint, const std::vector<Joint>& hierarchy, int depth = 0) const;
+		void computeInverseBindPose(std::vector<glm::mat4>& pose, const glm::mat4& parentPose, unsigned int joint, const std::vector<Joint>& hierarchy) const;
+		void computePose(std::vector<glm::mat4>& pose, const glm::mat4& parentPose, unsigned int joint, const std::vector<Joint>& hierarchy) const;
 		//
 
         //	Attributes

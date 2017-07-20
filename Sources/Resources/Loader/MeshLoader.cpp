@@ -28,6 +28,7 @@ int MeshLoader::loadMesh(std::string file)
 			for (int j = 0; j < 4; j++)
 				globalMatrix[i][j] = m[j][i];
 		globalMatrix = glm::mat4(1.f);
+
 		//	usefull parameters for next
 		unsigned int facesOffset = 0;
 		glm::vec3 meshColor;
@@ -139,6 +140,12 @@ int MeshLoader::loadMesh(std::string file)
 					}
 				}
 			}
+			for (unsigned int i = 0; i < bones.size(); i++)
+			{
+				if (bones[i].x < 0) bones[i].x = 0;
+				if (bones[i].y < 0) bones[i].y = 0;
+				if (bones[i].z < 0) bones[i].z = 0;
+			}
 
 			//	read scene hierarchy for importing skeleton
 			if (scene->mRootNode) readSceneHierarchy(scene->mRootNode);
@@ -147,67 +154,135 @@ int MeshLoader::loadMesh(std::string file)
 		}
 
 		//	Load animation
+		/*	Debug
+			if (scene->mNumAnimations > 0)
+			{
+				std::cout << "mesh : " << file.substr(file.find_last_of("/") + 1) << std::endl;
+				std::cout << "mNumAnimations : " << scene->mNumAnimations << std::endl;
+			}
+		*/
 		for (unsigned int i = 0; i < scene->mNumAnimations; i++)
 		{
+			// init
+			/*	Debug
+				std::cout << "   annimation " << i << ", mNumChannels : " << scene->mAnimations[i]->mNumChannels << std::endl;
+			*/
+
+			BidirectionnalVectorMap positionBM;
+			BidirectionnalVectorMap scaleBM;
+			BidirectionnalQuaternionMap rotationBM;
+			glm::vec3 position, scale;
+			glm::fquat rotation;
+
+			// extract array from assimp
 			for (unsigned int j = 0; j < scene->mAnimations[i]->mNumChannels; j++)
 			{
-				std::string channel(scene->mAnimations[i]->mChannels[j]->mNodeName.C_Str());
-				glm::vec3 p, s;
-				glm::fquat q;
+				aiNodeAnim* currentChannel = scene->mAnimations[i]->mChannels[j];
+				std::string channelName(currentChannel->mNodeName.C_Str());
+				
+				/*	Debug
+					std::cout << "      channel " << channelName << std::endl;
+					std::cout << "        mNumPositionKeys : " << currentChannel->mNumPositionKeys << std::endl;
+					std::cout << "        mNumRotationKeys : " << currentChannel->mNumRotationKeys << std::endl;
+					std::cout << "        mNumScalingKeys : "  << currentChannel->mNumScalingKeys << std::endl;
+				*/
 
+				// import translation vector
 				for (unsigned int k = 0; k < scene->mAnimations[i]->mChannels[j]->mNumPositionKeys; k++)
 				{
-					p = glm::vec3(	scene->mAnimations[i]->mChannels[j]->mPositionKeys[k].mValue.x,
-									scene->mAnimations[i]->mChannels[j]->mPositionKeys[k].mValue.y,
-									scene->mAnimations[i]->mChannels[j]->mPositionKeys[k].mValue.z);
-					updateKeyFramePosition((float) scene->mAnimations[i]->mChannels[j]->mPositionKeys[k].mTime, boneMap[channel], p);
+					position = glm::vec3(scene->mAnimations[i]->mChannels[j]->mPositionKeys[k].mValue.x,
+										 scene->mAnimations[i]->mChannels[j]->mPositionKeys[k].mValue.y,
+										 scene->mAnimations[i]->mChannels[j]->mPositionKeys[k].mValue.z);
+					positionBM.push_back(std::make_tuple((float)currentChannel->mPositionKeys[k].mTime, channelName, position));
 				}
+
+				// import rotation quaternion
 				for (unsigned int k = 0; k < scene->mAnimations[i]->mChannels[j]->mNumRotationKeys; k++)
 				{
-					q = glm::fquat( scene->mAnimations[i]->mChannels[j]->mRotationKeys[k].mValue.w,
-									scene->mAnimations[i]->mChannels[j]->mRotationKeys[k].mValue.x,
-									scene->mAnimations[i]->mChannels[j]->mRotationKeys[k].mValue.y,
-									scene->mAnimations[i]->mChannels[j]->mRotationKeys[k].mValue.z);
-					updateKeyFrameOrientation((float) scene->mAnimations[i]->mChannels[j]->mRotationKeys[k].mTime, boneMap[channel], q);
+					rotation = glm::fquat(scene->mAnimations[i]->mChannels[j]->mRotationKeys[k].mValue.w,
+										  scene->mAnimations[i]->mChannels[j]->mRotationKeys[k].mValue.x,
+										  scene->mAnimations[i]->mChannels[j]->mRotationKeys[k].mValue.y,
+										  scene->mAnimations[i]->mChannels[j]->mRotationKeys[k].mValue.z);
+					rotationBM.push_back(std::make_tuple((float)currentChannel->mRotationKeys[k].mTime, channelName, rotation));
 				}
-				for (unsigned int k = 0; k < scene->mAnimations[i]->mChannels[j]->mNumRotationKeys; k++)
+
+				// import scaling vector
+				for (unsigned int k = 0; k < scene->mAnimations[i]->mChannels[j]->mNumScalingKeys; k++)
 				{
-					s = glm::vec3(	scene->mAnimations[i]->mChannels[j]->mScalingKeys[k].mValue.x,
-									scene->mAnimations[i]->mChannels[j]->mScalingKeys[k].mValue.y,
-									scene->mAnimations[i]->mChannels[j]->mScalingKeys[k].mValue.z);
-					updateKeyFrameScale((float) scene->mAnimations[i]->mChannels[j]->mScalingKeys[k].mTime, boneMap[channel], s);
+					scale = glm::vec3(scene->mAnimations[i]->mChannels[j]->mScalingKeys[k].mValue.x,
+									  scene->mAnimations[i]->mChannels[j]->mScalingKeys[k].mValue.y,
+									  scene->mAnimations[i]->mChannels[j]->mScalingKeys[k].mValue.z);
+					scaleBM.push_back(std::make_tuple((float)currentChannel->mScalingKeys[k].mTime, channelName, scale));
 				}
 			}
-		}
 
-		///	Debug
-		/*for (unsigned int i = 0; i < joints.size(); i++)
-		{
-			std::cout << "joint : " << i << std::endl;
-			std::cout << "   p : " << joints[i].offsetPosition.x << ' ' << joints[i].offsetPosition.y << ' ' << joints[i].offsetPosition.z << std::endl;
-			std::cout << "   q : " << joints[i].offsetOrientation.w << ' ' << joints[i].offsetOrientation.x << ' ' << joints[i].offsetOrientation.y << ' ' << joints[i].offsetOrientation.z << std::endl;
-			std::cout << "   s : " << joints[i].offsetScale.x << ' ' << joints[i].offsetScale.y << ' ' << joints[i].offsetScale.z << std::endl;
-		}*/
-		/*for (unsigned int i = 0; i < animations.size() && i<1; i++)
-		{
-			std::cout << "time : " << animations[i].time << std::endl;
-			for (unsigned int j = 0; j < animations[i].poses.size(); j++)
+			// sort lists in time
+			positionBM.sort([](tupleVec3 a, tupleVec3 b) { return std::get<float>(a) < std::get<float>(b); });
+			scaleBM.sort([](tupleVec3 a, tupleVec3 b) { return std::get<float>(a) < std::get<float>(b); });
+			rotationBM.sort([](tupleQuat a, tupleQuat b) { return std::get<float>(a) < std::get<float>(b); });
+
+			// read lists in time and create keyframes
+			KeyFrame currentKeyFrame;
+				currentKeyFrame.time = 0.f;
+				currentKeyFrame.poses.assign(joints.size(), JointPose());
+			BidirectionnalVectorMap::iterator itPos = positionBM.begin();
+			BidirectionnalVectorMap::iterator itSca = scaleBM.begin();
+			BidirectionnalQuaternionMap::iterator itRot = rotationBM.begin();
+
+			while (itPos != positionBM.end() || itSca != scaleBM.end() || itRot != rotationBM.end())
 			{
-				std::cout << "   bone name : " << joints[j].name << std::endl;
-				JointPose jp = animations[i].poses[j];
-				glm::mat4 m = glm::translate(jp.position) * glm::toMat4(jp.orientation);
+				// counter for no more information for current time
+				int increment = 0;
 
-				std::cout << "      position : " << jp.position.x << ' ' << jp.position.y << ' ' << jp.position.z << std::endl;
-				std::cout << "      orientation : " << jp.orientation.w << ' ' << jp.orientation.x << ' ' << jp.orientation.y << ' ' << jp.orientation.z << std::endl;
+				// update current keyframe pose for skeleton (here position)
+				if (itPos != positionBM.end() && std::get<float>(*itPos) <= currentKeyFrame.time)
+				{
+					currentKeyFrame.poses[boneMap[std::get<std::string>(*itPos)]].position = std::get<glm::vec3>(*itPos);
+					itPos++;
+				}
+				else increment++;
 
-				//for (int i = 0; i < 4; i++)
-				//	std::cout << "   " << m[0][i] << ' ' << m[1][i] << ' ' << m[2][i] << ' ' << m[3][i] << std::endl;
-				std::cout << std::endl;
-				//std::cout << "      scale : " << jp.scale.x << ' ' << jp.scale.y << ' ' << jp.scale.z << std::endl;
+				// update current keyframe pose for skeleton (here rotation)
+				if (itRot != rotationBM.end() && std::get<float>(*itRot) <= currentKeyFrame.time)
+				{
+					currentKeyFrame.poses[boneMap[std::get<std::string>(*itRot)]].orientation = std::get<glm::fquat>(*itRot);
+					itRot++;
+				}
+				else increment++;
+
+				// update current keyframe pose for skeleton (here scaling)
+				if (itSca != scaleBM.end() && std::get<float>(*itSca) <= currentKeyFrame.time)
+				{
+					currentKeyFrame.poses[boneMap[std::get<std::string>(*itSca)]].scale = std::get<glm::vec3>(*itSca);
+					itSca++;
+				}
+				else increment++;
+
+				if (increment >= 3)
+				{
+					// push keyframe and increment currentKeyFrame time
+					animations.push_back(currentKeyFrame);
+
+					float t1 = FLT_MAX; if (itPos != positionBM.end()) t1 = std::get<float>(*itPos);
+					float t2 = FLT_MAX; if (itRot != rotationBM.end()) t1 = std::get<float>(*itRot);
+					float t3 = FLT_MAX; if (itSca != scaleBM.end())    t1 = std::get<float>(*itSca);
+					
+					currentKeyFrame.time = std::min(std::min(t1, t2), t3);
+					if (currentKeyFrame.time == FLT_MAX) break;
+				}
 			}
-		}*/
+			/*	Warnning : 
+				if multiple animation are attached to mesh they will be all stacked into "animations" attributes 
+				(time is discontinue when changing from one to another).
+				maybe add some label to diferenciate them			
+			*/
+		}
+		/*	Debug
+			if (scene->mNumAnimations > 0) std::cout << std::endl << std::endl;
+		*/
 
-		//importer.FreeScene();
+		// end
+		importer.FreeScene();
 		return 0;
 	}
 }
@@ -256,35 +331,6 @@ void MeshLoader::readSceneHierarchy(const aiNode* node, int depth)
 			}
 		readSceneHierarchy(node->mChildren[i], depth + 1);
 	}
-}
-int MeshLoader::searchKeyFrameIndex(const float& keyTime)
-{
-	//	Search keyFrame
-	for (unsigned int i = 0; i < animations.size(); i++)
-		if (animations[i].time == keyTime) return i;
-
-	//	keyFrame not found
-	int keyFrameIndex = animations.size();
-	KeyFrame kf;
-		kf.time = keyTime;
-		kf.poses.assign(joints.size(), JointPose());
-		animations.push_back(kf);
-	return keyFrameIndex;
-}
-void MeshLoader::updateKeyFramePosition(const float& keyTime, const int& joint, const glm::vec3& p)
-{
-	int keyFrameIndex = searchKeyFrameIndex(keyTime);
-	animations[keyFrameIndex].poses[joint].position = p;
-}
-void MeshLoader::updateKeyFrameOrientation(const float& keyTime, const int& joint, const glm::fquat& q)
-{
-	int keyFrameIndex = searchKeyFrameIndex(keyTime);
-	animations[keyFrameIndex].poses[joint].orientation = q;
-}
-void MeshLoader::updateKeyFrameScale(const float& keyTime, const int& joint, const glm::vec3& s)
-{
-	int keyFrameIndex = searchKeyFrameIndex(keyTime);
-	animations[keyFrameIndex].poses[joint].scale = s;
 }
 //
 

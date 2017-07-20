@@ -66,6 +66,7 @@ int main()
 	SceneManager::getInstance()->setWorldPosition(glm::vec3(0,0,25));
 	SceneManager::getInstance()->setWorldSize(glm::vec3(GRID_SIZE*GRID_ELEMENT_SIZE, GRID_SIZE*GRID_ELEMENT_SIZE, 50));
 	
+
 		//initializeForestScene();
 		InstanceDrawable* peasant = InstanceManager::getInstance()->getInstanceDrawable("Peasant8.dae", "skeletonDebug");
 		peasant->setSize(glm::vec3(0.01, 0.01, 0.01));
@@ -74,16 +75,9 @@ int main()
 
 		InstanceDrawable* peasant2 = InstanceManager::getInstance()->getInstanceDrawable("Peasant8.dae", "skinning");
 		peasant2->setSize(peasant->getSize());
-		peasant2->setPosition(peasant->getPosition());
-		//SceneManager::getInstance()->addStaticObject(peasant2);
+		peasant2->setPosition(peasant->getPosition() + glm::vec3(0.f, 0.5f, 0.f));
+		SceneManager::getInstance()->addStaticObject(peasant2);
 
-		/*glm::fquat q(-0.07f, 0.75f, 0.1f, 0.6f);
-		std::cout << "quaternion : " << q.w << ' ' << q.x << ' ' << q.y << ' ' << q.z << std::endl;
-
-		glm::mat4 m = glm::toMat4(q);
-		std::cout << "matrix : " << std::endl;
-		for (int k = 0; k < 4; k++)
-			std::cout << m[k][0] << ' ' << m[k][1] << ' ' << m[k][2] << ' ' << m[k][3] << ' ' << std::endl;*/
 
 
 

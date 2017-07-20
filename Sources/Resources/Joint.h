@@ -13,6 +13,7 @@
 struct Joint
 {
 	Joint(std::string n = "unknown joint", glm::mat4 offsetMatrix = glm::mat4(1.f));
+	inline bool operator==(const Joint& right) { return (name==right.name && parent == right.parent && sons == right.sons); };
 
 	unsigned int parent;
 	std::vector<unsigned int> sons;

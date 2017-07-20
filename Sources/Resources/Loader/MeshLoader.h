@@ -2,6 +2,8 @@
 
 #include <vector>
 #include <map>
+#include <list>
+#include <tuple>
 #include <string>
 #include <fstream>
 #include <sstream>
@@ -46,13 +48,23 @@ class MeshLoader
 		std::vector<KeyFrame> animations;
 
 	private:
+		typedef std::tuple<float, std::string, glm::vec3>  tupleVec3;
+		typedef std::tuple<float, std::string, glm::fquat> tupleQuat;
+		typedef std::list<tupleVec3> BidirectionnalVectorMap;
+		typedef std::list<tupleQuat> BidirectionnalQuaternionMap;
+
 		//	Private functions
 		void clear();
 		void readSceneHierarchy(const aiNode* node, int depth = 0);
-		int searchKeyFrameIndex(const float& keyTime);
+
+		/*int searchKeyFrameIndex(const float& keyTime);
 		void updateKeyFramePosition(const float& keyTime, const int& joint, const glm::vec3& p);
 		void updateKeyFrameOrientation(const float& keyTime, const int& joint, const glm::fquat& q);
-		void updateKeyFrameScale(const float& keyTime, const int& joint, const glm::vec3& s);
+		void updateKeyFrameScale(const float& keyTime, const int& joint, const glm::vec3& s);*/
+
+		/*BidirectionnalVectorMap::iterator serachFromTime(const float& time, BidirectionnalVectorMap& bm);
+		BidirectionnalMap::iterator serachFromJointName(const Joint& joint, BidirectionnalMap& bm);
+		BidirectionnalMap::iterator insertInBidirectionnalMap(float time, Joint joint, JointPose jointPose, BidirectionnalMap::iterator position);*/
 		//
 
 		//	Debug

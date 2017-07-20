@@ -25,11 +25,13 @@ vec4 lightCoordinateWorldSpace = vec4(1000,200,1500,1);
 // program
 void main()
 {
+	// length of normalized weights
+	normalize(weights);
+
 	// compute vertex position
-	mat4 boneTransform = mat4(1.0);
-	if(boneIDs.x >= 0) boneTransform += skeletonPose[boneIDs.x] * bindPose[boneIDs.x] * weights.x;
-	if(boneIDs.y >= 0) boneTransform += skeletonPose[boneIDs.y] * bindPose[boneIDs.y] * weights.y;
-	if(boneIDs.z >= 0) boneTransform += skeletonPose[boneIDs.z] * bindPose[boneIDs.z] * weights.z;
+	mat4 boneTransform  = skeletonPose[boneIDs.x] * bindPose[boneIDs.x] * weights.x;
+	boneTransform += skeletonPose[boneIDs.y] * bindPose[boneIDs.y] * weights.y;
+	boneTransform += skeletonPose[boneIDs.z] * bindPose[boneIDs.z] * weights.z;
 	vec4 transformPosition = boneTransform * vec4(position, 1.0);
 	
 	// end
