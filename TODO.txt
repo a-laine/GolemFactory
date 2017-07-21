@@ -47,7 +47,7 @@ ResourceManager
 	  a joint can be defined as irrelevant in a pose (useful for pose blending)
 	* add a resource SkeletonAnimation from parsing a json file
 	  this file specify a poses list. A pose is a list of position for all joint of the skeleton.
-	  an animation can be defined as looped. if yes when the animation reach the end she loop on itself (useful for walking, running ...)
+	  an animation can be defined as looped. if yes when the animation reach the end, she loop on itself (useful for walking, running ...)
 	  an animation can be defined as flaged. if yes a flags will be set up when the animation end
 
 => this define the "Action state machine" described in game architecture (this holly bible book!) p604

@@ -49,7 +49,7 @@ void drawCross(vec3 p1, vec3 p2, float size, vec3 color) //8 vertices out
 
 void main()
 {
-	float s = 10;
+	float s = 0.1;
 	if(boneID[0] == boneID[1] && boneID[0] == boneID[2])
 		drawCube(gl_in[0].gl_Position.xyz, s , vec3(0.5 , 0.5 , 1.0));
 	if(boneID[0] != boneID[1])

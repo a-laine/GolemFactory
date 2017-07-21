@@ -23,7 +23,8 @@ class Mesh : public ResourceVirtual
         //  Default
 		Mesh(const std::string& meshName);
 		Mesh(const std::string& meshName, const std::vector<glm::vec3>& verticesArray, const std::vector<glm::vec3>& normalesArray, const std::vector<glm::vec3>& colorArray, const std::vector<unsigned int>& facesArray);
-        virtual ~Mesh();
+		Mesh(const Mesh& original);
+		virtual ~Mesh();
 		//
 
 		//	Public functions

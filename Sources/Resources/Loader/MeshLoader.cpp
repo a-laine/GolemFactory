@@ -154,20 +154,9 @@ int MeshLoader::loadMesh(std::string file)
 		}
 
 		//	Load animation
-		/*	Debug
-			if (scene->mNumAnimations > 0)
-			{
-				std::cout << "mesh : " << file.substr(file.find_last_of("/") + 1) << std::endl;
-				std::cout << "mNumAnimations : " << scene->mNumAnimations << std::endl;
-			}
-		*/
 		for (unsigned int i = 0; i < scene->mNumAnimations; i++)
 		{
 			// init
-			/*	Debug
-				std::cout << "   annimation " << i << ", mNumChannels : " << scene->mAnimations[i]->mNumChannels << std::endl;
-			*/
-
 			BidirectionnalVectorMap positionBM;
 			BidirectionnalVectorMap scaleBM;
 			BidirectionnalQuaternionMap rotationBM;
@@ -180,13 +169,6 @@ int MeshLoader::loadMesh(std::string file)
 				aiNodeAnim* currentChannel = scene->mAnimations[i]->mChannels[j];
 				std::string channelName(currentChannel->mNodeName.C_Str());
 				
-				/*	Debug
-					std::cout << "      channel " << channelName << std::endl;
-					std::cout << "        mNumPositionKeys : " << currentChannel->mNumPositionKeys << std::endl;
-					std::cout << "        mNumRotationKeys : " << currentChannel->mNumRotationKeys << std::endl;
-					std::cout << "        mNumScalingKeys : "  << currentChannel->mNumScalingKeys << std::endl;
-				*/
-
 				// import translation vector
 				for (unsigned int k = 0; k < scene->mAnimations[i]->mChannels[j]->mNumPositionKeys; k++)
 				{
@@ -245,7 +227,7 @@ int MeshLoader::loadMesh(std::string file)
 				// update current keyframe pose for skeleton (here rotation)
 				if (itRot != rotationBM.end() && std::get<float>(*itRot) <= currentKeyFrame.time)
 				{
-					currentKeyFrame.poses[boneMap[std::get<std::string>(*itRot)]].orientation = std::get<glm::fquat>(*itRot);
+					currentKeyFrame.poses[boneMap[std::get<std::string>(*itRot)]].rotation = std::get<glm::fquat>(*itRot);
 					itRot++;
 				}
 				else increment++;
@@ -277,9 +259,6 @@ int MeshLoader::loadMesh(std::string file)
 				maybe add some label to diferenciate them			
 			*/
 		}
-		/*	Debug
-			if (scene->mNumAnimations > 0) std::cout << std::endl << std::endl;
-		*/
 
 		// end
 		importer.FreeScene();

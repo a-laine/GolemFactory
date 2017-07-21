@@ -13,6 +13,5 @@ SkeletonDebug
 		view : "mat4";
 		projection : "mat4";
 		skeletonPose : "mat4 array32";
-		//bindPose : "mat4 array32";
 	};
 }

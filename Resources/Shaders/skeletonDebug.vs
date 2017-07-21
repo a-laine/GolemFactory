@@ -27,7 +27,7 @@ void main()
 	if(weights.z > 0) boneID = boneIDs.z;
 	
 	// compute joint position (bone position)
-	gl_Position = vec4(20 * vec3(skeletonPose[boneID][3][0] , skeletonPose[boneID][3][1] , skeletonPose[boneID][3][2]) , 1.0);
+	gl_Position = skeletonPose[boneID][3];
 	
 	// save matrix
 	PVM = projection * view * model;

@@ -1,4 +1,4 @@
-// Golem Factory 1.0.cpp : define consol application entry point
+// Golem Factory 1.0.cpp : define console application entry point
 //
 
 #include <iostream>
@@ -22,19 +22,13 @@
 
 // prototypes
 GLFWwindow* initGLFW();
-void initializeForestScene();
+void initializeForestScene(bool emptyPlace = false);
 //
 
 
-//
-//void generateRagdoll(Skeleton* s);
-//
-
-
-//std::string resourceRepository = "C:/Users/Thibault/Documents/Github/GolemFactory/Resources/";
+//std::string resourceRepository = "C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/";
 std::string resourceRepository = "C:/Users/Thibault/Documents/Github/GolemFactory/Resources/";
 //std::string resourceRepository = "Resources/";
-
 
 
 // program
@@ -60,25 +54,23 @@ int main()
 	Renderer::getInstance()->setCamera(&camera);
 	Renderer::getInstance()->setWindow(window);
 	Renderer::getInstance()->initializeGrid(GRID_SIZE, GRID_ELEMENT_SIZE);
-	ResourceManager::getInstance()->getShader("tree");
+	//Renderer::getInstance()->setDefaultShader(ResourceManager::getInstance()->getShader("skeletonDebug"));
+	//ResourceManager::getInstance()->getShader("tree");
 
 	// init scene
 	SceneManager::getInstance()->setWorldPosition(glm::vec3(0,0,25));
 	SceneManager::getInstance()->setWorldSize(glm::vec3(GRID_SIZE*GRID_ELEMENT_SIZE, GRID_SIZE*GRID_ELEMENT_SIZE, 50));
 	
-
-		//initializeForestScene();
-		InstanceDrawable* peasant = InstanceManager::getInstance()->getInstanceDrawable("Peasant8.dae", "skeletonDebug");
-		peasant->setSize(glm::vec3(0.01, 0.01, 0.01));
-		peasant->setPosition(glm::vec3(0.f, 0.f, 0.94f));
+		initializeForestScene(true);
+		/*
+			Pourquoi un facteur 20 !!!!!!!!!!!!!!!!!!!!!
+			et en plus il y a le meme dans le shader
+		*/
+		InstanceDrawable* peasant = InstanceManager::getInstance()->getInstanceDrawable("Peasant9.dae", "skinning");
+		float scale = 1.7f / peasant->getBBSize().z * 20;
+		peasant->setSize(glm::vec3(scale));
+		peasant->setPosition(glm::vec3(0.f, 0.f, -scale/20 * peasant->getMesh()->sizeZ.x));
 		SceneManager::getInstance()->addStaticObject(peasant);
-
-		InstanceDrawable* peasant2 = InstanceManager::getInstance()->getInstanceDrawable("Peasant8.dae", "skinning");
-		peasant2->setSize(peasant->getSize());
-		peasant2->setPosition(peasant->getPosition() + glm::vec3(0.f, 0.5f, 0.f));
-		SceneManager::getInstance()->addStaticObject(peasant2);
-
-
 
 
 	// init loop time tracking
@@ -129,18 +121,10 @@ int main()
 			if(v[i] == QUIT) glfwSetWindowShouldClose(window, GL_TRUE);
 			else if(v[i] == CHANGE_CURSOR_MODE) EventHandler::getInstance()->setCursorMode(!EventHandler::getInstance()->getCursorMode());
 			else if (v[i] == ACTION) FPScam = !FPScam;
-			/*else if (v[i] == DOUBLE_CLICK_LEFT)
+			else if (v[i] == DOUBLE_CLICK_LEFT)
 			{
-				if (!SceneManager::getInstance()->removeObject(house))
-					std::cout << "fail remove instance from scene" << std::endl;
-				InstanceManager::getInstance()->release(house);
-
-				double time = glfwGetTime();
-				house = hg.getHouse(randomEngine()%10000, 20, 30);
-				std::cout << 1000.f*(glfwGetTime() - time) << std::endl;
-				InstanceManager::getInstance()->add(house);
-				SceneManager::getInstance()->addStaticObject(house);
-			}*/
+				
+			}
 		}
 
 		//Animate camera
@@ -186,7 +170,7 @@ GLFWwindow* initGLFW()
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	GLFWwindow*window = glfwCreateWindow(640, 480, "Golem Factory v1.0", NULL, NULL);
+	GLFWwindow*window = glfwCreateWindow(800, 480, "Golem Factory v1.0", NULL, NULL);
 	if (!window)
 	{
 		glfwTerminate();
@@ -197,7 +181,7 @@ GLFWwindow* initGLFW()
 	return window;
 }
 
-void initializeForestScene()
+void initializeForestScene(bool emptyPlace)
 {
 	// blue sky & green grass!!
 	glClearColor(0.6f, 0.85f, 0.91f, 0.f);
@@ -212,12 +196,15 @@ void initializeForestScene()
 	HouseGenerator hg;
 	srand((unsigned int)time(NULL));
 
-	//	center tree
-	InstanceDrawable* bigTree = InstanceManager::getInstance()->getInstanceDrawable();
-	bigTree->setMesh("firTree1.obj");
-	bigTree->setShader("tree");
-	bigTree->setSize(glm::vec3(5.f, 5.f, 5.f));
-	SceneManager::getInstance()->addStaticObject(bigTree);
+	//	center tree in place
+	if (!emptyPlace)
+	{
+		InstanceDrawable* bigTree = InstanceManager::getInstance()->getInstanceDrawable();
+		bigTree->setMesh("firTree1.obj");
+		bigTree->setShader("tree");
+		bigTree->setSize(glm::vec3(5.f, 5.f, 5.f));
+		SceneManager::getInstance()->addStaticObject(bigTree);
+	}
 
 	// village
 	int vilageHouseCount = 0;
@@ -313,50 +300,5 @@ void initializeForestScene()
 	std::cout << "House count : " << vilageHouseCount  << std::endl;
 	std::cout << "Insert fail : " << fail << std::endl;
 }
-//
-
-//
-/*
-void createBone(Skeleton* s, unsigned int joint, glm::vec3 parentPosition)
-{
-	InstanceDrawable* ins = InstanceManager::getInstance()->getInstanceDrawable("cube2.obj");
-	if (!ins) return;
-
-	if (joint == s->root)
-	{
-		ins->setSize(glm::vec3(0, 0, 0));
-		ins->setPosition(parentPosition);
-	}
-	else
-	{
-		ins->setSize(glm::vec3(0, 0, 0));
-		ins->setPosition(parentPosition);
-
-		ins->setPosition(parentPosition + 0.5f * s->jointList[joint].position);
-		ins->setSize(glm::vec3(0.1, 0.1, 0.48f * glm::length(s->jointList[joint].position)));
-		glm::vec3 v = glm::normalize(s->jointList[joint].position);
-		if (glm::dot(v, glm::vec3(0, 0, 1)) != 1.f)
-			ins->setOrientation(glm::orientation(-v, glm::vec3(0, 0, 1)));
-		//s->jointList[joint].orientation = glm::quat_cast(glm::orientation(-v, glm::vec3(0, 0, 1)));
-
-		if (s->jointList[joint].sons.empty())
-		{
-			InstanceDrawable* leaf = InstanceManager::getInstance()->getInstanceDrawable("icosphere.obj");
-
-			leaf->setSize(glm::vec3(0.3, 0.3, 0.3));
-			leaf->setPosition(parentPosition + s->jointList[joint].position);
-			SceneManager::getInstance()->addStaticObject(leaf);
-		}
-	}
-	SceneManager::getInstance()->addStaticObject(ins);
-
-	for (unsigned int i = 0; i < s->jointList[joint].sons.size(); i++)
-		createBone(s, s->jointList[joint].sons[i], parentPosition + s->jointList[joint].position);
-}
-void generateRagdoll(Skeleton* s)
-{
-	createBone(s, s->root, glm::vec3(0, 0, 3));
-}
-*/
 //
 

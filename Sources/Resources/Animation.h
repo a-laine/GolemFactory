@@ -22,24 +22,23 @@ class Animation : public ResourceVirtual
 
 		//	Public functions
         bool isValid() const;
+		std::vector<glm::mat4x4> getInverseBindPose(const std::vector<unsigned int>& roots, const std::vector<Joint>& hierarchy);
 		std::vector<glm::mat4x4> getBindPose(const std::vector<unsigned int>& roots, const std::vector<Joint>& hierarchy) const;
-		std::vector<glm::mat4x4> getPose(const std::vector<unsigned int>& roots, const std::vector<Joint>& hierarchy) const;
+		std::vector<glm::mat4x4> getPose(const unsigned int& keyFramePose ,const std::vector<unsigned int>& roots, const std::vector<Joint>& hierarchy) const;
         //
 
 		//	Attributes
 		static std::string extension;   //!< Default extension
-		
-		///
-		int debugframe;
 		//
 
     protected:
 		//	Protected functions
-		void computeInverseBindPose(std::vector<glm::mat4>& pose, const glm::mat4& parentPose, unsigned int joint, const std::vector<Joint>& hierarchy) const;
-		void computePose(std::vector<glm::mat4>& pose, const glm::mat4& parentPose, unsigned int joint, const std::vector<Joint>& hierarchy) const;
+		void computeBindPose(std::vector<glm::mat4>& pose, const glm::mat4& parentPose, unsigned int joint, const std::vector<Joint>& hierarchy) const;
+		void computePose(const unsigned int& keyFramePose, std::vector<glm::mat4>& pose, const glm::mat4& parentPose, unsigned int joint, const std::vector<Joint>& hierarchy) const;
 		//
 
         //	Attributes
 		std::vector<KeyFrame> timeLine;
+		std::vector<glm::mat4> inverseBindPose;
 		//
 };

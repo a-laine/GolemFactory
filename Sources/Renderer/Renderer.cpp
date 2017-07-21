@@ -55,7 +55,7 @@ void Renderer::render()
 
 	// dummy animation timeline
 
-	dummy += 0.16 / 3;
+	dummy += 0.16 / 30.f;
 	if (dummy >= 6.28) dummy = 0.0;
 
 	// bind matrix
@@ -205,25 +205,18 @@ void Renderer::drawInstanceDrawable(InstanceVirtual* ins, const float* view, con
 		Skeleton* skel = ins->getSkeleton();
 		if (anim && skel)
 		{
-			if (dummy > 2)
-			{
-				dummy = 0.0;
-				anim->debugframe++;
-				anim->debugframe %= anim->timeLine.size();
-			}
-
-			std::vector<glm::mat4> bonesPoses = anim->getPose(skel->roots, skel->joints);
+			std::vector<glm::mat4> bonesPoses = anim->getPose((unsigned int) (3*dummy), skel->roots, skel->joints);
 			glUniformMatrix4fv(loc, bonesPoses.size(), FALSE, (float*)bonesPoses.data());
 		}
 	}
-	loc = shaderToUse->getUniformLocation("bindPose");
+	loc = shaderToUse->getUniformLocation("inverseBindPose");
 	if (loc >= 0)
 	{
 		Animation* anim = ins->getAnimation();
 		Skeleton* skel = ins->getSkeleton();
 		if (anim && skel)
 		{
-			std::vector<glm::mat4> bonesPoses = anim->getBindPose(skel->roots, skel->joints);
+			std::vector<glm::mat4> bonesPoses = anim->getInverseBindPose(skel->roots, skel->joints);
 			glUniformMatrix4fv(loc, bonesPoses.size(), FALSE, (float*)bonesPoses.data());
 		}
 	}

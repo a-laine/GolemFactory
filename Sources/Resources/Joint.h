@@ -28,7 +28,7 @@ struct JointPose
 	JointPose();
 
 	glm::vec3 position;
-	glm::fquat orientation;
+	glm::fquat rotation;
 	glm::vec3 scale;
 };
 
