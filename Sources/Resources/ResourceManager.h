@@ -41,6 +41,8 @@ class ResourceManager : public Singleton<ResourceManager>
 		void addTexture(Texture* texture);
 		void addShader(Shader* shader);
 		void addFont(Font* font);
+		void addSkeleton(Skeleton* skeleton);
+		void addAnimation(Animation* animation);
         //
 
         //  Set/get functions

@@ -11,17 +11,16 @@ class Skeleton : public ResourceVirtual
 	friend class Renderer;
 	public:
 		//	Default
-		Skeleton(const std::string& skeletonName, const std::vector<unsigned int>& rootsList, const std::vector<Joint>& jointsList, const glm::mat4& globalMatrix);
+		Skeleton(const std::string& skeletonName, const std::vector<unsigned int>& rootsList, const std::vector<Joint>& jointsList);
 		Skeleton(const std::string& path, const std::string& skeletonName);
 		~Skeleton();
 		//
 
 		//	Public functions
 		bool isValid() const;
-		//
 
-		///	Debug
-		void debug();
+		std::vector<glm::mat4x4> getInverseBindPose() const;
+		std::vector<glm::mat4x4> getBindPose() const;
 		//
 
 		//	Attributes
@@ -30,15 +29,14 @@ class Skeleton : public ResourceVirtual
 
 	protected:
 		//	Attributes
-		glm::mat4 global;
 		std::vector<unsigned int> roots;
 		std::vector<Joint> joints;
+
+		std::vector<glm::mat4> inverseBindPose;
+		std::vector<glm::mat4> bindPose;
 		//
 
-		///	Debug
-		void printJoint(unsigned int joint,int depth);
-
-		//
-		void computeLocalBindTransform(unsigned int joint, glm::mat4 localParentTransform);
+		//	Protected functions
+		void computeBindPose(const glm::mat4& parentPose, unsigned int joint);
 		//
 };

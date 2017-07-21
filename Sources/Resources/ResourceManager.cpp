@@ -103,11 +103,11 @@ Mesh* ResourceManager::getMesh(std::string name)
 	else resource = new MeshAnimated(name, !ml.animations.empty(), ml.vertices, ml.normales, ml.colors, ml.bones, ml.weights, ml.faces);
 
 	//	create skeleton if needed
-	if (!ml.roots.empty())
+	if (!ml.roots.empty() && skeletonList.find(name) == skeletonList.end())
 	{
-		if (skeletonList.find(name) == skeletonList.end())
+		Skeleton* skeleton = new Skeleton(name, ml.roots, ml.joints);
+		if (skeleton->isValid())
 		{
-			Skeleton* skeleton = new Skeleton(name, ml.roots, ml.joints, ml.globalMatrix);
 			mutexList.lock();
 			skeletonList[name] = skeleton;
 			mutexList.unlock();
@@ -115,10 +115,10 @@ Mesh* ResourceManager::getMesh(std::string name)
 	}
 
 	//	create animation if needed
-	if (!ml.animations.empty())
+	if (!ml.animations.empty() && animationList.find(name) == animationList.end())
 	{
 		Animation* animation = new Animation(name, ml.animations);
-		if (animationList.find(name) == animationList.end())
+		if (animation->isValid())
 		{
 			mutexList.lock();
 			animationList[name] = animation;
@@ -385,6 +385,36 @@ void ResourceManager::addFont(Font* font)
 		fontList[font->name] = font;
 		mutexList.unlock();
 		font->count++;
+	}
+}
+void ResourceManager::addSkeleton(Skeleton* skeleton)
+{
+	auto it = skeletonList.find(skeleton->name);
+	if (it != skeletonList.end())
+	{
+		skeleton->count++;
+	}
+	else
+	{
+		mutexList.lock();
+		skeletonList[skeleton->name] = skeleton;
+		mutexList.unlock();
+		skeleton->count++;
+	}
+}
+void ResourceManager::addAnimation(Animation* animation)
+{
+	auto it = animationList.find(animation->name);
+	if (it != animationList.end())
+	{
+		animation->count++;
+	}
+	else
+	{
+		mutexList.lock();
+		animationList[animation->name] = animation;
+		mutexList.unlock();
+		animation->count++;
 	}
 }
 //

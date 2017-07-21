@@ -12,14 +12,12 @@
 
 struct Joint
 {
-	Joint(std::string n = "unknown joint", glm::mat4 offsetMatrix = glm::mat4(1.f));
-	inline bool operator==(const Joint& right) { return (name==right.name && parent == right.parent && sons == right.sons); };
+	Joint(std::string jointName = "unknown joint");
 
 	unsigned int parent;
 	std::vector<unsigned int> sons;
 
 	glm::mat4 relativeBindTransform;
-	glm::mat4 inverseLocalBindTransform;
 	std::string name;
 };
 

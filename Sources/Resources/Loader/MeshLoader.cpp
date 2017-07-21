@@ -91,17 +91,9 @@ int MeshLoader::loadMesh(std::string file)
 					if (boneMap.find(boneName) == boneMap.end())
 					{
 						boneMap[boneName] = boneMap.size();
-
-						glm::mat4 offset;
-						for (int l = 0; l < 4; l++)
-							for (int m = 0; m < 4; m++)
-								offset[l][m] = scene->mMeshes[i]->mBones[j]->mOffsetMatrix[m][l];
-
-						joints.push_back(Joint(boneName, offset));
+						joints.push_back(Joint(boneName));
 					}
-				}
-
-						
+				}	
 
 			//	import bone index & weight for each vertex
 			bones.assign(vertices.size(), glm::ivec3(-1, -1, -1));
@@ -140,6 +132,8 @@ int MeshLoader::loadMesh(std::string file)
 					}
 				}
 			}
+
+			// replace negative value by 0 (for shader simplifaction)
 			for (unsigned int i = 0; i < bones.size(); i++)
 			{
 				if (bones[i].x < 0) bones[i].x = 0;

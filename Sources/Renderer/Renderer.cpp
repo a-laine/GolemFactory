@@ -205,7 +205,8 @@ void Renderer::drawInstanceDrawable(InstanceVirtual* ins, const float* view, con
 		Skeleton* skel = ins->getSkeleton();
 		if (anim && skel)
 		{
-			std::vector<glm::mat4> bonesPoses = anim->getPose((unsigned int) (3*dummy), skel->roots, skel->joints);
+			std::vector<glm::mat4> bonesPoses = anim->getKeyPose((unsigned int) (3*dummy), skel->roots, skel->joints);
+			//std::vector<glm::mat4> bonesPoses = skel->getBindPose();
 			glUniformMatrix4fv(loc, bonesPoses.size(), FALSE, (float*)bonesPoses.data());
 		}
 	}
@@ -216,7 +217,7 @@ void Renderer::drawInstanceDrawable(InstanceVirtual* ins, const float* view, con
 		Skeleton* skel = ins->getSkeleton();
 		if (anim && skel)
 		{
-			std::vector<glm::mat4> bonesPoses = anim->getInverseBindPose(skel->roots, skel->joints);
+			std::vector<glm::mat4> bonesPoses = skel->getInverseBindPose();
 			glUniformMatrix4fv(loc, bonesPoses.size(), FALSE, (float*)bonesPoses.data());
 		}
 	}

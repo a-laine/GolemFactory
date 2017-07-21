@@ -1,6 +1,6 @@
 #include "Joint.h"
 
-Joint::Joint(std::string n, glm::mat4 offsetMatrix) : parent(-1), name(n), inverseLocalBindTransform(offsetMatrix)
+Joint::Joint(std::string jointName) : parent(-1), name(jointName)
 {
 	relativeBindTransform = glm::mat4(1.f);
 }

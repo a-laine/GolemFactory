@@ -48,7 +48,7 @@ glm::vec3 InstanceDrawable::getBBSize() const
 	else return glm::vec3(
 		size.x*(mesh->sizeX.y - mesh->sizeX.x),
 		size.y*(mesh->sizeY.y - mesh->sizeY.x),
-		size.z*(mesh->sizeZ.y - mesh->sizeZ.x));
+		size.z*(mesh->sizeZ.y - mesh->sizeZ.x)   );
 }
 float InstanceDrawable::getBSRadius() const
 {
