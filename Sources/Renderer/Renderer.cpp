@@ -90,14 +90,20 @@ void Renderer::render()
 	unsigned int drawnInstance = 0;
 	for (auto it = instanceList.begin(); it != instanceList.end() && drawnInstance < 8000; it++, drawnInstance++)
 	{
-		if (it->second->getType() == InstanceVirtual::DRAWABLE)
-			drawInstanceDrawable(it->second, &view[0][0], &projection[0][0]);
-		else if (it->second->getType() == InstanceVirtual::CONTAINER)
-			drawInstanceContainer(it->second, view, projection, glm::mat4(1.f));
-		/*if (InstanceDrawable* d = dynamic_cast<InstanceDrawable*>(it->second))
-			drawInstanceDrawable(d, &view[0][0], &projection[0][0]);
-		else if (InstanceContainer* d = dynamic_cast<InstanceContainer*>(it->second))
-			drawInstanceContainer(d, view, projection, glm::mat4(1.f));*/
+		switch (it->second->getType())
+		{
+			case InstanceVirtual::DRAWABLE:
+				drawInstanceDrawable(it->second, &view[0][0], &projection[0][0]);
+				break;
+			case InstanceVirtual::ANIMATABLE:
+				drawInstanceAnimatable(it->second, &view[0][0], &projection[0][0]);
+				break;
+			case InstanceVirtual::CONTAINER:
+				drawInstanceContainer(it->second, view, projection, glm::mat4(1.f));
+				break;
+			default:
+				break;
+		}
 	}
 }
 
@@ -197,32 +203,34 @@ void Renderer::drawInstanceDrawable(InstanceVirtual* ins, const float* view, con
 		glUniform4fv(loc, 1, &wind.x);
 	}
 
-	//	Load instance skeleton if necessary
-	loc = shaderToUse->getUniformLocation("skeletonPose");
-	if (loc >= 0)
-	{
-		Animation* anim = ins->getAnimation();
-		Skeleton* skel = ins->getSkeleton();
-		if (anim && skel)
-		{
-			std::vector<glm::mat4> bonesPoses = anim->getKeyPose((unsigned int) (3*dummy), skel->roots, skel->joints);
-			//std::vector<glm::mat4> bonesPoses = skel->getBindPose();
-			glUniformMatrix4fv(loc, bonesPoses.size(), FALSE, (float*)bonesPoses.data());
-		}
-	}
-	loc = shaderToUse->getUniformLocation("inverseBindPose");
-	if (loc >= 0)
-	{
-		Animation* anim = ins->getAnimation();
-		Skeleton* skel = ins->getSkeleton();
-		if (anim && skel)
-		{
-			std::vector<glm::mat4> bonesPoses = skel->getInverseBindPose();
-			glUniformMatrix4fv(loc, bonesPoses.size(), FALSE, (float*)bonesPoses.data());
-		}
-	}
-
 	// Draw mesh
+	ins->getMesh()->draw();
+}
+void Renderer::drawInstanceAnimatable(InstanceVirtual* ins, const float* view, const float* projection)
+{
+	// Get shader
+	Shader* shaderToUse;
+	if (defaultShader) shaderToUse = defaultShader;
+	else shaderToUse = ins->getShader();
+	if (!shaderToUse) return;
+	shaderToUse->enable();
+
+	// Enable mvp matrix
+	loadMVPMatrix(shaderToUse, &ins->getModelMatrix()[0][0], view, projection);
+
+	//	load skeleton pose matrix list for vertex skinning calculation
+	std::vector<glm::mat4> pose = ins->getPose();
+	int loc = shaderToUse->getUniformLocation("skeletonPose");
+	if (loc >= 0) glUniformMatrix4fv(loc, pose.size(), FALSE, (float*)pose.data());
+
+	//	load inverse bind pose matrix list for vertex skinning calculation
+	std::vector<glm::mat4> bind;
+	Skeleton* skeleton = ins->getSkeleton();
+	if (skeleton) bind = skeleton->getInverseBindPose();
+	loc = shaderToUse->getUniformLocation("inverseBindPose");
+	if (loc >= 0) glUniformMatrix4fv(loc, bind.size(), FALSE, (float*)bind.data());
+
+	//	draw mesh
 	ins->getMesh()->draw();
 }
 void Renderer::drawInstanceContainer(InstanceVirtual* ins, const glm::mat4& view, const glm::mat4& projection, const glm::mat4& model)

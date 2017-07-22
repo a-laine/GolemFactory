@@ -39,9 +39,10 @@ class InstanceVirtual
 		*/
 		enum InstanceType
 		{
-			NONE = 0,       //!< Virtual
-			CONTAINER = 1,  //!< Texture
-			DRAWABLE = 2    //!< Shader
+			NONE = 0,       //!< 
+			CONTAINER = 1,  //!< 
+			DRAWABLE = 2,	//!< 
+			ANIMATABLE = 3	//!< 
 		};
 
 		//  Default
@@ -133,6 +134,9 @@ class InstanceVirtual
 		virtual Animation* getAnimation() const;
 		virtual Skeleton* getSkeleton() const;
 		virtual Mesh* getMesh() const;
+
+		virtual std::vector<glm::mat4> getPose();
+
 		virtual const std::list<InstanceVirtual*>& getChildList() const;
 		//
 		

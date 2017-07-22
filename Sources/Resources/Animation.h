@@ -12,7 +12,7 @@
 class Animation : public ResourceVirtual
 {
     friend class ResourceManager;
-	friend class Renderer;
+	friend class InstanceAnimatable;
     public:
         //  Default
 		Animation(const std::string& animationName, const std::vector<KeyFrame>& keyFrames);
@@ -24,6 +24,7 @@ class Animation : public ResourceVirtual
         bool isValid() const;
 
 		std::vector<glm::mat4x4> getKeyPose(const unsigned int& keyFramePose ,const std::vector<unsigned int>& roots, const std::vector<Joint>& hierarchy) const;
+		std::pair<int, int> getBoundingKeyFrameIndex(float time) const;
         //
 
 		//	Attributes

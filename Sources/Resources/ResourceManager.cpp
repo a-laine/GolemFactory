@@ -99,8 +99,9 @@ Mesh* ResourceManager::getMesh(std::string name)
 	//	load mesh with mesh loader
 	MeshLoader ml;
 	ml.loadMesh(repository + "Meshes/" + name);
-	if (ml.roots.empty()) resource = new Mesh(name, ml.vertices, ml.normales, ml.colors, ml.faces);
-	else resource = new MeshAnimated(name, !ml.animations.empty(), ml.vertices, ml.normales, ml.colors, ml.bones, ml.weights, ml.faces);
+	if (!ml.bones.empty() && !ml.weights.empty())
+		resource = new MeshAnimated(name, !ml.animations.empty(), ml.vertices, ml.normales, ml.colors, ml.bones, ml.weights, ml.faces);
+	else resource = new Mesh(name, ml.vertices, ml.normales, ml.colors, ml.faces);
 
 	//	create skeleton if needed
 	if (!ml.roots.empty() && skeletonList.find(name) == skeletonList.end())

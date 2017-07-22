@@ -22,12 +22,28 @@ bool Animation::isValid() const
 {
 	return !timeLine.empty();
 }
+
 std::vector<glm::mat4> Animation::getKeyPose(const unsigned int& keyFrame, const std::vector<unsigned int>& roots, const std::vector<Joint>& hierarchy) const
 {
 	std::vector<glm::mat4> pose(timeLine[0].poses.size(), glm::mat4(1.f));
 	for (unsigned int i = 0; i < roots.size() && keyFrame < timeLine.size(); i++)
 		computePose(keyFrame, pose, glm::mat4(1.f), roots[i], hierarchy);
 	return pose;
+}
+std::pair<int, int> Animation::getBoundingKeyFrameIndex(float time) const
+{
+	int previous = -1;
+	int next = -1;
+	for (unsigned int i = 0; i < timeLine.size(); i++)
+	{
+		if (timeLine[i].time >= time)
+		{
+			previous = i - 1;
+			next = i;
+			break;
+		}
+	}
+	return std::pair<int, int>(previous, next);
 }
 //
 

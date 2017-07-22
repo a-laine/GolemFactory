@@ -9,6 +9,7 @@
 class Mesh : public ResourceVirtual
 {
 	friend class HouseGenerator;
+	friend class MeshSaver;
 
     public:
 		//  Miscellaneous

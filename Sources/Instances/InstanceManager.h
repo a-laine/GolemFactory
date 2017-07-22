@@ -14,6 +14,7 @@
 #include "InstanceVirtual.h"
 #include "InstanceDrawable.h"
 #include "InstanceContainer.h"
+#include "InstanceAnimatable.h"
 
 
  /*! \class InstanceManager
@@ -68,6 +69,16 @@ class InstanceManager : public Singleton<InstanceManager>
 		 *  The function return null if the instance allocation fail, or if the instance can't be added to container.
 		 */
 		InstanceDrawable* getInstanceDrawable(std::string meshName = "default", std::string shaderName = "default");
+
+		/*!
+		*  \brief Instanciate a new getInstanceAnimatable object
+		*  \param meshName : the mesh name for the instance. If not specified the default mesh is used.
+		*  \param shaderName : the shader name for the instance. If not specified the default shader is used.
+		*  \return a valid pointer on the newly getInstanceAnimatable created, or null an error occur.
+		*
+		*  The function return null if the instance allocation fail, or if the instance can't be added to container.
+		*/
+		InstanceAnimatable* getInstanceAnimatable(std::string meshName = "default", std::string shaderName = "default");
 
 		/*!
 		 *  \brief Instanciate a new InstanceContainer object

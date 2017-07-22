@@ -14,6 +14,12 @@ __/\\\\\\\\\\\\\\\_______/\\\\\_______/\\\\\\\\\\\\__________/\\\\\______
 00100000 01100100 01101111 00100000 01101001 01110100 00100000 00100001
 
 
+NEXT STEP
+personnal mesh file format (heritate from obj)
+personnal skeleton file format (json)
+personnal animation file format (json)
+add label inside animations
+
 LITTLE TODO
 Shader, font passer c++11
 

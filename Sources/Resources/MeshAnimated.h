@@ -8,6 +8,8 @@
 
 class MeshAnimated : public Mesh
 {
+	friend class MeshSaver;
+
     public:
 		//  Default
 		MeshAnimated(const std::string& meshName,					const bool& isAnimable,                

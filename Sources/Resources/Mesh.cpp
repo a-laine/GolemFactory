@@ -25,7 +25,7 @@ Mesh::~Mesh()
 //
 
 
-//
+//	Public functions
 void Mesh::initializeVBO()
 {
 	glGenBuffers(1, &verticesBuffer);

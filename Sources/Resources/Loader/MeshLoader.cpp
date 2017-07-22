@@ -247,6 +247,8 @@ int MeshLoader::loadMesh(std::string file)
 					if (currentKeyFrame.time == FLT_MAX) break;
 				}
 			}
+			animations.push_back(currentKeyFrame);
+
 			/*	Warnning : 
 				if multiple animation are attached to mesh they will be all stacked into "animations" attributes 
 				(time is discontinue when changing from one to another).

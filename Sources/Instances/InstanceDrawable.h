@@ -2,6 +2,8 @@
 
 #include "InstanceVirtual.h"
 
+class Animator;
+
 class InstanceDrawable : public InstanceVirtual
 {
 	public:
@@ -19,7 +21,7 @@ class InstanceDrawable : public InstanceVirtual
 		virtual ~InstanceDrawable();
 		//
 
-		//	Public functions
+		//	Set/get functions
 		/*!
 		 *  \brief Change shader of instance
 		 *  \param shaderName : the shader name for the instance.
@@ -67,25 +69,11 @@ class InstanceDrawable : public InstanceVirtual
 		 *  \return the mesh used to draw instance
 		 */
 		Mesh* getMesh() const;
-
-		/*!
-		*  \brief Get skeleton used
-		*  \return the skeleton used to draw instance
-		*/
-		Skeleton* getSkeleton() const;
-
-		/*!
-		*  \brief Get animation used
-		*  \return the animation used to draw instance
-		*/
-		Animation* getAnimation() const;
 		//
 
 	protected:
 		// Attributes
 		Mesh* mesh;				//!< Mesh resource pointer
 		Shader* shader;			//!< Shader resource pointer
-		Skeleton* skeleton;		//!< Skeleton resource pointer
-		Animation* animation;	//!< Animation resource pointer
 		//
 };

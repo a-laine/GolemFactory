@@ -11,6 +11,8 @@
 #include "Renderer/Renderer.h"
 #include "Generators/HouseGenerator.h"
 
+#include "Resources/Loader/MeshSaver.h"
+
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -61,12 +63,13 @@ int main()
 	SceneManager::getInstance()->setWorldPosition(glm::vec3(0,0,25));
 	SceneManager::getInstance()->setWorldSize(glm::vec3(GRID_SIZE*GRID_ELEMENT_SIZE, GRID_SIZE*GRID_ELEMENT_SIZE, 50));
 	
-		//initializeForestScene(true);
+		initializeForestScene(true);
 		/*
 			Pourquoi un facteur 20 !!!!!!!!!!!!!!!!!!!!!
 			et en plus il y a le meme dans le shader
 		*/
-		InstanceDrawable* peasant = InstanceManager::getInstance()->getInstanceDrawable("Peasant9.dae", "skinning");
+		//InstanceDrawable* peasant = InstanceManager::getInstance()->getInstanceDrawable("Peasant9.dae", "default");
+		InstanceAnimatable* peasant = InstanceManager::getInstance()->getInstanceAnimatable("Peasant10.dae", "skinning");
 		float scale = 1.7f / peasant->getBBSize().z * 20;
 		peasant->setSize(glm::vec3(scale));
 		peasant->setPosition(glm::vec3(0.f, 0.f, -scale/20 * peasant->getMesh()->sizeZ.x));
@@ -90,6 +93,7 @@ int main()
 			frame = 0;
 			EventHandler::getInstance()->addFrameEvent(DOUBLE_CLICK_LEFT);
 		}
+		peasant->animate((float)elapseTime);
 
 		// begin loop
 		double startTime = glfwGetTime();
@@ -145,6 +149,10 @@ int main()
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 		elapseTime = 1000.0*(glfwGetTime() - startTime);
 	}
+
+	//
+	MeshSaver ms;
+	ms.save(peasant->getMesh());
 
 	//	end
 	std::cout << "ending game" << std::endl;

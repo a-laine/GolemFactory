@@ -95,6 +95,16 @@ InstanceDrawable* InstanceManager::getInstanceDrawable(std::string meshName, std
 	}
 	return ins;
 }
+InstanceAnimatable* InstanceManager::getInstanceAnimatable(std::string meshName, std::string shaderName)
+{
+	InstanceAnimatable*ins = new InstanceAnimatable(meshName, shaderName);
+	if (!ins || !add(ins))
+	{
+		if (ins) delete ins;
+		return nullptr;
+	}
+	return ins;
+}
 InstanceContainer* InstanceManager::getInstanceContainer()
 {
 	InstanceContainer* ins = new InstanceContainer();
