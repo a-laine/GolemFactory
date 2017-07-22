@@ -15,7 +15,6 @@ __/\\\\\\\\\\\\\\\_______/\\\\\_______/\\\\\\\\\\\\__________/\\\\\______
 
 
 NEXT STEP
-personnal mesh file format (heritate from obj)
 personnal skeleton file format (json)
 personnal animation file format (json)
 add label inside animations

@@ -48,12 +48,20 @@ class MeshLoader
 		std::vector<KeyFrame> animations;
 
 	private:
+		//	Temp structures
 		typedef std::tuple<float, std::string, glm::vec3>  tupleVec3;
 		typedef std::tuple<float, std::string, glm::fquat> tupleQuat;
 		typedef std::list<tupleVec3> BidirectionnalVectorMap;
 		typedef std::list<tupleQuat> BidirectionnalQuaternionMap;
 
+		struct gfvertex { int v, vn, c; };
+		struct gfvertex_extended { int v, vn, c, w, b; };
+		//
+
 		//	Private functions
+		void loadFromAssimp(const aiScene* scene);
+		void loadFromGfMesh(const std::string& file);
+
 		void clear();
 		void readSceneHierarchy(const aiNode* node, int depth = 0);
 		//

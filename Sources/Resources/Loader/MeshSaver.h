@@ -1,6 +1,7 @@
 #pragma once
 
 #include <set>
+#include <fstream>
 
 #include <glm/glm.hpp>
 
@@ -17,8 +18,8 @@ class MeshSaver
 		//
 
 		//	Public functions
-		void save(Mesh* mesh);
-		void save(MeshAnimated* mesh);
+		void save(Mesh* mesh, std::string resourcesPath, std::string fileName = "");
+		//void save(MeshAnimated* mesh, std::string resourcesPath, std::string fileName = "");
 		//
 
 	protected:
@@ -49,6 +50,19 @@ class MeshSaver
 			};
 			int x, y, z;
 		};
+
+		struct vertex { int position, normal, color; };
+		struct face { vertex vertex1, vertex2, vertex3; };
+		
+		struct extendedVertex { int position, normal, color, weights, bones; };
+		struct extendedFace { extendedVertex vertex1, vertex2, vertex3; };
+		//
+
+		//	Protected functions
+		void clear();
+
+		void save(Mesh* mesh, std::ofstream& file);
+		void save(MeshAnimated* mesh, std::ofstream& file);
 		//
 
 		//	Attributes

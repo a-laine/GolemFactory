@@ -1,5 +1,6 @@
 #include "EventHandlerEnum.h"
 #include "Utiles/Parser/Reader.h"
+#include "Utiles/ToolBox.h"
 
 #include <cctype>
 #include <sstream>
@@ -40,7 +41,7 @@ void EventHandlerEnum::loadKeyMapping(const std::string& path,std::string filena
 
     //  Create map userEnum string to int map
 	{
-		std::string file = openAndCleanCStyleFile(path + "../Sources/UserEnum.enum");
+		std::string file = ToolBox::openAndCleanCStyleFile(path + "../Sources/UserEnum.enum");
 		if (file.empty()) return;
 		
 		int index = 0;

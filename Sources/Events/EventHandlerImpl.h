@@ -223,11 +223,6 @@ class EventHandlerImpl
 		*	\brief Swap the double buffered user event list
 		*/
         virtual void swapFrameEventList(){};
-
-		/*!
-		*	\brief Useful function for parsing user defined enumeration file.
-		*/
-		virtual std::string openAndCleanCStyleFile(std::string fileName, std::string commentBlockEntry = "/*", std::string commentLineEntry = "//");
 		//
 
         //  Callbacks

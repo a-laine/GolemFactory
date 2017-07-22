@@ -12,50 +12,194 @@ MeshSaver::~MeshSaver()
 //
 
 //	Public functions
-void MeshSaver::save(Mesh* mesh)
+void MeshSaver::save(Mesh* mesh, std::string resourcesPath, std::string fileName)
 {
+	//	clear buffers
+	clear();
+
+	//	initialize fileName
+	if (fileName.empty())
+		fileName = mesh->name;
+	if (fileName.find_last_of('/') != std::string::npos)
+		fileName = fileName.substr(fileName.find_last_of('/') + 1);
+	if (fileName.find_first_of('.') != std::string::npos)
+		fileName = fileName.substr(0, fileName.find_first_of('.'));
+
+	//	create and initialize file
+	std::ofstream file(resourcesPath + "Meshes/" + fileName + ".gfmesh", std::ofstream::out);
+	file << "#File : " << fileName << std::endl;
+	file << "#Format : gfmesh, for Golem Factory engines" << std::endl << std::endl << std::endl;
+
+	//	try a cast into MeshAnimated
 	MeshAnimated* m = dynamic_cast<MeshAnimated*>(mesh);
-	if (m) save(m);
-	else
-	{
-		//	vertices compression
-		for (unsigned int i = 0; i < mesh->vertices.size(); i++)
-			vertices.insert(vec3(mesh->vertices[i]));
+	if (m) save(m, file);
+	else save(mesh, file);
 
-		//	normales compression
-		for (unsigned int i = 0; i < mesh->normales.size(); i++)
-			normales.insert(vec3(mesh->normales[i]));
-
-		//	colors compression
-		for (unsigned int i = 0; i < mesh->colors.size(); i++)
-			colors.insert(vec3(mesh->colors[i]));
-	}
+	//	end
+	file.close();
 }
-void MeshSaver::save(MeshAnimated* mesh)
+//
+
+//	Protected functions
+void MeshSaver::clear()
 {
-	//	vertices compression
+	vertices.clear();
+	normales.clear();
+	colors.clear();
+	weights.clear();
+	bones.clear();
+	faces.clear();
+}
+void MeshSaver::save(Mesh* mesh, std::ofstream& file)
+{
+	float truncature = 0.001f;
+
+	//	vertices compression & write
 	for (unsigned int i = 0; i < mesh->vertices.size(); i++)
 		vertices.insert(vec3(mesh->vertices[i]));
-	std::cout << std::endl << "vertices compression : " << vertices.size() << " -> -" << mesh->vertices.size() - vertices.size() << std::endl;
+	file << "#  positions" << std::endl;
+	for (std::set<vec3>::iterator it = vertices.begin(); it != vertices.end(); it++)
+		file << "v " << (int)(it->x / truncature) * truncature << ' ' << (int)(it->y / truncature) * truncature << ' ' << (int)(it->z / truncature) * truncature << std::endl;
+	file << std::endl;
 
-	//	normales compression
+	//	normales compression & write
 	for (unsigned int i = 0; i < mesh->normales.size(); i++)
 		normales.insert(vec3(mesh->normales[i]));
-	std::cout << "normales compression : " << normales.size() << " -> -" << mesh->normales.size() - normales.size() << std::endl;
+	file << "#  normales" << std::endl;
+	for (std::set<vec3>::iterator it = normales.begin(); it != normales.end(); it++)
+		file << "vn " << (int)(it->x / truncature) * truncature << ' ' << (int)(it->y / truncature) * truncature << ' ' << (int)(it->z / truncature) * truncature << std::endl;
+	file << std::endl;
 
-	//	colors compression
+	//	colors compression & write
 	for (unsigned int i = 0; i < mesh->colors.size(); i++)
 		colors.insert(vec3(mesh->colors[i]));
-	std::cout << "colors compression : " << colors.size() << " -> -" << mesh->colors.size() - colors.size() << std::endl;
+	file << "#  colors" << std::endl;
+	for (std::set<vec3>::iterator it = colors.begin(); it != colors.end(); it++)
+		file << "c " << (int)(it->x / truncature) * truncature << ' ' << (int)(it->y / truncature) * truncature << ' ' << (int)(it->z / truncature) * truncature << std::endl;
+	file << std::endl;
 
-	//	weights compression
+	//	faces
+	file << "#  triangles" << std::endl;
+	for (unsigned int i = 0; i < mesh->faces.size(); i += 3)
+	{
+		file << "f ";
+		for (int j = 0; j < 3; j++)
+		{
+			glm::vec3 v = mesh->vertices[mesh->faces[i + j]];
+			glm::vec3 vn = mesh->normales[mesh->faces[i + j]];
+			glm::vec3 c = mesh->colors[mesh->faces[i + j]];
+
+			//	search vertex index
+			int index = 0;
+			for (std::set<vec3>::iterator it = vertices.begin(); it != vertices.end(); it++, index++)
+				if (it->x == v.x && it->y == v.y && it->z == v.z) break;
+			file << index << "//"; // double because of texture not yet supported
+
+								   // search normal index
+			index = 0;
+			for (std::set<vec3>::iterator it = normales.begin(); it != normales.end(); it++, index++)
+				if (it->x == vn.x && it->y == vn.y && it->z == vn.z) break;
+			file << index << '/';
+
+			// search color index
+			index = 0;
+			for (std::set<vec3>::iterator it = colors.begin(); it != colors.end(); it++, index++)
+				if (it->x == c.x && it->y == c.y && it->z == c.z) break;
+			file << index << ' ';
+		}
+		file << std::endl;
+	}
+	file << std::endl;
+}
+void MeshSaver::save(MeshAnimated* mesh, std::ofstream& file)
+{
+	float truncature = 0.001f;
+
+	//	vertices compression & write
+	for (unsigned int i = 0; i < mesh->vertices.size(); i++)
+		vertices.insert(vec3(mesh->vertices[i]));
+	file << "#  positions" << std::endl;
+	for (std::set<vec3>::iterator it = vertices.begin(); it != vertices.end(); it++)
+		file << "v " << (int)(it->x / truncature) * truncature << ' ' << (int)(it->y / truncature) * truncature << ' ' << (int)(it->z / truncature) * truncature << std::endl;
+	file << std::endl;
+
+	//	normales compression & write
+	for (unsigned int i = 0; i < mesh->normales.size(); i++)
+		normales.insert(vec3(mesh->normales[i]));
+	file << "#  normales" << std::endl;
+	for (std::set<vec3>::iterator it = normales.begin(); it != normales.end(); it++)
+		file << "vn " << (int)(it->x / truncature) * truncature << ' ' << (int)(it->y / truncature) * truncature << ' ' << (int)(it->z / truncature) * truncature << std::endl;
+	file << std::endl;
+
+	//	colors compression & write
+	for (unsigned int i = 0; i < mesh->colors.size(); i++)
+		colors.insert(vec3(mesh->colors[i]));
+	file << "#  colors" << std::endl;
+	for (std::set<vec3>::iterator it = colors.begin(); it != colors.end(); it++)
+		file << "c " << (int)(it->x / truncature) * truncature << ' ' << (int)(it->y / truncature) * truncature << ' ' << (int)(it->z / truncature) * truncature << std::endl;
+	file << std::endl;
+
+	//	weights compression & write
 	for (unsigned int i = 0; i < mesh->weights.size(); i++)
 		weights.insert(vec3(mesh->weights[i]));
-	std::cout << "weights compression : " << weights.size() << " -> -" << mesh->weights.size() - weights.size() << std::endl;
+	file << "#  weights" << std::endl;
+	for (std::set<vec3>::iterator it = weights.begin(); it != weights.end(); it++)
+		file << "w " << (int)(it->x / truncature) * truncature << ' ' << (int)(it->y / truncature) * truncature << ' ' << (int)(it->z / truncature) * truncature << std::endl;
+	file << std::endl;
 
-	//	bones compression
+	//	bones compression & write
 	for (unsigned int i = 0; i < mesh->bones.size(); i++)
 		bones.insert(ivec3(mesh->bones[i]));
-	std::cout << "bones compression : " << bones.size() << " -> -" << mesh->bones.size() - bones.size() << std::endl << std::endl;
+	file << "#  bones" << std::endl;
+	for (std::set<ivec3>::iterator it = bones.begin(); it != bones.end(); it++)
+		file << "b " << it->x << ' ' << it->y << ' ' << it->z << std::endl;
+	file << std::endl;
+
+	//	faces
+	file << "#  triangles" << std::endl;
+	for (unsigned int i = 0; i < mesh->faces.size(); i += 3)
+	{
+		file << "f ";
+		for (int j = 0; j < 3; j++)
+		{
+			glm::vec3 v = mesh->vertices[mesh->faces[i + j]];
+			glm::vec3 vn = mesh->normales[mesh->faces[i + j]];
+			glm::vec3 c = mesh->colors[mesh->faces[i + j]];
+			glm::vec3 w = mesh->weights[mesh->faces[i + j]];
+			glm::ivec3 b = mesh->bones[mesh->faces[i + j]];
+
+			//	search vertex index
+			int index = 0;
+			for (std::set<vec3>::iterator it = vertices.begin(); it != vertices.end(); it++, index++)
+				if (it->x == v.x && it->y == v.y && it->z == v.z) break;
+			file << index << "//"; // double because of texture not yet supported
+
+								   // search normal index
+			index = 0;
+			for (std::set<vec3>::iterator it = normales.begin(); it != normales.end(); it++, index++)
+				if (it->x == vn.x && it->y == vn.y && it->z == vn.z) break;
+			file << index << '/';
+
+			// search color index
+			index = 0;
+			for (std::set<vec3>::iterator it = colors.begin(); it != colors.end(); it++, index++)
+				if (it->x == c.x && it->y == c.y && it->z == c.z) break;
+			file << index << '/';
+
+			// search weights index
+			index = 0;
+			for (std::set<vec3>::iterator it = weights.begin(); it != weights.end(); it++, index++)
+				if (it->x == w.x && it->y == w.y && it->z == w.z) break;
+			file << index << '/';
+
+			// search bones index
+			index = 0;
+			for (std::set<ivec3>::iterator it = bones.begin(); it != bones.end(); it++, index++)
+				if (it->x == b.x && it->y == b.y && it->z == b.z) break;
+			file << index << ' ';
+		}
+		file << std::endl;
+	}
+	file << std::endl;
 }
 //
