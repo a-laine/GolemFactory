@@ -1,6 +1,6 @@
 #include "Font.h"
 #include "Utiles/Parser/Reader.h"
-
+#include "Utiles/ToolBox.h"
 #include "Loader/ImageLoader.h"
 
 //  Static attributes
@@ -75,7 +75,7 @@ Font::Font(const std::string& path, const std::string& fontName) : ResourceVirtu
     std::string arrayFile;
     try
 	{
-		arrayFile = openAndCleanCStyleFile(path + fontInfo["font"].toString());
+		arrayFile = ToolBox::openAndCleanCStyleFile(path + fontInfo["font"].toString());
 	}
     catch(std::exception&)
 	{

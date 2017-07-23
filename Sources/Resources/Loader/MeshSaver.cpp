@@ -12,7 +12,7 @@ MeshSaver::~MeshSaver()
 //
 
 //	Public functions
-void MeshSaver::save(Mesh* mesh, std::string resourcesPath, std::string fileName)
+void MeshSaver::save(Mesh* mesh, const std::string& resourcesPath, std::string fileName)
 {
 	//	clear buffers
 	clear();
@@ -30,7 +30,7 @@ void MeshSaver::save(Mesh* mesh, std::string resourcesPath, std::string fileName
 	file << "#File : " << fileName << std::endl;
 	file << "#Format : gfmesh, for Golem Factory engines" << std::endl << std::endl << std::endl;
 
-	//	try a cast into MeshAnimated
+	//	try a cast into MeshAnimated and save apropriately
 	MeshAnimated* m = dynamic_cast<MeshAnimated*>(mesh);
 	if (m) save(m, file);
 	else save(mesh, file);
@@ -58,7 +58,7 @@ void MeshSaver::save(Mesh* mesh, std::ofstream& file)
 	for (unsigned int i = 0; i < mesh->vertices.size(); i++)
 		vertices.insert(vec3(mesh->vertices[i]));
 	file << "#  positions" << std::endl;
-	for (std::set<vec3>::iterator it = vertices.begin(); it != vertices.end(); it++)
+	for (std::set<vec3>::iterator it = vertices.begin(); it != vertices.end(); ++it)
 		file << "v " << (int)(it->x / truncature) * truncature << ' ' << (int)(it->y / truncature) * truncature << ' ' << (int)(it->z / truncature) * truncature << std::endl;
 	file << std::endl;
 
@@ -66,7 +66,7 @@ void MeshSaver::save(Mesh* mesh, std::ofstream& file)
 	for (unsigned int i = 0; i < mesh->normales.size(); i++)
 		normales.insert(vec3(mesh->normales[i]));
 	file << "#  normales" << std::endl;
-	for (std::set<vec3>::iterator it = normales.begin(); it != normales.end(); it++)
+	for (std::set<vec3>::iterator it = normales.begin(); it != normales.end(); ++it)
 		file << "vn " << (int)(it->x / truncature) * truncature << ' ' << (int)(it->y / truncature) * truncature << ' ' << (int)(it->z / truncature) * truncature << std::endl;
 	file << std::endl;
 
@@ -74,7 +74,7 @@ void MeshSaver::save(Mesh* mesh, std::ofstream& file)
 	for (unsigned int i = 0; i < mesh->colors.size(); i++)
 		colors.insert(vec3(mesh->colors[i]));
 	file << "#  colors" << std::endl;
-	for (std::set<vec3>::iterator it = colors.begin(); it != colors.end(); it++)
+	for (std::set<vec3>::iterator it = colors.begin(); it != colors.end(); ++it)
 		file << "c " << (int)(it->x / truncature) * truncature << ' ' << (int)(it->y / truncature) * truncature << ' ' << (int)(it->z / truncature) * truncature << std::endl;
 	file << std::endl;
 
@@ -91,19 +91,19 @@ void MeshSaver::save(Mesh* mesh, std::ofstream& file)
 
 			//	search vertex index
 			int index = 0;
-			for (std::set<vec3>::iterator it = vertices.begin(); it != vertices.end(); it++, index++)
+			for (std::set<vec3>::iterator it = vertices.begin(); it != vertices.end(); ++it, index++)
 				if (it->x == v.x && it->y == v.y && it->z == v.z) break;
 			file << index << "//"; // double because of texture not yet supported
 
 								   // search normal index
 			index = 0;
-			for (std::set<vec3>::iterator it = normales.begin(); it != normales.end(); it++, index++)
+			for (std::set<vec3>::iterator it = normales.begin(); it != normales.end(); ++it, index++)
 				if (it->x == vn.x && it->y == vn.y && it->z == vn.z) break;
 			file << index << '/';
 
 			// search color index
 			index = 0;
-			for (std::set<vec3>::iterator it = colors.begin(); it != colors.end(); it++, index++)
+			for (std::set<vec3>::iterator it = colors.begin(); it != colors.end(); ++it, index++)
 				if (it->x == c.x && it->y == c.y && it->z == c.z) break;
 			file << index << ' ';
 		}
@@ -119,7 +119,7 @@ void MeshSaver::save(MeshAnimated* mesh, std::ofstream& file)
 	for (unsigned int i = 0; i < mesh->vertices.size(); i++)
 		vertices.insert(vec3(mesh->vertices[i]));
 	file << "#  positions" << std::endl;
-	for (std::set<vec3>::iterator it = vertices.begin(); it != vertices.end(); it++)
+	for (std::set<vec3>::iterator it = vertices.begin(); it != vertices.end(); ++it)
 		file << "v " << (int)(it->x / truncature) * truncature << ' ' << (int)(it->y / truncature) * truncature << ' ' << (int)(it->z / truncature) * truncature << std::endl;
 	file << std::endl;
 
@@ -127,7 +127,7 @@ void MeshSaver::save(MeshAnimated* mesh, std::ofstream& file)
 	for (unsigned int i = 0; i < mesh->normales.size(); i++)
 		normales.insert(vec3(mesh->normales[i]));
 	file << "#  normales" << std::endl;
-	for (std::set<vec3>::iterator it = normales.begin(); it != normales.end(); it++)
+	for (std::set<vec3>::iterator it = normales.begin(); it != normales.end(); ++it)
 		file << "vn " << (int)(it->x / truncature) * truncature << ' ' << (int)(it->y / truncature) * truncature << ' ' << (int)(it->z / truncature) * truncature << std::endl;
 	file << std::endl;
 
@@ -135,7 +135,7 @@ void MeshSaver::save(MeshAnimated* mesh, std::ofstream& file)
 	for (unsigned int i = 0; i < mesh->colors.size(); i++)
 		colors.insert(vec3(mesh->colors[i]));
 	file << "#  colors" << std::endl;
-	for (std::set<vec3>::iterator it = colors.begin(); it != colors.end(); it++)
+	for (std::set<vec3>::iterator it = colors.begin(); it != colors.end(); ++it)
 		file << "c " << (int)(it->x / truncature) * truncature << ' ' << (int)(it->y / truncature) * truncature << ' ' << (int)(it->z / truncature) * truncature << std::endl;
 	file << std::endl;
 
@@ -143,7 +143,7 @@ void MeshSaver::save(MeshAnimated* mesh, std::ofstream& file)
 	for (unsigned int i = 0; i < mesh->weights.size(); i++)
 		weights.insert(vec3(mesh->weights[i]));
 	file << "#  weights" << std::endl;
-	for (std::set<vec3>::iterator it = weights.begin(); it != weights.end(); it++)
+	for (std::set<vec3>::iterator it = weights.begin(); it != weights.end(); ++it)
 		file << "w " << (int)(it->x / truncature) * truncature << ' ' << (int)(it->y / truncature) * truncature << ' ' << (int)(it->z / truncature) * truncature << std::endl;
 	file << std::endl;
 
@@ -151,7 +151,7 @@ void MeshSaver::save(MeshAnimated* mesh, std::ofstream& file)
 	for (unsigned int i = 0; i < mesh->bones.size(); i++)
 		bones.insert(ivec3(mesh->bones[i]));
 	file << "#  bones" << std::endl;
-	for (std::set<ivec3>::iterator it = bones.begin(); it != bones.end(); it++)
+	for (std::set<ivec3>::iterator it = bones.begin(); it != bones.end(); ++it)
 		file << "b " << it->x << ' ' << it->y << ' ' << it->z << std::endl;
 	file << std::endl;
 
@@ -170,31 +170,31 @@ void MeshSaver::save(MeshAnimated* mesh, std::ofstream& file)
 
 			//	search vertex index
 			int index = 0;
-			for (std::set<vec3>::iterator it = vertices.begin(); it != vertices.end(); it++, index++)
+			for (std::set<vec3>::iterator it = vertices.begin(); it != vertices.end(); ++it, index++)
 				if (it->x == v.x && it->y == v.y && it->z == v.z) break;
 			file << index << "//"; // double because of texture not yet supported
 
 								   // search normal index
 			index = 0;
-			for (std::set<vec3>::iterator it = normales.begin(); it != normales.end(); it++, index++)
+			for (std::set<vec3>::iterator it = normales.begin(); it != normales.end(); ++it, index++)
 				if (it->x == vn.x && it->y == vn.y && it->z == vn.z) break;
 			file << index << '/';
 
 			// search color index
 			index = 0;
-			for (std::set<vec3>::iterator it = colors.begin(); it != colors.end(); it++, index++)
+			for (std::set<vec3>::iterator it = colors.begin(); it != colors.end(); ++it, index++)
 				if (it->x == c.x && it->y == c.y && it->z == c.z) break;
 			file << index << '/';
 
 			// search weights index
 			index = 0;
-			for (std::set<vec3>::iterator it = weights.begin(); it != weights.end(); it++, index++)
+			for (std::set<vec3>::iterator it = weights.begin(); it != weights.end(); ++it, index++)
 				if (it->x == w.x && it->y == w.y && it->z == w.z) break;
 			file << index << '/';
 
 			// search bones index
 			index = 0;
-			for (std::set<ivec3>::iterator it = bones.begin(); it != bones.end(); it++, index++)
+			for (std::set<ivec3>::iterator it = bones.begin(); it != bones.end(); ++it, index++)
 				if (it->x == b.x && it->y == b.y && it->z == b.z) break;
 			file << index << ' ';
 		}

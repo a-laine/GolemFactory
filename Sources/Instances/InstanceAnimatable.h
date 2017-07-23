@@ -16,7 +16,7 @@ class InstanceAnimatable : public InstanceDrawable
 		//
 
 		//  Default
-		InstanceAnimatable(std::string meshName = "default", std::string shaderName = "default");
+		InstanceAnimatable(std::string meshName, std::string shaderName);
 		virtual ~InstanceAnimatable();
 		//
 
@@ -25,6 +25,8 @@ class InstanceAnimatable : public InstanceDrawable
 		//
 
 		//	Set/get functions
+		void setSkeleton(std::string skeletonName);
+		void setSkeleton(Skeleton* s);
 		void setAnimation(std::string animationName);
 		void setAnimation(Animation* a);
 
@@ -43,7 +45,6 @@ class InstanceAnimatable : public InstanceDrawable
 
 		uint8_t animationConfiguration;
 		float animationTime;
-		float animationSpeed;
 		int previousKeyFrame;
 		int nextKeyFrame;
 		int startKeyFrame;

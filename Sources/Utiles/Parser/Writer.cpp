@@ -31,6 +31,7 @@ Writer::Writer(std::ostream* output)
     if(!output->good())
         throw std::logic_error("Writer::Writer : stream error");
     ostr = output;
+	inlineArray = false;
 }
 
 
@@ -42,6 +43,10 @@ void Writer::setStream(std::ostream* output)
     if(!output->good())
         throw std::logic_error("Writer::setStream : stream error");
     ostr = output;
+}
+void Writer::setOption(bool arrayInUniqueLine)
+{
+	inlineArray = arrayInUniqueLine;
 }
 
 
@@ -80,17 +85,20 @@ void Writer::writeVariant(Variant& var,const int decal) const
     {
         case Variant::ARRAY:
             {
-                *ostr << '[' << std::endl;
+                *ostr << '['; if(!inlineArray) *ostr << std::endl;
                 Variant::ArrayType::iterator it = var.getArray().begin();
                 Variant::ArrayType::iterator itend = var.getArray().end();
                 if(it!=itend)
                 {
-                    *ostr << decalStr;
+					if (!inlineArray) *ostr << decalStr;
                     writeVariant(*it,decal+1);
                     for(++it; it!=itend; ++it)
                     {
-                        *ostr << ',' << std::endl;
-                        *ostr << decalStr;
+                        *ostr << ',';
+						if (!inlineArray) *ostr << std::endl;
+						else *ostr << ' ';
+
+						if (!inlineArray) *ostr << decalStr;
                         writeVariant(*it,decal+1);
                     }
                 }

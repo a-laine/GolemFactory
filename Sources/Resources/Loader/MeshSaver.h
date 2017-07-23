@@ -18,8 +18,7 @@ class MeshSaver
 		//
 
 		//	Public functions
-		void save(Mesh* mesh, std::string resourcesPath, std::string fileName = "");
-		//void save(MeshAnimated* mesh, std::string resourcesPath, std::string fileName = "");
+		void save(Mesh* mesh, const std::string& resourcesPath, std::string fileName = "");
 		//
 
 	protected:

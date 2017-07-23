@@ -3,7 +3,7 @@
 
 //  Default
 ResourceManager::ResourceManager(const std::string& path)
-	: repository(path), defaultTexture("10points.png"), defaultFont("Comic Sans MS"), defaultShader("default"), defaultMesh("cube2.obj"), defaultSkeleton("default"), defaultAnimation("default")
+	: repository(path), defaultTexture("10points.png"), defaultFont("Comic Sans MS"), defaultShader("default"), defaultMesh("cube2.obj"), defaultSkeleton("human"), defaultAnimation("humanAnomation")
 {
     
 }
@@ -44,22 +44,27 @@ void ResourceManager::setRepository(std::string path)
 }
 void ResourceManager::release(ResourceVirtual* resource)
 {
+	//	prevent fail & decrement resources user counter
 	if (!resource) return;
 	resource->count--;
 
 	if (resource->count <= 0)
     {
+		//	remove resource from avalaible ressources lists
         mutexList.lock();
 		switch (resource->type)
         {
-			case ResourceVirtual::FONT:     fontList.erase(resource->name);		break;
-            case ResourceVirtual::SHADER:   shaderList.erase(resource->name);	break;
-            case ResourceVirtual::TEXTURE:  textureList.erase(resource->name);	break;
-            case ResourceVirtual::MESH:     meshList.erase(resource->name);		break;
+            case ResourceVirtual::TEXTURE:		textureList.erase(resource->name);		break;
+			case ResourceVirtual::SHADER:		shaderList.erase(resource->name);		break;
+            case ResourceVirtual::MESH:			meshList.erase(resource->name);			break;
+			case ResourceVirtual::ANIMATION:	animationList.erase(resource->name);	break;
+			case ResourceVirtual::FONT:			fontList.erase(resource->name);			break;
+			case ResourceVirtual::SKELETON:     skeletonList.erase(resource->name);		break;
             default: break;
         }
         mutexList.unlock();
 
+		//	add resources to garbage for delayed deletion
         mutexGarbage.lock();
 		garbage.insert(garbage.end(), resource);
         mutexGarbage.unlock();
@@ -67,12 +72,15 @@ void ResourceManager::release(ResourceVirtual* resource)
 }
 void ResourceManager::clearGarbage()
 {
+	//	instanciate the dummy list
     std::vector<ResourceVirtual*> garbageCopy;
 
+	//	swap dummy list with garbage
     mutexGarbage.lock();
 	garbage.swap(garbageCopy);
     mutexGarbage.unlock();
 
+	//	delete element in garbage list
 	for (unsigned int i = 0; i < garbageCopy.size(); i++)
 		if (garbageCopy[i]) delete garbageCopy[i];
     garbageCopy.clear();
@@ -102,7 +110,7 @@ Mesh* ResourceManager::getMesh(std::string name)
 	if (!ml.bones.empty() && !ml.weights.empty())
 		resource = new MeshAnimated(name, !ml.animations.empty(), ml.vertices, ml.normales, ml.colors, ml.bones, ml.weights, ml.faces);
 	else resource = new Mesh(name, ml.vertices, ml.normales, ml.colors, ml.faces);
-
+	
 	//	create skeleton if needed
 	if (!ml.roots.empty() && skeletonList.find(name) == skeletonList.end())
 	{
@@ -149,192 +157,248 @@ Mesh* ResourceManager::getMesh(std::string name)
 }
 Texture* ResourceManager::getTexture(std::string name,uint8_t conf)
 {
+	//	initialization
     if(name == "default") name = defaultTexture;
-    Texture* resource = nullptr;
-    mutexList.lock();
+    Texture* texture = nullptr;
 
+	//	search texture in resources containers
+    mutexList.lock();
     auto it=textureList.find(name);
     if(it!=textureList.end())
     {
-        resource = it->second;
-        resource->count++;
+		texture = it->second;
+		texture->count++;
     }
     mutexList.unlock();
-    if(resource) return resource;
+    if(texture) return texture;
 
-	resource = new Texture(repository + "Textures/", name, conf);
+	//	load texture
+	texture = new Texture(repository + "Textures/", name, conf);
 
-    if(resource && resource->isValid())
+	//	return if successfully loaded
+    if(texture && texture->isValid())
     {
-    mutexList.lock();
-        textureList[name] = resource;
-        resource->count++;
-    mutexList.unlock();
+		mutexList.lock();
+		textureList[name] = texture;
+		texture->count++;
+		mutexList.unlock();
     }
+
+	//	an error occur : try return the default one
     else if(name != defaultTexture)
     {
-        if(resource) delete resource;
-        resource = getTexture(defaultTexture);
-    }
-    else if(resource)
-    {
-        delete resource;
-        resource = nullptr;
+        if(texture) delete texture;
+		texture = getTexture(defaultTexture);
     }
 
-    return resource;
+	//	an error occur on default texture loading : return nullptr
+    else if(texture)
+    {
+        delete texture;
+		texture = nullptr;
+    }
+
+	//	end
+    return texture;
 }
 Texture* ResourceManager::getTexture2D(const std::string& name,uint8_t conf) {return getTexture(name,conf|Texture::TEXTURE_2D);}
 Shader* ResourceManager::getShader(std::string name)
 {
+	//	initialization
     if(name == "default") name = defaultShader;
-    Shader* resource = nullptr;
-    mutexList.lock();
+    Shader* shader = nullptr;
 
+	//	search shader in resources containers
+    mutexList.lock();
     auto it=shaderList.find(name);
     if(it!=shaderList.end())
     {
-        resource = it->second;
-        resource->count++;
+		shader = it->second;
+		shader->count++;
     }
     mutexList.unlock();
-    if(resource) return resource;
+    if(shader) return shader;
 
-    resource = new Shader(repository+"Shaders/",name);
-    if(resource && resource->isValid())
+	//	load shader
+	shader = new Shader(repository+"Shaders/",name);
+
+	//	return if successfully loaded
+    if(shader && shader->isValid())
     {
         mutexList.lock();
-        shaderList[name] = resource;
-        resource->count++;
+        shaderList[name] = shader;
+		shader->count++;
         mutexList.unlock();
     }
+
+	//	an error occur : try return the default one
     else if(name != defaultShader)
     {
         std::cerr<<"fail load shader : "<<name<<std::endl;
-        if(resource) delete resource;
-        resource = getShader(defaultShader);
+        if(shader) delete shader;
+		shader = getShader(defaultShader);
     }
-    else if(resource)
+
+	//	an error occur on default shader loading : return nullptr
+    else if(shader)
     {
-        delete resource;
-        resource = nullptr;
+        delete shader;
+		shader = nullptr;
     }
-    return resource;
+
+	//	end
+    return shader;
 }
 Font* ResourceManager::getFont(std::string name)
 {
+	//	initialization
     if(name == "default") name = defaultFont;
-    Font* resource = nullptr;
+    Font* font = nullptr;
 
+	//	search font in resources containers
     mutexList.lock();
     auto it=fontList.find(name);
     if(it!=fontList.end())
     {
-        resource = it->second;
-        resource->count++;
+		font = it->second;
+		font->count++;
     }
     mutexList.unlock();
-    if(resource) return resource;
+    if(font) return font;
 
-    resource = new Font(repository+"Font/",name);
-    if(resource && resource->isValid())
+	//	load font
+	font = new Font(repository+"Font/",name);
+
+	//	return if successfully loaded
+    if(font && font->isValid())
     {
-    mutexList.lock();
-        fontList[name] = resource;
-        resource->count++;
-    mutexList.unlock();
+		mutexList.lock();
+        fontList[name] = font;
+		font->count++;
+		mutexList.unlock();
     }
+
+	//	an error occur : try return the default one
     else if(name != defaultFont)
     {
-        if(resource) delete resource;
-        resource = getFont(defaultFont);
+        if(font) delete font;
+		font = getFont(defaultFont);
     }
-    else if(resource)
+
+	//	an error occur on default font loading : return nullptr
+    else if(font)
     {
-        delete resource;
-        resource = nullptr;
+        delete font;
+		font = nullptr;
     }
-    return resource;
+
+	//	end
+    return font;
 }
 Skeleton* ResourceManager::getSkeleton(std::string name)
 {
-	Skeleton*resource = nullptr;
+	//	initialization
+	if (name == "default") name = defaultSkeleton;
+	Skeleton* skeleton = nullptr;
+	
+	//	search skeleton in resources containers
 	mutexList.lock();
-
-	//	search mesh in resources containers
 	auto it = skeletonList.find(name);
 	if (it != skeletonList.end())
 	{
-		resource = it->second;
-		resource->count++;
+		skeleton = it->second;
+		skeleton->count++;
 	}
 	mutexList.unlock();
-	if (resource) return resource;
+	if (skeleton) return skeleton;
 
-	resource = new Skeleton(repository + "Skeleton/", name);
-	if (resource && resource->isValid())
+	//	load skeleton
+	skeleton = new Skeleton(repository + "Skeletons/", name);
+
+	//	return if successfully loaded
+	if (skeleton && skeleton->isValid())
 	{
 		mutexList.lock();
-		skeletonList[name] = resource;
-		resource->count++;
+		skeletonList[name] = skeleton;
+		skeleton->count++;
 		mutexList.unlock();
 	}
-	else if (name != defaultFont)
+
+	//	an error occur : try return the default one
+	else if (name != defaultSkeleton)
 	{
-		if (resource) delete resource;
-		resource = getSkeleton(defaultFont);
+		if (skeleton) delete skeleton;
+		skeleton = getSkeleton(defaultSkeleton);
 	}
-	else if (resource)
+
+	//	an error occur on default skeleton loading : return nullptr
+	else if (skeleton)
 	{
-		delete resource;
-		resource = nullptr;
+		delete skeleton;
+		skeleton = nullptr;
 	}
-	return resource;
+
+	//	end
+	return skeleton;
 }
 Animation* ResourceManager::getAnimation(std::string name)
 {
-	Animation*resource = nullptr;
-	mutexList.lock();
+	//	initialization
+	if (name == "default") name = defaultAnimation;
+	Animation* animation = nullptr;
 
-	//	search mesh in resources containers
+	//	search animation in resources containers
+	mutexList.lock();
 	auto it = animationList.find(name);
 	if (it != animationList.end())
 	{
-		resource = it->second;
-		resource->count++;
+		animation = it->second;
+		animation->count++;
 	}
 	mutexList.unlock();
-	if (resource) return resource;
+	if (animation) return animation;
 
-	resource = new Animation(repository + "Skeleton/", name);
-	if (resource && resource->isValid())
+	//	load animation
+	animation = new Animation(repository + "Animations/", name);
+
+	//	return if successfully loaded
+	if (animation && animation->isValid())
 	{
 		mutexList.lock();
-		animationList[name] = resource;
-		resource->count++;
+		animationList[name] = animation;
+		animation->count++;
 		mutexList.unlock();
 	}
-	else if (name != defaultFont)
+
+	//	an error occur : try return the default one
+	else if (name != defaultAnimation)
 	{
-		if (resource) delete resource;
-		resource = getAnimation(defaultFont);
+		if (animation) delete animation;
+		animation = getAnimation(defaultAnimation);
 	}
-	else if (resource)
+
+	//	an error occur on default animation loading : return nullptr
+	else if (animation)
 	{
-		delete resource;
-		resource = nullptr;
+		delete animation;
+		animation = nullptr;
 	}
-	return resource;
+
+	//	end
+	return animation;
 }
 
 
 void ResourceManager::addMesh(Mesh* mesh)
 {
+	//	search mesh in resources containers
 	auto it = meshList.find(mesh->name);
 	if (it != meshList.end())
 	{
 		mesh->count++;
 	}
+
+	//	add to containers if not founded
 	else
 	{
 		mutexList.lock();
@@ -345,11 +409,14 @@ void ResourceManager::addMesh(Mesh* mesh)
 }
 void ResourceManager::addTexture(Texture* texture)
 {
+	//	search texture in resources containers
 	auto it = textureList.find(texture->name);
 	if (it != textureList.end())
 	{
 		texture->count++;
 	}
+
+	//	add to containers if not founded
 	else
 	{
 		mutexList.lock();
@@ -360,11 +427,14 @@ void ResourceManager::addTexture(Texture* texture)
 }
 void ResourceManager::addShader(Shader* shader)
 {
+	//	search shader in resources containers
 	auto it = shaderList.find(shader->name);
 	if (it != shaderList.end())
 	{
 		shader->count++;
 	}
+
+	//	add to containers if not founded
 	else
 	{
 		mutexList.lock();
@@ -375,11 +445,14 @@ void ResourceManager::addShader(Shader* shader)
 }
 void ResourceManager::addFont(Font* font)
 {
+	//	search font in resources containers
 	auto it = fontList.find(font->name);
 	if (it != fontList.end())
 	{
 		font->count++;
 	}
+
+	//	add to containers if not founded
 	else
 	{
 		mutexList.lock();
@@ -390,26 +463,34 @@ void ResourceManager::addFont(Font* font)
 }
 void ResourceManager::addSkeleton(Skeleton* skeleton)
 {
+	//	search skeleton in resources containers
 	auto it = skeletonList.find(skeleton->name);
 	if (it != skeletonList.end())
 	{
 		skeleton->count++;
 	}
+
+	//	add to containers if not founded
 	else
 	{
 		mutexList.lock();
 		skeletonList[skeleton->name] = skeleton;
 		mutexList.unlock();
 		skeleton->count++;
+
+		std::cout << skeleton->name << " added" << std::endl;
 	}
 }
 void ResourceManager::addAnimation(Animation* animation)
 {
+	//	search animation in resources containers
 	auto it = animationList.find(animation->name);
 	if (it != animationList.end())
 	{
 		animation->count++;
 	}
+
+	//	add to containers if not founded
 	else
 	{
 		mutexList.lock();

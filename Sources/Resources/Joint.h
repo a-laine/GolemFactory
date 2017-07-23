@@ -12,9 +12,9 @@
 
 struct Joint
 {
-	Joint(std::string jointName = "unknown joint");
+	Joint(const std::string& jointName = "unknown joint");
 
-	unsigned int parent;
+	int parent;
 	std::vector<unsigned int> sons;
 
 	glm::mat4 relativeBindTransform;

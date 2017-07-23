@@ -122,7 +122,7 @@ std::string ToolBox::openAndCleanCStyleFile(std::string targetFile, std::string 
 }
 void ToolBox::clearWhitespace(std::string& input)
 {
-	for (std::string::iterator it = input.begin(); it != input.end(); it++)
+	for (std::string::iterator it = input.begin(); it != input.end(); ++it)
 	{
 		if (std::isspace(*it) && *std::prev(it) == ' ') it = std::prev(input.erase(it));
 		else if (std::isspace(*it) && *std::prev(it) != ' ') *it = ' ';

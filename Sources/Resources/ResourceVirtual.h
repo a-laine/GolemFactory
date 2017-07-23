@@ -82,8 +82,4 @@ class ResourceVirtual
         //	Attributes
         std::atomic_uint count; //!< The number of clients using the resource.
         //
-
-		//	Protected functions
-		std::string openAndCleanCStyleFile(std::string fileName, std::string commentBlockEntry = "/*", std::string commentLineEntry = "//");
-		//
 };

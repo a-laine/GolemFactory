@@ -1,6 +1,7 @@
 #include "Joint.h"
 
-Joint::Joint(std::string jointName) : parent(-1), name(jointName)
+
+Joint::Joint(const std::string& jointName) : parent(-1), name(jointName)
 {
 	relativeBindTransform = glm::mat4(1.f);
 }

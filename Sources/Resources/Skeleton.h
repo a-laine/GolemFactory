@@ -5,10 +5,12 @@
 
 #include "ResourceVirtual.h"
 #include "Joint.h"
+#include "Utiles/Parser/Variant.h"
 
 class Skeleton : public ResourceVirtual
 {
 	friend class InstanceAnimatable;
+
 	public:
 		//	Default
 		Skeleton(const std::string& skeletonName, const std::vector<unsigned int>& rootsList, const std::vector<Joint>& jointsList);
@@ -21,6 +23,7 @@ class Skeleton : public ResourceVirtual
 
 		std::vector<glm::mat4x4> getInverseBindPose() const;
 		std::vector<glm::mat4x4> getBindPose() const;
+		std::vector<Joint> getJoints() const;
 		//
 
 		//	Attributes

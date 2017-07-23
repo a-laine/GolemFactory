@@ -137,7 +137,7 @@ class InstanceVirtual
 
 		virtual std::vector<glm::mat4> getPose();
 
-		virtual const std::list<InstanceVirtual*>& getChildList() const;
+		virtual const std::list<InstanceVirtual*>* getChildList() const;
 		//
 		
 	protected:

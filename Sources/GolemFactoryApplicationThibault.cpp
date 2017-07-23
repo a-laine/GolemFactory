@@ -12,6 +12,7 @@
 #include "Generators/HouseGenerator.h"
 
 #include "Resources/Loader/MeshSaver.h"
+#include "Resources/Loader/SkeletonSaver.h"
 
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -63,21 +64,23 @@ int main()
 	SceneManager::getInstance()->setWorldPosition(glm::vec3(0,0,25));
 	SceneManager::getInstance()->setWorldSize(glm::vec3(GRID_SIZE*GRID_ELEMENT_SIZE, GRID_SIZE*GRID_ELEMENT_SIZE, 50));
 	
-		initializeForestScene(true);
+		//initializeForestScene(true);
 
-		InstanceDrawable* peasant = InstanceManager::getInstance()->getInstanceDrawable("peasant.gfmesh", "default");
+		/*InstanceDrawable* peasant = InstanceManager::getInstance()->getInstanceDrawable("peasant.gfmesh", "default");
 		float scale = 1.7f / peasant->getBBSize().z;
 		peasant->setSize(glm::vec3(scale));
-		peasant->setPosition(glm::vec3(0.f, 0.f, -scale * peasant->getMesh()->sizeZ.x));
+		peasant->setPosition(glm::vec3(0.f, 0.f, -scale * peasant->getMesh()->sizeZ.x));*/
 
 		/*
 			Pourquoi un facteur 20 !!!!!!!!!!!!!!!!!!!!!
 			et en plus il y a le meme dans le shader
 		*/
-		/*InstanceAnimatable* peasant = InstanceManager::getInstance()->getInstanceAnimatable("Peasant10.dae", "skinning");
+
+		//InstanceAnimatable* peasant = InstanceManager::getInstance()->getInstanceAnimatable("Peasant10.dae", "skinning");
+		InstanceAnimatable* peasant = InstanceManager::getInstance()->getInstanceAnimatable("peasant.gfmesh", "human", "humanAnomation", "skinning");
 		float scale = 1.7f / peasant->getBBSize().z *20;
 		peasant->setSize(glm::vec3(scale));
-		peasant->setPosition(glm::vec3(0.f, 0.f, -scale/20 * peasant->getMesh()->sizeZ.x));*/
+		peasant->setPosition(glm::vec3(0.f, 0.f, -scale/20 * peasant->getMesh()->sizeZ.x));
 		SceneManager::getInstance()->addStaticObject(peasant);
 
 
@@ -87,18 +90,14 @@ int main()
 
 	std::cout << "game loop initiated" << std::endl;
 
-	int frame = 0;
 	//std::mt19937 randomEngine;
 
 	while (!glfwWindowShouldClose(window))
 	{
-		//frame++;
-		if (frame > 30)
-		{
-			frame = 0;
-			EventHandler::getInstance()->addFrameEvent(DOUBLE_CLICK_LEFT);
-		}
-		//peasant->animate((float)elapseTime);
+		///
+		//if (glfwGetTime() > 0.5) EventHandler::getInstance()->addFrameEvent(QUIT);
+		//std::cout << "*" << std::endl;
+		peasant->animate((float)elapseTime);
 
 		// begin loop
 		double startTime = glfwGetTime();
@@ -156,6 +155,8 @@ int main()
 	}
 
 	//	Save mesh in gfmesh format
+	//SkeletonSaver ss;
+	//ss.save(peasant->getSkeleton(), resourceRepository, "human");
 	//MeshSaver ms;
 	//ms.save(peasant->getMesh(), resourceRepository, "peasant_static");
 
@@ -229,7 +230,7 @@ void initializeForestScene(bool emptyPlace)
 		vilageHouseCount += houseCount;
 		float angleOffset = 6.28f * ((rand() % 100) / 100.f);
 
-		for (int j = 0; j < houseCount; j++)
+		for (int j = 0; j < houseCount;)
 		{
 			float radius = villageRadius[i] + 3.f * (((rand() % 100) / 50.f) - 1.f);
 			float angle = angleOffset + 6.28f * j / houseCount + ((((rand() % 100) / 50.f) - 1.f)) / houseCount;
@@ -241,24 +242,26 @@ void initializeForestScene(bool emptyPlace)
 				a = glm::rotate(a, angle + 0.4f * ((((rand() % 100) / 50.f) - 1.f)), glm::vec3(0, 0, 1));
 			
 			InstanceDrawable* house = dynamic_cast<InstanceDrawable*>(hg.getHouse(rand(), 20, 30));
-			InstanceManager::getInstance()->add(house);
-			
-			glm::vec3 p = glm::vec3(radius * cos(angle), radius * sin(angle), house->getBSRadius());
-			house->setOrientation(glm::rotate(glm::mat4(1.0), 1.57f + angle, glm::vec3(0, 0, 1)));
-
-			for (unsigned int k = 0; k < houseCircle.size(); k++)
+			if (house && InstanceManager::getInstance()->add(house))
 			{
-				float delta = glm::length(glm::vec3(houseCircle[k].x - p.x, houseCircle[k].y - p.y, 0.f));
-				if (delta < houseCircle[k].z + p.z - 0.5f)
-				{
-					p += (1.f + houseCircle[k].z + p.z - delta) * glm::normalize(glm::vec3(p.x - houseCircle[k].x, p.y - houseCircle[k].y, 0.f));
-					k = 0;
-				}
-			}
+				glm::vec3 p = glm::vec3(radius * cos(angle), radius * sin(angle), house->getBSRadius());
+				house->setOrientation(glm::rotate(glm::mat4(1.0), 1.57f + angle, glm::vec3(0, 0, 1)));
 
-			houseCircle.push_back(p);
-			house->setPosition(glm::vec3(p.x, p.y, 0.f));
-			SceneManager::getInstance()->addStaticObject(house);
+				for (unsigned int k = 0; k < houseCircle.size(); k++)
+				{
+					float delta = glm::length(glm::vec3(houseCircle[k].x - p.x, houseCircle[k].y - p.y, 0.f));
+					if (delta < houseCircle[k].z + p.z - 0.5f)
+					{
+						p += (1.f + houseCircle[k].z + p.z - delta) * glm::normalize(glm::vec3(p.x - houseCircle[k].x, p.y - houseCircle[k].y, 0.f));
+						k = 0;
+					}
+				}
+
+				houseCircle.push_back(p);
+				house->setPosition(glm::vec3(p.x, p.y, 0.f));
+				SceneManager::getInstance()->addStaticObject(house);
+				j++;
+			}
 		}
 	}
 

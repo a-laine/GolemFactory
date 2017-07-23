@@ -55,7 +55,7 @@ void Renderer::render()
 
 	// dummy animation timeline
 
-	dummy += 0.16 / 30.f;
+	dummy += 0.16 / 3.f;
 	if (dummy >= 6.28) dummy = 0.0;
 
 	// bind matrix
@@ -236,7 +236,7 @@ void Renderer::drawInstanceAnimatable(InstanceVirtual* ins, const float* view, c
 void Renderer::drawInstanceContainer(InstanceVirtual* ins, const glm::mat4& view, const glm::mat4& projection, const glm::mat4& model)
 {
 	glm::mat4 modelMatrix = model * ins->getModelMatrix();
-	auto instanceList = ins->getChildList();
+	auto instanceList = *ins->getChildList();
 	for (auto it = instanceList.begin(); it != instanceList.end(); it++)
 	{
 		if (InstanceDrawable* d = dynamic_cast<InstanceDrawable*>(*it))

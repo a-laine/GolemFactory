@@ -13,7 +13,7 @@ Shader::Shader(const std::string& path, const std::string& shaderName) : Resourc
     geometricShader = 0;    tessControlShader = 0;      tessEvalShader = 0;
     program = 0;
     textureCount = 0;
-    Variant v; Variant* tmp = NULL;
+    Variant v; Variant* tmp = nullptr;
     std::string tmpName;
 
     try

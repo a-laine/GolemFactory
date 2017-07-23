@@ -15,12 +15,15 @@ __/\\\\\\\\\\\\\\\_______/\\\\\_______/\\\\\\\\\\\\__________/\\\\\______
 
 
 NEXT STEP
-personnal skeleton file format (json)
 personnal animation file format (json)
 add label inside animations
 
 LITTLE TODO
 Shader, font passer c++11
+change parsing gfmesh line from "iss<<" to sscanf_s
+change truncature in MeshSaver to aproximation
+move gf mesh loading into dedicated class (mesh & meshanimated)
+->meshloader is only used with assimp library
 
 
 

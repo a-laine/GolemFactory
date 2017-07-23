@@ -79,6 +79,7 @@ class InstanceManager : public Singleton<InstanceManager>
 		*  The function return null if the instance allocation fail, or if the instance can't be added to container.
 		*/
 		InstanceAnimatable* getInstanceAnimatable(std::string meshName = "default", std::string shaderName = "default");
+		InstanceAnimatable* getInstanceAnimatable(std::string meshName, std::string skeletonName, std::string animationName, std::string shaderName);
 
 		/*!
 		 *  \brief Instanciate a new InstanceContainer object

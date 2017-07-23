@@ -30,8 +30,8 @@ void InstanceContainer::removeInstance(InstanceVirtual* ins)
 		ins->count--;
 	}
 }
-const std::list<InstanceVirtual*>& InstanceContainer::getChildList() const
+const std::list<InstanceVirtual*>* InstanceContainer::getChildList() const
 {
-	return child;
+	return &child;
 }
 //

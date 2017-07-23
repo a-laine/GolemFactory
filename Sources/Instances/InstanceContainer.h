@@ -17,7 +17,7 @@ class InstanceContainer : public InstanceVirtual
 		void addInstance(InstanceVirtual* ins);
 
 		void removeInstance(InstanceVirtual* ins);
-		const std::list<InstanceVirtual*>& getChildList() const;
+		const std::list<InstanceVirtual*>* getChildList() const;
 		//
 
 	protected:

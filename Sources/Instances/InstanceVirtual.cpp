@@ -33,9 +33,8 @@ Skeleton* InstanceVirtual::getSkeleton() const { return nullptr; }
 Mesh* InstanceVirtual::getMesh() const { return nullptr; }
 std::vector<glm::mat4> InstanceVirtual::getPose() { return std::vector<glm::mat4>(); }
 
-const std::list<InstanceVirtual*>& InstanceVirtual::getChildList() const
+const std::list<InstanceVirtual*>* InstanceVirtual::getChildList() const
 {
-	std::list<InstanceVirtual*> l;
-	return l;
+	return nullptr;
 }
 //

@@ -12,7 +12,7 @@ Animation::Animation(const std::string& animationName, const std::vector<KeyFram
 
 Animation::Animation(const std::string& path, const std::string& animationName) : ResourceVirtual(animationName, ResourceVirtual::ANIMATION)
 {
-	std::cerr << "ERROR : loading animation : " << animationName << "\n" << extension << "format not yet implemented" << std::endl;
+	std::cerr << "ERROR : loading animation : " << animationName << " : " << extension << " format not yet implemented" << std::endl;
 }
 Animation::~Animation() {}
 //

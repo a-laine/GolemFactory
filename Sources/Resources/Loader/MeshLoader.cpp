@@ -231,7 +231,7 @@ void MeshLoader::loadFromAssimp(const aiScene* scene)
 			if (itPos != positionBM.end() && std::get<float>(*itPos) <= currentKeyFrame.time)
 			{
 				currentKeyFrame.poses[boneMap[std::get<std::string>(*itPos)]].position = std::get<glm::vec3>(*itPos);
-				itPos++;
+				++itPos;
 			}
 			else increment++;
 
@@ -239,7 +239,7 @@ void MeshLoader::loadFromAssimp(const aiScene* scene)
 			if (itRot != rotationBM.end() && std::get<float>(*itRot) <= currentKeyFrame.time)
 			{
 				currentKeyFrame.poses[boneMap[std::get<std::string>(*itRot)]].rotation = std::get<glm::fquat>(*itRot);
-				itRot++;
+				++itRot;
 			}
 			else increment++;
 
@@ -247,11 +247,11 @@ void MeshLoader::loadFromAssimp(const aiScene* scene)
 			if (itSca != scaleBM.end() && std::get<float>(*itSca) <= currentKeyFrame.time)
 			{
 				currentKeyFrame.poses[boneMap[std::get<std::string>(*itSca)]].scale = std::get<glm::vec3>(*itSca);
-				itSca++;
+				++itSca;
 			}
 			else increment++;
 
-			if (increment >= 3)
+			if (increment == 3)
 			{
 				// push keyframe and increment currentKeyFrame time
 				animations.push_back(currentKeyFrame);
@@ -405,9 +405,6 @@ void MeshLoader::loadFromGfMesh(const std::string& file)
 			}
 		}
 	}
-
-	bones.clear();
-	weights.clear();
 }
 
 

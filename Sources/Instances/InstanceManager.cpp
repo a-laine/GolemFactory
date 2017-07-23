@@ -97,7 +97,23 @@ InstanceDrawable* InstanceManager::getInstanceDrawable(std::string meshName, std
 }
 InstanceAnimatable* InstanceManager::getInstanceAnimatable(std::string meshName, std::string shaderName)
 {
-	InstanceAnimatable*ins = new InstanceAnimatable(meshName, shaderName);
+	InstanceAnimatable* ins = new InstanceAnimatable(meshName, shaderName);
+	if (!ins || !add(ins))
+	{
+		if (ins) delete ins;
+		return nullptr;
+	}
+	return ins;
+}
+InstanceAnimatable* InstanceManager::getInstanceAnimatable(std::string meshName, std::string skeletonName, std::string animationName, std::string shaderName)
+{
+	InstanceAnimatable* ins = new InstanceAnimatable(meshName, shaderName);
+	if (ins)
+	{
+		ins->setSkeleton(skeletonName);
+		//ins->setAnimation(nullptr);
+	}
+
 	if (!ins || !add(ins))
 	{
 		if (ins) delete ins;
