@@ -10,17 +10,7 @@
 class SkeletonSaver
 {
 	public:
-		//  Default
-		SkeletonSaver();
-		~SkeletonSaver();
-		//
-
 		//	Public functions
-		void save(Skeleton* skeleton, const std::string& resourcesPath, std::string fileName = "");
-		//
-
-	protected:
-		//	Attributes
-		Variant* rootVariant;
+		static void save(Skeleton* skeleton, const std::string& resourcesPath, std::string fileName = "");
 		//
 };

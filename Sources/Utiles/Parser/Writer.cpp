@@ -32,6 +32,7 @@ Writer::Writer(std::ostream* output)
         throw std::logic_error("Writer::Writer : stream error");
     ostr = output;
 	inlineArray = false;
+	inlineEmptyMap = false;
 }
 
 
@@ -44,9 +45,13 @@ void Writer::setStream(std::ostream* output)
         throw std::logic_error("Writer::setStream : stream error");
     ostr = output;
 }
-void Writer::setOption(bool arrayInUniqueLine)
+void Writer::setInlineArray(bool enable)
 {
-	inlineArray = arrayInUniqueLine;
+	inlineArray = enable;
+}
+void Writer::setInlineEmptyMap(bool enable)
+{
+	inlineEmptyMap = enable;
 }
 
 
@@ -107,6 +112,11 @@ void Writer::writeVariant(Variant& var,const int decal) const
             }
             break;
         case Variant::MAP:
+			if (inlineEmptyMap && var.getMap().empty())
+			{
+				*ostr << "{}";
+			}
+			else
             {
                 *ostr << '{' << std::endl;
                 Variant::MapType::iterator it = var.getMap().begin();

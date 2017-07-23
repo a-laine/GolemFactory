@@ -13,6 +13,7 @@
 
 #include "Resources/Loader/MeshSaver.h"
 #include "Resources/Loader/SkeletonSaver.h"
+#include "Resources/Loader/AnimationSaver.h"
 
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -76,8 +77,8 @@ int main()
 			et en plus il y a le meme dans le shader
 		*/
 
-		//InstanceAnimatable* peasant = InstanceManager::getInstance()->getInstanceAnimatable("Peasant10.dae", "skinning");
-		InstanceAnimatable* peasant = InstanceManager::getInstance()->getInstanceAnimatable("peasant.gfmesh", "human", "humanAnomation", "skinning");
+		InstanceAnimatable* peasant = InstanceManager::getInstance()->getInstanceAnimatable("Peasant10.dae", "skinning");
+		//InstanceAnimatable* peasant = InstanceManager::getInstance()->getInstanceAnimatable("peasant.gfmesh", "human", "humanAnomation", "skinning");
 		float scale = 1.7f / peasant->getBBSize().z *20;
 		peasant->setSize(glm::vec3(scale));
 		peasant->setPosition(glm::vec3(0.f, 0.f, -scale/20 * peasant->getMesh()->sizeZ.x));
@@ -95,7 +96,7 @@ int main()
 	while (!glfwWindowShouldClose(window))
 	{
 		///
-		//if (glfwGetTime() > 0.5) EventHandler::getInstance()->addFrameEvent(QUIT);
+		if (glfwGetTime() > 0.5) EventHandler::getInstance()->addFrameEvent(QUIT);
 		//std::cout << "*" << std::endl;
 		peasant->animate((float)elapseTime);
 
@@ -155,8 +156,8 @@ int main()
 	}
 
 	//	Save mesh in gfmesh format
-	//SkeletonSaver ss;
-	//ss.save(peasant->getSkeleton(), resourceRepository, "human");
+	//SkeletonSaver::save(peasant->getSkeleton(), resourceRepository, "human");
+	AnimationSaver::save(peasant->getAnimation(), resourceRepository, "human");
 	//MeshSaver ms;
 	//ms.save(peasant->getMesh(), resourceRepository, "peasant_static");
 

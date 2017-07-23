@@ -45,6 +45,7 @@ std::pair<int, int> Animation::getBoundingKeyFrameIndex(float time) const
 	}
 	return std::pair<int, int>(previous, next);
 }
+std::vector<KeyFrame> Animation::getTimeLine() const { return timeLine; }
 //
 
 //	Protected functions

@@ -2,17 +2,6 @@
 #include "Utiles/Parser/Writer.h"
 
 
-//  Default
-SkeletonSaver::SkeletonSaver() : rootVariant(nullptr)
-{
-
-}
-SkeletonSaver::~SkeletonSaver()
-{
-	delete rootVariant;
-}
-//
-
 //	Public functions
 void SkeletonSaver::save(Skeleton* skeleton, const std::string& resourcesPath, std::string fileName)
 {
@@ -27,21 +16,20 @@ void SkeletonSaver::save(Skeleton* skeleton, const std::string& resourcesPath, s
 		fileName = fileName.substr(0, fileName.find_first_of('.'));
 
 	//	clear buffers
-	delete rootVariant;
-	rootVariant = new Variant(Variant::MapType());
-	rootVariant->insert("jointList", Variant::MapType());
-	rootVariant->insert("order", Variant::ArrayType());
+	Variant rootVariant;   rootVariant.createMap();
+	rootVariant.insert("jointList", Variant::MapType());
+	rootVariant.insert("order", Variant::ArrayType());
 
 	//	fill root variant structure
 	std::vector<Joint> jointList = skeleton->getJoints();
 	for (unsigned int i = 0; i < jointList.size(); i++)
 	{
 		//	save skeleton joint vector order (!important)
-		rootVariant->getMap()["order"].getArray().push_back(Variant(jointList[i].name));
+		rootVariant.getMap()["order"].getArray().push_back(Variant(jointList[i].name));
 
 		//	create joint variant
-		rootVariant->getMap()["jointList"].insert(jointList[i].name, Variant::MapType());
-		Variant& jointVariant = rootVariant->getMap()["jointList"].getMap()[jointList[i].name];
+		rootVariant.getMap()["jointList"].insert(jointList[i].name, Variant::MapType());
+		Variant& jointVariant = rootVariant.getMap()["jointList"].getMap()[jointList[i].name];
 
 		//	create parent attribute
 		if (jointList[i].parent >= 0)
@@ -65,7 +53,7 @@ void SkeletonSaver::save(Skeleton* skeleton, const std::string& resourcesPath, s
 	Writer writer(&file);
 	file << std::fixed;
 	file.precision(5);
-	writer.setOption(true);
-	writer.write(*rootVariant);
+	writer.setInlineArray(true);
+	writer.write(rootVariant);
 }
 //

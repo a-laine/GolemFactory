@@ -19,7 +19,8 @@ class Writer
 
 		//	Set/get functions
 		void setStream(std::ostream* output);
-		void setOption(bool arrayInUniqueLine);
+		void setInlineArray(bool enable);
+		void setInlineEmptyMap(bool enable);
 		//
 
     private:
@@ -31,5 +32,6 @@ class Writer
         std::ostream* ostr;
         bool json;
 		bool inlineArray;
+		bool inlineEmptyMap;
 		//
 };

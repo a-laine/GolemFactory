@@ -22,9 +22,12 @@ class Animation : public ResourceVirtual
 
 		//	Public functions
         bool isValid() const;
+		//
 
+		//	Set/get functions
 		std::vector<glm::mat4x4> getKeyPose(const unsigned int& keyFramePose ,const std::vector<unsigned int>& roots, const std::vector<Joint>& hierarchy) const;
 		std::pair<int, int> getBoundingKeyFrameIndex(float time) const;
+		std::vector<KeyFrame> getTimeLine() const;
         //
 
 		//	Attributes
