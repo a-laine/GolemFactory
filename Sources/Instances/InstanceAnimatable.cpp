@@ -10,16 +10,6 @@ InstanceAnimatable::InstanceAnimatable(std::string meshName, std::string shaderN
 		if (mesh->hasSkeleton()) skeleton = ResourceManager::getInstance()->getSkeleton(meshName);
 		if (mesh->isAnimable())  animation = ResourceManager::getInstance()->getAnimation(meshName);
 	}
-
-	animationTime = 0.f;
-	distortion = 1.f;
-
-	startKeyFrame = 0;
-	stopKeyFrame = (animation ? animation->timeLine.size() - 1 : startKeyFrame + 1);
-	previousKeyFrame = startKeyFrame;
-	nextKeyFrame = startKeyFrame + 1;
-
-	animationConfiguration = PLAY | LOOPED;
 }
 InstanceAnimatable::~InstanceAnimatable()
 {
@@ -35,38 +25,54 @@ InstanceAnimatable::~InstanceAnimatable()
 void InstanceAnimatable::animate(float step)
 {
 	if (!skeleton) return;
-	if (!(animationConfiguration & PLAY)) return;
-
 	if (animation)
 	{
-		animationTime += distortion * step / 1000.f;
-		std::pair<int, int> bound = animation->getBoundingKeyFrameIndex(animation->timeLine[previousKeyFrame].time + animationTime);
-		if (bound.second != nextKeyFrame)
+		//	update all current animations
+		for (std::list<AnimationTrack>::iterator it = currentAnimations.begin(); it != currentAnimations.end();)
 		{
-			//std::cout << previousKeyFrame << ' ' << nextKeyFrame << ' ' << animation->timeLine.size() << std::endl;
-			animationTime -= animation->timeLine[nextKeyFrame].time - animation->timeLine[previousKeyFrame].time;
-			if (bound.first >= stopKeyFrame || bound.first < 0)
+			if (it->animate(step, this)) 
 			{
-				if (animationConfiguration&LOOPED)
-					bound = animation->getBoundingKeyFrameIndex(animation->timeLine[startKeyFrame].time + animationTime);
-				else
+				if (it->flag) std::cout << "end animation" << it->name << std::endl;
+				it = currentAnimations.erase(it);
+			}
+			else ++it;
+		}
+		if (currentAnimations.empty()) return;
+
+		//	blend all animations
+		std::vector<JointPose> blendPose(skeleton->joints.size());
+		for (unsigned int i = 0; i < blendPose.size(); i++)
+		{
+			float m = blendingMagnitude(i);
+			if (m > 0.f)
+			{
+				blendPose[i].position = glm::vec3(0.f);
+				blendPose[i].scale = glm::vec3(0.f);
+				blendPose[i].rotation = glm::fquat(0.f, 0.f, 0.f, 0.f);
+
+				for (std::list<AnimationTrack>::iterator it = currentAnimations.begin(); it != currentAnimations.end(); ++it)
 				{
-					bound = std::pair<int, int>(startKeyFrame, startKeyFrame + 1);
-					animationConfiguration &= ~PLAY;
+					blendPose[i].position += (it->pose[i].priority / m) * it->pose[i].position;
+					blendPose[i].scale += (it->pose[i].priority / m) * it->pose[i].scale;
+					blendPose[i].rotation += (it->pose[i].priority / m) * it->pose[i].rotation;
 				}
 			}
+			else
+			{
+				blendPose[i].position = currentAnimations.begin()->pose[i].position;
+				blendPose[i].scale = currentAnimations.begin()->pose[i].scale;
+				blendPose[i].rotation = currentAnimations.begin()->pose[i].rotation;
+			}
 		}
-		previousKeyFrame = bound.first;
-		nextKeyFrame = bound.second;
-		if (!(animationConfiguration & PLAY)) return;
 
-		std::vector<glm::mat4> newPose(animation->timeLine[0].poses.size(), glm::mat4(1.f));
+		//	compute matrix list pose
+		std::vector<glm::mat4> blendMatrix(blendPose.size(), glm::mat4(1.f));
 		for (unsigned int i = 0; i < skeleton->roots.size(); i++)
-			interpolatePose(previousKeyFrame, nextKeyFrame, animationTime / (animation->timeLine[nextKeyFrame].time - animation->timeLine[previousKeyFrame].time),
-				newPose, glm::mat4(1.f), skeleton->roots[i], skeleton->joints);
+			computePose(blendMatrix, blendPose, glm::mat4(1.f), skeleton->roots[i]);
 
+		//swap
 		locker.lock();
-		pose = newPose;
+		pose = blendMatrix;
 		locker.unlock();
 	}
 	else
@@ -76,22 +82,21 @@ void InstanceAnimatable::animate(float step)
 		locker.unlock();
 	}
 }
-void InstanceAnimatable::launchAnimation(const std::string& labelName)
+void InstanceAnimatable::launchAnimation(const std::string& labelName, const bool& flaged)
 {
-	if (!animation) return;
+	if (!animation || !skeleton) return;
 	std::map<std::string, KeyLabel>::iterator it = animation->labels.find(labelName);
 	if (it != animation->labels.end())
 	{
-		animationTime = 0.f;
-		distortion = it->second.distortion;
-
-		startKeyFrame = it->second.start;
-		stopKeyFrame = it->second.stop;
-		previousKeyFrame = startKeyFrame;
-		nextKeyFrame = previousKeyFrame + 1;
-
-		animationConfiguration = PLAY;
-		if (it->second.loop) animationConfiguration |= LOOPED;
+		AnimationTrack at(skeleton->joints.size(), labelName);
+			at.distortion = it->second.distortion;
+			at.start = it->second.start;
+			at.stop = it->second.stop;
+			at.previous = at.start;
+			at.next = at.previous + 1;
+			at.loop = it->second.loop;
+			at.flag = flaged;
+		currentAnimations.insert(currentAnimations.end(), at);
 	}
 }
 //
@@ -99,14 +104,13 @@ void InstanceAnimatable::launchAnimation(const std::string& labelName)
 //	Set/get functions
 void InstanceAnimatable::setAnimation(std::string animationName)
 {
+	currentAnimations.clear();
 	ResourceManager::getInstance()->release(animation);
 	animation = ResourceManager::getInstance()->getAnimation(animationName);
-
-	startKeyFrame = 0;
-	stopKeyFrame = (animation ? animation->timeLine.size() - 1 : startKeyFrame + 1);
 }
 void InstanceAnimatable::setAnimation(Animation* a)
 {
+	currentAnimations.clear();
 	ResourceManager::getInstance()->release(animation);
 	if (a) animation = ResourceManager::getInstance()->getAnimation(a->name);
 	else animation = nullptr;
@@ -137,14 +141,52 @@ std::vector<glm::mat4> InstanceAnimatable::getPose()
 //
 
 //	Private functions
-void InstanceAnimatable::interpolatePose(const int& key1, const int& key2,const float& p, std::vector<glm::mat4>& pose, const glm::mat4& parentPose, unsigned int joint, const std::vector<Joint>& hierarchy)
+void InstanceAnimatable::computePose(std::vector<glm::mat4>& result, const std::vector<JointPose>& input, const glm::mat4& parentPose, unsigned int joint)
 {
-	glm::mat4 t = glm::translate(glm::mix(animation->timeLine[key1].poses[joint].position, animation->timeLine[key2].poses[joint].position, p));
-	glm::mat4 s = glm::scale(glm::mix(animation->timeLine[key1].poses[joint].scale,    animation->timeLine[key2].poses[joint].scale,    p));
-	glm::mat4 r = glm::toMat4(glm::slerp(animation->timeLine[key1].poses[joint].rotation,           animation->timeLine[key2].poses[joint].rotation,                 p));
+	result[joint] = parentPose * glm::translate(input[joint].position) * glm::toMat4(input[joint].rotation) * glm::scale(input[joint].scale);
+	for (unsigned int i = 0; i < skeleton->joints[joint].sons.size(); i++)
+		computePose(result, input, result[joint], skeleton->joints[joint].sons[i]);
+}
+float InstanceAnimatable::blendingMagnitude(const unsigned int& joint)
+{
+	float magnitude = 0.f;
+	for (std::list<AnimationTrack>::iterator it = currentAnimations.begin(); it != currentAnimations.end(); ++it)
+		if (it->pose[joint].priority > 0.f)
+			magnitude += it->pose[joint].priority;
+	return magnitude;
+}
+//
 
-	pose[joint] = parentPose * t * r * s;
-	for (unsigned int i = 0; i < hierarchy[joint].sons.size(); i++)
-		interpolatePose(key1, key2, p, pose, pose[joint], hierarchy[joint].sons[i], hierarchy);
+//	Miscellaneous
+InstanceAnimatable::AnimationTrack::AnimationTrack(const unsigned int& poseSize, const std::string& n) : name(n), start(0), stop(0), previous(0), next(0), time(0.f), loop(false), flag(false)
+{
+	pose.assign(poseSize, JointPose());
+}
+bool InstanceAnimatable::AnimationTrack::animate(const float& step, const InstanceAnimatable* const parent)
+{
+	time += distortion * step / 1000.f;
+	const std::vector<KeyFrame>& animationSet = parent->animation->timeLine;
+	float dt = animationSet[next].time - animationSet[previous].time;
+	if (time > dt)
+	{
+		std::pair<int, int> bound = parent->animation->getBoundingKeyFrameIndex(animationSet[previous].time + time);
+		time -= dt;
+		if (bound.first >= stop || bound.first < 0)
+		{
+			if (loop) bound = parent->animation->getBoundingKeyFrameIndex(animationSet[start].time + time);
+			else return true;
+		}
+		previous = bound.first;
+		next = bound.second;
+	}
+
+	float t = time / (animationSet[next].time - animationSet[previous].time);
+	for (unsigned int i = 0; i < pose.size(); i++)
+	{
+		pose[i].position = glm::mix(animationSet[previous].poses[i].position, animationSet[next].poses[i].position, t);
+		pose[i].rotation = glm::slerp(animationSet[previous].poses[i].rotation, animationSet[next].poses[i].rotation, t);
+		pose[i].scale = glm::mix(animationSet[previous].poses[i].scale, animationSet[next].poses[i].scale, t);
+	}
+	return false;
 }
 //

@@ -25,6 +25,7 @@ struct JointPose
 {
 	JointPose();
 
+	float priority;
 	glm::vec3 position;
 	glm::fquat rotation;
 	glm::vec3 scale;

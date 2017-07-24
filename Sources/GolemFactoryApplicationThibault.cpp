@@ -65,13 +65,13 @@ int main()
 	SceneManager::getInstance()->setWorldPosition(glm::vec3(0,0,25));
 	SceneManager::getInstance()->setWorldSize(glm::vec3(GRID_SIZE*GRID_ELEMENT_SIZE, GRID_SIZE*GRID_ELEMENT_SIZE, 50));
 	
-		initializeForestScene(true);
+		//initializeForestScene(true);
 
 		InstanceAnimatable* peasant = InstanceManager::getInstance()->getInstanceAnimatable("peasant", "human", "human", "skinning");
 		//InstanceDrawable* peasant = InstanceManager::getInstance()->getInstanceDrawable("peasant_static", "default");
 		//InstanceAnimatable* peasant = InstanceManager::getInstance()->getInstanceAnimatable("Peasant10.dae", "skinning");
 
-		float scale = 10.f / peasant->getBBSize().z;
+		float scale = 1.7f / peasant->getBBSize().z;
 		peasant->setSize(glm::vec3(scale));
 		peasant->setPosition(glm::vec3(0.f, 0.f, -scale * peasant->getMesh()->sizeZ.x));
 		peasant->launchAnimation("walk");
@@ -127,12 +127,12 @@ int main()
 			else if (v[i] == SLOT1) peasant->launchAnimation("hello");
 			else if (v[i] == SLOT2) peasant->launchAnimation("yes");
 			else if (v[i] == SLOT3) peasant->launchAnimation("no");
-			else if (v[i] == SLOT4) peasant->launchAnimation("start walk");
+			//else if (v[i] == SLOT4) peasant->launchAnimation("start walk");
 			else if (v[i] == SLOT5) peasant->launchAnimation("walk");
-			else if (v[i] == SLOT6) peasant->launchAnimation("end walk");
-			else if (v[i] == SLOT7) peasant->launchAnimation("start run");
+			//else if (v[i] == SLOT6) peasant->launchAnimation("end walk");
+			/*else if (v[i] == SLOT7) peasant->launchAnimation("start run");
 			else if (v[i] == SLOT8) peasant->launchAnimation("run");
-			else if (v[i] == SLOT9) peasant->launchAnimation("end run");
+			else if (v[i] == SLOT9) peasant->launchAnimation("end run");*/
 		}
 
 		//Animate camera

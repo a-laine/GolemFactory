@@ -6,6 +6,8 @@
 
 class InstanceAnimatable : public InstanceDrawable
 {
+	friend struct AnimationTrack;
+
 	public:
 		//	Miscellaneous
 		enum AnimationConfigurationFlags
@@ -22,7 +24,7 @@ class InstanceAnimatable : public InstanceDrawable
 
 		//	Public functions
 		void animate(float step);
-		void launchAnimation(const std::string& labelName);
+		void launchAnimation(const std::string& labelName, const bool& flaged = false);
 		//
 
 		//	Set/get functions
@@ -37,23 +39,31 @@ class InstanceAnimatable : public InstanceDrawable
 		//
 
 	protected:
+		//	Protected functions
+		void computePose(std::vector<glm::mat4>& result, const std::vector<JointPose>& input, const glm::mat4& parentPose, unsigned int joint);
+		float blendingMagnitude(const unsigned int& joint);
+		//
+		
+		//	Miscellaneous
+		struct AnimationTrack
+		{
+			AnimationTrack(const unsigned int& poseSize, const std::string& n = "");
+			bool animate(const float& step, const InstanceAnimatable* const parent);
+
+			std::string name;
+			int start, stop, previous, next;
+			float time, distortion;
+			bool loop, flag;
+			std::vector<JointPose> pose;
+		};
+		//
+
 		// Attributes
 		Skeleton* skeleton;		//!< Skeleton resource pointer
 		Animation* animation;	//!< Animation resource
 
 		Mutex locker;
 		std::vector<glm::mat4> pose;
-
-		uint8_t animationConfiguration;
-		float animationTime;
-		int previousKeyFrame;
-		int nextKeyFrame;
-		int startKeyFrame;
-		int stopKeyFrame;
-		float distortion;
-		//
-
-		//	Protected functions
-		void interpolatePose(const int& key1, const int& key2, const float& p, std::vector<glm::mat4>& pose, const glm::mat4& parentPose, unsigned int joint, const std::vector<Joint>& hierarchy);
+		std::list<AnimationTrack> currentAnimations;
 		//
 };
