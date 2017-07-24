@@ -4,14 +4,6 @@
 //	Public functions
 void MeshSaver::save(Mesh* mesh, const std::string& resourcesPath, std::string fileName, glm::vec3 scaleModifier)
 {
-	//	Attributes
-	std::set<vec3> vertices;
-	std::set<vec3> normales;
-	std::set<vec3> colors;
-	std::set<vec3> weights;
-	std::set<ivec3> bones;
-	std::vector<unsigned int> faces;
-
 	//	initialize fileName
 	if (fileName.empty())
 		fileName = mesh->name;
@@ -22,11 +14,15 @@ void MeshSaver::save(Mesh* mesh, const std::string& resourcesPath, std::string f
 
 	//	create and initialize file
 	std::ofstream file(resourcesPath + "Meshes/" + fileName + ".gfmesh", std::ofstream::out);
-	file << "#File : " << fileName << std::endl;
-	file << "#Format : gfmesh, for Golem Factory engines" << std::endl << std::endl << std::endl;
+	file << "# File : " << fileName << std::endl;
+	file << "# Format : gfmesh, for Golem Factory engines" << std::endl;
+	file << "# Vertex count : " << mesh->vertices.size() << std::endl;
+	file << "# Faces count : " << mesh->faces.size() << std::endl;
 
 	//	try a cast into MeshAnimated and save apropriately
-	MeshAnimated* m = dynamic_cast<MeshAnimated*>(mesh);
+	MeshAnimated* m = nullptr;
+	if (mesh->hasSkeleton()) m = dynamic_cast<MeshAnimated*>(mesh);
+
 	if (m) save(m, file, scaleModifier);
 	else save(mesh, file, scaleModifier);
 
@@ -38,6 +34,9 @@ void MeshSaver::save(Mesh* mesh, const std::string& resourcesPath, std::string f
 //	Protected functions
 void MeshSaver::save(Mesh* mesh, std::ofstream& file, glm::vec3 scaleModifier)
 {
+	//	finish header
+	file << "# Static mesh" << std::endl << std::endl << std::endl;
+
 	//	initialize buffers
 	std::set<vec3> vertices;
 	std::set<vec3> normales;
@@ -110,6 +109,9 @@ void MeshSaver::save(Mesh* mesh, std::ofstream& file, glm::vec3 scaleModifier)
 }
 void MeshSaver::save(MeshAnimated* mesh, std::ofstream& file, glm::vec3 scaleModifier)
 {
+	//	finish header
+	file << "# Animatable mesh : contain bones and / or weights" << std::endl << std::endl << std::endl;
+
 	//	initialize buffers
 	std::set<vec3> vertices;
 	std::set<vec3> normales;

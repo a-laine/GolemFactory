@@ -12,6 +12,7 @@ class MeshAnimated : public Mesh
 
     public:
 		//  Default
+		MeshAnimated(const std::string& path, const std::string& meshName);
 		MeshAnimated(const std::string& meshName,					const bool& isAnimable,                
 					 const std::vector<glm::vec3>& verticesArray,	const std::vector<glm::vec3>& normalesArray, 
 					 const std::vector<glm::vec3>& colorArray,		const std::vector<glm::ivec3>& bonesArray,   
@@ -31,6 +32,10 @@ class MeshAnimated : public Mesh
 		//
 
 	protected:
+		//	Temporary loading structures
+		struct gfvertex_extended { int v, vn, c, w, b; };
+		//
+
         //  Attributes
 		GLuint weightsBuffer, bonesBuffer;
 

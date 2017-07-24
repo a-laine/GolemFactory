@@ -5,11 +5,11 @@ InstanceAnimatable::InstanceAnimatable(std::string meshName, std::string shaderN
 {
 	type = InstanceVirtual::ANIMATABLE;
 
-	mesh = ResourceManager::getInstance()->getMesh(meshName);
-	shader = ResourceManager::getInstance()->getShader(shaderName);
-
-	if (mesh->hasSkeleton()) skeleton = ResourceManager::getInstance()->getSkeleton(meshName); 
-	if (mesh->isAnimable())  animation = ResourceManager::getInstance()->getAnimation(meshName);
+	if (mesh && !mesh->isFromGolemFactoryFormat())
+	{
+		if (mesh->hasSkeleton()) skeleton = ResourceManager::getInstance()->getSkeleton(meshName);
+		if (mesh->isAnimable())  animation = ResourceManager::getInstance()->getAnimation(meshName);
+	}
 
 	animationTime = 0.f;
 	distortion = 1.f;

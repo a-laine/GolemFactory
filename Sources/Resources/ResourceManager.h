@@ -58,6 +58,11 @@ class ResourceManager : public Singleton<ResourceManager>
         ~ResourceManager();											//!< Default destructor.
         //
 
+		//  Private functions
+		Mesh* loadFromAssimp(std::string fileName);
+		Mesh* loadFromGolemFactoryFormat(std::string fileName, bool haveExtention);
+		//
+
         //  Attributes
         Mutex mutexGarbage;								//!< A mutex to prevent garbage collision.
         std::vector<ResourceVirtual*> garbage;			//!< The list of resources to delete.

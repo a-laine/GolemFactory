@@ -65,21 +65,13 @@ int main()
 	SceneManager::getInstance()->setWorldPosition(glm::vec3(0,0,25));
 	SceneManager::getInstance()->setWorldSize(glm::vec3(GRID_SIZE*GRID_ELEMENT_SIZE, GRID_SIZE*GRID_ELEMENT_SIZE, 50));
 	
-		//initializeForestScene(true);
+		initializeForestScene(true);
 
-		/*InstanceDrawable* peasant = InstanceManager::getInstance()->getInstanceDrawable("peasant.gfmesh", "default");
-		float scale = 1.7f / peasant->getBBSize().z;
-		peasant->setSize(glm::vec3(scale));
-		peasant->setPosition(glm::vec3(0.f, 0.f, -scale * peasant->getMesh()->sizeZ.x));*/
-
-		/*
-			Pourquoi un facteur 20 !!!!!!!!!!!!!!!!!!!!!
-			et en plus il y a le meme dans le shader
-		*/
-
+		InstanceAnimatable* peasant = InstanceManager::getInstance()->getInstanceAnimatable("peasant", "human", "human", "skinning");
+		//InstanceDrawable* peasant = InstanceManager::getInstance()->getInstanceDrawable("peasant_static", "default");
 		//InstanceAnimatable* peasant = InstanceManager::getInstance()->getInstanceAnimatable("Peasant10.dae", "skinning");
-		InstanceAnimatable* peasant = InstanceManager::getInstance()->getInstanceAnimatable("peasant.gfmesh", "human", "human", "skinning");
-		float scale = 1.7f / peasant->getBBSize().z;
+
+		float scale = 10.f / peasant->getBBSize().z;
 		peasant->setSize(glm::vec3(scale));
 		peasant->setPosition(glm::vec3(0.f, 0.f, -scale * peasant->getMesh()->sizeZ.x));
 		peasant->launchAnimation("walk");

@@ -15,14 +15,15 @@ class Mesh : public ResourceVirtual
 		//  Miscellaneous
 		enum ConfigurationFlags
 		{
-			VALID = 1 << 0,
+			WELL_LOADED = 1 << 0,
 			HAS_SKELETON = 1 << 1,
 			IS_ANIMABLE = 1 << 2
 		};
 		//
 
         //  Default
-		Mesh(const std::string& meshName);
+		Mesh();
+		Mesh(const std::string& path, const std::string& meshName);
 		Mesh(const std::string& meshName, const std::vector<glm::vec3>& verticesArray, const std::vector<glm::vec3>& normalesArray, const std::vector<glm::vec3>& colorArray, const std::vector<unsigned int>& facesArray);
 		Mesh(const Mesh& original);
 		virtual ~Mesh();
@@ -38,18 +39,25 @@ class Mesh : public ResourceVirtual
         //
 
         //  Set/get functions
-        unsigned int getNumberVertices() const;
-        unsigned int getNumberFaces() const;
-		virtual bool isValid() const;
 		bool hasSkeleton() const;
 		bool isAnimable() const;
+		virtual bool isValid() const;
+		bool isFromGolemFactoryFormat() const;
+
+        unsigned int getNumberVertices() const;
+        unsigned int getNumberFaces() const;
         //
 
 		//	Attributes
+		static std::string extension;
 		glm::vec2 sizeX, sizeY, sizeZ;
 		//
 
 	protected:
+		//	Temporary loading structures
+		struct gfvertex { int v, vn, c; };
+		//
+
         //  Attributes
         uint8_t configuration;
 		GLuint  vao,

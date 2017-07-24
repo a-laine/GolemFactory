@@ -1,5 +1,5 @@
 #include "ResourceManager.h"
-
+#include "Utiles/ToolBox.h"
 
 //  Default
 ResourceManager::ResourceManager(const std::string& path)
@@ -104,36 +104,11 @@ Mesh* ResourceManager::getMesh(std::string name)
     mutexList.unlock();
 	if (resource) return resource;
 
-	//	load mesh with mesh loader
-	MeshLoader ml;
-	ml.loadMesh(repository + "Meshes/" + name);
-	if (!ml.bones.empty() && !ml.weights.empty())
-		resource = new MeshAnimated(name, !ml.animations.empty(), ml.vertices, ml.normales, ml.colors, ml.bones, ml.weights, ml.faces);
-	else resource = new Mesh(name, ml.vertices, ml.normales, ml.colors, ml.faces);
-	
-	//	create skeleton if needed
-	if (!ml.roots.empty() && skeletonList.find(name) == skeletonList.end())
-	{
-		Skeleton* skeleton = new Skeleton(name, ml.roots, ml.joints);
-		if (skeleton->isValid())
-		{
-			mutexList.lock();
-			skeletonList[name] = skeleton;
-			mutexList.unlock();
-		}
-	}
-
-	//	create animation if needed
-	if (!ml.animations.empty() && animationList.find(name) == animationList.end())
-	{
-		Animation* animation = new Animation(name, ml.animations);
-		if (animation->isValid())
-		{
-			mutexList.lock();
-			animationList[name] = animation;
-			mutexList.unlock();
-		}
-	}
+	//	detect extention
+	size_t ext = name.find_last_of('.');
+	if(ext == std::string::npos || name.substr(ext) == Mesh::extension)
+		resource = loadFromGolemFactoryFormat(name, ext != std::string::npos);
+	else resource = loadFromAssimp(name);
 
 	//	verify if mesh is successfully loaded
 	if (resource && resource->isValid())
@@ -540,5 +515,66 @@ void ResourceManager::setDefaultName(ResourceVirtual::ResourceType type,std::str
 		case ResourceVirtual::SKELETON:		defaultSkeleton = name;		break;
         default: break;
     }
+}
+//
+
+//  Private functions
+Mesh* ResourceManager::loadFromAssimp(std::string fileName)
+{
+	//	load mesh with mesh loader
+	Mesh* m;
+	MeshLoader ml;
+	ml.loadMesh(repository + "Meshes/" + fileName);
+	if (!ml.bones.empty() && !ml.weights.empty())
+		m = new MeshAnimated(fileName, !ml.animations.empty(), ml.vertices, ml.normales, ml.colors, ml.bones, ml.weights, ml.faces);
+	else m = new Mesh(fileName, ml.vertices, ml.normales, ml.colors, ml.faces);
+
+	//	create skeleton if needed
+	if (!ml.roots.empty() && skeletonList.find(fileName) == skeletonList.end())
+	{
+		Skeleton* skeleton = new Skeleton(fileName, ml.roots, ml.joints);
+		if (skeleton->isValid())
+		{
+			mutexList.lock();
+			skeletonList[fileName] = skeleton;
+			mutexList.unlock();
+		}
+	}
+
+	//	create animation if needed
+	if (!ml.animations.empty() && animationList.find(fileName) == animationList.end())
+	{
+		Animation* animation = new Animation(fileName, ml.animations);
+		if (animation->isValid())
+		{
+			mutexList.lock();
+			animationList[fileName] = animation;
+			mutexList.unlock();
+		}
+	}
+
+	return m;
+}
+Mesh* ResourceManager::loadFromGolemFactoryFormat(std::string fileName, bool haveExtention)
+{
+	//std::cout << "   loadFromGolemFactoryFormat : " << fileName << " ";
+	bool animated = false;
+	{
+		std::ifstream file(repository + "Meshes/" + fileName + (haveExtention ? "" : Mesh::extension));
+		if (!file.good()) return nullptr;
+		std::string line;
+		while (!file.eof())
+		{
+			std::getline(file, line);
+			if (line.find("b ") != std::string::npos || line.find("w ") != std::string::npos) {
+				animated = true;
+				break; }
+		}
+		file.close();
+	}
+	if (animated) return new MeshAnimated(repository + "Meshes/", fileName);
+	else return new Mesh(repository + "Meshes/", fileName);
+
+	return nullptr;
 }
 //
