@@ -28,6 +28,7 @@ class Animation : public ResourceVirtual
 		std::vector<glm::mat4x4> getKeyPose(const unsigned int& keyFramePose ,const std::vector<unsigned int>& roots, const std::vector<Joint>& hierarchy) const;
 		std::pair<int, int> getBoundingKeyFrameIndex(float time) const;
 		std::vector<KeyFrame> getTimeLine() const;
+		std::map<std::string, KeyLabel> getLabels() const;
         //
 
 		//	Attributes
@@ -41,6 +42,7 @@ class Animation : public ResourceVirtual
 
         //	Attributes
 		std::vector<KeyFrame> timeLine;
+		std::map<std::string, KeyLabel> labels;
 		std::vector<glm::mat4> inverseBindPose;
 		//
 };

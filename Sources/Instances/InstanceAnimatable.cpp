@@ -12,9 +12,10 @@ InstanceAnimatable::InstanceAnimatable(std::string meshName, std::string shaderN
 	if (mesh->isAnimable())  animation = ResourceManager::getInstance()->getAnimation(meshName);
 
 	animationTime = 0.f;
+	distortion = 1.f;
+
 	startKeyFrame = 0;
 	stopKeyFrame = (animation ? animation->timeLine.size() - 1 : startKeyFrame + 1);
-
 	previousKeyFrame = startKeyFrame;
 	nextKeyFrame = startKeyFrame + 1;
 
@@ -38,7 +39,7 @@ void InstanceAnimatable::animate(float step)
 
 	if (animation)
 	{
-		animationTime += step / 1000.f;
+		animationTime += distortion * step / 1000.f;
 		std::pair<int, int> bound = animation->getBoundingKeyFrameIndex(animation->timeLine[previousKeyFrame].time + animationTime);
 		if (bound.second != nextKeyFrame)
 		{
@@ -75,6 +76,24 @@ void InstanceAnimatable::animate(float step)
 		locker.unlock();
 	}
 }
+void InstanceAnimatable::launchAnimation(const std::string& labelName)
+{
+	if (!animation) return;
+	std::map<std::string, KeyLabel>::iterator it = animation->labels.find(labelName);
+	if (it != animation->labels.end())
+	{
+		animationTime = 0.f;
+		distortion = it->second.distortion;
+
+		startKeyFrame = it->second.start;
+		stopKeyFrame = it->second.stop;
+		previousKeyFrame = startKeyFrame;
+		nextKeyFrame = previousKeyFrame + 1;
+
+		animationConfiguration = PLAY;
+		if (it->second.loop) animationConfiguration |= LOOPED;
+	}
+}
 //
 
 //	Set/get functions
@@ -82,6 +101,9 @@ void InstanceAnimatable::setAnimation(std::string animationName)
 {
 	ResourceManager::getInstance()->release(animation);
 	animation = ResourceManager::getInstance()->getAnimation(animationName);
+
+	startKeyFrame = 0;
+	stopKeyFrame = (animation ? animation->timeLine.size() - 1 : startKeyFrame + 1);
 }
 void InstanceAnimatable::setAnimation(Animation* a)
 {

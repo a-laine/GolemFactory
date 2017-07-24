@@ -22,6 +22,7 @@ class InstanceAnimatable : public InstanceDrawable
 
 		//	Public functions
 		void animate(float step);
+		void launchAnimation(const std::string& labelName);
 		//
 
 		//	Set/get functions
@@ -49,6 +50,7 @@ class InstanceAnimatable : public InstanceDrawable
 		int nextKeyFrame;
 		int startKeyFrame;
 		int stopKeyFrame;
+		float distortion;
 		//
 
 		//	Protected functions

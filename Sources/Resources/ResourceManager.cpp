@@ -3,7 +3,7 @@
 
 //  Default
 ResourceManager::ResourceManager(const std::string& path)
-	: repository(path), defaultTexture("10points.png"), defaultFont("Comic Sans MS"), defaultShader("default"), defaultMesh("cube2.obj"), defaultSkeleton("human"), defaultAnimation("humanAnomation")
+	: repository(path), defaultTexture("10points.png"), defaultFont("Comic Sans MS"), defaultShader("default"), defaultMesh("cube2.obj"), defaultSkeleton("human"), defaultAnimation("human")
 {
     
 }

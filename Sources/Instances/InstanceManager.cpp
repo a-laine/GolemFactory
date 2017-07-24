@@ -111,7 +111,7 @@ InstanceAnimatable* InstanceManager::getInstanceAnimatable(std::string meshName,
 	if (ins)
 	{
 		ins->setSkeleton(skeletonName);
-		//ins->setAnimation(nullptr);
+		ins->setAnimation(animationName);
 	}
 
 	if (!ins || !add(ins))

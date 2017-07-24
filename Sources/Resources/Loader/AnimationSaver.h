@@ -12,4 +12,10 @@ class AnimationSaver
 		//	Public functions
 		static void save(Animation* animation, const std::string& resourcesPath, std::string fileName = "");
 		//
+
+	protected:
+		//	Protected functions
+		static bool epsilon(glm::vec3 a, glm::vec3 b, float e);
+		static bool epsilon(glm::fquat a, glm::fquat b, float e);
+		//
 };

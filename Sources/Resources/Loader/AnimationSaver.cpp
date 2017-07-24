@@ -41,7 +41,7 @@ void AnimationSaver::save(Animation* animation, const std::string& resourcesPath
 		for (unsigned int j = 0; j < timeLine[i].poses.size(); j++)
 		{
 			//	create joint name
-			std::string jointName = "joint";
+			std::string jointName = "jp";
 			{
 				int maxDigit = (timeLine[i].poses.size() > 0 ? (int)log10((double)timeLine[i].poses.size()) + 1 : 1);
 				int jointDigit = (j > 0 ? (int)log10((double)j) + 1 : 1);
@@ -54,7 +54,7 @@ void AnimationSaver::save(Animation* animation, const std::string& resourcesPath
 			Variant& joint = frame.getMap()[jointName];
 
 			//	save joint position
-			if (i == 0 || timeLine[i].poses[j].position != timeLine[i-1].poses[j].position)
+			if (i == 0 || epsilon(timeLine[i].poses[j].position, timeLine[i - 1].poses[j].position, 0.001f))
 			{
 				joint.insert("p", Variant::ArrayType());
 				for (int k = 0; k < 3; k++)
@@ -62,7 +62,7 @@ void AnimationSaver::save(Animation* animation, const std::string& resourcesPath
 			}
 
 			//	save joint scale
-			if (i == 0 || timeLine[i].poses[j].scale != timeLine[i - 1].poses[j].scale)
+			if (i == 0 || epsilon(timeLine[i].poses[j].scale, timeLine[i - 1].poses[j].scale, 0.001f))
 			{
 				joint.insert("s", Variant::ArrayType());
 				for (int k = 0; k < 3; k++)
@@ -70,13 +70,29 @@ void AnimationSaver::save(Animation* animation, const std::string& resourcesPath
 			}
 
 			//	save joint rotation
-			if (i == 0 || timeLine[i].poses[j].rotation != timeLine[i - 1].poses[j].rotation)
+			if (i == 0 || epsilon(timeLine[i].poses[j].rotation, timeLine[i - 1].poses[j].rotation, 0.001f))
 			{
 				joint.insert("r", Variant::ArrayType());
 				for (int k = 0; k < 4; k++)
 					joint["r"].getArray().push_back(Variant(timeLine[i].poses[j].rotation[k]));
 			}
 		}
+	}
+
+	//	export labels
+	rootVariant.insert("labelList", Variant::MapType());
+	std::map<std::string, KeyLabel> labels = animation->getLabels();
+	for (std::map<std::string, KeyLabel>::iterator it = labels.begin(); it != labels.end(); ++it)
+	{
+		//	create label variant
+		rootVariant.getMap()["labelList"].insert(it->first, Variant::MapType());
+		Variant& label = rootVariant.getMap()["labelList"].getMap()[it->first];
+
+		//	save label attributes
+		label.insert("start", Variant((int)it->second.start));
+		label.insert("stop", Variant((int)it->second.stop));
+		if (it->second.distortion != 1.f) label.insert("distortion", Variant(it->second.distortion));
+		if (it->second.loop) label.insert("loop", Variant(it->second.loop));
 	}
 
 	//	save into file
@@ -87,5 +103,16 @@ void AnimationSaver::save(Animation* animation, const std::string& resourcesPath
 	writer.setInlineArray(true);
 	writer.setInlineEmptyMap(true);
 	writer.write(rootVariant);
+}
+//
+
+//	Protected functions
+bool AnimationSaver::epsilon(glm::vec3 a, glm::vec3 b, float e)
+{
+	return (a.x - b.x)*(a.x - b.x) + (a.y - b.y)*(a.y - b.y) + (a.z - b.z)*(a.z - b.z) > e;
+}
+bool AnimationSaver::epsilon(glm::fquat a, glm::fquat b, float e)
+{
+	return (a.x - b.x)*(a.x - b.x) + (a.y - b.y)*(a.y - b.y) + (a.z - b.z)*(a.z - b.z) + (a.w - b.w)*(a.w - b.w) > e;
 }
 //

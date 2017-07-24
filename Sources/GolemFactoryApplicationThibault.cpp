@@ -77,11 +77,12 @@ int main()
 			et en plus il y a le meme dans le shader
 		*/
 
-		InstanceAnimatable* peasant = InstanceManager::getInstance()->getInstanceAnimatable("Peasant10.dae", "skinning");
-		//InstanceAnimatable* peasant = InstanceManager::getInstance()->getInstanceAnimatable("peasant.gfmesh", "human", "humanAnomation", "skinning");
-		float scale = 1.7f / peasant->getBBSize().z *20;
+		//InstanceAnimatable* peasant = InstanceManager::getInstance()->getInstanceAnimatable("Peasant10.dae", "skinning");
+		InstanceAnimatable* peasant = InstanceManager::getInstance()->getInstanceAnimatable("peasant.gfmesh", "human", "human", "skinning");
+		float scale = 1.7f / peasant->getBBSize().z;
 		peasant->setSize(glm::vec3(scale));
-		peasant->setPosition(glm::vec3(0.f, 0.f, -scale/20 * peasant->getMesh()->sizeZ.x));
+		peasant->setPosition(glm::vec3(0.f, 0.f, -scale * peasant->getMesh()->sizeZ.x));
+		peasant->launchAnimation("walk");
 		SceneManager::getInstance()->addStaticObject(peasant);
 
 
@@ -96,7 +97,7 @@ int main()
 	while (!glfwWindowShouldClose(window))
 	{
 		///
-		if (glfwGetTime() > 0.5) EventHandler::getInstance()->addFrameEvent(QUIT);
+		//if (glfwGetTime() > 0.5) EventHandler::getInstance()->addFrameEvent(QUIT);
 		//std::cout << "*" << std::endl;
 		peasant->animate((float)elapseTime);
 
@@ -130,10 +131,16 @@ int main()
 			if(v[i] == QUIT) glfwSetWindowShouldClose(window, GL_TRUE);
 			else if(v[i] == CHANGE_CURSOR_MODE) EventHandler::getInstance()->setCursorMode(!EventHandler::getInstance()->getCursorMode());
 			else if (v[i] == ACTION) FPScam = !FPScam;
-			else if (v[i] == DOUBLE_CLICK_LEFT)
-			{
-				
-			}
+
+			else if (v[i] == SLOT1) peasant->launchAnimation("hello");
+			else if (v[i] == SLOT2) peasant->launchAnimation("yes");
+			else if (v[i] == SLOT3) peasant->launchAnimation("no");
+			else if (v[i] == SLOT4) peasant->launchAnimation("start walk");
+			else if (v[i] == SLOT5) peasant->launchAnimation("walk");
+			else if (v[i] == SLOT6) peasant->launchAnimation("end walk");
+			else if (v[i] == SLOT7) peasant->launchAnimation("start run");
+			else if (v[i] == SLOT8) peasant->launchAnimation("run");
+			else if (v[i] == SLOT9) peasant->launchAnimation("end run");
 		}
 
 		//Animate camera
@@ -157,9 +164,8 @@ int main()
 
 	//	Save mesh in gfmesh format
 	//SkeletonSaver::save(peasant->getSkeleton(), resourceRepository, "human");
-	AnimationSaver::save(peasant->getAnimation(), resourceRepository, "human");
-	//MeshSaver ms;
-	//ms.save(peasant->getMesh(), resourceRepository, "peasant_static");
+	//AnimationSaver::save(peasant->getAnimation(), resourceRepository, "human");
+	//MeshSaver::save(peasant->getMesh(), resourceRepository, "peasant", glm::vec3(1.f));
 
 	//	end
 	std::cout << "ending game" << std::endl;

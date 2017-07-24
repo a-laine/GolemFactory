@@ -1,21 +1,16 @@
 #include "MeshSaver.h"
 
-//  Default
-MeshSaver::MeshSaver()
-{
-
-}
-MeshSaver::~MeshSaver()
-{
-
-}
-//
 
 //	Public functions
-void MeshSaver::save(Mesh* mesh, const std::string& resourcesPath, std::string fileName)
+void MeshSaver::save(Mesh* mesh, const std::string& resourcesPath, std::string fileName, glm::vec3 scaleModifier)
 {
-	//	clear buffers
-	clear();
+	//	Attributes
+	std::set<vec3> vertices;
+	std::set<vec3> normales;
+	std::set<vec3> colors;
+	std::set<vec3> weights;
+	std::set<ivec3> bones;
+	std::vector<unsigned int> faces;
 
 	//	initialize fileName
 	if (fileName.empty())
@@ -32,8 +27,8 @@ void MeshSaver::save(Mesh* mesh, const std::string& resourcesPath, std::string f
 
 	//	try a cast into MeshAnimated and save apropriately
 	MeshAnimated* m = dynamic_cast<MeshAnimated*>(mesh);
-	if (m) save(m, file);
-	else save(mesh, file);
+	if (m) save(m, file, scaleModifier);
+	else save(mesh, file, scaleModifier);
 
 	//	end
 	file.close();
@@ -41,17 +36,13 @@ void MeshSaver::save(Mesh* mesh, const std::string& resourcesPath, std::string f
 //
 
 //	Protected functions
-void MeshSaver::clear()
+void MeshSaver::save(Mesh* mesh, std::ofstream& file, glm::vec3 scaleModifier)
 {
-	vertices.clear();
-	normales.clear();
-	colors.clear();
-	weights.clear();
-	bones.clear();
-	faces.clear();
-}
-void MeshSaver::save(Mesh* mesh, std::ofstream& file)
-{
+	//	initialize buffers
+	std::set<vec3> vertices;
+	std::set<vec3> normales;
+	std::set<vec3> colors;
+	std::vector<unsigned int> faces;
 	float truncature = 0.001f;
 
 	//	vertices compression & write
@@ -59,7 +50,9 @@ void MeshSaver::save(Mesh* mesh, std::ofstream& file)
 		vertices.insert(vec3(mesh->vertices[i]));
 	file << "#  positions" << std::endl;
 	for (std::set<vec3>::iterator it = vertices.begin(); it != vertices.end(); ++it)
-		file << "v " << (int)(it->x / truncature) * truncature << ' ' << (int)(it->y / truncature) * truncature << ' ' << (int)(it->z / truncature) * truncature << std::endl;
+		file << "v " << (int)(it->x * scaleModifier.x / truncature + truncature / 2) * truncature
+			 << ' ' <<  (int)(it->y * scaleModifier.y / truncature + truncature / 2) * truncature
+			 << ' ' <<  (int)(it->z * scaleModifier.z / truncature + truncature / 2) * truncature << std::endl;
 	file << std::endl;
 
 	//	normales compression & write
@@ -67,7 +60,9 @@ void MeshSaver::save(Mesh* mesh, std::ofstream& file)
 		normales.insert(vec3(mesh->normales[i]));
 	file << "#  normales" << std::endl;
 	for (std::set<vec3>::iterator it = normales.begin(); it != normales.end(); ++it)
-		file << "vn " << (int)(it->x / truncature) * truncature << ' ' << (int)(it->y / truncature) * truncature << ' ' << (int)(it->z / truncature) * truncature << std::endl;
+		file << "vn " << (int)(it->x / truncature + truncature / 2) * truncature
+			 << ' ' <<   (int)(it->y / truncature + truncature / 2) * truncature
+			 << ' ' <<   (int)(it->z / truncature + truncature / 2) * truncature << std::endl;
 	file << std::endl;
 
 	//	colors compression & write
@@ -75,7 +70,9 @@ void MeshSaver::save(Mesh* mesh, std::ofstream& file)
 		colors.insert(vec3(mesh->colors[i]));
 	file << "#  colors" << std::endl;
 	for (std::set<vec3>::iterator it = colors.begin(); it != colors.end(); ++it)
-		file << "c " << (int)(it->x / truncature) * truncature << ' ' << (int)(it->y / truncature) * truncature << ' ' << (int)(it->z / truncature) * truncature << std::endl;
+		file << "c " << (int)(it->x / truncature + truncature / 2) * truncature
+			 << ' ' <<  (int)(it->y / truncature + truncature / 2) * truncature
+			 << ' ' <<  (int)(it->z / truncature + truncature / 2) * truncature << std::endl;
 	file << std::endl;
 
 	//	faces
@@ -95,7 +92,7 @@ void MeshSaver::save(Mesh* mesh, std::ofstream& file)
 				if (it->x == v.x && it->y == v.y && it->z == v.z) break;
 			file << index << "//"; // double because of texture not yet supported
 
-								   // search normal index
+			// search normal index
 			index = 0;
 			for (std::set<vec3>::iterator it = normales.begin(); it != normales.end(); ++it, index++)
 				if (it->x == vn.x && it->y == vn.y && it->z == vn.z) break;
@@ -111,8 +108,15 @@ void MeshSaver::save(Mesh* mesh, std::ofstream& file)
 	}
 	file << std::endl;
 }
-void MeshSaver::save(MeshAnimated* mesh, std::ofstream& file)
+void MeshSaver::save(MeshAnimated* mesh, std::ofstream& file, glm::vec3 scaleModifier)
 {
+	//	initialize buffers
+	std::set<vec3> vertices;
+	std::set<vec3> normales;
+	std::set<vec3> colors;
+	std::set<vec3> weights;
+	std::set<ivec3> bones;
+	std::vector<unsigned int> faces;
 	float truncature = 0.001f;
 
 	//	vertices compression & write
@@ -120,7 +124,9 @@ void MeshSaver::save(MeshAnimated* mesh, std::ofstream& file)
 		vertices.insert(vec3(mesh->vertices[i]));
 	file << "#  positions" << std::endl;
 	for (std::set<vec3>::iterator it = vertices.begin(); it != vertices.end(); ++it)
-		file << "v " << (int)(it->x / truncature) * truncature << ' ' << (int)(it->y / truncature) * truncature << ' ' << (int)(it->z / truncature) * truncature << std::endl;
+		file << "v " << (int)(it->x * scaleModifier.x / truncature + truncature/2) * truncature
+			 << ' ' <<  (int)(it->y * scaleModifier.y / truncature + truncature / 2) * truncature
+			 << ' ' <<  (int)(it->z * scaleModifier.z / truncature + truncature / 2) * truncature << std::endl;
 	file << std::endl;
 
 	//	normales compression & write
@@ -128,7 +134,9 @@ void MeshSaver::save(MeshAnimated* mesh, std::ofstream& file)
 		normales.insert(vec3(mesh->normales[i]));
 	file << "#  normales" << std::endl;
 	for (std::set<vec3>::iterator it = normales.begin(); it != normales.end(); ++it)
-		file << "vn " << (int)(it->x / truncature) * truncature << ' ' << (int)(it->y / truncature) * truncature << ' ' << (int)(it->z / truncature) * truncature << std::endl;
+		file << "vn " << (int)(it->x / truncature + truncature / 2) * truncature
+			 << ' ' <<   (int)(it->y / truncature + truncature / 2) * truncature
+			 << ' ' <<   (int)(it->z / truncature + truncature / 2) * truncature << std::endl;
 	file << std::endl;
 
 	//	colors compression & write
@@ -136,7 +144,9 @@ void MeshSaver::save(MeshAnimated* mesh, std::ofstream& file)
 		colors.insert(vec3(mesh->colors[i]));
 	file << "#  colors" << std::endl;
 	for (std::set<vec3>::iterator it = colors.begin(); it != colors.end(); ++it)
-		file << "c " << (int)(it->x / truncature) * truncature << ' ' << (int)(it->y / truncature) * truncature << ' ' << (int)(it->z / truncature) * truncature << std::endl;
+		file << "c " << (int)(it->x / truncature + truncature / 2) * truncature
+			 << ' ' <<  (int)(it->y / truncature + truncature / 2) * truncature
+			 << ' ' <<  (int)(it->z / truncature + truncature / 2) * truncature << std::endl;
 	file << std::endl;
 
 	//	weights compression & write
@@ -144,7 +154,9 @@ void MeshSaver::save(MeshAnimated* mesh, std::ofstream& file)
 		weights.insert(vec3(mesh->weights[i]));
 	file << "#  weights" << std::endl;
 	for (std::set<vec3>::iterator it = weights.begin(); it != weights.end(); ++it)
-		file << "w " << (int)(it->x / truncature) * truncature << ' ' << (int)(it->y / truncature) * truncature << ' ' << (int)(it->z / truncature) * truncature << std::endl;
+		file << "w " << (int)(it->x / truncature + truncature / 2) * truncature
+			 << ' ' <<  (int)(it->y / truncature + truncature / 2) * truncature
+			 << ' ' <<  (int)(it->z / truncature + truncature / 2) * truncature << std::endl;
 	file << std::endl;
 
 	//	bones compression & write
@@ -174,7 +186,7 @@ void MeshSaver::save(MeshAnimated* mesh, std::ofstream& file)
 				if (it->x == v.x && it->y == v.y && it->z == v.z) break;
 			file << index << "//"; // double because of texture not yet supported
 
-								   // search normal index
+			// search normal index
 			index = 0;
 			for (std::set<vec3>::iterator it = normales.begin(); it != normales.end(); ++it, index++)
 				if (it->x == vn.x && it->y == vn.y && it->z == vn.z) break;

@@ -12,13 +12,8 @@
 class MeshSaver
 {
 	public:
-		//  Default
-		MeshSaver();
-		~MeshSaver();
-		//
-
 		//	Public functions
-		void save(Mesh* mesh, const std::string& resourcesPath, std::string fileName = "");
+		static void save(Mesh* mesh, const std::string& resourcesPath, std::string fileName = "", glm::vec3 scaleModifier = glm::vec3(1.f));
 		//
 
 	protected:
@@ -58,18 +53,7 @@ class MeshSaver
 		//
 
 		//	Protected functions
-		void clear();
-
-		void save(Mesh* mesh, std::ofstream& file);
-		void save(MeshAnimated* mesh, std::ofstream& file);
-		//
-
-		//	Attributes
-		std::set<vec3> vertices;
-		std::set<vec3> normales;
-		std::set<vec3> colors;
-		std::set<vec3> weights;
-		std::set<ivec3> bones;
-		std::vector<unsigned int> faces;
+		static void save(Mesh* mesh, std::ofstream& file, glm::vec3 scaleModifier);
+		static void save(MeshAnimated* mesh, std::ofstream& file, glm::vec3 scaleModifier);
 		//
 };

@@ -35,3 +35,11 @@ struct KeyFrame
 	float time;
 	std::vector<JointPose> poses;
 };
+
+struct KeyLabel
+{
+	unsigned int start;
+	unsigned int stop;
+	float distortion;
+	bool loop;
+};

@@ -32,7 +32,7 @@ void main()
 	mat4 boneTransform  = skeletonPose[boneIDs.x] * inverseBindPose[boneIDs.x] * weights.x;
 	boneTransform += skeletonPose[boneIDs.y] * inverseBindPose[boneIDs.y] * weights.y;
 	boneTransform += skeletonPose[boneIDs.z] * inverseBindPose[boneIDs.z] * weights.z;
-	vec4 transformPosition = boneTransform * vec4(0.05 * position, 1.0);
+	vec4 transformPosition = boneTransform * vec4(position, 1.0);
 	
 	// end
 	gl_Position = projection * view * model * transformPosition;
