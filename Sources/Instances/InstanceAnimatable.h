@@ -24,7 +24,7 @@ class InstanceAnimatable : public InstanceDrawable
 
 		//	Public functions
 		void animate(float step);
-		void launchAnimation(const std::string& labelName, const bool& flaged = false);
+		void launchAnimation(const std::string& labelName, const bool& flaged = true);
 		//
 
 		//	Set/get functions
@@ -41,7 +41,6 @@ class InstanceAnimatable : public InstanceDrawable
 	protected:
 		//	Protected functions
 		void computePose(std::vector<glm::mat4>& result, const std::vector<JointPose>& input, const glm::mat4& parentPose, unsigned int joint);
-		float blendingMagnitude(const unsigned int& joint);
 		//
 		
 		//	Miscellaneous

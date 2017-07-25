@@ -32,7 +32,7 @@ void InstanceAnimatable::animate(float step)
 		{
 			if (it->animate(step, this)) 
 			{
-				if (it->flag) std::cout << "end animation" << it->name << std::endl;
+				if (it->flag) std::cout << "end animation " << it->name << std::endl;
 				it = currentAnimations.erase(it);
 			}
 			else ++it;
@@ -43,25 +43,30 @@ void InstanceAnimatable::animate(float step)
 		std::vector<JointPose> blendPose(skeleton->joints.size());
 		for (unsigned int i = 0; i < blendPose.size(); i++)
 		{
-			float m = blendingMagnitude(i);
-			if (m > 0.f)
+			float pl = -1.f; float ph = -1.f;
+			std::list<AnimationTrack>::iterator pl_it = currentAnimations.begin();
+			std::list<AnimationTrack>::iterator ph_it = currentAnimations.begin();
+			for (std::list<AnimationTrack>::iterator it = currentAnimations.begin(); it != currentAnimations.end(); ++it)
 			{
-				blendPose[i].position = glm::vec3(0.f);
-				blendPose[i].scale = glm::vec3(0.f);
-				blendPose[i].rotation = glm::fquat(0.f, 0.f, 0.f, 0.f);
-
-				for (std::list<AnimationTrack>::iterator it = currentAnimations.begin(); it != currentAnimations.end(); ++it)
+				if (it->pose[i].priority > ph)
 				{
-					blendPose[i].position += (it->pose[i].priority / m) * it->pose[i].position;
-					blendPose[i].scale += (it->pose[i].priority / m) * it->pose[i].scale;
-					blendPose[i].rotation += (it->pose[i].priority / m) * it->pose[i].rotation;
+					pl = ph;
+					ph = it->pose[i].priority;
+					pl_it = ph_it;
+					ph_it = it;
 				}
 			}
-			else
+			if (ph - (int)ph > 0.f && pl > 0.f && ph - pl < 1.f)
 			{
-				blendPose[i].position = currentAnimations.begin()->pose[i].position;
-				blendPose[i].scale = currentAnimations.begin()->pose[i].scale;
-				blendPose[i].rotation = currentAnimations.begin()->pose[i].rotation;
+				blendPose[i].position = glm::mix(pl_it->pose[i].position, ph_it->pose[i].position, ph - pl);
+				blendPose[i].rotation = glm::slerp(pl_it->pose[i].rotation, ph_it->pose[i].rotation, ph - pl);
+				blendPose[i].scale = glm::mix(pl_it->pose[i].scale, ph_it->pose[i].scale, ph - pl);
+			}
+			else if(ph_it != currentAnimations.end())
+			{
+				blendPose[i].position = ph_it->pose[i].position;
+				blendPose[i].scale = ph_it->pose[i].scale;
+				blendPose[i].rotation = ph_it->pose[i].rotation;
 			}
 		}
 
@@ -107,6 +112,9 @@ void InstanceAnimatable::setAnimation(std::string animationName)
 	currentAnimations.clear();
 	ResourceManager::getInstance()->release(animation);
 	animation = ResourceManager::getInstance()->getAnimation(animationName);
+
+	if (animation && skeleton && pose.empty())
+		pose = animation->getKeyPose(0, skeleton->roots, skeleton->joints);
 }
 void InstanceAnimatable::setAnimation(Animation* a)
 {
@@ -114,18 +122,27 @@ void InstanceAnimatable::setAnimation(Animation* a)
 	ResourceManager::getInstance()->release(animation);
 	if (a) animation = ResourceManager::getInstance()->getAnimation(a->name);
 	else animation = nullptr;
+
+	if (animation && skeleton && pose.empty())
+		pose = animation->getKeyPose(0, skeleton->roots, skeleton->joints);
 }
 
 void InstanceAnimatable::setSkeleton(std::string skeletonName)
 {
 	ResourceManager::getInstance()->release(skeleton);
 	skeleton = ResourceManager::getInstance()->getSkeleton(skeletonName);
+
+	if (animation && skeleton && pose.empty())
+		pose = animation->getKeyPose(0, skeleton->roots, skeleton->joints);
 }
 void InstanceAnimatable::setSkeleton(Skeleton* s)
 {
 	ResourceManager::getInstance()->release(skeleton);
 	if (s) skeleton = ResourceManager::getInstance()->getSkeleton(s->name);
 	else skeleton = nullptr;
+
+	if (animation && skeleton && pose.empty())
+		pose = animation->getKeyPose(0, skeleton->roots, skeleton->joints);
 }
 
 Skeleton* InstanceAnimatable::getSkeleton() const { return skeleton; }
@@ -146,14 +163,6 @@ void InstanceAnimatable::computePose(std::vector<glm::mat4>& result, const std::
 	result[joint] = parentPose * glm::translate(input[joint].position) * glm::toMat4(input[joint].rotation) * glm::scale(input[joint].scale);
 	for (unsigned int i = 0; i < skeleton->joints[joint].sons.size(); i++)
 		computePose(result, input, result[joint], skeleton->joints[joint].sons[i]);
-}
-float InstanceAnimatable::blendingMagnitude(const unsigned int& joint)
-{
-	float magnitude = 0.f;
-	for (std::list<AnimationTrack>::iterator it = currentAnimations.begin(); it != currentAnimations.end(); ++it)
-		if (it->pose[joint].priority > 0.f)
-			magnitude += it->pose[joint].priority;
-	return magnitude;
 }
 //
 

@@ -30,8 +30,8 @@ void initializeForestScene(bool emptyPlace = false);
 //
 
 
-//std::string resourceRepository = "C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/";
-std::string resourceRepository = "C:/Users/Thibault/Documents/Github/GolemFactory/Resources/";
+std::string resourceRepository = "C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/";
+//std::string resourceRepository = "C:/Users/Thibault/Documents/Github/GolemFactory/Resources/";
 //std::string resourceRepository = "Resources/";
 
 
@@ -67,7 +67,7 @@ int main()
 	
 		//initializeForestScene(true);
 
-		InstanceAnimatable* peasant = InstanceManager::getInstance()->getInstanceAnimatable("peasant", "human", "human2", "skinning");
+		InstanceAnimatable* peasant = InstanceManager::getInstance()->getInstanceAnimatable("peasant", "human", "simple_peasant", "skinning");
 		//InstanceDrawable* peasant = InstanceManager::getInstance()->getInstanceDrawable("peasant_static", "default");
 		//InstanceAnimatable* peasant = InstanceManager::getInstance()->getInstanceAnimatable("Peasant10.dae", "skinning");
 
@@ -156,7 +156,7 @@ int main()
 
 	//	Save mesh in gfmesh format
 	//SkeletonSaver::save(peasant->getSkeleton(), resourceRepository, "human");
-	//AnimationSaver::save(peasant->getAnimation(), resourceRepository, "human2");
+	AnimationSaver::save(peasant->getAnimation(), resourceRepository, "simple_peasant");
 	//MeshSaver::save(peasant->getMesh(), resourceRepository, "peasant", glm::vec3(1.f));
 
 	//	end

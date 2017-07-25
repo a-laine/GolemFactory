@@ -25,12 +25,17 @@ Animation::Animation(const std::string& path, const std::string& animationName) 
 	//	import data
 	KeyFrame keyframe;
 	JointPose jointpose;
+	std::vector<std::string> errors;
+	errors.push_back("");
 	try
 	{
 		//	load first key frame
+		errors.back() = "loading first key frame";
 		{
 			//	load time and alias
-			Variant& key0 = animationMap.getMap()["keyFrameList"].getMap()["key00"];
+			errors.push_back("key time");
+			Variant& key0 = animationMap.getMap()["keyFrameList"].getMap().begin()->second;
+			
 			keyframe.time = (float)key0.getMap()["time"].toDouble();
 
 			//	load joints poses attributes
@@ -39,19 +44,25 @@ Animation::Animation(const std::string& path, const std::string& animationName) 
 				if (it2->first.find("jp") == 0)
 				{
 					//	joint priority
-					jointpose.priority = (float)it2->second.getMap()["p"].toDouble();
+					errors.back() = "joint priority";
+					if (it2->second.getMap().find("p") != it2->second.getMap().end())
+						jointpose.priority = it2->second.getMap()["p"].toInt();
+					else throw std::logic_error("");
 
 					//	joint position
+					errors.back() = "joint position";
 					jointpose.position.x = (float)it2->second.getMap()["t"].getArray()[0].toDouble();
 					jointpose.position.y = (float)it2->second.getMap()["t"].getArray()[1].toDouble();
 					jointpose.position.z = (float)it2->second.getMap()["t"].getArray()[2].toDouble();
 
 					//	joint scaling
+					errors.back() = "joint scale";
 					jointpose.scale.x = (float)it2->second.getMap()["s"].getArray()[0].toDouble();
 					jointpose.scale.y = (float)it2->second.getMap()["s"].getArray()[1].toDouble();
 					jointpose.scale.z = (float)it2->second.getMap()["s"].getArray()[2].toDouble();
 
 					//	joint rotation
+					errors.back() = "joint rotation";
 					jointpose.rotation.x = (float)it2->second.getMap()["r"].getArray()[0].toDouble();
 					jointpose.rotation.y = (float)it2->second.getMap()["r"].getArray()[1].toDouble();
 					jointpose.rotation.z = (float)it2->second.getMap()["r"].getArray()[2].toDouble();
@@ -62,66 +73,62 @@ Animation::Animation(const std::string& path, const std::string& animationName) 
 				}
 			}
 			timeLine.push_back(keyframe);
+			errors.pop_back();
 		}
 		
 		//	load all others key frame
-		try
+		errors.back() = "loading other frames : ";
+		for (auto it = ++animationMap.getMap()["keyFrameList"].getMap().begin(); it != animationMap.getMap()["keyFrameList"].getMap().end(); ++it)
 		{
-			for (auto it = ++animationMap.getMap()["keyFrameList"].getMap().begin(); it != animationMap.getMap()["keyFrameList"].getMap().end(); ++it)
+			//	load time and alias
+			if (it->first.find("key") == std::string::npos) continue;
+			keyframe.time = (float)it->second.getMap()["time"].toDouble();
+
+			//	load joint poses attributes
+			for (auto it2 = it->second.getMap().begin(); it2 != it->second.getMap().end(); ++it2)
 			{
-				//	load time and alias
-				if (it->first.find("key") == std::string::npos) continue;
-				keyframe.time = (float)it->second.getMap()["time"].toDouble();
-
-				//	load joint poses attributes
-				for (auto it2 = it->second.getMap().begin(); it2 != it->second.getMap().end(); ++it2)
+				if (it2->first.find("jp") == 0)
 				{
-					if (it2->first.find("jp") == 0)
+					int jp = std::stoi(it2->first.substr(it2->first.find("jp") + 2));
+
+					//	joint priority
+					if (it2->second.getMap().find("p") != it2->second.getMap().end())
+						keyframe.poses[jp].priority = it2->second.getMap()["p"].toInt();
+
+					//	joint position
+					try
 					{
-						int jp = std::stoi(it2->first.substr(it2->first.find("jp") + 2));
-
-						//	joint priority
-						try
-						{
-							keyframe.poses[jp].priority = (float)it2->second.getMap()["p"].toDouble();
-						}
-						catch (std::exception&) {}
-
-						//	joint position
-						try
-						{
-							keyframe.poses[jp].position.x = (float)it2->second.getMap()["t"].getArray()[0].toDouble();
-							keyframe.poses[jp].position.y = (float)it2->second.getMap()["t"].getArray()[1].toDouble();
-							keyframe.poses[jp].position.z = (float)it2->second.getMap()["t"].getArray()[2].toDouble();
-						}
-						catch (std::exception&) {}
-
-						//	joint scaling
-						try
-						{
-							keyframe.poses[jp].scale.x = (float)it2->second.getMap()["s"].getArray()[0].toDouble();
-							keyframe.poses[jp].scale.y = (float)it2->second.getMap()["s"].getArray()[1].toDouble();
-							keyframe.poses[jp].scale.z = (float)it2->second.getMap()["s"].getArray()[2].toDouble();
-						}
-						catch (std::exception&) {}
-
-						//	joint rotation
-						try
-						{
-							keyframe.poses[jp].rotation.x = (float)it2->second.getMap()["r"].getArray()[0].toDouble();
-							keyframe.poses[jp].rotation.y = (float)it2->second.getMap()["r"].getArray()[1].toDouble();
-							keyframe.poses[jp].rotation.z = (float)it2->second.getMap()["r"].getArray()[2].toDouble();
-							keyframe.poses[jp].rotation.w = (float)it2->second.getMap()["r"].getArray()[3].toDouble();
-						}
-						catch (std::exception&) {}
+						keyframe.poses[jp].position.x = (float)it2->second.getMap()["t"].getArray()[0].toDouble();
+						keyframe.poses[jp].position.y = (float)it2->second.getMap()["t"].getArray()[1].toDouble();
+						keyframe.poses[jp].position.z = (float)it2->second.getMap()["t"].getArray()[2].toDouble();
 					}
+					catch (std::exception&) {}
+
+					//	joint scaling
+					try
+					{
+						keyframe.poses[jp].scale.x = (float)it2->second.getMap()["s"].getArray()[0].toDouble();
+						keyframe.poses[jp].scale.y = (float)it2->second.getMap()["s"].getArray()[1].toDouble();
+						keyframe.poses[jp].scale.z = (float)it2->second.getMap()["s"].getArray()[2].toDouble();
+					}
+					catch (std::exception&) {}
+
+					//	joint rotation
+					try
+					{
+						keyframe.poses[jp].rotation.x = (float)it2->second.getMap()["r"].getArray()[0].toDouble();
+						keyframe.poses[jp].rotation.y = (float)it2->second.getMap()["r"].getArray()[1].toDouble();
+						keyframe.poses[jp].rotation.z = (float)it2->second.getMap()["r"].getArray()[2].toDouble();
+						keyframe.poses[jp].rotation.w = (float)it2->second.getMap()["r"].getArray()[3].toDouble();
+					}
+					catch (std::exception&) {}
 				}
-				timeLine.push_back(keyframe);
 			}
+			timeLine.push_back(keyframe);
 		}
-		catch (std::exception&) {}
 		
 		//	load labels
+		errors.back() = "loading labels";
 		try
 		{
 			KeyLabel label;
@@ -143,7 +150,10 @@ Animation::Animation(const std::string& path, const std::string& animationName) 
 	}
 	catch (std::exception&)
 	{
-		std::cerr << "ERROR : loading animation : " << animationName << " : parser fail, check file manually to correct format" << std::endl;
+		std::cerr << "ERROR : loading animation : " << animationName << " : ";
+		for (unsigned int i = 0; i < errors.size(); i++)
+			std::cerr << errors[i] << (i == errors.size() - 1 ? "" : " : ");
+		std::cerr << std::endl;
 		return;
 	}
 }

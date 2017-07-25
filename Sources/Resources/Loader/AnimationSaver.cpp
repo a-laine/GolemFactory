@@ -58,7 +58,7 @@ void AnimationSaver::save(Animation* animation, const std::string& resourcesPath
 			if (i == 0 || epsilon(timeLine[i].poses[j].priority, timeLine[i - 1].poses[j].priority, 0.001f))
 			{
 				insertion++;
-				joint.insert("p", timeLine[i].poses[j].priority);
+				joint.insert("p", (int)timeLine[i].poses[j].priority);
 			}
 
 			//	save joint position
@@ -115,7 +115,6 @@ void AnimationSaver::save(Animation* animation, const std::string& resourcesPath
 	file << std::fixed;
 	file.precision(5);
 	writer.setInlineArray(true);
-	writer.setInlineEmptyMap(true);
 	writer.write(rootVariant);
 }
 //
