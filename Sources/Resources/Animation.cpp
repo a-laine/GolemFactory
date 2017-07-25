@@ -12,8 +12,6 @@ Animation::Animation(const std::string& animationName, const std::vector<KeyFram
 
 Animation::Animation(const std::string& path, const std::string& animationName) : ResourceVirtual(animationName, ResourceVirtual::ANIMATION)
 {
-	//std::cerr << "ERROR : loading animation : " << animationName << " : " << extension << " format not yet implemented" << std::endl;
-
 	//	initialization
 	Variant v; Variant* tmp = nullptr;
 	try
@@ -31,7 +29,7 @@ Animation::Animation(const std::string& path, const std::string& animationName) 
 	{
 		//	load first key frame
 		{
-			//	laod time and alias
+			//	load time and alias
 			Variant& key0 = animationMap.getMap()["keyFrameList"].getMap()["key00"];
 			keyframe.time = (float)key0.getMap()["time"].toDouble();
 
@@ -40,10 +38,13 @@ Animation::Animation(const std::string& path, const std::string& animationName) 
 			{
 				if (it2->first.find("jp") == 0)
 				{
+					//	joint priority
+					jointpose.priority = (float)it2->second.getMap()["p"].toDouble();
+
 					//	joint position
-					jointpose.position.x = (float)it2->second.getMap()["p"].getArray()[0].toDouble();
-					jointpose.position.y = (float)it2->second.getMap()["p"].getArray()[1].toDouble();
-					jointpose.position.z = (float)it2->second.getMap()["p"].getArray()[2].toDouble();
+					jointpose.position.x = (float)it2->second.getMap()["t"].getArray()[0].toDouble();
+					jointpose.position.y = (float)it2->second.getMap()["t"].getArray()[1].toDouble();
+					jointpose.position.z = (float)it2->second.getMap()["t"].getArray()[2].toDouble();
 
 					//	joint scaling
 					jointpose.scale.x = (float)it2->second.getMap()["s"].getArray()[0].toDouble();
@@ -62,7 +63,7 @@ Animation::Animation(const std::string& path, const std::string& animationName) 
 			}
 			timeLine.push_back(keyframe);
 		}
-
+		
 		//	load all others key frame
 		try
 		{
@@ -73,17 +74,25 @@ Animation::Animation(const std::string& path, const std::string& animationName) 
 				keyframe.time = (float)it->second.getMap()["time"].toDouble();
 
 				//	load joint poses attributes
-				int jp = 0;
-				for (auto it2 = it->second.getMap().begin(); it2 != it->second.getMap().end(); ++it2, jp++)
+				for (auto it2 = it->second.getMap().begin(); it2 != it->second.getMap().end(); ++it2)
 				{
 					if (it2->first.find("jp") == 0)
 					{
+						int jp = std::stoi(it2->first.substr(it2->first.find("jp") + 2));
+
+						//	joint priority
+						try
+						{
+							keyframe.poses[jp].priority = (float)it2->second.getMap()["p"].toDouble();
+						}
+						catch (std::exception&) {}
+
 						//	joint position
 						try
 						{
-							keyframe.poses[jp].position.x = (float)it2->second.getMap()["p"].getArray()[0].toDouble();
-							keyframe.poses[jp].position.y = (float)it2->second.getMap()["p"].getArray()[1].toDouble();
-							keyframe.poses[jp].position.z = (float)it2->second.getMap()["p"].getArray()[2].toDouble();
+							keyframe.poses[jp].position.x = (float)it2->second.getMap()["t"].getArray()[0].toDouble();
+							keyframe.poses[jp].position.y = (float)it2->second.getMap()["t"].getArray()[1].toDouble();
+							keyframe.poses[jp].position.z = (float)it2->second.getMap()["t"].getArray()[2].toDouble();
 						}
 						catch (std::exception&) {}
 
@@ -111,7 +120,7 @@ Animation::Animation(const std::string& path, const std::string& animationName) 
 			}
 		}
 		catch (std::exception&) {}
-
+		
 		//	load labels
 		try
 		{

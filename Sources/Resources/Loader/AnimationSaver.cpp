@@ -52,18 +52,28 @@ void AnimationSaver::save(Animation* animation, const std::string& resourcesPath
 			//	create frame variant and export time
 			frame.insert(jointName, Variant::MapType());
 			Variant& joint = frame.getMap()[jointName];
+			int insertion = 0;
+
+			//	save joint priority
+			if (i == 0 || epsilon(timeLine[i].poses[j].priority, timeLine[i - 1].poses[j].priority, 0.001f))
+			{
+				insertion++;
+				joint.insert("p", timeLine[i].poses[j].priority);
+			}
 
 			//	save joint position
 			if (i == 0 || epsilon(timeLine[i].poses[j].position, timeLine[i - 1].poses[j].position, 0.001f))
 			{
-				joint.insert("p", Variant::ArrayType());
+				insertion++;
+				joint.insert("t", Variant::ArrayType());
 				for (int k = 0; k < 3; k++)
-					joint["p"].getArray().push_back(Variant(timeLine[i].poses[j].position[k]));
+					joint["t"].getArray().push_back(Variant(timeLine[i].poses[j].position[k]));
 			}
 
 			//	save joint scale
 			if (i == 0 || epsilon(timeLine[i].poses[j].scale, timeLine[i - 1].poses[j].scale, 0.001f))
 			{
+				insertion++;
 				joint.insert("s", Variant::ArrayType());
 				for (int k = 0; k < 3; k++)
 					joint["s"].getArray().push_back(Variant(timeLine[i].poses[j].scale[k]));
@@ -72,10 +82,14 @@ void AnimationSaver::save(Animation* animation, const std::string& resourcesPath
 			//	save joint rotation
 			if (i == 0 || epsilon(timeLine[i].poses[j].rotation, timeLine[i - 1].poses[j].rotation, 0.001f))
 			{
+				insertion++;
 				joint.insert("r", Variant::ArrayType());
 				for (int k = 0; k < 4; k++)
 					joint["r"].getArray().push_back(Variant(timeLine[i].poses[j].rotation[k]));
 			}
+
+			//
+			if (!insertion) frame.getMap().erase(jointName);
 		}
 	}
 
@@ -107,11 +121,15 @@ void AnimationSaver::save(Animation* animation, const std::string& resourcesPath
 //
 
 //	Protected functions
-bool AnimationSaver::epsilon(glm::vec3 a, glm::vec3 b, float e)
+bool AnimationSaver::epsilon(const float& a, const float& b, const float& e)
+{
+	return (a - b)*(a - b) > e;
+}
+bool AnimationSaver::epsilon(const glm::vec3& a, const glm::vec3& b, const float& e)
 {
 	return (a.x - b.x)*(a.x - b.x) + (a.y - b.y)*(a.y - b.y) + (a.z - b.z)*(a.z - b.z) > e;
 }
-bool AnimationSaver::epsilon(glm::fquat a, glm::fquat b, float e)
+bool AnimationSaver::epsilon(const glm::fquat& a, const glm::fquat& b, const float& e)
 {
 	return (a.x - b.x)*(a.x - b.x) + (a.y - b.y)*(a.y - b.y) + (a.z - b.z)*(a.z - b.z) + (a.w - b.w)*(a.w - b.w) > e;
 }
