@@ -13,25 +13,40 @@ Shader::Shader(const std::string& path, const std::string& shaderName) : Resourc
     geometricShader = 0;    tessControlShader = 0;      tessEvalShader = 0;
     program = 0;
     textureCount = 0;
-    Variant v; Variant* tmp = nullptr;
-    std::string tmpName;
 
+    Variant v; Variant* tmp = nullptr;
     try
 	{
 		Reader::parseFile(v, path + shaderName + extension);
 		tmp = &(v.getMap().begin()->second);
 	}
-    catch(std::exception&) { return; }
+    catch(std::exception&)
+	{
+		if (logVerboseLevel > 0)
+			std::cerr << "ERROR : loading shader : " << shaderName << " : fail to open or parse file" << std::endl;
+		return;
+	}
     Variant& shaderMap = *tmp;
 
     //  Vertex shader
+	std::string tmpName;
     try { tmpName = path + shaderMap["vertex"].toString(); }
-    catch(std::exception&) { std::cerr<<"fail to parse vertex shader name"<<std::endl; tmpName = path + "default.vs"; }
+    catch(std::exception&)
+	{
+		if (logVerboseLevel > 1)
+			std::cerr << "WARNING : loading shader : " << shaderName << " : fail to parse vertex shader name, try loading default.vs instead" << std::endl;
+		tmpName = path + "default.vs";
+	}
     if(!loadShader(VERTEX_SH,tmpName,vertexShader)) return;
 
     //  Fragment shader
     try { tmpName = path + shaderMap["fragment"].toString(); }
-    catch(std::exception&) { std::cerr<<"fail to parse fragment shader name"<<std::endl; tmpName = path + "default.fs"; }
+    catch(std::exception&)
+	{
+		if (logVerboseLevel > 1)
+			std::cerr << "WARNING : loading shader : " << shaderName << " : fail to parse fragment shader name, try loading default.fs instead" << std::endl;
+		tmpName = path + "default.fs";
+	}
     if(!loadShader(FRAGMENT_SH,tmpName,fragmentShader)) { glDeleteShader(vertexShader); return; }
 
     //  Program
@@ -111,7 +126,11 @@ Shader::Shader(const std::string& path, const std::string& shaderName) : Resourc
 						std::cout << "maybe the variable is not used in shader." << std::endl;
 					}
 				}
-				catch(std::exception&){ std::cerr << "Shader resource : Fail in uniform loading" << std::endl; }
+				catch(std::exception&)
+				{
+					if (logVerboseLevel > 1)
+						std::cerr << "WARNING : loading shader : " << shaderName << " : fail to load uniform : " << it->first << std::endl;
+				}
 			}
 		}
 	}
@@ -191,13 +210,14 @@ std::string Shader::getUniformType(const std::string& uniform)
 
 
 //  Private functions
-bool Shader::loadShader(ShaderType shaderType, std::string fileName,GLuint& shader)
+bool Shader::loadShader(ShaderType shaderType, std::string fileName, GLuint& shader)
 {
 	std::string source;
 	std::ifstream file(fileName);
 	if (!file.good())
 	{
-		std::cerr << "Shader resource : Fail to open file :" << std::endl;
+		if (logVerboseLevel > 1)
+			std::cerr << "WARRNING : loading shader : " << name << " : in resource " << toString(shaderType) << " : fail to open file" << std::endl;
 		return false;
 	}
 	else
@@ -206,7 +226,8 @@ bool Shader::loadShader(ShaderType shaderType, std::string fileName,GLuint& shad
 		file.close();
 		if (source.empty())
 		{
-			std::cerr << "Shader resource : File was sucessfully opened but is empty !" << std::endl;
+			if (logVerboseLevel > 1)
+				std::cerr << "WARRNING : loading shader : " << name << " : in resource " << toString(shaderType) << " : empty file" << std::endl;
 			return false;
 		}
 	}
@@ -220,13 +241,14 @@ bool Shader::loadShader(ShaderType shaderType, std::string fileName,GLuint& shad
         case TESS_EVAL_SH:  shader = glCreateShader(GL_TESS_EVALUATION_SHADER); break;
         case TESS_CONT_SH:  shader = glCreateShader(GL_TESS_CONTROL_SHADER);    break;
         default:
-            shader = 0;
-            std::cerr<<"invalid shader type"<<std::endl;
+			if (logVerboseLevel > 1)
+				std::cerr << "WARRNING : loading shader : " << name << " : in resource " << toString(shaderType) << std::endl;
             return false;
     }
     if(!shader)
     {
-        std::cout<<"Fail to create shader of type("<<(int)shaderType<<')'<<std::endl;
+		if (logVerboseLevel > 1)
+			std::cerr << "WARRNING : loading shader : " << name << " : in resource " << toString(shaderType) << " : fail to create OPENGL shader" << std::endl;
         return false;
     }
 
@@ -243,23 +265,28 @@ bool Shader::loadShader(ShaderType shaderType, std::string fileName,GLuint& shad
         char *log = new char[logsize];
         glGetShaderInfoLog(shader, logsize, &logsize, log);
 
-		std::cerr << "\n\nERROR : when compiling ";
-		switch (shaderType)
+		if (logVerboseLevel > 1)
 		{
-			case VERTEX_SH:     std::cerr << "vertex";					break;
-			case GEOMETRIC_SH:  std::cerr << "geometry";				break;
-			case FRAGMENT_SH:   std::cerr << "fragment";				break;
-			case TESS_EVAL_SH:  std::cerr << "tesselation evaluation";	break;
-			case TESS_CONT_SH:  std::cerr << "tesselation control";		break;
-			default: break;
+			std::cerr << "ERROR : loading shader : " << name << " : in resource " << toString(shaderType) << " : fail to compile" << std::endl << std::endl;
+			std::cerr << log << std::endl << std::endl;
 		}
-		std::cout << " shader\n\n" << log << std::endl << std::endl;
-
         delete[] log;
         return false;
     }
 
     // End
     return true;
+}
+std::string Shader::toString(const ShaderType& shaderType) const
+{
+	switch (shaderType)
+	{
+		case VERTEX_SH:     return "vertex shader";
+		case GEOMETRIC_SH:  return "geometry shader";
+		case FRAGMENT_SH:   return "fragment shader";
+		case TESS_EVAL_SH:  return "tesselation evaluation shader";
+		case TESS_CONT_SH:  return "tesselation control shader";
+		default: return "unknown shader";
+	}
 }
 //

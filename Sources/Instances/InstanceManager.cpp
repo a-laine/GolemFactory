@@ -113,9 +113,9 @@ InstanceAnimatable* InstanceManager::getInstanceAnimatable(std::string meshName,
 		ins->setSkeleton(skeletonName);
 		ins->setAnimation(animationName);
 
-		std::vector<Joint> joints = ins->getSkeleton()->getJoints();
+		/*std::vector<Joint> joints = ins->getSkeleton()->getJoints();
 		for (unsigned int i = 0; i < joints.size(); i++)
-			std::cout << i << " : " << joints[i].name << std::endl;
+			std::cout << i << " : " << joints[i].name << std::endl;*/
 	}
 
 	if (!ins || !add(ins))

@@ -39,7 +39,7 @@ class Texture : public ResourceVirtual
         int getType();
         GLenum getGLenumType();
         GLuint getTextureId() const;
-        GLuint* getTextureIdPt();
+        GLuint* getTextureIdPointer();
         //
 
         //  Attributes

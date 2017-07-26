@@ -14,11 +14,16 @@ Mesh::Mesh(const std::string& path, const std::string& meshName) : ResourceVirtu
 {
 	//	open file
 	std::string tmpExtension = Mesh::extension;
-	size_t ext = name.find_last_of('.');
 	if (meshName.find(Mesh::extension) != std::string::npos)
 		tmpExtension = "";
 	std::ifstream file(path + meshName + tmpExtension);
-	if (!file.good()) return;
+	if (!file.good())
+	{
+		if (logVerboseLevel > 0)
+			std::cerr << "ERROR : loading mesh : " << meshName << " : fail to open file" << std::endl;
+		return;
+	}
+
 	
 	//	initialization
 	int lineIndex = 0;
@@ -26,6 +31,7 @@ Mesh::Mesh(const std::string& path, const std::string& meshName) : ResourceVirtu
 	std::vector<glm::vec3> tmpv, tmpvn, tmpc;
 
 	//	loading
+	bool errorOccured = false;
 	while (!file.eof())
 	{
 		std::getline(file, line);
@@ -39,6 +45,13 @@ Mesh::Mesh(const std::string& path, const std::string& meshName) : ResourceVirtu
 			std::istringstream iss(line.substr(2));
 			glm::vec3 v;
 			iss >> v.x; iss >> v.y; iss >> v.z;
+			if (iss.fail())
+			{
+				if (!errorOccured && logVerboseLevel > 1)
+					std::cerr << "WARNING : loading font : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
+				if (logVerboseLevel > 1)
+					std::cerr << " check line : " << lineIndex << std::endl;
+			}
 			tmpv.push_back(v);
 		}
 		else if (line.substr(0, 3) == "vn ")
@@ -46,6 +59,13 @@ Mesh::Mesh(const std::string& path, const std::string& meshName) : ResourceVirtu
 			std::istringstream iss(line.substr(2));
 			glm::vec3 vn;
 			iss >> vn.x; iss >> vn.y; iss >> vn.z;
+			if (iss.fail())
+			{
+				if (!errorOccured && logVerboseLevel > 1)
+					std::cerr << "WARNING : loading font : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
+				if (logVerboseLevel > 1)
+					std::cerr << " check line : " << lineIndex << std::endl;
+			}
 			tmpvn.push_back(vn);
 		}
 		else if (line.substr(0, 2) == "c ")
@@ -53,6 +73,13 @@ Mesh::Mesh(const std::string& path, const std::string& meshName) : ResourceVirtu
 			std::istringstream iss(line.substr(2));
 			glm::vec3 c;
 			iss >> c.x; iss >> c.y; iss >> c.z;
+			if (iss.fail())
+			{
+				if (!errorOccured && logVerboseLevel > 1)
+					std::cerr << "WARNING : loading font : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
+				if (logVerboseLevel > 1)
+					std::cerr << " check line : " << lineIndex << std::endl;
+			}
 			tmpc.push_back(c);
 		}
 		else if (line.substr(0, 2) == "f ")
@@ -76,7 +103,13 @@ Mesh::Mesh(const std::string& path, const std::string& meshName) : ResourceVirtu
 				if (v2.c<0 || v2.c >= (int)tmpc.size()) outrange++;
 				if (v3.c<0 || v3.c >= (int)tmpc.size()) outrange++;
 
-				if (outrange) std::cerr << "ERROR : loading mesh : line " << lineIndex << " : " << outrange << " arguments out of range" << std::endl;
+				if (outrange)
+				{
+					if (!errorOccured && logVerboseLevel > 1)
+						std::cerr << "WARNING : loading font : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
+					if (logVerboseLevel > 1)
+						std::cerr << " check line : " << lineIndex << " arguments out of range" << std::endl;
+				}
 				else
 				{
 					faces.push_back(vertices.size());	faces.push_back(vertices.size() + 1);	faces.push_back(vertices.size() + 2);
@@ -86,7 +119,13 @@ Mesh::Mesh(const std::string& path, const std::string& meshName) : ResourceVirtu
 					colors.push_back(tmpc[v1.c]);		colors.push_back(tmpc[v2.c]);		colors.push_back(tmpc[v3.c]);
 				}
 			}
-			else std::cerr << "ERROR : loading mesh : line " << lineIndex << " : wrong number of argument successfully parsed" << std::endl;
+			else
+			{
+				if (!errorOccured && logVerboseLevel > 1)
+					std::cerr << "WARNING : loading font : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
+				if (logVerboseLevel > 1)
+					std::cerr << " check line : " << lineIndex << std::endl;
+			}
 		}
 	}
 

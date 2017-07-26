@@ -13,7 +13,7 @@ class InstanceDrawable : public InstanceVirtual
 		 *  \param meshName : the mesh name for the instance. If not specified the default mesh is used.
 		 *  \param shaderName : the shader name for the instance. If not specified the default shader is used.
 		 */
-		InstanceDrawable(std::string meshName = "default", std::string shaderName = "default");
+		InstanceDrawable(const std::string& meshName = "default", const std::string& shaderName = "default");
 
 		/*!
 		 *  \brief Destructor

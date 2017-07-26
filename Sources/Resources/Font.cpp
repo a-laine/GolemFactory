@@ -23,8 +23,8 @@ Font::Font(const std::string& path, const std::string& fontName) : ResourceVirtu
 	}
     catch(std::exception&)
 	{
-		std::cerr << "Font : Fail to load file :" << std::endl;
-		std::cerr << "       " << path + fontName + extension << std::endl;
+		if (logVerboseLevel > 0)
+			std::cerr << "ERROR : loading font : " << fontName << " : fail to open or parse file" << std::endl;
 		return;
 	}
     Variant& fontInfo = *tmp;
@@ -37,19 +37,18 @@ Font::Font(const std::string& path, const std::string& fontName) : ResourceVirtu
 	}
     catch(std::exception&) 
 	{
-		std::cerr << "Font : Fail to extract texture name from file :" << std::endl;
-		std::cerr << "       " << path + fontName + extension << std::endl;
+		if (logVerboseLevel > 0)
+			std::cerr << "ERROR : loading font : " << fontName << " : texture attribute field not found" << std::endl;
 		return;
 	}
 
     //  Loading the image
     int x,y,n;
-    uint8_t* image = ImageLoader::loadFromFile(textureFile,x,y,n,ImageLoader::RGB_ALPHA);
-    if(!image)
+	uint8_t* image = ImageLoader::loadFromFile(textureFile, x, y, n, ImageLoader::RGB_ALPHA);
+	if (!image)
 	{
-		std::cerr << "Font : Fail to load texture image." << std::endl;
-		std::cerr << "       Error occur in file :" << std::endl;
-		std::cerr << "       " << path + fontName + extension << std::endl;
+		if (logVerboseLevel > 0)
+			std::cerr << "ERROR : loading font : " << fontName << " : fail loading texture image" << std::endl;
 		return;
 	}
 
@@ -65,29 +64,8 @@ Font::Font(const std::string& path, const std::string& fontName) : ResourceVirtu
     ImageLoader::freeImage(image);
     if(!glIsTexture(texture))
 	{
-		std::cerr << "Font : Fail to load texture image." << std::endl;
-		std::cerr << "       Error occur in file :" << std::endl;
-		std::cerr << "       " << path + fontName + extension << std::endl;
-		return;
-	}
-
-    //  Extract and prepare file array for parsing
-    std::string arrayFile;
-    try
-	{
-		arrayFile = ToolBox::openAndCleanCStyleFile(path + fontInfo["font"].toString());
-	}
-    catch(std::exception&)
-	{
-		clear();
-		std::cerr << "Font : Fail to extract array char :" << std::endl;
-		std::cerr << "       " << path + fontName + extension << std::endl;
-		return;
-	}
-	if(arrayFile.empty()) 
-	{
-		clear();
-		std::cerr << "Font : Empty array char :" << std::endl;
+		if (logVerboseLevel > 0)
+			std::cerr << "ERROR : loading font : " << fontName << " : fail create OPENGL texture" << std::endl;
 		return;
 	}
 
@@ -102,8 +80,32 @@ Font::Font(const std::string& path, const std::string& fontName) : ResourceVirtu
 
     try { defaultChar = fontInfo["default"].toInt(); }
     catch(std::exception&) { defaultChar = begin; }
-    if(defaultChar>end) defaultChar = begin;
+	if (defaultChar > end) defaultChar = begin;
 	charTable.assign(end - begin + 1, Patch());
+
+    //  Extract and prepare file array for parsing
+    std::string arrayFile;
+    try
+	{
+		arrayFile = ToolBox::openAndCleanCStyleFile(path + fontInfo["font"].toString());
+	}
+    catch(std::exception&)
+	{
+		if (logVerboseLevel > 0)
+			std::cerr << "ERROR : loading font : " << fontName << " : fail open char array" << std::endl;
+		clear();
+		return;
+	}
+	if(arrayFile.empty()) 
+	{
+		if (logVerboseLevel > 1)
+			std::cerr << "WARNING : loading font : " << fontName << " : char array file empty" << std::endl;
+		begin = 0;
+		end = 0;
+		defaultChar = 0;
+	}
+
+
 
 	//  Load coordinate array
 	std::string line;
@@ -145,20 +147,12 @@ Font::Font(const std::string& path, const std::string& fontName) : ResourceVirtu
 		}
 		else
 		{
-			if (errorOccured)
-			{
-				std::cerr << "Font : Error in parsing file :" << std::endl;
-				std::cerr << "       " << path + fontName + extension << std::endl;
-			}
-			std::cerr << "       At line : "<< lineCount << std::endl;
+			if (!errorOccured && logVerboseLevel > 1)
+				std::cerr << "WARNING : loading font : " << fontName << " : parsing char array : " << std::endl;
+			if (logVerboseLevel > 1)
+				std::cerr << " check line : "<< lineCount << std::endl;
 			errorOccured = true;
 		}
-	}
-	if (errorOccured)
-	{
-		std::cerr << "       For more info check file in cause at specified lines!" << std::endl;
-		clear();
-		return;
 	}
 	charTable.shrink_to_fit();
 }
@@ -175,27 +169,31 @@ bool Font::isValid() const
 //
 
 //  Public functions
-Font::Patch Font::getPatch(char c)
+Font::Patch Font::getPatch(char c) const
 {
-    if(!glIsTexture(texture)) return Patch();
-    else if(c>end || c<begin) return charTable[defaultChar-begin];
-    else return charTable[c-begin];
+	if (!glIsTexture(texture)) return Patch();
+	else if (c > end || c < begin) return charTable[defaultChar - begin];
+	else return charTable[c - begin];
 }
 //
 
 //  Set/get functions
-char Font::getDefaultChar() { return (char)defaultChar; }
-char Font::getBeginChar() { return (char)begin; }
-char Font::getEndChar() { return (char)end; }
-int Font::getArraySize() { return end - begin + 1; }
+char Font::getDefaultChar() const { return (char)defaultChar; }
+char Font::getBeginChar() const { return (char)begin; }
+char Font::getEndChar() const { return (char)end; }
+int Font::getArraySize() const { return charTable.size(); }
 //
 
 //  Private functions
 void Font::clear()
 {
-    if(glIsTexture(texture))
-		glDeleteTextures(1,&texture);
+	if (glIsTexture(texture))
+		glDeleteTextures(1, &texture);
     texture = 0;
     charTable.clear();
 }
+//
+
+//	Internal classes
+Font::Patch::Patch() : corner1(0.f), corner2(0.f) {}
 //

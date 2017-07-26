@@ -1,7 +1,11 @@
 #include "ResourceVirtual.h"
 
+//	Static attributes
+int ResourceVirtual::logVerboseLevel = 0;
+//
+
 //  Default
-ResourceVirtual::ResourceVirtual(const std::string& resourceName, ResourceType resourceType) : name(resourceName),type(resourceType)
+ResourceVirtual::ResourceVirtual(const std::string& resourceName, ResourceType resourceType) : name(resourceName), type(resourceType)
 {
     count = 0;
 }

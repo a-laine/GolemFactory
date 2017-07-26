@@ -74,6 +74,7 @@ class ResourceVirtual
         //
 
         //  Attributes
+		static int logVerboseLevel;
         std::string name;       //!< The resource name.
         ResourceType type;      //!< The resource type.
         //

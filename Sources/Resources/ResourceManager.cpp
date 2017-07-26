@@ -38,7 +38,7 @@ ResourceManager::~ResourceManager()
 //
 
 //  Public functions
-void ResourceManager::setRepository(std::string path)
+void ResourceManager::setRepository(const std::string& path)
 {
     repository = path;
 }
@@ -176,7 +176,7 @@ Texture* ResourceManager::getTexture(std::string name,uint8_t conf)
 	//	end
     return texture;
 }
-Texture* ResourceManager::getTexture2D(const std::string& name,uint8_t conf) {return getTexture(name,conf|Texture::TEXTURE_2D);}
+Texture* ResourceManager::getTexture2D(const std::string& name, uint8_t conf) { return getTexture(name, conf | Texture::TEXTURE_2D); }
 Shader* ResourceManager::getShader(std::string name)
 {
 	//	initialization
@@ -209,7 +209,6 @@ Shader* ResourceManager::getShader(std::string name)
 	//	an error occur : try return the default one
     else if(name != defaultShader)
     {
-        std::cerr<<"fail load shader : "<<name<<std::endl;
         if(shader) delete shader;
 		shader = getShader(defaultShader);
     }
@@ -477,7 +476,7 @@ void ResourceManager::addAnimation(Animation* animation)
 //
 
 //  Set/get functions
-unsigned int ResourceManager::getNumberOfRessources(ResourceVirtual::ResourceType type)
+unsigned int ResourceManager::getNumberOfRessources(const ResourceVirtual::ResourceType& type) const
 {
     switch(type)
     {
@@ -490,7 +489,7 @@ unsigned int ResourceManager::getNumberOfRessources(ResourceVirtual::ResourceTyp
 		default: return fontList.size() + shaderList.size() + textureList.size() + meshList.size() + animationList.size() + skeletonList.size();
     }
 }
-std::string ResourceManager::getDefaultName(ResourceVirtual::ResourceType type)
+std::string ResourceManager::getDefaultName(const ResourceVirtual::ResourceType& type) const
 {
     switch(type)
     {
@@ -503,7 +502,7 @@ std::string ResourceManager::getDefaultName(ResourceVirtual::ResourceType type)
         default: return "";
     }
 }
-void ResourceManager::setDefaultName(ResourceVirtual::ResourceType type,std::string name)
+void ResourceManager::setDefaultName(const ResourceVirtual::ResourceType& type, const std::string& name)
 {
     switch(type)
     {
@@ -519,7 +518,7 @@ void ResourceManager::setDefaultName(ResourceVirtual::ResourceType type,std::str
 //
 
 //  Private functions
-Mesh* ResourceManager::loadFromAssimp(std::string fileName)
+Mesh* ResourceManager::loadFromAssimp(const std::string& fileName)
 {
 	//	load mesh with mesh loader
 	Mesh* m;
@@ -555,9 +554,8 @@ Mesh* ResourceManager::loadFromAssimp(std::string fileName)
 
 	return m;
 }
-Mesh* ResourceManager::loadFromGolemFactoryFormat(std::string fileName, bool haveExtention)
+Mesh* ResourceManager::loadFromGolemFactoryFormat(const std::string& fileName, bool haveExtention) const
 {
-	//std::cout << "   loadFromGolemFactoryFormat : " << fileName << " ";
 	bool animated = false;
 	{
 		std::ifstream file(repository + "Meshes/" + fileName + (haveExtention ? "" : Mesh::extension));

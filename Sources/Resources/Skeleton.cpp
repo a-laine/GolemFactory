@@ -24,13 +24,24 @@ Skeleton::Skeleton(const std::string& path, const std::string& skeletonName) : R
 		Reader::parseFile(v, path + skeletonName + extension);
 		tmp = &(v.getMap().begin()->second);
 	}
-	catch (std::exception&) { return; }
+	catch (std::exception&)
+	{
+		if (logVerboseLevel > 0)
+			std::cerr << "ERROR : loading shader : " << skeletonName << " : fail to open file" << std::endl;
+		return;
+	}
 	Variant& skeletonMap = *tmp;
 
 	//	import data
 	Joint joint;
 	try
 	{
+		//	Prevent parsing errors
+		if (skeletonMap.getMap().find("order") == skeletonMap.getMap().end())
+			throw std::runtime_error("no order array defined");
+		if (skeletonMap.getMap().find("jointList") == skeletonMap.getMap().end())
+			throw std::runtime_error("no joint array defined");
+
 		for (unsigned int i = 0; i < skeletonMap.getMap()["order"].getArray().size(); i++)
 		{
 			//	extract name & currentvariant alias
@@ -39,6 +50,8 @@ Skeleton::Skeleton(const std::string& path, const std::string& skeletonName) : R
 			Variant& jointVariant = skeletonMap.getMap()["jointList"].getMap()[joint.name];
 
 			//	extract relative bind position
+			if (jointVariant.getMap().find("relativeBindTransform") == jointVariant.getMap().end())
+				throw std::runtime_error("no relative transform defined for at least one joint");
 			for (int j = 0; j < 4; j++)
 				for (int k = 0; k < 4; k++)
 					joint.relativeBindTransform[j][k] = (float)jointVariant.getMap()["relativeBindTransform"].getArray()[4 * j + k].toDouble();
@@ -80,9 +93,11 @@ Skeleton::Skeleton(const std::string& path, const std::string& skeletonName) : R
 			joints.push_back(joint);
 		}
 	}
-	catch (std::exception&)
+	catch (std::exception& e)
 	{
-		std::cerr << "ERROR : loading skeleton : " << skeletonName << " : parser fail, check file manually to correct format" << std::endl;
+		//std::cerr << "ERROR : loading skeleton : " << skeletonName << " : parser fail, check file manually to correct format" << std::endl;
+		if (logVerboseLevel > 0)
+			std::cerr << "ERROR : loading shader : " << skeletonName << " : " << e.what() << std::endl;
 		roots.clear();
 		joints.clear();
 		return;

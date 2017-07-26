@@ -49,17 +49,18 @@ class Shader : public ResourceVirtual
     private:
         //  Private functions
         bool loadShader(ShaderType shaderType, std::string filename,GLuint& shader); //!< Load a shader in a specific place, with a specific source code defined in filename
+		std::string toString(const ShaderType& shaderType) const;
         //
 
         //  Attributes
-        GLuint  vertexShader,                           //!< Vertex shader opengl id
-                fragmentShader,                         //!< Fragment shader opengl id
-                geometricShader,                        //!< Geometry shader opengl id
-                tessControlShader,                      //!< Tesselation control shader opengl id
-                tessEvalShader,                         //!< Tesselation evaluation shader opengl id
-                program;                                //!< Program opengl id
-        uint8_t textureCount;                           //!< The number of texture use by the program
+        GLuint  vertexShader,								//!< Vertex shader opengl id
+                fragmentShader,								//!< Fragment shader opengl id
+                geometricShader,							//!< Geometry shader opengl id
+                tessControlShader,							//!< Tesselation control shader opengl id
+                tessEvalShader,								//!< Tesselation evaluation shader opengl id
+                program;									//!< Program opengl id
+        uint8_t textureCount;								//!< The number of texture use by the program
         std::map<std::string,GLuint> attributesLocation;	//!< The shader attribute map with their opengl location
-		std::map<std::string, std::string> attributesType;	//!< 
+		std::map<std::string, std::string> attributesType;
         //
 };

@@ -19,7 +19,12 @@ Animation::Animation(const std::string& path, const std::string& animationName) 
 		Reader::parseFile(v, path + animationName + extension);
 		tmp = &(v.getMap().begin()->second);
 	}
-	catch (std::exception&){ return; }
+	catch (std::exception&)
+	{
+		if(logVerboseLevel > 1)
+			std::cerr << "ERROR : loading animation : " << animationName << " : fail to open or parse file" << std::endl;
+		return;
+	}
 	Variant& animationMap = *tmp;
 
 	//	import data
@@ -46,7 +51,7 @@ Animation::Animation(const std::string& path, const std::string& animationName) 
 					//	joint priority
 					errors.back() = "joint priority";
 					if (it2->second.getMap().find("p") != it2->second.getMap().end())
-						jointpose.priority = it2->second.getMap()["p"].toInt();
+						jointpose.priority = (float)it2->second.getMap()["p"].toInt();
 					else throw std::logic_error("");
 
 					//	joint position
@@ -93,7 +98,7 @@ Animation::Animation(const std::string& path, const std::string& animationName) 
 
 					//	joint priority
 					if (it2->second.getMap().find("p") != it2->second.getMap().end())
-						keyframe.poses[jp].priority = it2->second.getMap()["p"].toInt();
+						keyframe.poses[jp].priority = (float)it2->second.getMap()["p"].toInt();
 
 					//	joint position
 					try
@@ -128,7 +133,6 @@ Animation::Animation(const std::string& path, const std::string& animationName) 
 		}
 		
 		//	load labels
-		errors.back() = "loading labels";
 		try
 		{
 			KeyLabel label;
@@ -140,8 +144,10 @@ Animation::Animation(const std::string& path, const std::string& animationName) 
 				if (it->second.getMap().find("distortion") != it->second.getMap().end())
 					label.distortion = (float)it->second.getMap()["distortion"].toDouble();
 				else label.distortion = 1.f;
-				try{ label.loop = it->second.getMap()["loop"].toBool(); }
-				catch (std::exception&) { label.loop = false; }
+
+				if (it->second.getMap().find("loop") != it->second.getMap().end())
+					label.loop = it->second.getMap()["loop"].toBool();
+				else label.loop = false;
 
 				labels[it->first] = label;
 			}

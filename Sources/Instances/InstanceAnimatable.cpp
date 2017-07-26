@@ -1,7 +1,7 @@
 #include "InstanceAnimatable.h"
 
 //  Default
-InstanceAnimatable::InstanceAnimatable(std::string meshName, std::string shaderName) : InstanceDrawable(meshName, shaderName), skeleton(nullptr), animation(nullptr)
+InstanceAnimatable::InstanceAnimatable(const std::string& meshName, const std::string& shaderName) : InstanceDrawable(meshName, shaderName), skeleton(nullptr), animation(nullptr)
 {
 	type = InstanceVirtual::ANIMATABLE;
 
@@ -13,7 +13,6 @@ InstanceAnimatable::InstanceAnimatable(std::string meshName, std::string shaderN
 }
 InstanceAnimatable::~InstanceAnimatable()
 {
-	std::cout << "deleted instance" << std::endl;
 	ResourceManager::getInstance()->release(mesh);
 	ResourceManager::getInstance()->release(shader);
 	ResourceManager::getInstance()->release(skeleton);
@@ -167,7 +166,8 @@ void InstanceAnimatable::computePose(std::vector<glm::mat4>& result, const std::
 //
 
 //	Miscellaneous
-InstanceAnimatable::AnimationTrack::AnimationTrack(const unsigned int& poseSize, const std::string& n) : name(n), start(0), stop(0), previous(0), next(0), time(0.f), loop(false), flag(false)
+InstanceAnimatable::AnimationTrack::AnimationTrack(const unsigned int& poseSize, const std::string& n)
+	: name(n), start(0), stop(0), previous(0), next(0), time(0.f), distortion(1.f), loop(false), flag(false)
 {
 	pose.assign(poseSize, JointPose());
 }

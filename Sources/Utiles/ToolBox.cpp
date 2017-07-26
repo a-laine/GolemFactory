@@ -124,7 +124,8 @@ void ToolBox::clearWhitespace(std::string& input)
 {
 	for (std::string::iterator it = input.begin(); it != input.end(); ++it)
 	{
-		if (std::isspace(*it) && *std::prev(it) == ' ' || std::isspace(*it) && it == input.begin()) it = std::prev(input.erase(it));
+		if (std::isspace(*it) && *std::prev(it) == ' ' || std::isspace(*it) && it == input.begin())
+			it = std::prev(input.erase(it));
 		else if (std::isspace(*it) && *std::prev(it) != ' ') *it = ' ';
 	}
 }

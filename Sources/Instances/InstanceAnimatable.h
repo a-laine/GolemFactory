@@ -18,7 +18,7 @@ class InstanceAnimatable : public InstanceDrawable
 		//
 
 		//  Default
-		InstanceAnimatable(std::string meshName, std::string shaderName);
+		InstanceAnimatable(const std::string& meshName, const std::string& shaderName);
 		virtual ~InstanceAnimatable();
 		//
 

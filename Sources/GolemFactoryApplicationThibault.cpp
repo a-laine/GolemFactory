@@ -30,8 +30,8 @@ void initializeForestScene(bool emptyPlace = false);
 //
 
 
-std::string resourceRepository = "C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/";
-//std::string resourceRepository = "C:/Users/Thibault/Documents/Github/GolemFactory/Resources/";
+//std::string resourceRepository = "C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/";
+std::string resourceRepository = "C:/Users/Thibault/Documents/Github/GolemFactory/Resources/";
 //std::string resourceRepository = "Resources/";
 
 
@@ -49,6 +49,7 @@ int main()
 	EventHandler::getInstance()->setCursorMode(false);
 	
 	// Init Resources manager & instance manager
+	ResourceVirtual::logVerboseLevel = 2;
 	ResourceManager::getInstance()->setRepository(resourceRepository);
 	InstanceManager::getInstance()->setMaxNumberOfInstances(1000000);
 	

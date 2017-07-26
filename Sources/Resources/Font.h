@@ -14,6 +14,7 @@ class Font : public ResourceVirtual
         //  Miscellaneous
         struct Patch
 		{
+			Patch();
             glm::vec2 corner1;			//!< Upper left char corner coordinates.
 			glm::vec2 corner2;			//!< Bottom right char corner coordinates.
         };
@@ -27,14 +28,14 @@ class Font : public ResourceVirtual
         //
 
         //  Set/get functions
-        char getDefaultChar();
-        char getBeginChar();
-        char getEndChar();
-        int getArraySize();
+        char getDefaultChar() const;
+        char getBeginChar() const;
+        char getEndChar() const;
+        int getArraySize() const;
         //
 
         //  Public functions
-        Patch getPatch(char c);
+        Patch getPatch(char c) const;
         //
 
         //  Attributes

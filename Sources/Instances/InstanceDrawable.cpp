@@ -2,7 +2,7 @@
 
 
 //  Default
-InstanceDrawable::InstanceDrawable(std::string meshName, std::string shaderName) : InstanceVirtual(InstanceVirtual::DRAWABLE)
+InstanceDrawable::InstanceDrawable(const std::string& meshName, const std::string& shaderName) : InstanceVirtual(InstanceVirtual::DRAWABLE)
 {
 	mesh = ResourceManager::getInstance()->getMesh(meshName);
 	shader = ResourceManager::getInstance()->getShader(shaderName);
