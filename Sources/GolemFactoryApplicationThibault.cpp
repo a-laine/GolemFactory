@@ -70,7 +70,7 @@ int main()
 
 		InstanceAnimatable* peasant = InstanceManager::getInstance()->getInstanceAnimatable("peasant", "human", "simple_peasant", "skinning");
 		//InstanceDrawable* peasant = InstanceManager::getInstance()->getInstanceDrawable("peasant_static", "default");
-		//InstanceAnimatable* peasant = InstanceManager::getInstance()->getInstanceAnimatable("Peasant10.dae", "skinning");
+		//InstanceAnimatable* peasant = InstanceManager::getInstance()->getInstanceAnimatable("Peasant11.dae", "skinning");
 
 		float scale = 1.7f / peasant->getBBSize().z;
 		peasant->setSize(glm::vec3(scale));
@@ -128,12 +128,12 @@ int main()
 			else if (v[i] == SLOT1) peasant->launchAnimation("hello");
 			else if (v[i] == SLOT2) peasant->launchAnimation("yes");
 			else if (v[i] == SLOT3) peasant->launchAnimation("no");
-			/*else if (v[i] == SLOT4) peasant->launchAnimation("start walk");
-			else if (v[i] == SLOT5) peasant->launchAnimation("walk");
-			else if (v[i] == SLOT6) peasant->launchAnimation("end walk");
-			else if (v[i] == SLOT7) peasant->launchAnimation("start run");
-			else if (v[i] == SLOT8) peasant->launchAnimation("run");
-			else if (v[i] == SLOT9) peasant->launchAnimation("end run");*/
+			else if (v[i] == SLOT4) 
+			{
+				peasant->stopAnimation("run");
+				peasant->launchAnimation("walk");
+			}
+			else if (v[i] == SLOT5) peasant->launchAnimation("run");
 		}
 
 		//Animate camera
@@ -157,7 +157,7 @@ int main()
 
 	//	Save mesh in gfmesh format
 	//SkeletonSaver::save(peasant->getSkeleton(), resourceRepository, "human");
-	AnimationSaver::save(peasant->getAnimation(), resourceRepository, "simple_peasant");
+	//AnimationSaver::save(peasant->getAnimation(), resourceRepository, "simple_peasant");
 	//MeshSaver::save(peasant->getMesh(), resourceRepository, "peasant", glm::vec3(1.f));
 
 	//	end

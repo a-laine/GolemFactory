@@ -27,7 +27,7 @@ Skeleton::Skeleton(const std::string& path, const std::string& skeletonName) : R
 	catch (std::exception&)
 	{
 		if (logVerboseLevel > 0)
-			std::cerr << "ERROR : loading shader : " << skeletonName << " : fail to open file" << std::endl;
+			std::cerr << "ERROR : loading skeleton : " << skeletonName << " : fail to open file" << std::endl;
 		return;
 	}
 	Variant& skeletonMap = *tmp;

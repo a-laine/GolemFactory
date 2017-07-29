@@ -105,8 +105,9 @@ void AnimationSaver::save(Animation* animation, const std::string& resourcesPath
 		//	save label attributes
 		label.insert("start", Variant((int)it->second.start));
 		label.insert("stop", Variant((int)it->second.stop));
-		if (it->second.distortion != 1.f) label.insert("distortion", Variant(it->second.distortion));
 		if (it->second.loop) label.insert("loop", Variant(it->second.loop));
+		if (it->second.entry_key != it->second.start) label.insert("entry", Variant((int)it->second.entry_key));
+		if (it->second.exit_key != it->second.stop) label.insert("exit", Variant((int)it->second.exit_key));
 	}
 
 	//	save into file

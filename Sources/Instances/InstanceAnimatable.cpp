@@ -4,7 +4,6 @@
 InstanceAnimatable::InstanceAnimatable(const std::string& meshName, const std::string& shaderName) : InstanceDrawable(meshName, shaderName), skeleton(nullptr), animation(nullptr)
 {
 	type = InstanceVirtual::ANIMATABLE;
-
 	if (mesh && !mesh->isFromGolemFactoryFormat())
 	{
 		if (mesh->hasSkeleton()) skeleton = ResourceManager::getInstance()->getSkeleton(meshName);
@@ -29,6 +28,7 @@ void InstanceAnimatable::animate(float step)
 		//	update all current animations
 		for (std::list<AnimationTrack>::iterator it = currentAnimations.begin(); it != currentAnimations.end();)
 		{
+			it->jointCounter = 0;
 			if (it->animate(step, this)) 
 			{
 				if (it->flag) std::cout << "end animation " << it->name << std::endl;
@@ -60,13 +60,31 @@ void InstanceAnimatable::animate(float step)
 				blendPose[i].position = glm::mix(pl_it->pose[i].position, ph_it->pose[i].position, ph - pl);
 				blendPose[i].rotation = glm::slerp(pl_it->pose[i].rotation, ph_it->pose[i].rotation, ph - pl);
 				blendPose[i].scale = glm::mix(pl_it->pose[i].scale, ph_it->pose[i].scale, ph - pl);
+				pl_it->jointCounter++;
+				ph_it->jointCounter++;
+				pl_it->uselessTime = 0.f;
+				ph_it->uselessTime = 0.f;
 			}
 			else if(ph_it != currentAnimations.end())
 			{
 				blendPose[i].position = ph_it->pose[i].position;
 				blendPose[i].scale = ph_it->pose[i].scale;
 				blendPose[i].rotation = ph_it->pose[i].rotation;
+				ph_it->jointCounter++;
+				ph_it->uselessTime = 0.f;
 			}
+		}
+
+		//	remove useless animation track
+		for (std::list<AnimationTrack>::iterator it = currentAnimations.begin(); it != currentAnimations.end();)
+		{
+			if (it->jointCounter == 0 && it->uselessTime >= 1.f) it = currentAnimations.erase(it);
+			else if (it->jointCounter == 0)
+			{
+				it->uselessTime += step/1000.f;
+				++it;
+			}
+			else ++it;
 		}
 
 		//	compute matrix list pose
@@ -89,18 +107,27 @@ void InstanceAnimatable::animate(float step)
 void InstanceAnimatable::launchAnimation(const std::string& labelName, const bool& flaged)
 {
 	if (!animation || !skeleton) return;
+
 	std::map<std::string, KeyLabel>::iterator it = animation->labels.find(labelName);
 	if (it != animation->labels.end())
 	{
 		AnimationTrack at(skeleton->joints.size(), labelName);
-			at.distortion = it->second.distortion;
 			at.start = it->second.start;
 			at.stop = it->second.stop;
-			at.previous = at.start;
-			at.next = at.previous + 1;
+			at.exit = it->second.exit_key;
 			at.loop = it->second.loop;
 			at.flag = flaged;
+			at.previous = it->second.entry_key;
+			at.next = at.previous + 1;
 		currentAnimations.insert(currentAnimations.end(), at);
+	}
+}
+void InstanceAnimatable::stopAnimation(const std::string& labelName)
+{
+	for (std::list<AnimationTrack>::iterator it = currentAnimations.begin(); it != currentAnimations.end(); ++it)
+	{
+		if (it->name == labelName)
+			it->loop = false;
 	}
 }
 //
@@ -167,24 +194,25 @@ void InstanceAnimatable::computePose(std::vector<glm::mat4>& result, const std::
 
 //	Miscellaneous
 InstanceAnimatable::AnimationTrack::AnimationTrack(const unsigned int& poseSize, const std::string& n)
-	: name(n), start(0), stop(0), previous(0), next(0), time(0.f), distortion(1.f), loop(false), flag(false)
+: name(n), start(0), stop(0), exit(0), previous(0), next(0), time(0.f), uselessTime(0.f), loop(false), flag(false), jointCounter(0)
 {
 	pose.assign(poseSize, JointPose());
 }
 bool InstanceAnimatable::AnimationTrack::animate(const float& step, const InstanceAnimatable* const parent)
 {
-	time += distortion * step / 1000.f;
+	time += step / 1000.f;
 	const std::vector<KeyFrame>& animationSet = parent->animation->timeLine;
 	float dt = animationSet[next].time - animationSet[previous].time;
 	if (time > dt)
 	{
 		std::pair<int, int> bound = parent->animation->getBoundingKeyFrameIndex(animationSet[previous].time + time);
 		time -= dt;
-		if (bound.first >= stop || bound.first < 0)
+		if (loop && (bound.first >= stop || bound.first < 0))
 		{
 			if (loop) bound = parent->animation->getBoundingKeyFrameIndex(animationSet[start].time + time);
 			else return true;
 		}
+		else if (!loop && (bound.first >= exit || bound.first < 0)) return true;
 		previous = bound.first;
 		next = bound.second;
 	}

@@ -9,7 +9,7 @@ std::string Mesh::extension = ".mesh";
 //
 
 //  Default
-Mesh::Mesh() : ResourceVirtual("unknown", ResourceVirtual::MESH), configuration(0x00) {}
+Mesh::Mesh(const std::string& meshName) : ResourceVirtual(meshName, ResourceVirtual::MESH), configuration(0x00) {}
 Mesh::Mesh(const std::string& path, const std::string& meshName) : ResourceVirtual(meshName, ResourceVirtual::MESH), configuration(0x00)
 {
 	//	open file
@@ -48,7 +48,7 @@ Mesh::Mesh(const std::string& path, const std::string& meshName) : ResourceVirtu
 			if (iss.fail())
 			{
 				if (!errorOccured && logVerboseLevel > 1)
-					std::cerr << "WARNING : loading font : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
+					std::cerr << "WARNING : loading mesh : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
 				if (logVerboseLevel > 1)
 					std::cerr << " check line : " << lineIndex << std::endl;
 			}
@@ -62,7 +62,7 @@ Mesh::Mesh(const std::string& path, const std::string& meshName) : ResourceVirtu
 			if (iss.fail())
 			{
 				if (!errorOccured && logVerboseLevel > 1)
-					std::cerr << "WARNING : loading font : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
+					std::cerr << "WARNING : loading mesh : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
 				if (logVerboseLevel > 1)
 					std::cerr << " check line : " << lineIndex << std::endl;
 			}
@@ -76,7 +76,7 @@ Mesh::Mesh(const std::string& path, const std::string& meshName) : ResourceVirtu
 			if (iss.fail())
 			{
 				if (!errorOccured && logVerboseLevel > 1)
-					std::cerr << "WARNING : loading font : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
+					std::cerr << "WARNING : loading mesh : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
 				if (logVerboseLevel > 1)
 					std::cerr << " check line : " << lineIndex << std::endl;
 			}
@@ -106,7 +106,7 @@ Mesh::Mesh(const std::string& path, const std::string& meshName) : ResourceVirtu
 				if (outrange)
 				{
 					if (!errorOccured && logVerboseLevel > 1)
-						std::cerr << "WARNING : loading font : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
+						std::cerr << "WARNING : loading mesh : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
 					if (logVerboseLevel > 1)
 						std::cerr << " check line : " << lineIndex << " arguments out of range" << std::endl;
 				}
@@ -122,7 +122,7 @@ Mesh::Mesh(const std::string& path, const std::string& meshName) : ResourceVirtu
 			else
 			{
 				if (!errorOccured && logVerboseLevel > 1)
-					std::cerr << "WARNING : loading font : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
+					std::cerr << "WARNING : loading mesh : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
 				if (logVerboseLevel > 1)
 					std::cerr << " check line : " << lineIndex << std::endl;
 			}
@@ -218,7 +218,11 @@ bool Mesh::isValid() const
 	else return false;
 }
 bool Mesh::isAnimable() const { return (configuration & IS_ANIMABLE) != 0; }
-bool Mesh::isFromGolemFactoryFormat() const { return (name.find_last_of('.') == std::string::npos || name.substr(name.find_last_of('.')) == Mesh::extension); }
+bool Mesh::isFromGolemFactoryFormat() const
+{
+	if (name.find_last_of('.') == std::string::npos) return true;
+	return (name.substr(name.find_last_of('.')) == Mesh::extension);
+}
 //
 
 //	Protected functions

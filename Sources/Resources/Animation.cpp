@@ -141,9 +141,13 @@ Animation::Animation(const std::string& path, const std::string& animationName) 
 				label.start = (unsigned int)it->second.getMap()["start"].toInt();
 				label.stop = (unsigned int)it->second.getMap()["stop"].toInt();
 
-				if (it->second.getMap().find("distortion") != it->second.getMap().end())
-					label.distortion = (float)it->second.getMap()["distortion"].toDouble();
-				else label.distortion = 1.f;
+				if (it->second.getMap().find("entry") != it->second.getMap().end())
+					label.entry_key = it->second.getMap()["entry"].toInt();
+				else label.entry_key = label.start;
+
+				if (it->second.getMap().find("exit") != it->second.getMap().end())
+					label.exit_key = it->second.getMap()["exit"].toInt();
+				else label.exit_key = label.stop;
 
 				if (it->second.getMap().find("loop") != it->second.getMap().end())
 					label.loop = it->second.getMap()["loop"].toBool();

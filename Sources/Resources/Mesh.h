@@ -22,7 +22,7 @@ class Mesh : public ResourceVirtual
 		//
 
         //  Default
-		Mesh();
+		Mesh(const std::string& meshName = "unknown.unknown");
 		Mesh(const std::string& path, const std::string& meshName);
 		Mesh(const std::string& meshName, const std::vector<glm::vec3>& verticesArray, const std::vector<glm::vec3>& normalesArray, const std::vector<glm::vec3>& colorArray, const std::vector<unsigned int>& facesArray);
 		Mesh(const Mesh& original);

@@ -25,6 +25,7 @@ class InstanceAnimatable : public InstanceDrawable
 		//	Public functions
 		void animate(float step);
 		void launchAnimation(const std::string& labelName, const bool& flaged = true);
+		void stopAnimation(const std::string& labelName);
 		//
 
 		//	Set/get functions
@@ -50,10 +51,11 @@ class InstanceAnimatable : public InstanceDrawable
 			bool animate(const float& step, const InstanceAnimatable* const parent);
 
 			std::string name;
-			int start, stop, previous, next;
-			float time, distortion;
+			int start, stop, exit, previous, next;
+			float time, uselessTime;
 			bool loop, flag;
 			std::vector<JointPose> pose;
+			unsigned int jointCounter;
 		};
 		//
 

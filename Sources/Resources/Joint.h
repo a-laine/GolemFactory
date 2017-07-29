@@ -41,6 +41,7 @@ struct KeyLabel
 {
 	unsigned int start;
 	unsigned int stop;
-	float distortion;
+	unsigned int entry_key;
+	unsigned int exit_key;
 	bool loop;
 };

@@ -6,13 +6,18 @@
 
 **LITTLE TODO**
 
-*Micseleniuos*
+*Micselenious :*
 - Shader, font passer c++11
 - add static parameter in resourcesVirtual for verbose output levels
 - change parsing gfmesh line from "iss<<" to sscanf_s 
 	- for more error file detection
 
-*Scene manager:*
+*Font generator :*
+ - load a font from ttf file and generate texture atlas
+ - 
+
+
+*Scene manager :*
 - change NodeVirtual* sons[] container list into a thread safe forward list.
 - add an optional NodeVirtual* adoptedSons[] thread safe forward list for optionnal sub tree.
 - add the map structure to populate a huge map with several tree just around the camera.

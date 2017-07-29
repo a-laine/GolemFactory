@@ -5,7 +5,7 @@
 #include <sstream>
 
 //  Default
-MeshAnimated::MeshAnimated(const std::string& path, const std::string& meshName) : Mesh()
+MeshAnimated::MeshAnimated(const std::string& path, const std::string& meshName) : Mesh(meshName)
 {
 	//	open file
 	std::string tmpExtension = Mesh::extension;
@@ -43,7 +43,7 @@ MeshAnimated::MeshAnimated(const std::string& path, const std::string& meshName)
 			if (iss.fail())
 			{
 				if (!errorOccured && logVerboseLevel > 1)
-					std::cerr << "WARNING : loading font : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
+					std::cerr << "WARNING : loading mesh : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
 				if (logVerboseLevel > 1)
 					std::cerr << " check line : " << lineIndex << std::endl;
 			}
@@ -57,7 +57,7 @@ MeshAnimated::MeshAnimated(const std::string& path, const std::string& meshName)
 			if (iss.fail())
 			{
 				if (!errorOccured && logVerboseLevel > 1)
-					std::cerr << "WARNING : loading font : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
+					std::cerr << "WARNING : loading mesh : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
 				if (logVerboseLevel > 1)
 					std::cerr << " check line : " << lineIndex << std::endl;
 			}
@@ -71,7 +71,7 @@ MeshAnimated::MeshAnimated(const std::string& path, const std::string& meshName)
 			if (iss.fail())
 			{
 				if (!errorOccured && logVerboseLevel > 1)
-					std::cerr << "WARNING : loading font : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
+					std::cerr << "WARNING : loading mesh : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
 				if (logVerboseLevel > 1)
 					std::cerr << " check line : " << lineIndex << std::endl;
 			}
@@ -85,7 +85,7 @@ MeshAnimated::MeshAnimated(const std::string& path, const std::string& meshName)
 			if (iss.fail())
 			{
 				if (!errorOccured && logVerboseLevel > 1)
-					std::cerr << "WARNING : loading font : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
+					std::cerr << "WARNING : loading mesh : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
 				if (logVerboseLevel > 1)
 					std::cerr << " check line : " << lineIndex << std::endl;
 			}
@@ -99,7 +99,7 @@ MeshAnimated::MeshAnimated(const std::string& path, const std::string& meshName)
 			if (iss.fail())
 			{
 				if (!errorOccured && logVerboseLevel > 1)
-					std::cerr << "WARNING : loading font : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
+					std::cerr << "WARNING : loading mesh : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
 				if (logVerboseLevel > 1)
 					std::cerr << " check line : " << lineIndex << std::endl;
 			}
@@ -137,7 +137,7 @@ MeshAnimated::MeshAnimated(const std::string& path, const std::string& meshName)
 				if (outrange)
 				{
 					if (!errorOccured && logVerboseLevel > 1)
-						std::cerr << "WARNING : loading font : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
+						std::cerr << "WARNING : loading mesh : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
 					if (logVerboseLevel > 1)
 						std::cerr << " check line : " << lineIndex << " arguments out of range" << std::endl;
 				}
@@ -155,7 +155,7 @@ MeshAnimated::MeshAnimated(const std::string& path, const std::string& meshName)
 			else
 			{
 				if (!errorOccured && logVerboseLevel > 1)
-					std::cerr << "WARNING : loading font : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
+					std::cerr << "WARNING : loading mesh : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
 				if (logVerboseLevel > 1)
 					std::cerr << " check line : " << lineIndex << std::endl;
 			}
@@ -172,7 +172,7 @@ MeshAnimated::MeshAnimated(const std::string& path, const std::string& meshName)
 MeshAnimated::MeshAnimated(const std::string& meshName, const bool& isAnimable, const std::vector<glm::vec3>& verticesArray, const std::vector<glm::vec3>& normalesArray,
 	const std::vector<glm::vec3>& colorArray, const std::vector<glm::ivec3>& bonesArray, const std::vector<glm::vec3>& weightsArray,
 	const std::vector<unsigned int>& facesArray)
-	: bones(bonesArray), weights(weightsArray)
+	: Mesh(meshName), bones(bonesArray), weights(weightsArray)
 {
 	configuration = WELL_LOADED | HAS_SKELETON;
 	if (isAnimable) configuration |= IS_ANIMABLE;

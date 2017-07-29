@@ -12,7 +12,7 @@
 #include <algorithm>
 #include <fstream>
 
-/** \class ResourceVirtual
+/*! \class ResourceVirtual
  *	\brief Base class for resource implementation.
  *
  *	The ResourceManager manage ResourceVirtual object for resource creation deletion.
