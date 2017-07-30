@@ -55,6 +55,8 @@ int main()
 	
 	// Init Renderer;
 	Camera camera;
+		camera.setMode(Camera::TRACKBALL);
+		camera.setAllRadius(2.f, 0.5f, 10.f);
 		camera.setPosition(glm::vec3(0,-3,3));
 	Renderer::getInstance()->setCamera(&camera);
 	Renderer::getInstance()->setWindow(window);
@@ -66,22 +68,22 @@ int main()
 	SceneManager::getInstance()->setWorldPosition(glm::vec3(0,0,25));
 	SceneManager::getInstance()->setWorldSize(glm::vec3(GRID_SIZE*GRID_ELEMENT_SIZE, GRID_SIZE*GRID_ELEMENT_SIZE, 50));
 	
-		//initializeForestScene(true);
+		initializeForestScene(true);
 
 		InstanceAnimatable* peasant = InstanceManager::getInstance()->getInstanceAnimatable("peasant", "human", "simple_peasant", "skinning");
 		//InstanceDrawable* peasant = InstanceManager::getInstance()->getInstanceDrawable("peasant_static", "default");
 		//InstanceAnimatable* peasant = InstanceManager::getInstance()->getInstanceAnimatable("Peasant11.dae", "skinning");
 
 		float scale = 1.7f / peasant->getBBSize().z;
+		//float scale = 1.f;
 		peasant->setSize(glm::vec3(scale));
 		peasant->setPosition(glm::vec3(0.f, 0.f, -scale * peasant->getMesh()->sizeZ.x));
-		peasant->launchAnimation("walk");
+		//peasant->launchAnimation("walk");
 		SceneManager::getInstance()->addStaticObject(peasant);
 
 
 	// init loop time tracking
 	double elapseTime = 16.;
-	bool FPScam = false;
 
 	std::cout << "game loop initiated" << std::endl;
 
@@ -92,25 +94,21 @@ int main()
 		///
 		//if (glfwGetTime() > 0.5) EventHandler::getInstance()->addFrameEvent(QUIT);
 		//std::cout << "*" << std::endl;
-		peasant->animate((float)elapseTime);
 
 		// begin loop
 		double startTime = glfwGetTime();
 		int width, height;
 		glfwGetWindowSize(window, &width, &height);
-		float angle = camera.getFrustrumAngleVertical() + EventHandler::getInstance()->getScrollingRelative().y;
-		if (angle > 70.f) angle = 70.f;
-		else if (angle < 3) angle = 3.f;
-		camera.setFrustrumAngleVertical(angle);
-		camera.setFrustrumAngleHorizontalFromScreenRatio((float)width / height);
-
-		if (FPScam)
+		if (camera.getMode() == Camera::TRACKBALL)
+			camera.setRadius(camera.getRadius() + camera.getSensitivity() * EventHandler::getInstance()->getScrollingRelative().y);
+		else
 		{
-			glm::vec3 cp = camera.getPosition();
-				cp.z = 1.7f;
-			camera.setPosition(cp);
+			float angle = camera.getFrustrumAngleVertical() + EventHandler::getInstance()->getScrollingRelative().y;
+			if (angle > 70.f) angle = 70.f;
+			else if (angle < 3) angle = 3.f;
+			camera.setFrustrumAngleVertical(angle);
+			camera.setFrustrumAngleHorizontalFromScreenRatio((float)width / height);
 		}
-
 
 		// Render frame
 		Renderer::getInstance()->render();
@@ -123,20 +121,59 @@ int main()
 		{
 			if(v[i] == QUIT) glfwSetWindowShouldClose(window, GL_TRUE);
 			else if(v[i] == CHANGE_CURSOR_MODE) EventHandler::getInstance()->setCursorMode(!EventHandler::getInstance()->getCursorMode());
-			else if (v[i] == ACTION) FPScam = !FPScam;
+			else if (v[i] == ACTION)
+			{
+				if (camera.getMode() == Camera::TRACKBALL) camera.setMode(Camera::FREEFLY);
+				else if (camera.getMode() == Camera::FREEFLY) camera.setMode(Camera::TRACKBALL);
+			}
 
 			else if (v[i] == SLOT1) peasant->launchAnimation("hello");
 			else if (v[i] == SLOT2) peasant->launchAnimation("yes");
 			else if (v[i] == SLOT3) peasant->launchAnimation("no");
-			else if (v[i] == SLOT4) 
+			else if (v[i] == FORWARD) 
 			{
-				peasant->stopAnimation("run");
-				peasant->launchAnimation("walk");
+				if (EventHandler::getInstance()->isActivated(FORWARD) && camera.getMode() == Camera::TRACKBALL)
+				{
+					if(EventHandler::getInstance()->isActivated(RUN)) peasant->launchAnimation("run");
+					else peasant->launchAnimation("walk");
+				}
+				else
+				{
+					peasant->stopAnimation("run");
+					peasant->stopAnimation("walk");
+				}
 			}
-			else if (v[i] == SLOT5) peasant->launchAnimation("run");
+			else if (v[i] == RUN)
+			{
+				if (EventHandler::getInstance()->isActivated(RUN))
+				{
+					if (EventHandler::getInstance()->isActivated(FORWARD) && camera.getMode() == Camera::TRACKBALL) peasant->launchAnimation("run");
+					else peasant->stopAnimation("run");
+				}
+				else
+				{
+					peasant->stopAnimation("run");
+					if (EventHandler::getInstance()->isActivated(FORWARD) && camera.getMode() == Camera::TRACKBALL) peasant->launchAnimation("walk");
+				}
+			}
+		}
+
+		//	Animate instances
+		peasant->animate((float)elapseTime);
+
+		//	Move avatar if needed
+		if (camera.getMode() == Camera::TRACKBALL)
+		{
+			glm::vec3 forward = camera.getForward();
+			float speed = 0.f;
+			if (peasant->isAnimationRunning("walk")) speed = 0.025f;
+			if (peasant->isAnimationRunning("run")) speed = 0.1f;
+			peasant->setPosition(peasant->getPosition() + speed * glm::vec3(forward.x, forward.y, 0.f));
+			if (speed != 0.f) peasant->setOrientation(glm::rotate(glm::pi<float>()/2.f + atan2(forward.y, forward.x), glm::vec3(0.f, 0.f, 1.f)));
 		}
 
 		//Animate camera
+		if(camera.getMode() == Camera::TRACKBALL) camera.setTarget(peasant->getJointPosition("Head"));
 		camera.animate((float)elapseTime,
 			EventHandler::getInstance()->isActivated(FORWARD),	EventHandler::getInstance()->isActivated(BACKWARD),
 			EventHandler::getInstance()->isActivated(LEFT),		EventHandler::getInstance()->isActivated(RIGHT),
@@ -147,7 +184,7 @@ int main()
 		ResourceManager::getInstance()->clearGarbage();
 
 		//	Debug
-		//std::cout << 1000.f*(glfwGetTime() - startTime) << std::endl;
+		std::cout << 1000.f*(glfwGetTime() - startTime) << std::endl;
 
 		// End loop
 		glfwSwapBuffers(window);

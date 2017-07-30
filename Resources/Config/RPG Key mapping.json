@@ -2,12 +2,12 @@ DefaultRPGKeyMapping
 {
 	forward : {
 		eventPublished : "FORWARD";
-		configuration : "button";
+		configuration : ["button","down","up"];
 		listeningKey : [87];
 	};
 	backward : {
 		eventPublished : "BACKWARD";
-		configuration : "button";
+		configuration : ["button","down","up"];
 		listeningKey : [83];
 	};
 	left : {
@@ -59,7 +59,7 @@ DefaultRPGKeyMapping
 	};
 	run : {
 		eventPublished : "RUN";
-		configuration : "button";
+		configuration :["button","down","up"];
 		listeningKey : [340];
 	};
 	sneaky : {

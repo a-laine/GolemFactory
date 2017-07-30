@@ -42,6 +42,7 @@ void InstanceAnimatable::animate(float step)
 		std::vector<JointPose> blendPose(skeleton->joints.size());
 		for (unsigned int i = 0; i < blendPose.size(); i++)
 		{
+			//	check for highest priority animation track
 			float pl = -1.f; float ph = -1.f;
 			std::list<AnimationTrack>::iterator pl_it = currentAnimations.begin();
 			std::list<AnimationTrack>::iterator ph_it = currentAnimations.begin();
@@ -55,6 +56,8 @@ void InstanceAnimatable::animate(float step)
 					ph_it = it;
 				}
 			}
+
+			//	interpolate between the two highest priority animation track or just get the highest one
 			if (ph - (int)ph > 0.f && pl > 0.f && ph - pl < 1.f)
 			{
 				blendPose[i].position = glm::mix(pl_it->pose[i].position, ph_it->pose[i].position, ph - pl);
@@ -108,6 +111,7 @@ void InstanceAnimatable::launchAnimation(const std::string& labelName, const boo
 {
 	if (!animation || !skeleton) return;
 
+	//	create and add a new track to current animation
 	std::map<std::string, KeyLabel>::iterator it = animation->labels.find(labelName);
 	if (it != animation->labels.end())
 	{
@@ -125,22 +129,29 @@ void InstanceAnimatable::launchAnimation(const std::string& labelName, const boo
 void InstanceAnimatable::stopAnimation(const std::string& labelName)
 {
 	for (std::list<AnimationTrack>::iterator it = currentAnimations.begin(); it != currentAnimations.end(); ++it)
-	{
 		if (it->name == labelName)
 			it->loop = false;
-	}
 }
 //
 
 //	Set/get functions
+bool InstanceAnimatable::isAnimationRunning(const std::string& animationName)
+{
+	for (std::list<AnimationTrack>::iterator it = currentAnimations.begin(); it != currentAnimations.end(); ++it)
+		if (it->name == animationName && it->uselessTime <= 0.f) return true;
+	return false;
+}
+
 void InstanceAnimatable::setAnimation(std::string animationName)
 {
 	currentAnimations.clear();
 	ResourceManager::getInstance()->release(animation);
 	animation = ResourceManager::getInstance()->getAnimation(animationName);
 
+	locker.lock();
 	if (animation && skeleton && pose.empty())
 		pose = animation->getKeyPose(0, skeleton->roots, skeleton->joints);
+	locker.lock();
 }
 void InstanceAnimatable::setAnimation(Animation* a)
 {
@@ -149,8 +160,10 @@ void InstanceAnimatable::setAnimation(Animation* a)
 	if (a) animation = ResourceManager::getInstance()->getAnimation(a->name);
 	else animation = nullptr;
 
+	locker.lock();
 	if (animation && skeleton && pose.empty())
 		pose = animation->getKeyPose(0, skeleton->roots, skeleton->joints);
+	locker.lock();
 }
 
 void InstanceAnimatable::setSkeleton(std::string skeletonName)
@@ -158,8 +171,10 @@ void InstanceAnimatable::setSkeleton(std::string skeletonName)
 	ResourceManager::getInstance()->release(skeleton);
 	skeleton = ResourceManager::getInstance()->getSkeleton(skeletonName);
 
+	locker.lock();
 	if (animation && skeleton && pose.empty())
 		pose = animation->getKeyPose(0, skeleton->roots, skeleton->joints);
+	locker.lock();
 }
 void InstanceAnimatable::setSkeleton(Skeleton* s)
 {
@@ -167,8 +182,10 @@ void InstanceAnimatable::setSkeleton(Skeleton* s)
 	if (s) skeleton = ResourceManager::getInstance()->getSkeleton(s->name);
 	else skeleton = nullptr;
 
+	locker.lock();
 	if (animation && skeleton && pose.empty())
 		pose = animation->getKeyPose(0, skeleton->roots, skeleton->joints);
+	locker.lock();
 }
 
 Skeleton* InstanceAnimatable::getSkeleton() const { return skeleton; }
@@ -179,6 +196,27 @@ std::vector<glm::mat4> InstanceAnimatable::getPose()
 	locker.lock();
 	p = pose;
 	locker.unlock();
+	return p;
+}
+glm::vec3 InstanceAnimatable::getJointPosition(const std::string& jointName)
+{
+	locker.lock();
+	bool b = pose.empty();
+	locker.lock();
+	
+	if (!skeleton || b) return  glm::vec3(0.f);
+	int index = -1;
+	for (unsigned int i = 0; i < skeleton->joints.size(); i++)
+		if (skeleton->joints[i].name == jointName)
+		{
+			index = i;
+			break;
+		}
+	if (index < 0) return  glm::vec3(0.f);
+
+	locker.lock();
+	glm::vec3 p = position + size.x * glm::vec3(pose[index][3][0], pose[index][3][1], pose[index][3][2]);
+	locker.lock();
 	return p;
 }
 //
@@ -200,9 +238,12 @@ InstanceAnimatable::AnimationTrack::AnimationTrack(const unsigned int& poseSize,
 }
 bool InstanceAnimatable::AnimationTrack::animate(const float& step, const InstanceAnimatable* const parent)
 {
+	//	Increment time and create aliases
 	time += step / 1000.f;
 	const std::vector<KeyFrame>& animationSet = parent->animation->timeLine;
 	float dt = animationSet[next].time - animationSet[previous].time;
+
+	//	end of keyframes interpolation
 	if (time > dt)
 	{
 		std::pair<int, int> bound = parent->animation->getBoundingKeyFrameIndex(animationSet[previous].time + time);
@@ -217,6 +258,7 @@ bool InstanceAnimatable::AnimationTrack::animate(const float& step, const Instan
 		next = bound.second;
 	}
 
+	//	interpolate joint parameters
 	float t = time / (animationSet[next].time - animationSet[previous].time);
 	for (unsigned int i = 0; i < pose.size(); i++)
 	{

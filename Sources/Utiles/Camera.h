@@ -48,7 +48,7 @@ class Camera
 		 *  \brief Constructor
 		 *  \param screenRatio : the screen ratio
 		 */
-        Camera(float screenRatio = 1.0f);
+        Camera(const float& screenRatio = 1.0f);
 
 		/*!
 		 *  \brief Destructor

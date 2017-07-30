@@ -2,18 +2,11 @@
 
 
 //  Default
-Camera::Camera(float screenRatio)
+Camera::Camera(const float& screenRatio) : 
+	configuration(FREEFLY), position(0.f, -10.f, 5.f), teta(0.f), phi(0.f), sensivity(0.2f), speedMag(0.003f),
+	radius(3.f), radiusMin(1.f), radiusMax(10.f), frustrumAngleVertical(45.f)
 {
-    configuration = FREEFLY;
-
-    position = glm::vec3(0,-10,5);
     forward  = glm::vec3(0,0,1)- position;
-
-    teta = 0;           phi = 0;
-    sensivity = 0.2f;   speedMag = 0.003f; // = 3m/ms
-    radius = 3;         radiusMin = 1;
-    radiusMax = 10;
-	frustrumAngleVertical = 45.0f;
 	frustrumAngleHorizontal = screenRatio*frustrumAngleVertical;
 	
     anglesFromVectors();
@@ -23,7 +16,7 @@ Camera::~Camera() {}
 //
 
 //  Public functions
-void Camera::animate(float elapseTime,bool goForw,bool goBack,bool goLeft,bool goRight,bool option1,bool option2)
+void Camera::animate(float elapseTime, bool goForw, bool goBack, bool goLeft, bool goRight, bool option1, bool option2)
 {
 	//	begin
     mutex.lock();
@@ -58,7 +51,7 @@ void Camera::animate(float elapseTime,bool goForw,bool goBack,bool goLeft,bool g
             {
                 phi  -= tmpSensitivity*EventHandler::getInstance()->getCursorPositionRelative().x;
                 teta -= tmpSensitivity*EventHandler::getInstance()->getCursorPositionRelative().y;
-                vectorsFromAngles();
+                vectorsFromAngles(position + radius * forward);
             }
             break;
 
@@ -150,7 +143,7 @@ void Camera::setAllRadius(float r, float rmin, float rmax)
 void Camera::setPosition(glm::vec3 pos)
 {
     mutex.lock();
-    if((configuration&MODE_MASK)==TRACKBALL)
+	if ((configuration & MODE_MASK) == TRACKBALL)
     {
 		glm::vec3 target = position + radius*forward;
         position += pos;
@@ -176,12 +169,7 @@ void Camera::setOrientation(glm::vec3 orientation)
 void Camera::setTarget(glm::vec3 target)
 {
     mutex.lock();
-    forward = target-position;
-    radius = (float)forward.length();
-	forward = glm::normalize(forward);
-
     boundingRadius();
-    anglesFromVectors();
     vectorsFromAngles(target);
     mutex.unlock();
 }

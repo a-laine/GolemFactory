@@ -24,11 +24,13 @@ class InstanceAnimatable : public InstanceDrawable
 
 		//	Public functions
 		void animate(float step);
-		void launchAnimation(const std::string& labelName, const bool& flaged = true);
+		void launchAnimation(const std::string& labelName, const bool& flaged = false);
 		void stopAnimation(const std::string& labelName);
 		//
 
 		//	Set/get functions
+		bool isAnimationRunning(const std::string& animationName);
+
 		void setSkeleton(std::string skeletonName);
 		void setSkeleton(Skeleton* s);
 		void setAnimation(std::string animationName);
@@ -37,6 +39,7 @@ class InstanceAnimatable : public InstanceDrawable
 		Skeleton* getSkeleton() const;
 		Animation* getAnimation() const;
 		std::vector<glm::mat4> getPose();
+		glm::vec3 getJointPosition(const std::string& jointName);
 		//
 
 	protected:
