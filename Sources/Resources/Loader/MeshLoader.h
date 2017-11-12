@@ -22,6 +22,20 @@
 class MeshLoader
 {
     public:
+		//  Miscellaneous
+		/*!
+		*	\enum VerboseLevel
+		*	\brief The verbose level for logs
+		*/
+		enum VerboseLevel
+		{
+			NONE = 0,		//!< No log printed
+			ERRORS = 1,		//!< Just print errors in log
+			WARNINGS = 2,	//!< Print errors and logs
+			ALL = 3			//!< Print all logs (errors, warning and optionnal informations)
+		};
+		//
+
 		//  Default
 		MeshLoader();
 		~MeshLoader();
@@ -32,6 +46,8 @@ class MeshLoader
         //
 
 		//	Attributes
+		static VerboseLevel logVerboseLevel;
+
 		std::vector<glm::vec3> vertices;
 		std::vector<glm::vec3> normales;
 		std::vector<glm::vec3> colors;

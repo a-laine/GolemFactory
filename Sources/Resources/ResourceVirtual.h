@@ -42,7 +42,18 @@ class ResourceVirtual
             FONT = 6,       //!< Font
 			SKELETON = 7	//!< Skeleton
         };
-        //
+
+		/*!
+		*	\enum VerboseLevel
+		*	\brief The verbose level for logs
+		*/
+		enum VerboseLevel
+		{
+			ERRORS = 1,		//!< Just print errors in log
+			WARNINGS = 2,	//!< Print errors and logs
+			ALL = 3			//!< Print all logs (errors, warning and optionnal informations)
+		};
+		//
 
         //  Default
 		/*!
@@ -74,13 +85,17 @@ class ResourceVirtual
         //
 
         //  Attributes
-		static int logVerboseLevel;
-        std::string name;       //!< The resource name.
-        ResourceType type;      //!< The resource type.
+		static VerboseLevel logVerboseLevel;	//!< The verbose level define for all resources
+        std::string name;						//!< The resource name.
+        ResourceType type;						//!< The resource type.
         //
 
     protected:
         //	Attributes
-        std::atomic_uint count; //!< The number of clients using the resource.
+        std::atomic_uint count;					//!< The number of clients using the resource.
         //
+
+		//	Protected functions	
+		void printErrorLog(std::string resourceName, int errorLine, bool& printHeader);
+		//
 };

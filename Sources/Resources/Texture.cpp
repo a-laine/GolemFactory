@@ -20,7 +20,7 @@ Texture::Texture(const std::string& path, const std::string& textureName, uint8_
 		uint8_t* image = ImageLoader::loadFromFile(path + textureName, x, y, n, ImageLoader::RGB_ALPHA);
         if(!image)
 		{
-			if (logVerboseLevel > 0)
+			if (logVerboseLevel >= ResourceVirtual::ERRORS)
 				std::cerr << "ERROR : loading texture : " << textureName << " : fail to open file";
 			return;
 		}
@@ -37,7 +37,7 @@ Texture::Texture(const std::string& path, const std::string& textureName, uint8_
         ImageLoader::freeImage(image);
 		if (!glIsTexture(texture))
 		{
-			if (logVerboseLevel > 0)
+			if (logVerboseLevel >= ResourceVirtual::ERRORS)
 				std::cerr << "ERROR : loading texture : " << textureName << " : fail to create OPENGL texture";
 			return;
 		}
@@ -55,7 +55,7 @@ Texture::Texture(const std::string& path, const std::string& textureName, uint8_
 		}
         catch(std::exception&)
 		{
-			if (logVerboseLevel > 0)
+			if (logVerboseLevel >= ResourceVirtual::ERRORS)
 				std::cerr << "ERROR : loading texture : " << textureName << " : fail to open or parse file" << std::endl;
 			return;
 		}
@@ -71,7 +71,7 @@ Texture::Texture(const std::string& path, const std::string& textureName, uint8_
 		}
         catch(std::exception&)
 		{
-			if (logVerboseLevel > 0)
+			if (logVerboseLevel >= ResourceVirtual::ERRORS)
 				std::cerr << "ERROR : loading texture : " << textureName << " : invalid or inexistant texture type" << std::endl;
 			return;
 		}
@@ -153,7 +153,7 @@ Texture::Texture(const std::string& path, const std::string& textureName, uint8_
         }
         catch(std::exception& e)
         {
-			if (logVerboseLevel > 0)
+			if (logVerboseLevel >= ResourceVirtual::ERRORS)
 				std::cerr << "ERROR : loading texture : " << textureName << " : "<< e.what() << std::endl;
             if(textureData) delete[] textureData;
             return;
@@ -182,7 +182,7 @@ Texture::Texture(const std::string& path, const std::string& textureName, uint8_
 				if (configuration&USE_MIPMAP) glGenerateMipmap(GL_TEXTURE_3D);
                 break;
             default:
-				if (logVerboseLevel > 0)
+				if (logVerboseLevel >= ResourceVirtual::ERRORS)
 					std::cerr << "ERROR : loading texture : " << textureName << " : unknown type" << std::endl;
 				glDeleteTextures(1, &texture);
                 texture = 0;

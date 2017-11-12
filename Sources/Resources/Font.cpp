@@ -23,7 +23,7 @@ Font::Font(const std::string& path, const std::string& fontName) : ResourceVirtu
 	}
     catch(std::exception&)
 	{
-		if (logVerboseLevel > 0)
+		if (logVerboseLevel >= ResourceVirtual::ERRORS)
 			std::cerr << "ERROR : loading font : " << fontName << " : fail to open or parse file" << std::endl;
 		return;
 	}
@@ -37,7 +37,7 @@ Font::Font(const std::string& path, const std::string& fontName) : ResourceVirtu
 	}
     catch(std::exception&) 
 	{
-		if (logVerboseLevel > 0)
+		if (logVerboseLevel >= ResourceVirtual::ERRORS)
 			std::cerr << "ERROR : loading font : " << fontName << " : texture attribute field not found" << std::endl;
 		return;
 	}
@@ -47,7 +47,7 @@ Font::Font(const std::string& path, const std::string& fontName) : ResourceVirtu
 	uint8_t* image = ImageLoader::loadFromFile(textureFile, x, y, n, ImageLoader::RGB_ALPHA);
 	if (!image)
 	{
-		if (logVerboseLevel > 0)
+		if (logVerboseLevel >= ResourceVirtual::ERRORS)
 			std::cerr << "ERROR : loading font : " << fontName << " : fail loading texture image" << std::endl;
 		return;
 	}
@@ -64,7 +64,7 @@ Font::Font(const std::string& path, const std::string& fontName) : ResourceVirtu
     ImageLoader::freeImage(image);
     if(!glIsTexture(texture))
 	{
-		if (logVerboseLevel > 0)
+		if (logVerboseLevel >= ResourceVirtual::ERRORS)
 			std::cerr << "ERROR : loading font : " << fontName << " : fail create OPENGL texture" << std::endl;
 		return;
 	}
@@ -91,14 +91,14 @@ Font::Font(const std::string& path, const std::string& fontName) : ResourceVirtu
 	}
     catch(std::exception&)
 	{
-		if (logVerboseLevel > 0)
+		if (logVerboseLevel >= ResourceVirtual::ERRORS)
 			std::cerr << "ERROR : loading font : " << fontName << " : fail open char array" << std::endl;
 		clear();
 		return;
 	}
 	if(arrayFile.empty()) 
 	{
-		if (logVerboseLevel > 1)
+		if (logVerboseLevel >= ResourceVirtual::WARNINGS)
 			std::cerr << "WARNING : loading font : " << fontName << " : char array file empty" << std::endl;
 		begin = 0;
 		end = 0;
@@ -145,14 +145,7 @@ Font::Font(const std::string& path, const std::string& fontName) : ResourceVirtu
 			charTable[index - begin].corner2.x = c2.x / size.x;
 			charTable[index - begin].corner2.y = c2.y / size.y;
 		}
-		else
-		{
-			if (!errorOccured && logVerboseLevel > 1)
-				std::cerr << "WARNING : loading font : " << fontName << " : parsing char array : " << std::endl;
-			if (logVerboseLevel > 1)
-				std::cerr << " check line : "<< lineCount << std::endl;
-			errorOccured = true;
-		}
+		else printErrorLog(fontName, lineCount, errorOccured);
 	}
 	charTable.shrink_to_fit();
 }

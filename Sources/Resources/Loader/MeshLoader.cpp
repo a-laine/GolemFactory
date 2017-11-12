@@ -1,6 +1,11 @@
 #include "MeshLoader.h"
 #include "Utiles/ToolBox.h"
 
+
+
+MeshLoader::VerboseLevel MeshLoader::logVerboseLevel = MeshLoader::NONE;
+
+
 //  Default
 MeshLoader::MeshLoader() {}
 MeshLoader::~MeshLoader() { clear(); }
@@ -17,7 +22,8 @@ int MeshLoader::loadMesh(std::string file)
 	const aiScene* scene = importer.ReadFile(file.c_str(), aiProcessPreset_TargetRealtime_MaxQuality);
 	if (!scene)
 	{
-		std::cerr << "ERROR : loading mesh : " << file << " : could not open file" << std::endl;
+		if(logVerboseLevel >= ERRORS)
+			std::cerr << "ERROR : loading mesh : " << file << " : could not open file" << std::endl;
 		return 1;
 	}
 	else
@@ -123,7 +129,7 @@ int MeshLoader::loadMesh(std::string file)
 							bones[vertexIndex].z = boneMap[boneName];
 							weights[vertexIndex].z = vertexWeight;
 						}
-						else
+						else if(logVerboseLevel >= ERRORS)
 						{
 							std::cerr << "ERROR : loading mesh : vertex at position " << vertices[vertexIndex].x << ' ' << vertices[vertexIndex].y << ' ' << vertices[vertexIndex].z;
 							std::cerr << ": more than 3 bones weights defined" << std::endl;
@@ -249,9 +255,9 @@ int MeshLoader::loadMesh(std::string file)
 			animations.push_back(currentKeyFrame);
 
 			/*	Warnning :
-			if multiple animation are attached to mesh they will be all stacked into "animations" attributes
-			(time is discontinue when changing from one to another).
-			maybe add some label to diferenciate them
+				if multiple animation are attached to mesh they will be all stacked into "animations" attributes
+				(time is discontinue when changing from one to another).
+				maybe add some label to diferenciate them
 			*/
 		}
 		importer.FreeScene();

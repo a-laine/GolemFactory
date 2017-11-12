@@ -26,7 +26,7 @@ Skeleton::Skeleton(const std::string& path, const std::string& skeletonName) : R
 	}
 	catch (std::exception&)
 	{
-		if (logVerboseLevel > 0)
+		if (logVerboseLevel >= ResourceVirtual::ERRORS)
 			std::cerr << "ERROR : loading skeleton : " << skeletonName << " : fail to open file" << std::endl;
 		return;
 	}
@@ -95,8 +95,7 @@ Skeleton::Skeleton(const std::string& path, const std::string& skeletonName) : R
 	}
 	catch (std::exception& e)
 	{
-		//std::cerr << "ERROR : loading skeleton : " << skeletonName << " : parser fail, check file manually to correct format" << std::endl;
-		if (logVerboseLevel > 0)
+		if (logVerboseLevel >= ResourceVirtual::ERRORS)
 			std::cerr << "ERROR : loading shader : " << skeletonName << " : " << e.what() << std::endl;
 		roots.clear();
 		joints.clear();

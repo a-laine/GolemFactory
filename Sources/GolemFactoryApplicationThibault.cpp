@@ -49,13 +49,14 @@ int main()
 	EventHandler::getInstance()->setCursorMode(false);
 	
 	// Init Resources manager & instance manager
-	ResourceVirtual::logVerboseLevel = 2;
+	MeshLoader::logVerboseLevel = MeshLoader::ALL;
+	ResourceVirtual::logVerboseLevel = ResourceVirtual::ALL;
 	ResourceManager::getInstance()->setRepository(resourceRepository);
 	InstanceManager::getInstance()->setMaxNumberOfInstances(1000000);
 	
 	// Init Renderer;
 	Camera camera;
-		camera.setMode(Camera::TRACKBALL);
+		camera.setMode(Camera::FREEFLY);
 		camera.setAllRadius(2.f, 0.5f, 10.f);
 		camera.setPosition(glm::vec3(0,-3,3));
 	Renderer::getInstance()->setCamera(&camera);

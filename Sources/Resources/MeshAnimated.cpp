@@ -4,6 +4,7 @@
 #include <fstream>
 #include <sstream>
 
+
 //  Default
 MeshAnimated::MeshAnimated(const std::string& path, const std::string& meshName) : Mesh(meshName)
 {
@@ -14,7 +15,7 @@ MeshAnimated::MeshAnimated(const std::string& path, const std::string& meshName)
 	std::ifstream file(path + meshName + tmpExtension);
 	if (!file.good())
 	{
-		if (logVerboseLevel > 0)
+		if (logVerboseLevel >= ResourceVirtual::ERRORS)
 			std::cerr << "ERROR : loading mesh : " << meshName << " : fail to open file" << std::endl;
 		return;
 	}
@@ -37,72 +38,47 @@ MeshAnimated::MeshAnimated(const std::string& path, const std::string& meshName)
 
 		if (line.substr(0, 2) == "v ")
 		{
+			//	try to push a new vertex to vertex array
 			std::istringstream iss(line.substr(2));
 			glm::vec3 v;
 			iss >> v.x; iss >> v.y; iss >> v.z;
-			if (iss.fail())
-			{
-				if (!errorOccured && logVerboseLevel > 1)
-					std::cerr << "WARNING : loading mesh : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
-				if (logVerboseLevel > 1)
-					std::cerr << " check line : " << lineIndex << std::endl;
-			}
+			if (iss.fail()) printErrorLog(meshName, lineIndex, errorOccured);
 			tmpv.push_back(v);
 		}
 		else if (line.substr(0, 3) == "vn ")
 		{
+			//	try to push a new vertex normales to normales array
 			std::istringstream iss(line.substr(2));
 			glm::vec3 vn;
 			iss >> vn.x; iss >> vn.y; iss >> vn.z;
-			if (iss.fail())
-			{
-				if (!errorOccured && logVerboseLevel > 1)
-					std::cerr << "WARNING : loading mesh : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
-				if (logVerboseLevel > 1)
-					std::cerr << " check line : " << lineIndex << std::endl;
-			}
+			if (iss.fail()) printErrorLog(meshName, lineIndex, errorOccured);
 			tmpvn.push_back(vn);
 		}
 		else if (line.substr(0, 2) == "c ")
 		{
+			//	try to push a new vertex color to colors array
 			std::istringstream iss(line.substr(2));
 			glm::vec3 c;
 			iss >> c.x; iss >> c.y; iss >> c.z;
-			if (iss.fail())
-			{
-				if (!errorOccured && logVerboseLevel > 1)
-					std::cerr << "WARNING : loading mesh : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
-				if (logVerboseLevel > 1)
-					std::cerr << " check line : " << lineIndex << std::endl;
-			}
+			if (iss.fail()) printErrorLog(meshName, lineIndex, errorOccured);
 			tmpc.push_back(c);
 		}
 		else if (line.substr(0, 2) == "w ")
 		{
+			//	try to push a new vertex weight list to weights list array
 			std::istringstream iss(line.substr(2));
 			glm::vec3 w;
 			iss >> w.x; iss >> w.y; iss >> w.z;
-			if (iss.fail())
-			{
-				if (!errorOccured && logVerboseLevel > 1)
-					std::cerr << "WARNING : loading mesh : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
-				if (logVerboseLevel > 1)
-					std::cerr << " check line : " << lineIndex << std::endl;
-			}
+			if (iss.fail()) printErrorLog(meshName, lineIndex, errorOccured);
 			tmpw.push_back(w);
 		}
 		else if (line.substr(0, 2) == "b ")
 		{
+			//	try to push a new vertex bones list to bones list array
 			std::istringstream iss(line.substr(2));
 			glm::ivec3 b;
 			iss >> b.x; iss >> b.y; iss >> b.z;
-			if (iss.fail())
-			{
-				if (!errorOccured && logVerboseLevel > 1)
-					std::cerr << "WARNING : loading mesh : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
-				if (logVerboseLevel > 1)
-					std::cerr << " check line : " << lineIndex << std::endl;
-			}
+			if (iss.fail()) printErrorLog(meshName, lineIndex, errorOccured);
 			tmpb.push_back(b);
 		}
 		else if (line.substr(0, 2) == "f ")
@@ -113,6 +89,7 @@ MeshAnimated::MeshAnimated(const std::string& path, const std::string& meshName)
 				&v2.v, &v2.vn, &v2.c, &v2.w, &v2.b,
 				&v3.v, &v3.vn, &v3.c, &v3.w, &v3.b) == 15)
 			{
+				//	check if requested indexes are present in arrays
 				int outrange = 0;
 				if (v1.v<0 || v1.v >= (int)tmpv.size()) outrange++;
 				if (v2.v<0 || v2.v >= (int)tmpv.size()) outrange++;
@@ -134,13 +111,8 @@ MeshAnimated::MeshAnimated(const std::string& path, const std::string& meshName)
 				if (v2.b<0 || v2.b >= (int)tmpb.size()) outrange++;
 				if (v3.b<0 || v3.b >= (int)tmpb.size()) outrange++;
 
-				if (outrange)
-				{
-					if (!errorOccured && logVerboseLevel > 1)
-						std::cerr << "WARNING : loading mesh : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
-					if (logVerboseLevel > 1)
-						std::cerr << " check line : " << lineIndex << " arguments out of range" << std::endl;
-				}
+				//	push vertex attributes in arrays, print errors if not
+				if (outrange) printErrorLog(meshName, lineIndex, errorOccured);
 				else
 				{
 					faces.push_back(vertices.size());	faces.push_back(vertices.size() + 1);	faces.push_back(vertices.size() + 2);
@@ -152,13 +124,7 @@ MeshAnimated::MeshAnimated(const std::string& path, const std::string& meshName)
 					bones.push_back(tmpb[v1.b]);		bones.push_back(tmpb[v2.b]);		bones.push_back(tmpb[v3.b]);
 				}
 			}
-			else
-			{
-				if (!errorOccured && logVerboseLevel > 1)
-					std::cerr << "WARNING : loading mesh : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
-				if (logVerboseLevel > 1)
-					std::cerr << " check line : " << lineIndex << std::endl;
-			}
+			else printErrorLog(meshName, lineIndex, errorOccured);
 		}
 	}
 	
@@ -194,6 +160,7 @@ MeshAnimated::~MeshAnimated()
 	glDeleteBuffers(1, &weightsBuffer);
 }
 //
+
 
 //	Public functions
 void MeshAnimated::initializeVBO()
@@ -258,6 +225,7 @@ void MeshAnimated::draw()
 }
 //
 
+
 //	Set / get functions
 bool MeshAnimated::isValid() const
 {
@@ -265,8 +233,3 @@ bool MeshAnimated::isValid() const
 	else return glIsBuffer(bonesBuffer) && glIsBuffer(weightsBuffer);
 }
 //
-
-
-
-
-

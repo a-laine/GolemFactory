@@ -21,7 +21,7 @@ Animation::Animation(const std::string& path, const std::string& animationName) 
 	}
 	catch (std::exception&)
 	{
-		if(logVerboseLevel > 1)
+		if(logVerboseLevel >= ResourceVirtual::ERRORS)
 			std::cerr << "ERROR : loading animation : " << animationName << " : fail to open or parse file" << std::endl;
 		return;
 	}
@@ -160,10 +160,14 @@ Animation::Animation(const std::string& path, const std::string& animationName) 
 	}
 	catch (std::exception&)
 	{
-		std::cerr << "ERROR : loading animation : " << animationName << " : ";
-		for (unsigned int i = 0; i < errors.size(); i++)
-			std::cerr << errors[i] << (i == errors.size() - 1 ? "" : " : ");
-		std::cerr << std::endl;
+		//	Print errors in Log file or output
+		if (logVerboseLevel >= ResourceVirtual::ERRORS)
+		{
+			std::cerr << "ERROR : loading animation : " << animationName << " : ";
+			for (unsigned int i = 0; i < errors.size(); i++)
+				std::cerr << errors[i] << (i == errors.size() - 1 ? "" : " : ");
+			std::cerr << std::endl;
+		}
 		return;
 	}
 }

@@ -42,44 +42,29 @@ Mesh::Mesh(const std::string& path, const std::string& meshName) : ResourceVirtu
 
 		if (line.substr(0, 2) == "v ")
 		{
+			//	try to push a new vertex to vertex array
 			std::istringstream iss(line.substr(2));
 			glm::vec3 v;
 			iss >> v.x; iss >> v.y; iss >> v.z;
-			if (iss.fail())
-			{
-				if (!errorOccured && logVerboseLevel > 1)
-					std::cerr << "WARNING : loading mesh : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
-				if (logVerboseLevel > 1)
-					std::cerr << " check line : " << lineIndex << std::endl;
-			}
+			if (iss.fail()) printErrorLog(meshName, lineIndex, errorOccured);
 			tmpv.push_back(v);
 		}
 		else if (line.substr(0, 3) == "vn ")
 		{
+			//	try to push a new vertex normal to normales array
 			std::istringstream iss(line.substr(2));
 			glm::vec3 vn;
 			iss >> vn.x; iss >> vn.y; iss >> vn.z;
-			if (iss.fail())
-			{
-				if (!errorOccured && logVerboseLevel > 1)
-					std::cerr << "WARNING : loading mesh : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
-				if (logVerboseLevel > 1)
-					std::cerr << " check line : " << lineIndex << std::endl;
-			}
+			if (iss.fail()) printErrorLog(meshName, lineIndex, errorOccured);
 			tmpvn.push_back(vn);
 		}
 		else if (line.substr(0, 2) == "c ")
 		{
+			//	try to push a new vertex color to colors array
 			std::istringstream iss(line.substr(2));
 			glm::vec3 c;
 			iss >> c.x; iss >> c.y; iss >> c.z;
-			if (iss.fail())
-			{
-				if (!errorOccured && logVerboseLevel > 1)
-					std::cerr << "WARNING : loading mesh : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
-				if (logVerboseLevel > 1)
-					std::cerr << " check line : " << lineIndex << std::endl;
-			}
+			if (iss.fail()) printErrorLog(meshName, lineIndex, errorOccured);
 			tmpc.push_back(c);
 		}
 		else if (line.substr(0, 2) == "f ")
@@ -90,6 +75,7 @@ Mesh::Mesh(const std::string& path, const std::string& meshName) : ResourceVirtu
 				&v2.v, &v2.vn, &v2.c,
 				&v3.v, &v3.vn, &v3.c) == 9)
 			{
+				//	check if requested indexes are present in arrays
 				int outrange = 0;
 				if (v1.v<0 || v1.v >= (int)tmpv.size()) outrange++;
 				if (v2.v<0 || v2.v >= (int)tmpv.size()) outrange++;
@@ -103,13 +89,8 @@ Mesh::Mesh(const std::string& path, const std::string& meshName) : ResourceVirtu
 				if (v2.c<0 || v2.c >= (int)tmpc.size()) outrange++;
 				if (v3.c<0 || v3.c >= (int)tmpc.size()) outrange++;
 
-				if (outrange)
-				{
-					if (!errorOccured && logVerboseLevel > 1)
-						std::cerr << "WARNING : loading mesh : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
-					if (logVerboseLevel > 1)
-						std::cerr << " check line : " << lineIndex << " arguments out of range" << std::endl;
-				}
+				//	push vertex attributes in arrays, print errors if not
+				if (outrange) printErrorLog(meshName, lineIndex, errorOccured);
 				else
 				{
 					faces.push_back(vertices.size());	faces.push_back(vertices.size() + 1);	faces.push_back(vertices.size() + 2);
@@ -119,13 +100,7 @@ Mesh::Mesh(const std::string& path, const std::string& meshName) : ResourceVirtu
 					colors.push_back(tmpc[v1.c]);		colors.push_back(tmpc[v2.c]);		colors.push_back(tmpc[v3.c]);
 				}
 			}
-			else
-			{
-				if (!errorOccured && logVerboseLevel > 1)
-					std::cerr << "WARNING : loading mesh : " << meshName << " : wrong number of argument successfully parsed :" << std::endl;
-				if (logVerboseLevel > 1)
-					std::cerr << " check line : " << lineIndex << std::endl;
-			}
+			else printErrorLog(meshName, lineIndex, errorOccured);
 		}
 	}
 
@@ -160,6 +135,24 @@ Mesh::~Mesh()
 
 
 //	Public functions
+void Mesh::computeBoundingBoxDimension()
+{
+	sizeX = glm::vec2(std::numeric_limits<float>::max(), std::numeric_limits<float>::min());
+	sizeY = glm::vec2(std::numeric_limits<float>::max(), std::numeric_limits<float>::min());
+	sizeZ = glm::vec2(std::numeric_limits<float>::max(), std::numeric_limits<float>::min());
+
+	for (unsigned int i = 0; i < vertices.size(); i++)
+	{
+		sizeX.x = std::min(sizeX.x, vertices[i].x);
+		sizeX.y = std::max(sizeX.y, vertices[i].x);
+
+		sizeY.x = std::min(sizeY.x, vertices[i].y);
+		sizeY.y = std::max(sizeY.y, vertices[i].y);
+
+		sizeZ.x = std::min(sizeZ.x, vertices[i].z);
+		sizeZ.y = std::max(sizeZ.y, vertices[i].z);
+	}
+}
 void Mesh::initializeVBO()
 {
 	glGenBuffers(1, &verticesBuffer);
@@ -206,6 +199,7 @@ void Mesh::draw()
 }
 //
 
+
 //  Set/get functions
 unsigned int Mesh::getNumberVertices() const { return vertices.size(); }
 unsigned int Mesh::getNumberFaces() const { return faces.size(); }
@@ -222,26 +216,5 @@ bool Mesh::isFromGolemFactoryFormat() const
 {
 	if (name.find_last_of('.') == std::string::npos) return true;
 	return (name.substr(name.find_last_of('.')) == Mesh::extension);
-}
-//
-
-//	Protected functions
-void Mesh::computeBoundingBoxDimension()
-{
-	sizeX = glm::vec2(std::numeric_limits<float>::max(), std::numeric_limits<float>::min());
-	sizeY = glm::vec2(std::numeric_limits<float>::max(), std::numeric_limits<float>::min());
-	sizeZ = glm::vec2(std::numeric_limits<float>::max(), std::numeric_limits<float>::min());
-
-	for (unsigned int i = 0; i < vertices.size(); i++)
-	{
-		sizeX.x = std::min(sizeX.x, vertices[i].x);
-		sizeX.y = std::max(sizeX.y, vertices[i].x);
-
-		sizeY.x = std::min(sizeY.x, vertices[i].y);
-		sizeY.y = std::max(sizeY.y, vertices[i].y);
-
-		sizeZ.x = std::min(sizeZ.x, vertices[i].z);
-		sizeZ.y = std::max(sizeZ.y, vertices[i].z);
-	}
 }
 //
