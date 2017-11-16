@@ -89,6 +89,15 @@ glm::mat4 Camera::getViewMatrix()
     mutex.unlock();
 	return m;
 }
+glm::mat4 Camera::getModelMatrix()
+{
+	glm::mat4 m(1.0);
+	mutex.lock();
+	m = glm::translate(m, position);
+	m = m * glm::rotate(glm::mat4(1.0), glm::radians(phi + 90.f), glm::vec3(0, 0, 1)) * glm::rotate(glm::mat4(1.0), glm::radians(-teta), glm::vec3(1, 0, 0));
+	mutex.unlock();
+	return m;
+}
 void Camera::translate(glm::vec3 v)
 {
 	glm::vec3 p = v + getPosition();

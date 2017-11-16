@@ -52,7 +52,7 @@ void Renderer::initGLEW(int verbose)
 void Renderer::render()
 {
 	if (!window || !camera) return;
-
+	
 	// dummy animation timeline
 
 	dummy += 0.16 / 3.f;
@@ -77,6 +77,11 @@ void Renderer::render()
 		glBindVertexArray(gridVAO);
 		glDrawElements(GL_TRIANGLES, vboGridSize, GL_UNSIGNED_INT, NULL);
 	}
+
+	//	HUD
+	//glm::mat4 model = camera->getModelMatrix();
+	glm::mat4 model = glm::translate(glm::mat4(1.0), 0.15f*camera->getForward()) * camera->getModelMatrix();
+	drawWidgetVirtual(dummyPlaceHolder, &model[0][0], &view[0][0], &projection[0][0]);
 
 	//	get instance list
 	SceneManager::getInstance()->setCameraAttributes(camera->getPosition(), camera->getForward(), camera->getVertical(), camera->getLeft(),
@@ -105,6 +110,8 @@ void Renderer::render()
 				break;
 		}
 	}
+
+	
 }
 
 void Renderer::setGridVisible(bool enable)
@@ -121,7 +128,6 @@ void Renderer::initializeGrid(unsigned int gridSize, float elementSize)
 	if (glIsVertexArray(gridVAO)) return;
 
 	gridShader = ResourceManager::getInstance()->getShader("wiredGrid");
-	if (!gridShader) std::cout << "loading grid shader fail" << std::endl;
 
 	//	generate grid vertex buffer
 	vertexBufferGrid = new float[3 * (gridSize + 1)*(gridSize + 1)];
@@ -161,13 +167,14 @@ void Renderer::initializeGrid(unsigned int gridSize, float elementSize)
 	glGenVertexArrays(1, &gridVAO);
 	glBindVertexArray(gridVAO);
 
+	glEnableVertexAttribArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-	glEnableVertexAttribArray(0);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, arraybuffer);
-
 	glBindVertexArray(0);
+
+	dummyPlaceHolder = new WidgetVirtual();
 }
 //
 
@@ -184,17 +191,17 @@ void Renderer::loadMVPMatrix(Shader* shader, const float* model, const float* vi
 }
 void Renderer::drawInstanceDrawable(InstanceVirtual* ins, const float* view, const float* projection)
 {
-	// Get shader
+	//	Get shader
 	Shader* shaderToUse;
 	if (defaultShader) shaderToUse = defaultShader;
 	else shaderToUse = ins->getShader();
 	if (!shaderToUse) return;
 	shaderToUse->enable();
 
-	// Enable mvp matrix
+	//	Enable mvp matrix
 	loadMVPMatrix(shaderToUse, &ins->getModelMatrix()[0][0], view, projection);
 
-	// Map with wind if instance sensible to wind
+	//	Map with wind if instance sensible to wind
 	int loc = shaderToUse->getUniformLocation("wind");
 	if (loc >= 0)
 	{
@@ -203,34 +210,34 @@ void Renderer::drawInstanceDrawable(InstanceVirtual* ins, const float* view, con
 		glUniform4fv(loc, 1, &wind.x);
 	}
 
-	// Draw mesh
+	//	Draw mesh
 	ins->getMesh()->draw();
 }
 void Renderer::drawInstanceAnimatable(InstanceVirtual* ins, const float* view, const float* projection)
 {
-	// Get shader
+	//	Get shader
 	Shader* shaderToUse;
 	if (defaultShader) shaderToUse = defaultShader;
 	else shaderToUse = ins->getShader();
 	if (!shaderToUse) return;
 	shaderToUse->enable();
 
-	// Enable mvp matrix
+	//	Enable mvp matrix
 	loadMVPMatrix(shaderToUse, &ins->getModelMatrix()[0][0], view, projection);
 
-	//	load skeleton pose matrix list for vertex skinning calculation
+	//	Load skeleton pose matrix list for vertex skinning calculation
 	std::vector<glm::mat4> pose = ins->getPose();
 	int loc = shaderToUse->getUniformLocation("skeletonPose");
 	if (loc >= 0) glUniformMatrix4fv(loc, pose.size(), FALSE, (float*)pose.data());
 
-	//	load inverse bind pose matrix list for vertex skinning calculation
+	//	Load inverse bind pose matrix list for vertex skinning calculation
 	std::vector<glm::mat4> bind;
 	Skeleton* skeleton = ins->getSkeleton();
 	if (skeleton) bind = skeleton->getInverseBindPose();
 	loc = shaderToUse->getUniformLocation("inverseBindPose");
 	if (loc >= 0) glUniformMatrix4fv(loc, bind.size(), FALSE, (float*)bind.data());
 
-	//	draw mesh
+	//	Draw mesh
 	ins->getMesh()->draw();
 }
 void Renderer::drawInstanceContainer(InstanceVirtual* ins, const glm::mat4& view, const glm::mat4& projection, const glm::mat4& model)
@@ -255,6 +262,23 @@ void Renderer::drawInstanceContainer(InstanceVirtual* ins, const glm::mat4& view
 		else if (InstanceContainer* d = dynamic_cast<InstanceContainer*>(*it))
 			drawInstanceContainer(d, view, projection, glm::mat4(1.f));
 	}
+}
+
+
+void Renderer::drawWidgetVirtual(WidgetVirtual* widget, const float* model, const float* view, const float* projection)
+{
+	//	Get shader
+	Shader* shaderToUse;
+	if (defaultShader) shaderToUse = defaultShader;
+	else shaderToUse = widget->getShader();
+	if (!shaderToUse) return;
+	shaderToUse->enable();
+
+	//	Enable mvp matrix
+	loadMVPMatrix(shaderToUse, model, view, projection);
+
+	//	Draw 
+	widget->draw();
 }
 //
 

@@ -75,10 +75,16 @@ class Camera
                      bool option1 = false,      bool option2 = false);
 
 		/*!
-		 *	\brief Compute and retur the view matrix
-		 *	\return the view matric computed with glm::lookAt
+		 *	\brief Compute and return the view matrix
+		 *	\return the view matrix computed with glm::lookAt
 		 */
 		glm::mat4 getViewMatrix();
+
+		/*!
+		*	\brief Compute and return the local model matrix
+		*	\return the model matrix (useful for HUD)
+		*/
+		glm::mat4 getModelMatrix();
 
 		/*!
 		 *	\brief Translate the camera
