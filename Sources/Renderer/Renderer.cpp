@@ -78,11 +78,6 @@ void Renderer::render()
 		glDrawElements(GL_TRIANGLES, vboGridSize, GL_UNSIGNED_INT, NULL);
 	}
 
-	//	HUD
-	//glm::mat4 model = camera->getModelMatrix();
-	glm::mat4 model = glm::translate(glm::mat4(1.0), 0.15f*camera->getForward()) * camera->getModelMatrix();
-	drawWidgetVirtual(dummyPlaceHolder, &model[0][0], &view[0][0], &projection[0][0]);
-
 	//	get instance list
 	SceneManager::getInstance()->setCameraAttributes(camera->getPosition(), camera->getForward(), camera->getVertical(), camera->getLeft(),
 		camera->getFrustrumAngleVertical() / 1.6f, camera->getFrustrumAngleVertical() / 1.6f);
@@ -111,7 +106,11 @@ void Renderer::render()
 		}
 	}
 
-	
+	//	HUD
+	glClear(GL_DEPTH_BUFFER_BIT);
+	projection = glm::perspective(glm::radians(45.f), (float)width / height, 0.1f, 1500.f);
+	glm::mat4 model = glm::translate(glm::mat4(1.0), 0.15f*camera->getForward()) * camera->getModelMatrix();
+	//drawWidgetVirtual(dummyPlaceHolder, &model[0][0], &view[0][0], &projection[0][0]);
 }
 
 void Renderer::setGridVisible(bool enable)
@@ -212,6 +211,12 @@ void Renderer::drawInstanceDrawable(InstanceVirtual* ins, const float* view, con
 
 	//	Draw mesh
 	ins->getMesh()->draw();
+
+	/*
+	glm::mat4 model = glm::translate(glm::mat4(1.f), ins->getPosition());
+	model = glm::translate(model, glm::vec3(0.f, 0.f, ins->getSize().z * (1.f + ins->getMesh()->sizeZ.y - ins->getMesh()->sizeZ.x))) * camera->getOrientationMatrix();
+	drawWidgetVirtual(dummyPlaceHolder, &model[0][0], view, projection);
+	*/
 }
 void Renderer::drawInstanceAnimatable(InstanceVirtual* ins, const float* view, const float* projection)
 {
@@ -239,6 +244,12 @@ void Renderer::drawInstanceAnimatable(InstanceVirtual* ins, const float* view, c
 
 	//	Draw mesh
 	ins->getMesh()->draw();
+
+	/*
+	glm::mat4 model = glm::translate(glm::mat4(1.f), ins->getPosition());
+	model = glm::translate(model, glm::vec3(0.f, 0.f, ins->getSize().z * (1.f + ins->getMesh()->sizeZ.y - ins->getMesh()->sizeZ.x))) * camera->getOrientationMatrix();
+	drawWidgetVirtual(dummyPlaceHolder, &model[0][0], view, projection);
+	*/
 }
 void Renderer::drawInstanceContainer(InstanceVirtual* ins, const glm::mat4& view, const glm::mat4& projection, const glm::mat4& model)
 {

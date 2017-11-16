@@ -1,7 +1,7 @@
 #include "WidgetVirtual.h"
 
 //  Default
-WidgetVirtual::WidgetVirtual(const uint8_t& config, const std::string& shaderName) : configuration(config), position(0, 0), size(0.07f, 0.05f)
+WidgetVirtual::WidgetVirtual(const uint8_t& config, const std::string& shaderName) : configuration(config), position(0, 0), size(1.f,1.f)//size(0.07f, 0.05f)
 {
 	shader = ResourceManager::getInstance()->getShader(shaderName);
 
