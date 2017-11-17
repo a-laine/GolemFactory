@@ -1,7 +1,6 @@
 #pragma once
 
 #include <iostream>
-#include <algorithm>
 #include <vector>
 
 #include <glm/glm.hpp>
@@ -9,8 +8,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "WidgetVirtual.h"
+#include "WidgetContainer.h"
 
-class Layer
+class Layer : public WidgetContainer
 {
 	public:
 		//  Miscellaneous
@@ -27,8 +27,6 @@ class Layer
 
 		//	Public functions
 		virtual void update(const float& elapseTime);
-		void add(WidgetVirtual* w);
-		bool remove(WidgetVirtual* w);
 		//
 
 		//  Set/get functions
@@ -39,7 +37,6 @@ class Layer
 
 		bool isVisible() const;
 		glm::mat4 getModelMatrix() const;
-		std::vector<WidgetVirtual*>& getWidgetList();
 		//
 
 	protected:

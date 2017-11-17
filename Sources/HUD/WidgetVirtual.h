@@ -55,22 +55,22 @@ class WidgetVirtual
 		//
 
 		//	Public functions
-		virtual void initializeVBO(const unsigned int& index);
-		virtual void initializeVAO(const unsigned int& index);
+		virtual void initializeVBOs();
+		virtual void initializeVAOs();
 
-		virtual void draw(const unsigned int& index);
+		virtual void draw(Shader* s);
 		virtual void update(const float& elapseTime);
 		//
 
 		//  Set/get functions
 		virtual void setSize(const glm::vec2& s);
-		virtual void setPosition(const glm::vec2& p);
+		virtual void setPosition(const glm::vec3& p);
 		virtual void setOrigin(const uint8_t& origin);
 		void setVisibility(const bool& visible);
 		void setActive(const bool& active);
 
 		glm::vec2 getSize() const;
-		glm::vec2 getPosition() const;
+		glm::vec3 getPosition() const;
 		glm::vec4* getColor(const unsigned int& index);
 		uint8_t getOriginPosition() const;
 		bool isVisible() const;
@@ -83,7 +83,7 @@ class WidgetVirtual
 	protected:
 		//  Attributes
 		uint8_t configuration;
-		glm::vec2 position;
+		glm::vec3 position;
 		glm::vec2 size;
 
 		std::vector<drawBatch> batchList;

@@ -16,9 +16,9 @@ uniform mat4 skeletonPose[MAX_SKELETON_BONE]; 	// bone matrix
 uniform mat4 inverseBindPose[MAX_SKELETON_BONE]; 		// vertex to bone transformation matrix
 
 // output
-out vec3 lightDirectionCameraSpace;
-out vec3 fragmentNormal;
-out vec3 fragmentColor;
+out vec3 lightDirectionCameraSpace_gs;
+out vec3 fragmentNormal_gs;
+out vec3 fragmentColor_gs;
 
 vec4 lightPositionWorldSpace = vec4(1000,200,1500,1);
 
@@ -33,12 +33,12 @@ void main()
 	
 	// end
 	gl_Position = projection * view * model * transformPosition;
-	fragmentNormal = (view * model * boneTransform * vec4(normal,0.0)).xyz;
-	normalize(fragmentNormal);
-	fragmentColor = vertexcolor;
+	fragmentNormal_gs = (view * model * boneTransform * vec4(normal,0.0)).xyz;
+	normalize(fragmentNormal_gs);
+	fragmentColor_gs = vertexcolor;
 	
 	vec3 eyeDirectionCameraSpace = - ( view * model * transformPosition).xyz;
 	vec3 lightPositionCameraSpace = (view * lightPositionWorldSpace).xyz;
-	lightDirectionCameraSpace = lightPositionCameraSpace + eyeDirectionCameraSpace;
+	lightDirectionCameraSpace_gs = lightPositionCameraSpace + eyeDirectionCameraSpace;
 }
 

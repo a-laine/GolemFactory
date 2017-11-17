@@ -5,15 +5,16 @@ Renderer::Renderer()
 {
 	window = nullptr;
 	camera = nullptr;
-	defaultShader = nullptr;
+
+	defaultShader[GRID] = nullptr;
+	defaultShader[INSTANCE_ANIMATABLE] = nullptr;
+	defaultShader[INSTANCE_DRAWABLE] = nullptr;
+	defaultShader[HUD] = nullptr;
 
 	gridVAO = 0;
 	vertexbuffer = 0;
 	arraybuffer = 0;
 	drawGrid = true;
-	gridShader = nullptr;
-	vertexBufferGrid = nullptr;
-	indexBufferGrid = nullptr;
 
 	dummy = 0.0;
 }
@@ -21,10 +22,9 @@ Renderer::~Renderer()
 {
 	glDeleteVertexArrays(1, &gridVAO);
 	glDeleteBuffers(1, &vertexbuffer);
+	glDeleteBuffers(1, &colorbuffer);
+	glDeleteBuffers(1, &normalbuffer);
 	glDeleteBuffers(1, &arraybuffer);
-
-	if (vertexBufferGrid) delete[] vertexBufferGrid;
-	if (indexBufferGrid) delete[] indexBufferGrid;
 }
 //
 
@@ -48,13 +48,101 @@ void Renderer::initGLEW(int verbose)
 	std::cout << "        Renderer name : " << glGetString(GL_RENDERER) << std::endl;
 	std::cout << "        GLSL version : " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
 }
+void Renderer::initializeGrid(unsigned int gridSize, float elementSize)
+{
+	if (glIsVertexArray(gridVAO)) return;
 
+	defaultShader[GRID] = ResourceManager::getInstance()->getShader("wired");
+
+	//	generate grid vertex buffer
+	float* vertexBufferGrid = new float[3 * (gridSize + 1)*(gridSize + 1)];
+	float* colorBufferGrid = new float[3 * (gridSize + 1)*(gridSize + 1)];
+	float* normalBufferGrid = new float[3 * (gridSize + 1)*(gridSize + 1)];
+	for (unsigned int i = 0; i < gridSize + 1; i++)
+		for (unsigned int j = 0; j < gridSize + 1; j++)
+		{
+			vertexBufferGrid[3 * (i*(gridSize + 1) + j) + 0] = elementSize*i - (gridSize * elementSize) / 2;
+			vertexBufferGrid[3 * (i*(gridSize + 1) + j) + 1] = elementSize*j - (gridSize * elementSize) / 2;
+			vertexBufferGrid[3 * (i*(gridSize + 1) + j) + 2] = 0;
+
+			normalBufferGrid[3 * (i*(gridSize + 1) + j) + 0] = 0.f;
+			normalBufferGrid[3 * (i*(gridSize + 1) + j) + 1] = 0.f;
+			normalBufferGrid[3 * (i*(gridSize + 1) + j) + 2] = 1.f;
+
+			colorBufferGrid[3 * (i*(gridSize + 1) + j) + 0] = 0.4f;
+			colorBufferGrid[3 * (i*(gridSize + 1) + j) + 1] = 0.2f;
+			colorBufferGrid[3 * (i*(gridSize + 1) + j) + 2] = 0.1f;
+		}
+
+	uint32_t* indexBufferGrid = new uint32_t[6 * gridSize*gridSize];
+	for (unsigned int i = 0; i < gridSize; i++)
+		for (unsigned int j = 0; j < gridSize; j++)
+		{
+			indexBufferGrid[6 * (i*gridSize + j) + 0] = i*(gridSize + 1) + j + (gridSize + 1);
+			indexBufferGrid[6 * (i*gridSize + j) + 1] = i*(gridSize + 1) + j;
+			indexBufferGrid[6 * (i*gridSize + j) + 2] = i*(gridSize + 1) + j + 1;
+
+			indexBufferGrid[6 * (i*gridSize + j) + 3] = i*(gridSize + 1) + j + (gridSize + 1);
+			indexBufferGrid[6 * (i*gridSize + j) + 4] = i*(gridSize + 1) + j + (gridSize + 1) + 1;
+			indexBufferGrid[6 * (i*gridSize + j) + 5] = i*(gridSize + 1) + j + 1;
+		}
+	
+	vboGridSize = 6 * gridSize * gridSize;
+
+	//	initialize VBO
+	glGenBuffers(1, &vertexbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+	glBufferData(GL_ARRAY_BUFFER, 3 * (gridSize + 1)*(gridSize + 1) * sizeof(float), vertexBufferGrid, GL_STATIC_DRAW);
+
+	glGenBuffers(1, &colorbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
+	glBufferData(GL_ARRAY_BUFFER, 3 * (gridSize + 1)*(gridSize + 1) * sizeof(float), colorBufferGrid, GL_STATIC_DRAW);
+
+	glGenBuffers(1, &normalbuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
+	glBufferData(GL_ARRAY_BUFFER, 3 * (gridSize + 1)*(gridSize + 1) * sizeof(float), normalBufferGrid, GL_STATIC_DRAW);
+
+	glGenBuffers(1, &arraybuffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, arraybuffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * gridSize*gridSize * sizeof(unsigned int), indexBufferGrid, GL_STATIC_DRAW);
+
+	//	initialize VAO
+	glGenVertexArrays(1, &gridVAO);
+	glBindVertexArray(gridVAO);
+
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
+	glEnableVertexAttribArray(1);
+	glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
+	glEnableVertexAttribArray(2);
+	glBindBuffer(GL_ARRAY_BUFFER, colorbuffer);
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, arraybuffer);
+	glBindVertexArray(0);
+
+	//	free grid resources
+	delete[] vertexBufferGrid;
+	delete[] colorBufferGrid;
+	delete[] normalBufferGrid;
+	delete[] indexBufferGrid;
+
+	//	dummy
+	dummyPlaceHolder = new WidgetVirtual();
+	dummyLayer = new Layer();
+		dummyLayer->setSize(0.05f);
+		dummyLayer->setPosition(glm::vec3(0.05f, 0.f, 0.f));
+		dummyLayer->add(dummyPlaceHolder);
+}
 void Renderer::render()
 {
 	if (!window || !camera) return;
 	
 	// dummy animation timeline
-
 	dummy += 0.16 / 3.f;
 	if (dummy >= 6.28) dummy = 0.0;
 
@@ -69,10 +157,11 @@ void Renderer::render()
 	glEnable(GL_DEPTH_TEST);
 
 	//	draw grid
-	if (drawGrid && gridShader && glIsVertexArray(gridVAO))
+	Shader* s = defaultShader[GRID];
+	if (drawGrid && s && glIsVertexArray(gridVAO))
 	{
-		gridShader->enable();
-		loadMVPMatrix(gridShader, &glm::mat4(1.0)[0][0], &view[0][0], &projection[0][0]);
+		s->enable();
+		loadMVPMatrix(s, &glm::mat4(1.0)[0][0], &view[0][0], &projection[0][0]);
 
 		glBindVertexArray(gridVAO);
 		glDrawElements(GL_TRIANGLES, vboGridSize, GL_UNSIGNED_INT, NULL);
@@ -115,77 +204,10 @@ void Renderer::render()
 
 	projection = glm::perspective(glm::radians(45.f), (float)width / height, 0.1f, 1500.f);
 	glm::mat4 model = glm::translate(glm::mat4(1.f), 0.15f*camera->getForward()) * camera->getModelMatrix();
-	drawLayer(dummyLayer, model, &view[0][0], &projection[0][0]);
+	if(dummyLayer->isVisible())
+		drawLayer(dummyLayer, model, &view[0][0], &projection[0][0]);
 
 	glDisable(GL_BLEND);
-}
-
-void Renderer::setGridVisible(bool enable)
-{
-	drawGrid = enable;
-}
-bool Renderer::gridVisible()
-{
-	return drawGrid;
-}
-
-void Renderer::initializeGrid(unsigned int gridSize, float elementSize)
-{
-	if (glIsVertexArray(gridVAO)) return;
-
-	gridShader = ResourceManager::getInstance()->getShader("wiredGrid");
-
-	//	generate grid vertex buffer
-	vertexBufferGrid = new float[3 * (gridSize + 1)*(gridSize + 1)];
-	for (unsigned int i = 0; i < gridSize + 1; i++)
-		for (unsigned int j = 0; j < gridSize + 1; j++)
-		{
-			vertexBufferGrid[3 * (i*(gridSize + 1) + j) + 0] = elementSize*i - (gridSize * elementSize) / 2;
-			vertexBufferGrid[3 * (i*(gridSize + 1) + j) + 1] = elementSize*j - (gridSize * elementSize) / 2;
-			vertexBufferGrid[3 * (i*(gridSize + 1) + j) + 2] = 0;
-		}
-
-	indexBufferGrid = new uint32_t[6 * gridSize*gridSize];
-	for (unsigned int i = 0; i < gridSize; i++)
-		for (unsigned int j = 0; j < gridSize; j++)
-		{
-			indexBufferGrid[6 * (i*gridSize + j) + 0] = i*(gridSize + 1) + j + (gridSize + 1);
-			indexBufferGrid[6 * (i*gridSize + j) + 1] = i*(gridSize + 1) + j;
-			indexBufferGrid[6 * (i*gridSize + j) + 2] = i*(gridSize + 1) + j + 1;
-
-			indexBufferGrid[6 * (i*gridSize + j) + 3] = i*(gridSize + 1) + j + (gridSize + 1);
-			indexBufferGrid[6 * (i*gridSize + j) + 4] = i*(gridSize + 1) + j + (gridSize + 1) + 1;
-			indexBufferGrid[6 * (i*gridSize + j) + 5] = i*(gridSize + 1) + j + 1;
-		}
-	
-	vboGridSize = 6 * gridSize * gridSize;
-
-	//	initialize VBO
-	glGenBuffers(1, &vertexbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-	glBufferData(GL_ARRAY_BUFFER, 3 * (gridSize + 1)*(gridSize + 1) * sizeof(float), vertexBufferGrid, GL_STATIC_DRAW);
-
-	glGenBuffers(1, &arraybuffer);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, arraybuffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * gridSize*gridSize * sizeof(unsigned int), indexBufferGrid, GL_STATIC_DRAW);
-
-	//	initialize VAO
-	glGenVertexArrays(1, &gridVAO);
-	glBindVertexArray(gridVAO);
-
-	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, arraybuffer);
-	glBindVertexArray(0);
-
-	//	dummy
-	dummyPlaceHolder = new WidgetVirtual();
-	dummyLayer = new Layer();
-		dummyLayer->setSize(0.05f);
-		dummyLayer->setPosition(glm::vec3(0.05f, 0.f, 0.f));
-		dummyLayer->add(dummyPlaceHolder);
 }
 //
 
@@ -203,9 +225,8 @@ void Renderer::loadMVPMatrix(Shader* shader, const float* model, const float* vi
 void Renderer::drawInstanceDrawable(InstanceVirtual* ins, const float* view, const float* projection)
 {
 	//	Get shader
-	Shader* shaderToUse;
-	if (defaultShader) shaderToUse = defaultShader;
-	else shaderToUse = ins->getShader();
+	Shader* shaderToUse = defaultShader[INSTANCE_DRAWABLE];
+	if (!shaderToUse) shaderToUse = ins->getShader();
 	if (!shaderToUse) return;
 	shaderToUse->enable();
 
@@ -233,9 +254,8 @@ void Renderer::drawInstanceDrawable(InstanceVirtual* ins, const float* view, con
 void Renderer::drawInstanceAnimatable(InstanceVirtual* ins, const float* view, const float* projection)
 {
 	//	Get shader
-	Shader* shaderToUse;
-	if (defaultShader) shaderToUse = defaultShader;
-	else shaderToUse = ins->getShader();
+	Shader* shaderToUse = defaultShader[INSTANCE_ANIMATABLE];
+	if (!shaderToUse) shaderToUse = ins->getShader();
 	if (!shaderToUse) return;
 	shaderToUse->enable();
 
@@ -272,9 +292,8 @@ void Renderer::drawInstanceContainer(InstanceVirtual* ins, const glm::mat4& view
 		if (InstanceDrawable* d = dynamic_cast<InstanceDrawable*>(*it))
 		{
 			// Get shader
-			Shader* shaderToUse;
-			if (defaultShader) shaderToUse = defaultShader;
-			else shaderToUse = d->getShader();
+			Shader* shaderToUse = defaultShader[INSTANCE_DRAWABLE];
+			if (!shaderToUse) shaderToUse = d->getShader();
 			if (!shaderToUse) continue;
 			shaderToUse->enable();
 
@@ -288,75 +307,53 @@ void Renderer::drawInstanceContainer(InstanceVirtual* ins, const glm::mat4& view
 }
 
 
-void Renderer::drawWidgetVirtual(WidgetVirtual* widget, const float* model, const float* view, const float* projection)
+void Renderer::drawWidgetVirtual(WidgetVirtual* widget, const glm::mat4& modelBase, const float* view, const float* projection)
 {
 	//	Get shader
-	Shader* shaderToUse;
-	if (defaultShader) shaderToUse = defaultShader;
-	else shaderToUse = widget->getShader();
+	Shader* shaderToUse = defaultShader[HUD];
+	if (!shaderToUse) shaderToUse = widget->getShader();
 	if (!shaderToUse) return;
 	shaderToUse->enable();
 
 	//	Enable mvp matrix
-	loadMVPMatrix(shaderToUse, model, view, projection);
+	loadMVPMatrix(shaderToUse, &glm::translate(modelBase, widget->getPosition())[0][0], view, projection);
 
-	//	draw all batch per colors
-	for (unsigned int i = 0; i < widget->getBatchListSize(); i++)
-	{
-		//	load color
-		int loc = shaderToUse->getUniformLocation("color");
-		if (loc >= 0) glUniform4fv(loc, 1, (const float*) widget->getColor(i));
-
-		//	Draw 
-		widget->draw(i);
-	}
+	//	Draw 
+	widget->draw(shaderToUse);
 }
 void Renderer::drawLayer(Layer* layer, const glm::mat4& modelBase, const float* view, const float* projection)
 {
-	glm::mat4 model = modelBase * layer->getModelMatrix();
 	std::vector<WidgetVirtual*>& list = layer->getWidgetList();
 	for (std::vector<WidgetVirtual*>::iterator it = list.begin(); it != list.end(); ++it)
 	{
 		if((*it)->isVisible())
-			drawWidgetVirtual(*it, &model[0][0], view, projection);
+			drawWidgetVirtual(*it, modelBase * layer->getModelMatrix(), view, projection);
 	}
 }
 //
 
 
 //  Set/get functions
-void Renderer::setCamera(Camera* cam)
+void Renderer::setCamera(Camera* cam) { camera = cam; }
+void Renderer::setWindow(GLFWwindow* win) { window = win; }
+void Renderer::setShader(ShaderIdentifier id, Shader* s)
 {
-	camera = cam;
+	std::map<ShaderIdentifier, Shader*>::iterator it = defaultShader.find(id);
+	if(it != defaultShader.end()) ResourceManager::getInstance()->release(defaultShader[id]);
+
+	if (s) defaultShader[id] = ResourceManager::getInstance()->getShader(s->name);
+	else defaultShader[id] = nullptr;
 }
-void Renderer::setWindow(GLFWwindow* win)
-{
-	window = win;
-}
-void Renderer::setDefaultShader(Shader* s)
-{
-	ResourceManager::getInstance()->release(defaultShader);
-	if (s) defaultShader = ResourceManager::getInstance()->getShader(s->name);
-	else defaultShader = nullptr;
-}
-void Renderer::setGridShader(Shader* s)
-{
-	ResourceManager::getInstance()->release(gridShader);
-	if (s) gridShader = ResourceManager::getInstance()->getShader(s->name);
-	else gridShader = nullptr;
-}
+void Renderer::setGridVisible(bool enable) { drawGrid = enable; }
 
 
-Camera* Renderer::getCamera()
+Camera* Renderer::getCamera() { return camera; }
+GLFWwindow* Renderer::getWindow() { return window; }
+Shader* Renderer::getShader(ShaderIdentifier id)
 {
-	return camera;
+	std::map<ShaderIdentifier, Shader*>::iterator it = defaultShader.find(id);
+	if (it != defaultShader.end()) return defaultShader[id];
+	else return nullptr;
 }
-GLFWwindow* Renderer::getWindow()
-{
-	return window;
-}
-Shader* Renderer::getDefaultShader()
-{
-	return defaultShader;
-}
+bool Renderer::isGridVisible() { return drawGrid; }
 //

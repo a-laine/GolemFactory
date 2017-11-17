@@ -24,24 +24,32 @@ class Renderer : public Singleton<Renderer>
 	friend class Singleton<Renderer>;
 
 	public:
+		//	Miscellaneous
+		enum ShaderIdentifier
+		{
+			INSTANCE_DRAWABLE = 1,
+			INSTANCE_ANIMATABLE,
+			HUD,
+			GRID
+		};
+		//
+
 		//  Public functions
 		void initGLEW(int verbose = 1);
-		void render();
-		
-		void setGridVisible(bool enable);
-		bool gridVisible();
 		void initializeGrid(unsigned int gridSize, float elementSize = 1.f);
+		void render();
 		//
 
 		//  Set/get functions
 		void setCamera(Camera* cam);
 		void setWindow(GLFWwindow* win);
-		void setDefaultShader(Shader* s);
-		void setGridShader(Shader* s);
+		void setShader(ShaderIdentifier id, Shader* s);
+		void setGridVisible(bool enable);
 		
 		Camera* getCamera();
 		GLFWwindow* getWindow();
-		Shader* getDefaultShader();
+		Shader* getShader(ShaderIdentifier id);
+		bool isGridVisible();
 		//
 
 	private:
@@ -56,7 +64,7 @@ class Renderer : public Singleton<Renderer>
 		void drawInstanceAnimatable(InstanceVirtual* ins, const float* view, const float* projection);
 		void drawInstanceContainer(InstanceVirtual* ins, const glm::mat4& view, const glm::mat4& projection, const glm::mat4& model);
 
-		void drawWidgetVirtual(WidgetVirtual* widget, const float* model, const float* view, const float* projection);
+		void drawWidgetVirtual(WidgetVirtual* widget, const glm::mat4& modelBase, const float* view, const float* projection);
 		void drawLayer(Layer* layer, const glm::mat4& modelBase, const float* view, const float* projection);
 		//
 
@@ -64,13 +72,12 @@ class Renderer : public Singleton<Renderer>
 		GLFWwindow* window;
 		Camera* camera;
 
-		Shader* gridShader;
-		Shader* defaultShader;
+		std::map<ShaderIdentifier, Shader*> defaultShader;
 		bool drawGrid;
 		unsigned int vboGridSize;
-		GLuint gridVAO, vertexbuffer, arraybuffer;
-		float* vertexBufferGrid;
-		uint32_t* indexBufferGrid;
+		GLuint gridVAO, vertexbuffer, arraybuffer, colorbuffer, normalbuffer;
+		/*float* vertexBufferGrid;
+		uint32_t* indexBufferGrid;*/
 
 		double dummy;
 		WidgetVirtual* dummyPlaceHolder;

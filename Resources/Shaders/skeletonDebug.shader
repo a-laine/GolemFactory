@@ -4,9 +4,6 @@ SkeletonDebug
 	fragment : "skeletonDebug.fs";
 	geometry : "skeletonDebug.gs";
 	
-	//  Tessellation evaluation shader
-	//  Tessellation control shader
-	
 	uniform :
 	{
 		model : "mat4";

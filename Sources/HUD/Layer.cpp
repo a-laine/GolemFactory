@@ -10,15 +10,6 @@ void Layer::update(const float& elapseTime)
 {
 	//eulerAngle.z += elapseTime / 1000 * 3.1415927f;
 }
-void Layer::add(WidgetVirtual* w)
-{
-	widgetList.push_back(w);
-}
-bool Layer::remove(WidgetVirtual* w)
-{
-	std::vector<WidgetVirtual*>::iterator it = std::find(widgetList.begin(), widgetList.end(), w);
-	if (it != widgetList.end()) widgetList.erase(it);
-}
 //
 
 //  Set/get functions
@@ -46,5 +37,4 @@ glm::mat4 Layer::getModelMatrix() const
 	model = glm::scale(model, glm::vec3(size, size, size));							//	change scale
 	return model;
 }
-std::vector<WidgetVirtual*>& Layer::getWidgetList() { return widgetList; }
 //

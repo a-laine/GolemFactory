@@ -62,8 +62,9 @@ int main()
 	Renderer::getInstance()->setCamera(&camera);
 	Renderer::getInstance()->setWindow(window);
 	Renderer::getInstance()->initializeGrid(GRID_SIZE, GRID_ELEMENT_SIZE);
-	//Renderer::getInstance()->setDefaultShader(ResourceManager::getInstance()->getShader("skeletonDebug"));
-	//ResourceManager::getInstance()->getShader("tree");
+	//Renderer::getInstance()->setShader(Renderer::INSTANCE_ANIMATABLE, ResourceManager::getInstance()->getShader("wiredSkinning"));
+	//Renderer::getInstance()->setShader(Renderer::INSTANCE_ANIMATABLE, ResourceManager::getInstance()->getShader("skeletonDebug"));
+	//Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE, ResourceManager::getInstance()->getShader("wired"));
 
 	// init scene
 	SceneManager::getInstance()->setWorldPosition(glm::vec3(0,0,25));
@@ -72,14 +73,10 @@ int main()
 		initializeForestScene(true);
 
 		InstanceAnimatable* peasant = InstanceManager::getInstance()->getInstanceAnimatable("peasant", "human", "simple_peasant", "skinning");
-		//InstanceDrawable* peasant = InstanceManager::getInstance()->getInstanceDrawable("peasant_static", "default");
-		//InstanceAnimatable* peasant = InstanceManager::getInstance()->getInstanceAnimatable("Peasant11.dae", "skinning");
 
 		float scale = 1.7f / peasant->getBBSize().z;
-		//float scale = 1.f;
 		peasant->setSize(glm::vec3(scale));
 		peasant->setPosition(glm::vec3(0.f, 0.f, -scale * peasant->getMesh()->sizeZ.x));
-		//peasant->launchAnimation("walk");
 		SceneManager::getInstance()->addStaticObject(peasant);
 
 
@@ -237,7 +234,7 @@ void initializeForestScene(bool emptyPlace)
 {
 	// blue sky & green grass!!
 	glClearColor(0.6f, 0.85f, 0.91f, 0.f);
-	Renderer::getInstance()->setGridShader(ResourceManager::getInstance()->getShader("greenGrass"));
+	Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getShader("greenGrass"));
 
 	// init instance placement
 	int fail = 0;
