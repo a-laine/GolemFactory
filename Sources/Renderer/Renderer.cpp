@@ -132,10 +132,13 @@ void Renderer::initializeGrid(unsigned int gridSize, float elementSize)
 	delete[] indexBufferGrid;
 
 	//	dummy
-	dummyPlaceHolder = new WidgetVirtual();
+	dummyPlaceHolder = new WidgetBoard();
+		dummyPlaceHolder->setSize(glm::vec2(3.f,2.f));
+		dummyPlaceHolder->initialize(0.1f, 0.5f);
+		//dummyPlaceHolder->initialize(0.1f, 0.5f, WidgetBoard::TOP_LEFT | WidgetBoard::TOP_RIGHT | WidgetBoard::BOTTOM_RIGHT | WidgetBoard::BOTTOM_LEFT);
 	dummyLayer = new Layer();
 		dummyLayer->setSize(0.05f);
-		dummyLayer->setPosition(glm::vec3(0.05f, 0.f, 0.f));
+		dummyLayer->setPosition(glm::vec3(0.f, 0.f, 0.f));
 		dummyLayer->add(dummyPlaceHolder);
 }
 void Renderer::render()

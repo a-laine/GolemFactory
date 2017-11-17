@@ -4,10 +4,10 @@
 WidgetVirtual::WidgetVirtual(const uint8_t& config, const std::string& shaderName) : configuration(config), position(0.f, 0.f, 0.f), size(1.f,1.f)
 {
 	shader = ResourceManager::getInstance()->getShader(shaderName);
-
+	/*
 	drawBatch b;
 		///
-		b.color = glm::vec4(1.f, 1.f, 1.f, 0.2f);
+		b.color = glm::vec4(1.f, 1.f, 1.f,1.f);
 
 		b.vertices.push_back(glm::vec3(-0.5f*size.x, 0.f, -0.5f*size.y));
 		b.vertices.push_back(glm::vec3(-0.5f*size.x, 0.f,  0.5f*size.y));
@@ -35,7 +35,7 @@ WidgetVirtual::WidgetVirtual(const uint8_t& config, const std::string& shaderNam
 		batchList.push_back(b);
 
 	initializeVBOs();
-	initializeVAOs();
+	initializeVAOs();*/
 }
 WidgetVirtual::~WidgetVirtual()
 {

@@ -8,7 +8,8 @@ Layer::~Layer() {}
 //	Public functions
 void Layer::update(const float& elapseTime)
 {
-	//eulerAngle.z += elapseTime / 1000 * 3.1415927f;
+	//eulerAngle.x += elapseTime / 1000 * 3.1415927f;
+	//eulerAngle.z += elapseTime / 5000 * 3.1415927f;
 }
 //
 
