@@ -15,6 +15,7 @@
 #include "Instances/InstanceManager.h"
 #include "Scene/SceneManager.h"
 
+#include "HUD/Layer.h"
 #include "HUD/WidgetVirtual.h"
 
 
@@ -56,6 +57,7 @@ class Renderer : public Singleton<Renderer>
 		void drawInstanceContainer(InstanceVirtual* ins, const glm::mat4& view, const glm::mat4& projection, const glm::mat4& model);
 
 		void drawWidgetVirtual(WidgetVirtual* widget, const float* model, const float* view, const float* projection);
+		void drawLayer(Layer* layer, const glm::mat4& modelBase, const float* view, const float* projection);
 		//
 
 		//  Attributes
@@ -72,6 +74,7 @@ class Renderer : public Singleton<Renderer>
 
 		double dummy;
 		WidgetVirtual* dummyPlaceHolder;
+		Layer* dummyLayer;
 		//
 };
 

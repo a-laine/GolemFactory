@@ -1,78 +1,101 @@
 #include "WidgetVirtual.h"
 
 //  Default
-WidgetVirtual::WidgetVirtual(const uint8_t& config, const std::string& shaderName) : configuration(config), position(0, 0), size(1.f,1.f)//size(0.07f, 0.05f)
+WidgetVirtual::WidgetVirtual(const uint8_t& config, const std::string& shaderName) : configuration(config), position(0, 0), size(1.f,1.f)
 {
 	shader = ResourceManager::getInstance()->getShader(shaderName);
 
-	vertices.push_back(glm::vec3(-0.5f*size.x, 0.f, -0.5f*size.y));
-	vertices.push_back(glm::vec3(-0.5f*size.x, 0.f,  0.5f*size.y));
-	vertices.push_back(glm::vec3( 0.5f*size.x, 0.f,  0.5f*size.y));
-	vertices.push_back(glm::vec3( 0.5f*size.x, 0.f, -0.5f*size.y));
+	///
+	drawBatch b;
+		b.color = glm::vec4(1.f, 1.f, 1.f, 0.2f);
 
-	textures.push_back(glm::vec2(0.f, 0.f));
-	textures.push_back(glm::vec2(0.f, 0.f));
-	textures.push_back(glm::vec2(0.f, 0.f));
-	textures.push_back(glm::vec2(0.f, 0.f));
+		b.vertices.push_back(glm::vec3(-0.5f*size.x, 0.f, -0.5f*size.y));
+		b.vertices.push_back(glm::vec3(-0.5f*size.x, 0.f,  0.5f*size.y));
+		b.vertices.push_back(glm::vec3( 0.f*size.x,  0.f,  0.5f*size.y));
+		b.vertices.push_back(glm::vec3( 0.f*size.x,  0.f, -0.5f*size.y));
 
-	faces.push_back(0); faces.push_back(1); faces.push_back(2);
-	faces.push_back(0); faces.push_back(2); faces.push_back(3);
+		b.textures.push_back(glm::vec2(0.f, 0.f));
+		b.textures.push_back(glm::vec2(0.f, 0.f));
+		b.textures.push_back(glm::vec2(0.f, 0.f));
+		b.textures.push_back(glm::vec2(0.f, 0.f));
 
-	initializeVBO();
-	initializeVAO();
+		b.faces.push_back(0); b.faces.push_back(1); b.faces.push_back(2);
+		b.faces.push_back(0); b.faces.push_back(2); b.faces.push_back(3);
+		batchList.push_back(b);
+
+	initializeVBO(0);
+	initializeVAO(0);
+	
+		b.color = glm::vec4(1.f, 0.f, 1.f, 1.f);
+
+		b.vertices.clear();
+		b.vertices.push_back(glm::vec3(0.f*size.x,  0.f, -0.5f*size.y));
+		b.vertices.push_back(glm::vec3(0.f*size.x,  0.f, 0.5f*size.y));
+		b.vertices.push_back(glm::vec3(0.5f*size.x, 0.f, 0.5f*size.y));
+		b.vertices.push_back(glm::vec3(0.5f*size.x, 0.f, -0.5f*size.y));
+
+		batchList.push_back(b);
+
+	initializeVBO(1);
+	initializeVAO(1);
 }
 WidgetVirtual::~WidgetVirtual()
 {
-	vertices.clear();
-	textures.clear();
-	faces.clear();
+	//	free all batch
+	for (unsigned int i = 0; i < batchList.size(); i++)
+	{
+		batchList[i].vertices.clear();
+		batchList[i].textures.clear();
+		batchList[i].faces.clear();
 
-	glDeleteBuffers(1, &verticesBuffer);
-	glDeleteBuffers(1, &texturesBuffer);
-	glDeleteBuffers(1, &facesBuffer);
-	glDeleteVertexArrays(1, &vao);
+		glDeleteBuffers(1, &batchList[i].verticesBuffer);
+		glDeleteBuffers(1, &batchList[i].texturesBuffer);
+		glDeleteBuffers(1, &batchList[i].facesBuffer);
+		glDeleteVertexArrays(1, &batchList[i].vao);
+	}
 
+	//	free shared resources
 	ResourceManager::getInstance()->release(shader);
 }
 //
 
 
 //	Public functions
-void WidgetVirtual::initializeVBO()
+void WidgetVirtual::initializeVBO(const unsigned int& index)
 {
-	glGenBuffers(1, &verticesBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, verticesBuffer);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), vertices.data(), GL_STATIC_DRAW);
+	glGenBuffers(1, &batchList[index].verticesBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, batchList[index].verticesBuffer);
+	glBufferData(GL_ARRAY_BUFFER, batchList[index].vertices.size() * sizeof(glm::vec3), batchList[index].vertices.data(), GL_STATIC_DRAW);
 
-	glGenBuffers(1, &texturesBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, texturesBuffer);
-	glBufferData(GL_ARRAY_BUFFER, textures.size() * sizeof(glm::vec2), textures.data(), GL_STATIC_DRAW);
+	glGenBuffers(1, &batchList[index].texturesBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, batchList[index].texturesBuffer);
+	glBufferData(GL_ARRAY_BUFFER, batchList[index].textures.size() * sizeof(glm::vec2), batchList[index].textures.data(), GL_STATIC_DRAW);
 
-	glGenBuffers(1, &facesBuffer);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, facesBuffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, faces.size() * sizeof(unsigned int), faces.data(), GL_STATIC_DRAW);
+	glGenBuffers(1, &batchList[index].facesBuffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, batchList[index].facesBuffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, batchList[index].faces.size() * sizeof(unsigned int), batchList[index].faces.data(), GL_STATIC_DRAW);
 }
-void WidgetVirtual::initializeVAO()
+void WidgetVirtual::initializeVAO(const unsigned int& index)
 {
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
+	glGenVertexArrays(1, &batchList[index].vao);
+	glBindVertexArray(batchList[index].vao);
 
 	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, verticesBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, batchList[index].verticesBuffer);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
 	glEnableVertexAttribArray(1);
-	glBindBuffer(GL_ARRAY_BUFFER, texturesBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, batchList[index].texturesBuffer);
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, NULL);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, facesBuffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, batchList[index].facesBuffer);
 	glBindVertexArray(0);
 }
 
-void WidgetVirtual::draw()
+void WidgetVirtual::draw(const unsigned int& index)
 {
-	glBindVertexArray(vao);
-	glDrawElements(GL_TRIANGLES, faces.size(), GL_UNSIGNED_INT, NULL);
+	glBindVertexArray(batchList[index].vao);
+	glDrawElements(GL_TRIANGLES, batchList[index].faces.size(), GL_UNSIGNED_INT, NULL);
 }
 void WidgetVirtual::update(const float& elapseTime) {}
 //
@@ -100,31 +123,11 @@ void WidgetVirtual::setActive(const bool& active)
 
 glm::vec2 WidgetVirtual::getSize() const { return size; }
 glm::vec2 WidgetVirtual::getPosition() const { return position; }
+glm::vec4* WidgetVirtual::getColor(const unsigned int& index) { return &(batchList[index].color); }
 uint8_t WidgetVirtual::getOriginPosition() const { return configuration & (HORIZONTAL_MASK | VERTICAL_MASK); }
 bool WidgetVirtual::isVisible() const { return (configuration & VISIBLE)!=0; }
 bool WidgetVirtual::isActive() const { return (configuration & ACTIVE) != 0; }
 uint8_t WidgetVirtual::getState() const { return configuration & STATE_MASK; }
-glm::vec2 WidgetVirtual::getWidgetCenter() const
-{
-	glm::vec2 center = position;
-	switch (configuration&(HORIZONTAL_MASK | VERTICAL_MASK))
-	{
-	case CENTER:   break;
-	case (MIDDLE_H | TOP):          center.y -= size.y / 2;   break;
-	case (MIDDLE_H | BOTTOM):       center.y += size.y / 2;   break;
-
-	case (LEFT | MIDDLE_V):         center.x += size.x / 2;   break;
-	case (LEFT | TOP):              center.x += size.x / 2;   center.y -= size.y / 2;   break;
-	case (LEFT | BOTTOM):           center.x += size.x / 2;   center.y += size.y / 2;   break;
-
-	case (RIGHT | MIDDLE_V):		center.x -= size.x / 2;   break;
-	case (RIGHT | TOP):             center.x -= size.x / 2;   center.y -= size.y / 2;   break;
-	case (RIGHT | BOTTOM):          center.x -= size.x / 2;   center.y += size.y / 2;   break;
-
-	default: break;
-	}
-	return center;
-}
-
+unsigned int WidgetVirtual::getBatchListSize() const { return batchList.size(); }
 Shader* WidgetVirtual::getShader() const { return shader; }
 //

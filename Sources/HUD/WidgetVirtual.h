@@ -36,6 +36,17 @@ class WidgetVirtual
 			VISIBLE = 1 << 6,
 			ACTIVE = 1 << 7
 		};
+		struct drawBatch
+		{
+			glm::vec4 color;
+			GLuint  vao,
+				verticesBuffer,
+				texturesBuffer,
+				facesBuffer;
+			std::vector<glm::vec3> vertices;
+			std::vector<glm::vec2> textures;
+			std::vector<unsigned int> faces;
+		};
 		//
 
 		//  Default
@@ -44,10 +55,10 @@ class WidgetVirtual
 		//
 
 		//	Public functions
-		virtual void initializeVBO();
-		virtual void initializeVAO();
+		virtual void initializeVBO(const unsigned int& index);
+		virtual void initializeVAO(const unsigned int& index);
 
-		virtual void draw();
+		virtual void draw(const unsigned int& index);
 		virtual void update(const float& elapseTime);
 		//
 
@@ -60,12 +71,12 @@ class WidgetVirtual
 
 		glm::vec2 getSize() const;
 		glm::vec2 getPosition() const;
+		glm::vec4* getColor(const unsigned int& index);
 		uint8_t getOriginPosition() const;
 		bool isVisible() const;
 		bool isActive() const;
 		uint8_t getState() const;
-		glm::vec2 getWidgetCenter() const;
-
+		unsigned int getBatchListSize() const;
 		Shader* getShader() const;
 		//
 
@@ -75,10 +86,7 @@ class WidgetVirtual
 		glm::vec2 position;
 		glm::vec2 size;
 
-		GLuint  vao, verticesBuffer, texturesBuffer, facesBuffer;
-		std::vector<glm::vec3> vertices;
-		std::vector<glm::vec2> textures;
-		std::vector<unsigned int> faces;
+		std::vector<drawBatch> batchList;
 
 		Shader* shader;
 		//

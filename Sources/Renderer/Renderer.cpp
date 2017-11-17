@@ -107,10 +107,17 @@ void Renderer::render()
 	}
 
 	//	HUD
+	dummyLayer->update(16);
+
 	glClear(GL_DEPTH_BUFFER_BIT);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 	projection = glm::perspective(glm::radians(45.f), (float)width / height, 0.1f, 1500.f);
-	glm::mat4 model = glm::translate(glm::mat4(1.0), 0.15f*camera->getForward()) * camera->getModelMatrix();
-	//drawWidgetVirtual(dummyPlaceHolder, &model[0][0], &view[0][0], &projection[0][0]);
+	glm::mat4 model = glm::translate(glm::mat4(1.f), 0.15f*camera->getForward()) * camera->getModelMatrix();
+	drawLayer(dummyLayer, model, &view[0][0], &projection[0][0]);
+
+	glDisable(GL_BLEND);
 }
 
 void Renderer::setGridVisible(bool enable)
@@ -173,7 +180,12 @@ void Renderer::initializeGrid(unsigned int gridSize, float elementSize)
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, arraybuffer);
 	glBindVertexArray(0);
 
+	//	dummy
 	dummyPlaceHolder = new WidgetVirtual();
+	dummyLayer = new Layer();
+		dummyLayer->setSize(0.05f);
+		dummyLayer->setPosition(glm::vec3(0.05f, 0.f, 0.f));
+		dummyLayer->add(dummyPlaceHolder);
 }
 //
 
@@ -288,8 +300,26 @@ void Renderer::drawWidgetVirtual(WidgetVirtual* widget, const float* model, cons
 	//	Enable mvp matrix
 	loadMVPMatrix(shaderToUse, model, view, projection);
 
-	//	Draw 
-	widget->draw();
+	//	draw all batch per colors
+	for (unsigned int i = 0; i < widget->getBatchListSize(); i++)
+	{
+		//	load color
+		int loc = shaderToUse->getUniformLocation("color");
+		if (loc >= 0) glUniform4fv(loc, 1, (const float*) widget->getColor(i));
+
+		//	Draw 
+		widget->draw(i);
+	}
+}
+void Renderer::drawLayer(Layer* layer, const glm::mat4& modelBase, const float* view, const float* projection)
+{
+	glm::mat4 model = modelBase * layer->getModelMatrix();
+	std::vector<WidgetVirtual*>& list = layer->getWidgetList();
+	for (std::vector<WidgetVirtual*>::iterator it = list.begin(); it != list.end(); ++it)
+	{
+		if((*it)->isVisible())
+			drawWidgetVirtual(*it, &model[0][0], view, projection);
+	}
 }
 //
 
