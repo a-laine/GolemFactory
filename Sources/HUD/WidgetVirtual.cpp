@@ -4,38 +4,7 @@
 WidgetVirtual::WidgetVirtual(const uint8_t& config, const std::string& shaderName) : configuration(config), position(0.f, 0.f, 0.f), size(1.f,1.f)
 {
 	shader = ResourceManager::getInstance()->getShader(shaderName);
-	/*
-	drawBatch b;
-		///
-		b.color = glm::vec4(1.f, 1.f, 1.f,1.f);
-
-		b.vertices.push_back(glm::vec3(-0.5f*size.x, 0.f, -0.5f*size.y));
-		b.vertices.push_back(glm::vec3(-0.5f*size.x, 0.f,  0.5f*size.y));
-		b.vertices.push_back(glm::vec3( 0.f*size.x,  0.f,  0.5f*size.y));
-		b.vertices.push_back(glm::vec3( 0.f*size.x,  0.f, -0.5f*size.y));
-
-		b.textures.push_back(glm::vec2(0.f, 0.f));
-		b.textures.push_back(glm::vec2(0.f, 0.f));
-		b.textures.push_back(glm::vec2(0.f, 0.f));
-		b.textures.push_back(glm::vec2(0.f, 0.f));
-
-		b.faces.push_back(0); b.faces.push_back(1); b.faces.push_back(2);
-		b.faces.push_back(0); b.faces.push_back(2); b.faces.push_back(3);
-		batchList.push_back(b);
-
-		///
-		b.color = glm::vec4(1.f, 0.f, 1.f, 1.f);
-
-		b.vertices.clear();
-		b.vertices.push_back(glm::vec3(0.f*size.x,  0.f, -0.5f*size.y));
-		b.vertices.push_back(glm::vec3(0.f*size.x,  0.f, 0.5f*size.y));
-		b.vertices.push_back(glm::vec3(0.5f*size.x, 0.f, 0.5f*size.y));
-		b.vertices.push_back(glm::vec3(0.5f*size.x, 0.f, -0.5f*size.y));
-
-		batchList.push_back(b);
-
-	initializeVBOs();
-	initializeVAOs();*/
+	texture = nullptr;
 }
 WidgetVirtual::~WidgetVirtual()
 {
@@ -73,7 +42,7 @@ void WidgetVirtual::initializeVBOs()
 
 		glGenBuffers(1, &batchList[i].facesBuffer);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, batchList[i].facesBuffer);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, batchList[i].faces.size() * sizeof(unsigned int), batchList[i].faces.data(), GL_STATIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, batchList[i].faces.size() * sizeof(unsigned short), batchList[i].faces.data(), GL_STATIC_DRAW);
 	}
 }
 void WidgetVirtual::initializeVAOs()
@@ -104,7 +73,7 @@ void WidgetVirtual::draw(Shader* s)
 		if (loc >= 0) glUniform4fv(loc, 1, &batchList[i].color.x);
 
 		glBindVertexArray(batchList[i].vao);
-		glDrawElements(GL_TRIANGLES, batchList[i].faces.size(), GL_UNSIGNED_INT, NULL);
+		glDrawElements(GL_TRIANGLES, batchList[i].faces.size(), GL_UNSIGNED_SHORT, NULL);
 	}
 }
 void WidgetVirtual::update(const float& elapseTime) {}
@@ -129,15 +98,19 @@ void WidgetVirtual::setActive(const bool& active)
 	if (active) configuration |= ACTIVE;
 	else configuration &= ~ACTIVE;
 }
+void WidgetVirtual::setTexture(const std::string& shaderName)
+{
+	ResourceManager::getInstance()->release(texture);
+	if (!shaderName.empty()) texture = ResourceManager::getInstance()->getTexture(shaderName);
+	else texture = nullptr;
+}
 
-
-glm::vec2 WidgetVirtual::getSize() const { return size; }
 glm::vec3 WidgetVirtual::getPosition() const { return position; }
 glm::vec4* WidgetVirtual::getColor(const unsigned int& index) { return &(batchList[index].color); }
 uint8_t WidgetVirtual::getOriginPosition() const { return configuration & (HORIZONTAL_MASK | VERTICAL_MASK); }
 bool WidgetVirtual::isVisible() const { return (configuration & VISIBLE)!=0; }
 bool WidgetVirtual::isActive() const { return (configuration & ACTIVE) != 0; }
 uint8_t WidgetVirtual::getState() const { return configuration & STATE_MASK; }
-unsigned int WidgetVirtual::getBatchListSize() const { return batchList.size(); }
 Shader* WidgetVirtual::getShader() const { return shader; }
+Texture* WidgetVirtual::getTexture() const { return texture; }
 //

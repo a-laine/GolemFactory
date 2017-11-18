@@ -48,7 +48,7 @@ void Renderer::initGLEW(int verbose)
 	std::cout << "        Renderer name : " << glGetString(GL_RENDERER) << std::endl;
 	std::cout << "        GLSL version : " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
 }
-void Renderer::initializeGrid(unsigned int gridSize, float elementSize)
+void Renderer::initializeGrid(const unsigned int& gridSize,const float& elementSize, const glm::vec3& color)
 {
 	if (glIsVertexArray(gridVAO)) return;
 
@@ -69,9 +69,9 @@ void Renderer::initializeGrid(unsigned int gridSize, float elementSize)
 			normalBufferGrid[3 * (i*(gridSize + 1) + j) + 1] = 0.f;
 			normalBufferGrid[3 * (i*(gridSize + 1) + j) + 2] = 1.f;
 
-			colorBufferGrid[3 * (i*(gridSize + 1) + j) + 0] = 0.4f;
-			colorBufferGrid[3 * (i*(gridSize + 1) + j) + 1] = 0.2f;
-			colorBufferGrid[3 * (i*(gridSize + 1) + j) + 2] = 0.1f;
+			colorBufferGrid[3 * (i*(gridSize + 1) + j) + 0] = color.x;
+			colorBufferGrid[3 * (i*(gridSize + 1) + j) + 1] = color.y;
+			colorBufferGrid[3 * (i*(gridSize + 1) + j) + 2] = color.z;
 		}
 
 	uint32_t* indexBufferGrid = new uint32_t[6 * gridSize*gridSize];
@@ -133,9 +133,8 @@ void Renderer::initializeGrid(unsigned int gridSize, float elementSize)
 
 	//	dummy
 	dummyPlaceHolder = new WidgetBoard();
-		dummyPlaceHolder->setSize(glm::vec2(3.f,2.f));
-		dummyPlaceHolder->initialize(0.1f, 0.5f);
-		//dummyPlaceHolder->initialize(0.1f, 0.5f, WidgetBoard::TOP_LEFT | WidgetBoard::TOP_RIGHT | WidgetBoard::BOTTOM_RIGHT | WidgetBoard::BOTTOM_LEFT);
+		dummyPlaceHolder->setSize(glm::vec2(1.f,0.5f));
+		dummyPlaceHolder->initialize(0.02f, 0.1f, WidgetBoard::TOP_LEFT | WidgetBoard::TOP_RIGHT | WidgetBoard::BOTTOM_RIGHT | WidgetBoard::BOTTOM_LEFT);
 	dummyLayer = new Layer();
 		dummyLayer->setSize(0.05f);
 		dummyLayer->setPosition(glm::vec3(0.f, 0.f, 0.f));

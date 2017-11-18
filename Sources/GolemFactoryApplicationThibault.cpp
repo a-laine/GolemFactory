@@ -4,6 +4,8 @@
 #include <iostream>
 #include <list>
 #include <time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <GL/glew.h>
 
 #include "Utiles/System.h"
@@ -11,28 +13,22 @@
 #include "Renderer/Renderer.h"
 #include "Generators/HouseGenerator.h"
 
-#include "Resources/Loader/MeshSaver.h"
-#include "Resources/Loader/SkeletonSaver.h"
-#include "Resources/Loader/AnimationSaver.h"
-
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtc/quaternion.hpp>
 
+
 #define GRID_SIZE 100
 #define GRID_ELEMENT_SIZE 5.f
+
 
 // prototypes
 GLFWwindow* initGLFW();
 void initializeForestScene(bool emptyPlace = false);
+std::string checkResourcesDirectory();
 //
-
-
-//std::string resourceRepository = "C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/";
-std::string resourceRepository = "C:/Users/Thibault/Documents/Github/GolemFactory/Resources/";
-//std::string resourceRepository = "Resources/";
 
 
 // program
@@ -41,6 +37,8 @@ int main()
 	// init window and opengl
 	GLFWwindow* window = initGLFW();
 	Renderer::getInstance()->initGLEW(0);
+	std::string resourceRepository = checkResourcesDirectory();
+	std::cout << "Found resources folder at : " << resourceRepository << std::endl;
 
 	// Init Event handler
 	EventHandler::getInstance()->addWindow(window);
@@ -61,7 +59,7 @@ int main()
 		camera.setPosition(glm::vec3(0,-3,3));
 	Renderer::getInstance()->setCamera(&camera);
 	Renderer::getInstance()->setWindow(window);
-	Renderer::getInstance()->initializeGrid(GRID_SIZE, GRID_ELEMENT_SIZE);
+	Renderer::getInstance()->initializeGrid(GRID_SIZE, GRID_ELEMENT_SIZE, glm::vec3(24/255.f, 202/255.f, 230/255.f));	// blue tron
 	//Renderer::getInstance()->setShader(Renderer::INSTANCE_ANIMATABLE, ResourceManager::getInstance()->getShader("wiredSkinning"));
 	//Renderer::getInstance()->setShader(Renderer::INSTANCE_ANIMATABLE, ResourceManager::getInstance()->getShader("skeletonDebug"));
 	//Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE, ResourceManager::getInstance()->getShader("wired"));
@@ -70,29 +68,20 @@ int main()
 	SceneManager::getInstance()->setWorldPosition(glm::vec3(0,0,25));
 	SceneManager::getInstance()->setWorldSize(glm::vec3(GRID_SIZE*GRID_ELEMENT_SIZE, GRID_SIZE*GRID_ELEMENT_SIZE, 50));
 	
-		initializeForestScene(true);
+		//initializeForestScene(true);
 
 		InstanceAnimatable* peasant = InstanceManager::getInstance()->getInstanceAnimatable("peasant", "human", "simple_peasant", "skinning");
-
-		float scale = 1.7f / peasant->getBBSize().z;
-		peasant->setSize(glm::vec3(scale));
-		peasant->setPosition(glm::vec3(0.f, 0.f, -scale * peasant->getMesh()->sizeZ.x));
-		SceneManager::getInstance()->addStaticObject(peasant);
+			float scale = 1.7f / peasant->getBBSize().z;
+			peasant->setSize(glm::vec3(scale));
+			peasant->setPosition(glm::vec3(0.f, 0.f, -scale * peasant->getMesh()->sizeZ.x));
+			SceneManager::getInstance()->addStaticObject(peasant);
 
 
 	// init loop time tracking
 	double elapseTime = 16.;
-
 	std::cout << "game loop initiated" << std::endl;
-
-	//std::mt19937 randomEngine;
-
 	while (!glfwWindowShouldClose(window))
 	{
-		///
-		//if (glfwGetTime() > 0.5) EventHandler::getInstance()->addFrameEvent(QUIT);
-		//std::cout << "*" << std::endl;
-
 		// begin loop
 		double startTime = glfwGetTime();
 		int width, height;
@@ -190,11 +179,6 @@ int main()
 		elapseTime = 1000.0*(glfwGetTime() - startTime);
 	}
 
-	//	Save mesh in gfmesh format
-	//SkeletonSaver::save(peasant->getSkeleton(), resourceRepository, "human");
-	//AnimationSaver::save(peasant->getAnimation(), resourceRepository, "simple_peasant");
-	//MeshSaver::save(peasant->getMesh(), resourceRepository, "peasant", glm::vec3(1.f));
-
 	//	end
 	std::cout << "ending game" << std::endl;
 	InstanceManager::getInstance()->clearGarbage();
@@ -204,6 +188,7 @@ int main()
 	return 0;
 }
 //
+
 
 //	functions implementation
 static void errorCallback(int error, const char* description) { std::cerr << "GLFW ERROR : " << description << std::endl; }
@@ -350,6 +335,23 @@ void initializeForestScene(bool emptyPlace)
 	std::cout << "Instance count : " << InstanceManager::getInstance()->getNumberOfInstances() << std::endl;
 	std::cout << "House count : " << vilageHouseCount  << std::endl;
 	std::cout << "Insert fail : " << fail << std::endl;
+}
+std::string checkResourcesDirectory()
+{
+	struct stat info;
+
+	//	check for home repository
+	if (stat("C:/Users/Thibault/Documents/Github/GolemFactory/Resources/", &info) != 0);
+	else if (info.st_mode & S_IFDIR)
+		return "C:/Users/Thibault/Documents/Github/GolemFactory/Resources/";
+
+	//	check for work repository
+	if (stat("C:/Users/Thibault/Documents/Github/GolemFactory/Resources/", &info) != 0);
+	else if (info.st_mode & S_IFDIR)
+		return "C:/Users/Thibault/Documents/Github/GolemFactory/Resources/";
+	
+	//	return the default resource path for portable applications
+	return "Resources/";
 }
 //
 

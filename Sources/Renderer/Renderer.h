@@ -36,7 +36,7 @@ class Renderer : public Singleton<Renderer>
 
 		//  Public functions
 		void initGLEW(int verbose = 1);
-		void initializeGrid(unsigned int gridSize, float elementSize = 1.f);
+		void initializeGrid(const unsigned int& gridSize, const float& elementSize = 1.f, const glm::vec3& color = glm::vec3(0.4f, 0.2f, 0.1f));
 		void render();
 		//
 

@@ -45,7 +45,7 @@ class WidgetVirtual
 				facesBuffer;
 			std::vector<glm::vec3> vertices;
 			std::vector<glm::vec2> textures;
-			std::vector<unsigned int> faces;
+			std::vector<unsigned short> faces;
 		};
 		//
 
@@ -68,16 +68,18 @@ class WidgetVirtual
 		virtual void setOrigin(const uint8_t& origin);
 		void setVisibility(const bool& visible);
 		void setActive(const bool& active);
+		void setTexture(const std::string& shaderName);
 
-		glm::vec2 getSize() const;
+		uint8_t getOriginPosition() const;
+		uint8_t getState() const;
+
 		glm::vec3 getPosition() const;
 		glm::vec4* getColor(const unsigned int& index);
-		uint8_t getOriginPosition() const;
+		Shader* getShader() const;
+		Texture* getTexture() const;
+
 		bool isVisible() const;
 		bool isActive() const;
-		uint8_t getState() const;
-		unsigned int getBatchListSize() const;
-		Shader* getShader() const;
 		//
 
 	protected:
@@ -89,5 +91,6 @@ class WidgetVirtual
 		std::vector<drawBatch> batchList;
 
 		Shader* shader;
+		Texture* texture;
 		//
 };

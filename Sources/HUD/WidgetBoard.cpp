@@ -118,7 +118,7 @@ void WidgetBoard::initialize(const float& borderThickness, const float& borderWi
 	}
 
 	//	Right
-	/**/if (corner & BOTTOM_RIGHT)
+	if (corner & BOTTOM_RIGHT)
 	{
 		//	center
 		unsigned int index = center.vertices.size() - 1;
@@ -127,6 +127,42 @@ void WidgetBoard::initialize(const float& borderThickness, const float& borderWi
 
 		center.vertices.push_back(glm::vec3(dimension.x - borderWidth, 0.f, -dimension.z));
 		center.faces.push_back(0); center.faces.push_back(index + 1); center.faces.push_back(index + 2);
+
+		//	vertex index + 1
+		index = border.vertices.size() - 1;
+		border.vertices.push_back(glm::vec3(dimension.x, 0.f, -dimension.z + borderWidth));
+		border.vertices.push_back(glm::vec3(dimension.x + borderThickness, 0.f, -dimension.z + borderWidth));
+
+		//	vertex index + 3
+		border.vertices.push_back(glm::vec3(dimension.x + borderThickness* sin(5 * pi / 8), 0.f, -dimension.z + borderWidth + borderThickness * cos(5 * pi / 8)));
+		border.vertices.push_back(glm::vec3(dimension.x + borderThickness* sin(6 * pi / 8), 0.f, -dimension.z + borderWidth + borderThickness * cos(6 * pi / 8)));
+
+		//	right rectangle
+		border.faces.push_back(borderCornerIndex);  border.faces.push_back(index);		border.faces.push_back(index + 1);
+		border.faces.push_back(index);				border.faces.push_back(index + 1);	border.faces.push_back(index + 2);
+
+		//	semi disk
+		borderCornerIndex = index + 1;
+		border.faces.push_back(borderCornerIndex);  border.faces.push_back(index + 2);		border.faces.push_back(index + 3);
+		border.faces.push_back(borderCornerIndex);  border.faces.push_back(index + 3);		border.faces.push_back(index + 4);
+
+		//	vertex index + 1
+		index = border.vertices.size() - 1;
+		border.vertices.push_back(glm::vec3(dimension.x - borderWidth, 0.f, -dimension.z));
+		border.vertices.push_back(glm::vec3(dimension.x - borderWidth + borderThickness* sin(6 * pi / 8), 0.f, -dimension.z + borderThickness * cos(6 * pi / 8)));
+
+		//	vertex index + 3
+		border.vertices.push_back(glm::vec3(dimension.x - borderWidth + borderThickness* sin(7 * pi / 8), 0.f, -dimension.z + borderThickness * cos(7 * pi / 8)));
+		border.vertices.push_back(glm::vec3(dimension.x - borderWidth, 0.f, -dimension.z - borderThickness));
+
+		//	bottom right corner
+		border.faces.push_back(borderCornerIndex);	border.faces.push_back(index);			border.faces.push_back(index + 1);
+		border.faces.push_back(index);				border.faces.push_back(index + 1);		border.faces.push_back(index + 2);
+
+		//	semi disk
+		borderCornerIndex = index + 1;
+		border.faces.push_back(borderCornerIndex);	border.faces.push_back(index + 2);			border.faces.push_back(index + 3);
+		border.faces.push_back(borderCornerIndex);	border.faces.push_back(index + 3);			border.faces.push_back(index + 4);
 	}
 	else
 	{
@@ -140,7 +176,11 @@ void WidgetBoard::initialize(const float& borderThickness, const float& borderWi
 		border.vertices.push_back(glm::vec3(dimension.x, 0.f, -dimension.z));
 		border.vertices.push_back(glm::vec3(dimension.x + borderThickness, 0.f, -dimension.z));
 
-
+		//	vertex index + 3
+		border.vertices.push_back(glm::vec3(dimension.x + borderThickness* sin(5 * pi / 8), 0.f, -dimension.z + borderThickness * cos(5 * pi / 8)));
+		border.vertices.push_back(glm::vec3(dimension.x + borderThickness* sin(6 * pi / 8), 0.f, -dimension.z + borderThickness * cos(6 * pi / 8)));
+		border.vertices.push_back(glm::vec3(dimension.x + borderThickness* sin(7 * pi / 8), 0.f, -dimension.z + borderThickness * cos(7 * pi / 8)));
+		border.vertices.push_back(glm::vec3(dimension.x, 0.f, -dimension.z - borderThickness));
 
 		//	right rectangle
 		border.faces.push_back(borderCornerIndex);  border.faces.push_back(index);		border.faces.push_back(index + 1);
@@ -148,10 +188,14 @@ void WidgetBoard::initialize(const float& borderThickness, const float& borderWi
 
 		//	semi disk
 		borderCornerIndex = index + 1;
+		border.faces.push_back(borderCornerIndex);  border.faces.push_back(index + 2);		border.faces.push_back(index + 3);
+		border.faces.push_back(borderCornerIndex);  border.faces.push_back(index + 3);		border.faces.push_back(index + 4);
+		border.faces.push_back(borderCornerIndex);  border.faces.push_back(index + 4);		border.faces.push_back(index + 5);
+		border.faces.push_back(borderCornerIndex);  border.faces.push_back(index + 5);		border.faces.push_back(index + 6);
 	}
 
 	//	Bottom
-	/**/if (corner & BOTTOM_LEFT)
+	if (corner & BOTTOM_LEFT)
 	{
 		//	center
 		unsigned int index = center.vertices.size() - 1;
@@ -160,17 +204,75 @@ void WidgetBoard::initialize(const float& borderThickness, const float& borderWi
 
 		center.vertices.push_back(glm::vec3(-dimension.x, 0.f, -dimension.z + borderWidth));
 		center.faces.push_back(0); center.faces.push_back(index + 1); center.faces.push_back(index + 2);
+
+		//	vertex index + 1
+		index = border.vertices.size() - 1;
+		border.vertices.push_back(glm::vec3(-dimension.x + borderWidth, 0.f, -dimension.z));
+		border.vertices.push_back(glm::vec3(-dimension.x + borderWidth, 0.f, -dimension.z - borderThickness));
+
+		//	vertex index + 3
+		border.vertices.push_back(glm::vec3(-dimension.x + borderWidth + borderThickness* sin(9 * pi / 8), 0.f, -dimension.z + borderThickness * cos(9 * pi / 8)));
+		border.vertices.push_back(glm::vec3(-dimension.x + borderWidth + borderThickness* sin(10 * pi / 8), 0.f, -dimension.z + borderThickness * cos(10 * pi / 8)));
+
+		//	bottom rectangle
+		border.faces.push_back(borderCornerIndex);  border.faces.push_back(index);		border.faces.push_back(index + 1);
+		border.faces.push_back(index);				border.faces.push_back(index + 1);	border.faces.push_back(index + 2);
+
+		//	semi disk
+		borderCornerIndex = index + 1;
+		border.faces.push_back(borderCornerIndex);  border.faces.push_back(index + 2);		border.faces.push_back(index + 3);
+		border.faces.push_back(borderCornerIndex);  border.faces.push_back(index + 3);		border.faces.push_back(index + 4);
+
+		//	vertex index + 1
+		index = border.vertices.size() - 1;
+		border.vertices.push_back(glm::vec3(-dimension.x, 0.f, -dimension.z + borderWidth));
+		border.vertices.push_back(glm::vec3(-dimension.x + borderThickness* sin(10 * pi / 8), 0.f, -dimension.z + borderWidth + borderThickness * cos(10 * pi / 8)));
+
+		//	vertex index + 3
+		border.vertices.push_back(glm::vec3(-dimension.x + borderThickness* sin(11 * pi / 8), 0.f, -dimension.z + borderWidth + borderThickness * cos(11 * pi / 8)));
+		border.vertices.push_back(glm::vec3(-dimension.x - borderThickness, 0.f, -dimension.z + borderWidth));
+
+		//	bottom left corner
+		border.faces.push_back(borderCornerIndex);	border.faces.push_back(index);			border.faces.push_back(index + 1);
+		border.faces.push_back(index);				border.faces.push_back(index + 1);		border.faces.push_back(index + 2);
+
+		//	semi disk
+		borderCornerIndex = index + 1;
+		border.faces.push_back(borderCornerIndex);	border.faces.push_back(index + 2);			border.faces.push_back(index + 3);
+		border.faces.push_back(borderCornerIndex);	border.faces.push_back(index + 3);			border.faces.push_back(index + 4);
 	}
-	/**/else
+	else
 	{
 		//	center
 		unsigned int index = center.vertices.size() - 1;
 		center.vertices.push_back(glm::vec3(-dimension.x, 0.f, -dimension.z));
 		center.faces.push_back(0); center.faces.push_back(index); center.faces.push_back(index + 1);
+
+		//	vertex index + 1
+		index = border.vertices.size() - 1;
+		border.vertices.push_back(glm::vec3(-dimension.x, 0.f, -dimension.z));
+		border.vertices.push_back(glm::vec3(-dimension.x, 0.f, -dimension.z - borderThickness));
+
+		//	vertex index + 3
+		border.vertices.push_back(glm::vec3(-dimension.x + borderThickness* sin(9 * pi / 8), 0.f, -dimension.z + borderThickness * cos(9 * pi / 8)));
+		border.vertices.push_back(glm::vec3(-dimension.x + borderThickness* sin(10 * pi / 8), 0.f, -dimension.z + borderThickness * cos(10 * pi / 8)));
+		border.vertices.push_back(glm::vec3(-dimension.x + borderThickness* sin(11 * pi / 8), 0.f, -dimension.z + borderThickness * cos(11 * pi / 8)));
+		border.vertices.push_back(glm::vec3(-dimension.x - borderThickness, 0.f, -dimension.z));
+
+		//	bottom rectangle
+		border.faces.push_back(borderCornerIndex);  border.faces.push_back(index);		border.faces.push_back(index + 1);
+		border.faces.push_back(index);				border.faces.push_back(index + 1);	border.faces.push_back(index + 2);
+
+		//	semi disk
+		borderCornerIndex = index + 1;
+		border.faces.push_back(borderCornerIndex);  border.faces.push_back(index + 2);		border.faces.push_back(index + 3);
+		border.faces.push_back(borderCornerIndex);  border.faces.push_back(index + 3);		border.faces.push_back(index + 4);
+		border.faces.push_back(borderCornerIndex);  border.faces.push_back(index + 4);		border.faces.push_back(index + 5);
+		border.faces.push_back(borderCornerIndex);  border.faces.push_back(index + 5);		border.faces.push_back(index + 6);
 	}
 
 	//	Left
-	/**/if (corner & TOP_LEFT)
+	if (corner & TOP_LEFT)
 	{
 		//	center
 		unsigned int index = center.vertices.size() - 1;
@@ -179,13 +281,71 @@ void WidgetBoard::initialize(const float& borderThickness, const float& borderWi
 
 		center.vertices.push_back(glm::vec3(-dimension.x + borderWidth, 0.f, dimension.z));
 		center.faces.push_back(0); center.faces.push_back(index + 1); center.faces.push_back(index + 2);
+
+		//	vertex index + 1
+		index = border.vertices.size() - 1;
+		border.vertices.push_back(glm::vec3(-dimension.x, 0.f, dimension.z - borderWidth));
+		border.vertices.push_back(glm::vec3(-dimension.x - borderThickness, 0.f, dimension.z - borderWidth));
+
+		//	vertex index + 3
+		border.vertices.push_back(glm::vec3(-dimension.x + borderThickness* sin(13 * pi / 8), 0.f, dimension.z - borderWidth + borderThickness * cos(13 * pi / 8)));
+		border.vertices.push_back(glm::vec3(-dimension.x + borderThickness* sin(14 * pi / 8), 0.f, dimension.z - borderWidth + borderThickness * cos(14 * pi / 8)));
+
+		//	left rectangle
+		border.faces.push_back(borderCornerIndex);  border.faces.push_back(index);		border.faces.push_back(index + 1);
+		border.faces.push_back(index);				border.faces.push_back(index + 1);	border.faces.push_back(index + 2);
+
+		//	semi disk
+		borderCornerIndex = index + 1;
+		border.faces.push_back(borderCornerIndex);  border.faces.push_back(index + 2);		border.faces.push_back(index + 3);
+		border.faces.push_back(borderCornerIndex);  border.faces.push_back(index + 3);		border.faces.push_back(index + 4);
+
+		//	vertex index + 1
+		index = border.vertices.size() - 1;
+		border.vertices.push_back(glm::vec3(-dimension.x + borderWidth, 0.f, dimension.z));
+		border.vertices.push_back(glm::vec3(-dimension.x + borderWidth + borderThickness* sin(14 * pi / 8), 0.f, dimension.z + borderThickness * cos(14 * pi / 8)));
+
+		//	vertex index + 3
+		border.vertices.push_back(glm::vec3(-dimension.x + borderWidth + borderThickness* sin(15 * pi / 8), 0.f, dimension.z + borderThickness * cos(15 * pi / 8)));
+		border.vertices.push_back(glm::vec3(-dimension.x + borderWidth, 0.f, dimension.z + borderThickness));
+
+		//	top left corner
+		border.faces.push_back(borderCornerIndex);	border.faces.push_back(index);			border.faces.push_back(index + 1);
+		border.faces.push_back(index);				border.faces.push_back(index + 1);		border.faces.push_back(index + 2);
+
+		//	semi disk
+		borderCornerIndex = index + 1;
+		border.faces.push_back(borderCornerIndex);	border.faces.push_back(index + 2);			border.faces.push_back(index + 3);
+		border.faces.push_back(borderCornerIndex);	border.faces.push_back(index + 3);			border.faces.push_back(index + 4);
 	}
-	/**/else
+	else
 	{
 		//	center
 		unsigned int index = center.vertices.size() - 1;
 		center.vertices.push_back(glm::vec3(-dimension.x, 0.f, dimension.z));
 		center.faces.push_back(0); center.faces.push_back(index); center.faces.push_back(index + 1);
+
+		//	vertex index + 1
+		index = border.vertices.size() - 1;
+		border.vertices.push_back(glm::vec3(-dimension.x, 0.f, dimension.z));
+		border.vertices.push_back(glm::vec3(-dimension.x - borderThickness, 0.f, dimension.z));
+
+		//	vertex index + 3
+		border.vertices.push_back(glm::vec3(-dimension.x + borderThickness* sin(13 * pi / 8), 0.f, dimension.z + borderThickness * cos(13 * pi / 8)));
+		border.vertices.push_back(glm::vec3(-dimension.x + borderThickness* sin(14 * pi / 8), 0.f, dimension.z + borderThickness * cos(14 * pi / 8)));
+		border.vertices.push_back(glm::vec3(-dimension.x + borderThickness* sin(15 * pi / 8), 0.f, dimension.z + borderThickness * cos(15 * pi / 8)));
+		border.vertices.push_back(glm::vec3(-dimension.x, 0.f, dimension.z + borderThickness));
+
+		//	bottom rectangle
+		border.faces.push_back(borderCornerIndex);  border.faces.push_back(index);		border.faces.push_back(index + 1);
+		border.faces.push_back(index);				border.faces.push_back(index + 1);	border.faces.push_back(index + 2);
+
+		//	semi disk
+		borderCornerIndex = index + 1;
+		border.faces.push_back(borderCornerIndex);  border.faces.push_back(index + 2);		border.faces.push_back(index + 3);
+		border.faces.push_back(borderCornerIndex);  border.faces.push_back(index + 3);		border.faces.push_back(index + 4);
+		border.faces.push_back(borderCornerIndex);  border.faces.push_back(index + 4);		border.faces.push_back(index + 5);
+		border.faces.push_back(borderCornerIndex);  border.faces.push_back(index + 5);		border.faces.push_back(index + 6);
 	}
 
 	//	Debug log
@@ -214,7 +374,7 @@ void WidgetBoard::initialize(const float& borderThickness, const float& borderWi
 //  Set/get functions
 void WidgetBoard::setColor(const glm::vec4& c)
 {
-	if (!batchList.empty())
+	if (batchList.size() >= 2)
 	{
 		batchList[0].color = c;
 		batchList[1].color = glm::vec4(c.x, c.y, c.z, 0.5f * c.w);
