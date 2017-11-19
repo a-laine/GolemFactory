@@ -105,6 +105,10 @@ class NodeVirtual
 		 *	\brief Merge node (delete children)
 		 */
 		virtual void merge();
+
+		
+		virtual void add(NodeVirtual* n);
+		virtual bool remove(NodeVirtual* n);
 		//
 
 		//Set/Get functions
@@ -157,7 +161,8 @@ class NodeVirtual
 
 		//	Attributes
 		NodeVirtual* parent;						//!< Pointer to parent node (nullptr if root)
-		std::vector<NodeVirtual*> children;			//!< Children container (empty if leaf)
+		std::vector<NodeVirtual*> children;			//!< Subdivision children container (empty if leaf)
+		std::vector<NodeVirtual*> adoptedChildren;	//!< Children added to, for special tree
 		glm::vec3 position;							//!< Node position in scene coordinate
 		glm::vec3 size;								//!< Node size
 

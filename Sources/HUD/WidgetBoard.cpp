@@ -1,7 +1,7 @@
 #include "WidgetBoard.h"
 
 //  Default
-WidgetBoard::WidgetBoard(const uint8_t& config, const std::string& shaderName) : WidgetVirtual(config, shaderName) {}
+WidgetBoard::WidgetBoard(const uint8_t& config, const std::string& shaderName) : WidgetVirtual(WidgetVirtual::BOARD, config, shaderName) {}
 WidgetBoard::~WidgetBoard() {}
 //
 
@@ -9,10 +9,9 @@ WidgetBoard::~WidgetBoard() {}
 void WidgetBoard::initialize(const float& borderThickness, const float& borderWidth, const uint8_t& corner)
 {
 	//	init
-	drawBatch border;
-	drawBatch center;
-	border.color = glm::vec4(1.f, 1.f, 1.f, 1.f);
-	center.color = glm::vec4(1.f, 1.f, 1.f, 0.5f);
+	drawBatch border;   border.color = glm::vec4(1.f, 1.f, 1.f, 1.f);
+	drawBatch center;   center.color = glm::vec4(1.f, 1.f, 1.f, 0.5f);
+	
 	glm::vec3 dimension = glm::vec3(0.5f * size.x - borderThickness, 0.f, 0.5f * size.y - borderThickness);
 	const float pi = glm::pi<float>();
 	unsigned int borderCornerIndex;
@@ -347,25 +346,16 @@ void WidgetBoard::initialize(const float& borderThickness, const float& borderWi
 		border.faces.push_back(borderCornerIndex);  border.faces.push_back(index + 4);		border.faces.push_back(index + 5);
 		border.faces.push_back(borderCornerIndex);  border.faces.push_back(index + 5);		border.faces.push_back(index + 6);
 	}
-
-	//	Debug log
-	std::cout << "center vertices : " << center.vertices.size() << std::endl;
-	std::cout << "center faces : " << center.faces.size() << std::endl;
-	std::cout << "center textures : " << center.textures.size() << std::endl << std::endl;
-
-	std::cout << "border vertices : " << border.vertices.size() << std::endl;
-	std::cout << "border faces : " << border.faces.size() << std::endl;
-	std::cout << "border textures : " << border.textures.size() << std::endl << std::endl;
-
-	//	end
+	
+	//	fill texture coord to dummy value
 	for (unsigned int i = 0; i < border.vertices.size(); i++)
 		border.textures.push_back(glm::vec2(0.f, 0.f));
 	batchList.push_back(border);
-
 	for (unsigned int i = 0; i < center.vertices.size(); i++)
 		center.textures.push_back(glm::vec2(0.f, 0.f));
 	batchList.push_back(center);
 
+	//	end
 	initializeVBOs();
 	initializeVAOs();
 }

@@ -107,7 +107,7 @@ Shader::Shader(const std::string& path, const std::string& shaderName) : Resourc
 	{
 		std::string uniformName;
 		std::string uniformType;
-		GLuint uniformLocation;
+		GLint uniformLocation;
 
 		if (glIsProgram(program))
 		{
@@ -120,10 +120,12 @@ Shader::Shader(const std::string& path, const std::string& shaderName) : Resourc
 					uniformLocation = glGetUniformLocation(program, uniformName.c_str());
 					attributesLocation[uniformName] = uniformLocation;
 					attributesType[uniformName] = uniformType;
-					if (uniformLocation > GL_MAX_VERTEX_UNIFORM_COMPONENTS)
+					if (uniformLocation < 0)
 					{
-						if (logVerboseLevel >= ResourceVirtual::ALL)
-							std::cerr << "INFORMATION : loading shader : " << shaderName << " : warnning in loading '" << uniformName << "' variable location : " << uniformLocation << "; maybe the variable is not used in shader." << std::endl;
+						if (uniformName.size() >= 3 && uniformName[0] == 'g' && uniformName[0] == 'l' && uniformName[0] == '_' && logVerboseLevel >= ResourceVirtual::ERRORS)
+								std::cerr << "ERROR : loading shader : " << shaderName << " : error in loading '" << uniformName << "' : name format not allowed remove the 'gl_' prefix." << std::endl;
+						else if (logVerboseLevel >= ResourceVirtual::ERRORS)
+							std::cerr << "ERROR : loading shader : " << shaderName << " : ERROR in loading '" << uniformName << "' variable location : " << uniformLocation << "; maybe the variable name does not correspond to an active uniform variable" << std::endl;
 					}
 				}
 				catch(std::exception&)

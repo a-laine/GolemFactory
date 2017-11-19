@@ -10,6 +10,12 @@ class WidgetVirtual
 {
 	public:
 		//  Miscellaneous
+		enum WidgetType
+		{
+			VIRTUAL = 0,
+			BOARD,
+			IMAGE
+		};
 		enum OriginPosition
 		{
 			MIDDLE_V = 0 << 0,
@@ -50,14 +56,12 @@ class WidgetVirtual
 		//
 
 		//  Default
-		WidgetVirtual(const uint8_t& config = VISIBLE, const std::string& shaderName = "defaultWidget");
+		WidgetVirtual(const WidgetType& t = VIRTUAL, const uint8_t& config = VISIBLE, const std::string& shaderName = "defaultWidget");
 		virtual ~WidgetVirtual();
 		//
 
 		//	Public functions
-		virtual void initializeVBOs();
-		virtual void initializeVAOs();
-
+		virtual void initialize();
 		virtual void draw(Shader* s);
 		virtual void update(const float& elapseTime);
 		//
@@ -68,11 +72,15 @@ class WidgetVirtual
 		virtual void setOrigin(const uint8_t& origin);
 		void setVisibility(const bool& visible);
 		void setActive(const bool& active);
-		void setTexture(const std::string& shaderName);
+		void setTexture(const std::string& textureName);
+		void setShader(const std::string& shaderName);
 
-		uint8_t getOriginPosition() const;
+
+
+		uint8_t getOriginConfiguration() const;
+		glm::vec3 getOriginPosition() const;
 		uint8_t getState() const;
-
+		WidgetType getType() const;
 		glm::vec3 getPosition() const;
 		glm::vec4* getColor(const unsigned int& index);
 		Shader* getShader() const;
@@ -84,6 +92,7 @@ class WidgetVirtual
 
 	protected:
 		//  Attributes
+		WidgetType type;
 		uint8_t configuration;
 		glm::vec3 position;
 		glm::vec2 size;
@@ -92,5 +101,10 @@ class WidgetVirtual
 
 		Shader* shader;
 		Texture* texture;
+		//
+
+		//	Protected functions
+		virtual void initializeVBOs();
+		virtual void initializeVAOs();
 		//
 };

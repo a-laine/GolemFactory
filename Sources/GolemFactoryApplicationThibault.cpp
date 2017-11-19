@@ -68,7 +68,7 @@ int main()
 	SceneManager::getInstance()->setWorldPosition(glm::vec3(0,0,25));
 	SceneManager::getInstance()->setWorldSize(glm::vec3(GRID_SIZE*GRID_ELEMENT_SIZE, GRID_SIZE*GRID_ELEMENT_SIZE, 50));
 	
-		//initializeForestScene(true);
+		///initializeForestScene(true);
 
 		InstanceAnimatable* peasant = InstanceManager::getInstance()->getInstanceAnimatable("peasant", "human", "simple_peasant", "skinning");
 			float scale = 1.7f / peasant->getBBSize().z;
@@ -194,8 +194,7 @@ int main()
 static void errorCallback(int error, const char* description) { std::cerr << "GLFW ERROR : " << description << std::endl; }
 GLFWwindow* initGLFW()
 {
-	if (!glfwInit())
-		exit(EXIT_FAILURE);
+	if (!glfwInit()) exit(EXIT_FAILURE);
 
 	glfwSetErrorCallback(errorCallback);
 	glfwWindowHint(GLFW_SAMPLES, 4);
@@ -204,7 +203,7 @@ GLFWwindow* initGLFW()
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	GLFWwindow*window = glfwCreateWindow(800, 480, "Golem Factory v1.0", NULL, NULL);
+	GLFWwindow*window = glfwCreateWindow(1600, 900, "Golem Factory v1.0", NULL, NULL);
 	if (!window)
 	{
 		glfwTerminate();

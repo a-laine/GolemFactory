@@ -132,13 +132,19 @@ void Renderer::initializeGrid(const unsigned int& gridSize,const float& elementS
 	delete[] indexBufferGrid;
 
 	//	dummy
-	dummyPlaceHolder = new WidgetBoard();
-		dummyPlaceHolder->setSize(glm::vec2(1.f,0.5f));
-		dummyPlaceHolder->initialize(0.02f, 0.1f, WidgetBoard::TOP_LEFT | WidgetBoard::TOP_RIGHT | WidgetBoard::BOTTOM_RIGHT | WidgetBoard::BOTTOM_LEFT);
+	dummyPlaceHolder = new WidgetImage("10points.png");
+		dummyPlaceHolder->setSize(glm::vec2(1.f, 1.f));
+		dummyPlaceHolder->initialize();
+	WidgetBoard* board = new WidgetBoard();
+		board->setPosition(glm::vec3(0.f, -0.05f, 0.f));
+		board->setSize(glm::vec2(1.f,0.5f));
+		board->initialize(0.02f, 0.1f, WidgetBoard::TOP_LEFT | WidgetBoard::TOP_RIGHT | WidgetBoard::BOTTOM_RIGHT | WidgetBoard::BOTTOM_LEFT);
+		board->setColor(glm::vec4(0.5f, 0.f, 0.2f, 1.f));
 	dummyLayer = new Layer();
 		dummyLayer->setSize(0.05f);
 		dummyLayer->setPosition(glm::vec3(0.f, 0.f, 0.f));
 		dummyLayer->add(dummyPlaceHolder);
+		dummyLayer->add(board);
 }
 void Renderer::render()
 {
@@ -203,6 +209,7 @@ void Renderer::render()
 	glClear(GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glActiveTexture(GL_TEXTURE0);
 
 	projection = glm::perspective(glm::radians(45.f), (float)width / height, 0.1f, 1500.f);
 	glm::mat4 model = glm::translate(glm::mat4(1.f), 0.15f*camera->getForward()) * camera->getModelMatrix();

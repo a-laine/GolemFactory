@@ -16,6 +16,7 @@
 #include "Scene/SceneManager.h"
 
 #include "HUD/Layer.h"
+#include "HUD/WidgetImage.h"
 #include "HUD/WidgetBoard.h"
 
 
@@ -80,7 +81,7 @@ class Renderer : public Singleton<Renderer>
 		uint32_t* indexBufferGrid;*/
 
 		double dummy;
-		WidgetBoard* dummyPlaceHolder;
+		WidgetImage* dummyPlaceHolder;
 		Layer* dummyLayer;
 		//
 };

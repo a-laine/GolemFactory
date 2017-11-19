@@ -7,7 +7,6 @@
 **LITTLE TODO**
 
 *Micselenious :*
-- Shader, font passer c++11
 - change parsing gfmesh line from "iss<<" to sscanf_s 
 	- for more error file detection
 
@@ -16,11 +15,10 @@
 
 
 *Scene manager :*
-- change NodeVirtual* sons[] container list into a thread safe forward list.
-- add an optional NodeVirtual* adoptedSons[] thread safe forward list for optionnal sub tree.
+- change NodeVirtual class for thread safe
+- change SceneManager class for thread safe
 - add the map structure to populate a huge map with several tree just around the camera.
 - add support to change depth of these tree, depending on camera position
-- change this class to make it totaly thread safe !
 - add support of instance hierarchy. two way possible :
 	- getInstance function only return parent (and the renderer has to get child by himself)
 	- getInstance function return parent and children with all instance have an absolute position/orientation

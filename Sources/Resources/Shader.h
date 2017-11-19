@@ -60,7 +60,7 @@ class Shader : public ResourceVirtual
                 tessEvalShader,								//!< Tesselation evaluation shader opengl id
                 program;									//!< Program opengl id
         uint8_t textureCount;								//!< The number of texture use by the program
-        std::map<std::string,GLuint> attributesLocation;	//!< The shader attribute map with their opengl location
+        std::map<std::string,GLint> attributesLocation;	//!< The shader attribute map with their opengl location
 		std::map<std::string, std::string> attributesType;
         //
 };

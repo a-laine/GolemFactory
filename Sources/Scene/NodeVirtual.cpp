@@ -25,11 +25,16 @@ NodeVirtual::NodeVirtual(NodeVirtual* p, unsigned int d) : parent(p),debuginstan
 }
 NodeVirtual::~NodeVirtual()
 {
+	//	free instance
 	for (unsigned int i = 0; i < instanceList.size(); i++)
 		InstanceManager::getInstance()->release(instanceList[i]);
 	instanceList.clear();
 	InstanceManager::getInstance()->release(debuginstance);
+
+	//	delete all children
 	merge();
+	for (unsigned int i = 0; i < adoptedChildren.size(); i++)
+		delete adoptedChildren[i];
 }
 //
 
@@ -51,7 +56,7 @@ void NodeVirtual::print(int lvl)
 //
 
 //	Public functions
-int NodeVirtual::getChildrenCount() const { return children.size(); }
+int NodeVirtual::getChildrenCount() const { return children.size() + adoptedChildren.size(); }
 bool NodeVirtual::isLastBranch() const
 {
 	if (!children.empty() && children[0]->children.empty()) return true;
@@ -103,7 +108,6 @@ void NodeVirtual::getInstanceList(std::vector<std::pair<int, InstanceVirtual*> >
 
 	//	give personnal instance and continue with recursive call on children
 	//list.push_back(std::pair<int, InstanceVirtual*>(distance, debuginstance));
-
 	for (unsigned int i = 0; i < instanceList.size(); i++)
 		list.push_back(std::pair<int, InstanceVirtual*>(distance,instanceList[i]));
 	for (unsigned int i = 0; i < children.size(); i++)
@@ -140,6 +144,23 @@ void NodeVirtual::merge()
 	for (unsigned int i = 0; i < children.size(); i++)
 		delete children[i];
 	children.clear();
+}
+
+void NodeVirtual::add(NodeVirtual* n)
+{
+	adoptedChildren.push_back(n);
+	n->parent = this;
+}
+bool NodeVirtual::remove(NodeVirtual* n)
+{
+	std::vector<NodeVirtual*>::iterator it = std::find(adoptedChildren.begin(), adoptedChildren.end(), n);
+	if (it != adoptedChildren.end())
+	{
+		adoptedChildren.erase(it);
+		n->parent = nullptr;
+		return true;
+	}
+	else return false;
 }
 //
 
