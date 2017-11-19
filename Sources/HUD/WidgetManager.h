@@ -25,7 +25,7 @@ class WidgetManager : public Singleton<WidgetManager>
 		//	Public functions
 		void draw(Shader* s, const glm::mat4& base, const float* view, const float* projection);
 		void update(const float& elapsedTime);
-		void loadHud(const std::string& fileName);
+		void loadDebugHud();
 
 		void addWidget(WidgetVirtual* w);
 		void removeWidget(WidgetVirtual* w);

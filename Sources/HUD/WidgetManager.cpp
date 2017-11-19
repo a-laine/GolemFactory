@@ -12,28 +12,120 @@ WidgetManager::~WidgetManager()
 //
 
 //	Public functions
-void WidgetManager::loadHud(const std::string& fileName)
+void WidgetManager::loadDebugHud()
 {
-	//	dummy
-	WidgetBoard* board = new WidgetBoard();
-		board->setPosition(glm::vec3(0.f, 0.1f, 0.f));
-		board->setSize(glm::vec2(2.f, 1.f));
-		board->initialize(0.02f, 0.1f, WidgetBoard::TOP_LEFT | WidgetBoard::TOP_RIGHT | WidgetBoard::BOTTOM_RIGHT | WidgetBoard::BOTTOM_LEFT);
-		board->setColor(glm::vec4(0.5f, 0.f, 0.2f, 1.f));
-		widgetList.insert(board);
-	WidgetLabel* label = new WidgetLabel();
-		label->setSize(glm::vec2(1.85f, 0.8f));
-		label->setFont("Data Control");
-		label->initialize("Hi friend !", WidgetLabel::CLIPPING);
-		widgetList.insert(label);
-	Layer* layer = new Layer();
-		layer->setSize(0.05f);
-		layer->setPosition(glm::vec3(0.f, 0.f, 0.f));
-		layer->add(board);
-		layer->add(label);
-		layerList.insert(layer);
-	hudList["default"].push_back(layer);
-	activeHud = "default";
+	//	top title
+	WidgetBoard* board1 = new WidgetBoard();
+		board1->setPosition(glm::vec3(0.f, 0.1f, 0.f));
+		board1->setSize(glm::vec2(2.8f, 0.3f));
+		board1->initialize(0.02f, 0.1f);
+		board1->setColor(glm::vec4(0.5f, 0.f, 0.2f, 1.f));
+		widgetList.insert(board1);
+	WidgetLabel* label1 = new WidgetLabel();
+		label1->setPosition(glm::vec3(0.f, 0.f, -0.05f));
+		label1->setSizeChar(0.15f);
+		label1->setSize(glm::vec2(2.7f, 0.2f));
+		label1->setFont("Data Control");
+		label1->initialize("Debud Hud", WidgetLabel::CLIPPING);
+		widgetList.insert(label1);
+	Layer* layer1 = new Layer();
+		layer1->setSize(0.05f);
+		layer1->setPosition(glm::vec3(0.f, 0.f, 0.055f));
+		layer1->add(board1);
+		layer1->add(label1);
+		layerList.insert(layer1);
+
+	//	runtime speed
+	WidgetBoard* board2 = new WidgetBoard();
+		board2->setPosition(glm::vec3(0.f, 0.1f, 0.f));
+		board2->setSize(glm::vec2(0.8f, 0.5f));
+		board2->initialize(0.02f, 0.15f, WidgetBoard::BOTTOM_RIGHT);
+		board2->setColor(glm::vec4(0.f, 0.f, 0.5f, 1.f));
+		widgetList.insert(board2);
+	WidgetLabel* label2 = new WidgetLabel();
+		label2->setPosition(glm::vec3(0.03f, 0.f, -0.05f));
+		label2->setSizeChar(0.07f);
+		label2->setSize(glm::vec2(0.7f, 0.5f));
+		label2->setFont("Data Control");
+		label2->initialize("FPS : 60\nAvg : 60\n\nTime : 9ms\nAvg : 11ms", WidgetLabel::LEFT | WidgetLabel::CLIPPING); // 
+		widgetList.insert(label2);
+	Layer* layer2 = new Layer();
+		layer2->setSize(0.05f);
+		layer2->setPosition(glm::vec3(-0.093f, 0.f, 0.05f));
+		layer2->add(board2);
+		layer2->add(label2);
+		layerList.insert(layer2);
+
+	//	Draw calls
+	WidgetBoard* board3 = new WidgetBoard();
+		board3->setPosition(glm::vec3(0.f, 0.1f, 0.f));
+		board3->setSize(glm::vec2(0.8f, 0.5f));
+		board3->initialize(0.02f, 0.15f, WidgetBoard::BOTTOM_LEFT);
+		board3->setColor(glm::vec4(0.8f, 0.f, 0.0f, 1.f));
+		widgetList.insert(board3);
+	WidgetLabel* label3 = new WidgetLabel();
+		label3->setPosition(glm::vec3(0.025f, 0.f, -0.05f));
+		label3->setSizeChar(0.07f);
+		label3->setSize(glm::vec2(0.7f, 0.5f));
+		label3->setFont("Data Control");
+		label3->initialize("Instances :\n8000\n\nTriangles :\n1000000", WidgetLabel::LEFT | WidgetLabel::CLIPPING); // 
+		widgetList.insert(label3);
+	Layer* layer3 = new Layer();
+		layer3->setSize(0.05f);
+		layer3->setPosition(glm::vec3(0.093f, 0.f, 0.05f));
+		layer3->add(board3);
+		layer3->add(label3);
+		layerList.insert(layer3);
+
+	//	console
+	WidgetBoard* board4 = new WidgetBoard();
+		board4->setPosition(glm::vec3(0.f, 0.1f, 0.f));
+		board4->setSize(glm::vec2(2.2f, 0.5f));
+		board4->initialize(0.02f, 0.1f, WidgetBoard::TOP_RIGHT);
+		board4->setColor(glm::vec4(0.5f, 0.5f, 0.f, 1.f));
+		widgetList.insert(board4);
+	WidgetLabel* label4 = new WidgetLabel();
+		label4->setPosition(glm::vec3(0.045f, 0.f, 0.f));
+		label4->setSizeChar(0.055f);
+		label4->setSize(glm::vec2(2.2f, 0.35f));
+		label4->setFont("Data Control");
+		label4->initialize("debug consol test 3000\nWARRNING : this game is too awesome\n   this could cause some crash !\npeasant says : hello\npeasant says : that's true this game is awesome\n\ndebug consol test 3000", WidgetLabel::LEFT | WidgetLabel::BOTTOM | WidgetLabel::CLIPPING);
+		widgetList.insert(label4);
+	Layer* layer4 = new Layer();
+		layer4->setSize(0.05f);
+		layer4->setPosition(glm::vec3(-0.057f, 0.f, -0.05f));
+		layer4->add(board4);
+		layer4->add(label4);
+		layerList.insert(layer4);
+
+	//	picking
+	WidgetBoard* board5 = new WidgetBoard();
+		board5->setPosition(glm::vec3(0.f, 0.1f, 0.f));
+		board5->setSize(glm::vec2(2.2f, 0.5f));
+		board5->initialize(0.02f, 0.1f, WidgetBoard::TOP_LEFT);
+		board5->setColor(glm::vec4(0.f, 0.5f, 0.f, 1.f));
+		widgetList.insert(board5);
+	WidgetLabel* label5 = new WidgetLabel();
+		label5->setPosition(glm::vec3(0.045f, 0.f, 0.f));
+		label5->setSizeChar(0.07f);
+		label5->setSize(glm::vec2(2.2f, 0.35f));
+		label5->setFont("Data Control");
+		label5->initialize("Distance : 50.06 m\nPosition : (923.1 , 584.6 , 1.2)\nInstance on ray : 5\nFirst instance pointed id : 23681\n  type : animated", WidgetLabel::LEFT | WidgetLabel::CLIPPING);
+		widgetList.insert(label5);
+	Layer* layer5 = new Layer();
+		layer5->setSize(0.05f);
+		layer5->setPosition(glm::vec3(0.057f, 0.f, -0.05f));
+		layer5->add(board5);
+		layer5->add(label5);
+		layerList.insert(layer5);
+
+	//	push on HUD
+	hudList["debug"].push_back(layer1);
+	hudList["debug"].push_back(layer2);
+	hudList["debug"].push_back(layer3);
+	hudList["debug"].push_back(layer4);
+	hudList["debug"].push_back(layer5);
+	activeHud = "debug";
 }
 void WidgetManager::draw(Shader* s, const glm::mat4& base, const float* view, const float* projection)
 {

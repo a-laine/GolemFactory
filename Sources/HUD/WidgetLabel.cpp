@@ -118,10 +118,9 @@ float WidgetLabel::getSizeChar() const { return sizeChar; }
 void WidgetLabel::updateBuffers()
 {
 	DrawBatch batch;
-
 	parseText();
 	float x = 0.f;
-	int line = 0;
+	unsigned int line = 0;
 	float italic = ((textConfiguration & ITALIC) ? ITALIC_RATIO : 0.f);
 
 	for (unsigned int i = 0; i < text.size(); i++)
@@ -136,7 +135,8 @@ void WidgetLabel::updateBuffers()
 		{
 			case '\n':
 				line++;
-				x = 0;
+				x = 0.f;
+				charLength = 0.f;
 				break;
 
 			case '\t':

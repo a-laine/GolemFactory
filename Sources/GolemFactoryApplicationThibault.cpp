@@ -64,7 +64,7 @@ int main()
 	//Renderer::getInstance()->setShader(Renderer::INSTANCE_ANIMATABLE, ResourceManager::getInstance()->getShader("skeletonDebug"));
 	//Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE, ResourceManager::getInstance()->getShader("wired"));
 
-	WidgetManager::getInstance()->loadHud("");
+	WidgetManager::getInstance()->loadDebugHud();
 
 	// init scene
 	SceneManager::getInstance()->setWorldPosition(glm::vec3(0,0,25));
@@ -229,7 +229,7 @@ void initializeForestScene(bool emptyPlace)
 	float sDispersion;
 	float sOffset;
 	HouseGenerator hg;
-	srand((unsigned int)time(NULL));
+	srand(0);// (unsigned int)time(NULL));
 
 	//	center tree in place
 	if (!emptyPlace)
