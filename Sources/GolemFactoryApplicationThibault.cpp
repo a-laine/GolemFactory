@@ -64,11 +64,13 @@ int main()
 	//Renderer::getInstance()->setShader(Renderer::INSTANCE_ANIMATABLE, ResourceManager::getInstance()->getShader("skeletonDebug"));
 	//Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE, ResourceManager::getInstance()->getShader("wired"));
 
+	WidgetManager::getInstance()->loadHud("");
+
 	// init scene
 	SceneManager::getInstance()->setWorldPosition(glm::vec3(0,0,25));
 	SceneManager::getInstance()->setWorldSize(glm::vec3(GRID_SIZE*GRID_ELEMENT_SIZE, GRID_SIZE*GRID_ELEMENT_SIZE, 50));
 	
-		//initializeForestScene(true);
+		initializeForestScene(true);
 
 		InstanceAnimatable* peasant = InstanceManager::getInstance()->getInstanceAnimatable("peasant", "human", "simple_peasant", "skinning");
 			float scale = 1.7f / peasant->getBBSize().z;

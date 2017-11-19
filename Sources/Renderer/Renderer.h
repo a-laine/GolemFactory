@@ -15,10 +15,7 @@
 #include "Instances/InstanceManager.h"
 #include "Scene/SceneManager.h"
 
-#include "HUD/Layer.h"
-#include "HUD/WidgetImage.h"
-#include "HUD/WidgetBoard.h"
-#include "HUD/WidgetLabel.h"
+#include "HUD/WidgetManager.h"
 
 
 class Renderer : public Singleton<Renderer>
@@ -74,16 +71,12 @@ class Renderer : public Singleton<Renderer>
 		GLFWwindow* window;
 		Camera* camera;
 		std::map<ShaderIdentifier, Shader*> defaultShader;
-		uint8_t stencilMask;
-
 
 		bool drawGrid;
 		unsigned int vboGridSize;
 		GLuint gridVAO, vertexbuffer, arraybuffer, colorbuffer, normalbuffer;
 
-		WidgetLabel* label;
 		double dummy;
-		Layer* dummyLayer;
 		//
 };
 

@@ -130,28 +130,6 @@ void Renderer::initializeGrid(const unsigned int& gridSize,const float& elementS
 	delete[] colorBufferGrid;
 	delete[] normalBufferGrid;
 	delete[] indexBufferGrid;
-
-	//	dummy
-	WidgetBoard* board = new WidgetBoard();
-		board->setPosition(glm::vec3(0.f, 0.1f, 0.f));
-		board->setSize(glm::vec2(2.f,1.f));
-		board->initialize(0.02f, 0.1f, WidgetBoard::TOP_LEFT | WidgetBoard::TOP_RIGHT | WidgetBoard::BOTTOM_RIGHT | WidgetBoard::BOTTOM_LEFT);
-		board->setColor(glm::vec4(0.5f, 0.f, 0.2f, 1.f));
-	label = new WidgetLabel();
-		label->setSize(glm::vec2(1.85f, 0.8f));
-		//label->setPosition(glm::vec3(-0.925f, 0.f, 0.f));
-		label->setFont("Data Control");
-		label->initialize("Hi friend !", WidgetLabel::RIGHT | WidgetLabel::CLIPPING);
-	/*WidgetImage* tex = new WidgetImage("../Font/Data control.png");
-		tex->setSize(glm::vec2(1.f, 1.f));
-		tex->initialize();*/
-
-
-	dummyLayer = new Layer();
-		dummyLayer->setSize(0.05f);
-		dummyLayer->setPosition(glm::vec3(0.f, 0.f, 0.f));
-		dummyLayer->add(board);
-		dummyLayer->add(label);
 }
 void Renderer::render()
 {
@@ -211,23 +189,8 @@ void Renderer::render()
 	}
 
 	//	HUD
-	dummyLayer->update(16);
-	//label->setText(std::to_string(rand() % 3000));
-	label->update(16);
-	
-	glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-	glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_STENCIL_TEST);
-	glActiveTexture(GL_TEXTURE0);
-	
-	stencilMask = 0x00;
 	projection = glm::perspective(glm::radians(45.f), (float)width / height, 0.1f, 1500.f);
-	glm::mat4 model = glm::translate(glm::mat4(1.f), 0.15f*camera->getForward()) * camera->getModelMatrix();
-	if(dummyLayer->isVisible())
-		drawLayer(dummyLayer, model, &view[0][0], &projection[0][0]);
-
-	glDisable(GL_BLEND);
+	WidgetManager::getInstance()->draw(defaultShader[HUD], glm::translate(glm::mat4(1.f), 0.15f*camera->getForward()) * camera->getModelMatrix(), &view[0][0], &projection[0][0]);
 }
 //
 
@@ -323,31 +286,6 @@ void Renderer::drawInstanceContainer(InstanceVirtual* ins, const glm::mat4& view
 		}
 		else if (InstanceContainer* d = dynamic_cast<InstanceContainer*>(*it))
 			drawInstanceContainer(d, view, projection, glm::mat4(1.f));
-	}
-}
-
-
-void Renderer::drawWidgetVirtual(WidgetVirtual* widget, const glm::mat4& modelBase, const float* view, const float* projection)
-{
-	//	Get shader
-	Shader* shaderToUse = defaultShader[HUD];
-	if (!shaderToUse) shaderToUse = widget->getShader();
-	if (!shaderToUse) return;
-	shaderToUse->enable();
-
-	//	Enable mvp matrix
-	loadMVPMatrix(shaderToUse, &glm::translate(modelBase, widget->getPosition())[0][0], view, projection);
-
-	//	Draw 
-	widget->draw(shaderToUse, stencilMask);
-}
-void Renderer::drawLayer(Layer* layer, const glm::mat4& modelBase, const float* view, const float* projection)
-{
-	std::vector<WidgetVirtual*>& list = layer->getWidgetList();
-	for (std::vector<WidgetVirtual*>::iterator it = list.begin(); it != list.end(); ++it)
-	{
-		if((*it)->isVisible())
-			drawWidgetVirtual(*it, modelBase * layer->getModelMatrix(), view, projection);
 	}
 }
 //

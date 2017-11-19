@@ -22,6 +22,7 @@ void WidgetLabel::update(const float& elapseTime)
 	//	update buffers if needed
 	if (needUpdate)
 	{
+		parseText();
 		updateBuffers();
 		updateVBOs();
 		needUpdate = false;
