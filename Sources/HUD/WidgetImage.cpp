@@ -11,7 +11,7 @@ WidgetImage::~WidgetImage() {}
 //	Public functions
 void WidgetImage::initialize()
 {
-	drawBatch quad;
+	DrawBatch quad;
 	quad.color = glm::vec4(1.f, 1.f, 1.f, 1.f);
 
 	quad.vertices.push_back(glm::vec3(-0.5f * size.x, 0.f, -0.5f * size.y));
@@ -28,7 +28,7 @@ void WidgetImage::initialize()
 	quad.faces.push_back(0); quad.faces.push_back(2); quad.faces.push_back(3);
 
 	batchList.push_back(quad);
-	initializeVBOs();
+	initializeVBOs(GL_STATIC_DRAW);
 	initializeVAOs();
 }
 //

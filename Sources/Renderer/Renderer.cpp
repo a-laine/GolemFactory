@@ -132,19 +132,26 @@ void Renderer::initializeGrid(const unsigned int& gridSize,const float& elementS
 	delete[] indexBufferGrid;
 
 	//	dummy
-	dummyPlaceHolder = new WidgetImage("10points.png");
-		dummyPlaceHolder->setSize(glm::vec2(1.f, 1.f));
-		dummyPlaceHolder->initialize();
 	WidgetBoard* board = new WidgetBoard();
-		board->setPosition(glm::vec3(0.f, -0.05f, 0.f));
-		board->setSize(glm::vec2(1.f,0.5f));
+		board->setPosition(glm::vec3(0.f, 0.1f, 0.f));
+		board->setSize(glm::vec2(2.f,1.f));
 		board->initialize(0.02f, 0.1f, WidgetBoard::TOP_LEFT | WidgetBoard::TOP_RIGHT | WidgetBoard::BOTTOM_RIGHT | WidgetBoard::BOTTOM_LEFT);
 		board->setColor(glm::vec4(0.5f, 0.f, 0.2f, 1.f));
+	label = new WidgetLabel();
+		label->setSize(glm::vec2(1.85f, 0.8f));
+		//label->setPosition(glm::vec3(-0.925f, 0.f, 0.f));
+		label->setFont("Data Control");
+		label->initialize("Hi friend !", WidgetLabel::RIGHT | WidgetLabel::CLIPPING);
+	/*WidgetImage* tex = new WidgetImage("../Font/Data control.png");
+		tex->setSize(glm::vec2(1.f, 1.f));
+		tex->initialize();*/
+
+
 	dummyLayer = new Layer();
 		dummyLayer->setSize(0.05f);
 		dummyLayer->setPosition(glm::vec3(0.f, 0.f, 0.f));
-		dummyLayer->add(dummyPlaceHolder);
 		dummyLayer->add(board);
+		dummyLayer->add(label);
 }
 void Renderer::render()
 {
@@ -205,12 +212,16 @@ void Renderer::render()
 
 	//	HUD
 	dummyLayer->update(16);
-
-	glClear(GL_DEPTH_BUFFER_BIT);
+	//label->setText(std::to_string(rand() % 3000));
+	label->update(16);
+	
+	glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_STENCIL_TEST);
 	glActiveTexture(GL_TEXTURE0);
-
+	
+	stencilMask = 0x00;
 	projection = glm::perspective(glm::radians(45.f), (float)width / height, 0.1f, 1500.f);
 	glm::mat4 model = glm::translate(glm::mat4(1.f), 0.15f*camera->getForward()) * camera->getModelMatrix();
 	if(dummyLayer->isVisible())
@@ -328,7 +339,7 @@ void Renderer::drawWidgetVirtual(WidgetVirtual* widget, const glm::mat4& modelBa
 	loadMVPMatrix(shaderToUse, &glm::translate(modelBase, widget->getPosition())[0][0], view, projection);
 
 	//	Draw 
-	widget->draw(shaderToUse);
+	widget->draw(shaderToUse, stencilMask);
 }
 void Renderer::drawLayer(Layer* layer, const glm::mat4& modelBase, const float* view, const float* projection)
 {

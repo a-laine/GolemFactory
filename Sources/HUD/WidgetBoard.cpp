@@ -9,8 +9,8 @@ WidgetBoard::~WidgetBoard() {}
 void WidgetBoard::initialize(const float& borderThickness, const float& borderWidth, const uint8_t& corner)
 {
 	//	init
-	drawBatch border;   border.color = glm::vec4(1.f, 1.f, 1.f, 1.f);
-	drawBatch center;   center.color = glm::vec4(1.f, 1.f, 1.f, 0.5f);
+	DrawBatch border;   border.color = glm::vec4(1.f, 1.f, 1.f, 1.f);
+	DrawBatch center;   center.color = glm::vec4(1.f, 1.f, 1.f, 0.5f);
 	
 	glm::vec3 dimension = glm::vec3(0.5f * size.x - borderThickness, 0.f, 0.5f * size.y - borderThickness);
 	const float pi = glm::pi<float>();
@@ -356,7 +356,7 @@ void WidgetBoard::initialize(const float& borderThickness, const float& borderWi
 	batchList.push_back(center);
 
 	//	end
-	initializeVBOs();
+	initializeVBOs(GL_STATIC_DRAW);
 	initializeVAOs();
 }
 //

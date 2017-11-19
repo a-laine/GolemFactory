@@ -14,35 +14,14 @@ class WidgetVirtual
 		{
 			VIRTUAL = 0,
 			BOARD,
-			IMAGE
-		};
-		enum OriginPosition
-		{
-			MIDDLE_V = 0 << 0,
-			TOP = 1 << 0,
-			BOTTOM = 2 << 0,
-
-			MIDDLE_H = 0 << 2,
-			LEFT = 1 << 2,
-			RIGHT = 2 << 2,
-
-			CENTER = MIDDLE_H | MIDDLE_V,
-			HORIZONTAL_MASK = 0x0C,
-			VERTICAL_MASK = 0x03,
-		};
-		enum State
-		{
-			NONE = 0 << 4,
-			UNDER_CURSOR = 1 << 4,
-			SELECTED = 2 << 4,
-			STATE_MASK = 0x03 << 4
+			IMAGE,
+			LABEL
 		};
 		enum Flags
 		{
-			VISIBLE = 1 << 6,
-			ACTIVE = 1 << 7
+			VISIBLE = 1 << 6
 		};
-		struct drawBatch
+		struct DrawBatch
 		{
 			glm::vec4 color;
 			GLuint  vao,
@@ -61,50 +40,43 @@ class WidgetVirtual
 		//
 
 		//	Public functions
-		virtual void initialize();
-		virtual void draw(Shader* s);
+		virtual void initialize(int VBOtype = GL_STATIC_DRAW);
+		virtual void draw(Shader* s, uint8_t& stencilMask);
 		virtual void update(const float& elapseTime);
 		//
 
 		//  Set/get functions
 		virtual void setSize(const glm::vec2& s);
 		virtual void setPosition(const glm::vec3& p);
-		virtual void setOrigin(const uint8_t& origin);
 		void setVisibility(const bool& visible);
-		void setActive(const bool& active);
 		void setTexture(const std::string& textureName);
 		void setShader(const std::string& shaderName);
 
 
-
-		uint8_t getOriginConfiguration() const;
-		glm::vec3 getOriginPosition() const;
-		uint8_t getState() const;
 		WidgetType getType() const;
 		glm::vec3 getPosition() const;
 		glm::vec4* getColor(const unsigned int& index);
 		Shader* getShader() const;
 		Texture* getTexture() const;
-
 		bool isVisible() const;
-		bool isActive() const;
 		//
 
 	protected:
+		//	Protected functions
+		void drawClippingShape(const unsigned int& batchIndex, const bool& enableClipping, Shader* s, uint8_t& stencilMask);
+		void initializeVBOs(int VBOtype = GL_STATIC_DRAW);
+		void initializeVAOs();
+		//
+
 		//  Attributes
 		WidgetType type;
 		uint8_t configuration;
 		glm::vec3 position;
 		glm::vec2 size;
 
-		std::vector<drawBatch> batchList;
+		std::vector<DrawBatch> batchList;
 
 		Shader* shader;
 		Texture* texture;
-		//
-
-		//	Protected functions
-		virtual void initializeVBOs();
-		virtual void initializeVAOs();
 		//
 };
