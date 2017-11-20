@@ -172,9 +172,6 @@ int main()
 		InstanceManager::getInstance()->clearGarbage();
 		ResourceManager::getInstance()->clearGarbage();
 
-		//	Debug
-		//std::cout << 1000.f*(glfwGetTime() - startTime) << std::endl;
-
 		// End loop
 		glfwSwapBuffers(window);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -205,7 +202,7 @@ GLFWwindow* initGLFW()
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	GLFWwindow*window = glfwCreateWindow(1600, 900, "Golem Factory v1.0", NULL, NULL);
+	GLFWwindow*window = glfwCreateWindow(800, 450, "Golem Factory v1.0", NULL, NULL);
 	if (!window)
 	{
 		glfwTerminate();
@@ -342,16 +339,19 @@ std::string checkResourcesDirectory()
 	struct stat info;
 
 	//	check for home repository
-	if (stat("C:/Users/Thibault/Documents/Github/GolemFactory/Resources/", &info) != 0);
+	std::string directory = "C:/Users/Thibault/Documents/Github/GolemFactory/Resources/";
+	if (stat(directory.data(), &info) != 0);
 	else if (info.st_mode & S_IFDIR)
 		return "C:/Users/Thibault/Documents/Github/GolemFactory/Resources/";
 
 	//	check for work repository
-	if (stat("C:/Users/Thibault/Documents/Github/GolemFactory/Resources/", &info) != 0);
+	directory = "C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/";
+	if (stat(directory.data(), &info) != 0);
 	else if (info.st_mode & S_IFDIR)
-		return "C:/Users/Thibault/Documents/Github/GolemFactory/Resources/";
+		return "C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/";
 	
 	//	return the default resource path for portable applications
+	std::cout << "FATAL WARRNING : Fail to found ressource repo" << std::endl;
 	return "Resources/";
 }
 //

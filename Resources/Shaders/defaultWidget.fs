@@ -15,7 +15,7 @@ layout (location = 0) out vec4 fragColor;
 void main()
 {
 	if(useTexture != 0)
-		fragColor = color * texture2D(texture0, textureCoord0);
+		fragColor = color * texture(texture0, textureCoord0);
 	else fragColor = color;
 }
 
