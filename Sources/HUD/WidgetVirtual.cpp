@@ -53,6 +53,10 @@ void WidgetVirtual::draw(Shader* s, uint8_t& stencilMask)
 	}
 }
 void WidgetVirtual::update(const float& elapseTime) {}
+
+void WidgetVirtual::setString(const std::string& s) {}
+std::string WidgetVirtual::getString() { return std::string(); }
+std::stringstream* WidgetVirtual::getStream() { return nullptr; }
 //
 
 
@@ -83,6 +87,13 @@ glm::vec4* WidgetVirtual::getColor(const unsigned int& index) { return &(batchLi
 bool WidgetVirtual::isVisible() const { return (configuration & VISIBLE)!=0; }
 Shader* WidgetVirtual::getShader() const { return shader; }
 Texture* WidgetVirtual::getTexture() const { return texture; }
+unsigned int WidgetVirtual::getNumberFaces() const
+{
+	unsigned int result = 0;
+	for (unsigned int i = 0; i < batchList.size(); i++)
+		result += batchList[i].faces.size();
+	return result;
+}
 //
 
 //	Protected functions

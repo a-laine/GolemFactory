@@ -27,17 +27,24 @@ class WidgetManager : public Singleton<WidgetManager>
 		void update(const float& elapsedTime);
 		void loadDebugHud();
 
-		void addWidget(WidgetVirtual* w);
-		void removeWidget(WidgetVirtual* w);
-		void addLayer(Layer* l);
-		void removeLayer(Layer* l);
+		void addAssociation(WidgetVirtual* w, const std::string& associationName);
+		void setString(const std::string& associationName, const std::string& s);
+		std::string getString(const std::string& associationName);
+		std::stringstream* getStream(const std::string& associationName);
 
+		void addWidget(WidgetVirtual* w);
+		void addLayer(Layer* l);
+		void removeWidget(WidgetVirtual* w);
+		void removeLayer(Layer* l);
 		//
 
 		//	Set / get functions
 		void setActiveHUD(const std::string& s);
+		void setPickingParameters(const glm::mat4& base, const glm::vec3& ray, const glm::vec3& origin);
 
 		std::string getActiveHUD() const;
+		unsigned int getNbDrawnWidgets() const;
+		unsigned int getNbDrawnTriangles() const;
 		//
 
 	private:
@@ -46,14 +53,17 @@ class WidgetManager : public Singleton<WidgetManager>
 		~WidgetManager();
 		//
 
-		//	Protected functions
-
-		//
-
 		//	Attributes
 		std::set<Layer*> layerList;
 		std::set<WidgetVirtual*> widgetList;
 		std::map<std::string, std::vector<Layer*> > hudList;
 		std::string activeHud;
+		std::map<std::string, WidgetVirtual*> associations;
+
+		unsigned int widgetDrawn, trianglesDrawn;
+
+		glm::vec3 pickingRay;
+		glm::vec3 pickingOrigin;
+		glm::mat4 pickingBase;
 		//
 };

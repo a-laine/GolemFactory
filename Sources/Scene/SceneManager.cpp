@@ -7,11 +7,11 @@ SceneManager::SceneManager()
 	NodeVirtual* n = new NodeVirtual(nullptr, 0x040401);
 		n->setPosition(glm::vec3(0.f, 0.f, 0.f));
 		n->setSize(glm::vec3(100.f, 100.f, 10.f));
-		//n->split();
+		n->split();
 	world.push_back(n);
 
-	//for (unsigned int i = 0; i < world[0]->children.size(); i++)
-		//world[0]->children[i]->split();
+	for (unsigned int i = 0; i < world[0]->children.size(); i++)
+		world[0]->children[i]->split();
 }
 SceneManager::~SceneManager()
 {

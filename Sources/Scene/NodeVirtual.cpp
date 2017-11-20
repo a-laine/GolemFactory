@@ -1,5 +1,7 @@
 #include "NodeVirtual.h"
 
+#define FRUSTRUM_COEFF 2.f
+
 //	static attributes initialization
 glm::vec3 NodeVirtual::camPosition = glm::vec3(0, 0, 0);
 glm::vec3 NodeVirtual::camDirection = glm::vec3(1, 0, 0);
@@ -239,15 +241,18 @@ int NodeVirtual::getChildrenKey(glm::vec3 p) const
 int NodeVirtual::isInFrustrum() const
 {
 	glm::vec3 p = position - camPosition;
-	float forwardFloat = glm::dot(p, camDirection) + std::abs(size.x*camDirection.x) + abs(size.y*camDirection.y) + abs(size.z*camDirection.z);
-	if (forwardFloat < 0) return std::numeric_limits<int>::lowest();
+	float forwardFloat = glm::dot(p, camDirection) + FRUSTRUM_COEFF * (std::abs(size.x*camDirection.x) + abs(size.y*camDirection.y) + abs(size.z*camDirection.z));
+	if (forwardFloat < 0)
+		return std::numeric_limits<int>::lowest();
 
-	float maxAbsoluteDimension = (std::max)(size.x, (std::max)(size.y, size.z)) / 2;
-	float maxTangentDimension = std::abs(size.x*camLeft.x) / 2 + abs(size.y*camLeft.y) / 2 + abs(size.z*camLeft.z) / 2;
-	if (std::abs(glm::dot(p, camLeft)) - maxTangentDimension > std::abs(forwardFloat)*std::tan(glm::radians(camHorizontalAngle)) + maxAbsoluteDimension) return std::numeric_limits<int>::lowest();
+	float maxAbsoluteDimension = (std::max)(size.x, (std::max)(size.y, size.z)) / 2.f;
+	float maxTangentDimension = std::abs(size.x*camLeft.x) / 2.f + abs(size.y*camLeft.y) / 2.f + abs(size.z*camLeft.z) / 2.f;
+	if (std::abs(glm::dot(p, camLeft)) - maxTangentDimension > std::abs(forwardFloat)*std::tan(glm::radians(camHorizontalAngle)) + FRUSTRUM_COEFF * maxAbsoluteDimension)
+		return std::numeric_limits<int>::lowest();
 
-	maxTangentDimension = std::abs(size.x*camVertical.x) / 2 + abs(size.y*camVertical.y) / 2 + abs(size.z*camVertical.z) / 2;
-	if (std::abs(glm::dot(p, camVertical)) - maxTangentDimension > std::abs(forwardFloat)*std::tan(glm::radians(camVerticalAngle)) + maxAbsoluteDimension) return std::numeric_limits<int>::lowest();
+	maxTangentDimension = std::abs(size.x*camVertical.x) / 2.f + abs(size.y*camVertical.y) / 2.f + abs(size.z*camVertical.z) / 2.f;
+	if (std::abs(glm::dot(p, camVertical)) - maxTangentDimension > std::abs(forwardFloat)*std::tan(glm::radians(camVerticalAngle)) + FRUSTRUM_COEFF * maxAbsoluteDimension)
+		return std::numeric_limits<int>::lowest();
 
 	return (int)glm::length(p);
 }

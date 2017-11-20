@@ -43,6 +43,10 @@ class WidgetVirtual
 		virtual void initialize(int VBOtype = GL_STATIC_DRAW);
 		virtual void draw(Shader* s, uint8_t& stencilMask);
 		virtual void update(const float& elapseTime);
+
+		virtual void setString(const std::string& s);
+		virtual std::string getString();
+		virtual std::stringstream* getStream();
 		//
 
 		//  Set/get functions
@@ -59,6 +63,7 @@ class WidgetVirtual
 		Shader* getShader() const;
 		Texture* getTexture() const;
 		bool isVisible() const;
+		virtual unsigned int getNumberFaces() const;
 		//
 
 	protected:

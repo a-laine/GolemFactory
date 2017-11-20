@@ -39,11 +39,11 @@ class WidgetLabel : public WidgetVirtual
 		//
 
 		//	Set / get functions
-		void setText(const std::string& newText);
+		void setString(const std::string& newText);
 		void setFont(const std::string& fontName);
 		void setSizeChar(const float& f);
 
-		std::string getText() const;
+		std::string getString() const;
 		Font* getFont() const;
 		float getSizeChar() const;
 		//
@@ -63,5 +63,6 @@ class WidgetLabel : public WidgetVirtual
 		uint8_t textConfiguration;
 		float sizeChar;
 		bool needUpdate;
+		float updateCooldown;
 		//
 };

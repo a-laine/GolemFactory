@@ -13,6 +13,26 @@ Camera::Camera(const float& screenRatio) :
     vectorsFromAngles();
 }
 Camera::~Camera() {}
+Camera& Camera::operator=(Camera& c)
+{
+	configuration = c.configuration;
+	position = c.position;
+	forward = c.forward;
+	left = c.left;
+	vertical = c.vertical;
+
+	radius = c.radius;
+	radiusMin = c.radiusMin;
+	radiusMax = c.radiusMax;
+
+	sensivity = c.sensivity;
+	speedMag = c.speedMag;
+	frustrumAngleHorizontal = c.frustrumAngleHorizontal;
+	frustrumAngleVertical = c.frustrumAngleVertical;
+	phi = c.phi;
+	teta = c.teta;
+	return *this;
+}
 //
 
 //  Public functions

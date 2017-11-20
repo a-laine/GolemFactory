@@ -50,6 +50,8 @@ class Camera
 		 */
         Camera(const float& screenRatio = 1.0f);
 
+		Camera& operator=(Camera& c);
+
 		/*!
 		 *  \brief Destructor
 		 */

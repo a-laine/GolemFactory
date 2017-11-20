@@ -185,4 +185,57 @@ DefaultRPGKeyMapping
 		configuration : ["button","down"];
 		listeningKey : [256];
 	};
+	
+	
+
+	F3 : {
+		eventPublished : "F3";
+		configuration : ["button","down"];
+		listeningKey : [292];
+	};
+	F4 : {
+		eventPublished : "F4";
+		configuration : ["button","down"];
+		listeningKey : [293];
+	};
+	F5 : {
+		eventPublished : "F5";
+		configuration : ["button","down"];
+		listeningKey : [294];
+	};
+	F6 : {
+		eventPublished : "F6";
+		configuration : ["button","down"];
+		listeningKey : [295];
+	};
+	F7 : {
+		eventPublished : "F7";
+		configuration : ["button","down"];
+		listeningKey : [296];
+	};
+	F8 : {
+		eventPublished : "F8";
+		configuration : ["button","down"];
+		listeningKey : [297];
+	};
+	F9 : {
+		eventPublished : "F9";
+		configuration : ["button","down"];
+		listeningKey : [298];
+	};
+	F10 : {
+		eventPublished : "F10";
+		configuration : ["button","down"];
+		listeningKey : [299];
+	};
+	F11 : {
+		eventPublished : "F11";
+		configuration : ["button","down"];
+		listeningKey : [300];
+	};
+	F12 : {
+		eventPublished : "F12";
+		configuration : ["button","down"];
+		listeningKey : [301];
+	};
 }

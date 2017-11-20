@@ -131,20 +131,22 @@ void Renderer::initializeGrid(const unsigned int& gridSize,const float& elementS
 	delete[] normalBufferGrid;
 	delete[] indexBufferGrid;
 }
-void Renderer::render()
+void Renderer::render(Camera* renderCam)
 {
-	if (!window || !camera) return;
+	trianglesDrawn = 0;
+	instanceDrawn = 0;
+	if (!window || !camera || !renderCam) return;
 	
 	// dummy animation timeline
 	dummy += 0.16 / 3.f;
 	if (dummy >= 6.28) dummy = 0.0;
 
 	// bind matrix
-	glm::mat4 view = camera->getViewMatrix();
+	glm::mat4 view = renderCam->getViewMatrix();
 
 	int width, height;
 	glfwGetWindowSize(window, &width, &height);
-	glm::mat4 projection = glm::perspective(glm::radians(camera->getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f);
+	glm::mat4 projection = glm::perspective(glm::radians(renderCam->getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f);
 	
 	// opengl state
 	glEnable(GL_DEPTH_TEST);
@@ -205,7 +207,7 @@ void Renderer::loadMVPMatrix(Shader* shader, const float* model, const float* vi
 	loc = shader->getUniformLocation("projection");
 	if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, projection);
 }
-void Renderer::drawInstanceDrawable(InstanceVirtual* ins, const float* view, const float* projection)
+void Renderer::drawInstanceDrawable(InstanceVirtual* ins, const float* view, const float* projection, const glm::mat4& base)
 {
 	//	Get shader
 	Shader* shaderToUse = defaultShader[INSTANCE_DRAWABLE];
@@ -214,7 +216,7 @@ void Renderer::drawInstanceDrawable(InstanceVirtual* ins, const float* view, con
 	shaderToUse->enable();
 
 	//	Enable mvp matrix
-	loadMVPMatrix(shaderToUse, &ins->getModelMatrix()[0][0], view, projection);
+	loadMVPMatrix(shaderToUse, &(base * ins->getModelMatrix())[0][0], view, projection);
 
 	//	Map with wind if instance sensible to wind
 	int loc = shaderToUse->getUniformLocation("wind");
@@ -227,6 +229,8 @@ void Renderer::drawInstanceDrawable(InstanceVirtual* ins, const float* view, con
 
 	//	Draw mesh
 	ins->getMesh()->draw();
+	instanceDrawn++;
+	trianglesDrawn += ins->getMesh()->getNumberFaces();
 
 	/*
 	glm::mat4 model = glm::translate(glm::mat4(1.f), ins->getPosition());
@@ -259,6 +263,8 @@ void Renderer::drawInstanceAnimatable(InstanceVirtual* ins, const float* view, c
 
 	//	Draw mesh
 	ins->getMesh()->draw();
+	instanceDrawn++;
+	trianglesDrawn += ins->getMesh()->getNumberFaces();
 
 	/*
 	glm::mat4 model = glm::translate(glm::mat4(1.f), ins->getPosition());
@@ -273,17 +279,7 @@ void Renderer::drawInstanceContainer(InstanceVirtual* ins, const glm::mat4& view
 	for (auto it = instanceList.begin(); it != instanceList.end(); it++)
 	{
 		if (InstanceDrawable* d = dynamic_cast<InstanceDrawable*>(*it))
-		{
-			// Get shader
-			Shader* shaderToUse = defaultShader[INSTANCE_DRAWABLE];
-			if (!shaderToUse) shaderToUse = d->getShader();
-			if (!shaderToUse) continue;
-			shaderToUse->enable();
-
-			// Enable mvp matrix
-			loadMVPMatrix(shaderToUse, &(modelMatrix * d->getModelMatrix())[0][0], &view[0][0], &projection[0][0]);
-			d->getMesh()->draw();
-		}
+			drawInstanceDrawable(d, &view[0][0], &projection[0][0], modelMatrix);
 		else if (InstanceContainer* d = dynamic_cast<InstanceContainer*>(*it))
 			drawInstanceContainer(d, view, projection, glm::mat4(1.f));
 	}
@@ -314,4 +310,6 @@ Shader* Renderer::getShader(ShaderIdentifier id)
 	else return nullptr;
 }
 bool Renderer::isGridVisible() { return drawGrid; }
+unsigned int Renderer::getNbDrawnInstances() const { return instanceDrawn; }
+unsigned int Renderer::getNbDrawnTriangles() const { return trianglesDrawn; }
 //

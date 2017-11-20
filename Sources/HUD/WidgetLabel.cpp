@@ -6,7 +6,7 @@
 
 //  Default
 WidgetLabel::WidgetLabel(const std::string& fontName, const uint8_t& config, const std::string& shaderName) : 
-	WidgetVirtual(WidgetVirtual::LABEL, config, shaderName), textConfiguration(0x00), sizeChar(0.1f), needUpdate(true)
+	WidgetVirtual(WidgetVirtual::LABEL, config, shaderName), textConfiguration(0x00), sizeChar(0.1f), needUpdate(true), updateCooldown(0.f)
 {
 	font = nullptr;
 }
@@ -20,12 +20,14 @@ WidgetLabel::~WidgetLabel()
 void WidgetLabel::update(const float& elapseTime)
 {
 	//	update buffers if needed
-	if (needUpdate)
+	updateCooldown += elapseTime;
+	if (needUpdate && updateCooldown > 100.f)
 	{
 		parseText();
 		updateBuffers();
 		updateVBOs();
 		needUpdate = false;
+		updateCooldown = 0.f;
 	}
 }
 void WidgetLabel::initialize(const std::string& t, uint8_t textConfig)
@@ -65,6 +67,7 @@ void WidgetLabel::initialize(const std::string& t, uint8_t textConfig)
 	//	end
 	initializeVBOs(GL_DYNAMIC_DRAW);
 	initializeVAOs();
+	needUpdate = false;
 }
 void WidgetLabel::draw(Shader* s, uint8_t& stencilMask)
 {
@@ -92,7 +95,7 @@ void WidgetLabel::draw(Shader* s, uint8_t& stencilMask)
 //
 
 //	Set / get functions
-void WidgetLabel::setText(const std::string& newText)
+void WidgetLabel::setString(const std::string& newText)
 {
 	text = newText;
 	needUpdate = true;
@@ -109,7 +112,7 @@ void WidgetLabel::setSizeChar(const float& f)
 	needUpdate = true;
 }
 
-std::string WidgetLabel::getText() const { return text; }
+std::string WidgetLabel::getString() const { return text; }
 Font* WidgetLabel::getFont() const { return font; }
 float WidgetLabel::getSizeChar() const { return sizeChar; }
 //
@@ -136,11 +139,11 @@ void WidgetLabel::updateBuffers()
 			case '\n':
 				line++;
 				x = 0.f;
-				charLength = 0.f;
 				break;
 
 			case '\t':
 				x = sizeChar * ((int)(x / sizeChar) + 1);
+				x += sizeChar*charLength;
 				break;
 
 			default:
@@ -162,9 +165,10 @@ void WidgetLabel::updateBuffers()
 				batch.faces.push_back((unsigned short)(batch.vertices.size() - 4));
 				batch.faces.push_back((unsigned short)(batch.vertices.size() - 2));
 				batch.faces.push_back((unsigned short)(batch.vertices.size() - 1));
+
+				x += sizeChar*charLength;
 				break;
 		}
-		x += sizeChar*charLength;
 	}
 	batchList[0].vertices = batch.vertices;
 	batchList[0].textures = batch.textures;

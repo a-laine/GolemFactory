@@ -22,7 +22,7 @@
 
 #define GRID_SIZE 100
 #define GRID_ELEMENT_SIZE 5.f
-
+#define DEBUG 0
 
 // prototypes
 GLFWwindow* initGLFW();
@@ -38,7 +38,8 @@ int main()
 	GLFWwindow* window = initGLFW();
 	Renderer::getInstance()->initGLEW(0);
 	std::string resourceRepository = checkResourcesDirectory();
-	std::cout << "Found resources folder at : " << resourceRepository << std::endl;
+
+	if (DEBUG) std::cout << "Found resources folder at : " << resourceRepository << std::endl;
 
 	// Init Event handler
 	EventHandler::getInstance()->addWindow(window);
@@ -57,7 +58,12 @@ int main()
 		camera.setMode(Camera::FREEFLY);
 		camera.setAllRadius(2.f, 0.5f, 10.f);
 		camera.setPosition(glm::vec3(0,-3,3));
-	Renderer::getInstance()->setCamera(&camera);
+	Camera camera2;
+		camera2.setMode(Camera::FREEFLY);
+		camera2.setAllRadius(2.f, 0.5f, 10.f);
+		camera2.setPosition(glm::vec3(0, -3, 3));
+	bool syncronizedCamera = true;
+	Renderer::getInstance()->setCamera(&camera2);
 	Renderer::getInstance()->setWindow(window);
 	Renderer::getInstance()->initializeGrid(GRID_SIZE, GRID_ELEMENT_SIZE, glm::vec3(24/255.f, 202/255.f, 230/255.f));	// blue tron
 	//Renderer::getInstance()->setShader(Renderer::INSTANCE_ANIMATABLE, ResourceManager::getInstance()->getShader("wiredSkinning"));
@@ -81,6 +87,10 @@ int main()
 
 	// init loop time tracking
 	double elapseTime = 16.;
+	double completeTime = 16.;
+	double averageCompleteTime = 16.;
+
+	//	game loop
 	std::cout << "game loop initiated" << std::endl;
 	while (!glfwWindowShouldClose(window))
 	{
@@ -100,7 +110,7 @@ int main()
 		}
 
 		// Render frame
-		Renderer::getInstance()->render();
+		Renderer::getInstance()->render(&camera);
 
 		//  handle events
 		EventHandler::getInstance()->handleEvent();
@@ -108,6 +118,7 @@ int main()
 		EventHandler::getInstance()->getFrameEvent(v);
 		for (unsigned int i = 0; i<v.size(); i++)
 		{
+			//	micselenious
 			if(v[i] == QUIT) glfwSetWindowShouldClose(window, GL_TRUE);
 			else if(v[i] == CHANGE_CURSOR_MODE) EventHandler::getInstance()->setCursorMode(!EventHandler::getInstance()->getCursorMode());
 			else if (v[i] == ACTION)
@@ -116,6 +127,7 @@ int main()
 				else if (camera.getMode() == Camera::FREEFLY) camera.setMode(Camera::TRACKBALL);
 			}
 
+			//	avatar related
 			else if (v[i] == SLOT1) peasant->launchAnimation("hello");
 			else if (v[i] == SLOT2) peasant->launchAnimation("yes");
 			else if (v[i] == SLOT3) peasant->launchAnimation("no");
@@ -145,10 +157,23 @@ int main()
 					if (EventHandler::getInstance()->isActivated(FORWARD) && camera.getMode() == Camera::TRACKBALL) peasant->launchAnimation("walk");
 				}
 			}
+
+			//	debug action
+			else if (v[i] == F3) syncronizedCamera = !syncronizedCamera;
 		}
 
 		//	Animate instances
 		peasant->animate((float)elapseTime);
+
+		//	Update widgets
+		averageCompleteTime = 0.99f * averageCompleteTime + 0.01f * completeTime;
+		WidgetManager::getInstance()->setString("runtime speed", 
+			"FPS: " + std::to_string((int)(1000.f / completeTime)) + "\n ~: " + std::to_string((int)(1000.f / averageCompleteTime)) + 
+			"\n\nTime: " + std::to_string((int)completeTime) + " ms\n ~: " +std::to_string((int)averageCompleteTime));
+		WidgetManager::getInstance()->setString("drawcalls",
+			"Instances :\n " + std::to_string(Renderer::getInstance()->getNbDrawnInstances() + WidgetManager::getInstance()->getNbDrawnWidgets()) + 
+			"\n\nTriangles :\n " + std::to_string(Renderer::getInstance()->getNbDrawnTriangles() + WidgetManager::getInstance()->getNbDrawnTriangles()));
+		WidgetManager::getInstance()->update((float)elapseTime);
 
 		//	Move avatar if needed
 		if (camera.getMode() == Camera::TRACKBALL)
@@ -168,11 +193,14 @@ int main()
 			EventHandler::getInstance()->isActivated(LEFT),		EventHandler::getInstance()->isActivated(RIGHT),
 			EventHandler::getInstance()->isActivated(RUN),		EventHandler::getInstance()->isActivated(SNEAKY)    );
 
+		if (syncronizedCamera) camera2 = camera;
+
 		//	clear garbages
 		InstanceManager::getInstance()->clearGarbage();
 		ResourceManager::getInstance()->clearGarbage();
 
 		// End loop
+		completeTime = 1000.0*(glfwGetTime() - startTime);
 		glfwSwapBuffers(window);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 		elapseTime = 1000.0*(glfwGetTime() - startTime);
@@ -202,7 +230,7 @@ GLFWwindow* initGLFW()
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	GLFWwindow*window = glfwCreateWindow(800, 450, "Golem Factory v1.0", NULL, NULL);
+	GLFWwindow*window = glfwCreateWindow(1600, 900, "Golem Factory v1.0", NULL, NULL);
 	if (!window)
 	{
 		glfwTerminate();
@@ -330,9 +358,12 @@ void initializeForestScene(bool emptyPlace)
 		}
 
 	//	debug
-	std::cout << "Instance count : " << InstanceManager::getInstance()->getNumberOfInstances() << std::endl;
-	std::cout << "House count : " << vilageHouseCount  << std::endl;
-	std::cout << "Insert fail : " << fail << std::endl;
+	if (DEBUG)
+	{
+		std::cout << "Instance count : " << InstanceManager::getInstance()->getNumberOfInstances() << std::endl;
+		std::cout << "House count : " << vilageHouseCount  << std::endl;
+		std::cout << "Insert fail : " << fail << std::endl;
+	}
 }
 std::string checkResourcesDirectory()
 {
