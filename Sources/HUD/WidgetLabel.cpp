@@ -92,6 +92,40 @@ void WidgetLabel::draw(Shader* s, uint8_t& stencilMask)
 	if (textConfiguration & CLIPPING)
 		drawClippingShape(1, false, s, stencilMask);
 }
+bool WidgetLabel::intersect(const glm::mat4& base, const glm::vec3& ray, const glm::vec3 origin, glm::vec3& result)
+{
+	for (unsigned int j = 0; j < batchList[0].faces.size(); j += 3)
+	{
+		//	compute triangles vertices in eyes space
+		glm::vec3 p1 = glm::vec3(base * glm::vec4(batchList[0].vertices[batchList[0].faces[j]], 1.f));
+		glm::vec3 p2 = glm::vec3(base * glm::vec4(batchList[0].vertices[batchList[0].faces[j + 1]], 1.f));
+		glm::vec3 p3 = glm::vec3(base * glm::vec4(batchList[0].vertices[batchList[0].faces[j + 2]], 1.f));
+
+		//	compute local base (triangle edge), and triangle normal
+		glm::vec3 v1 = p2 - p1;
+		glm::vec3 v2 = p3 - p1;
+		glm::vec3 normal = glm::cross(v1, v2);
+		if (normal == glm::vec3(0.f)) continue;
+		glm::normalize(normal);
+
+		//	compute intersection point
+		if (glm::dot(normal, ray) == 0.f) return false;
+		float depth = glm::dot(normal, p1) / glm::dot(normal, ray);
+		glm::vec3 intersection = depth * ray - p1;
+
+		//	check if point is inside triangle (checking barycentric coordinates)
+		float magnitute = glm::dot(v2, v2)*glm::dot(v1, v1) - glm::dot(v1, v2)*glm::dot(v1, v2);
+		glm::vec2 barry;
+		barry.x = (glm::dot(v2, v2) * glm::dot(intersection, v1) - glm::dot(v2, v1) * glm::dot(intersection, v2)) / magnitute;
+		barry.y = (glm::dot(v1, v1) * glm::dot(intersection, v2) - glm::dot(v2, v1) * glm::dot(intersection, v1)) / magnitute;
+		if (barry.x < -PICKING_MARGIN || barry.y < -PICKING_MARGIN || barry.x + barry.y > 1.f + PICKING_MARGIN) continue;
+
+		//	ray actually intersect this triangle
+		result = intersection;
+		return true;
+	}
+	return false;
+}
 //
 
 //	Set / get functions

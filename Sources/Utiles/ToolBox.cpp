@@ -129,4 +129,9 @@ void ToolBox::clearWhitespace(std::string& input)
 		else if (std::isspace(*it) && *std::prev(it) != ' ') *it = ' ';
 	}
 }
+bool ToolBox::isPathExist(const std::string& fileName)
+{
+	struct stat buffer;
+	return (stat(fileName.c_str(), &buffer) == 0);
+}
 //

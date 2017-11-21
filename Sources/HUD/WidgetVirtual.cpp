@@ -1,5 +1,7 @@
 #include "WidgetVirtual.h"
 
+const float WidgetVirtual::PICKING_MARGIN = 0.f;
+
 //  Default
 WidgetVirtual::WidgetVirtual(const WidgetType& t, const uint8_t& config, const std::string& shaderName) : type(t), configuration(config), position(0.f, 0.f, 0.f), size(1.f,1.f)
 {
@@ -53,6 +55,44 @@ void WidgetVirtual::draw(Shader* s, uint8_t& stencilMask)
 	}
 }
 void WidgetVirtual::update(const float& elapseTime) {}
+bool WidgetVirtual::intersect(const glm::mat4& base, const glm::vec3& ray, const glm::vec3 origin, glm::vec3& result)
+{
+	for (unsigned int i = 0; i < batchList.size(); i++)
+	{
+		for (unsigned int j = 0; j < batchList[i].faces.size(); j +=3 )
+		{
+			//	compute triangles vertices in eyes space
+			glm::vec3 p1 = glm::vec3(base * glm::vec4(batchList[i].vertices[batchList[i].faces[j]], 1.f));
+			glm::vec3 p2 = glm::vec3(base * glm::vec4(batchList[i].vertices[batchList[i].faces[j + 1]], 1.f));
+			glm::vec3 p3 = glm::vec3(base * glm::vec4(batchList[i].vertices[batchList[i].faces[j + 2]], 1.f));
+
+			//	compute local base (triangle edge), and triangle normal
+			glm::vec3 v1 = p2 - p1;
+			glm::vec3 v2 = p3 - p1;
+			glm::vec3 normal = glm::cross(v1, v2);
+			if (normal == glm::vec3(0.f)) continue;
+			glm::normalize(normal);
+
+			//	compute intersection point
+			if (glm::dot(normal, ray) == 0.f) return false;
+			float depth = glm::dot(normal, p1) / glm::dot(normal, ray);
+			glm::vec3 intersection = depth * ray - p1;
+
+			//	check if point is inside triangle (checking barycentric coordinates)
+			float magnitute = glm::dot(v2, v2)*glm::dot(v1, v1) - glm::dot(v1, v2)*glm::dot(v1, v2);
+			glm::vec2 barry;
+				barry.x = (glm::dot(v2, v2) * glm::dot(intersection, v1) - glm::dot(v2, v1) * glm::dot(intersection, v2)) / magnitute;
+				barry.y = (glm::dot(v1, v1) * glm::dot(intersection, v2) - glm::dot(v2, v1) * glm::dot(intersection, v1)) / magnitute;
+			if (barry.x < -PICKING_MARGIN || barry.y < -PICKING_MARGIN || barry.x + barry.y > 1.f + PICKING_MARGIN) continue;
+
+			//	ray actually intersect this triangle
+			result = intersection;
+			return true;
+		}
+	}
+	return false;
+}
+
 
 void WidgetVirtual::setString(const std::string& s) {}
 std::string WidgetVirtual::getString() { return std::string(); }

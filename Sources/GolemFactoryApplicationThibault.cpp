@@ -5,10 +5,10 @@
 #include <list>
 #include <time.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <GL/glew.h>
 
 #include "Utiles/System.h"
+#include "Utiles/ToolBox.h"
 #include "Events/EventHandler.h"
 #include "Renderer/Renderer.h"
 #include "Generators/HouseGenerator.h"
@@ -70,7 +70,7 @@ int main()
 	//Renderer::getInstance()->setShader(Renderer::INSTANCE_ANIMATABLE, ResourceManager::getInstance()->getShader("skeletonDebug"));
 	//Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE, ResourceManager::getInstance()->getShader("wired"));
 
-	WidgetManager::getInstance()->loadDebugHud();
+	WidgetManager::getInstance()->loadHud("");
 
 	// init scene
 	SceneManager::getInstance()->setWorldPosition(glm::vec3(0,0,25));
@@ -98,6 +98,8 @@ int main()
 		double startTime = glfwGetTime();
 		int width, height;
 		glfwGetWindowSize(window, &width, &height);
+		/*
+		//	update some camera attribute
 		if (camera.getMode() == Camera::TRACKBALL)
 			camera.setRadius(camera.getRadius() + camera.getSensitivity() * EventHandler::getInstance()->getScrollingRelative().y);
 		else
@@ -108,7 +110,7 @@ int main()
 			camera.setFrustrumAngleVertical(angle);
 			camera.setFrustrumAngleHorizontalFromScreenRatio((float)width / height);
 		}
-
+		*/
 		// Render frame
 		Renderer::getInstance()->render(&camera);
 
@@ -165,6 +167,23 @@ int main()
 		//	Animate instances
 		peasant->animate((float)elapseTime);
 
+		//	Compute HUD picking parameters
+		if (EventHandler::getInstance()->getCursorMode())
+		{
+			//vec4 ray_eye = inverse(projection_matrix) * ray_clip;
+			glm::vec2 cursor = EventHandler::getInstance()->getCursorNormalizedPosition();
+			glm::vec4 ray_eye = glm::inverse(glm::perspective(glm::radians(45.f), (float)width / height, 0.1f, 1500.f)) * glm::vec4(cursor.x, cursor.y, -1.f, 1.f);
+			WidgetManager::getInstance()->setPickingParameters(
+				camera.getViewMatrix() * glm::translate(glm::mat4(1.f), 0.15f*camera.getForward()) * camera.getModelMatrix(),
+				glm::normalize(glm::vec3(ray_eye.x, ray_eye.y, ray_eye.z)),
+				camera.getPosition());
+		}
+		else
+		{
+			WidgetManager::getInstance()->setPickingParameters(glm::mat4(1.f), glm::vec3(0.f), camera.getPosition());
+		}
+
+
 		//	Update widgets
 		averageCompleteTime = 0.99f * averageCompleteTime + 0.01f * completeTime;
 		WidgetManager::getInstance()->setString("runtime speed", 
@@ -192,7 +211,16 @@ int main()
 			EventHandler::getInstance()->isActivated(FORWARD),	EventHandler::getInstance()->isActivated(BACKWARD),
 			EventHandler::getInstance()->isActivated(LEFT),		EventHandler::getInstance()->isActivated(RIGHT),
 			EventHandler::getInstance()->isActivated(RUN),		EventHandler::getInstance()->isActivated(SNEAKY)    );
-
+		if (camera.getMode() == Camera::TRACKBALL)
+			camera.setRadius(camera.getRadius() + camera.getSensitivity() * EventHandler::getInstance()->getScrollingRelative().y);
+		else
+		{
+			float angle = camera.getFrustrumAngleVertical() + EventHandler::getInstance()->getScrollingRelative().y;
+			if (angle > 70.f) angle = 70.f;
+			else if (angle < 3) angle = 3.f;
+			camera.setFrustrumAngleVertical(angle);
+			camera.setFrustrumAngleHorizontalFromScreenRatio((float)width / height);
+		}
 		if (syncronizedCamera) camera2 = camera;
 
 		//	clear garbages
@@ -367,19 +395,13 @@ void initializeForestScene(bool emptyPlace)
 }
 std::string checkResourcesDirectory()
 {
-	struct stat info;
-
 	//	check for home repository
 	std::string directory = "C:/Users/Thibault/Documents/Github/GolemFactory/Resources/";
-	if (stat(directory.data(), &info) != 0);
-	else if (info.st_mode & S_IFDIR)
-		return "C:/Users/Thibault/Documents/Github/GolemFactory/Resources/";
+	if (ToolBox::isPathExist(directory)) return directory;
 
 	//	check for work repository
 	directory = "C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/";
-	if (stat(directory.data(), &info) != 0);
-	else if (info.st_mode & S_IFDIR)
-		return "C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/";
+	if (ToolBox::isPathExist(directory)) return directory;
 	
 	//	return the default resource path for portable applications
 	std::cout << "FATAL WARRNING : Fail to found ressource repo" << std::endl;

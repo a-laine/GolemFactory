@@ -25,7 +25,7 @@ class WidgetManager : public Singleton<WidgetManager>
 		//	Public functions
 		void draw(Shader* s, const glm::mat4& base, const float* view, const float* projection);
 		void update(const float& elapsedTime);
-		void loadDebugHud();
+		void loadHud(const std::string& hudName);
 
 		void addAssociation(WidgetVirtual* w, const std::string& associationName);
 		void setString(const std::string& associationName, const std::string& s);
@@ -53,6 +53,10 @@ class WidgetManager : public Singleton<WidgetManager>
 		~WidgetManager();
 		//
 
+		//	Protected functions
+		void loadDebugHud();
+		//
+
 		//	Attributes
 		std::set<Layer*> layerList;
 		std::set<WidgetVirtual*> widgetList;
@@ -65,5 +69,6 @@ class WidgetManager : public Singleton<WidgetManager>
 		glm::vec3 pickingRay;
 		glm::vec3 pickingOrigin;
 		glm::mat4 pickingBase;
+		std::set<WidgetVirtual*> hoverWidgetList;
 		//
 };

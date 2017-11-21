@@ -12,6 +12,166 @@ WidgetManager::~WidgetManager()
 //
 
 //	Public functions
+void WidgetManager::loadHud(const std::string& hudName)
+{
+	loadDebugHud();
+}
+void WidgetManager::draw(Shader* s, const glm::mat4& base, const float* view, const float* projection)
+{
+	//	change opengl states
+	glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+	glEnable(GL_STENCIL_TEST);
+	glEnable(GL_BLEND);
+
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glActiveTexture(GL_TEXTURE0);
+	uint8_t stencilMask = 0x00;
+	widgetDrawn = 0;
+	trianglesDrawn = 0;
+
+	//	draw all widget in hudList
+	for (std::map<std::string, std::vector<Layer*> >::iterator it = hudList.begin(); it != hudList.end(); ++it)
+	{
+		for (unsigned int i = 0; i < it->second.size(); i++)
+		{
+			if (it->second[i]->isVisible())		// layer visible
+			{
+				glm::mat4 model = base * it->second[i]->getModelMatrix();
+				std::vector<WidgetVirtual*>& list = it->second[i]->getWidgetList();
+				for (std::vector<WidgetVirtual*>::iterator it2 = list.begin(); it2 != list.end(); ++it2)
+				{
+					if ((*it2)->isVisible())	// widget visible
+					{
+						//	Get shader
+						Shader* shader;
+						if (!s) shader = (*it2)->getShader();
+						if (!shader) return;
+						shader->enable();
+
+						//	Enable mvp matrix
+						int loc = shader->getUniformLocation("model");
+						if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, &glm::translate(model, (*it2)->getPosition())[0][0]);
+						loc = shader->getUniformLocation("view");
+						if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, view);
+						loc = shader->getUniformLocation("projection");
+						if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, projection);
+
+						//	Draw
+						(*it2)->draw(shader, stencilMask);
+						widgetDrawn++;
+						trianglesDrawn += (*it2)->getNumberFaces();
+					}
+				}
+			}
+		}
+	}
+	glDisable(GL_BLEND);
+}
+void WidgetManager::update(const float& elapsedTime)
+{
+	//	picking
+	glm::vec3 intersection;
+	std::set<WidgetVirtual*> newHoverWidgetList;
+	if (pickingRay != glm::vec3(0.f))
+	{
+		//	draw all widget in hudList
+		for (std::map<std::string, std::vector<Layer*> >::iterator it = hudList.begin(); it != hudList.end(); ++it)
+			for (unsigned int i = 0; i < it->second.size(); i++)
+				if (it->second[i]->isVisible())		// layer visible
+				{
+					glm::mat4 model = pickingBase * it->second[i]->getModelMatrix();
+					std::vector<WidgetVirtual*>& list = it->second[i]->getWidgetList();
+					for (std::vector<WidgetVirtual*>::iterator it2 = list.begin(); it2 != list.end(); ++it2)
+					{
+						if ((*it2)->isVisible())	// widget visible
+						{
+							if ((*it2)->intersect(glm::translate(model, (*it2)->getPosition()), pickingRay, pickingOrigin, intersection))
+							{
+								newHoverWidgetList.insert(*it2);
+							}
+						}
+					}
+				}
+	}
+
+	//	change state of widgets
+
+
+	//	update all layers and widgets
+	for (std::set<Layer*>::iterator it = layerList.begin(); it != layerList.end(); ++it)
+		(*it)->update(elapsedTime);
+	for (std::set<WidgetVirtual*>::iterator it = widgetList.begin(); it != widgetList.end(); ++it)
+		(*it)->update(elapsedTime);
+}
+
+
+void WidgetManager::addAssociation(WidgetVirtual* w, const std::string& associationName)
+{
+	associations[associationName] = w;
+}
+void  WidgetManager::setString(const std::string& associationName, const std::string& s)
+{
+	try
+	{
+		WidgetVirtual* w = associations.at(associationName);
+		if (w) w->setString(s);
+	}
+	catch (const std::out_of_range &) {}
+}
+std::string  WidgetManager::getString(const std::string& associationName)
+{
+	try
+	{
+		WidgetVirtual* w = associations.at(associationName);
+		if (w) return w->getString();
+	}
+	catch (const std::out_of_range &) {}
+}
+std::stringstream*  WidgetManager::getStream(const std::string& associationName)
+{
+	try
+	{
+		WidgetVirtual* w = associations.at(associationName);
+		if (w) return w->getStream();
+	}
+	catch (const std::out_of_range &) {}
+}
+
+
+void WidgetManager::addWidget(WidgetVirtual* w) { widgetList.insert(w); }
+void WidgetManager::removeWidget(WidgetVirtual* w)
+{
+	widgetList.erase(w);
+	for (auto it = associations.begin(); it != associations.end(); )
+	{
+		if (it->second == w)
+			it = associations.erase(it);
+		else ++it;
+	}
+}
+void WidgetManager::addLayer(Layer* l) { layerList.insert(l); }
+void WidgetManager::removeLayer(Layer* l) { layerList.erase(l); }
+//
+
+//	Set / get functions
+void WidgetManager::setActiveHUD(const std::string& s)
+{
+	activeHud = s;
+}
+void WidgetManager::setPickingParameters(const glm::mat4& base, const glm::vec3& ray, const glm::vec3& origin)
+{
+	pickingRay = ray;
+	pickingBase = base;
+	pickingOrigin = origin;
+}
+
+
+std::string WidgetManager::getActiveHUD() const { return activeHud; }
+unsigned int WidgetManager::getNbDrawnWidgets() const { return widgetDrawn; }
+unsigned int WidgetManager::getNbDrawnTriangles() const { return trianglesDrawn; }
+//
+
+//	Protected functions
 void WidgetManager::loadDebugHud()
 {
 	//	top title
@@ -131,131 +291,4 @@ void WidgetManager::loadDebugHud()
 	hudList["debug"].push_back(layer5);
 	activeHud = "debug";
 }
-void WidgetManager::draw(Shader* s, const glm::mat4& base, const float* view, const float* projection)
-{
-	//	change opengl states
-	glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-	glEnable(GL_STENCIL_TEST);
-	glEnable(GL_BLEND);
-
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glActiveTexture(GL_TEXTURE0);
-	uint8_t stencilMask = 0x00;
-	widgetDrawn = 0;
-	trianglesDrawn = 0;
-
-	//	draw all widget in hudList
-	for (std::map<std::string, std::vector<Layer*> >::iterator it = hudList.begin(); it != hudList.end(); ++it)
-	{
-		for (unsigned int i = 0; i < it->second.size(); i++)
-		{
-			if (it->second[i]->isVisible())		// layer visible
-			{
-				glm::mat4 model = base * it->second[i]->getModelMatrix();
-				std::vector<WidgetVirtual*>& list = it->second[i]->getWidgetList();
-				for (std::vector<WidgetVirtual*>::iterator it2 = list.begin(); it2 != list.end(); ++it2)
-				{
-					if ((*it2)->isVisible())	// widget visible
-					{
-						//	Get shader
-						Shader* shader;
-						if (!s) shader = (*it2)->getShader();
-						if (!shader) return;
-						shader->enable();
-
-						//	Enable mvp matrix
-						int loc = shader->getUniformLocation("model");
-						if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, &glm::translate(model, (*it2)->getPosition())[0][0]);
-						loc = shader->getUniformLocation("view");
-						if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, view);
-						loc = shader->getUniformLocation("projection");
-						if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, projection);
-
-						//	Draw
-						(*it2)->draw(shader, stencilMask);
-						widgetDrawn++;
-						trianglesDrawn += (*it2)->getNumberFaces();
-					}
-				}
-			}
-		}
-	}
-	glDisable(GL_BLEND);
-}
-void WidgetManager::update(const float& elapsedTime)
-{
-	//	picking
-
-	//	update all layers and widgets
-	for (std::set<Layer*>::iterator it = layerList.begin(); it != layerList.end(); ++it)
-		(*it)->update(elapsedTime);
-	for (std::set<WidgetVirtual*>::iterator it = widgetList.begin(); it != widgetList.end(); ++it)
-		(*it)->update(elapsedTime);
-}
-
-
-void WidgetManager::addAssociation(WidgetVirtual* w, const std::string& associationName)
-{
-	associations[associationName] = w;
-}
-void  WidgetManager::setString(const std::string& associationName, const std::string& s)
-{
-	try
-	{
-		WidgetVirtual* w = associations.at(associationName);
-		if (w) w->setString(s);
-	}
-	catch (const std::out_of_range &) {}
-}
-std::string  WidgetManager::getString(const std::string& associationName)
-{
-	try
-	{
-		WidgetVirtual* w = associations.at(associationName);
-		if (w) return w->getString();
-	}
-	catch (const std::out_of_range &) {}
-}
-std::stringstream*  WidgetManager::getStream(const std::string& associationName)
-{
-	try
-	{
-		WidgetVirtual* w = associations.at(associationName);
-		if (w) return w->getStream();
-	}
-	catch (const std::out_of_range &) {}
-}
-
-
-void WidgetManager::addWidget(WidgetVirtual* w) { widgetList.insert(w); }
-void WidgetManager::removeWidget(WidgetVirtual* w)
-{
-	widgetList.erase(w);
-	for (auto it = associations.begin(); it != associations.end(); )
-	{
-		if (it->second == w)
-			it = associations.erase(it);
-		else ++it;
-	}
-}
-void WidgetManager::addLayer(Layer* l) { layerList.insert(l); }
-void WidgetManager::removeLayer(Layer* l) { layerList.erase(l); }
-//
-
-//	Set / get functions
-void WidgetManager::setActiveHUD(const std::string& s)
-{
-	activeHud = s;
-}
-void WidgetManager::setPickingParameters(const glm::mat4& base, const glm::vec3& ray, const glm::vec3& origin)
-{
-	pickingRay = ray;
-	pickingBase = base;
-	pickingOrigin = origin;
-}
-
-
-std::string WidgetManager::getActiveHUD() const { return activeHud; }
-unsigned int WidgetManager::getNbDrawnWidgets() const { return widgetDrawn; }
-unsigned int WidgetManager::getNbDrawnTriangles() const { return trianglesDrawn; }
 //

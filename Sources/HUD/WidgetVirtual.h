@@ -43,6 +43,7 @@ class WidgetVirtual
 		virtual void initialize(int VBOtype = GL_STATIC_DRAW);
 		virtual void draw(Shader* s, uint8_t& stencilMask);
 		virtual void update(const float& elapseTime);
+		virtual bool intersect(const glm::mat4& base, const glm::vec3& ray, const glm::vec3 origin, glm::vec3& result);
 
 		virtual void setString(const std::string& s);
 		virtual std::string getString();
@@ -83,5 +84,7 @@ class WidgetVirtual
 
 		Shader* shader;
 		Texture* texture;
+		
+		static float const PICKING_MARGIN;
 		//
 };
