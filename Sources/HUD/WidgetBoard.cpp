@@ -9,10 +9,14 @@ WidgetBoard::~WidgetBoard() {}
 void WidgetBoard::initialize(const float& borderThickness, const float& borderWidth, const uint8_t& corner)
 {
 	//	init
-	DrawBatch border;   border.color = glm::vec4(1.f, 1.f, 1.f, 1.f);
-	DrawBatch center;   center.color = glm::vec4(1.f, 1.f, 1.f, 0.5f);
-	
-	glm::vec3 dimension = glm::vec3(0.5f * size.x - borderThickness, 0.f, 0.5f * size.y - borderThickness);
+	colors[CURRENT] = colors[(State)(configuration & STATE_MASK)];
+	positions[CURRENT] = positions[(State)(configuration & STATE_MASK)];
+	sizes[CURRENT] = sizes[(State)(configuration & STATE_MASK)];
+
+	std::cout << (int)(DEFAULT) << std::endl;
+
+	DrawBatch border, center;
+	glm::vec3 dimension = glm::vec3(0.5f * sizes[CURRENT].x - borderThickness, 0.f, 0.5f * sizes[CURRENT].y - borderThickness);
 	const float pi = glm::pi<float>();
 	unsigned int borderCornerIndex;
 
@@ -359,15 +363,35 @@ void WidgetBoard::initialize(const float& borderThickness, const float& borderWi
 	initializeVBOs(GL_STATIC_DRAW);
 	initializeVAOs();
 }
-//
-
-//  Set/get functions
-void WidgetBoard::setColor(const glm::vec4& c)
+void WidgetBoard::draw(Shader* s, uint8_t& stencilMask)
 {
-	if (batchList.size() >= 2)
-	{
-		batchList[0].color = c;
-		batchList[1].color = glm::vec4(c.x, c.y, c.z, 0.5f * c.w);
-	}
+	//	texture related stuff
+	if (texture) glBindTexture(GL_TEXTURE_2D, texture->getTextureId());
+	else glBindTexture(GL_TEXTURE_2D, 0);
+	int loc = s->getUniformLocation("useTexture");
+	if (loc >= 0) glUniform1i(loc, (texture ? 1 : 0));
+
+	//	draw border
+	loc = s->getUniformLocation("color");
+	if (loc >= 0) glUniform4fv(loc, 1, &colors[CURRENT].x);
+
+	glBindVertexArray(batchList[0].vao);
+	glDrawElements(GL_TRIANGLES, batchList[0].faces.size(), GL_UNSIGNED_SHORT, NULL);
+
+	//	draw center at different alpha
+	glm::vec4 color(colors[CURRENT].x, colors[CURRENT].y, colors[CURRENT].z, 0.5f * colors[CURRENT].w);
+	loc = s->getUniformLocation("color");
+	if (loc >= 0) glUniform4fv(loc, 1, &color.x);
+
+	glBindVertexArray(batchList[1].vao);
+	glDrawElements(GL_TRIANGLES, batchList[1].faces.size(), GL_UNSIGNED_SHORT, NULL);
+}
+void WidgetBoard::update(const float& elapseTime)
+{
+	State s = (State)(configuration & STATE_MASK);
+	colors[CURRENT] = 0.9f * colors[CURRENT] + 0.1f * colors[s];
+	positions[CURRENT] = positions[s];
+	sizes[CURRENT] = sizes[s];
+	lastConfiguration = configuration;
 }
 //

@@ -31,18 +31,23 @@ class Layer : public WidgetContainer
 
 		//  Set/get functions
 		void setPosition(const glm::vec3& p);
+		void setSreenPosition(const glm::vec3& p);
+		void setTargetPosition(const glm::vec3& p);
 		void setSize(const float& s);
 		void setOrientation(const float& yaw, const float& pitch, const float& roll);
 		void setVisibility(const bool& visible);
 
 		bool isVisible() const;
 		glm::mat4 getModelMatrix() const;
+		glm::vec3 getSreenPosition() const;
 		//
 
 	protected:
 		//  Attributes
 		uint8_t configuration;
 		glm::vec3 position;
+		glm::vec3 sreenPosition;
+		glm::vec3 targetPosition;
 		float size;
 		glm::vec3 eulerAngle;
 

@@ -11,6 +11,8 @@
 
 #include "Utiles/Singleton.h"
 
+#include "Events/EventHandler.h"
+
 #include "HUD/Layer.h"
 #include "HUD/WidgetImage.h"
 #include "HUD/WidgetBoard.h"
@@ -24,7 +26,7 @@ class WidgetManager : public Singleton<WidgetManager>
 	public:
 		//	Public functions
 		void draw(Shader* s, const glm::mat4& base, const float* view, const float* projection);
-		void update(const float& elapsedTime);
+		void update(const float& elapsedTime, const bool& clickButtonPressed);
 		void loadHud(const std::string& hudName);
 
 		void addAssociation(WidgetVirtual* w, const std::string& associationName);
@@ -69,6 +71,8 @@ class WidgetManager : public Singleton<WidgetManager>
 		glm::vec3 pickingRay;
 		glm::vec3 pickingOrigin;
 		glm::mat4 pickingBase;
+		bool lastClickButtonState;
 		std::set<WidgetVirtual*> hoverWidgetList;
+		std::list<WidgetVirtual*> activeWidgetList;
 		//
 };

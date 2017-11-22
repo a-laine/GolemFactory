@@ -161,7 +161,8 @@ int main()
 			}
 
 			//	debug action
-			else if (v[i] == F3) syncronizedCamera = !syncronizedCamera;
+			else if (v[i] == F12) syncronizedCamera = !syncronizedCamera;
+			else if (v[i] == F9) WidgetManager::getInstance()->setActiveHUD((WidgetManager::getInstance()->getActiveHUD() == "debug" ? "" : "debug"));
 		}
 
 		//	Animate instances
@@ -192,7 +193,7 @@ int main()
 		WidgetManager::getInstance()->setString("drawcalls",
 			"Instances :\n " + std::to_string(Renderer::getInstance()->getNbDrawnInstances() + WidgetManager::getInstance()->getNbDrawnWidgets()) + 
 			"\n\nTriangles :\n " + std::to_string(Renderer::getInstance()->getNbDrawnTriangles() + WidgetManager::getInstance()->getNbDrawnTriangles()));
-		WidgetManager::getInstance()->update((float)elapseTime);
+		WidgetManager::getInstance()->update((float)elapseTime, EventHandler::getInstance()->isActivated(USE1));
 
 		//	Move avatar if needed
 		if (camera.getMode() == Camera::TRACKBALL)

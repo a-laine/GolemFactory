@@ -17,6 +17,29 @@ WidgetLabel::~WidgetLabel()
 //
 
 //	Public functions
+void WidgetLabel::initialize(const std::string& t, uint8_t textConfig)
+{
+	//	init
+	colors[CURRENT] = colors[(State)(configuration & STATE_MASK)];
+	positions[CURRENT] = positions[(State)(configuration & STATE_MASK)];
+	sizes[CURRENT] = sizes[(State)(configuration & STATE_MASK)];
+	if (!font) return;
+		
+	text = t;
+	textConfiguration = textConfig;
+	parseText();
+
+	//	prepare batch (with text)
+	batchList.push_back(DrawBatch());
+	batchList.push_back(DrawBatch());
+	updateBuffers();
+
+	//	end
+	initializeVBOs(GL_DYNAMIC_DRAW);
+	initializeVAOs();
+	needUpdate = false;
+	lastConfiguration = configuration;
+}
 void WidgetLabel::update(const float& elapseTime)
 {
 	//	update buffers if needed
@@ -29,45 +52,6 @@ void WidgetLabel::update(const float& elapseTime)
 		needUpdate = false;
 		updateCooldown = 0.f;
 	}
-}
-void WidgetLabel::initialize(const std::string& t, uint8_t textConfig)
-{
-	if (!font) return;
-
-	//	init
-	text = t;
-	textConfiguration = textConfig;
-	parseText();
-
-	//	prepare batch (with text)
-	DrawBatch batch;
-	batch.color = glm::vec4(1.f, 1.f, 1.f, 1.f);
-	batchList.push_back(batch);
-	updateBuffers();
-
-	//	clipping rectangle
-	DrawBatch quad;
-	quad.color = glm::vec4(0.f, 0.f, 0.f, 0.f);
-
-	quad.vertices.push_back(glm::vec3(-0.5f * size.x, 0.f, -0.5f * size.y));
-	quad.vertices.push_back(glm::vec3(-0.5f * size.x, 0.f,  0.5f * size.y));
-	quad.vertices.push_back(glm::vec3( 0.5f * size.x, 0.f,  0.5f * size.y));
-	quad.vertices.push_back(glm::vec3( 0.5f * size.x, 0.f, -0.5f * size.y));
-
-	quad.textures.push_back(glm::vec2(0.f, 1.f));
-	quad.textures.push_back(glm::vec2(0.f, 0.f));
-	quad.textures.push_back(glm::vec2(1.f, 0.f));
-	quad.textures.push_back(glm::vec2(1.f, 1.f));
-
-	quad.faces.push_back(0); quad.faces.push_back(1); quad.faces.push_back(2);
-	quad.faces.push_back(0); quad.faces.push_back(2); quad.faces.push_back(3);
-
-	batchList.push_back(quad);
-
-	//	end
-	initializeVBOs(GL_DYNAMIC_DRAW);
-	initializeVAOs();
-	needUpdate = false;
 }
 void WidgetLabel::draw(Shader* s, uint8_t& stencilMask)
 {
@@ -82,11 +66,11 @@ void WidgetLabel::draw(Shader* s, uint8_t& stencilMask)
 	if (loc >= 0) glUniform1i(loc, (font ? 1 : 0));
 
 	//	draw batch 0 (text)
-		loc = s->getUniformLocation("color");
-		if (loc >= 0) glUniform4fv(loc, 1, &batchList[0].color.x);
+	loc = s->getUniformLocation("color");
+	if (loc >= 0) glUniform4fv(loc, 1, &colors[CURRENT].x);
 
-		glBindVertexArray(batchList[0].vao);
-		glDrawElements(GL_TRIANGLES, batchList[0].faces.size(), GL_UNSIGNED_SHORT, NULL);
+	glBindVertexArray(batchList[0].vao);
+	glDrawElements(GL_TRIANGLES, batchList[0].faces.size(), GL_UNSIGNED_SHORT, NULL);
 
 	//	unclip zone (batch 1)
 	if (textConfiguration & CLIPPING)
@@ -126,14 +110,17 @@ bool WidgetLabel::intersect(const glm::mat4& base, const glm::vec3& ray, const g
 	}
 	return false;
 }
-//
 
-//	Set / get functions
+
 void WidgetLabel::setString(const std::string& newText)
 {
 	text = newText;
 	needUpdate = true;
 }
+std::string WidgetLabel::getString() const { return text; }
+//
+
+//	Set / get functions
 void WidgetLabel::setFont(const std::string& fontName)
 {
 	ResourceManager::getInstance()->release(font);
@@ -146,7 +133,7 @@ void WidgetLabel::setSizeChar(const float& f)
 	needUpdate = true;
 }
 
-std::string WidgetLabel::getString() const { return text; }
+
 Font* WidgetLabel::getFont() const { return font; }
 float WidgetLabel::getSizeChar() const { return sizeChar; }
 //
@@ -155,10 +142,10 @@ float WidgetLabel::getSizeChar() const { return sizeChar; }
 void WidgetLabel::updateBuffers()
 {
 	DrawBatch batch;
-	parseText();
 	float x = 0.f;
 	unsigned int line = 0;
 	float italic = ((textConfiguration & ITALIC) ? ITALIC_RATIO : 0.f);
+	State s = (State)(configuration & STATE_MASK);
 
 	for (unsigned int i = 0; i < text.size(); i++)
 	{
@@ -204,9 +191,28 @@ void WidgetLabel::updateBuffers()
 				break;
 		}
 	}
-	batchList[0].vertices = batch.vertices;
-	batchList[0].textures = batch.textures;
-	batchList[0].faces = batch.faces;
+	batchList[0].vertices.swap(batch.vertices);
+	batchList[0].textures.swap(batch.textures);
+	batchList[0].faces.swap(batch.faces);
+
+	//	clipping rectangle
+	DrawBatch quad;
+		quad.vertices.push_back(glm::vec3(-0.5f * sizes[s].x, 0.f, -0.5f * sizes[s].y));
+		quad.vertices.push_back(glm::vec3(-0.5f * sizes[s].x, 0.f,  0.5f * sizes[s].y));
+		quad.vertices.push_back(glm::vec3( 0.5f * sizes[s].x, 0.f,  0.5f * sizes[s].y));
+		quad.vertices.push_back(glm::vec3( 0.5f * sizes[s].x, 0.f, -0.5f * sizes[s].y));
+
+		quad.textures.push_back(glm::vec2(0.f, 1.f));
+		quad.textures.push_back(glm::vec2(0.f, 0.f));
+		quad.textures.push_back(glm::vec2(1.f, 0.f));
+		quad.textures.push_back(glm::vec2(1.f, 1.f));
+
+		quad.faces.push_back(0); quad.faces.push_back(1); quad.faces.push_back(2);
+		quad.faces.push_back(0); quad.faces.push_back(2); quad.faces.push_back(3);
+
+	batchList[1].vertices.swap(quad.vertices);
+	batchList[1].textures.swap(quad.textures);
+	batchList[1].faces.swap(quad.faces);
 }
 void WidgetLabel::updateVBOs()
 {
@@ -249,9 +255,10 @@ void WidgetLabel::parseText()
 	}
 	if (!text.empty()) linesLength.push_back(length);
 }
-glm::vec2 WidgetLabel::getLineOrigin(const unsigned int& lineIndex, const uint8_t& textConfiguration) const
+glm::vec2 WidgetLabel::getLineOrigin(const unsigned int& lineIndex, const uint8_t& textConfiguration)
 {
-	glm::vec2 origin(position);
+	glm::vec2 origin(positions[CURRENT].x, positions[CURRENT].y);
+	glm::vec2 size(sizes[CURRENT]);
 	switch (textConfiguration & (HORIZONTAL_MASK | VERTICAL_MASK))
 	{
 		case CENTER:

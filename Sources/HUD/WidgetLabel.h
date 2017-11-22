@@ -37,14 +37,16 @@ class WidgetLabel : public WidgetVirtual
 		virtual void initialize(const std::string& t, uint8_t textConfiguration = AlignmentMode::CENTER);
 		virtual void draw(Shader* s, uint8_t& stencilMask);
 		bool intersect(const glm::mat4& base, const glm::vec3& ray, const glm::vec3 origin, glm::vec3& result);
+		
+		void setString(const std::string& newText);
+		std::string getString() const;
 		//
 
 		//	Set / get functions
-		void setString(const std::string& newText);
 		void setFont(const std::string& fontName);
 		void setSizeChar(const float& f);
 
-		std::string getString() const;
+		
 		Font* getFont() const;
 		float getSizeChar() const;
 		//
@@ -54,7 +56,7 @@ class WidgetLabel : public WidgetVirtual
 		void updateBuffers();
 		void updateVBOs();
 		void parseText();
-		glm::vec2 getLineOrigin(const unsigned int& lineIndex, const uint8_t& textConfiguration) const;
+		glm::vec2 getLineOrigin(const unsigned int& lineIndex, const uint8_t& textConfiguration);
 		//
 
 		//  Attributes

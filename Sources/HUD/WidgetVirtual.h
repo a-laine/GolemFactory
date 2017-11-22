@@ -17,13 +17,22 @@ class WidgetVirtual
 			IMAGE,
 			LABEL
 		};
-		enum Flags
+		enum OrphanFlags
 		{
 			VISIBLE = 1 << 6
 		};
+		enum State
+		{
+			DEFAULT = 0 << 0,
+			HOVER = 1 << 0,
+			ACTIVE = 2 << 0,
+			STATE_MASK = 0x03 << 0,
+			
+			CURRENT = 3 << 0,
+			ALL = 4 << 0
+		};
 		struct DrawBatch
 		{
-			glm::vec4 color;
 			GLuint  vao,
 				verticesBuffer,
 				texturesBuffer,
@@ -40,27 +49,31 @@ class WidgetVirtual
 		//
 
 		//	Public functions
-		virtual void initialize(int VBOtype = GL_STATIC_DRAW);
 		virtual void draw(Shader* s, uint8_t& stencilMask);
 		virtual void update(const float& elapseTime);
 		virtual bool intersect(const glm::mat4& base, const glm::vec3& ray, const glm::vec3 origin, glm::vec3& result);
+		virtual bool mouseEvent(const glm::vec3& eventLocation, const bool& clicked);
 
 		virtual void setString(const std::string& s);
-		virtual std::string getString();
+		virtual std::string getString() const;
 		virtual std::stringstream* getStream();
 		//
 
 		//  Set/get functions
-		virtual void setSize(const glm::vec2& s);
-		virtual void setPosition(const glm::vec3& p);
+		virtual void setState(State state);
+		virtual void setSize(const glm::vec2& s, const State& state = CURRENT);
+		virtual void setPosition(const glm::vec3& p, const State& state = CURRENT);
+		virtual void setColor(const glm::vec4& c, const State& state = CURRENT);
 		void setVisibility(const bool& visible);
 		void setTexture(const std::string& textureName);
 		void setShader(const std::string& shaderName);
 
 
 		WidgetType getType() const;
-		glm::vec3 getPosition() const;
-		glm::vec4* getColor(const unsigned int& index);
+		State getState() const;
+		glm::vec2 getSize(State state = CURRENT);
+		glm::vec3 getPosition(State state = CURRENT);
+		glm::vec4 getColor(const unsigned int& index, State state = CURRENT);
 		Shader* getShader() const;
 		Texture* getTexture() const;
 		bool isVisible() const;
@@ -76,9 +89,10 @@ class WidgetVirtual
 
 		//  Attributes
 		WidgetType type;
-		uint8_t configuration;
-		glm::vec3 position;
-		glm::vec2 size;
+		uint8_t configuration, lastConfiguration;
+		std::map<State, glm::vec2> sizes;
+		std::map<State, glm::vec3> positions;
+		std::map<State, glm::vec4> colors;
 
 		std::vector<DrawBatch> batchList;
 

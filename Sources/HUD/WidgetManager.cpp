@@ -67,11 +67,11 @@ void WidgetManager::draw(Shader* s, const glm::mat4& base, const float* view, co
 	}
 	glDisable(GL_BLEND);
 }
-void WidgetManager::update(const float& elapsedTime)
+void WidgetManager::update(const float& elapsedTime, const bool& clickButtonPressed)
 {
 	//	picking
 	glm::vec3 intersection;
-	std::set<WidgetVirtual*> newHoverWidgetList;
+	std::set<WidgetVirtual*> tmpWidgetList;
 	if (pickingRay != glm::vec3(0.f))
 	{
 		//	draw all widget in hudList
@@ -86,22 +86,56 @@ void WidgetManager::update(const float& elapsedTime)
 						if ((*it2)->isVisible())	// widget visible
 						{
 							if ((*it2)->intersect(glm::translate(model, (*it2)->getPosition()), pickingRay, pickingOrigin, intersection))
-							{
-								newHoverWidgetList.insert(*it2);
-							}
+								tmpWidgetList.insert(*it2);
 						}
 					}
 				}
 	}
 
-	//	change state of widgets
+	//	trigger new hover widget and widget leaving hover list
+	for (std::set<WidgetVirtual*>::iterator it = tmpWidgetList.begin(); it != tmpWidgetList.end(); ++it)
+	{
+		if (hoverWidgetList.find(*it) == hoverWidgetList.end())
+		{
+			(*it)->setState(WidgetVirtual::HOVER);
+		}
+	}
+	for (std::set<WidgetVirtual*>::iterator it = hoverWidgetList.begin(); it != hoverWidgetList.end(); ++it)
+	{
+		//	widget not hover anymore and not active anymore
+		if (tmpWidgetList.find(*it) == tmpWidgetList.end() && std::find(activeWidgetList.begin(), activeWidgetList.end(), *it) == activeWidgetList.end())
+			(*it)->setState(WidgetVirtual::DEFAULT);
+	}
+	hoverWidgetList.swap(tmpWidgetList);
 
+	//	widget hover and a click occur -> add widget to active list if possible
+	if (clickButtonPressed)
+		for (std::set<WidgetVirtual*>::iterator it = hoverWidgetList.begin(); it != hoverWidgetList.end(); ++it)
+		{
+			if((*it)->mouseEvent(intersection, clickButtonPressed))
+				activeWidgetList.insert(activeWidgetList.end(), *it);
+		}
+	
+	//	special update on active widget
+	for (std::list<WidgetVirtual*>::iterator it = activeWidgetList.begin(); it != activeWidgetList.end();)
+	{
+		if((*it)->mouseEvent(intersection, clickButtonPressed)) ++it;
+		else 
+		{
+			if (hoverWidgetList.find(*it) == hoverWidgetList.end()) (*it)->setState(WidgetVirtual::DEFAULT);
+			else (*it)->setState(WidgetVirtual::HOVER);
+			it = activeWidgetList.erase(it);
+		}
+	}
 
 	//	update all layers and widgets
 	for (std::set<Layer*>::iterator it = layerList.begin(); it != layerList.end(); ++it)
 		(*it)->update(elapsedTime);
 	for (std::set<WidgetVirtual*>::iterator it = widgetList.begin(); it != widgetList.end(); ++it)
 		(*it)->update(elapsedTime);
+
+	//	end
+	lastClickButtonState = clickButtonPressed;
 }
 
 
@@ -156,6 +190,30 @@ void WidgetManager::removeLayer(Layer* l) { layerList.erase(l); }
 //	Set / get functions
 void WidgetManager::setActiveHUD(const std::string& s)
 {
+	//	activate new HUD layer
+	std::map<std::string, std::vector<Layer*> >::iterator it = hudList.find(s);
+	if (it != hudList.end())
+	{
+		for (unsigned int i = 0; i < it->second.size(); i++)
+		{
+			it->second[i]->setVisibility(true);
+			it->second[i]->setTargetPosition(it->second[i]->getSreenPosition());
+		}
+	}
+
+	//	push all widget from former HUD
+	it = hudList.find(activeHud);
+	if (it != hudList.end())
+	{
+		for (unsigned int i = 0; i < it->second.size(); i++)
+		{
+			glm::vec3 direction = it->second[i]->getSreenPosition();
+			if (direction == glm::vec3(0.f)) direction = glm::vec3(0.f, 0.f, 1.f);
+			it->second[i]->setTargetPosition(it->second[i]->getSreenPosition() + 0.1f * glm::normalize(direction));
+		}
+	}
+
+	//	swap
 	activeHud = s;
 }
 void WidgetManager::setPickingParameters(const glm::mat4& base, const glm::vec3& ray, const glm::vec3& origin)
@@ -176,112 +234,138 @@ void WidgetManager::loadDebugHud()
 {
 	//	top title
 	WidgetBoard* board1 = new WidgetBoard();
-		board1->setPosition(glm::vec3(0.f, 0.01f, 0.f));
-		board1->setSize(glm::vec2(2.8f, 0.3f));
+		board1->setPosition(glm::vec3(0.f, 0.01f, 0.f), WidgetVirtual::ALL);
+		board1->setSize(glm::vec2(2.8f, 0.3f), WidgetVirtual::ALL);
 		board1->initialize(0.02f, 0.1f);
-		board1->setColor(glm::vec4(0.5f, 0.f, 0.2f, 1.f));
+		board1->setColor(glm::vec4(0.5f, 0.f, 0.2f, 1.f), WidgetVirtual::ALL);
+		board1->setColor(glm::vec4(0.5f, 0.5f, 0.5f, 1.f), WidgetVirtual::HOVER);
 		widgetList.insert(board1);
 	WidgetLabel* label1 = new WidgetLabel();
-		label1->setPosition(glm::vec3(0.f, 0.f, 0.f));
+		label1->setPosition(glm::vec3(0.f, 0.f, 0.f), WidgetVirtual::ALL);
 		label1->setSizeChar(0.15f);
-		label1->setSize(glm::vec2(2.7f, 0.2f));
+		label1->setSize(glm::vec2(2.7f, 0.2f), WidgetVirtual::ALL);
 		label1->setFont("Data Control");
 		label1->initialize("Debug Hud", WidgetLabel::CLIPPING);
 		widgetList.insert(label1);
 	Layer* layer1 = new Layer();
 		layer1->setSize(0.05f);
-		layer1->setPosition(glm::vec3(0.f, 0.f, 0.054f));
+		layer1->setSreenPosition(glm::vec3(0.f, 0.f, 0.054f));
+		layer1->setPosition(layer1->getSreenPosition());
+		layer1->setTargetPosition(layer1->getSreenPosition());
 		layer1->add(board1);
 		layer1->add(label1);
 		layerList.insert(layer1);
 
 	//	runtime speed
 	WidgetBoard* board2 = new WidgetBoard();
-		board2->setPosition(glm::vec3(0.f, 0.01f, 0.f));
-		board2->setSize(glm::vec2(0.8f, 0.5f));
+		board2->setPosition(glm::vec3(0.f, 0.01f, 0.f), WidgetVirtual::ALL);
+		board2->setSize(glm::vec2(0.8f, 0.5f), WidgetVirtual::ALL);
 		board2->initialize(0.02f, 0.15f, WidgetBoard::BOTTOM_RIGHT);
-		board2->setColor(glm::vec4(0.f, 0.f, 0.5f, 1.f));
+		board2->setColor(glm::vec4(0.f, 0.f, 0.5f, 1.f), WidgetVirtual::ALL);
+		board2->setColor(glm::vec4(0.5f, 0.5f, 0.5f, 1.f), WidgetVirtual::HOVER);
 		widgetList.insert(board2);
 	WidgetLabel* label2 = new WidgetLabel();
-		label2->setPosition(glm::vec3(0.03f, 0.f, 0.f));
+		label2->setPosition(glm::vec3(0.03f, 0.f, 0.f), WidgetVirtual::ALL);
 		label2->setSizeChar(0.07f);
-		label2->setSize(glm::vec2(0.7f, 0.5f));
+		label2->setSize(glm::vec2(0.7f, 0.5f), WidgetVirtual::ALL);
 		label2->setFont("Data Control");
 		label2->initialize("FPS : 60\n Avg : 60\n\nTime : 9ms\n Avg : 11ms", WidgetLabel::LEFT | WidgetLabel::CLIPPING);
 		widgetList.insert(label2);
 		addAssociation(label2, "runtime speed");
 	Layer* layer2 = new Layer();
 		layer2->setSize(0.05f);
-		layer2->setPosition(glm::vec3(-0.091f, 0.f, 0.049f));
+		layer2->setSreenPosition(glm::vec3(-0.091f, 0.f, 0.049f));
+		layer2->setPosition(layer2->getSreenPosition());
+		layer2->setTargetPosition(layer2->getSreenPosition());
 		layer2->add(board2);
 		layer2->add(label2);
 		layerList.insert(layer2);
 
 	//	Draw calls
 	WidgetBoard* board3 = new WidgetBoard();
-		board3->setPosition(glm::vec3(0.f, 0.01f, 0.f));
-		board3->setSize(glm::vec2(0.8f, 0.5f));
+		board3->setPosition(glm::vec3(0.f, 0.01f, 0.f), WidgetVirtual::ALL);
+		board3->setSize(glm::vec2(0.8f, 0.5f), WidgetVirtual::ALL);
 		board3->initialize(0.02f, 0.15f, WidgetBoard::BOTTOM_LEFT);
-		board3->setColor(glm::vec4(0.8f, 0.f, 0.0f, 1.f));
+		board3->setColor(glm::vec4(0.8f, 0.f, 0.f, 1.f), WidgetVirtual::ALL);
+		board3->setColor(glm::vec4(0.5f, 0.5f, 0.5f, 1.f), WidgetVirtual::HOVER);
 		widgetList.insert(board3);
 	WidgetLabel* label3 = new WidgetLabel();
-		label3->setPosition(glm::vec3(0.025f, 0.f, 0.f));
+		label3->setPosition(glm::vec3(0.025f, 0.f, 0.f), WidgetVirtual::ALL);
 		label3->setSizeChar(0.07f);
-		label3->setSize(glm::vec2(0.7f, 0.5f));
+		label3->setSize(glm::vec2(0.7f, 0.5f), WidgetVirtual::ALL);
 		label3->setFont("Data Control");
 		label3->initialize("Instances :\n80000\n\nTriangles :\n10000000", WidgetLabel::LEFT | WidgetLabel::CLIPPING);
 		addAssociation(label3, "drawcalls");
 		widgetList.insert(label3);
 	Layer* layer3 = new Layer();
 		layer3->setSize(0.05f);
-		layer3->setPosition(glm::vec3(0.091f, 0.f, 0.049f));
+		layer3->setSreenPosition(glm::vec3(0.091f, 0.f, 0.049f));
+		layer3->setPosition(layer3->getSreenPosition());
+		layer3->setTargetPosition(layer3->getSreenPosition());
 		layer3->add(board3);
 		layer3->add(label3);
 		layerList.insert(layer3);
 
 	//	console
 	WidgetBoard* board4 = new WidgetBoard();
-		board4->setPosition(glm::vec3(0.f, 0.01f, 0.f));
-		board4->setSize(glm::vec2(2.1f, 0.5f));
+		board4->setPosition(glm::vec3(0.f, 0.01f, 0.f), WidgetVirtual::ALL);
+		board4->setSize(glm::vec2(2.1f, 0.5f), WidgetVirtual::ALL);
 		board4->initialize(0.02f, 0.1f, WidgetBoard::TOP_RIGHT);
-		board4->setColor(glm::vec4(0.5f, 0.5f, 0.f, 1.f));
+		board4->setColor(glm::vec4(0.5f, 0.5f, 0.f, 1.f), WidgetVirtual::ALL);
+		board4->setColor(glm::vec4(0.5f, 0.5f, 0.5f, 1.f), WidgetVirtual::HOVER);
 		widgetList.insert(board4);
 	WidgetLabel* label4 = new WidgetLabel();
-		label4->setPosition(glm::vec3(0.045f, 0.f, 0.f));
+		label4->setPosition(glm::vec3(0.045f, 0.f, 0.f), WidgetVirtual::ALL);
 		label4->setSizeChar(0.055f);
-		label4->setSize(glm::vec2(2.2f, 0.35f));
+		label4->setSize(glm::vec2(2.2f, 0.35f), WidgetVirtual::ALL);
 		label4->setFont("Data Control");
 		label4->initialize("debug consol test 3000\nWARRNING : this game is too awesome\n   this could cause some crash !\npeasant says : hello\npeasant says : that's true this game is awesome\n\ndebug consol test 3000", WidgetLabel::LEFT | WidgetLabel::BOTTOM | WidgetLabel::CLIPPING);
 		addAssociation(label4, "console");
 		widgetList.insert(label4);
 	Layer* layer4 = new Layer();
 		layer4->setSize(0.05f);
-		layer4->setPosition(glm::vec3(-0.055f, 0.f, -0.049f));
+		layer4->setSreenPosition(glm::vec3(-0.055f, 0.f, -0.049f));
+		layer4->setPosition(layer4->getSreenPosition());
+		layer4->setTargetPosition(layer4->getSreenPosition());
 		layer4->add(board4);
 		layer4->add(label4);
 		layerList.insert(layer4);
 
 	//	picking
 	WidgetBoard* board5 = new WidgetBoard();
-		board5->setPosition(glm::vec3(0.f, 0.01f, 0.f));
-		board5->setSize(glm::vec2(2.1f, 0.5f));
+		board5->setPosition(glm::vec3(0.f, 0.01f, 0.f), WidgetVirtual::ALL);
+		board5->setSize(glm::vec2(2.1f, 0.5f), WidgetVirtual::ALL);
 		board5->initialize(0.02f, 0.1f, WidgetBoard::TOP_LEFT);
-		board5->setColor(glm::vec4(0.f, 0.5f, 0.f, 1.f));
+		board5->setColor(glm::vec4(0.f, 0.5f, 0.f, 1.f), WidgetVirtual::ALL);
+		board5->setColor(glm::vec4(0.5f, 0.5f, 0.5f, 1.f), WidgetVirtual::HOVER);
 		widgetList.insert(board5);
 	WidgetLabel* label5 = new WidgetLabel();
-		label5->setPosition(glm::vec3(0.045f, 0.f, 0.f));
+		label5->setPosition(glm::vec3(0.045f, 0.f, 0.f), WidgetVirtual::ALL);
 		label5->setSizeChar(0.07f);
-		label5->setSize(glm::vec2(2.2f, 0.35f));
+		label5->setSize(glm::vec2(2.2f, 0.35f), WidgetVirtual::ALL);
 		label5->setFont("Data Control");
 		label5->initialize("Distance : 50.06 m\nPosition : (923.1 , 584.6 , 1.2)\nInstance on ray : 5\nFirst instance pointed id : 23681\n  type : animated", WidgetLabel::LEFT | WidgetLabel::CLIPPING);
 		addAssociation(label5, "interaction");
 		widgetList.insert(label5);
 	Layer* layer5 = new Layer();
 		layer5->setSize(0.05f);
-		layer5->setPosition(glm::vec3(0.055f, 0.f, -0.049f));
+		layer5->setSreenPosition(glm::vec3(0.055f, 0.f, -0.049f));
+		layer5->setPosition(layer5->getSreenPosition());
+		layer5->setTargetPosition(layer5->getSreenPosition());
 		layer5->add(board5);
 		layer5->add(label5);
 		layerList.insert(layer5);
+
+	//	test
+	/*WidgetImage* image = new WidgetImage("10points.png");
+		image->setColor(glm::vec4(1.f, 1.f, 1.f, 1.f), WidgetVirtual::DEFAULT);
+		image->setColor(glm::vec4(1.f, 1.f, 0.f, 1.f), WidgetVirtual::HOVER);
+		image->setColor(glm::vec4(1.f, 0.f, 0.f, 1.f), WidgetVirtual::ACTIVE);
+		image->initialize();
+	Layer* layer6 = new Layer();
+		layer6->setSize(0.05f);
+		layer6->add(image);
+		layerList.insert(layer6);*/
 
 	//	push on HUD
 	hudList["debug"].push_back(layer1);
@@ -289,6 +373,7 @@ void WidgetManager::loadDebugHud()
 	hudList["debug"].push_back(layer3);
 	hudList["debug"].push_back(layer4);
 	hudList["debug"].push_back(layer5);
+	//hudList["debug"].push_back(layer6);
 	activeHud = "debug";
 }
 //

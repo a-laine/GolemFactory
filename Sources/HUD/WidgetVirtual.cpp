@@ -3,8 +3,23 @@
 const float WidgetVirtual::PICKING_MARGIN = 0.f;
 
 //  Default
-WidgetVirtual::WidgetVirtual(const WidgetType& t, const uint8_t& config, const std::string& shaderName) : type(t), configuration(config), position(0.f, 0.f, 0.f), size(1.f,1.f)
+WidgetVirtual::WidgetVirtual(const WidgetType& t, const uint8_t& config, const std::string& shaderName) : type(t), configuration(config)
 {
+	sizes[DEFAULT] = glm::vec2(1.f);
+	sizes[HOVER] = glm::vec2(1.f);
+	sizes[ACTIVE] = glm::vec2(1.f);
+	sizes[CURRENT] = glm::vec2(1.f);
+
+	positions[DEFAULT] = glm::vec3(0.f);
+	positions[HOVER] = glm::vec3(0.f);
+	positions[ACTIVE] = glm::vec3(0.f);
+	positions[CURRENT] = glm::vec3(0.f);
+
+	colors[DEFAULT] = glm::vec4(1.f);
+	colors[HOVER] = glm::vec4(1.f);
+	colors[ACTIVE] = glm::vec4(1.f);
+	colors[CURRENT] = glm::vec4(1.f);
+
 	shader = ResourceManager::getInstance()->getShader(shaderName);
 	texture = nullptr;
 }
@@ -31,11 +46,6 @@ WidgetVirtual::~WidgetVirtual()
 
 
 //	Public functions
-void WidgetVirtual::initialize(int VBOtype)
-{
-	initializeVBOs(VBOtype);
-	initializeVAOs();
-}
 void WidgetVirtual::draw(Shader* s, uint8_t& stencilMask)
 {
 	//	texture related stuff
@@ -45,16 +55,23 @@ void WidgetVirtual::draw(Shader* s, uint8_t& stencilMask)
 	if (loc >= 0) glUniform1i(loc, (texture ? 1 : 0));
 
 	//	draw all batches
+	State state = (State)(configuration & STATE_MASK);
+	loc = s->getUniformLocation("color");
+	if (loc >= 0) glUniform4fv(loc, 1, &colors[state].x);
 	for (unsigned int i = 0; i < batchList.size(); i++)
 	{
-		int loc2 = s->getUniformLocation("color");
-		if (loc2 >= 0) glUniform4fv(loc2, 1, &batchList[i].color.x);
-
 		glBindVertexArray(batchList[i].vao);
 		glDrawElements(GL_TRIANGLES, batchList[i].faces.size(), GL_UNSIGNED_SHORT, NULL);
 	}
 }
-void WidgetVirtual::update(const float& elapseTime) {}
+void WidgetVirtual::update(const float& elapseTime)
+{
+	State s = (State)(configuration & STATE_MASK);
+	colors[CURRENT] = colors[s];
+	positions[CURRENT] = positions[s];
+	sizes[CURRENT] = sizes[s];
+	lastConfiguration = configuration;
+}
 bool WidgetVirtual::intersect(const glm::mat4& base, const glm::vec3& ray, const glm::vec3 origin, glm::vec3& result)
 {
 	for (unsigned int i = 0; i < batchList.size(); i++)
@@ -92,17 +109,54 @@ bool WidgetVirtual::intersect(const glm::mat4& base, const glm::vec3& ray, const
 	}
 	return false;
 }
+bool WidgetVirtual::mouseEvent(const glm::vec3& eventLocation, const bool& clicked) { return false; }
 
 
 void WidgetVirtual::setString(const std::string& s) {}
-std::string WidgetVirtual::getString() { return std::string(); }
+std::string WidgetVirtual::getString() const { return std::string(); }
 std::stringstream* WidgetVirtual::getStream() { return nullptr; }
 //
 
 
 //  Set/get functions
-void WidgetVirtual::setSize(const glm::vec2& s) { size = s; }
-void WidgetVirtual::setPosition(const glm::vec3& p) { position = p; }
+void WidgetVirtual::setState(State state)
+{
+	configuration &= ~STATE_MASK;
+	configuration |= state % CURRENT;
+}
+void WidgetVirtual::setSize(const glm::vec2& s, const State& state)
+{
+	if (state == ALL)
+	{
+		sizes[DEFAULT] = s;
+		sizes[HOVER] = s;
+		sizes[ACTIVE] = s;
+		sizes[CURRENT] = s;
+	}
+	else sizes[state] = s;
+}
+void WidgetVirtual::setPosition(const glm::vec3& p, const State& state)
+{
+	if (state == ALL)
+	{
+		positions[DEFAULT] = p;
+		positions[HOVER] = p;
+		positions[ACTIVE] = p;
+		positions[CURRENT] = p;
+	}
+	else positions[state] = p;
+}
+void WidgetVirtual::setColor(const glm::vec4& c, const State& state) 
+{
+	if (state == ALL)
+	{
+		colors[DEFAULT] = c;
+		colors[HOVER] = c;
+		colors[ACTIVE] = c;
+		colors[CURRENT] = c;
+	}
+	else colors[state] = c;
+}
 void WidgetVirtual::setVisibility(const bool& visible)
 {
 	if (visible) configuration |= VISIBLE;
@@ -122,8 +176,22 @@ void WidgetVirtual::setShader(const std::string& shaderName)
 
 
 WidgetVirtual::WidgetType WidgetVirtual::getType() const { return type; }
-glm::vec3 WidgetVirtual::getPosition() const { return position; }
-glm::vec4* WidgetVirtual::getColor(const unsigned int& index) { return &(batchList[index].color); }
+WidgetVirtual::State WidgetVirtual::getState() const { return (State)(configuration & STATE_MASK); }
+glm::vec2 WidgetVirtual::getSize(State state)
+{
+	if (state == CURRENT) return sizes[(State)(configuration & STATE_MASK)];
+	else return sizes[(State)((int)state % CURRENT)];
+}
+glm::vec3 WidgetVirtual::getPosition(State state)
+{
+	if (state == CURRENT) return positions[(State)(configuration & STATE_MASK)];
+	else return positions[(State)((int)state % CURRENT)];
+}
+glm::vec4 WidgetVirtual::getColor(const unsigned int& index, State state)
+{
+	if (state == CURRENT) return colors[(State)(configuration & STATE_MASK)];
+	else return colors[(State)((int)state % CURRENT)];
+}
 bool WidgetVirtual::isVisible() const { return (configuration & VISIBLE)!=0; }
 Shader* WidgetVirtual::getShader() const { return shader; }
 Texture* WidgetVirtual::getTexture() const { return texture; }

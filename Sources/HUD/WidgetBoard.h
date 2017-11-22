@@ -26,9 +26,7 @@ class WidgetBoard : public WidgetVirtual
 
 		//  Public functions
 		void initialize(const float& borderThickness, const float& borderWidth, const uint8_t& corner = 0x00);
-		//
-
-		//  Set/get functions
-		void setColor(const glm::vec4& c);
+		void draw(Shader* s, uint8_t& stencilMask);
+		void update(const float& elapseTime);
 		//
 };

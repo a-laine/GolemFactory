@@ -1,5 +1,7 @@
 #include "Layer.h"
 
+#define SPEED 0.003f
+
 //  Default
 Layer::Layer(const uint8_t& config) : configuration(config), size(1.f) {}
 Layer::~Layer() {}
@@ -8,13 +10,20 @@ Layer::~Layer() {}
 //	Public functions
 void Layer::update(const float& elapseTime)
 {
-	//eulerAngle.x += elapseTime / 1000 * 3.1415927f;
-	//eulerAngle.z += elapseTime / 5000 * 3.1415927f;
+	glm::vec3 direction = targetPosition - position;
+	if (glm::length(direction) > SPEED)
+		position += SPEED * glm::normalize(direction);
+	else position = targetPosition;
+
+	if (glm::length(position - targetPosition) < SPEED && targetPosition != sreenPosition)
+		configuration &= ~VISIBLE;
 }
 //
 
 //  Set/get functions
 void Layer::setPosition(const glm::vec3& p) { position = p; }
+void Layer::setSreenPosition(const glm::vec3& p) { sreenPosition = p; }
+void Layer::setTargetPosition(const glm::vec3& p) { targetPosition = p; }
 void Layer::setSize(const float& s) { size = s; }
 void Layer::setOrientation(const float& yaw, const float& pitch, const float& roll)
 {
@@ -38,4 +47,5 @@ glm::mat4 Layer::getModelMatrix() const
 	model = glm::scale(model, glm::vec3(size, size, size));							//	change scale
 	return model;
 }
+glm::vec3 Layer::getSreenPosition() const { return sreenPosition; }
 //
