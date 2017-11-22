@@ -98,19 +98,7 @@ int main()
 		double startTime = glfwGetTime();
 		int width, height;
 		glfwGetWindowSize(window, &width, &height);
-		/*
-		//	update some camera attribute
-		if (camera.getMode() == Camera::TRACKBALL)
-			camera.setRadius(camera.getRadius() + camera.getSensitivity() * EventHandler::getInstance()->getScrollingRelative().y);
-		else
-		{
-			float angle = camera.getFrustrumAngleVertical() + EventHandler::getInstance()->getScrollingRelative().y;
-			if (angle > 70.f) angle = 70.f;
-			else if (angle < 3) angle = 3.f;
-			camera.setFrustrumAngleVertical(angle);
-			camera.setFrustrumAngleHorizontalFromScreenRatio((float)width / height);
-		}
-		*/
+
 		// Render frame
 		Renderer::getInstance()->render(&camera);
 
