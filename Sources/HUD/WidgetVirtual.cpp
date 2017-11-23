@@ -1,6 +1,5 @@
 #include "WidgetVirtual.h"
 
-const float WidgetVirtual::PICKING_MARGIN = 0.f;
 
 //  Default
 WidgetVirtual::WidgetVirtual(const WidgetType& t, const uint8_t& config, const std::string& shaderName) : type(t), configuration(config)
@@ -91,7 +90,7 @@ bool WidgetVirtual::intersect(const glm::mat4& base, const glm::vec3& ray, const
 			glm::normalize(normal);
 
 			//	compute intersection point
-			if (glm::dot(normal, ray) == 0.f) return false;
+			if (glm::dot(normal, ray) == 0.f) continue;
 			float depth = glm::dot(normal, p1) / glm::dot(normal, ray);
 			glm::vec3 intersection = depth * ray - p1;
 
@@ -100,7 +99,7 @@ bool WidgetVirtual::intersect(const glm::mat4& base, const glm::vec3& ray, const
 			glm::vec2 barry;
 				barry.x = (glm::dot(v2, v2) * glm::dot(intersection, v1) - glm::dot(v2, v1) * glm::dot(intersection, v2)) / magnitute;
 				barry.y = (glm::dot(v1, v1) * glm::dot(intersection, v2) - glm::dot(v2, v1) * glm::dot(intersection, v1)) / magnitute;
-			if (barry.x < -PICKING_MARGIN || barry.y < -PICKING_MARGIN || barry.x + barry.y > 1.f + PICKING_MARGIN) continue;
+			if (barry.x < 0.f || barry.y < 0.f || barry.x + barry.y > 1.f) continue;
 
 			//	ray actually intersect this triangle
 			result = intersection;
@@ -134,6 +133,7 @@ void WidgetVirtual::setSize(const glm::vec2& s, const State& state)
 		sizes[CURRENT] = s;
 	}
 	else sizes[state] = s;
+	if(configuration & RESPONSIVE) configuration |= NEED_UPDATE;
 }
 void WidgetVirtual::setPosition(const glm::vec3& p, const State& state)
 {
@@ -161,6 +161,11 @@ void WidgetVirtual::setVisibility(const bool& visible)
 {
 	if (visible) configuration |= VISIBLE;
 	else configuration &= ~VISIBLE;
+}
+void WidgetVirtual::setResponsive(const bool& responsive)
+{
+	if (responsive) configuration |= RESPONSIVE;
+	else configuration &= ~RESPONSIVE;
 }
 void WidgetVirtual::setTexture(const std::string& textureName)
 {
@@ -193,6 +198,7 @@ glm::vec4 WidgetVirtual::getColor(const unsigned int& index, State state)
 	else return colors[(State)((int)state % CURRENT)];
 }
 bool WidgetVirtual::isVisible() const { return (configuration & VISIBLE)!=0; }
+bool WidgetVirtual::isResponsive() const { return (configuration & RESPONSIVE) != 0; }
 Shader* WidgetVirtual::getShader() const { return shader; }
 Texture* WidgetVirtual::getTexture() const { return texture; }
 unsigned int WidgetVirtual::getNumberFaces() const

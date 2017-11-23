@@ -1,12 +1,12 @@
 #include "WidgetLabel.h"
 
-
+#define LINE_OFFSET		0.5f
 #define TEX_OFFSET		0.00586f
 #define ITALIC_RATIO	0.5f
 
 //  Default
-WidgetLabel::WidgetLabel(const std::string& fontName, const uint8_t& config, const std::string& shaderName) : 
-	WidgetVirtual(WidgetVirtual::LABEL, config, shaderName), textConfiguration(0x00), sizeChar(0.1f), needUpdate(true), updateCooldown(0.f)
+WidgetLabel::WidgetLabel(const uint8_t& config, const std::string& shaderName) : 
+	WidgetVirtual(WidgetVirtual::LABEL, config | NEED_UPDATE, shaderName), textConfiguration(0x00), sizeChar(0.1f), updateCooldown(0.f)
 {
 	font = nullptr;
 }
@@ -20,9 +20,11 @@ WidgetLabel::~WidgetLabel()
 void WidgetLabel::initialize(const std::string& t, uint8_t textConfig)
 {
 	//	init
-	colors[CURRENT] = colors[(State)(configuration & STATE_MASK)];
-	positions[CURRENT] = positions[(State)(configuration & STATE_MASK)];
-	sizes[CURRENT] = sizes[(State)(configuration & STATE_MASK)];
+	State s = (State)(configuration & STATE_MASK);
+	colors[CURRENT] = colors[s];
+	positions[CURRENT] = positions[s];
+	sizes[CURRENT] = sizes[s];
+	lastConfiguration = configuration;
 	if (!font) return;
 		
 	text = t;
@@ -37,20 +39,26 @@ void WidgetLabel::initialize(const std::string& t, uint8_t textConfig)
 	//	end
 	initializeVBOs(GL_DYNAMIC_DRAW);
 	initializeVAOs();
-	needUpdate = false;
-	lastConfiguration = configuration;
 }
 void WidgetLabel::update(const float& elapseTime)
 {
+	State s = (State)(configuration & STATE_MASK);
+	colors[CURRENT] = colors[s];
+	positions[CURRENT] = positions[s];
+	sizes[CURRENT] = sizes[s];
+	lastConfiguration = configuration;
+
 	//	update buffers if needed
 	updateCooldown += elapseTime;
-	if (needUpdate && updateCooldown > 100.f)
+	if (configuration & NEED_UPDATE && updateCooldown > 100.f)
 	{
+		configuration &= ~NEED_UPDATE;
+		updateCooldown = 0.f;
+		if (!font) return;
+
 		parseText();
 		updateBuffers();
 		updateVBOs();
-		needUpdate = false;
-		updateCooldown = 0.f;
 	}
 }
 void WidgetLabel::draw(Shader* s, uint8_t& stencilMask)
@@ -93,7 +101,7 @@ bool WidgetLabel::intersect(const glm::mat4& base, const glm::vec3& ray, const g
 		glm::normalize(normal);
 
 		//	compute intersection point
-		if (glm::dot(normal, ray) == 0.f) return false;
+		if (glm::dot(normal, ray) == 0.f) continue;
 		float depth = glm::dot(normal, p1) / glm::dot(normal, ray);
 		glm::vec3 intersection = depth * ray - p1;
 
@@ -102,7 +110,7 @@ bool WidgetLabel::intersect(const glm::mat4& base, const glm::vec3& ray, const g
 		glm::vec2 barry;
 		barry.x = (glm::dot(v2, v2) * glm::dot(intersection, v1) - glm::dot(v2, v1) * glm::dot(intersection, v2)) / magnitute;
 		barry.y = (glm::dot(v1, v1) * glm::dot(intersection, v2) - glm::dot(v2, v1) * glm::dot(intersection, v1)) / magnitute;
-		if (barry.x < -PICKING_MARGIN || barry.y < -PICKING_MARGIN || barry.x + barry.y > 1.f + PICKING_MARGIN) continue;
+		if (barry.x < 0.f || barry.y < 0.f || barry.x + barry.y > 1.f) continue;
 
 		//	ray actually intersect this triangle
 		result = intersection;
@@ -115,7 +123,7 @@ bool WidgetLabel::intersect(const glm::mat4& base, const glm::vec3& ray, const g
 void WidgetLabel::setString(const std::string& newText)
 {
 	text = newText;
-	needUpdate = true;
+	configuration |= NEED_UPDATE;
 }
 std::string WidgetLabel::getString() const { return text; }
 //
@@ -125,12 +133,12 @@ void WidgetLabel::setFont(const std::string& fontName)
 {
 	ResourceManager::getInstance()->release(font);
 	font = ResourceManager::getInstance()->getFont(fontName);
-	needUpdate = true;
+	configuration |= NEED_UPDATE;
 }
 void WidgetLabel::setSizeChar(const float& f)
 {
 	sizeChar = f;
-	needUpdate = true;
+	configuration |= NEED_UPDATE;
 }
 
 
@@ -145,7 +153,6 @@ void WidgetLabel::updateBuffers()
 	float x = 0.f;
 	unsigned int line = 0;
 	float italic = ((textConfiguration & ITALIC) ? ITALIC_RATIO : 0.f);
-	State s = (State)(configuration & STATE_MASK);
 
 	for (unsigned int i = 0; i < text.size(); i++)
 	{
@@ -197,10 +204,10 @@ void WidgetLabel::updateBuffers()
 
 	//	clipping rectangle
 	DrawBatch quad;
-		quad.vertices.push_back(glm::vec3(-0.5f * sizes[s].x, 0.f, -0.5f * sizes[s].y));
-		quad.vertices.push_back(glm::vec3(-0.5f * sizes[s].x, 0.f,  0.5f * sizes[s].y));
-		quad.vertices.push_back(glm::vec3( 0.5f * sizes[s].x, 0.f,  0.5f * sizes[s].y));
-		quad.vertices.push_back(glm::vec3( 0.5f * sizes[s].x, 0.f, -0.5f * sizes[s].y));
+		quad.vertices.push_back(glm::vec3(-0.5f * sizes[CURRENT].x, 0.f, -0.5f * sizes[CURRENT].y));
+		quad.vertices.push_back(glm::vec3(-0.5f * sizes[CURRENT].x, 0.f,  0.5f * sizes[CURRENT].y));
+		quad.vertices.push_back(glm::vec3( 0.5f * sizes[CURRENT].x, 0.f,  0.5f * sizes[CURRENT].y));
+		quad.vertices.push_back(glm::vec3( 0.5f * sizes[CURRENT].x, 0.f, -0.5f * sizes[CURRENT].y));
 
 		quad.textures.push_back(glm::vec2(0.f, 1.f));
 		quad.textures.push_back(glm::vec2(0.f, 0.f));
@@ -216,17 +223,19 @@ void WidgetLabel::updateBuffers()
 }
 void WidgetLabel::updateVBOs()
 {
-	if (batchList.empty()) return;
-	glBindVertexArray(0);
+	for (unsigned int i = 0; i < batchList.size(); i++)
+	{
+		glBindVertexArray(0);
 
-	glBindBuffer(GL_ARRAY_BUFFER, batchList[0].verticesBuffer);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, batchList[0].vertices.size() * sizeof(glm::vec3), batchList[0].vertices.data());
+		glBindBuffer(GL_ARRAY_BUFFER, batchList[i].verticesBuffer);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, batchList[i].vertices.size() * sizeof(glm::vec3), batchList[i].vertices.data());
 
-	glBindBuffer(GL_ARRAY_BUFFER, batchList[0].texturesBuffer);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, batchList[0].textures.size() * sizeof(glm::vec2), batchList[0].textures.data());
+		glBindBuffer(GL_ARRAY_BUFFER, batchList[i].texturesBuffer);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, batchList[i].textures.size() * sizeof(glm::vec2), batchList[i].textures.data());
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, batchList[0].facesBuffer);
-	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, batchList[0].faces.size() * sizeof(unsigned short), batchList[0].faces.data());
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, batchList[i].facesBuffer);
+		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, batchList[i].faces.size() * sizeof(unsigned short), batchList[i].faces.data());
+	}
 }
 void WidgetLabel::parseText()
 {
@@ -301,6 +310,6 @@ glm::vec2 WidgetLabel::getLineOrigin(const unsigned int& lineIndex, const uint8_
 			break;
 		default: break;
 	}
-	return origin;
+	return origin + glm::vec2(sizeChar * LINE_OFFSET, 0.f);
 }
 //

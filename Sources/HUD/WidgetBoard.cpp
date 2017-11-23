@@ -1,17 +1,81 @@
 #include "WidgetBoard.h"
 
 //  Default
-WidgetBoard::WidgetBoard(const uint8_t& config, const std::string& shaderName) : WidgetVirtual(WidgetVirtual::BOARD, config, shaderName) {}
+WidgetBoard::WidgetBoard(const uint8_t& config, const std::string& shaderName) : 
+	WidgetVirtual(WidgetVirtual::BOARD, config | NEED_UPDATE, shaderName), updateCooldown(0.f)
+{}
 WidgetBoard::~WidgetBoard() {}
 //
 
 //  Public functions
-void WidgetBoard::initialize(const float& borderThickness, const float& borderWidth, const uint8_t& corner)
+void WidgetBoard::initialize(const float& bThickness, const float& bWidth, const uint8_t& corner)
 {
-	//	init
 	colors[CURRENT] = colors[(State)(configuration & STATE_MASK)];
 	positions[CURRENT] = positions[(State)(configuration & STATE_MASK)];
 	sizes[CURRENT] = sizes[(State)(configuration & STATE_MASK)];
+	lastConfiguration = configuration;
+
+	borderThickness = bThickness;
+	borderWidth = bWidth;
+	cornerConfiguration = corner;
+
+	batchList.push_back(DrawBatch());
+	batchList.push_back(DrawBatch());
+	updateBuffers(true);
+
+	if(configuration & RESPONSIVE) initializeVBOs(GL_DYNAMIC_DRAW);
+	else initializeVBOs(GL_STATIC_DRAW);
+	initializeVAOs();
+}
+void WidgetBoard::draw(Shader* s, uint8_t& stencilMask)
+{
+	//	texture related stuff
+	if (texture) glBindTexture(GL_TEXTURE_2D, texture->getTextureId());
+	else glBindTexture(GL_TEXTURE_2D, 0);
+	int loc = s->getUniformLocation("useTexture");
+	if (loc >= 0) glUniform1i(loc, (texture ? 1 : 0));
+
+	//	draw border
+	loc = s->getUniformLocation("color");
+	if (loc >= 0) glUniform4fv(loc, 1, &colors[CURRENT].x);
+
+	glBindVertexArray(batchList[0].vao);
+	glDrawElements(GL_TRIANGLES, batchList[0].faces.size(), GL_UNSIGNED_SHORT, NULL);
+
+	//	draw center at different alpha
+	glm::vec4 color(colors[CURRENT].x, colors[CURRENT].y, colors[CURRENT].z, 0.5f * colors[CURRENT].w);
+	loc = s->getUniformLocation("color");
+	if (loc >= 0) glUniform4fv(loc, 1, &color.x);
+
+	glBindVertexArray(batchList[1].vao);
+	glDrawElements(GL_TRIANGLES, batchList[1].faces.size(), GL_UNSIGNED_SHORT, NULL);
+}
+void WidgetBoard::update(const float& elapseTime)
+{
+	State s = (State)(configuration & STATE_MASK);
+	colors[CURRENT] = 0.9f * colors[CURRENT] + 0.1f * colors[s];
+	positions[CURRENT] = positions[s];
+	sizes[CURRENT] = sizes[s];
+	lastConfiguration = configuration;
+
+	//	update buffers if needed
+	if (configuration & RESPONSIVE)
+	{
+		updateCooldown += elapseTime;
+		if (configuration & NEED_UPDATE && updateCooldown > 500.f)
+		{
+			updateBuffers();
+			updateVBOs();
+			configuration &= ~NEED_UPDATE;
+			updateCooldown = 0.f;
+		}
+	}
+}
+//
+
+//	Protected functions
+void WidgetBoard::updateBuffers(const bool& firstInit)
+{
 
 	DrawBatch border, center;
 	glm::vec3 dimension = glm::vec3(0.5f * sizes[CURRENT].x - borderThickness, 0.f, 0.5f * sizes[CURRENT].y - borderThickness);
@@ -23,7 +87,7 @@ void WidgetBoard::initialize(const float& borderThickness, const float& borderWi
 	center.faces.push_back(0);
 
 	//	Top
-	if (corner & TOP_LEFT)
+	if (cornerConfiguration & TOP_LEFT)
 	{
 		center.vertices.push_back(glm::vec3(-dimension.x + borderWidth, 0.f, dimension.z));
 		center.faces.push_back(1);
@@ -47,7 +111,7 @@ void WidgetBoard::initialize(const float& borderThickness, const float& borderWi
 		//	begin triangle 1
 		border.faces.push_back(0); border.faces.push_back(1);
 	}
-	if (corner & TOP_RIGHT)
+	if (cornerConfiguration & TOP_RIGHT)
 	{
 		//	center
 		center.vertices.push_back(glm::vec3(dimension.x - borderWidth, 0.f, dimension.z));
@@ -60,18 +124,18 @@ void WidgetBoard::initialize(const float& borderThickness, const float& borderWi
 		border.vertices.push_back(glm::vec3(dimension.x - borderWidth, 0.f, dimension.z));
 		border.vertices.push_back(glm::vec3(dimension.x - borderWidth, 0.f, dimension.z + borderThickness));
 		border.vertices.push_back(glm::vec3(dimension.x - borderWidth + borderThickness * sin(pi / 8), 0.f, dimension.z + borderThickness * cos(pi / 8)));
-		
+
 		//	vertex 5
 		border.vertices.push_back(glm::vec3(dimension.x - borderWidth + borderThickness * sin(pi / 4), 0.f, dimension.z + borderThickness * cos(pi / 4)));
 		border.vertices.push_back(glm::vec3(dimension.x + borderThickness * sin(pi / 4), 0.f, dimension.z - borderWidth + borderThickness * cos(pi / 4)));
 		border.vertices.push_back(glm::vec3(dimension.x, 0.f, dimension.z - borderWidth));
-		
+
 		//	vertex 8
 		border.vertices.push_back(glm::vec3(dimension.x + borderThickness * sin(3 * pi / 8), 0.f, dimension.z - borderWidth + borderThickness * cos(3 * pi / 8)));
 		border.vertices.push_back(glm::vec3(dimension.x + borderThickness, 0.f, dimension.z - borderWidth));
 
 		//	finish last block triangle
-		border.faces.push_back(2);	
+		border.faces.push_back(2);
 
 		//	finish top rectangle
 		border.faces.push_back(1); border.faces.push_back(2); border.faces.push_back(3);
@@ -101,7 +165,7 @@ void WidgetBoard::initialize(const float& borderThickness, const float& borderWi
 
 		//	vertex 5
 		border.vertices.push_back(glm::vec3(dimension.x + borderThickness * sin(pi / 4), 0.f, dimension.z + borderThickness * cos(pi / 4)));
-		border.vertices.push_back(glm::vec3(dimension.x + borderThickness * sin(3*pi / 8), 0.f, dimension.z + borderThickness * cos(3*pi / 8)));
+		border.vertices.push_back(glm::vec3(dimension.x + borderThickness * sin(3 * pi / 8), 0.f, dimension.z + borderThickness * cos(3 * pi / 8)));
 		border.vertices.push_back(glm::vec3(dimension.x + borderThickness, 0.f, dimension.z));
 
 		//	finish last block triangle
@@ -119,7 +183,7 @@ void WidgetBoard::initialize(const float& borderThickness, const float& borderWi
 	}
 
 	//	Right
-	if (corner & BOTTOM_RIGHT)
+	if (cornerConfiguration & BOTTOM_RIGHT)
 	{
 		//	center
 		unsigned int index = center.vertices.size() - 1;
@@ -196,7 +260,7 @@ void WidgetBoard::initialize(const float& borderThickness, const float& borderWi
 	}
 
 	//	Bottom
-	if (corner & BOTTOM_LEFT)
+	if (cornerConfiguration & BOTTOM_LEFT)
 	{
 		//	center
 		unsigned int index = center.vertices.size() - 1;
@@ -273,7 +337,7 @@ void WidgetBoard::initialize(const float& borderThickness, const float& borderWi
 	}
 
 	//	Left
-	if (corner & TOP_LEFT)
+	if (cornerConfiguration & TOP_LEFT)
 	{
 		//	center
 		unsigned int index = center.vertices.size() - 1;
@@ -348,48 +412,38 @@ void WidgetBoard::initialize(const float& borderThickness, const float& borderWi
 		border.faces.push_back(borderCornerIndex);  border.faces.push_back(index + 4);		border.faces.push_back(index + 5);
 		border.faces.push_back(borderCornerIndex);  border.faces.push_back(index + 5);		border.faces.push_back(index + 6);
 	}
-	
-	//	fill texture coord to dummy value
-	for (unsigned int i = 0; i < border.vertices.size(); i++)
-		border.textures.push_back(glm::vec2(0.f, 0.f));
-	batchList.push_back(border);
-	for (unsigned int i = 0; i < center.vertices.size(); i++)
-		center.textures.push_back(glm::vec2(0.f, 0.f));
-	batchList.push_back(center);
 
 	//	end
-	initializeVBOs(GL_STATIC_DRAW);
-	initializeVAOs();
+	if (firstInit)
+	{
+		for (unsigned int i = 0; i < border.vertices.size(); i++)
+			border.textures.push_back(glm::vec2(0.f, 0.f));
+		batchList[0].textures.swap(border.textures);
+
+		for (unsigned int i = 0; i < center.vertices.size(); i++)
+			center.textures.push_back(glm::vec2(0.f, 0.f));
+		batchList[1].textures.swap(center.textures);
+	}
+
+	batchList[0].vertices.swap(border.vertices);
+	batchList[0].faces.swap(border.faces);
+	batchList[1].vertices.swap(center.vertices);
+	batchList[1].faces.swap(center.faces);
 }
-void WidgetBoard::draw(Shader* s, uint8_t& stencilMask)
+void WidgetBoard::updateVBOs()
 {
-	//	texture related stuff
-	if (texture) glBindTexture(GL_TEXTURE_2D, texture->getTextureId());
-	else glBindTexture(GL_TEXTURE_2D, 0);
-	int loc = s->getUniformLocation("useTexture");
-	if (loc >= 0) glUniform1i(loc, (texture ? 1 : 0));
+	for (unsigned int i = 0; i < batchList.size(); i++)
+	{
+		glBindVertexArray(0);
 
-	//	draw border
-	loc = s->getUniformLocation("color");
-	if (loc >= 0) glUniform4fv(loc, 1, &colors[CURRENT].x);
+		glBindBuffer(GL_ARRAY_BUFFER, batchList[i].verticesBuffer);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, batchList[i].vertices.size() * sizeof(glm::vec3), batchList[i].vertices.data());
 
-	glBindVertexArray(batchList[0].vao);
-	glDrawElements(GL_TRIANGLES, batchList[0].faces.size(), GL_UNSIGNED_SHORT, NULL);
+		glBindBuffer(GL_ARRAY_BUFFER, batchList[i].texturesBuffer);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, batchList[i].textures.size() * sizeof(glm::vec2), batchList[i].textures.data());
 
-	//	draw center at different alpha
-	glm::vec4 color(colors[CURRENT].x, colors[CURRENT].y, colors[CURRENT].z, 0.5f * colors[CURRENT].w);
-	loc = s->getUniformLocation("color");
-	if (loc >= 0) glUniform4fv(loc, 1, &color.x);
-
-	glBindVertexArray(batchList[1].vao);
-	glDrawElements(GL_TRIANGLES, batchList[1].faces.size(), GL_UNSIGNED_SHORT, NULL);
-}
-void WidgetBoard::update(const float& elapseTime)
-{
-	State s = (State)(configuration & STATE_MASK);
-	colors[CURRENT] = 0.9f * colors[CURRENT] + 0.1f * colors[s];
-	positions[CURRENT] = positions[s];
-	sizes[CURRENT] = sizes[s];
-	lastConfiguration = configuration;
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, batchList[i].facesBuffer);
+		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, batchList[i].faces.size() * sizeof(unsigned short), batchList[i].faces.data());
+	}
 }
 //

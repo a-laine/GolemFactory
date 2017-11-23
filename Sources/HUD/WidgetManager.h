@@ -24,6 +24,10 @@ class WidgetManager : public Singleton<WidgetManager>
 	friend class Singleton<WidgetManager>;
 
 	public:
+		//	Callback
+		static void resizeCallback(int w, int h);
+		//
+
 		//	Public functions
 		void draw(Shader* s, const glm::mat4& base, const float* view, const float* projection);
 		void update(const float& elapsedTime, const bool& clickButtonPressed);
@@ -74,5 +78,7 @@ class WidgetManager : public Singleton<WidgetManager>
 		bool lastClickButtonState;
 		std::set<WidgetVirtual*> hoverWidgetList;
 		std::list<WidgetVirtual*> activeWidgetList;
+
+		int lastWidth, lastHeight;
 		//
 };

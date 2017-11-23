@@ -15,14 +15,14 @@ void Layer::update(const float& elapseTime)
 		position += SPEED * glm::normalize(direction);
 	else position = targetPosition;
 
-	if (glm::length(position - targetPosition) < SPEED && targetPosition != sreenPosition)
+	if (glm::length(position - targetPosition) < SPEED && targetPosition != screenPosition)
 		configuration &= ~VISIBLE;
 }
 //
 
 //  Set/get functions
 void Layer::setPosition(const glm::vec3& p) { position = p; }
-void Layer::setSreenPosition(const glm::vec3& p) { sreenPosition = p; }
+void Layer::setScreenPosition(const glm::vec3& p) { screenPosition = p; }
 void Layer::setTargetPosition(const glm::vec3& p) { targetPosition = p; }
 void Layer::setSize(const float& s) { size = s; }
 void Layer::setOrientation(const float& yaw, const float& pitch, const float& roll)
@@ -36,9 +36,17 @@ void Layer::setVisibility(const bool& visible)
 	if (visible) configuration |= VISIBLE;
 	else configuration &= ~VISIBLE;
 }
+void Layer::setResponsive(const bool& responsive)
+{
+	if (responsive) configuration |= RESPONSIVE;
+	else configuration &= ~RESPONSIVE;
+}
+
 
 
 bool Layer::isVisible() const { return (configuration & VISIBLE) != 0; }
+bool Layer::isResponsive() const { return (configuration & RESPONSIVE) != 0; }
+float Layer::getSize() const { return size; }
 glm::mat4 Layer::getModelMatrix() const
 {
 	glm::mat4 model = glm::rotate(glm::pi<float>(), glm::vec3(0, 0, 1));			//	begin to rotate 180 degres to have x axis in good direction (left to right)
@@ -47,5 +55,7 @@ glm::mat4 Layer::getModelMatrix() const
 	model = glm::scale(model, glm::vec3(size, size, size));							//	change scale
 	return model;
 }
-glm::vec3 Layer::getSreenPosition() const { return sreenPosition; }
+glm::vec3 Layer::getPosition() const { return position; }
+glm::vec3 Layer::getScreenPosition() const { return screenPosition; }
+glm::vec3 Layer::getTargetPosition() const { return targetPosition; }
 //

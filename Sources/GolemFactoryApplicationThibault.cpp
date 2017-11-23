@@ -45,7 +45,8 @@ int main()
 	EventHandler::getInstance()->addWindow(window);
 	EventHandler::getInstance()->setRepository(resourceRepository);
 	EventHandler::getInstance()->loadKeyMapping("RPG Key mapping");
-	EventHandler::getInstance()->setCursorMode(false);
+	EventHandler::getInstance()->setCursorMode(true);
+	EventHandler::getInstance()->setResizeCallback(WidgetManager::resizeCallback);
 	
 	// Init Resources manager & instance manager
 	MeshLoader::logVerboseLevel = MeshLoader::ALL;

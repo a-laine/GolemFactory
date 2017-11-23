@@ -1,6 +1,9 @@
 #include "WidgetManager.h"
 
 
+#define INITIAL_RATIO ((16.f/9.f))
+
+
 //  Default
 WidgetManager::WidgetManager() : widgetDrawn(0), trianglesDrawn(0), pickingRay(0.f) {}
 WidgetManager::~WidgetManager()
@@ -14,6 +17,7 @@ WidgetManager::~WidgetManager()
 //	Public functions
 void WidgetManager::loadHud(const std::string& hudName)
 {
+	lastWidth = 1600; lastHeight = 900;
 	loadDebugHud();
 }
 void WidgetManager::draw(Shader* s, const glm::mat4& base, const float* view, const float* projection)
@@ -197,7 +201,7 @@ void WidgetManager::setActiveHUD(const std::string& s)
 		for (unsigned int i = 0; i < it->second.size(); i++)
 		{
 			it->second[i]->setVisibility(true);
-			it->second[i]->setTargetPosition(it->second[i]->getSreenPosition());
+			it->second[i]->setTargetPosition(it->second[i]->getScreenPosition());
 		}
 	}
 
@@ -207,9 +211,9 @@ void WidgetManager::setActiveHUD(const std::string& s)
 	{
 		for (unsigned int i = 0; i < it->second.size(); i++)
 		{
-			glm::vec3 direction = it->second[i]->getSreenPosition();
+			glm::vec3 direction = it->second[i]->getScreenPosition();
 			if (direction == glm::vec3(0.f)) direction = glm::vec3(0.f, 0.f, 1.f);
-			it->second[i]->setTargetPosition(it->second[i]->getSreenPosition() + 0.1f * glm::normalize(direction));
+			it->second[i]->setTargetPosition(it->second[i]->getScreenPosition() + 0.1f * glm::normalize(direction));
 		}
 	}
 
@@ -229,29 +233,92 @@ unsigned int WidgetManager::getNbDrawnWidgets() const { return widgetDrawn; }
 unsigned int WidgetManager::getNbDrawnTriangles() const { return trianglesDrawn; }
 //
 
+//	callbacks functions
+void WidgetManager::resizeCallback(int w, int h)
+{
+	std::map<std::string, std::vector<Layer*> >& hudList = WidgetManager::getInstance()->hudList;
+	for (std::map<std::string, std::vector<Layer*> >::iterator it = hudList.begin(); it != hudList.end(); ++it)
+	{
+		for (unsigned int i = 0; i < it->second.size(); i++)
+		{
+			Layer* l = it->second[i];
+			if (l->isResponsive())		// layer responsive
+			{
+				//	change position but keep ratio screen position (just on x)
+				float ratio = (float) WidgetManager::getInstance()->lastHeight * w / h / WidgetManager::getInstance()->lastWidth;
+				l->setPosition(glm::vec3(l->getPosition().x * ratio, l->getPosition().y, l->getPosition().z));
+				l->setTargetPosition(glm::vec3(l->getTargetPosition().x * ratio, l->getTargetPosition().y, l->getTargetPosition().z));
+				l->setScreenPosition(glm::vec3(l->getScreenPosition().x * ratio, l->getScreenPosition().y, l->getScreenPosition().z));
+			}
+			else
+			{
+				//	change Layer position to be kept at this position relative to the border of screen
+
+				float zscale = tan(glm::radians(45.f / 2.f)) * (l->getPosition().y + 0.15f);													//	compute relative scale on vertical axis (base because always 45 degres of view angle)
+				float xscale = zscale * w / h;																									//	compute relative scale of x axis
+				float lxscale = zscale * WidgetManager::getInstance()->lastWidth / WidgetManager::getInstance()->lastHeight;					//	compute previous relative scale of x axis
+				if (l->getPosition().x > 0)																										//	discriminate left or right border relative
+					l->setPosition(glm::vec3(xscale - std::abs(l->getPosition().x - lxscale), l->getPosition().y, l->getPosition().z));			//	change position = border position -+ delta from border (delta = actual position - former scale)
+				else l->setPosition(glm::vec3(-xscale + std::abs(-l->getPosition().x - lxscale), l->getPosition().y, l->getPosition().z));		//	change position 
+
+				zscale = tan(glm::radians(45.f / 2.f)) * (l->getTargetPosition().y + 0.15f);
+				xscale = zscale * w / h;
+				lxscale = zscale * WidgetManager::getInstance()->lastWidth / WidgetManager::getInstance()->lastHeight;
+				if (l->getTargetPosition().x > 0)
+					l->setTargetPosition(glm::vec3(xscale - std::abs(l->getTargetPosition().x - lxscale), l->getTargetPosition().y, l->getTargetPosition().z));
+				else l->setTargetPosition(glm::vec3(-xscale + std::abs(-l->getTargetPosition().x - lxscale), l->getTargetPosition().y, l->getTargetPosition().z));
+
+				zscale = tan(glm::radians(45.f / 2.f)) * (l->getScreenPosition().y + 0.15f);
+				xscale = zscale * w / h;
+				lxscale = zscale * WidgetManager::getInstance()->lastWidth / WidgetManager::getInstance()->lastHeight;
+				if (l->getScreenPosition().x > 0)
+					l->setScreenPosition(glm::vec3(xscale - std::abs(l->getScreenPosition().x - lxscale), l->getScreenPosition().y, l->getScreenPosition().z));
+				else l->setScreenPosition(glm::vec3(-xscale + std::abs(-l->getScreenPosition().x - lxscale), l->getScreenPosition().y, l->getScreenPosition().z));
+			}
+
+			//	check all widgets attach to it
+			std::vector<WidgetVirtual*>& list = it->second[i]->getWidgetList();
+			for (std::vector<WidgetVirtual*>::iterator it2 = list.begin(); it2 != list.end(); ++it2)
+			{
+				if ((*it2)->isResponsive())		// widget responsive
+				{
+					float ratio = (float)WidgetManager::getInstance()->lastHeight * w / h / WidgetManager::getInstance()->lastWidth;
+					(*it2)->setSize(glm::vec2((*it2)->getSize(WidgetVirtual::DEFAULT).x * ratio, (*it2)->getSize(WidgetVirtual::DEFAULT).y), WidgetVirtual::DEFAULT);
+					(*it2)->setSize(glm::vec2((*it2)->getSize(WidgetVirtual::ACTIVE).x * ratio,  (*it2)->getSize(WidgetVirtual::ACTIVE).y),  WidgetVirtual::ACTIVE);
+					(*it2)->setSize(glm::vec2((*it2)->getSize(WidgetVirtual::HOVER).x * ratio,   (*it2)->getSize(WidgetVirtual::HOVER).y),   WidgetVirtual::HOVER);
+					(*it2)->setSize(glm::vec2((*it2)->getSize(WidgetVirtual::CURRENT).x * ratio, (*it2)->getSize(WidgetVirtual::CURRENT).y), WidgetVirtual::CURRENT);
+				}
+			}
+		}
+	}
+	WidgetManager::getInstance()->lastWidth = w;
+	WidgetManager::getInstance()->lastHeight = h;
+}
+//
+
 //	Protected functions
 void WidgetManager::loadDebugHud()
 {
 	//	top title
-	WidgetBoard* board1 = new WidgetBoard();
+	WidgetBoard* board1 = new WidgetBoard(WidgetVirtual::VISIBLE | WidgetVirtual::RESPONSIVE);
 		board1->setPosition(glm::vec3(0.f, 0.01f, 0.f), WidgetVirtual::ALL);
-		board1->setSize(glm::vec2(2.8f, 0.3f), WidgetVirtual::ALL);
-		board1->initialize(0.02f, 0.1f);
+		board1->setSize(glm::vec2(2.4f, 0.3f), WidgetVirtual::ALL);
+		board1->initialize(0.02f, 0.1f, WidgetBoard::BOTTOM_LEFT | WidgetBoard::BOTTOM_RIGHT);
 		board1->setColor(glm::vec4(0.5f, 0.f, 0.2f, 1.f), WidgetVirtual::ALL);
 		board1->setColor(glm::vec4(0.5f, 0.5f, 0.5f, 1.f), WidgetVirtual::HOVER);
 		widgetList.insert(board1);
-	WidgetLabel* label1 = new WidgetLabel();
+	WidgetLabel* label1 = new WidgetLabel(WidgetVirtual::VISIBLE | WidgetVirtual::RESPONSIVE);
 		label1->setPosition(glm::vec3(0.f, 0.f, 0.f), WidgetVirtual::ALL);
 		label1->setSizeChar(0.15f);
-		label1->setSize(glm::vec2(2.7f, 0.2f), WidgetVirtual::ALL);
+		label1->setSize(glm::vec2(2.3f, 0.2f), WidgetVirtual::ALL);
 		label1->setFont("Data Control");
 		label1->initialize("Debug Hud", WidgetLabel::CLIPPING);
 		widgetList.insert(label1);
 	Layer* layer1 = new Layer();
 		layer1->setSize(0.05f);
-		layer1->setSreenPosition(glm::vec3(0.f, 0.f, 0.054f));
-		layer1->setPosition(layer1->getSreenPosition());
-		layer1->setTargetPosition(layer1->getSreenPosition());
+		layer1->setScreenPosition(glm::vec3(0.f, 0.003f, 0.054f));
+		layer1->setPosition(layer1->getScreenPosition());
+		layer1->setTargetPosition(layer1->getScreenPosition());
 		layer1->add(board1);
 		layer1->add(label1);
 		layerList.insert(layer1);
@@ -272,11 +339,11 @@ void WidgetManager::loadDebugHud()
 		label2->initialize("FPS : 60\n Avg : 60\n\nTime : 9ms\n Avg : 11ms", WidgetLabel::LEFT | WidgetLabel::CLIPPING);
 		widgetList.insert(label2);
 		addAssociation(label2, "runtime speed");
-	Layer* layer2 = new Layer();
+	Layer* layer2 = new Layer(Layer::VISIBLE);
 		layer2->setSize(0.05f);
-		layer2->setSreenPosition(glm::vec3(-0.091f, 0.f, 0.049f));
-		layer2->setPosition(layer2->getSreenPosition());
-		layer2->setTargetPosition(layer2->getSreenPosition());
+		layer2->setScreenPosition(glm::vec3(-0.091f, 0.f, 0.049f));
+		layer2->setPosition(layer2->getScreenPosition());
+		layer2->setTargetPosition(layer2->getScreenPosition());
 		layer2->add(board2);
 		layer2->add(label2);
 		layerList.insert(layer2);
@@ -297,75 +364,64 @@ void WidgetManager::loadDebugHud()
 		label3->initialize("Instances :\n80000\n\nTriangles :\n10000000", WidgetLabel::LEFT | WidgetLabel::CLIPPING);
 		addAssociation(label3, "drawcalls");
 		widgetList.insert(label3);
-	Layer* layer3 = new Layer();
+	Layer* layer3 = new Layer(Layer::VISIBLE);
 		layer3->setSize(0.05f);
-		layer3->setSreenPosition(glm::vec3(0.091f, 0.f, 0.049f));
-		layer3->setPosition(layer3->getSreenPosition());
-		layer3->setTargetPosition(layer3->getSreenPosition());
+		layer3->setScreenPosition(glm::vec3(0.091f, 0.f, 0.049f));
+		layer3->setPosition(layer3->getScreenPosition());
+		layer3->setTargetPosition(layer3->getScreenPosition());
 		layer3->add(board3);
 		layer3->add(label3);
 		layerList.insert(layer3);
 
 	//	console
-	WidgetBoard* board4 = new WidgetBoard();
+	WidgetBoard* board4 = new WidgetBoard(WidgetVirtual::VISIBLE | WidgetVirtual::RESPONSIVE);
 		board4->setPosition(glm::vec3(0.f, 0.01f, 0.f), WidgetVirtual::ALL);
 		board4->setSize(glm::vec2(2.1f, 0.5f), WidgetVirtual::ALL);
 		board4->initialize(0.02f, 0.1f, WidgetBoard::TOP_RIGHT);
 		board4->setColor(glm::vec4(0.5f, 0.5f, 0.f, 1.f), WidgetVirtual::ALL);
 		board4->setColor(glm::vec4(0.5f, 0.5f, 0.5f, 1.f), WidgetVirtual::HOVER);
 		widgetList.insert(board4);
-	WidgetLabel* label4 = new WidgetLabel();
-		label4->setPosition(glm::vec3(0.045f, 0.f, 0.f), WidgetVirtual::ALL);
+	WidgetLabel* label4 = new WidgetLabel(WidgetVirtual::VISIBLE | WidgetVirtual::RESPONSIVE);
+		label4->setPosition(glm::vec3(0.0f, 0.f, 0.f), WidgetVirtual::ALL);
 		label4->setSizeChar(0.055f);
-		label4->setSize(glm::vec2(2.2f, 0.35f), WidgetVirtual::ALL);
+		label4->setSize(glm::vec2(2.f, 0.35f), WidgetVirtual::ALL);
 		label4->setFont("Data Control");
 		label4->initialize("debug consol test 3000\nWARRNING : this game is too awesome\n   this could cause some crash !\npeasant says : hello\npeasant says : that's true this game is awesome\n\ndebug consol test 3000", WidgetLabel::LEFT | WidgetLabel::BOTTOM | WidgetLabel::CLIPPING);
 		addAssociation(label4, "console");
 		widgetList.insert(label4);
 	Layer* layer4 = new Layer();
 		layer4->setSize(0.05f);
-		layer4->setSreenPosition(glm::vec3(-0.055f, 0.f, -0.049f));
-		layer4->setPosition(layer4->getSreenPosition());
-		layer4->setTargetPosition(layer4->getSreenPosition());
+		layer4->setScreenPosition(glm::vec3(-0.055f, 0.f, -0.049f));
+		layer4->setPosition(layer4->getScreenPosition());
+		layer4->setTargetPosition(layer4->getScreenPosition());
 		layer4->add(board4);
 		layer4->add(label4);
 		layerList.insert(layer4);
 
 	//	picking
-	WidgetBoard* board5 = new WidgetBoard();
+	WidgetBoard* board5 = new WidgetBoard(WidgetVirtual::VISIBLE | WidgetVirtual::RESPONSIVE);
 		board5->setPosition(glm::vec3(0.f, 0.01f, 0.f), WidgetVirtual::ALL);
 		board5->setSize(glm::vec2(2.1f, 0.5f), WidgetVirtual::ALL);
 		board5->initialize(0.02f, 0.1f, WidgetBoard::TOP_LEFT);
 		board5->setColor(glm::vec4(0.f, 0.5f, 0.f, 1.f), WidgetVirtual::ALL);
 		board5->setColor(glm::vec4(0.5f, 0.5f, 0.5f, 1.f), WidgetVirtual::HOVER);
 		widgetList.insert(board5);
-	WidgetLabel* label5 = new WidgetLabel();
-		label5->setPosition(glm::vec3(0.045f, 0.f, 0.f), WidgetVirtual::ALL);
+	WidgetLabel* label5 = new WidgetLabel(WidgetVirtual::VISIBLE | WidgetVirtual::RESPONSIVE);
+		label5->setPosition(glm::vec3(0.0f, 0.f, 0.f), WidgetVirtual::ALL);
 		label5->setSizeChar(0.07f);
-		label5->setSize(glm::vec2(2.2f, 0.35f), WidgetVirtual::ALL);
+		label5->setSize(glm::vec2(2.f, 0.35f), WidgetVirtual::ALL);
 		label5->setFont("Data Control");
 		label5->initialize("Distance : 50.06 m\nPosition : (923.1 , 584.6 , 1.2)\nInstance on ray : 5\nFirst instance pointed id : 23681\n  type : animated", WidgetLabel::LEFT | WidgetLabel::CLIPPING);
 		addAssociation(label5, "interaction");
 		widgetList.insert(label5);
 	Layer* layer5 = new Layer();
 		layer5->setSize(0.05f);
-		layer5->setSreenPosition(glm::vec3(0.055f, 0.f, -0.049f));
-		layer5->setPosition(layer5->getSreenPosition());
-		layer5->setTargetPosition(layer5->getSreenPosition());
+		layer5->setScreenPosition(glm::vec3(0.055f, 0.f, -0.049f));
+		layer5->setPosition(layer5->getScreenPosition());
+		layer5->setTargetPosition(layer5->getScreenPosition());
 		layer5->add(board5);
 		layer5->add(label5);
 		layerList.insert(layer5);
-
-	//	test
-	/*WidgetImage* image = new WidgetImage("10points.png");
-		image->setColor(glm::vec4(1.f, 1.f, 1.f, 1.f), WidgetVirtual::DEFAULT);
-		image->setColor(glm::vec4(1.f, 1.f, 0.f, 1.f), WidgetVirtual::HOVER);
-		image->setColor(glm::vec4(1.f, 0.f, 0.f, 1.f), WidgetVirtual::ACTIVE);
-		image->initialize();
-	Layer* layer6 = new Layer();
-		layer6->setSize(0.05f);
-		layer6->add(image);
-		layerList.insert(layer6);*/
 
 	//	push on HUD
 	hudList["debug"].push_back(layer1);

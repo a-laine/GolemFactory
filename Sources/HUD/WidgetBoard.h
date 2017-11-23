@@ -29,4 +29,17 @@ class WidgetBoard : public WidgetVirtual
 		void draw(Shader* s, uint8_t& stencilMask);
 		void update(const float& elapseTime);
 		//
+
+	protected:
+		//	Protected functions
+		void updateBuffers(const bool& firstInit = false);
+		void updateVBOs();
+		//
+
+		//	Attributes
+		uint8_t cornerConfiguration;
+		float borderWidth;
+		float borderThickness;
+		float updateCooldown;
+		//
 };

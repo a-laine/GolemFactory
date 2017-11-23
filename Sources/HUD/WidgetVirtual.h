@@ -19,7 +19,9 @@ class WidgetVirtual
 		};
 		enum OrphanFlags
 		{
-			VISIBLE = 1 << 6
+			VISIBLE = 1 << 4,
+			RESPONSIVE = 1 << 5,
+			NEED_UPDATE = 1<<6
 		};
 		enum State
 		{
@@ -65,6 +67,7 @@ class WidgetVirtual
 		virtual void setPosition(const glm::vec3& p, const State& state = CURRENT);
 		virtual void setColor(const glm::vec4& c, const State& state = CURRENT);
 		void setVisibility(const bool& visible);
+		void setResponsive(const bool& responsive);
 		void setTexture(const std::string& textureName);
 		void setShader(const std::string& shaderName);
 
@@ -77,6 +80,7 @@ class WidgetVirtual
 		Shader* getShader() const;
 		Texture* getTexture() const;
 		bool isVisible() const;
+		bool isResponsive() const;
 		virtual unsigned int getNumberFaces() const;
 		//
 
@@ -98,7 +102,5 @@ class WidgetVirtual
 
 		Shader* shader;
 		Texture* texture;
-		
-		static float const PICKING_MARGIN;
 		//
 };

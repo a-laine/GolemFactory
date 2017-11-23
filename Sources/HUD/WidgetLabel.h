@@ -28,7 +28,7 @@ class WidgetLabel : public WidgetVirtual
 		//
 
 		//  Default
-		WidgetLabel(const std::string& fontName = "default", const uint8_t& config = VISIBLE, const std::string& shaderName = "defaultWidget");
+		WidgetLabel(const uint8_t& config = VISIBLE, const std::string& shaderName = "defaultWidget");
 		virtual ~WidgetLabel();
 		//
 
@@ -65,7 +65,6 @@ class WidgetLabel : public WidgetVirtual
 		std::vector<float> linesLength;
 		uint8_t textConfiguration;
 		float sizeChar;
-		bool needUpdate;
 		float updateCooldown;
 		//
 };
