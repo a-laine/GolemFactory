@@ -13,8 +13,6 @@ void WidgetBoard::initialize(const float& borderThickness, const float& borderWi
 	positions[CURRENT] = positions[(State)(configuration & STATE_MASK)];
 	sizes[CURRENT] = sizes[(State)(configuration & STATE_MASK)];
 
-	std::cout << (int)(DEFAULT) << std::endl;
-
 	DrawBatch border, center;
 	glm::vec3 dimension = glm::vec3(0.5f * sizes[CURRENT].x - borderThickness, 0.f, 0.5f * sizes[CURRENT].y - borderThickness);
 	const float pi = glm::pi<float>();
