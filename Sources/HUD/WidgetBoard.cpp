@@ -1,5 +1,8 @@
 #include "WidgetBoard.h"
 
+#define BATCH_INDEX_BORDER 0
+#define BATCH_INDEX_CENTER 1
+
 //  Default
 WidgetBoard::WidgetBoard(const uint8_t& config, const std::string& shaderName) : 
 	WidgetVirtual(WidgetVirtual::BOARD, config | NEED_UPDATE, shaderName), updateCooldown(0.f)
@@ -19,12 +22,20 @@ void WidgetBoard::initialize(const float& bThickness, const float& bWidth, const
 	borderWidth = bWidth;
 	cornerConfiguration = corner;
 
-	batchList.push_back(DrawBatch());
-	batchList.push_back(DrawBatch());
+	batchList.push_back(DrawBatch());	//	BATCH_INDEX_BORDER
+	batchList.push_back(DrawBatch());	//	BATCH_INDEX_CENTER
 	updateBuffers(true);
 
-	if(configuration & RESPONSIVE) initializeVBOs(GL_DYNAMIC_DRAW);
-	else initializeVBOs(GL_STATIC_DRAW);
+	if(configuration & RESPONSIVE) 
+	{
+		initializeVBO(BATCH_INDEX_BORDER, GL_DYNAMIC_DRAW);
+		initializeVBO(BATCH_INDEX_CENTER, GL_DYNAMIC_DRAW);
+	}
+	else
+	{
+		initializeVBO(BATCH_INDEX_BORDER, GL_STATIC_DRAW);
+		initializeVBO(BATCH_INDEX_CENTER, GL_STATIC_DRAW);
+	}
 	initializeVAOs();
 }
 void WidgetBoard::draw(Shader* s, uint8_t& stencilMask)
@@ -39,16 +50,16 @@ void WidgetBoard::draw(Shader* s, uint8_t& stencilMask)
 	loc = s->getUniformLocation("color");
 	if (loc >= 0) glUniform4fv(loc, 1, &colors[CURRENT].x);
 
-	glBindVertexArray(batchList[0].vao);
-	glDrawElements(GL_TRIANGLES, batchList[0].faces.size(), GL_UNSIGNED_SHORT, NULL);
+	glBindVertexArray(batchList[BATCH_INDEX_BORDER].vao);
+	glDrawElements(GL_TRIANGLES, batchList[BATCH_INDEX_BORDER].faces.size(), GL_UNSIGNED_SHORT, NULL);
 
 	//	draw center at different alpha
 	glm::vec4 color(colors[CURRENT].x, colors[CURRENT].y, colors[CURRENT].z, 0.5f * colors[CURRENT].w);
 	loc = s->getUniformLocation("color");
 	if (loc >= 0) glUniform4fv(loc, 1, &color.x);
 
-	glBindVertexArray(batchList[1].vao);
-	glDrawElements(GL_TRIANGLES, batchList[1].faces.size(), GL_UNSIGNED_SHORT, NULL);
+	glBindVertexArray(batchList[BATCH_INDEX_CENTER].vao);
+	glDrawElements(GL_TRIANGLES, batchList[BATCH_INDEX_CENTER].faces.size(), GL_UNSIGNED_SHORT, NULL);
 }
 void WidgetBoard::update(const float& elapseTime)
 {
@@ -418,17 +429,17 @@ void WidgetBoard::updateBuffers(const bool& firstInit)
 	{
 		for (unsigned int i = 0; i < border.vertices.size(); i++)
 			border.textures.push_back(glm::vec2(0.f, 0.f));
-		batchList[0].textures.swap(border.textures);
+		batchList[BATCH_INDEX_BORDER].textures.swap(border.textures);
 
 		for (unsigned int i = 0; i < center.vertices.size(); i++)
 			center.textures.push_back(glm::vec2(0.f, 0.f));
-		batchList[1].textures.swap(center.textures);
+		batchList[BATCH_INDEX_CENTER].textures.swap(center.textures);
 	}
 
-	batchList[0].vertices.swap(border.vertices);
-	batchList[0].faces.swap(border.faces);
-	batchList[1].vertices.swap(center.vertices);
-	batchList[1].faces.swap(center.faces);
+	batchList[BATCH_INDEX_BORDER].vertices.swap(border.vertices);
+	batchList[BATCH_INDEX_BORDER].faces.swap(border.faces);
+	batchList[BATCH_INDEX_CENTER].vertices.swap(center.vertices);
+	batchList[BATCH_INDEX_CENTER].faces.swap(center.faces);
 }
 void WidgetBoard::updateVBOs()
 {

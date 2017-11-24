@@ -1,5 +1,7 @@
 #include "WidgetImage.h"
 
+#define BATCH_INDEX_QUAD 0
+
 //  Default
 WidgetImage::WidgetImage(const std::string& textureName, const uint8_t& config, const std::string& shaderName) : WidgetVirtual(WidgetVirtual::IMAGE, config, shaderName)
 {
@@ -33,35 +35,8 @@ void WidgetImage::initialize()
 
 	//	end
 	batchList.push_back(quad);
-	initializeVBOs(GL_STATIC_DRAW);
+	initializeVBO(BATCH_INDEX_QUAD, GL_STATIC_DRAW);
 	initializeVAOs();
 }
-
-
-
-
-
-
-
-
-
-
-bool WidgetImage::mouseEvent(const glm::vec3& eventLocation, const bool& clicked)
-{
-	if (clicked) 
-	{
-		setState(ACTIVE);
-		return true;
-	}
-	else return false;
-}
-
-
-
-
-
-
-
-
 //
 

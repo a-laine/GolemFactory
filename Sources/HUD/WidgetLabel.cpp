@@ -3,6 +3,10 @@
 #define LINE_OFFSET		0.5f
 #define TEX_OFFSET		0.00586f
 #define ITALIC_RATIO	0.5f
+#define TEXT_MAX_CHAR	200
+
+#define BATCH_INDEX_TEXT		0
+#define BATCH_INDEX_CLIPPING	1
 
 //  Default
 WidgetLabel::WidgetLabel(const uint8_t& config, const std::string& shaderName) : 
@@ -32,12 +36,13 @@ void WidgetLabel::initialize(const std::string& t, uint8_t textConfig)
 	parseText();
 
 	//	prepare batch (with text)
-	batchList.push_back(DrawBatch());
-	batchList.push_back(DrawBatch());
+	batchList.push_back(DrawBatch());	//	BATCH_INDEX_TEXT
+	batchList.push_back(DrawBatch());	//	BATCH_INDEX_CLIPPING
 	updateBuffers();
 
 	//	end
-	initializeVBOs(GL_DYNAMIC_DRAW);
+	initializeVBO(BATCH_INDEX_CLIPPING, GL_DYNAMIC_DRAW);
+	initVBOtext();
 	initializeVAOs();
 }
 void WidgetLabel::update(const float& elapseTime)
@@ -65,7 +70,7 @@ void WidgetLabel::draw(Shader* s, uint8_t& stencilMask)
 {
 	//	clipping zone (batch 1)
 	if(textConfiguration & CLIPPING)
-		drawClippingShape(1, true, s, stencilMask);
+		drawClippingShape(BATCH_INDEX_CLIPPING, true, s, stencilMask);
 
 	//	texture related stuff
 	if (font) glBindTexture(GL_TEXTURE_2D, font->texture);
@@ -77,16 +82,16 @@ void WidgetLabel::draw(Shader* s, uint8_t& stencilMask)
 	loc = s->getUniformLocation("color");
 	if (loc >= 0) glUniform4fv(loc, 1, &colors[CURRENT].x);
 
-	glBindVertexArray(batchList[0].vao);
-	glDrawElements(GL_TRIANGLES, batchList[0].faces.size(), GL_UNSIGNED_SHORT, NULL);
+	glBindVertexArray(batchList[BATCH_INDEX_TEXT].vao);
+	glDrawElements(GL_TRIANGLES, batchList[BATCH_INDEX_TEXT].faces.size(), GL_UNSIGNED_SHORT, NULL);
 
 	//	unclip zone (batch 1)
 	if (textConfiguration & CLIPPING)
-		drawClippingShape(1, false, s, stencilMask);
+		drawClippingShape(BATCH_INDEX_CLIPPING, false, s, stencilMask);
 }
 bool WidgetLabel::intersect(const glm::mat4& base, const glm::vec3& ray, const glm::vec3 origin, glm::vec3& result)
 {
-	for (unsigned int j = 0; j < batchList[0].faces.size(); j += 3)
+	for (unsigned int j = 0; j < batchList[BATCH_INDEX_TEXT].faces.size(); j += 3)
 	{
 		//	compute triangles vertices in eyes space
 		glm::vec3 p1 = glm::vec3(base * glm::vec4(batchList[0].vertices[batchList[0].faces[j]], 1.f));
@@ -126,6 +131,11 @@ void WidgetLabel::setString(const std::string& newText)
 	configuration |= NEED_UPDATE;
 }
 std::string WidgetLabel::getString() const { return text; }
+void WidgetLabel::append(const std::string& s)
+{
+	text += s;
+	configuration |= NEED_UPDATE;
+}
 //
 
 //	Set / get functions
@@ -147,6 +157,23 @@ float WidgetLabel::getSizeChar() const { return sizeChar; }
 //
 
 //	Protected functions
+void WidgetLabel::initVBOtext()
+{
+	glGenBuffers(1, &batchList[BATCH_INDEX_TEXT].verticesBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, batchList[BATCH_INDEX_TEXT].verticesBuffer);
+	glBufferData(GL_ARRAY_BUFFER, TEXT_MAX_CHAR * 4 * sizeof(glm::vec3), nullptr, GL_DYNAMIC_DRAW);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, batchList[BATCH_INDEX_TEXT].vertices.size() * sizeof(glm::vec3), batchList[BATCH_INDEX_TEXT].vertices.data());
+
+	glGenBuffers(1, &batchList[BATCH_INDEX_TEXT].texturesBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, batchList[BATCH_INDEX_TEXT].texturesBuffer);
+	glBufferData(GL_ARRAY_BUFFER, TEXT_MAX_CHAR * 4 * sizeof(glm::vec2), nullptr, GL_DYNAMIC_DRAW);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, batchList[BATCH_INDEX_TEXT].textures.size() * sizeof(glm::vec2), batchList[BATCH_INDEX_TEXT].textures.data());
+
+	glGenBuffers(1, &batchList[BATCH_INDEX_TEXT].facesBuffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, batchList[BATCH_INDEX_TEXT].facesBuffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, TEXT_MAX_CHAR * 6 * sizeof(unsigned short), nullptr, GL_DYNAMIC_DRAW);
+	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, batchList[BATCH_INDEX_TEXT].faces.size() * sizeof(unsigned short), batchList[BATCH_INDEX_TEXT].faces.data());
+}
 void WidgetLabel::updateBuffers()
 {
 	DrawBatch batch;
@@ -175,10 +202,10 @@ void WidgetLabel::updateBuffers()
 				break;
 
 			default:
-				batch.vertices.push_back(glm::vec3(o.x + x, 0.f, o.y + 0.f));
+				batch.vertices.push_back(glm::vec3(o.x + x, 0.f, o.y));
 				batch.vertices.push_back(glm::vec3(o.x + x + italic*sizeChar, 0.f, o.y + sizeChar));
 				batch.vertices.push_back(glm::vec3(o.x + x + (charLength + italic)*sizeChar, 0.f, o.y + sizeChar));
-				batch.vertices.push_back(glm::vec3(o.x + x + charLength*sizeChar, 0.f, o.y + 0.f));
+				batch.vertices.push_back(glm::vec3(o.x + x + charLength*sizeChar, 0.f, o.y));
 
 				batch.textures.push_back(glm::vec2(patch.corner1.x + TEX_OFFSET, patch.corner2.y - TEX_OFFSET));
 				batch.textures.push_back(glm::vec2(patch.corner1.x + TEX_OFFSET, patch.corner1.y + TEX_OFFSET));
@@ -198,9 +225,9 @@ void WidgetLabel::updateBuffers()
 				break;
 		}
 	}
-	batchList[0].vertices.swap(batch.vertices);
-	batchList[0].textures.swap(batch.textures);
-	batchList[0].faces.swap(batch.faces);
+	batchList[BATCH_INDEX_TEXT].vertices.swap(batch.vertices);
+	batchList[BATCH_INDEX_TEXT].textures.swap(batch.textures);
+	batchList[BATCH_INDEX_TEXT].faces.swap(batch.faces);
 
 	//	clipping rectangle
 	DrawBatch quad;
@@ -217,9 +244,9 @@ void WidgetLabel::updateBuffers()
 		quad.faces.push_back(0); quad.faces.push_back(1); quad.faces.push_back(2);
 		quad.faces.push_back(0); quad.faces.push_back(2); quad.faces.push_back(3);
 
-	batchList[1].vertices.swap(quad.vertices);
-	batchList[1].textures.swap(quad.textures);
-	batchList[1].faces.swap(quad.faces);
+	batchList[BATCH_INDEX_CLIPPING].vertices.swap(quad.vertices);
+	batchList[BATCH_INDEX_CLIPPING].textures.swap(quad.textures);
+	batchList[BATCH_INDEX_CLIPPING].faces.swap(quad.faces);
 }
 void WidgetLabel::updateVBOs()
 {
@@ -266,7 +293,7 @@ void WidgetLabel::parseText()
 }
 glm::vec2 WidgetLabel::getLineOrigin(const unsigned int& lineIndex, const uint8_t& textConfiguration)
 {
-	glm::vec2 origin(positions[CURRENT].x, positions[CURRENT].y);
+	glm::vec2 origin(positions[CURRENT].x, positions[CURRENT].z);
 	glm::vec2 size(sizes[CURRENT]);
 	switch (textConfiguration & (HORIZONTAL_MASK | VERTICAL_MASK))
 	{

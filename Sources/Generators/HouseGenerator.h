@@ -137,7 +137,7 @@ class HouseGenerator
 		std::vector<glm::vec3> verticesArray;
 		std::vector<glm::vec3> normalesArray;
 		std::vector<glm::vec3> colorArray;
-		std::vector<unsigned int> facesArray;
+		std::vector<unsigned short> facesArray;
 
 		std::map<std::string, Mesh*> assetLibrary;
 		std::vector<glm::ivec3> blockLibrary;

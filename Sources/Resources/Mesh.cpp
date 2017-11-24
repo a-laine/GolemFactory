@@ -93,7 +93,9 @@ Mesh::Mesh(const std::string& path, const std::string& meshName) : ResourceVirtu
 				if (outrange) printErrorLog(meshName, lineIndex, errorOccured);
 				else
 				{
-					faces.push_back(vertices.size());	faces.push_back(vertices.size() + 1);	faces.push_back(vertices.size() + 2);
+					faces.push_back((unsigned short)vertices.size());
+					faces.push_back((unsigned short)vertices.size() + 1);
+					faces.push_back((unsigned short)vertices.size() + 2);
 
 					vertices.push_back(tmpv[v1.v]);		vertices.push_back(tmpv[v2.v]);		vertices.push_back(tmpv[v3.v]);
 					normales.push_back(tmpvn[v1.vn]);	normales.push_back(tmpvn[v2.vn]);	normales.push_back(tmpvn[v3.vn]);
@@ -111,7 +113,7 @@ Mesh::Mesh(const std::string& path, const std::string& meshName) : ResourceVirtu
 	initializeVBO();
 	initializeVAO();
 }
-Mesh::Mesh(const std::string& meshName, const std::vector<glm::vec3>& verticesArray, const std::vector<glm::vec3>& normalesArray, const std::vector<glm::vec3>& colorArray, const std::vector<unsigned int>& facesArray)
+Mesh::Mesh(const std::string& meshName, const std::vector<glm::vec3>& verticesArray, const std::vector<glm::vec3>& normalesArray, const std::vector<glm::vec3>& colorArray, const std::vector<unsigned short>& facesArray)
 	: ResourceVirtual(meshName, ResourceVirtual::MESH), configuration(WELL_LOADED), vertices(verticesArray), normales(normalesArray), colors(colorArray), faces(facesArray)
 {
 	computeBoundingBoxDimension();
@@ -169,7 +171,7 @@ void Mesh::initializeVBO()
 
 	glGenBuffers(1, &facesBuffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, facesBuffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, faces.size() * sizeof(unsigned int), faces.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, faces.size() * sizeof(unsigned short), faces.data(), GL_STATIC_DRAW);
 }
 void Mesh::initializeVAO()
 {
@@ -195,7 +197,7 @@ void Mesh::initializeVAO()
 void Mesh::draw()
 {
 	glBindVertexArray(vao);
-	glDrawElements(GL_TRIANGLES, faces.size(), GL_UNSIGNED_INT, NULL);
+	glDrawElements(GL_TRIANGLES, faces.size(), GL_UNSIGNED_SHORT, NULL);
 }
 //
 

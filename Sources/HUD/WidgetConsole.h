@@ -16,25 +16,29 @@ class WidgetConsole : public WidgetBoard
 		void initialize(const float& borderThickness, const float& borderWidth, const uint8_t& corner = 0x00);
 		void draw(Shader* s, uint8_t& stencilMask);
 		bool intersect(const glm::mat4& base, const glm::vec3& ray, const glm::vec3 origin, glm::vec3& result);
+		bool mouseEvent(const glm::vec3& eventLocation, const bool& clicked);
 		//
 
 		//	Set / get functions
 		void setFont(const std::string& fontName);
 		void setSizeChar(const float& f);
+		void append(const std::string& s);
 
-		std::stringstream* getStream();
 		Font* getFont() const;
 		float getSizeChar() const;
 		//
 
 	protected:
 		//	Protected functions
+		void initVBOtext();
 		void updateBuffers(const bool& firstInit = false);
+		void updateTextBuffer();
+		void parseText();
 		//
 
 		//  Attributes
 		Font* font;
-		std::stringstream text;
+		std::string text;
 		std::vector<float> linesLength;
 		float sizeChar;
 		//

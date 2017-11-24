@@ -24,7 +24,9 @@ class Mesh : public ResourceVirtual
         //  Default
 		Mesh(const std::string& meshName = "unknown.unknown");
 		Mesh(const std::string& path, const std::string& meshName);
-		Mesh(const std::string& meshName, const std::vector<glm::vec3>& verticesArray, const std::vector<glm::vec3>& normalesArray, const std::vector<glm::vec3>& colorArray, const std::vector<unsigned int>& facesArray);
+		Mesh(const std::string& meshName, const std::vector<glm::vec3>& verticesArray, 
+			const std::vector<glm::vec3>& normalesArray, const std::vector<glm::vec3>& colorArray, 
+			const std::vector<unsigned short>& facesArray);
 		Mesh(const Mesh& original);
 		virtual ~Mesh();
 		//
@@ -69,6 +71,6 @@ class Mesh : public ResourceVirtual
         std::vector<glm::vec3> vertices;
 		std::vector<glm::vec3> normales;
 		std::vector<glm::vec3> colors;
-        std::vector<unsigned int> faces;
+        std::vector<unsigned short> faces;
         //
 };

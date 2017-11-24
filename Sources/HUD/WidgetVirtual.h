@@ -22,7 +22,8 @@ class WidgetVirtual
 		{
 			VISIBLE = 1 << 4,
 			RESPONSIVE = 1 << 5,
-			NEED_UPDATE = 1<<6
+			NEED_UPDATE = 1<<6,
+			SPECIAL = 1 << 7
 		};
 		enum State
 		{
@@ -58,8 +59,8 @@ class WidgetVirtual
 		virtual bool mouseEvent(const glm::vec3& eventLocation, const bool& clicked);
 
 		virtual void setString(const std::string& s);
+		virtual void append(const std::string& s);
 		virtual std::string getString() const;
-		virtual std::stringstream* getStream();
 		//
 
 		//  Set/get functions
@@ -88,7 +89,7 @@ class WidgetVirtual
 	protected:
 		//	Protected functions
 		void drawClippingShape(const unsigned int& batchIndex, const bool& enableClipping, Shader* s, uint8_t& stencilMask);
-		void initializeVBOs(int VBOtype = GL_STATIC_DRAW);
+		void initializeVBO(const unsigned int& batchIndex, int VBOtype = GL_STATIC_DRAW);
 		void initializeVAOs();
 		//
 

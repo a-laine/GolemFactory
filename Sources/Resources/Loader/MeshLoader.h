@@ -53,7 +53,7 @@ class MeshLoader
 		std::vector<glm::vec3> colors;
 		std::vector<glm::ivec3> bones;
 		std::vector<glm::vec3> weights;
-		std::vector<unsigned int> faces;
+		std::vector<unsigned short> faces;
 
 		std::map<std::string, int> boneMap;
 

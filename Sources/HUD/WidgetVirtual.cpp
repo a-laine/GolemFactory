@@ -112,8 +112,8 @@ bool WidgetVirtual::mouseEvent(const glm::vec3& eventLocation, const bool& click
 
 
 void WidgetVirtual::setString(const std::string& s) {}
-std::string WidgetVirtual::getString() const { return std::string(); }
-std::stringstream* WidgetVirtual::getStream() { return nullptr; }
+std::string WidgetVirtual::getString() const { return ""; }
+void WidgetVirtual::append(const std::string& s) {}
 //
 
 
@@ -229,31 +229,28 @@ void WidgetVirtual::drawClippingShape(const unsigned int& batchIndex, const bool
 	int loc = s->getUniformLocation("useTexture");
 	if (loc >= 0) glUniform1i(loc, 0);
 	loc = s->getUniformLocation("color");
-	if (loc >= 0) glUniform4fv(loc, 1, (const float*)&glm::vec4(0.f, 0.f, 0.f, 0.f));
+	if (loc >= 0) glUniform4fv(loc, 1, &glm::vec4(0.f)[0]);
 
-	glBindVertexArray(batchList[1].vao);
-	glDrawElements(GL_TRIANGLES, batchList[1].faces.size(), GL_UNSIGNED_SHORT, NULL);
+	glBindVertexArray(batchList[batchIndex].vao);
+	glDrawElements(GL_TRIANGLES, batchList[batchIndex].faces.size(), GL_UNSIGNED_SHORT, NULL);
 
 	glStencilFunc(GL_EQUAL, stencilMask, 0xFF);
 	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 	glEnable(GL_DEPTH_TEST);
 }
-void WidgetVirtual::initializeVBOs(int VBOtype)
+void WidgetVirtual::initializeVBO(const unsigned int& batchIndex, int VBOtype)
 {
-	for (unsigned int i = 0; i < batchList.size(); i++)
-	{
-		glGenBuffers(1, &batchList[i].verticesBuffer);
-		glBindBuffer(GL_ARRAY_BUFFER, batchList[i].verticesBuffer);
-		glBufferData(GL_ARRAY_BUFFER, batchList[i].vertices.size() * sizeof(glm::vec3), batchList[i].vertices.data(), VBOtype);
+	glGenBuffers(1, &batchList[batchIndex].verticesBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, batchList[batchIndex].verticesBuffer);
+	glBufferData(GL_ARRAY_BUFFER, batchList[batchIndex].vertices.size() * sizeof(glm::vec3), batchList[batchIndex].vertices.data(), VBOtype);
 
-		glGenBuffers(1, &batchList[i].texturesBuffer);
-		glBindBuffer(GL_ARRAY_BUFFER, batchList[i].texturesBuffer);
-		glBufferData(GL_ARRAY_BUFFER, batchList[i].textures.size() * sizeof(glm::vec2), batchList[i].textures.data(), VBOtype);
+	glGenBuffers(1, &batchList[batchIndex].texturesBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, batchList[batchIndex].texturesBuffer);
+	glBufferData(GL_ARRAY_BUFFER, batchList[batchIndex].textures.size() * sizeof(glm::vec2), batchList[batchIndex].textures.data(), VBOtype);
 
-		glGenBuffers(1, &batchList[i].facesBuffer);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, batchList[i].facesBuffer);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, batchList[i].faces.size() * sizeof(unsigned short), batchList[i].faces.data(), VBOtype);
-	}
+	glGenBuffers(1, &batchList[batchIndex].facesBuffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, batchList[batchIndex].facesBuffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, batchList[batchIndex].faces.size() * sizeof(unsigned short), batchList[batchIndex].faces.data(), VBOtype);
 }
 void WidgetVirtual::initializeVAOs()
 {

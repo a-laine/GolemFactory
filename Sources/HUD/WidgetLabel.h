@@ -40,6 +40,7 @@ class WidgetLabel : public WidgetVirtual
 		
 		void setString(const std::string& newText);
 		std::string getString() const;
+		void append(const std::string& s);
 		//
 
 		//	Set / get functions
@@ -53,6 +54,7 @@ class WidgetLabel : public WidgetVirtual
 
 	protected:
 		//	Protected functions
+		void initVBOtext();
 		void updateBuffers();
 		void updateVBOs();
 		void parseText();

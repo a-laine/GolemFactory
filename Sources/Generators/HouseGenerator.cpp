@@ -619,10 +619,10 @@ void HouseGenerator::optimizeMesh()
 	std::vector<glm::vec3> verticesBuffer;
 	std::vector<glm::vec3> normalesBuffer;
 	std::vector<glm::vec3> colorBuffer;
-	std::vector<unsigned int> facesBuffer;
+	std::vector<unsigned short> facesBuffer;
 
-	std::map<OrderedVertex, unsigned int> vertexAlias;
-	std::map<OrderedVertex, unsigned int>::iterator alias;
+	std::map<OrderedVertex, unsigned short> vertexAlias;
+	std::map<OrderedVertex, unsigned short>::iterator alias;
 	OrderedVertex current;
 
 	for (unsigned int i = 0; i < facesArray.size(); i++)
@@ -637,9 +637,9 @@ void HouseGenerator::optimizeMesh()
 			verticesBuffer.push_back(verticesArray[facesArray[i]]);
 			normalesBuffer.push_back(normalesArray[facesArray[i]]);
 			colorBuffer.push_back(colorArray[facesArray[i]]);
-			facesBuffer.push_back(vertexAlias.size());
+			facesBuffer.push_back((unsigned short)vertexAlias.size());
 
-			vertexAlias[current] = vertexAlias.size();
+			vertexAlias[current] = (unsigned short)vertexAlias.size();
 		}
 		else facesBuffer.push_back(alias->second);
 	}
@@ -939,7 +939,12 @@ void HouseGenerator::pushGround(float px1, float py1, float pz1, float px2, floa
 							 glm::normalize(glm::vec3(0.f, py2 - py1, (pz1 + pz2) / 2.f)));
 	normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);
 	colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 3); facesArray.push_back(verticesArray.size() - 2);
-	facesArray.push_back(verticesArray.size() - 4); facesArray.push_back(verticesArray.size() - 2); facesArray.push_back(verticesArray.size() - 1);
+	facesArray.push_back((unsigned short)verticesArray.size() - 4);
+	facesArray.push_back((unsigned short)verticesArray.size() - 3);
+	facesArray.push_back((unsigned short)verticesArray.size() - 2);
+
+	facesArray.push_back((unsigned short)verticesArray.size() - 4);
+	facesArray.push_back((unsigned short)verticesArray.size() - 2);
+	facesArray.push_back((unsigned short)verticesArray.size() - 1);
 }
 //

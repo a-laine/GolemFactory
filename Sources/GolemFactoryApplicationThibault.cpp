@@ -94,6 +94,9 @@ int main()
 	double elapseTime = 16.;
 	double completeTime = 16.;
 	double averageCompleteTime = 16.;
+	double dummy = 0;
+
+
 
 	//	game loop
 	std::cout << "game loop initiated" << std::endl;
@@ -180,11 +183,18 @@ int main()
 		//	Update widgets
 		averageCompleteTime = 0.99f * averageCompleteTime + 0.01f * completeTime;
 		WidgetManager::getInstance()->setString("runtime speed", 
-			"FPS: " + std::to_string((int)(1000.f / completeTime)) + "\n ~: " + std::to_string((int)(1000.f / averageCompleteTime)) + 
-			"\n\nTime: " + std::to_string((int)completeTime) + " ms\n ~: " +std::to_string((int)averageCompleteTime));
+			"FPS : " + std::to_string((int)(1000.f / completeTime)) + "\navg : " + std::to_string((int)(1000.f / averageCompleteTime)) + 
+			"\n\nTime : " + std::to_string((int)completeTime) + " ms\navg : " + std::to_string((int)averageCompleteTime) + " ms");
 		WidgetManager::getInstance()->setString("drawcalls",
-			"Instances :\n " + std::to_string(Renderer::getInstance()->getNbDrawnInstances() + WidgetManager::getInstance()->getNbDrawnWidgets()) + 
-			"\n\nTriangles :\n " + std::to_string(Renderer::getInstance()->getNbDrawnTriangles() + WidgetManager::getInstance()->getNbDrawnTriangles()));
+			"Instances :\n  " + std::to_string(Renderer::getInstance()->getNbDrawnInstances() + WidgetManager::getInstance()->getNbDrawnWidgets()) + 
+			"\n\nTriangles :\n  " + std::to_string(Renderer::getInstance()->getNbDrawnTriangles() + WidgetManager::getInstance()->getNbDrawnTriangles()));
+
+		dummy += elapseTime;
+		if (dummy > 1000.0)
+		{
+			dummy -= 1000.0;
+			//WidgetManager::getInstance()->append("console", std::to_string(glfwGetTime()));
+		}
 		WidgetManager::getInstance()->update((float)elapseTime, EventHandler::getInstance()->isActivated(USE1));
 
 		//	Move avatar if needed

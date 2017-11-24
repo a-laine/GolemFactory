@@ -115,7 +115,9 @@ MeshAnimated::MeshAnimated(const std::string& path, const std::string& meshName)
 				if (outrange) printErrorLog(meshName, lineIndex, errorOccured);
 				else
 				{
-					faces.push_back(vertices.size());	faces.push_back(vertices.size() + 1);	faces.push_back(vertices.size() + 2);
+					faces.push_back((unsigned short)vertices.size());
+					faces.push_back((unsigned short)vertices.size() + 1);
+					faces.push_back((unsigned short)vertices.size() + 2);
 
 					vertices.push_back(tmpv[v1.v]);		vertices.push_back(tmpv[v2.v]);		vertices.push_back(tmpv[v3.v]);
 					normales.push_back(tmpvn[v1.vn]);	normales.push_back(tmpvn[v2.vn]);	normales.push_back(tmpvn[v3.vn]);
@@ -137,7 +139,7 @@ MeshAnimated::MeshAnimated(const std::string& path, const std::string& meshName)
 }
 MeshAnimated::MeshAnimated(const std::string& meshName, const bool& isAnimable, const std::vector<glm::vec3>& verticesArray, const std::vector<glm::vec3>& normalesArray,
 	const std::vector<glm::vec3>& colorArray, const std::vector<glm::ivec3>& bonesArray, const std::vector<glm::vec3>& weightsArray,
-	const std::vector<unsigned int>& facesArray)
+	const std::vector<unsigned short>& facesArray)
 	: Mesh(meshName), bones(bonesArray), weights(weightsArray)
 {
 	configuration = WELL_LOADED | HAS_SKELETON;
@@ -187,7 +189,7 @@ void MeshAnimated::initializeVBO()
 
 	glGenBuffers(1, &facesBuffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, facesBuffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, faces.size() * sizeof(unsigned int), faces.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, faces.size() * sizeof(unsigned short), faces.data(), GL_STATIC_DRAW);
 }
 void MeshAnimated::initializeVAO()
 {
@@ -221,7 +223,7 @@ void MeshAnimated::initializeVAO()
 void MeshAnimated::draw()
 {
 	glBindVertexArray(vao);
-	glDrawElements(GL_TRIANGLES, faces.size(), GL_UNSIGNED_INT, NULL);
+	glDrawElements(GL_TRIANGLES, faces.size(), GL_UNSIGNED_SHORT, NULL);
 }
 //
 

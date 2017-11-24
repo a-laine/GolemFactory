@@ -34,6 +34,17 @@ int MeshLoader::loadMesh(std::string file)
 				globalMatrix[i][j] = m[j][i];
 		globalMatrix = glm::mat4(1.f);
 
+		//
+		unsigned int totalVertices = 0;
+		for (unsigned int i = 0; i < scene->mNumMeshes; i++)
+			totalVertices += scene->mMeshes[i]->mNumVertices;
+		if (totalVertices > std::numeric_limits<unsigned short>::max())
+		{
+			std::cerr << "ERROR : loading mesh : " << file << " : too much vertex in file (not supported by engine)" << std::endl;
+			return 1;
+		}
+
+
 		//	usefull parameters for next
 		unsigned int facesOffset = 0;
 		glm::vec3 meshColor;

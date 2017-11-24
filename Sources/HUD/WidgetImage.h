@@ -12,16 +12,6 @@ class WidgetImage : public WidgetVirtual
 		//
 
 		//	Public functions
-		virtual void initialize();
-
-
-
-		//for test burn after copy elswhere !!!!!
-			bool mouseEvent(const glm::vec3& eventLocation, const bool& clicked);
-
-
-
-
-
+		void initialize();
 		//
 };

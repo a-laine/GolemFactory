@@ -39,8 +39,8 @@ class WidgetManager : public Singleton<WidgetManager>
 
 		void addAssociation(WidgetVirtual* w, const std::string& associationName);
 		void setString(const std::string& associationName, const std::string& s);
+		void append(const std::string& associationName, const std::string& s);
 		std::string getString(const std::string& associationName);
-		std::stringstream* getStream(const std::string& associationName);
 
 		void addWidget(WidgetVirtual* w);
 		void addLayer(Layer* l);
@@ -83,6 +83,7 @@ class WidgetManager : public Singleton<WidgetManager>
 		bool lastClickButtonState;
 		std::set<WidgetVirtual*> hoverWidgetList;
 		std::list<WidgetVirtual*> activeWidgetList;
+		std::map<WidgetVirtual*, Layer*> activeWidgetParentList;
 
 		int lastWidth, lastHeight;
 		//
