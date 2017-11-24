@@ -15,7 +15,8 @@ class WidgetVirtual
 			VIRTUAL = 0,
 			BOARD,
 			IMAGE,
-			LABEL
+			LABEL,
+			CONSOLE
 		};
 		enum OrphanFlags
 		{

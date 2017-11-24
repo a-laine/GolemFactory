@@ -17,6 +17,10 @@
 #include "HUD/WidgetImage.h"
 #include "HUD/WidgetBoard.h"
 #include "HUD/WidgetLabel.h"
+#include "HUD/WidgetConsole.h"
+
+#define ANGLE_VERTICAL_HUD_PROJECTION 45.f
+#define DISTANCE_HUD_CAMERA 0.15f
 
 
 class WidgetManager : public Singleton<WidgetManager>
@@ -45,6 +49,7 @@ class WidgetManager : public Singleton<WidgetManager>
 		//
 
 		//	Set / get functions
+		void setInitialWindowSize(const int& width, const int& height);
 		void setActiveHUD(const std::string& s);
 		void setPickingParameters(const glm::mat4& base, const glm::vec3& ray, const glm::vec3& origin);
 

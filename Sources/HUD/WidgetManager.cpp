@@ -1,9 +1,6 @@
 #include "WidgetManager.h"
 
 
-#define INITIAL_RATIO ((16.f/9.f))
-
-
 //  Default
 WidgetManager::WidgetManager() : widgetDrawn(0), trianglesDrawn(0), pickingRay(0.f) {}
 WidgetManager::~WidgetManager()
@@ -17,7 +14,6 @@ WidgetManager::~WidgetManager()
 //	Public functions
 void WidgetManager::loadHud(const std::string& hudName)
 {
-	lastWidth = 1600; lastHeight = 900;
 	loadDebugHud();
 }
 void WidgetManager::draw(Shader* s, const glm::mat4& base, const float* view, const float* projection)
@@ -192,6 +188,11 @@ void WidgetManager::removeLayer(Layer* l) { layerList.erase(l); }
 //
 
 //	Set / get functions
+void WidgetManager::setInitialWindowSize(const int& width, const int& height)
+{
+	lastWidth = width;
+	lastHeight = height;
+}
 void WidgetManager::setActiveHUD(const std::string& s)
 {
 	//	activate new HUD layer
@@ -254,21 +255,21 @@ void WidgetManager::resizeCallback(int w, int h)
 			{
 				//	change Layer position to be kept at this position relative to the border of screen
 
-				float zscale = tan(glm::radians(45.f / 2.f)) * (l->getPosition().y + 0.15f);													//	compute relative scale on vertical axis (base because always 45 degres of view angle)
+				float zscale = tan(glm::radians(ANGLE_VERTICAL_HUD_PROJECTION / 2.f)) * (l->getPosition().y + DISTANCE_HUD_CAMERA);													//	compute relative scale on vertical axis (base because always 45 degres of view angle)
 				float xscale = zscale * w / h;																									//	compute relative scale of x axis
 				float lxscale = zscale * WidgetManager::getInstance()->lastWidth / WidgetManager::getInstance()->lastHeight;					//	compute previous relative scale of x axis
 				if (l->getPosition().x > 0)																										//	discriminate left or right border relative
 					l->setPosition(glm::vec3(xscale - std::abs(l->getPosition().x - lxscale), l->getPosition().y, l->getPosition().z));			//	change position = border position -+ delta from border (delta = actual position - former scale)
 				else l->setPosition(glm::vec3(-xscale + std::abs(-l->getPosition().x - lxscale), l->getPosition().y, l->getPosition().z));		//	change position 
 
-				zscale = tan(glm::radians(45.f / 2.f)) * (l->getTargetPosition().y + 0.15f);
+				zscale = tan(glm::radians(ANGLE_VERTICAL_HUD_PROJECTION / 2.f)) * (l->getTargetPosition().y + DISTANCE_HUD_CAMERA);
 				xscale = zscale * w / h;
 				lxscale = zscale * WidgetManager::getInstance()->lastWidth / WidgetManager::getInstance()->lastHeight;
 				if (l->getTargetPosition().x > 0)
 					l->setTargetPosition(glm::vec3(xscale - std::abs(l->getTargetPosition().x - lxscale), l->getTargetPosition().y, l->getTargetPosition().z));
 				else l->setTargetPosition(glm::vec3(-xscale + std::abs(-l->getTargetPosition().x - lxscale), l->getTargetPosition().y, l->getTargetPosition().z));
 
-				zscale = tan(glm::radians(45.f / 2.f)) * (l->getScreenPosition().y + 0.15f);
+				zscale = tan(glm::radians(ANGLE_VERTICAL_HUD_PROJECTION / 2.f)) * (l->getScreenPosition().y + DISTANCE_HUD_CAMERA);
 				xscale = zscale * w / h;
 				lxscale = zscale * WidgetManager::getInstance()->lastWidth / WidgetManager::getInstance()->lastHeight;
 				if (l->getScreenPosition().x > 0)
@@ -423,13 +424,29 @@ void WidgetManager::loadDebugHud()
 		layer5->add(label5);
 		layerList.insert(layer5);
 
+	//	test
+	WidgetConsole* console = new WidgetConsole();
+		console->setPosition(glm::vec3(0.f, 0.01f, 0.f), WidgetVirtual::ALL);
+		console->setSize(glm::vec2(2.1f, 0.5f), WidgetVirtual::ALL);
+		console->initialize(0.02f, 0.1f, WidgetBoard::TOP_RIGHT);
+		console->setColor(glm::vec4(0.5f, 0.5f, 0.f, 1.f), WidgetVirtual::ALL);
+		console->setColor(glm::vec4(0.5f, 0.5f, 0.5f, 1.f), WidgetVirtual::HOVER);
+		widgetList.insert(console);
+	Layer* layer6 = new Layer(Layer::VISIBLE);
+		layer6->setSize(0.05f);
+		layer6->setScreenPosition(glm::vec3(0.f, 0.f, 0.f));
+		layer6->setPosition(layer6->getScreenPosition());
+		layer6->setTargetPosition(layer6->getScreenPosition());
+		layer6->add(console);
+		layerList.insert(layer6);
+
 	//	push on HUD
 	hudList["debug"].push_back(layer1);
 	hudList["debug"].push_back(layer2);
 	hudList["debug"].push_back(layer3);
 	hudList["debug"].push_back(layer4);
 	hudList["debug"].push_back(layer5);
-	//hudList["debug"].push_back(layer6);
+	hudList["debug"].push_back(layer6);
 	activeHud = "debug";
 }
 //

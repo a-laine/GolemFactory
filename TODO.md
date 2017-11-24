@@ -27,7 +27,9 @@
 *Instance manager :*
 - add support of instance hierarchy (parent <-> child)
 
-
+*Widget system :*
+- add hud loading from file
+- add implementation of widget console (whith scroll and expend button)
 
 
 

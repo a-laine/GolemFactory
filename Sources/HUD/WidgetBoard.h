@@ -25,14 +25,14 @@ class WidgetBoard : public WidgetVirtual
 		//
 
 		//  Public functions
-		void initialize(const float& borderThickness, const float& borderWidth, const uint8_t& corner = 0x00);
-		void draw(Shader* s, uint8_t& stencilMask);
-		void update(const float& elapseTime);
+		virtual void initialize(const float& bThickness, const float& bWidth, const uint8_t& corner = 0x00);
+		virtual void draw(Shader* s, uint8_t& stencilMask);
+		virtual void update(const float& elapseTime);
 		//
 
 	protected:
 		//	Protected functions
-		void updateBuffers(const bool& firstInit = false);
+		virtual void updateBuffers(const bool& firstInit = false);
 		void updateVBOs();
 		//
 

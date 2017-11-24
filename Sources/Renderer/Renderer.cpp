@@ -171,8 +171,7 @@ void Renderer::render(Camera* renderCam)
 	std::sort(instanceList.begin(), instanceList.end());
 
 	//	draw instance list
-	unsigned int drawnInstance = 0;
-	for (auto it = instanceList.begin(); it != instanceList.end() && drawnInstance < 8000; it++, drawnInstance++)
+	for (auto it = instanceList.begin(); it != instanceList.end(); it++)
 	{
 		switch (it->second->getType())
 		{
@@ -191,8 +190,8 @@ void Renderer::render(Camera* renderCam)
 	}
 
 	//	HUD
-	projection = glm::perspective(glm::radians(45.f), (float)width / height, 0.1f, 1500.f);
-	WidgetManager::getInstance()->draw(defaultShader[HUD], glm::translate(glm::mat4(1.f), 0.15f*camera->getForward()) * camera->getModelMatrix(), &view[0][0], &projection[0][0]);
+	projection = glm::perspective(glm::radians(ANGLE_VERTICAL_HUD_PROJECTION), (float)width / height, 0.1f, 1500.f);
+	WidgetManager::getInstance()->draw(defaultShader[HUD], glm::translate(glm::mat4(1.f), DISTANCE_HUD_CAMERA*camera->getForward()) * camera->getModelMatrix(), &view[0][0], &projection[0][0]);
 }
 //
 

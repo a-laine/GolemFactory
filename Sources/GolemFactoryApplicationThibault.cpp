@@ -71,6 +71,10 @@ int main()
 	//Renderer::getInstance()->setShader(Renderer::INSTANCE_ANIMATABLE, ResourceManager::getInstance()->getShader("skeletonDebug"));
 	//Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE, ResourceManager::getInstance()->getShader("wired"));
 
+	//
+	int width, height;
+	glfwGetWindowSize(window, &width, &height);
+	WidgetManager::getInstance()->setInitialWindowSize(width, height);
 	WidgetManager::getInstance()->loadHud("");
 
 	// init scene
@@ -97,7 +101,6 @@ int main()
 	{
 		// begin loop
 		double startTime = glfwGetTime();
-		int width, height;
 		glfwGetWindowSize(window, &width, &height);
 
 		// Render frame
@@ -107,7 +110,7 @@ int main()
 		EventHandler::getInstance()->handleEvent();
 		std::vector<UserEventType> v;
 		EventHandler::getInstance()->getFrameEvent(v);
-		for (unsigned int i = 0; i<v.size(); i++)
+		for (unsigned int i = 0; i < v.size(); i++)
 		{
 			//	micselenious
 			if(v[i] == QUIT) glfwSetWindowShouldClose(window, GL_TRUE);
@@ -162,11 +165,11 @@ int main()
 		{
 			//vec4 ray_eye = inverse(projection_matrix) * ray_clip;
 			glm::vec2 cursor = EventHandler::getInstance()->getCursorNormalizedPosition();
-			glm::vec4 ray_eye = glm::inverse(glm::perspective(glm::radians(45.f), (float)width / height, 0.1f, 1500.f)) * glm::vec4(cursor.x, cursor.y, -1.f, 1.f);
+			glm::vec4 ray_eye = glm::inverse(glm::perspective(glm::radians(ANGLE_VERTICAL_HUD_PROJECTION), (float)width / height, 0.01f, 150.f)) * glm::vec4(cursor.x, cursor.y, -1.f, 1.f);
 			WidgetManager::getInstance()->setPickingParameters(
-				camera.getViewMatrix() * glm::translate(glm::mat4(1.f), 0.15f*camera.getForward()) * camera.getModelMatrix(),
+				camera.getViewMatrix() * glm::translate(glm::mat4(1.f), DISTANCE_HUD_CAMERA*camera.getForward()) * camera.getModelMatrix(),
 				glm::normalize(glm::vec3(ray_eye.x, ray_eye.y, ray_eye.z)),
-				camera.getPosition());
+				camera.getPosition() );
 		}
 		else
 		{
