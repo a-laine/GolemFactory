@@ -80,7 +80,6 @@ class WidgetManager : public Singleton<WidgetManager>
 		glm::vec3 pickingRay;
 		glm::vec3 pickingOrigin;
 		glm::mat4 pickingBase;
-		bool lastClickButtonState;
 		std::set<WidgetVirtual*> hoverWidgetList;
 		std::list<WidgetVirtual*> activeWidgetList;
 		std::map<WidgetVirtual*, Layer*> activeWidgetParentList;

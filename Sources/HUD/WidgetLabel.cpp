@@ -66,7 +66,7 @@ void WidgetLabel::update(const float& elapseTime)
 		updateVBOs();
 	}
 }
-void WidgetLabel::draw(Shader* s, uint8_t& stencilMask)
+void WidgetLabel::draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model)
 {
 	//	clipping zone (batch 1)
 	if(textConfiguration & CLIPPING)
@@ -89,7 +89,7 @@ void WidgetLabel::draw(Shader* s, uint8_t& stencilMask)
 	if (textConfiguration & CLIPPING)
 		drawClippingShape(BATCH_INDEX_CLIPPING, false, s, stencilMask);
 }
-bool WidgetLabel::intersect(const glm::mat4& base, const glm::vec3& ray, const glm::vec3 origin, glm::vec3& result)
+bool WidgetLabel::intersect(const glm::mat4& base, const glm::vec3& ray)
 {
 	for (unsigned int j = 0; j < batchList[BATCH_INDEX_TEXT].faces.size(); j += 3)
 	{
@@ -116,10 +116,7 @@ bool WidgetLabel::intersect(const glm::mat4& base, const glm::vec3& ray, const g
 		barry.x = (glm::dot(v2, v2) * glm::dot(intersection, v1) - glm::dot(v2, v1) * glm::dot(intersection, v2)) / magnitute;
 		barry.y = (glm::dot(v1, v1) * glm::dot(intersection, v2) - glm::dot(v2, v1) * glm::dot(intersection, v1)) / magnitute;
 		if (barry.x < 0.f || barry.y < 0.f || barry.x + barry.y > 1.f) continue;
-
-		//	ray actually intersect this triangle
-		result = intersection;
-		return true;
+		else return true;
 	}
 	return false;
 }

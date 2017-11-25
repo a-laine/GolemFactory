@@ -14,9 +14,9 @@ class WidgetConsole : public WidgetBoard
 		//	Public functions
 		void update(const float& elapseTime);
 		void initialize(const float& borderThickness, const float& borderWidth, const uint8_t& corner = 0x00);
-		void draw(Shader* s, uint8_t& stencilMask);
-		bool intersect(const glm::mat4& base, const glm::vec3& ray, const glm::vec3 origin, glm::vec3& result);
-		bool mouseEvent(const glm::vec3& eventLocation, const bool& clicked);
+		void draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model);
+		bool intersect(const glm::mat4& base, const glm::vec3& ray);
+		bool mouseEvent(const glm::mat4& base, const glm::vec3& ray, const float& parentscale, const bool& clicked);
 		//
 
 		//	Set / get functions
@@ -41,5 +41,7 @@ class WidgetConsole : public WidgetBoard
 		std::string text;
 		std::vector<float> linesLength;
 		float sizeChar;
+		float firstCursory;
+		float elevator, elevatorLength, elevatorRange;
 		//
 };

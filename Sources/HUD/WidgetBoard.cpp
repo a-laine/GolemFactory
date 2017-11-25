@@ -38,7 +38,7 @@ void WidgetBoard::initialize(const float& bThickness, const float& bWidth, const
 	}
 	initializeVAOs();
 }
-void WidgetBoard::draw(Shader* s, uint8_t& stencilMask)
+void WidgetBoard::draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model)
 {
 	//	texture related stuff
 	if (texture) glBindTexture(GL_TEXTURE_2D, texture->getTextureId());

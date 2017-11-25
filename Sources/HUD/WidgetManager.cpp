@@ -57,7 +57,7 @@ void WidgetManager::draw(Shader* s, const glm::mat4& base, const float* view, co
 						if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, projection);
 
 						//	Draw
-						(*it2)->draw(shader, stencilMask);
+						(*it2)->draw(shader, stencilMask, model);
 						widgetDrawn++;
 						trianglesDrawn += (*it2)->getNumberFaces();
 					}
@@ -70,7 +70,6 @@ void WidgetManager::draw(Shader* s, const glm::mat4& base, const float* view, co
 void WidgetManager::update(const float& elapsedTime, const bool& clickButtonPressed)
 {
 	//	picking
-	glm::vec3 intersection;
 	std::map<WidgetVirtual*, Layer*> tmpParentList;
 	std::set<WidgetVirtual*> tmpWidgetList;
 	if (pickingRay != glm::vec3(0.f))
@@ -86,7 +85,7 @@ void WidgetManager::update(const float& elapsedTime, const bool& clickButtonPres
 					{
 						if ((*it2)->isVisible())	// widget visible
 						{
-							if ((*it2)->intersect(glm::translate(model, (*it2)->getPosition()), pickingRay, pickingOrigin, intersection))
+							if ((*it2)->intersect(glm::translate(model, (*it2)->getPosition()), pickingRay))
 							{
 								tmpWidgetList.insert(*it2);
 								tmpParentList[*it2] = it->second[i];
@@ -116,8 +115,7 @@ void WidgetManager::update(const float& elapsedTime, const bool& clickButtonPres
 	if (clickButtonPressed)
 		for (std::set<WidgetVirtual*>::iterator it = hoverWidgetList.begin(); it != hoverWidgetList.end(); ++it)
 		{
-			glm::mat4 model = glm::translate(pickingBase * tmpParentList[*it]->getModelMatrix(), (*it)->getPosition());
-			if((*it)->mouseEvent(glm::vec3(glm::inverse(model) * glm::vec4(intersection, 1.f)), clickButtonPressed))
+			if((*it)->mouseEvent(pickingBase * tmpParentList[*it]->getModelMatrix(), pickingRay, tmpParentList[*it]->getSize(), clickButtonPressed))
 			{
 				activeWidgetList.insert(activeWidgetList.end(), *it);
 				activeWidgetParentList[*it] = tmpParentList[*it];
@@ -127,8 +125,8 @@ void WidgetManager::update(const float& elapsedTime, const bool& clickButtonPres
 	//	special update on active widget
 	for (std::list<WidgetVirtual*>::iterator it = activeWidgetList.begin(); it != activeWidgetList.end();)
 	{
-		glm::mat4 model = glm::translate(pickingBase * activeWidgetParentList[*it]->getModelMatrix(), (*it)->getPosition());
-		if((*it)->mouseEvent(glm::vec3(glm::inverse(model) * glm::vec4(intersection, 1.f)), clickButtonPressed)) ++it;
+		if((*it)->mouseEvent(glm::translate(pickingBase * activeWidgetParentList[*it]->getModelMatrix(), (*it)->getPosition()), pickingRay, activeWidgetParentList[*it]->getSize(), clickButtonPressed))
+			++it;
 		else 
 		{
 			if (hoverWidgetList.find(*it) == hoverWidgetList.end()) (*it)->setState(WidgetVirtual::DEFAULT);
@@ -147,9 +145,6 @@ void WidgetManager::update(const float& elapsedTime, const bool& clickButtonPres
 		(*it)->update(elapsedTime);
 	for (std::set<WidgetVirtual*>::iterator it = widgetList.begin(); it != widgetList.end(); ++it)
 		(*it)->update(elapsedTime);
-
-	//	end
-	lastClickButtonState = clickButtonPressed;
 }
 
 
@@ -402,10 +397,11 @@ void WidgetManager::loadDebugHud()
 		widgetList.insert(console);
 	Layer* layer4 = new Layer();
 		layer4->setSize(0.05f);
-		layer4->setScreenPosition(glm::vec3(-0.055f, 0.f, -0.049f));
+		//layer4->setScreenPosition(glm::vec3(-0.055f, 0.f, -0.049f));
 		layer4->setPosition(layer4->getScreenPosition());
 		layer4->setTargetPosition(layer4->getScreenPosition());
 		layer4->add(console);
+		//layer4->setOrientation(0.1f, 0, 0);
 		layerList.insert(layer4);
 
 	//	picking

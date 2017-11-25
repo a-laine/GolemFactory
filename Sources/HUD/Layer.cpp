@@ -52,7 +52,7 @@ glm::mat4 Layer::getModelMatrix() const
 	glm::mat4 model = glm::rotate(glm::pi<float>(), glm::vec3(0, 0, 1));			//	begin to rotate 180 degres to have x axis in good direction (left to right)
 	model = glm::translate(model, position);										//	go to position
 	model = model * glm::eulerAngleYXZ(eulerAngle.y, eulerAngle.x, eulerAngle.z);	//	add orientation
-	model = glm::scale(model, glm::vec3(size, size, size));							//	change scale
+	model = glm::scale(model, glm::vec3(size, size, size));				//	change scale
 	return model;
 }
 glm::vec3 Layer::getPosition() const { return position; }

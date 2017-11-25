@@ -35,8 +35,8 @@ class WidgetLabel : public WidgetVirtual
 		//	Public functions
 		void update(const float& elapseTime);
 		void initialize(const std::string& t, uint8_t textConfiguration = AlignmentMode::CENTER);
-		void draw(Shader* s, uint8_t& stencilMask);
-		bool intersect(const glm::mat4& base, const glm::vec3& ray, const glm::vec3 origin, glm::vec3& result);
+		void draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model);
+		bool intersect(const glm::mat4& base, const glm::vec3& ray);
 		
 		void setString(const std::string& newText);
 		std::string getString() const;

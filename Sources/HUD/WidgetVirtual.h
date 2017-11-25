@@ -53,10 +53,10 @@ class WidgetVirtual
 		//
 
 		//	Public functions
-		virtual void draw(Shader* s, uint8_t& stencilMask);
+		virtual void draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model);
 		virtual void update(const float& elapseTime);
-		virtual bool intersect(const glm::mat4& base, const glm::vec3& ray, const glm::vec3 origin, glm::vec3& result);
-		virtual bool mouseEvent(const glm::vec3& eventLocation, const bool& clicked);
+		virtual bool intersect(const glm::mat4& base, const glm::vec3& ray);
+		virtual bool mouseEvent(const glm::mat4& base, const glm::vec3& ray, const float& parentscale, const bool& clicked);
 
 		virtual void setString(const std::string& s);
 		virtual void append(const std::string& s);

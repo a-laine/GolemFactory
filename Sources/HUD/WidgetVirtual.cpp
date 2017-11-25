@@ -45,7 +45,7 @@ WidgetVirtual::~WidgetVirtual()
 
 
 //	Public functions
-void WidgetVirtual::draw(Shader* s, uint8_t& stencilMask)
+void WidgetVirtual::draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model)
 {
 	//	texture related stuff
 	if (texture) glBindTexture(GL_TEXTURE_2D, texture->getTextureId());
@@ -71,7 +71,7 @@ void WidgetVirtual::update(const float& elapseTime)
 	sizes[CURRENT] = sizes[s];
 	lastConfiguration = configuration;
 }
-bool WidgetVirtual::intersect(const glm::mat4& base, const glm::vec3& ray, const glm::vec3 origin, glm::vec3& result)
+bool WidgetVirtual::intersect(const glm::mat4& base, const glm::vec3& ray)
 {
 	for (unsigned int i = 0; i < batchList.size(); i++)
 	{
@@ -100,15 +100,12 @@ bool WidgetVirtual::intersect(const glm::mat4& base, const glm::vec3& ray, const
 				barry.x = (glm::dot(v2, v2) * glm::dot(intersection, v1) - glm::dot(v2, v1) * glm::dot(intersection, v2)) / magnitute;
 				barry.y = (glm::dot(v1, v1) * glm::dot(intersection, v2) - glm::dot(v2, v1) * glm::dot(intersection, v1)) / magnitute;
 			if (barry.x < 0.f || barry.y < 0.f || barry.x + barry.y > 1.f) continue;
-
-			//	ray actually intersect this triangle
-			result = intersection;
-			return true;
+			else return true;
 		}
 	}
 	return false;
 }
-bool WidgetVirtual::mouseEvent(const glm::vec3& eventLocation, const bool& clicked) { return false; }
+bool WidgetVirtual::mouseEvent(const glm::mat4& base, const glm::vec3& ray, const float& parentscale, const bool& clicked) { return false; }
 
 
 void WidgetVirtual::setString(const std::string& s) {}

@@ -96,7 +96,8 @@ int main()
 	double averageCompleteTime = 16.;
 	double dummy = 0;
 
-
+	/*for(int i=0; i<10; i++)
+		WidgetManager::getInstance()->append("console", "line" + std::to_string(i));*/
 
 	//	game loop
 	std::cout << "game loop initiated" << std::endl;
@@ -170,7 +171,7 @@ int main()
 			glm::vec2 cursor = EventHandler::getInstance()->getCursorNormalizedPosition();
 			glm::vec4 ray_eye = glm::inverse(glm::perspective(glm::radians(ANGLE_VERTICAL_HUD_PROJECTION), (float)width / height, 0.01f, 150.f)) * glm::vec4(cursor.x, cursor.y, -1.f, 1.f);
 			WidgetManager::getInstance()->setPickingParameters(
-				camera.getViewMatrix() * glm::translate(glm::mat4(1.f), DISTANCE_HUD_CAMERA*camera.getForward()) * camera.getModelMatrix(),
+				camera.getViewMatrix() * glm::translate(glm::mat4(1.f), DISTANCE_HUD_CAMERA * camera.getForward()) * camera.getModelMatrix(),
 				glm::normalize(glm::vec3(ray_eye.x, ray_eye.y, ray_eye.z)),
 				camera.getPosition() );
 		}
@@ -190,10 +191,10 @@ int main()
 			"\n\nTriangles :\n  " + std::to_string(Renderer::getInstance()->getNbDrawnTriangles() + WidgetManager::getInstance()->getNbDrawnTriangles()));
 
 		dummy += elapseTime;
-		if (dummy > 1000.0)
+		if (dummy > 500.0)
 		{
-			dummy -= 1000.0;
-			//WidgetManager::getInstance()->append("console", std::to_string(glfwGetTime()));
+			dummy -= 500.0;
+			WidgetManager::getInstance()->append("console", std::to_string(glfwGetTime()));
 		}
 		WidgetManager::getInstance()->update((float)elapseTime, EventHandler::getInstance()->isActivated(USE1));
 
