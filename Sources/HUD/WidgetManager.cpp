@@ -43,9 +43,9 @@ void WidgetManager::draw(Shader* s, const glm::mat4& base, const float* view, co
 					if ((*it2)->isVisible())	// widget visible
 					{
 						//	Get shader
-						Shader* shader;
+						Shader* shader = s;
 						if (!s) shader = (*it2)->getShader();
-						if (!shader) return;
+						if (!shader) continue;
 						shader->enable();
 
 						//	Enable mvp matrix
@@ -397,11 +397,10 @@ void WidgetManager::loadDebugHud()
 		widgetList.insert(console);
 	Layer* layer4 = new Layer();
 		layer4->setSize(0.05f);
-		//layer4->setScreenPosition(glm::vec3(-0.055f, 0.f, -0.049f));
+		layer4->setScreenPosition(glm::vec3(-0.055f, 0.f, -0.049f));
 		layer4->setPosition(layer4->getScreenPosition());
 		layer4->setTargetPosition(layer4->getScreenPosition());
 		layer4->add(console);
-		//layer4->setOrientation(0.1f, 0, 0);
 		layerList.insert(layer4);
 
 	//	picking

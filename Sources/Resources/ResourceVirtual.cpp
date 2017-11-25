@@ -24,7 +24,7 @@ bool ResourceVirtual::isValid() const
 //
 
 //	Protected functions
-void ResourceVirtual::printErrorLog(std::string resourceName, int errorLine, bool& printHeader)
+void ResourceVirtual::printErrorLog(const std::string& resourceName, const int& errorLine, bool& printHeader)
 {
 	if (printHeader && logVerboseLevel >= ResourceVirtual::WARNINGS)
 		std::cerr << "WARNING : loading mesh : " << resourceName << " : wrong number of argument successfully parsed :" << std::endl;

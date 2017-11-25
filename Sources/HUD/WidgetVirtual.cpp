@@ -2,7 +2,7 @@
 
 
 //  Default
-WidgetVirtual::WidgetVirtual(const WidgetType& t, const uint8_t& config, const std::string& shaderName) : type(t), configuration(config)
+WidgetVirtual::WidgetVirtual(const WidgetType& t, const uint8_t& config, const std::string& shaderName) : type(t), configuration(config), lastConfiguration(config)
 {
 	sizes[DEFAULT] = glm::vec2(1.f);
 	sizes[HOVER] = glm::vec2(1.f);

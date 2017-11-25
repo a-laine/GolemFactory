@@ -96,6 +96,6 @@ class ResourceVirtual
         //
 
 		//	Protected functions	
-		void printErrorLog(std::string resourceName, int errorLine, bool& printHeader);
+		void printErrorLog(const std::string& resourceName, const int& errorLine, bool& printHeader);
 		//
 };

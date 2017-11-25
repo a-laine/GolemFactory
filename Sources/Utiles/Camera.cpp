@@ -31,6 +31,8 @@ Camera& Camera::operator=(Camera& c)
 	frustrumAngleVertical = c.frustrumAngleVertical;
 	phi = c.phi;
 	teta = c.teta;
+
+	mutex.unlock();
 	return *this;
 }
 //

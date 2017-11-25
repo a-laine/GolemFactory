@@ -56,7 +56,5 @@ class Layer : public WidgetContainer
 		glm::vec3 targetPosition;
 		float size;
 		glm::vec3 eulerAngle;
-
-		std::vector<WidgetVirtual*> widgetList;
 		//
 };

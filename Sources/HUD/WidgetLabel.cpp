@@ -1,12 +1,18 @@
 #include "WidgetLabel.h"
 
-#define LINE_OFFSET		0.5f
-#define TEX_OFFSET		0.00586f
-#define ITALIC_RATIO	0.5f
-#define TEXT_MAX_CHAR	200
 
+//	string define
+#define TEXT_MAX_CHAR			200
+
+//	drawing define
+#define LINE_MARGIN_LEFT		0.5f
+#define TEX_OFFSET				0.00586f
+#define ITALIC_RATIO			0.5f
+
+//	batch index define
 #define BATCH_INDEX_TEXT		0
 #define BATCH_INDEX_CLIPPING	1
+
 
 //  Default
 WidgetLabel::WidgetLabel(const uint8_t& config, const std::string& shaderName) : 
@@ -19,6 +25,7 @@ WidgetLabel::~WidgetLabel()
 	ResourceManager::getInstance()->release(font);
 }
 //
+
 
 //	Public functions
 void WidgetLabel::initialize(const std::string& t, uint8_t textConfig)
@@ -124,16 +131,23 @@ bool WidgetLabel::intersect(const glm::mat4& base, const glm::vec3& ray)
 
 void WidgetLabel::setString(const std::string& newText)
 {
-	text = newText;
-	configuration |= NEED_UPDATE;
+	if (newText != text)
+	{
+		text = newText;
+		configuration |= NEED_UPDATE;
+	}
 }
 std::string WidgetLabel::getString() const { return text; }
 void WidgetLabel::append(const std::string& s)
 {
-	text += s;
-	configuration |= NEED_UPDATE;
+	if (!s.empty())
+	{
+		text += s;
+		configuration |= NEED_UPDATE;
+	}
 }
 //
+
 
 //	Set / get functions
 void WidgetLabel::setFont(const std::string& fontName)
@@ -152,6 +166,7 @@ void WidgetLabel::setSizeChar(const float& f)
 Font* WidgetLabel::getFont() const { return font; }
 float WidgetLabel::getSizeChar() const { return sizeChar; }
 //
+
 
 //	Protected functions
 void WidgetLabel::initVBOtext()
@@ -334,6 +349,6 @@ glm::vec2 WidgetLabel::getLineOrigin(const unsigned int& lineIndex, const uint8_
 			break;
 		default: break;
 	}
-	return origin + glm::vec2(sizeChar * LINE_OFFSET, 0.f);
+	return origin + glm::vec2(sizeChar * LINE_MARGIN_LEFT, 0.f);
 }
 //

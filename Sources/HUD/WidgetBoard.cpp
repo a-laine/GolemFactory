@@ -5,7 +5,7 @@
 
 //  Default
 WidgetBoard::WidgetBoard(const uint8_t& config, const std::string& shaderName) : 
-	WidgetVirtual(WidgetVirtual::BOARD, config | NEED_UPDATE, shaderName), updateCooldown(0.f)
+	WidgetVirtual(WidgetVirtual::BOARD, config | NEED_UPDATE, shaderName), cornerConfiguration(0x00), borderWidth(0.f), borderThickness(0.f), updateCooldown(0.f)
 {}
 WidgetBoard::~WidgetBoard() {}
 //

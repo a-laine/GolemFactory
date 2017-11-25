@@ -24,7 +24,7 @@
 
 //  Default
 WidgetConsole::WidgetConsole(const uint8_t& config, const std::string& shaderName) : 
-	WidgetBoard(config | NEED_UPDATE | SPECIAL, shaderName), sizeChar(0.1f), firstCursory(0.f), elevator(0.f)
+	WidgetBoard(config | NEED_UPDATE | SPECIAL, shaderName), sizeChar(0.1f), firstCursory(0.f), elevator(0.f), elevatorLength(0.f), elevatorRange(0.f)
 {
 	type = CONSOLE;
 	font = nullptr;
@@ -34,7 +34,6 @@ WidgetConsole::~WidgetConsole()
 	ResourceManager::getInstance()->release(font);
 }
 //
-
 
 
 //	Public functions
@@ -230,7 +229,6 @@ bool WidgetConsole::mouseEvent(const glm::mat4& base, const glm::vec3& ray, cons
 //
 
 
-
 //	Set / get functions
 void WidgetConsole::setFont(const std::string& fontName)
 {
@@ -245,15 +243,19 @@ void WidgetConsole::setSizeChar(const float& f)
 }
 void WidgetConsole::append(const std::string& s)
 {
-	text += s + '\n';
-	configuration |= SPECIAL;
-	elevator = 0.f;
+	if (!s.empty())
+	{
+		text += s + '\n';
+		configuration |= NEED_UPDATE;
+		elevator = 0.f;
+	}
 }
 
 
 Font* WidgetConsole::getFont() const { return font; }
 float WidgetConsole::getSizeChar() const { return sizeChar; }
 //
+
 
 //	Protected functions
 void WidgetConsole::initVBOtext()

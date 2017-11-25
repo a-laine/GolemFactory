@@ -1867,6 +1867,7 @@ static int stbi__jpeg_decode_block_prog_ac(stbi__jpeg *j, short data[64], stbi__
 
             // advance by r
             while (k <= j->spec_end) {
+#pragma warning(suppress: 6011)
                short *p = &data[stbi__jpeg_dezigzag[k++]];
                if (*p != 0) {
                   if (stbi__jpeg_get_bit(j))
@@ -3369,6 +3370,7 @@ static stbi_uc *load_jpeg_image(stbi__jpeg *z, int *out_x, int *out_y, int *comp
                   out += n;
                }
          } else {
+#pragma warning(suppress: 6001)
             stbi_uc *y = coutput[0];
             if (n == 1)
                for (i=0; i < z->s->img_x; ++i) out[i] = y[i];
@@ -3384,6 +3386,7 @@ static stbi_uc *load_jpeg_image(stbi__jpeg *z, int *out_x, int *out_y, int *comp
    }
 }
 
+#pragma warning(suppress: 6262)
 static unsigned char *stbi__jpeg_load(stbi__context *s, int *x, int *y, int *comp, int req_comp)
 {
    stbi__jpeg j;
@@ -3392,6 +3395,7 @@ static unsigned char *stbi__jpeg_load(stbi__context *s, int *x, int *y, int *com
    return load_jpeg_image(&j, x,y,comp,req_comp);
 }
 
+#pragma warning(suppress: 6262)
 static int stbi__jpeg_test(stbi__context *s)
 {
    int r;
@@ -3415,6 +3419,7 @@ static int stbi__jpeg_info_raw(stbi__jpeg *j, int *x, int *y, int *comp)
    return 1;
 }
 
+#pragma warning(suppress: 6262)
 static int stbi__jpeg_info(stbi__context *s, int *x, int *y, int *comp)
 {
    stbi__jpeg j;
@@ -3690,6 +3695,8 @@ static int stbi__compute_huffman_codes(stbi__zbuf *a)
          lencodes[n++] = (stbi_uc) c;
       else if (c == 16) {
          c = stbi__zreceive(a,2)+3;
+#pragma warning(suppress: 6385)
+#pragma warning(suppress: 6001)
          memset(lencodes+n, lencodes[n-1], c);
          n += c;
       } else if (c == 17) {
@@ -5505,6 +5512,7 @@ static int stbi__gif_header(stbi__context *s, stbi__gif *g, int *comp, int is_in
    return 1;
 }
 
+#pragma warning(suppress: 6262)
 static int stbi__gif_info_raw(stbi__context *s, int *x, int *y, int *comp)
 {
    stbi__gif g;
@@ -5746,6 +5754,7 @@ static stbi_uc *stbi__gif_load_next(stbi__context *s, stbi__gif *g, int *comp, i
    }
 }
 
+#pragma warning(suppress: 6262)
 static stbi_uc *stbi__gif_load(stbi__context *s, int *x, int *y, int *comp, int req_comp)
 {
    stbi_uc *u = 0;
