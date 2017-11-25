@@ -55,10 +55,6 @@ class NodeVirtual
 		virtual ~NodeVirtual();
 		//
 
-		//	Debug
-		void print(int lvl);
-		//
-
 		//	Public functions
 		/*!
 		 *	\brief Get number of children
@@ -89,12 +85,6 @@ class NodeVirtual
 		 *  If not check recursively with children.
 		 */
 		virtual bool removeObject(InstanceVirtual* obj);
-
-		/*!
-		 *	\brief Compute instance list present in frustrum
-		 *	\param list : the list of instance in frustrum to complete
-		 */
-		virtual void getInstanceList(std::vector<std::pair<int, InstanceVirtual*> >& list);
 
 		/*!
 		 *	\brief Divide (split) node depending on node division byte
@@ -156,7 +146,9 @@ class NodeVirtual
 		 *  \brief Check if node is in frustrum
 		 *  \return the node distance to camera, or std::numeric_limits<int>::lowest if not in frustrum.
 		 */
-		int isInFrustrum() const;
+		int isInFrustrum(const glm::vec3& camP, const glm::vec3& camD, const glm::vec3& camV, const glm::vec3& camL, const float& camVa, const float& camHa) const;
+
+		int isOnRay(const glm::vec3& camP, const glm::vec3& ray) const;
 		//
 
 		//	Attributes
@@ -170,15 +162,6 @@ class NodeVirtual
 		unsigned int division;						//!< Division byte (see NodeDivisionFlags enum to code/decode it), it's a bitfield
 
 		InstanceDrawable* debuginstance;			//!< Debug
-		//
-
-		//	Static attributes
-		static glm::vec3 camPosition;				//!< Camera position
-		static glm::vec3 camDirection;				//!< Camera forward vector
-		static glm::vec3 camVertical;				//!< Camera relative vertical vector
-		static glm::vec3 camLeft;					//!< Camera left vector
-		static float camVerticalAngle;				//!< Frustrum angle vertical
-		static float camHorizontalAngle;			//!< Frustrum angle horizontal
 		//
 };
 

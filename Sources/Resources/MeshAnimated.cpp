@@ -133,7 +133,7 @@ MeshAnimated::MeshAnimated(const std::string& path, const std::string& meshName)
 	//	end
 	file.close();
 	configuration = WELL_LOADED | HAS_SKELETON;
-	computeBoundingBoxDimension();
+	computeBoundingBox();
 	initializeVBO();
 	initializeVAO();
 }
@@ -150,7 +150,7 @@ MeshAnimated::MeshAnimated(const std::string& meshName, const bool& isAnimable, 
 	colors = colorArray;
 	faces = facesArray;
 
-	computeBoundingBoxDimension();
+	computeBoundingBox();
 	initializeVBO();
 	initializeVAO();
 }

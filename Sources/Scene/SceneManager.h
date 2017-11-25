@@ -16,13 +16,18 @@ class SceneManager : public Singleton<SceneManager>
 	friend class Singleton<SceneManager>;
 
 	public:
-		//  Public functions
-		bool addStaticObject(InstanceVirtual* obj);
-		bool removeObject(InstanceVirtual* obj);
+		//	Miscellaneous
+		enum Grain
+		{
+			COARSE,
+			INSTANCE_BB,
+			INSTANCE_MESH
+		};
 		//
 
-		//	Debug
-		void print();
+		//  Scene modifier
+		bool addStaticObject(InstanceVirtual* obj);
+		bool removeObject(InstanceVirtual* obj);
 		//
 
 		//  Set/get functions
@@ -31,7 +36,8 @@ class SceneManager : public Singleton<SceneManager>
 		void setWorldSize(glm::vec3 size);
 		void setWorldPosition(glm::vec3 position);
 
-		void getInstanceList(std::vector<std::pair<int, InstanceVirtual*> >& list);
+		void getInstanceList(std::list<std::pair<int, InstanceVirtual*> >& list, const Grain& grain = COARSE);
+		void getInstanceOnRay(std::list<std::pair<int, InstanceVirtual*> >& list, const Grain& grain = COARSE);
 		std::vector<float> getMaxViewDistanceStack();
 		//
 
@@ -44,5 +50,12 @@ class SceneManager : public Singleton<SceneManager>
 		//  Attributes
 		std::vector<NodeVirtual*> world;
 		std::vector<float> viewMaxDistance;
+
+		glm::vec3 camPosition;				//!< Camera position
+		glm::vec3 camDirection;				//!< Camera forward vector
+		glm::vec3 camVertical;				//!< Camera relative vertical vector
+		glm::vec3 camLeft;					//!< Camera left vector
+		float camVerticalAngle;				//!< Frustrum angle vertical
+		float camHorizontalAngle;			//!< Frustrum angle horizontal
 		//
 };

@@ -1,6 +1,5 @@
 #include "WidgetConsole.h"
 
-#include <glm/gtc/matrix_access.hpp>
 
 //	string define
 #define MAX_LINE				20			//	max nb of line in text string

@@ -1,15 +1,6 @@
 #include "NodeVirtual.h"
 
-#define FRUSTRUM_COEFF 2.f
-
-//	static attributes initialization
-glm::vec3 NodeVirtual::camPosition = glm::vec3(0, 0, 0);
-glm::vec3 NodeVirtual::camDirection = glm::vec3(1, 0, 0);
-glm::vec3 NodeVirtual::camVertical = glm::vec3(0, 0, 1);
-glm::vec3 NodeVirtual::camLeft = glm::vec3(0, 1, 0);
-float NodeVirtual::camVerticalAngle = 45;
-float NodeVirtual::camHorizontalAngle = 45;
-//
+#define FRUSTRUM_COEFF 2.f	//	coefficient for frustrum intersection computation (to avoid artefacts)
 
 
 //	Default
@@ -40,22 +31,6 @@ NodeVirtual::~NodeVirtual()
 }
 //
 
-//
-void NodeVirtual::print(int lvl)
-{
-	//	check if node intersect frustrum
-	int distance = isInFrustrum();
-	if (distance == std::numeric_limits<int>::lowest()) return;
-
-	//	dummy debug
-	for (int i = 0; i < lvl; i++)
-		std::cout << "  ";
-	std::cout <<  this << ' ' << instanceList.size() << std::endl;
-
-	for (unsigned int i = 0; i < children.size(); i++)
-		children[i]->print(lvl + 1);
-}
-//
 
 //	Public functions
 int NodeVirtual::getChildrenCount() const { return children.size() + adoptedChildren.size(); }
@@ -64,11 +39,10 @@ bool NodeVirtual::isLastBranch() const
 	if (!children.empty() && children[0]->children.empty()) return true;
 	return false;
 }
-
 bool NodeVirtual::addObject(InstanceVirtual* obj)
 {
 	if (!obj) return false;
-	if (glm::length(obj->getBBSize()) < 0.1f * glm::length(size) && !children.empty())
+	if (glm::length(obj->getBBMax() - obj->getBBMin()) < 0.1f * glm::length(size) && !children.empty())
 	{
 		int key = getChildrenKey(obj->getPosition());
 		if (key < 0) return false;
@@ -84,7 +58,7 @@ bool NodeVirtual::addObject(InstanceVirtual* obj)
 bool NodeVirtual::removeObject(InstanceVirtual* obj)
 {
 	if (!obj) return false;
-	if (glm::length(obj->getBBSize()) < 0.1f * glm::length(size) && !children.empty())
+	if (glm::length(obj->getBBMax() - obj->getBBMin()) < 0.1f * glm::length(size) && !children.empty())
 	{
 		int key = getChildrenKey(obj->getPosition());
 		if (key < 0) return false;
@@ -101,19 +75,6 @@ bool NodeVirtual::removeObject(InstanceVirtual* obj)
 		}
 		else return false;
 	}
-}
-void NodeVirtual::getInstanceList(std::vector<std::pair<int, InstanceVirtual*> >& list)
-{
-	//	check if not in frustrum
-	int distance = isInFrustrum();
-	if (distance == std::numeric_limits<int>::lowest()) return;
-
-	//	give personnal instance and continue with recursive call on children
-	//list.push_back(std::pair<int, InstanceVirtual*>(distance, debuginstance));
-	for (unsigned int i = 0; i < instanceList.size(); i++)
-		list.push_back(std::pair<int, InstanceVirtual*>(distance,instanceList[i]));
-	for (unsigned int i = 0; i < children.size(); i++)
-		children[i]->getInstanceList(list);
 }
 
 
@@ -147,7 +108,6 @@ void NodeVirtual::merge()
 		delete children[i];
 	children.clear();
 }
-
 void NodeVirtual::add(NodeVirtual* n)
 {
 	adoptedChildren.push_back(n);
@@ -165,6 +125,7 @@ bool NodeVirtual::remove(NodeVirtual* n)
 	else return false;
 }
 //
+
 
 //Set/Get functions
 void NodeVirtual::setPosition(glm::vec3 p)
@@ -201,9 +162,11 @@ void NodeVirtual::setSize(glm::vec3 s)
 	}
 }
 
+
 glm::vec3 NodeVirtual::getPosition() const { return position; }
 glm::vec3 NodeVirtual::getSize() const { return size; }
 //
+
 
 //	Protected functions
 uint8_t NodeVirtual::getLevel() const
@@ -238,22 +201,43 @@ int NodeVirtual::getChildrenKey(glm::vec3 p) const
 
 	return zChild*yChild*x + zChild*y + z;
 }
-int NodeVirtual::isInFrustrum() const
+int NodeVirtual::isInFrustrum(const glm::vec3& camP, const glm::vec3& camD, const glm::vec3& camV, const glm::vec3& camL, const float& camVa, const float& camHa) const
 {
-	glm::vec3 p = position - camPosition;
-	float forwardFloat = glm::dot(p, camDirection) + FRUSTRUM_COEFF * (std::abs(size.x*camDirection.x) + abs(size.y*camDirection.y) + abs(size.z*camDirection.z));
-	if (forwardFloat < 0)
+	//	test if in front of camera
+	glm::vec3 p = position - camP;
+	float forwardFloat = glm::dot(p, camD) + FRUSTRUM_COEFF * (abs(size.x * camD.x) + abs(size.y * camD.y) + abs(size.z * camD.z));
+	if (forwardFloat < 0.f)
 		return std::numeric_limits<int>::lowest();
 
+	//	out of horizontal range
 	float maxAbsoluteDimension = (std::max)(size.x, (std::max)(size.y, size.z)) / 2.f;
-	float maxTangentDimension = std::abs(size.x*camLeft.x) / 2.f + abs(size.y*camLeft.y) / 2.f + abs(size.z*camLeft.z) / 2.f;
-	if (std::abs(glm::dot(p, camLeft)) - maxTangentDimension > std::abs(forwardFloat)*std::tan(glm::radians(camHorizontalAngle)) + FRUSTRUM_COEFF * maxAbsoluteDimension)
+	float maxTangentDimension = abs(size.x * camL.x) / 2.f + abs(size.y * camL.y) / 2.f + abs(size.z * camL.z) / 2.f;
+	if (abs(glm::dot(p, camL)) - maxTangentDimension > std::abs(forwardFloat) * tan(glm::radians(camHa)) + FRUSTRUM_COEFF * maxAbsoluteDimension)
 		return std::numeric_limits<int>::lowest();
 
-	maxTangentDimension = std::abs(size.x*camVertical.x) / 2.f + abs(size.y*camVertical.y) / 2.f + abs(size.z*camVertical.z) / 2.f;
-	if (std::abs(glm::dot(p, camVertical)) - maxTangentDimension > std::abs(forwardFloat)*std::tan(glm::radians(camVerticalAngle)) + FRUSTRUM_COEFF * maxAbsoluteDimension)
+	//	out of vertical range
+	maxTangentDimension = abs(size.x * camV.x) / 2.f + abs(size.y * camV.y) / 2.f + abs(size.z * camV.z) / 2.f;
+	if (abs(glm::dot(p, camV)) - maxTangentDimension > abs(forwardFloat) * tan(glm::radians(camVa)) + FRUSTRUM_COEFF * maxAbsoluteDimension)
 		return std::numeric_limits<int>::lowest();
 
+	//	return distance to camera in int
 	return (int)glm::length(p);
+}
+int NodeVirtual::isOnRay(const glm::vec3& origin, const glm::vec3& ray) const
+{
+	//	for explanation search slab method on internet
+	float t1 = (position.x - size.x / 2 - origin.x) / ray.x;
+	float t2 = (position.x + size.x / 2 - origin.x) / ray.x;
+	float t3 = (position.y - size.y / 2 - origin.y) / ray.y;
+	float t4 = (position.y + size.y / 2 - origin.y) / ray.y;
+	float t5 = (position.z - size.z / 2 - origin.z) / ray.z;
+	float t6 = (position.z + size.z / 2 - origin.z) / ray.z;
+
+	float tmin = std::max(std::max(std::min(t1, t2), std::min(t3, t4)), std::min(t5, t6));
+	float tmax = std::min(std::min(std::max(t1, t2), std::max(t3, t4)), std::max(t5, t6));
+	
+	if (tmax < 0.f) return std::numeric_limits<int>::lowest();			//	not in front of camera
+	else if (tmin > tmax) return std::numeric_limits<int>::lowest();	//	don't intersect
+	else return (int)tmin;
 }
 //

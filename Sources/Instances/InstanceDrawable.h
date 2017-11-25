@@ -46,11 +46,8 @@ class InstanceDrawable : public InstanceVirtual
 		 */
 		void setMesh(Mesh* m);
 
-		/*!
-		 *  \brief Get bounding box size of instance (depending on mesh bounding box)
-		 *  \return the bounding box as a vector.
-		 */
-		glm::vec3 getBBSize() const;
+		glm::vec3 getBBMax();
+		glm::vec3 getBBMin();
 
 		/*!
 		*  \brief Get bounding sphere radius of instance (depending on mesh bounding box)

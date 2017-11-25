@@ -33,10 +33,6 @@ class InstanceVirtual
 
 	public:
 		//  Miscellaneous
-		/*!
-		*	\enum InstanceType
-		*	\brief The type of the resources
-		*/
 		enum InstanceType
 		{
 			NONE = 0,       //!< 
@@ -46,89 +42,26 @@ class InstanceVirtual
 		};
 
 		//  Default
-		/*!
-		 *  \brief Constructor
-		 *  
-		 *  Instance position is set to zero, size to one, and orientation matrix to identity
-		 */
 		InstanceVirtual(InstanceType instanceType = NONE);
-
-		/*!
-		 *  \brief Destructor
-		 */
 		virtual ~InstanceVirtual();
 		//
 
 		//	Set/Get functions
-		InstanceType getType() const;
+		
 
-
-		/*!
-		 *  \brief Define instance position
-		 *  \param p : the new instance position
-		 */
 		void setPosition(glm::vec3 p);
-
-		/*!
-		 *  \brief Define instance size
-		 *  \param s : the new instance size.
-		 *  
-		 *  It's possible to have diferent size factor on world axis.
-		 *  read more about opengl size factor or matrix for more infos
-		 */
 		void setSize(glm::vec3 s);
-
-		/*!
-		 *  \brief Define instance orientation
-		 *  \param m : the new instance orientation matrix
-		 *
-		 *  This is a 4*4 matrix. To compute it correctly see the glm::orientation functions or other.
-		 */
 		void setOrientation(glm::mat4 m);
 
-		/*!
-		 *  \brief Get instance position
-		 *  \return the instance position
-		 */
 		glm::vec3 getPosition() const;
-
-		/*!
-		 *  \brief Get instance size
-		 *  \return the instance size vector
-		 */
 		glm::vec3 getSize() const;
-
-		/*!
-		 *  \brief Get instance orientation
-		 *  \return the instance orientation matrix
-		 */
 		glm::mat4 getOrientation() const;
-
-		/*!
-		 *  \brief Get instance model view matrix
-		 *  \return the instance model view matrix
-		 *
-		 *  The matrix is computed whith the actual instance position, size and orientation
-		 */
 		glm::mat4 getModelMatrix() const;
-
-		/*!
-		 *  \brief Get instance bounding box
-		 *  \return the instance bounding box
-		 *
-		 *  This is a virtual function, so you have to implement it depending on your specific instance.
-		 *  Actually the InstanceVirtual::getBBSize function return always a zero vector (a point object !).
-		 */
-		virtual glm::vec3 getBBSize();
-
-		/*!
-		*  \brief Get instance bounding sphere radius
-		*  \return the instance bounding sphere radius
-		*
-		*  This is a virtual function, so you have to implement it depending on your specific instance.
-		*  Actually the InstanceVirtual::getBSRadius function return always zero (a point object !).
-		*/
-		virtual float getBSRadius();
+		
+		InstanceType getType() const;
+		virtual glm::vec3 getBBMax() const;
+		virtual glm::vec3 getBBMin() const;
+		virtual float getBSRadius() const;
 
 		virtual Shader* getShader() const;
 		virtual Animation* getAnimation() const;

@@ -32,7 +32,7 @@ class Mesh : public ResourceVirtual
 		//
 
 		//	Public functions
-		void computeBoundingBoxDimension();
+		void computeBoundingBox();
 
 		virtual void initializeVBO();
 		virtual void initializeVAO();
@@ -48,11 +48,14 @@ class Mesh : public ResourceVirtual
 
         unsigned int getNumberVertices() const;
         unsigned int getNumberFaces() const;
+
+		const std::vector<glm::vec3>* getBBoxVertecies() const;
+		const std::vector<unsigned short>* getBBoxFaces() const;
         //
 
 		//	Attributes
 		static std::string extension;
-		glm::vec2 sizeX, sizeY, sizeZ;
+		glm::vec3 aabb_min, aabb_max;
 		//
 
 	protected:
@@ -72,5 +75,8 @@ class Mesh : public ResourceVirtual
 		std::vector<glm::vec3> normales;
 		std::vector<glm::vec3> colors;
         std::vector<unsigned short> faces;
+
+		std::vector<glm::vec3> vBBOx;
+		std::vector<unsigned short> fBBOx;
         //
 };

@@ -38,20 +38,14 @@ void InstanceDrawable::setMesh(Mesh* m)
 	else mesh = nullptr;
 }
 
-
-glm::vec3 InstanceDrawable::getBBSize() const
-{
-	if (!mesh) return glm::vec3(0.f, 0.f, 0.f);
-	else return glm::vec3(
-		size.x*(mesh->sizeX.y - mesh->sizeX.x),
-		size.y*(mesh->sizeY.y - mesh->sizeY.x),
-		size.z*(mesh->sizeZ.y - mesh->sizeZ.x)   );
-}
+glm::vec3 InstanceDrawable::getBBMax() { return mesh->aabb_max * size; }
+glm::vec3 InstanceDrawable::getBBMin() { return mesh->aabb_min * size; }
 float InstanceDrawable::getBSRadius() const
 {
-	return std::sqrtf(	(mesh->sizeX.y - mesh->sizeX.x)*(mesh->sizeX.y - mesh->sizeX.x) +
-						(mesh->sizeY.y - mesh->sizeY.x)*(mesh->sizeY.y - mesh->sizeY.x) +
-						(mesh->sizeZ.y - mesh->sizeZ.x)*(mesh->sizeZ.y - mesh->sizeZ.x)    ) * 0.5f;
+	float x = std::max(abs(mesh->aabb_min.x), abs(mesh->aabb_max.x));
+	float y = std::max(abs(mesh->aabb_min.y), abs(mesh->aabb_max.y));
+	float z = std::max(abs(mesh->aabb_min.z), abs(mesh->aabb_max.z));
+	return glm::length(glm::vec3(x,y,z));
 }
 Shader* InstanceDrawable::getShader() const { return shader; }
 Mesh* InstanceDrawable::getMesh() const { return mesh; }

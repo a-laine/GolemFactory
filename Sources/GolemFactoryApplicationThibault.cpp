@@ -45,7 +45,7 @@ int main()
 	EventHandler::getInstance()->addWindow(window);
 	EventHandler::getInstance()->setRepository(resourceRepository);
 	EventHandler::getInstance()->loadKeyMapping("RPG Key mapping");
-	EventHandler::getInstance()->setCursorMode(true);
+	EventHandler::getInstance()->setCursorMode(false);
 	EventHandler::getInstance()->setResizeCallback(WidgetManager::resizeCallback);
 	
 	// Init Resources manager & instance manager
@@ -84,9 +84,9 @@ int main()
 		initializeForestScene(true);
 
 		InstanceAnimatable* peasant = InstanceManager::getInstance()->getInstanceAnimatable("peasant", "human", "simple_peasant", "skinning");
-			float scale = 1.7f / peasant->getBBSize().z;
+			float scale = 1.7f / (peasant->getBBMax() - peasant->getBBMin()).z;
 			peasant->setSize(glm::vec3(scale));
-			peasant->setPosition(glm::vec3(0.f, 0.f, -scale * peasant->getMesh()->sizeZ.x));
+			//peasant->setPosition(glm::vec3(0.f, 0.f, -scale * peasant->getMesh()->sizeZ.x));
 			SceneManager::getInstance()->addStaticObject(peasant);
 
 
@@ -308,7 +308,7 @@ void initializeForestScene(bool emptyPlace)
 		vilageHouseCount += houseCount;
 		float angleOffset = 6.28f * ((rand() % 100) / 100.f);
 
-		for (int j = 0; j < houseCount;)
+		for (int j = 0; j < houseCount; j++)
 		{
 			float radius = villageRadius[i] + 3.f * (((rand() % 100) / 50.f) - 1.f);
 			float angle = angleOffset + 6.28f * j / houseCount + ((((rand() % 100) / 50.f) - 1.f)) / houseCount;
@@ -319,7 +319,7 @@ void initializeForestScene(bool emptyPlace)
 			else
 				a = glm::rotate(a, angle + 0.4f * ((((rand() % 100) / 50.f) - 1.f)), glm::vec3(0, 0, 1));
 			
-			InstanceDrawable* house = dynamic_cast<InstanceDrawable*>(hg.getHouse(rand(), 20, 30));
+			InstanceDrawable* house = nullptr;// dynamic_cast<InstanceDrawable*>(hg.getHouse(rand(), 20, 30));
 			if (house && InstanceManager::getInstance()->add(house))
 			{
 				glm::vec3 p = glm::vec3(radius * cos(angle), radius * sin(angle), house->getBSRadius());
@@ -338,7 +338,6 @@ void initializeForestScene(bool emptyPlace)
 				houseCircle.push_back(p);
 				house->setPosition(glm::vec3(p.x, p.y, 0.f));
 				SceneManager::getInstance()->addStaticObject(house);
-				j++;
 			}
 		}
 	}

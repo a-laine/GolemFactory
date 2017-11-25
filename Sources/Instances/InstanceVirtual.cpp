@@ -7,15 +7,14 @@ InstanceVirtual::~InstanceVirtual() {}
 
 
 //	Set/Get functions
-InstanceVirtual::InstanceType InstanceVirtual::getType() const { return type; }
 void InstanceVirtual::setPosition(glm::vec3 p) { position = p; }
 void InstanceVirtual::setSize(glm::vec3 s) { size = s; }
 void InstanceVirtual::setOrientation(glm::mat4 m) { orientation = m; }
 
+
 glm::vec3 InstanceVirtual::getPosition() const{ return position; }
 glm::vec3 InstanceVirtual::getSize() const  { return size; }
 glm::mat4 InstanceVirtual::getOrientation() const { return orientation; }
-
 glm::mat4 InstanceVirtual::getModelMatrix() const
 {
 	glm::mat4 model(1.0);
@@ -24,17 +23,21 @@ glm::mat4 InstanceVirtual::getModelMatrix() const
 	model = glm::scale(model, size);
 	return model;
 }
-glm::vec3 InstanceVirtual::getBBSize() { return glm::vec3(0.f, 0.f, 0.f); }
-float InstanceVirtual::getBSRadius() { return 0.f; };
+
+
+InstanceVirtual::InstanceType InstanceVirtual::getType() const { return type; }
+glm::vec3 InstanceVirtual::getBBMax() const { return glm::vec3(0.f, 0.f, 0.f); }
+glm::vec3 InstanceVirtual::getBBMin() const { return glm::vec3(0.f, 0.f, 0.f); }
+float InstanceVirtual::getBSRadius() const
+{
+	return std::max(glm::length(getBBMax()),glm::length(getBBMin()));
+};
+
 
 Shader* InstanceVirtual::getShader() const { return nullptr; }
 Animation* InstanceVirtual::getAnimation() const { return nullptr; }
 Skeleton* InstanceVirtual::getSkeleton() const { return nullptr; }
 Mesh* InstanceVirtual::getMesh() const { return nullptr; }
 std::vector<glm::mat4> InstanceVirtual::getPose() { return std::vector<glm::mat4>(); }
-
-const std::list<InstanceVirtual*>* InstanceVirtual::getChildList() const
-{
-	return nullptr;
-}
+const std::list<InstanceVirtual*>* InstanceVirtual::getChildList() const { return nullptr; }
 //

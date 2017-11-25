@@ -428,32 +428,27 @@ void WidgetManager::loadDebugHud()
 		layer5->add(label5);
 		layerList.insert(layer5);
 		
-	//	test
-/*	
-	WidgetConsole* console = new WidgetConsole();
-		console->setPosition(glm::vec3(0.f, 0.01f, 0.f), WidgetVirtual::ALL);
-		console->setSize(glm::vec2(2.1f, 1.f), WidgetVirtual::ALL);
-		console->setSizeChar(0.07f);
-		console->setFont("Data Control");
-		console->initialize(0.02f, 0.1f, WidgetBoard::TOP_RIGHT);
-		console->setColor(glm::vec4(0.5f, 0.5f, 0.f, 1.f), WidgetVirtual::ALL);
-		console->setColor(glm::vec4(0.5f, 0.5f, 0.5f, 1.f), WidgetVirtual::HOVER);
-		widgetList.insert(console);
+	//	hit cross
+	WidgetImage* image = new WidgetImage("hitcross.png");
+		image->setPosition(glm::vec3(0.f, 0.f, 0.f), WidgetVirtual::ALL);
+		image->setSize(glm::vec2(0.1f, 0.1f), WidgetVirtual::ALL);
+		image->initialize();
+		widgetList.insert(image);
 	Layer* layer6 = new Layer(Layer::VISIBLE);
 		layer6->setSize(0.05f);
 		layer6->setScreenPosition(glm::vec3(0.f, 0.f, 0.f));
 		layer6->setPosition(layer6->getScreenPosition());
 		layer6->setTargetPosition(layer6->getScreenPosition());
-		layer6->add(console);
+		layer6->add(image);
 		layerList.insert(layer6);
-*/
+
 	//	push on HUD
 	hudList["debug"].push_back(layer1);
 	hudList["debug"].push_back(layer2);
 	hudList["debug"].push_back(layer3);
 	hudList["debug"].push_back(layer4);
 	hudList["debug"].push_back(layer5);
-	//hudList["debug"].push_back(layer6);
+	hudList["debug"].push_back(layer6);
 	activeHud = "debug";
 }
 //

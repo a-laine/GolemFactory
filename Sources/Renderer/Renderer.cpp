@@ -166,13 +166,22 @@ void Renderer::render(Camera* renderCam)
 	SceneManager::getInstance()->setCameraAttributes(camera->getPosition(), camera->getForward(), camera->getVertical(), camera->getLeft(),
 		camera->getFrustrumAngleVertical() / 1.6f, camera->getFrustrumAngleVertical() / 1.6f);
 	
-	std::vector<std::pair<int, InstanceVirtual*> > instanceList;
+	std::list<std::pair<int, InstanceVirtual*> > instanceList;
 	SceneManager::getInstance()->getInstanceList(instanceList);
-	std::sort(instanceList.begin(), instanceList.end());
+	instanceList.sort();
+
+	std::list<std::pair<int, InstanceVirtual*> > rayList;
+	std::list<InstanceVirtual*> rayList2;
+	SceneManager::getInstance()->getInstanceOnRay(rayList, SceneManager::INSTANCE_BB);
+	for (auto it = rayList.begin(); it != rayList.end(); it++)
+		rayList2.push_back(it->second);
+
 
 	//	draw instance list
-	for (auto it = instanceList.begin(); it != instanceList.end(); it++)
+	for (std::list<std::pair<int, InstanceVirtual*> >::iterator it = instanceList.begin(); it != instanceList.end(); ++it)
 	{
+		if (std::find(rayList2.begin(), rayList2.end(), it->second) != rayList2.end())
+			continue;
 		switch (it->second->getType())
 		{
 			case InstanceVirtual::DRAWABLE:
@@ -218,13 +227,13 @@ void Renderer::drawInstanceDrawable(InstanceVirtual* ins, const float* view, con
 	loadMVPMatrix(shaderToUse, &(base * ins->getModelMatrix())[0][0], view, projection);
 
 	//	Map with wind if instance sensible to wind
-	int loc = shaderToUse->getUniformLocation("wind");
+	/*int loc = shaderToUse->getUniformLocation("wind");
 	if (loc >= 0)
 	{
 		double phase = 0.05*ins->getPosition().x + 0.05*ins->getSize().z;
 		glm::vec4 wind(0.1 * sin(dummy + phase), 0.0, 0.0, 0.0);
 		glUniform4fv(loc, 1, &wind.x);
-	}
+	}*/
 
 	//	Draw mesh
 	ins->getMesh()->draw();
