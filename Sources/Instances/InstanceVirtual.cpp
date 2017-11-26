@@ -38,6 +38,6 @@ Shader* InstanceVirtual::getShader() const { return nullptr; }
 Animation* InstanceVirtual::getAnimation() const { return nullptr; }
 Skeleton* InstanceVirtual::getSkeleton() const { return nullptr; }
 Mesh* InstanceVirtual::getMesh() const { return nullptr; }
-std::vector<glm::mat4> InstanceVirtual::getPose() { return std::vector<glm::mat4>(); }
+std::vector<glm::mat4> InstanceVirtual::getPose() const { return std::vector<glm::mat4>(); }
 const std::list<InstanceVirtual*>* InstanceVirtual::getChildList() const { return nullptr; }
 //

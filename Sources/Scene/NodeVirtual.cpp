@@ -1,6 +1,8 @@
 #include "NodeVirtual.h"
 
-#define FRUSTRUM_COEFF 2.f	//	coefficient for frustrum intersection computation (to avoid artefacts)
+#define FRUSTRUM_COEFF			2.f	//	coefficient for frustrum intersection computation (to avoid artefacts)
+#define RAY_COEFF				0.2f
+#define SIZE_ALLOWANCE_COEFF	0.1f
 
 
 //	Default
@@ -42,7 +44,7 @@ bool NodeVirtual::isLastBranch() const
 bool NodeVirtual::addObject(InstanceVirtual* obj)
 {
 	if (!obj) return false;
-	if (glm::length(obj->getBBMax() - obj->getBBMin()) < 0.1f * glm::length(size) && !children.empty())
+	if (glm::length(obj->getBBMax() - obj->getBBMin()) < SIZE_ALLOWANCE_COEFF * glm::length(size) && !children.empty())
 	{
 		int key = getChildrenKey(obj->getPosition());
 		if (key < 0) return false;
@@ -233,12 +235,12 @@ int NodeVirtual::isOnRay(const glm::vec3& origin, const glm::vec3& ray, const gl
 	//	out of horizontal range
 	float maxAbsoluteDimension = std::max(size.x, std::max(size.y, size.z)) / 2.f;
 	float maxTangentDimension = abs(size.x * rayL.x) / 2.f + abs(size.y * rayL.y) / 2.f + abs(size.z * rayL.z) / 2.f;
-	if (abs(glm::dot(p, rayL)) - maxTangentDimension > 0.2f * maxAbsoluteDimension)
+	if (abs(glm::dot(p, rayL)) - maxTangentDimension > RAY_COEFF * maxAbsoluteDimension)
 		return std::numeric_limits<int>::lowest();
 
 	//	out of vertical range
 	maxTangentDimension = abs(size.x * rayV.x) / 2.f + abs(size.y * rayV.y) / 2.f + abs(size.z * rayV.z) / 2.f;
-	if (abs(glm::dot(p, rayV)) - maxTangentDimension > 0.2f * maxAbsoluteDimension)
+	if (abs(glm::dot(p, rayV)) - maxTangentDimension > RAY_COEFF * maxAbsoluteDimension)
 		return std::numeric_limits<int>::lowest();
 
 	//	return distance to camera in int

@@ -166,21 +166,18 @@ void Renderer::render(Camera* renderCam)
 	SceneManager::getInstance()->setCameraAttributes(camera->getPosition(), camera->getForward(), camera->getVertical(), camera->getLeft(),
 		camera->getFrustrumAngleVertical() / 1.6f, camera->getFrustrumAngleVertical() / 1.6f);
 	
-	std::list<std::pair<int, InstanceVirtual*> > instanceList;
+	std::vector<std::pair<int, InstanceVirtual*> > instanceList;
 	SceneManager::getInstance()->getInstanceList(instanceList);
-	instanceList.sort();
+	std::sort(instanceList.begin(), instanceList.end());
 
-	std::list<std::pair<int, InstanceVirtual*> > rayList;
-	std::list<InstanceVirtual*> rayList2;
-	SceneManager::getInstance()->getInstanceOnRay(rayList, SceneManager::INSTANCE_BB);
-	for (auto it = rayList.begin(); it != rayList.end(); it++)
-		rayList2.push_back(it->second);
-
+	std::vector<std::pair<float, InstanceVirtual*> > rayList;
+	SceneManager::getInstance()->getInstanceOnRay(rayList, SceneManager::INSTANCE_MESH, 100);
+	std::sort(rayList.begin(), rayList.end());
 
 	//	draw instance list
-	for (std::list<std::pair<int, InstanceVirtual*> >::iterator it = instanceList.begin(); it != instanceList.end(); ++it)
+	for (auto it = instanceList.begin(); it != instanceList.end(); ++it)
 	{
-		if (std::find(rayList2.begin(), rayList2.end(), it->second) != rayList2.end())
+		if (!rayList.empty() && it->second == rayList.front().second)
 			continue;
 		switch (it->second->getType())
 		{
@@ -286,10 +283,10 @@ void Renderer::drawInstanceContainer(InstanceVirtual* ins, const glm::mat4& view
 	auto instanceList = *ins->getChildList();
 	for (auto it = instanceList.begin(); it != instanceList.end(); it++)
 	{
-		if (InstanceDrawable* d = dynamic_cast<InstanceDrawable*>(*it))
-			drawInstanceDrawable(d, &view[0][0], &projection[0][0], modelMatrix);
-		else if (InstanceContainer* d = dynamic_cast<InstanceContainer*>(*it))
-			drawInstanceContainer(d, view, projection, glm::mat4(1.f));
+		if ((*it)->getType() == InstanceVirtual::DRAWABLE)
+			drawInstanceDrawable(static_cast<InstanceDrawable*>(*it), &view[0][0], &projection[0][0], modelMatrix);
+		else if ((*it)->getType() == InstanceVirtual::CONTAINER)
+			drawInstanceContainer(static_cast<InstanceContainer*>(*it), view, projection, glm::mat4(1.f));
 	}
 }
 //

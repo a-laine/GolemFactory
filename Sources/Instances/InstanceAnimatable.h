@@ -38,7 +38,7 @@ class InstanceAnimatable : public InstanceDrawable
 
 		Skeleton* getSkeleton() const;
 		Animation* getAnimation() const;
-		std::vector<glm::mat4> getPose();
+		std::vector<glm::mat4> getPose() const;
 		glm::vec3 getJointPosition(const std::string& jointName);
 		//
 

@@ -54,8 +54,10 @@ class Mesh : public ResourceVirtual
         unsigned int getNumberVertices() const;
         unsigned int getNumberFaces() const;
 
-		const std::vector<glm::vec3>* getBBoxVertecies() const;
+		const std::vector<glm::vec3>* getBBoxVertices() const;
 		const std::vector<unsigned short>* getBBoxFaces() const;
+		const std::vector<glm::vec3>* getVertices() const;
+		const std::vector<unsigned short>* getFaces() const;
         //
 
 		//	Attributes

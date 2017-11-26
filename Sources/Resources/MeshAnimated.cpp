@@ -156,6 +156,7 @@ MeshAnimated::MeshAnimated(const std::string& meshName, const bool& isAnimable, 
 }
 MeshAnimated::~MeshAnimated()
 {
+	//	delete additionnal attribute from inherited Mesh
 	weights.clear();
 	bones.clear();
 	glDeleteBuffers(1, &bonesBuffer);

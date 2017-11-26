@@ -38,8 +38,8 @@ void InstanceDrawable::setMesh(Mesh* m)
 	else mesh = nullptr;
 }
 
-glm::vec3 InstanceDrawable::getBBMax() { return mesh->aabb_max * size; }
-glm::vec3 InstanceDrawable::getBBMin() { return mesh->aabb_min * size; }
+glm::vec3 InstanceDrawable::getBBMax() const  { return mesh->aabb_max * size; }
+glm::vec3 InstanceDrawable::getBBMin() const  { return mesh->aabb_min * size; }
 float InstanceDrawable::getBSRadius() const
 {
 	float x = std::max(abs(mesh->aabb_min.x), abs(mesh->aabb_max.x));

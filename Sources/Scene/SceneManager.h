@@ -36,8 +36,8 @@ class SceneManager : public Singleton<SceneManager>
 		void setWorldSize(glm::vec3 size);
 		void setWorldPosition(glm::vec3 position);
 
-		void getInstanceList(std::list<std::pair<int, InstanceVirtual*> >& list, const Grain& grain = COARSE);
-		void getInstanceOnRay(std::list<std::pair<int, InstanceVirtual*> >& list, const Grain& grain = COARSE);
+		void getInstanceList(std::vector<std::pair<int, InstanceVirtual*> >& list, const Grain& grain = COARSE);
+		void getInstanceOnRay(std::vector<std::pair<float, InstanceVirtual*> >& list, const Grain& grain = COARSE, const float& maxDistance = std::numeric_limits<float>::max());
 		std::vector<float> getMaxViewDistanceStack();
 		//
 

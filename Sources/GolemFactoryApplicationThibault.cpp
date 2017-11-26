@@ -201,7 +201,7 @@ int main()
 		averageCompleteTime = 0.99f * averageCompleteTime + 0.01f * completeTime;
 		WidgetManager::getInstance()->setString("runtime speed", 
 			"FPS : " + std::to_string((int)(1000.f / completeTime)) + "\navg : " + std::to_string((int)(1000.f / averageCompleteTime)) + 
-			"\n\nTime : " + std::to_string((int)completeTime) + " ms\navg : " + std::to_string((int)averageCompleteTime) + " ms");
+			"\n\nTime : " + std::to_string(completeTime) + " ms\navg : " + std::to_string(averageCompleteTime) + " ms");
 		WidgetManager::getInstance()->setString("drawcalls",
 			"Instances :\n  " + std::to_string(Renderer::getInstance()->getNbDrawnInstances() + WidgetManager::getInstance()->getNbDrawnWidgets()) + 
 			"\n\nTriangles :\n  " + std::to_string(Renderer::getInstance()->getNbDrawnTriangles() + WidgetManager::getInstance()->getNbDrawnTriangles()));
@@ -335,7 +335,7 @@ void initializeForestScene(bool emptyPlace)
 			else
 				a = glm::rotate(a, angle + 0.4f * ((((rand() % 100) / 50.f) - 1.f)), glm::vec3(0, 0, 1));
 			
-			InstanceDrawable* house = dynamic_cast<InstanceDrawable*>(hg.getHouse(rand(), 20, 30));
+			InstanceDrawable* house = static_cast<InstanceDrawable*>(hg.getHouse(rand(), 20, 30));
 			if (house && InstanceManager::getInstance()->add(house))
 			{
 				glm::vec3 p = glm::vec3(radius * cos(angle), radius * sin(angle), house->getBSRadius());
@@ -399,7 +399,7 @@ void initializeForestScene(bool emptyPlace)
 			ins->setShader(shaderName);
 			
 			ins->setPosition(p);
-			//ins->setSize(glm::vec3(s,s,s));
+			ins->setSize(glm::vec3(s,s,s));
 			ins->setOrientation(a);
 
 			if(!SceneManager::getInstance()->addStaticObject(ins))

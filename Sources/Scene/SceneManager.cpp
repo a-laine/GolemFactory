@@ -7,7 +7,7 @@ SceneManager::SceneManager()
 {
 	setViewDistance(100, 2);
 	NodeVirtual* n = new NodeVirtual(nullptr, 0x040401);
-		n->setPosition(glm::vec3(0.f, 0.f, 0.f));
+		n->setPosition(glm::vec3(0.f, 0.f, 10.f));
 		n->setSize(glm::vec3(100.f, 100.f, 20.f));
 		n->split();
 	world.push_back(n);
@@ -86,7 +86,7 @@ void SceneManager::setWorldPosition(glm::vec3 position)
 }
 
 
-void SceneManager::getInstanceList(std::list<std::pair<int, InstanceVirtual*> >& list, const Grain& grain)
+void SceneManager::getInstanceList(std::vector<std::pair<int, InstanceVirtual*> >& list, const Grain& grain)
 {
 	//	iterative path on tree to get instance of node in frustrum
 	for (unsigned int i = 0; i < world.size(); i++)
@@ -136,7 +136,7 @@ void SceneManager::getInstanceList(std::list<std::pair<int, InstanceVirtual*> >&
 	//	refine list
 	if (grain == COARSE) return;
 }
-void SceneManager::getInstanceOnRay(std::list<std::pair<int, InstanceVirtual*> >& list, const Grain& grain)
+void SceneManager::getInstanceOnRay(std::vector<std::pair<float, InstanceVirtual*> >& list, const Grain& grain, const float& maxDistance)
 {
 	//	iterative path on tree to get instance of node on ray
 	for (unsigned int i = 0; i < world.size(); i++)
@@ -176,26 +176,25 @@ void SceneManager::getInstanceOnRay(std::list<std::pair<int, InstanceVirtual*> >
 					list.push_back(std::pair<int, InstanceVirtual*>(distance, node->instanceList[i]));
 			}
 
-			//	iterate
-			if (!node->children.empty() && distance != std::numeric_limits<int>::lowest())	//	go down in tree
+			//	iterate (go down in tree or change branch)
+			if (!node->children.empty() && distance != std::numeric_limits<int>::lowest())
 				path.push_back(std::pair<NodeVirtual*, int>(node, 0));
-			else path.back().second++;														// change branch
+			else path.back().second++; // change branch
 		}
 	}
+	if (grain == COARSE) return;
 
 	//	refine list checking instance bounding boxes
-	if (grain == COARSE) return;
-	for (std::list<std::pair<int, InstanceVirtual*> >::iterator it = list.begin(); it != list.end();)
+	std::vector<std::pair<float, InstanceVirtual*> > refinedList;
+	for (auto it = list.begin(); it != list.end(); ++it)
 	{
 		Mesh* m = it->second->getMesh();
-		if (!m) it = list.erase(it);
+		if (!m) continue;
 		else
 		{
-			std::vector<glm::vec3> const& vBBox = *m->getBBoxVertecies();
+			std::vector<glm::vec3> const& vBBox = *m->getBBoxVertices();
 			std::vector<unsigned short> const& fBBox = *m->getBBoxFaces();
-			bool intersect = false;
-
-			for (unsigned int i = 0; i < fBBox.size(); i += 3)
+			for (unsigned int i = 0; i < fBBox.size(); i += 6)
 			{
 				//	compute triangles vertices in world space
 				glm::vec3 p1 = glm::vec3(it->second->getModelMatrix() * glm::vec4(vBBox[fBBox[i]], 1.f));
@@ -212,61 +211,67 @@ void SceneManager::getInstanceOnRay(std::list<std::pair<int, InstanceVirtual*> >
 				//	compute intersection point
 				if (glm::dot(normal, camDirection) == 0.f) continue;
 				if (glm::dot(normal, camDirection) > 0.f) normal *= -1.f;
-				float depth = (glm::dot(normal, p1 + camPosition)) / glm::dot(normal, camDirection);
+				float depth = glm::dot(normal, p1 - camPosition) / glm::dot(normal, camDirection);
+				if (depth > maxDistance) continue;
 				glm::vec3 intersection = camPosition + depth * camDirection - p1;
 
 				//	check if point is inside triangle
-				float magnitute = glm::dot(v2, v2)*glm::dot(v1, v1) - glm::dot(v1, v2)*glm::dot(v1, v2);
+				float magnitute = glm::dot(v2, v2) * glm::dot(v1, v1) - glm::dot(v1, v2) * glm::dot(v1, v2);
+				glm::vec2 barry;
+				barry.x = (glm::dot(v2, v2) * glm::dot(intersection, v1) - glm::dot(v2, v1) * glm::dot(intersection, v2)) / magnitute;
+				barry.y = (glm::dot(v1, v1) * glm::dot(intersection, v2) - glm::dot(v2, v1) * glm::dot(intersection, v1)) / magnitute;
+				if (barry.x < 0.f || barry.y < 0.f || barry.x > 1.f || barry.y > 1.f) continue;
+				else refinedList.push_back(std::pair<float, InstanceVirtual*>(depth, it->second));
+				break;
+			}
+		}
+	}
+	list.swap(refinedList);
+	if (grain == INSTANCE_BB) return;
+
+	//	refine list checking instance meshes
+	refinedList.clear();
+	for (auto it = list.begin(); it != list.end(); ++it)
+	{
+		Mesh* m = it->second->getMesh();
+		if (!m) continue;
+		else
+		{
+			std::vector<glm::vec3> const& vertices = *m->getVertices();
+			std::vector<unsigned short> const& faces = *m->getFaces();
+			for (unsigned int i = 0; i < faces.size(); i += 3)
+			{
+				//	compute triangles vertices in world space
+				glm::vec3 p1 = glm::vec3(it->second->getModelMatrix() * glm::vec4(vertices[faces[i]], 1.f));
+				glm::vec3 p2 = glm::vec3(it->second->getModelMatrix() * glm::vec4(vertices[faces[i + 1]], 1.f));
+				glm::vec3 p3 = glm::vec3(it->second->getModelMatrix() * glm::vec4(vertices[faces[i + 2]], 1.f));
+
+				//	compute local base
+				glm::vec3 v1 = p2 - p1;
+				glm::vec3 v2 = p3 - p1;
+				glm::vec3 normal = glm::cross(v1, v2);
+				if (normal == glm::vec3(0.f)) continue;
+				glm::normalize(normal);
+
+				//	compute intersection point
+				if (glm::dot(normal, camDirection) == 0.f) continue;
+				if (glm::dot(normal, camDirection) > 0.f) normal *= -1.f;
+				float depth = glm::dot(normal, p1 - camPosition) / glm::dot(normal, camDirection);
+				if (depth > maxDistance) continue;
+				glm::vec3 intersection = camPosition + depth * camDirection - p1;
+
+				//	check if point is inside triangle
+				float magnitute = glm::dot(v2, v2) * glm::dot(v1, v1) - glm::dot(v1, v2) * glm::dot(v1, v2);
 				glm::vec2 barry;
 				barry.x = (glm::dot(v2, v2) * glm::dot(intersection, v1) - glm::dot(v2, v1) * glm::dot(intersection, v2)) / magnitute;
 				barry.y = (glm::dot(v1, v1) * glm::dot(intersection, v2) - glm::dot(v2, v1) * glm::dot(intersection, v1)) / magnitute;
 				if (barry.x < 0.f || barry.y < 0.f || barry.x + barry.y > 1.f) continue;
-				else intersect =  true;
+				else refinedList.push_back(std::pair<float, InstanceVirtual*>(depth, it->second));
 				break;
 			}
-
-			if (intersect) ++it;
-			else it = list.erase(it);
 		}
-
-		/*
-		float p = glm::dot(it->second->getPosition() - camPosition, camDirection);
-		float d = glm::length(it->second->getPosition() - camPosition - p * camDirection);
-
-		if (it->second->getBSRadius() < 0) it = list.erase(it);
-		else ++it;
-		*/
-
-
-		/*glm::mat4 base = glm::translate(glm::mat4(), it->second->getPosition()) * it->second->getOrientation();
-		glm::vec3 aabb_min = it->second->getBBMin();
-		glm::vec3 aabb_max = it->second->getBBMax();
-
-		//	tmin & tmax on x axis
-		glm::vec3 axis = glm::vec3(glm::column(base, 0));
-		float t1 = (glm::dot(axis, it->second->getPosition() - camPosition) + aabb_min.x) / glm::dot(camDirection, axis);	
-		float t2 = (glm::dot(axis, it->second->getPosition() - camPosition) + aabb_max.x) / glm::dot(camDirection, axis);	
-
-		//	tmin & tmax on x axis
-		axis = glm::vec3(glm::column(base, 1));
-		float t3 = (glm::dot(axis, it->second->getPosition() - camPosition) + aabb_min.y) / glm::dot(camDirection, axis);
-		float t4 = (glm::dot(axis, it->second->getPosition() - camPosition) + aabb_max.y) / glm::dot(camDirection, axis);
-
-		//	tmin & tmax on z axis
-		axis = glm::vec3(glm::column(base, 2));
-		float t5 = (glm::dot(axis, it->second->getPosition() - camPosition) + aabb_min.z) / glm::dot(camDirection, axis);
-		float t6 = (glm::dot(axis, it->second->getPosition() - camPosition) + aabb_max.z) / glm::dot(camDirection, axis);
-
-		//	test
-		float tmin = std::max(std::max(std::min(t1, t2), std::min(t3, t4)), std::min(t5, t6));
-		float tmax = std::min(std::min(std::max(t1, t2), std::max(t3, t4)), std::max(t5, t6));
-
-		if (tmin > tmax) it = list.erase(it);
-		else ++it;*/
 	}
-
-	//	refine list checking instance meshes
-	if (grain == INSTANCE_BB) return;
+	list.swap(refinedList);
 }
 std::vector<float> SceneManager::getMaxViewDistanceStack() { return viewMaxDistance; }
 //

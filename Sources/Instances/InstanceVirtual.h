@@ -47,8 +47,6 @@ class InstanceVirtual
 		//
 
 		//	Set/Get functions
-		
-
 		void setPosition(glm::vec3 p);
 		void setSize(glm::vec3 s);
 		void setOrientation(glm::mat4 m);
@@ -67,8 +65,7 @@ class InstanceVirtual
 		virtual Animation* getAnimation() const;
 		virtual Skeleton* getSkeleton() const;
 		virtual Mesh* getMesh() const;
-
-		virtual std::vector<glm::mat4> getPose();
+		virtual std::vector<glm::mat4> getPose() const;
 
 		virtual const std::list<InstanceVirtual*>* getChildList() const;
 		//

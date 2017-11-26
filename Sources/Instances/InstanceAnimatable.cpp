@@ -190,14 +190,7 @@ void InstanceAnimatable::setSkeleton(Skeleton* s)
 
 Skeleton* InstanceAnimatable::getSkeleton() const { return skeleton; }
 Animation* InstanceAnimatable::getAnimation() const { return animation; }
-std::vector<glm::mat4> InstanceAnimatable::getPose()
-{
-	std::vector<glm::mat4> p;
-	locker.lock();
-	p = pose;
-	locker.unlock();
-	return p;
-}
+std::vector<glm::mat4> InstanceAnimatable::getPose() const { return pose; }
 glm::vec3 InstanceAnimatable::getJointPosition(const std::string& jointName)
 {
 	locker.lock();

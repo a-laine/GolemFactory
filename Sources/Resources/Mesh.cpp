@@ -122,6 +122,7 @@ Mesh::Mesh(const std::string& meshName, const std::vector<glm::vec3>& verticesAr
 }
 Mesh::~Mesh()
 {
+	//	delete mesh attributes
 	vertices.clear();
 	normales.clear();
 	colors.clear();
@@ -132,6 +133,14 @@ Mesh::~Mesh()
 	glDeleteBuffers(1, &colorsBuffer);
 	glDeleteBuffers(1, &facesBuffer);
 	glDeleteVertexArrays(1, &vao);
+
+	//	delete bounding box attributes
+	vBBOx.clear();
+	fBBOx.clear();
+
+	glDeleteBuffers(1, &vBBOBuffer);
+	glDeleteBuffers(1, &fBBOBuffer);
+	glDeleteVertexArrays(1, &BBOvao);
 }
 //
 
@@ -154,28 +163,29 @@ void Mesh::computeBoundingBox()
 		aabb_max.z = std::max(aabb_max.z, vertices[i].z);
 	}
 
-	//	bbox indexes array
+	//	bbox vertex array
 	vBBOx.push_back(aabb_min);
 	vBBOx.push_back(glm::vec3(aabb_min.x, aabb_min.y, aabb_max.z));
 	vBBOx.push_back(glm::vec3(aabb_min.x, aabb_max.y, aabb_min.z));
 	vBBOx.push_back(glm::vec3(aabb_min.x, aabb_max.y, aabb_max.z));
-	vBBOx.push_back(glm::vec3(aabb_max.x, aabb_min.y, aabb_min.z));
+	vBBOx.push_back(glm::vec3(aabb_max.x, aabb_min.y, aabb_min.z));//4
 	vBBOx.push_back(glm::vec3(aabb_max.x, aabb_min.y, aabb_max.z));
 	vBBOx.push_back(glm::vec3(aabb_max.x, aabb_max.y, aabb_min.z));
 	vBBOx.push_back(aabb_max);
 
-	fBBOx.push_back(0); fBBOx.push_back(6); fBBOx.push_back(4);
-	fBBOx.push_back(0); fBBOx.push_back(2); fBBOx.push_back(6);
-	fBBOx.push_back(0); fBBOx.push_back(3); fBBOx.push_back(2);
-	fBBOx.push_back(0); fBBOx.push_back(1); fBBOx.push_back(3);
-	fBBOx.push_back(2); fBBOx.push_back(7); fBBOx.push_back(6);
-	fBBOx.push_back(2); fBBOx.push_back(3); fBBOx.push_back(7);
-	fBBOx.push_back(4); fBBOx.push_back(6); fBBOx.push_back(7);
-	fBBOx.push_back(4); fBBOx.push_back(7); fBBOx.push_back(5);
-	fBBOx.push_back(0); fBBOx.push_back(4); fBBOx.push_back(5);
-	fBBOx.push_back(0); fBBOx.push_back(5); fBBOx.push_back(1);
-	fBBOx.push_back(1); fBBOx.push_back(5); fBBOx.push_back(7);
-	fBBOx.push_back(1); fBBOx.push_back(7); fBBOx.push_back(4);
+	//	bbox faces array (please don't change order it's important)
+	fBBOx.push_back(4); fBBOx.push_back(0); fBBOx.push_back(6);
+	fBBOx.push_back(2); fBBOx.push_back(0); fBBOx.push_back(6);
+	fBBOx.push_back(2); fBBOx.push_back(0); fBBOx.push_back(3);
+	fBBOx.push_back(1); fBBOx.push_back(0); fBBOx.push_back(3);
+	fBBOx.push_back(6); fBBOx.push_back(2); fBBOx.push_back(7);
+	fBBOx.push_back(3); fBBOx.push_back(2); fBBOx.push_back(7);
+	fBBOx.push_back(6); fBBOx.push_back(4); fBBOx.push_back(7);
+	fBBOx.push_back(5); fBBOx.push_back(4); fBBOx.push_back(7);
+	fBBOx.push_back(4); fBBOx.push_back(0); fBBOx.push_back(5);
+	fBBOx.push_back(1); fBBOx.push_back(0); fBBOx.push_back(5);
+	fBBOx.push_back(5); fBBOx.push_back(1); fBBOx.push_back(7);
+	fBBOx.push_back(3); fBBOx.push_back(1); fBBOx.push_back(7);
 }
 void Mesh::initializeVBO()
 {
@@ -259,8 +269,10 @@ void Mesh::draw(const RenderOption& option)
 //  Set/get functions
 unsigned int Mesh::getNumberVertices() const { return vertices.size(); }
 unsigned int Mesh::getNumberFaces() const { return faces.size(); }
-const std::vector<glm::vec3>* Mesh::getBBoxVertecies() const { return &vBBOx; }
+const std::vector<glm::vec3>* Mesh::getBBoxVertices() const { return &vBBOx; }
 const std::vector<unsigned short>* Mesh::getBBoxFaces() const { return &fBBOx; }
+const std::vector<glm::vec3>* Mesh::getVertices() const { return &vertices; }
+const std::vector<unsigned short>* Mesh::getFaces() const { return &faces; }
 
 bool Mesh::hasSkeleton() const { return (configuration & HAS_SKELETON) != 0; }
 bool Mesh::isValid() const
