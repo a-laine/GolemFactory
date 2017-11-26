@@ -1,6 +1,7 @@
 // Golem Factory 1.0.cpp : define console application entry point
 //
 
+
 #include <iostream>
 #include <list>
 #include <time.h>
@@ -20,14 +21,35 @@
 #include <glm/gtc/quaternion.hpp>
 
 
+
 #define GRID_SIZE 100
 #define GRID_ELEMENT_SIZE 5.f
 #define DEBUG 0
+
+
+
+//	global attributes
+GLFWwindow* window = nullptr;
+Camera camera, camera2;
+bool syncronizedCamera = true;
+InstanceAnimatable* avatar = nullptr;
+
+double completeTime = 16.;
+double averageCompleteTime = 16.;
+//
+
+
 
 // prototypes
 GLFWwindow* initGLFW();
 void initializeForestScene(bool emptyPlace = false);
 std::string checkResourcesDirectory();
+
+
+void initManagers();
+void picking(int width, int height);
+void events();
+void updates(float elapseTime, int width, int height);
 //
 
 
@@ -35,61 +57,18 @@ std::string checkResourcesDirectory();
 int main()
 {
 	// init window and opengl
-	GLFWwindow* window = initGLFW();
+	window = initGLFW();
 	Renderer::getInstance()->initGLEW(0);
-	std::string resourceRepository = checkResourcesDirectory();
+	initManagers();
 
-	if (DEBUG) std::cout << "Found resources folder at : " << resourceRepository << std::endl;
-
-	// Init Event handler
-	EventHandler::getInstance()->addWindow(window);
-	EventHandler::getInstance()->setRepository(resourceRepository);
-	EventHandler::getInstance()->loadKeyMapping("RPG Key mapping");
-	EventHandler::getInstance()->setCursorMode(false);
-	EventHandler::getInstance()->setResizeCallback(WidgetManager::resizeCallback);
-	
-	// Init Resources manager & instance manager
-	MeshLoader::logVerboseLevel = MeshLoader::ALL;
-	ResourceVirtual::logVerboseLevel = ResourceVirtual::ALL;
-	ResourceManager::getInstance()->setRepository(resourceRepository);
-	InstanceManager::getInstance()->setMaxNumberOfInstances(1000000);
-	ResourceManager::getInstance()->getShader("wired");
-	
-	// Init Renderer;
-	Camera camera;
-		camera.setMode(Camera::FREEFLY);
-		camera.setAllRadius(2.f, 0.5f, 10.f);
-		camera.setPosition(glm::vec3(0,-10,10));
-	Camera camera2;
-		camera2.setMode(Camera::FREEFLY);
-		camera2.setAllRadius(2.f, 0.5f, 10.f);
-		camera2.setPosition(glm::vec3(0, -10, 10));
-	bool syncronizedCamera = true;
-	Renderer::getInstance()->setCamera(&camera2);
-	Renderer::getInstance()->setWindow(window);
-	Renderer::getInstance()->initializeGrid(GRID_SIZE, GRID_ELEMENT_SIZE, glm::vec3(24/255.f, 202/255.f, 230/255.f));	// blue tron
-	Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getShader("greenGrass"));
-	//Renderer::getInstance()->setShader(Renderer::INSTANCE_ANIMATABLE, ResourceManager::getInstance()->getShader("wiredSkinning"));
-	//Renderer::getInstance()->setShader(Renderer::INSTANCE_ANIMATABLE, ResourceManager::getInstance()->getShader("skeletonDebug"));
-	//Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE, ResourceManager::getInstance()->getShader("wired"));
-
-	//	HUD
-	int width, height;
-	glfwGetWindowSize(window, &width, &height);
-	WidgetManager::getInstance()->setInitialWindowSize(width, height);
-	WidgetManager::getInstance()->loadHud("");
-
-	// init scene
-	SceneManager::getInstance()->setWorldPosition(glm::vec3(0,0,25));
-	SceneManager::getInstance()->setWorldSize(glm::vec3(GRID_SIZE*GRID_ELEMENT_SIZE, GRID_SIZE*GRID_ELEMENT_SIZE, 50));
-	
+	//	Test scene
 		initializeForestScene(true);
 
-		InstanceAnimatable* peasant = InstanceManager::getInstance()->getInstanceAnimatable("peasant", "human", "simple_peasant", "skinning");
-			float scale = 1.7f / (peasant->getBBMax() - peasant->getBBMin()).z;
-			peasant->setSize(glm::vec3(scale));
-			peasant->setPosition(glm::vec3(20.f, 0.f, -scale * peasant->getMesh()->aabb_min.z));
-			SceneManager::getInstance()->addStaticObject(peasant);
+		avatar = InstanceManager::getInstance()->getInstanceAnimatable("peasant", "human", "simple_peasant", "skinning");
+			float scale = 1.7f / (avatar->getBBMax() - avatar->getBBMin()).z;
+			avatar->setSize(glm::vec3(scale));
+			avatar->setPosition(glm::vec3(20.f, 0.f, -scale * avatar->getMesh()->aabb_min.z));
+			SceneManager::getInstance()->addStaticObject(avatar);
 
 		InstanceDrawable* bigTree = InstanceManager::getInstance()->getInstanceDrawable();
 			bigTree->setMesh("firTree1.obj");
@@ -100,10 +79,8 @@ int main()
 
 	// init loop time tracking
 	double elapseTime = 16.;
-	double completeTime = 16.;
-	double averageCompleteTime = 16.;
 	double dummy = 0;
-
+	int width, height;
 
 	//	game loop
 	std::cout << "game loop initiated" << std::endl;
@@ -113,174 +90,14 @@ int main()
 		double startTime = glfwGetTime();
 		glfwGetWindowSize(window, &width, &height);
 				
-		// Render scene
+		// Render scene & picking
 		Renderer::getInstance()->render(&camera);
-
-		//	Picking on scene
-		std::vector<std::pair<float, InstanceVirtual*> > rayList;
-		SceneManager::getInstance()->getInstanceOnRay(rayList, SceneManager::INSTANCE_MESH, 1000);
-		std::sort(rayList.begin(), rayList.end());
-
-		if (!rayList.empty())
-		{
-			std::string type;
-			switch (rayList[0].second->getType())
-			{
-			case InstanceVirtual::ANIMATABLE:	type = "animatable";	break;
-			case InstanceVirtual::DRAWABLE:		type = "drawable";		break;
-			case InstanceVirtual::CONTAINER:	type = "container";		break;
-			default: type = "virtual"; break;
-			}
-			glm::vec3 p = camera.getPosition() + rayList[0].first * camera.getForward();
-
-			WidgetManager::getInstance()->setString("interaction", "Distance : " + ToolBox::to_string_with_precision(rayList[0].first, 5) +
-				" m\nPosition : (" + ToolBox::to_string_with_precision(p.x, 5) + " , " + ToolBox::to_string_with_precision(p.y, 5) + " , " + ToolBox::to_string_with_precision(p.z, 5) +
-				")\nInstance on ray : " + std::to_string(rayList.size()) +
-				"\nFirst instance pointed id : " + std::to_string(rayList[0].second->getId()) +
-				"\n  type : " + type);
-
-			Mesh::RenderOption option = Renderer::getInstance()->getRenderOption();
-			Shader* s = Renderer::getInstance()->getShader(Renderer::INSTANCE_DRAWABLE);
-			Renderer::getInstance()->setRenderOption(Mesh::BOUNDING_BOX);
-			Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE, ResourceManager::getInstance()->getShader("wired"));
-
-			glm::mat4 projection = glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f);
-			Renderer::getInstance()->drawInstanceDrawable(rayList[0].second, &camera.getViewMatrix()[0][0], &projection[0][0]);
-
-			Renderer::getInstance()->setRenderOption(option);
-			Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE, s);
-		}
-		else
-		{
-			WidgetManager::getInstance()->setString("interaction", "Distance : (inf)\nPosition : ()\nInstance on ray : 0\nFirst instance pointed id : (null)\n ");
-		}
-
-		// Render scene
+		picking(width, height);
 		Renderer::getInstance()->renderHUD(&camera);
 
 		//  handle events
-		EventHandler::getInstance()->handleEvent();
-		std::vector<UserEventType> v;
-		EventHandler::getInstance()->getFrameEvent(v);
-		for (unsigned int i = 0; i < v.size(); i++)
-		{
-			//	micselenious
-			if(v[i] == QUIT) glfwSetWindowShouldClose(window, GL_TRUE);
-			else if(v[i] == CHANGE_CURSOR_MODE) EventHandler::getInstance()->setCursorMode(!EventHandler::getInstance()->getCursorMode());
-			else if (v[i] == ACTION)
-			{
-				if (camera.getMode() == Camera::TRACKBALL) camera.setMode(Camera::FREEFLY);
-				else if (camera.getMode() == Camera::FREEFLY) camera.setMode(Camera::TRACKBALL);
-			}
-
-			//	avatar related
-			else if (v[i] == SLOT1) peasant->launchAnimation("hello");
-			else if (v[i] == SLOT2) peasant->launchAnimation("yes");
-			else if (v[i] == SLOT3) peasant->launchAnimation("no");
-			else if (v[i] == FORWARD) 
-			{
-				if (EventHandler::getInstance()->isActivated(FORWARD) && camera.getMode() == Camera::TRACKBALL)
-				{
-					if(EventHandler::getInstance()->isActivated(RUN)) peasant->launchAnimation("run");
-					else peasant->launchAnimation("walk");
-				}
-				else
-				{
-					peasant->stopAnimation("run");
-					peasant->stopAnimation("walk");
-				}
-			}
-			else if (v[i] == RUN)
-			{
-				if (EventHandler::getInstance()->isActivated(RUN))
-				{
-					if (EventHandler::getInstance()->isActivated(FORWARD) && camera.getMode() == Camera::TRACKBALL) peasant->launchAnimation("run");
-					else peasant->stopAnimation("run");
-				}
-				else
-				{
-					peasant->stopAnimation("run");
-					if (EventHandler::getInstance()->isActivated(FORWARD) && camera.getMode() == Camera::TRACKBALL) peasant->launchAnimation("walk");
-				}
-			}
-
-			//	debug action
-			else if (v[i] == F12) syncronizedCamera = !syncronizedCamera;
-			else if (v[i] == F9) WidgetManager::getInstance()->setActiveHUD((WidgetManager::getInstance()->getActiveHUD() == "debug" ? "" : "debug"));
-			else if (v[i] == F3)
-			{
-				if (Renderer::getInstance()->getRenderOption() == Mesh::DEFAULT)
-				{
-					Renderer::getInstance()->setRenderOption(Mesh::BOUNDING_BOX);
-					Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE, ResourceManager::getInstance()->getShader("wired"));
-					WidgetManager::getInstance()->append("console", "wired");
-				}
-				else 
-				{
-					Renderer::getInstance()->setRenderOption(Mesh::DEFAULT);
-					Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE, nullptr);
-					WidgetManager::getInstance()->append("console", "default");
-				}
-			}
-		}
-
-		//	Animate instances
-		peasant->animate((float)elapseTime);
-
-		//	Compute HUD picking parameters
-		if (EventHandler::getInstance()->getCursorMode())
-		{
-			glm::vec2 cursor = EventHandler::getInstance()->getCursorNormalizedPosition();
-			glm::vec4 ray_eye = glm::inverse(glm::perspective(glm::radians(ANGLE_VERTICAL_HUD_PROJECTION), (float)width / height, 0.01f, 150.f)) * glm::vec4(cursor.x, cursor.y, -1.f, 1.f);
-			WidgetManager::getInstance()->setPickingParameters(
-				camera.getViewMatrix() * glm::translate(glm::mat4(1.f), DISTANCE_HUD_CAMERA * camera.getForward()) * camera.getModelMatrix(),
-				glm::normalize(glm::vec3(ray_eye.x, ray_eye.y, ray_eye.z)),
-				camera.getPosition() );
-		}
-		else
-		{
-			WidgetManager::getInstance()->setPickingParameters(glm::mat4(1.f), glm::vec3(0.f), camera.getPosition());
-		}
-
-
-		//	Update widgets
-		averageCompleteTime = 0.99f * averageCompleteTime + 0.01f * completeTime;
-		WidgetManager::getInstance()->setString("runtime speed", 
-			"FPS : " + std::to_string((int)(1000.f / completeTime)) + "\navg : " + std::to_string((int)(1000.f / averageCompleteTime)) + 
-			"\n\nTime : " + ToolBox::to_string_with_precision(completeTime) + " ms\navg : " + ToolBox::to_string_with_precision(averageCompleteTime) + " ms");
-		WidgetManager::getInstance()->setString("drawcalls",
-			"Instances :\n  " + std::to_string(Renderer::getInstance()->getNbDrawnInstances() + WidgetManager::getInstance()->getNbDrawnWidgets()) + 
-			"\n\nTriangles :\n  " + std::to_string(Renderer::getInstance()->getNbDrawnTriangles() + WidgetManager::getInstance()->getNbDrawnTriangles()));
-		WidgetManager::getInstance()->update((float)elapseTime, EventHandler::getInstance()->isActivated(USE1));
-
-		//	Move avatar if needed
-		if (camera.getMode() == Camera::TRACKBALL)
-		{
-			glm::vec3 forward = camera.getForward();
-			float speed = 0.f;
-			if (peasant->isAnimationRunning("walk")) speed = 0.025f;
-			if (peasant->isAnimationRunning("run")) speed = 0.1f;
-			peasant->setPosition(peasant->getPosition() + speed * glm::vec3(forward.x, forward.y, 0.f));
-			if (speed != 0.f) peasant->setOrientation(glm::rotate(glm::pi<float>()/2.f + atan2(forward.y, forward.x), glm::vec3(0.f, 0.f, 1.f)));
-		}
-
-		//Animate camera
-		if(camera.getMode() == Camera::TRACKBALL) camera.setTarget(peasant->getJointPosition("Head"));
-		camera.animate((float)elapseTime,
-			EventHandler::getInstance()->isActivated(FORWARD),	EventHandler::getInstance()->isActivated(BACKWARD),
-			EventHandler::getInstance()->isActivated(LEFT),		EventHandler::getInstance()->isActivated(RIGHT),
-			EventHandler::getInstance()->isActivated(RUN),		EventHandler::getInstance()->isActivated(SNEAKY)    );
-		if (camera.getMode() == Camera::TRACKBALL)
-			camera.setRadius(camera.getRadius() + camera.getSensitivity() * EventHandler::getInstance()->getScrollingRelative().y);
-		else
-		{
-			float angle = camera.getFrustrumAngleVertical() + EventHandler::getInstance()->getScrollingRelative().y;
-			if (angle > 70.f) angle = 70.f;
-			else if (angle < 3) angle = 3.f;
-			camera.setFrustrumAngleVertical(angle);
-			camera.setFrustrumAngleHorizontalFromScreenRatio((float)width / height);
-		}
-		if (syncronizedCamera) camera2 = camera;
+		events();
+		updates((float)elapseTime, width, height);
 
 		//	clear garbages
 		InstanceManager::getInstance()->clearGarbage();
@@ -327,6 +144,7 @@ GLFWwindow* initGLFW()
 	glfwSwapInterval(1);
 	return window;
 }
+
 
 void initializeForestScene(bool emptyPlace)
 {
@@ -467,5 +285,218 @@ std::string checkResourcesDirectory()
 	std::cout << "FATAL WARRNING : Fail to found ressource repo" << std::endl;
 	return "Resources/";
 }
-//
 
+
+void initManagers()
+{
+	std::string resourceRepository = checkResourcesDirectory();
+	if (DEBUG) std::cout << "Found resources folder at : " << resourceRepository << std::endl;
+
+	// Init Event handler
+	EventHandler::getInstance()->addWindow(window);
+	EventHandler::getInstance()->setRepository(resourceRepository);
+	EventHandler::getInstance()->loadKeyMapping("RPG Key mapping");
+	EventHandler::getInstance()->setCursorMode(false);
+	EventHandler::getInstance()->setResizeCallback(WidgetManager::resizeCallback);
+
+	// Init Resources manager & instance manager
+	MeshLoader::logVerboseLevel = MeshLoader::ALL;
+	ResourceVirtual::logVerboseLevel = ResourceVirtual::ALL;
+	ResourceManager::getInstance()->setRepository(resourceRepository);
+	InstanceManager::getInstance()->setMaxNumberOfInstances(1000000);
+
+	ResourceManager::getInstance()->getShader("wired");
+	ResourceManager::getInstance()->getShader("wiredSkinning");
+	ResourceManager::getInstance()->getShader("skeletonDebug");
+
+	//	Renderer
+	camera.setMode(Camera::FREEFLY);
+	camera.setAllRadius(2.f, 0.5f, 10.f);
+	camera.setPosition(glm::vec3(0, -10, 10));
+	camera2.setMode(Camera::FREEFLY);
+	camera2.setAllRadius(2.f, 0.5f, 10.f);
+	camera2.setPosition(glm::vec3(0, -10, 10));
+	Renderer::getInstance()->setWindow(window);
+	Renderer::getInstance()->initializeGrid(GRID_SIZE, GRID_ELEMENT_SIZE, glm::vec3(24 / 255.f, 202 / 255.f, 230 / 255.f));	// blue tron
+	Renderer::getInstance()->setCamera(&camera2);
+	Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getShader("greenGrass"));
+
+	//	HUD
+	int width, height;
+	glfwGetWindowSize(window, &width, &height);
+	WidgetManager::getInstance()->setInitialWindowSize(width, height);
+	WidgetManager::getInstance()->loadHud("");
+
+	// init scene
+	SceneManager::getInstance()->setWorldPosition(glm::vec3(0, 0, 25));
+	SceneManager::getInstance()->setWorldSize(glm::vec3(GRID_SIZE*GRID_ELEMENT_SIZE, GRID_SIZE*GRID_ELEMENT_SIZE, 50));
+}
+void picking(int width, int height)
+{
+
+	std::vector<std::pair<float, InstanceVirtual*> > rayList;
+	SceneManager::getInstance()->getInstanceOnRay(rayList, SceneManager::INSTANCE_MESH, 1000);
+	std::sort(rayList.begin(), rayList.end());
+
+	if (!rayList.empty())
+	{
+		std::string type;
+		switch (rayList[0].second->getType())
+		{
+		case InstanceVirtual::ANIMATABLE:	type = "animatable";	break;
+		case InstanceVirtual::DRAWABLE:		type = "drawable";		break;
+		case InstanceVirtual::CONTAINER:	type = "container";		break;
+		default: type = "virtual"; break;
+		}
+		glm::vec3 p = camera.getPosition() + rayList[0].first * camera.getForward();
+
+		WidgetManager::getInstance()->setString("interaction", "Distance : " + ToolBox::to_string_with_precision(rayList[0].first, 5) +
+			" m\nPosition : (" + ToolBox::to_string_with_precision(p.x, 5) + " , " + ToolBox::to_string_with_precision(p.y, 5) + " , " + ToolBox::to_string_with_precision(p.z, 5) +
+			")\nInstance on ray : " + std::to_string(rayList.size()) +
+			"\nFirst instance pointed id : " + std::to_string(rayList[0].second->getId()) +
+			"\n  type : " + type);
+
+		Mesh::RenderOption option = Renderer::getInstance()->getRenderOption();
+		Shader* s = Renderer::getInstance()->getShader(Renderer::INSTANCE_DRAWABLE);
+		Renderer::getInstance()->setRenderOption(Mesh::BOUNDING_BOX);
+		Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE, ResourceManager::getInstance()->getShader("wired"));
+
+		glm::mat4 projection = glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f);
+		Renderer::getInstance()->drawInstanceDrawable(rayList[0].second, &camera.getViewMatrix()[0][0], &projection[0][0]);
+
+		Renderer::getInstance()->setRenderOption(option);
+		Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE, s);
+	}
+	else
+	{
+		WidgetManager::getInstance()->setString("interaction", "Distance : (inf)\nPosition : ()\nInstance on ray : 0\nFirst instance pointed id : (null)\n ");
+	}
+}
+void events()
+{
+	EventHandler::getInstance()->handleEvent();
+	std::vector<UserEventType> v;
+	EventHandler::getInstance()->getFrameEvent(v);
+	for (unsigned int i = 0; i < v.size(); i++)
+	{
+		//	micselenious
+		if (v[i] == QUIT) glfwSetWindowShouldClose(window, GL_TRUE);
+		else if (v[i] == CHANGE_CURSOR_MODE) EventHandler::getInstance()->setCursorMode(!EventHandler::getInstance()->getCursorMode());
+		else if (v[i] == ACTION)
+		{
+			if (camera.getMode() == Camera::TRACKBALL) camera.setMode(Camera::FREEFLY);
+			else if (camera.getMode() == Camera::FREEFLY) camera.setMode(Camera::TRACKBALL);
+		}
+
+		//	avatar related
+		else if (v[i] == SLOT1) avatar->launchAnimation("hello");
+		else if (v[i] == SLOT2) avatar->launchAnimation("yes");
+		else if (v[i] == SLOT3) avatar->launchAnimation("no");
+		else if (v[i] == FORWARD)
+		{
+			if (EventHandler::getInstance()->isActivated(FORWARD) && camera.getMode() == Camera::TRACKBALL)
+			{
+				if (EventHandler::getInstance()->isActivated(RUN)) avatar->launchAnimation("run");
+				else avatar->launchAnimation("walk");
+			}
+			else
+			{
+				avatar->stopAnimation("run");
+				avatar->stopAnimation("walk");
+			}
+		}
+		else if (v[i] == RUN)
+		{
+			if (EventHandler::getInstance()->isActivated(RUN))
+			{
+				if (EventHandler::getInstance()->isActivated(FORWARD) && camera.getMode() == Camera::TRACKBALL) avatar->launchAnimation("run");
+				else avatar->stopAnimation("run");
+			}
+			else
+			{
+				avatar->stopAnimation("run");
+				if (EventHandler::getInstance()->isActivated(FORWARD) && camera.getMode() == Camera::TRACKBALL) avatar->launchAnimation("walk");
+			}
+		}
+
+		//	debug action
+		else if (v[i] == F12) syncronizedCamera = !syncronizedCamera;
+		else if (v[i] == F9) WidgetManager::getInstance()->setActiveHUD((WidgetManager::getInstance()->getActiveHUD() == "debug" ? "" : "debug"));
+		else if (v[i] == F3)
+		{
+			if (Renderer::getInstance()->getRenderOption() == Mesh::DEFAULT)
+			{
+				Renderer::getInstance()->setRenderOption(Mesh::BOUNDING_BOX);
+				Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE, ResourceManager::getInstance()->getShader("wired"));
+				WidgetManager::getInstance()->append("console", "wired");
+			}
+			else
+			{
+				Renderer::getInstance()->setRenderOption(Mesh::DEFAULT);
+				Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE, nullptr);
+				WidgetManager::getInstance()->append("console", "default");
+			}
+		}
+	}
+}
+void updates(float elapseTime, int width, int height)
+{
+	//	animate avatar
+	avatar->animate(elapseTime);
+
+	//	Compute HUD picking parameters
+	if (EventHandler::getInstance()->getCursorMode())
+	{
+		glm::vec2 cursor = EventHandler::getInstance()->getCursorNormalizedPosition();
+		glm::vec4 ray_eye = glm::inverse(glm::perspective(glm::radians(ANGLE_VERTICAL_HUD_PROJECTION), (float)width / height, 0.01f, 150.f)) * glm::vec4(cursor.x, cursor.y, -1.f, 1.f);
+		WidgetManager::getInstance()->setPickingParameters(
+			camera.getViewMatrix() * glm::translate(glm::mat4(1.f), DISTANCE_HUD_CAMERA * camera.getForward()) * camera.getModelMatrix(),
+			glm::normalize(glm::vec3(ray_eye.x, ray_eye.y, ray_eye.z)),
+			camera.getPosition());
+	}
+	else
+	{
+		WidgetManager::getInstance()->setPickingParameters(glm::mat4(1.f), glm::vec3(0.f), camera.getPosition());
+	}
+
+
+	//	Update widgets
+	averageCompleteTime = 0.99f * averageCompleteTime + 0.01f * completeTime;
+	WidgetManager::getInstance()->setString("runtime speed",
+		"FPS : " + std::to_string((int)(1000.f / completeTime)) + "\navg : " + std::to_string((int)(1000.f / averageCompleteTime)) +
+		"\n\nTime : " + ToolBox::to_string_with_precision(completeTime) + " ms\navg : " + ToolBox::to_string_with_precision(averageCompleteTime) + " ms");
+	WidgetManager::getInstance()->setString("drawcalls",
+		"Instances :\n  " + std::to_string(Renderer::getInstance()->getNbDrawnInstances() + WidgetManager::getInstance()->getNbDrawnWidgets()) +
+		"\n\nTriangles :\n  " + std::to_string(Renderer::getInstance()->getNbDrawnTriangles() + WidgetManager::getInstance()->getNbDrawnTriangles()));
+	WidgetManager::getInstance()->update((float)elapseTime, EventHandler::getInstance()->isActivated(USE1));
+
+	//	Move avatar if needed
+	if (camera.getMode() == Camera::TRACKBALL)
+	{
+		glm::vec3 forward = camera.getForward();
+		float speed = 0.f;
+		if (avatar->isAnimationRunning("walk")) speed = 0.025f;
+		if (avatar->isAnimationRunning("run")) speed = 0.1f;
+		avatar->setPosition(avatar->getPosition() + speed * glm::vec3(forward.x, forward.y, 0.f));
+		if (speed != 0.f) avatar->setOrientation(glm::rotate(glm::pi<float>() / 2.f + atan2(forward.y, forward.x), glm::vec3(0.f, 0.f, 1.f)));
+	}
+
+	//Animate camera
+	if (camera.getMode() == Camera::TRACKBALL) camera.setTarget(avatar->getJointPosition("Head"));
+	camera.animate((float)elapseTime,
+		EventHandler::getInstance()->isActivated(FORWARD), EventHandler::getInstance()->isActivated(BACKWARD),
+		EventHandler::getInstance()->isActivated(LEFT), EventHandler::getInstance()->isActivated(RIGHT),
+		EventHandler::getInstance()->isActivated(RUN), EventHandler::getInstance()->isActivated(SNEAKY));
+	if (camera.getMode() == Camera::TRACKBALL)
+		camera.setRadius(camera.getRadius() + camera.getSensitivity() * EventHandler::getInstance()->getScrollingRelative().y);
+	else
+	{
+		float angle = camera.getFrustrumAngleVertical() + EventHandler::getInstance()->getScrollingRelative().y;
+		if (angle > 70.f) angle = 70.f;
+		else if (angle < 3) angle = 3.f;
+		camera.setFrustrumAngleVertical(angle);
+		camera.setFrustrumAngleHorizontalFromScreenRatio((float)width / height);
+	}
+	if (syncronizedCamera) camera2 = camera;
+}
+//

@@ -194,12 +194,13 @@ void SceneManager::getInstanceOnRay(std::vector<std::pair<float, InstanceVirtual
 		{
 			std::vector<glm::vec3> const& vBBox = *m->getBBoxVertices();
 			std::vector<unsigned short> const& fBBox = *m->getBBoxFaces();
+			glm::mat4 model = it->second->getModelMatrix();
 			for (unsigned int i = 0; i < fBBox.size(); i += 6)
 			{
 				//	compute triangles vertices in world space
-				glm::vec3 p1 = glm::vec3(it->second->getModelMatrix() * glm::vec4(vBBox[fBBox[i]], 1.f));
-				glm::vec3 p2 = glm::vec3(it->second->getModelMatrix() * glm::vec4(vBBox[fBBox[i + 1]], 1.f));
-				glm::vec3 p3 = glm::vec3(it->second->getModelMatrix() * glm::vec4(vBBox[fBBox[i + 2]], 1.f));
+				glm::vec3 p1 = glm::vec3(model * glm::vec4(vBBox[fBBox[i]], 1.f));
+				glm::vec3 p2 = glm::vec3(model * glm::vec4(vBBox[fBBox[i + 1]], 1.f));
+				glm::vec3 p3 = glm::vec3(model * glm::vec4(vBBox[fBBox[i + 2]], 1.f));
 
 				//	compute local base
 				glm::vec3 v1 = p2 - p1;
@@ -239,12 +240,13 @@ void SceneManager::getInstanceOnRay(std::vector<std::pair<float, InstanceVirtual
 		{
 			std::vector<glm::vec3> const& vertices = *m->getVertices();
 			std::vector<unsigned short> const& faces = *m->getFaces();
+			glm::mat4 model = it->second->getModelMatrix();
 			for (unsigned int i = 0; i < faces.size(); i += 3)
 			{
 				//	compute triangles vertices in world space
-				glm::vec3 p1 = glm::vec3(it->second->getModelMatrix() * glm::vec4(vertices[faces[i]], 1.f));
-				glm::vec3 p2 = glm::vec3(it->second->getModelMatrix() * glm::vec4(vertices[faces[i + 1]], 1.f));
-				glm::vec3 p3 = glm::vec3(it->second->getModelMatrix() * glm::vec4(vertices[faces[i + 2]], 1.f));
+				glm::vec3 p1 = glm::vec3(model * glm::vec4(vertices[faces[i]], 1.f));
+				glm::vec3 p2 = glm::vec3(model * glm::vec4(vertices[faces[i + 1]], 1.f));
+				glm::vec3 p3 = glm::vec3(model * glm::vec4(vertices[faces[i + 2]], 1.f));
 
 				//	compute local base
 				glm::vec3 v1 = p2 - p1;
