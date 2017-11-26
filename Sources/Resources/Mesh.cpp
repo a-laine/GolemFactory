@@ -139,19 +139,19 @@ Mesh::~Mesh()
 //	Public functions
 void Mesh::computeBoundingBox()
 {
-	aabb_min = glm::vec3(std::numeric_limits<float>::min(), std::numeric_limits<float>::min(), std::numeric_limits<float>::min());
-	aabb_max = glm::vec3(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
+	aabb_min = glm::vec3(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
+	aabb_max = glm::vec3(std::numeric_limits<float>::min(), std::numeric_limits<float>::min(), std::numeric_limits<float>::min());
 
 	for (unsigned int i = 0; i < vertices.size(); i++)
 	{
 		aabb_min.x = std::min(aabb_min.x, vertices[i].x);
-		aabb_max.y = std::max(aabb_max.y, vertices[i].x);
+		aabb_max.x = std::max(aabb_max.x, vertices[i].x);
 
-		aabb_min.x = std::min(aabb_min.x, vertices[i].y);
+		aabb_min.y = std::min(aabb_min.y, vertices[i].y);
 		aabb_max.y = std::max(aabb_max.y, vertices[i].y);
 
-		aabb_min.x = std::min(aabb_min.x, vertices[i].z);
-		aabb_max.y = std::max(aabb_max.y, vertices[i].z);
+		aabb_min.z = std::min(aabb_min.z, vertices[i].z);
+		aabb_max.z = std::max(aabb_max.z, vertices[i].z);
 	}
 
 	//	bbox indexes array
@@ -159,22 +159,27 @@ void Mesh::computeBoundingBox()
 	vBBOx.push_back(glm::vec3(aabb_min.x, aabb_min.y, aabb_max.z));
 	vBBOx.push_back(glm::vec3(aabb_min.x, aabb_max.y, aabb_min.z));
 	vBBOx.push_back(glm::vec3(aabb_min.x, aabb_max.y, aabb_max.z));
-
 	vBBOx.push_back(glm::vec3(aabb_max.x, aabb_min.y, aabb_min.z));
 	vBBOx.push_back(glm::vec3(aabb_max.x, aabb_min.y, aabb_max.z));
 	vBBOx.push_back(glm::vec3(aabb_max.x, aabb_max.y, aabb_min.z));
 	vBBOx.push_back(aabb_max);
 
-	fBBOx.push_back(0); fBBOx.push_back(1); fBBOx.push_back(2);
-	fBBOx.push_back(0); fBBOx.push_back(1); fBBOx.push_back(4);
-	fBBOx.push_back(0); fBBOx.push_back(2); fBBOx.push_back(4);
-
-	fBBOx.push_back(7); fBBOx.push_back(6); fBBOx.push_back(5);
-	fBBOx.push_back(7); fBBOx.push_back(6); fBBOx.push_back(3);
-	fBBOx.push_back(7); fBBOx.push_back(6); fBBOx.push_back(5);
+	fBBOx.push_back(0); fBBOx.push_back(6); fBBOx.push_back(4);
+	fBBOx.push_back(0); fBBOx.push_back(2); fBBOx.push_back(6);
+	fBBOx.push_back(0); fBBOx.push_back(3); fBBOx.push_back(2);
+	fBBOx.push_back(0); fBBOx.push_back(1); fBBOx.push_back(3);
+	fBBOx.push_back(2); fBBOx.push_back(7); fBBOx.push_back(6);
+	fBBOx.push_back(2); fBBOx.push_back(3); fBBOx.push_back(7);
+	fBBOx.push_back(4); fBBOx.push_back(6); fBBOx.push_back(7);
+	fBBOx.push_back(4); fBBOx.push_back(7); fBBOx.push_back(5);
+	fBBOx.push_back(0); fBBOx.push_back(4); fBBOx.push_back(5);
+	fBBOx.push_back(0); fBBOx.push_back(5); fBBOx.push_back(1);
+	fBBOx.push_back(1); fBBOx.push_back(5); fBBOx.push_back(7);
+	fBBOx.push_back(1); fBBOx.push_back(7); fBBOx.push_back(4);
 }
 void Mesh::initializeVBO()
 {
+	//	mesh
 	glGenBuffers(1, &verticesBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, verticesBuffer);
 	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), vertices.data(), GL_STATIC_DRAW);
@@ -190,9 +195,19 @@ void Mesh::initializeVBO()
 	glGenBuffers(1, &facesBuffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, facesBuffer);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, faces.size() * sizeof(unsigned short), faces.data(), GL_STATIC_DRAW);
+
+	//	bounding box
+	glGenBuffers(1, &vBBOBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vBBOBuffer);
+	glBufferData(GL_ARRAY_BUFFER, vBBOx.size() * sizeof(glm::vec3), vBBOx.data(), GL_STATIC_DRAW);
+
+	glGenBuffers(1, &fBBOBuffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, fBBOBuffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, fBBOx.size() * sizeof(unsigned short), fBBOx.data(), GL_STATIC_DRAW);
 }
 void Mesh::initializeVAO()
 {
+	//	mesh
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 
@@ -210,12 +225,33 @@ void Mesh::initializeVAO()
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, facesBuffer);
 	glBindVertexArray(0);
+
+	//	bounding box
+	glGenVertexArrays(1, &BBOvao);
+	glBindVertexArray(BBOvao);
+
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, vBBOBuffer);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, fBBOBuffer);
+	glBindVertexArray(0);
 }
 
-void Mesh::draw()
+void Mesh::draw(const RenderOption& option)
 {
-	glBindVertexArray(vao);
-	glDrawElements(GL_TRIANGLES, faces.size(), GL_UNSIGNED_SHORT, NULL);
+	switch (option)
+	{
+		case BOUNDING_BOX:
+			glBindVertexArray(BBOvao);
+			glDrawElements(GL_TRIANGLES, fBBOx.size(), GL_UNSIGNED_SHORT, NULL);
+			break;
+
+		default:
+			glBindVertexArray(vao);
+			glDrawElements(GL_TRIANGLES, faces.size(), GL_UNSIGNED_SHORT, NULL);
+			break;
+	}
 }
 //
 

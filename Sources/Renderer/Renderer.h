@@ -44,6 +44,7 @@ class Renderer : public Singleton<Renderer>
 		void setWindow(GLFWwindow* win);
 		void setShader(ShaderIdentifier id, Shader* s);
 		void setGridVisible(bool enable);
+		void setRenderOption(const Mesh::RenderOption& option);
 		
 		Camera* getCamera();
 		GLFWwindow* getWindow();
@@ -51,6 +52,7 @@ class Renderer : public Singleton<Renderer>
 		bool isGridVisible();
 		unsigned int getNbDrawnInstances() const;
 		unsigned int getNbDrawnTriangles() const;
+		Mesh::RenderOption getRenderOption() const;
 		//
 
 	private:
@@ -70,13 +72,13 @@ class Renderer : public Singleton<Renderer>
 		GLFWwindow* window;
 		Camera* camera;
 		std::map<ShaderIdentifier, Shader*> defaultShader;
+		Mesh::RenderOption renderOption;
 
 		bool drawGrid;
 		unsigned int vboGridSize;
 		GLuint gridVAO, vertexbuffer, arraybuffer, colorbuffer, normalbuffer;
 
 		unsigned int instanceDrawn, trianglesDrawn;
-
 		double dummy;
 		//
 };

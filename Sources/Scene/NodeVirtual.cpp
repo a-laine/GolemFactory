@@ -223,21 +223,25 @@ int NodeVirtual::isInFrustrum(const glm::vec3& camP, const glm::vec3& camD, cons
 	//	return distance to camera in int
 	return (int)glm::length(p);
 }
-int NodeVirtual::isOnRay(const glm::vec3& origin, const glm::vec3& ray) const
+int NodeVirtual::isOnRay(const glm::vec3& origin, const glm::vec3& ray, const glm::vec3& rayV, const glm::vec3& rayL) const
 {
-	//	for explanation search slab method on internet
-	float t1 = (position.x - size.x / 2 - origin.x) / ray.x;
-	float t2 = (position.x + size.x / 2 - origin.x) / ray.x;
-	float t3 = (position.y - size.y / 2 - origin.y) / ray.y;
-	float t4 = (position.y + size.y / 2 - origin.y) / ray.y;
-	float t5 = (position.z - size.z / 2 - origin.z) / ray.z;
-	float t6 = (position.z + size.z / 2 - origin.z) / ray.z;
+	//	test if in front of camera
+	glm::vec3 p = position - origin;
+	if (glm::dot(p, ray) + 1.f * (abs(size.x * ray.x) + abs(size.y * ray.y) + abs(size.z * ray.z)) < 0.f)
+		return std::numeric_limits<int>::lowest();
 
-	float tmin = std::max(std::max(std::min(t1, t2), std::min(t3, t4)), std::min(t5, t6));
-	float tmax = std::min(std::min(std::max(t1, t2), std::max(t3, t4)), std::max(t5, t6));
-	
-	if (tmax < 0.f) return std::numeric_limits<int>::lowest();			//	not in front of camera
-	else if (tmin > tmax) return std::numeric_limits<int>::lowest();	//	don't intersect
-	else return (int)tmin;
+	//	out of horizontal range
+	float maxAbsoluteDimension = std::max(size.x, std::max(size.y, size.z)) / 2.f;
+	float maxTangentDimension = abs(size.x * rayL.x) / 2.f + abs(size.y * rayL.y) / 2.f + abs(size.z * rayL.z) / 2.f;
+	if (abs(glm::dot(p, rayL)) - maxTangentDimension > 0.2f * maxAbsoluteDimension)
+		return std::numeric_limits<int>::lowest();
+
+	//	out of vertical range
+	maxTangentDimension = abs(size.x * rayV.x) / 2.f + abs(size.y * rayV.y) / 2.f + abs(size.z * rayV.z) / 2.f;
+	if (abs(glm::dot(p, rayV)) - maxTangentDimension > 0.2f * maxAbsoluteDimension)
+		return std::numeric_limits<int>::lowest();
+
+	//	return distance to camera in int
+	return (int)glm::length(p);
 }
 //

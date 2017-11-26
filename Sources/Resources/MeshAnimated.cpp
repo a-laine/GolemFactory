@@ -167,6 +167,7 @@ MeshAnimated::~MeshAnimated()
 //	Public functions
 void MeshAnimated::initializeVBO()
 {
+	//	mesh
 	glGenBuffers(1, &verticesBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, verticesBuffer);
 	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), vertices.data(), GL_STATIC_DRAW);
@@ -190,9 +191,19 @@ void MeshAnimated::initializeVBO()
 	glGenBuffers(1, &facesBuffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, facesBuffer);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, faces.size() * sizeof(unsigned short), faces.data(), GL_STATIC_DRAW);
+
+	//	bounding box
+	glGenBuffers(1, &vBBOBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vBBOBuffer);
+	glBufferData(GL_ARRAY_BUFFER, vBBOx.size() * sizeof(glm::vec3), vBBOx.data(), GL_STATIC_DRAW);
+
+	glGenBuffers(1, &fBBOBuffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, fBBOBuffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, fBBOx.size() * sizeof(unsigned short), fBBOx.data(), GL_STATIC_DRAW);
 }
 void MeshAnimated::initializeVAO()
 {
+	//	mesh
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 
@@ -218,12 +229,33 @@ void MeshAnimated::initializeVAO()
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, facesBuffer);
 	glBindVertexArray(0);
+
+	//	bounding box
+	glGenVertexArrays(1, &BBOvao);
+	glBindVertexArray(BBOvao);
+
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, vBBOBuffer);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, fBBOBuffer);
+	glBindVertexArray(0);
 }
 
-void MeshAnimated::draw()
+void MeshAnimated::draw(const RenderOption& option)
 {
-	glBindVertexArray(vao);
-	glDrawElements(GL_TRIANGLES, faces.size(), GL_UNSIGNED_SHORT, NULL);
+	switch(option)
+	{
+		case BOUNDING_BOX:
+			glBindVertexArray(BBOvao);
+			glDrawElements(GL_TRIANGLES, fBBOx.size(), GL_UNSIGNED_SHORT, NULL);
+			break;
+
+		default:
+			glBindVertexArray(vao);
+			glDrawElements(GL_TRIANGLES, faces.size(), GL_UNSIGNED_SHORT, NULL);
+			break;
+	}
 }
 //
 

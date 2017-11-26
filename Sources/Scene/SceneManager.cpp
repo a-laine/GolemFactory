@@ -8,7 +8,7 @@ SceneManager::SceneManager()
 	setViewDistance(100, 2);
 	NodeVirtual* n = new NodeVirtual(nullptr, 0x040401);
 		n->setPosition(glm::vec3(0.f, 0.f, 0.f));
-		n->setSize(glm::vec3(100.f, 100.f, 10.f));
+		n->setSize(glm::vec3(100.f, 100.f, 20.f));
 		n->split();
 	world.push_back(n);
 
@@ -85,6 +85,7 @@ void SceneManager::setWorldPosition(glm::vec3 position)
 	world[0]->setPosition(position);
 }
 
+
 void SceneManager::getInstanceList(std::list<std::pair<int, InstanceVirtual*> >& list, const Grain& grain)
 {
 	//	iterative path on tree to get instance of node in frustrum
@@ -143,7 +144,7 @@ void SceneManager::getInstanceOnRay(std::list<std::pair<int, InstanceVirtual*> >
 		//	initialize and test root in frustrum
 		std::vector<std::pair<NodeVirtual*, unsigned int> > path;
 		NodeVirtual* node = world[i];
-		int distance = node->isOnRay(camPosition, camDirection);
+		int distance = node->isOnRay(camPosition, camDirection, camVertical, camLeft);
 		if (distance == std::numeric_limits<int>::lowest())
 			continue;
 		else
@@ -167,7 +168,7 @@ void SceneManager::getInstanceOnRay(std::list<std::pair<int, InstanceVirtual*> >
 
 			//	test if node in frustrum and iterate if not
 			node = path.back().first->children[path.back().second];
-			distance = node->isOnRay(camPosition, camDirection);
+			distance = node->isOnRay(camPosition, camDirection, camVertical, camLeft);
 			if (distance != std::numeric_limits<int>::lowest())
 			{
 				//	get instance list of node
@@ -210,26 +211,31 @@ void SceneManager::getInstanceOnRay(std::list<std::pair<int, InstanceVirtual*> >
 
 				//	compute intersection point
 				if (glm::dot(normal, camDirection) == 0.f) continue;
-				float depth = glm::dot(normal, p1) / glm::dot(normal, camDirection);
-				glm::vec3 intersection = depth * camDirection - p1;
+				if (glm::dot(normal, camDirection) > 0.f) normal *= -1.f;
+				float depth = (glm::dot(normal, p1 + camPosition)) / glm::dot(normal, camDirection);
+				glm::vec3 intersection = camPosition + depth * camDirection - p1;
 
 				//	check if point is inside triangle
 				float magnitute = glm::dot(v2, v2)*glm::dot(v1, v1) - glm::dot(v1, v2)*glm::dot(v1, v2);
 				glm::vec2 barry;
 				barry.x = (glm::dot(v2, v2) * glm::dot(intersection, v1) - glm::dot(v2, v1) * glm::dot(intersection, v2)) / magnitute;
 				barry.y = (glm::dot(v1, v1) * glm::dot(intersection, v2) - glm::dot(v2, v1) * glm::dot(intersection, v1)) / magnitute;
-				if (barry.x < 0.f || barry.y < 0.f || barry.x > 1.f || barry.y > 1.f) continue;
+				if (barry.x < 0.f || barry.y < 0.f || barry.x + barry.y > 1.f) continue;
 				else intersect =  true;
+				break;
 			}
+
 			if (intersect) ++it;
 			else it = list.erase(it);
 		}
 
-		//float p = glm::dot(it->second->getPosition() - camPosition, camDirection);
-		//float d = glm::length(it->second->getPosition() - camPosition - p * camDirection);
+		/*
+		float p = glm::dot(it->second->getPosition() - camPosition, camDirection);
+		float d = glm::length(it->second->getPosition() - camPosition - p * camDirection);
 
-		//if (it->second->getBSRadius() < 0) it = list.erase(it);
-		//else ++it;
+		if (it->second->getBSRadius() < 0) it = list.erase(it);
+		else ++it;
+		*/
 
 
 		/*glm::mat4 base = glm::translate(glm::mat4(), it->second->getPosition()) * it->second->getOrientation();
@@ -253,10 +259,10 @@ void SceneManager::getInstanceOnRay(std::list<std::pair<int, InstanceVirtual*> >
 
 		//	test
 		float tmin = std::max(std::max(std::min(t1, t2), std::min(t3, t4)), std::min(t5, t6));
-		float tmax = std::min(std::min(std::max(t1, t2), std::max(t3, t4)), std::max(t5, t6));*/
+		float tmax = std::min(std::min(std::max(t1, t2), std::max(t3, t4)), std::max(t5, t6));
 
-		//if (tmin > tmax) it = list.erase(it);
-		//else ++it;
+		if (tmin > tmax) it = list.erase(it);
+		else ++it;*/
 	}
 
 	//	refine list checking instance meshes

@@ -13,6 +13,11 @@ class Mesh : public ResourceVirtual
 
     public:
 		//  Miscellaneous
+		enum RenderOption
+		{
+			DEFAULT,
+			BOUNDING_BOX
+		};
 		enum ConfigurationFlags
 		{
 			WELL_LOADED = 1 << 0,
@@ -37,7 +42,7 @@ class Mesh : public ResourceVirtual
 		virtual void initializeVBO();
 		virtual void initializeVAO();
 
-		virtual void draw();
+		virtual void draw(const RenderOption& option = DEFAULT);
         //
 
         //  Set/get functions
@@ -76,6 +81,7 @@ class Mesh : public ResourceVirtual
 		std::vector<glm::vec3> colors;
         std::vector<unsigned short> faces;
 
+		GLuint  BBOvao, vBBOBuffer, fBBOBuffer;
 		std::vector<glm::vec3> vBBOx;
 		std::vector<unsigned short> fBBOx;
         //

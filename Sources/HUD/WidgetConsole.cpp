@@ -245,7 +245,7 @@ void WidgetConsole::append(const std::string& s)
 	if (!s.empty())
 	{
 		text += s + '\n';
-		configuration |= NEED_UPDATE;
+		configuration |= SPECIAL;
 		elevator = 0.f;
 	}
 }

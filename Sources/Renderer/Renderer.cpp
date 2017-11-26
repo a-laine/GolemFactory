@@ -1,7 +1,7 @@
 #include "Renderer.h"
 
 //  Default
-Renderer::Renderer()
+Renderer::Renderer() : renderOption(Mesh::DEFAULT)
 {
 	window = nullptr;
 	camera = nullptr;
@@ -236,7 +236,7 @@ void Renderer::drawInstanceDrawable(InstanceVirtual* ins, const float* view, con
 	}*/
 
 	//	Draw mesh
-	ins->getMesh()->draw();
+	ins->getMesh()->draw(renderOption);
 	instanceDrawn++;
 	trianglesDrawn += ins->getMesh()->getNumberFaces();
 
@@ -270,7 +270,7 @@ void Renderer::drawInstanceAnimatable(InstanceVirtual* ins, const float* view, c
 	if (loc >= 0) glUniformMatrix4fv(loc, bind.size(), FALSE, (float*)bind.data());
 
 	//	Draw mesh
-	ins->getMesh()->draw();
+	ins->getMesh()->draw(renderOption);
 	instanceDrawn++;
 	trianglesDrawn += ins->getMesh()->getNumberFaces();
 
@@ -307,6 +307,7 @@ void Renderer::setShader(ShaderIdentifier id, Shader* s)
 	else defaultShader[id] = nullptr;
 }
 void Renderer::setGridVisible(bool enable) { drawGrid = enable; }
+void Renderer::setRenderOption(const Mesh::RenderOption& option) { renderOption = option; }
 
 
 Camera* Renderer::getCamera() { return camera; }
@@ -320,4 +321,5 @@ Shader* Renderer::getShader(ShaderIdentifier id)
 bool Renderer::isGridVisible() { return drawGrid; }
 unsigned int Renderer::getNbDrawnInstances() const { return instanceDrawn; }
 unsigned int Renderer::getNbDrawnTriangles() const { return trianglesDrawn; }
+Mesh::RenderOption Renderer::getRenderOption() const { return renderOption; }
 //

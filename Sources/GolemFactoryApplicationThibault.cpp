@@ -58,11 +58,11 @@ int main()
 	Camera camera;
 		camera.setMode(Camera::FREEFLY);
 		camera.setAllRadius(2.f, 0.5f, 10.f);
-		camera.setPosition(glm::vec3(0,-3,3));
+		camera.setPosition(glm::vec3(0,-10,10));
 	Camera camera2;
 		camera2.setMode(Camera::FREEFLY);
 		camera2.setAllRadius(2.f, 0.5f, 10.f);
-		camera2.setPosition(glm::vec3(0, -3, 3));
+		camera2.setPosition(glm::vec3(0, -10, 10));
 	bool syncronizedCamera = true;
 	Renderer::getInstance()->setCamera(&camera2);
 	Renderer::getInstance()->setWindow(window);
@@ -86,8 +86,14 @@ int main()
 		InstanceAnimatable* peasant = InstanceManager::getInstance()->getInstanceAnimatable("peasant", "human", "simple_peasant", "skinning");
 			float scale = 1.7f / (peasant->getBBMax() - peasant->getBBMin()).z;
 			peasant->setSize(glm::vec3(scale));
-			//peasant->setPosition(glm::vec3(0.f, 0.f, -scale * peasant->getMesh()->sizeZ.x));
-			SceneManager::getInstance()->addStaticObject(peasant);
+			peasant->setPosition(glm::vec3(0.f, 0.f, -scale * peasant->getMesh()->aabb_min.z));
+			//SceneManager::getInstance()->addStaticObject(peasant);
+
+		InstanceDrawable* bigTree = InstanceManager::getInstance()->getInstanceDrawable();
+			bigTree->setMesh("firTree1.obj");
+			bigTree->setShader("tree");
+			bigTree->setSize(glm::vec3(5.f, 5.f, 5.f));
+			SceneManager::getInstance()->addStaticObject(bigTree);
 
 
 	// init loop time tracking
@@ -96,8 +102,6 @@ int main()
 	double averageCompleteTime = 16.;
 	double dummy = 0;
 
-	/*for(int i=0; i<10; i++)
-		WidgetManager::getInstance()->append("console", "line" + std::to_string(i));*/
 
 	//	game loop
 	std::cout << "game loop initiated" << std::endl;
@@ -159,6 +163,19 @@ int main()
 			//	debug action
 			else if (v[i] == F12) syncronizedCamera = !syncronizedCamera;
 			else if (v[i] == F9) WidgetManager::getInstance()->setActiveHUD((WidgetManager::getInstance()->getActiveHUD() == "debug" ? "" : "debug"));
+			else if (v[i] == F3)
+			{
+				if (Renderer::getInstance()->getRenderOption() == Mesh::DEFAULT)
+				{
+					Renderer::getInstance()->setRenderOption(Mesh::BOUNDING_BOX);
+					Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE, ResourceManager::getInstance()->getShader("wired"));
+				}
+				else 
+				{
+					Renderer::getInstance()->setRenderOption(Mesh::DEFAULT);
+					Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE, nullptr);
+				}
+			}
 		}
 
 		//	Animate instances
@@ -167,7 +184,6 @@ int main()
 		//	Compute HUD picking parameters
 		if (EventHandler::getInstance()->getCursorMode())
 		{
-			//vec4 ray_eye = inverse(projection_matrix) * ray_clip;
 			glm::vec2 cursor = EventHandler::getInstance()->getCursorNormalizedPosition();
 			glm::vec4 ray_eye = glm::inverse(glm::perspective(glm::radians(ANGLE_VERTICAL_HUD_PROJECTION), (float)width / height, 0.01f, 150.f)) * glm::vec4(cursor.x, cursor.y, -1.f, 1.f);
 			WidgetManager::getInstance()->setPickingParameters(
@@ -194,7 +210,7 @@ int main()
 		if (dummy > 500.0)
 		{
 			dummy -= 500.0;
-			WidgetManager::getInstance()->append("console", std::to_string(glfwGetTime()));
+			//WidgetManager::getInstance()->append("console", std::to_string(glfwGetTime()));
 		}
 		WidgetManager::getInstance()->update((float)elapseTime, EventHandler::getInstance()->isActivated(USE1));
 
@@ -302,7 +318,7 @@ void initializeForestScene(bool emptyPlace)
 	int vilageHouseCount = 0;
 	float villageRadius[] = {20.f, 30.f, 40.f};
 	std::vector<glm::vec3> houseCircle;
-	for (int i = 0; i < 3; i++)
+	/*for (int i = 0; i < 3; i++)
 	{
 		int houseCount = 5 + i * 7;
 		vilageHouseCount += houseCount;
@@ -319,7 +335,7 @@ void initializeForestScene(bool emptyPlace)
 			else
 				a = glm::rotate(a, angle + 0.4f * ((((rand() % 100) / 50.f) - 1.f)), glm::vec3(0, 0, 1));
 			
-			InstanceDrawable* house = nullptr;// dynamic_cast<InstanceDrawable*>(hg.getHouse(rand(), 20, 30));
+			InstanceDrawable* house = dynamic_cast<InstanceDrawable*>(hg.getHouse(rand(), 20, 30));
 			if (house && InstanceManager::getInstance()->add(house))
 			{
 				glm::vec3 p = glm::vec3(radius * cos(angle), radius * sin(angle), house->getBSRadius());
@@ -341,7 +357,9 @@ void initializeForestScene(bool emptyPlace)
 			}
 		}
 	}
-
+	*/
+	
+	
 	// forest
 	for (int i = 0; i < GRID_SIZE; i++)
 		for (int j = 0; j < GRID_SIZE; j++)
@@ -381,7 +399,7 @@ void initializeForestScene(bool emptyPlace)
 			ins->setShader(shaderName);
 			
 			ins->setPosition(p);
-			ins->setSize(glm::vec3(s,s,s));
+			//ins->setSize(glm::vec3(s,s,s));
 			ins->setOrientation(a);
 
 			if(!SceneManager::getInstance()->addStaticObject(ins))

@@ -24,7 +24,7 @@ class MeshAnimated : public Mesh
 		void initializeVBO();
 		void initializeVAO();
 
-		void draw();
+		void draw(const RenderOption& option = DEFAULT);
         //
 
 		//	Set / get functions
