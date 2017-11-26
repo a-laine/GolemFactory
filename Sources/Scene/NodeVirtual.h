@@ -148,7 +148,7 @@ class NodeVirtual
 		 */
 		int isInFrustrum(const glm::vec3& camP, const glm::vec3& camD, const glm::vec3& camV, const glm::vec3& camL, const float& camVa, const float& camHa) const;
 
-		int isOnRay(const glm::vec3& camP, const glm::vec3& ray, const glm::vec3& rayV, const glm::vec3& rayL) const;
+		float isOnRay(const glm::vec3& camP, const glm::vec3& ray, const glm::vec3& rayV, const glm::vec3& rayL) const;
 		//
 
 		//	Attributes

@@ -134,6 +134,11 @@ MeshAnimated::MeshAnimated(const std::string& path, const std::string& meshName)
 	file.close();
 	configuration = WELL_LOADED | HAS_SKELETON;
 	computeBoundingBox();
+	for (unsigned int i = 0; i < vBBox.size(); i++)
+	{
+		bBBox.push_back(glm::ivec3(0, 0, 0));
+		wBBox.push_back(glm::vec3(1.f, 0.f, 0.f));
+	}
 	initializeVBO();
 	initializeVAO();
 }
@@ -151,6 +156,12 @@ MeshAnimated::MeshAnimated(const std::string& meshName, const bool& isAnimable, 
 	faces = facesArray;
 
 	computeBoundingBox();
+	for (unsigned int i = 0; i < vBBox.size(); i++)
+	{
+		bBBox.push_back(glm::ivec3(0, 0, 0));
+		wBBox.push_back(glm::vec3(1.f, 0.f, 0.f));
+	}
+
 	initializeVBO();
 	initializeVAO();
 }
@@ -194,13 +205,21 @@ void MeshAnimated::initializeVBO()
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, faces.size() * sizeof(unsigned short), faces.data(), GL_STATIC_DRAW);
 
 	//	bounding box
-	glGenBuffers(1, &vBBOBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, vBBOBuffer);
-	glBufferData(GL_ARRAY_BUFFER, vBBOx.size() * sizeof(glm::vec3), vBBOx.data(), GL_STATIC_DRAW);
+	glGenBuffers(1, &vBBoxBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vBBoxBuffer);
+	glBufferData(GL_ARRAY_BUFFER, vBBox.size() * sizeof(glm::vec3), vBBox.data(), GL_STATIC_DRAW);
 
-	glGenBuffers(1, &fBBOBuffer);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, fBBOBuffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, fBBOx.size() * sizeof(unsigned short), fBBOx.data(), GL_STATIC_DRAW);
+	glGenBuffers(1, &bBBoxBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, bBBoxBuffer);
+	glBufferData(GL_ARRAY_BUFFER, bBBox.size() * sizeof(glm::ivec3), bBBox.data(), GL_STATIC_DRAW);
+
+	glGenBuffers(1, &wBBoxBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, wBBoxBuffer);
+	glBufferData(GL_ARRAY_BUFFER, wBBox.size() * sizeof(glm::vec3), wBBox.data(), GL_STATIC_DRAW);
+
+	glGenBuffers(1, &fBBoxBuffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, fBBoxBuffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, fBBox.size() * sizeof(unsigned short), fBBox.data(), GL_STATIC_DRAW);
 }
 void MeshAnimated::initializeVAO()
 {
@@ -232,14 +251,22 @@ void MeshAnimated::initializeVAO()
 	glBindVertexArray(0);
 
 	//	bounding box
-	glGenVertexArrays(1, &BBOvao);
-	glBindVertexArray(BBOvao);
+	glGenVertexArrays(1, &BBoxVao);
+	glBindVertexArray(BBoxVao);
 
 	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, vBBOBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vBBoxBuffer);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, fBBOBuffer);
+	glEnableVertexAttribArray(3);
+	glBindBuffer(GL_ARRAY_BUFFER, bBBoxBuffer);
+	glVertexAttribIPointer(3, 3, GL_INT, 0, NULL);
+
+	glEnableVertexAttribArray(4);
+	glBindBuffer(GL_ARRAY_BUFFER, wBBoxBuffer);
+	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, fBBoxBuffer);
 	glBindVertexArray(0);
 }
 
@@ -248,8 +275,8 @@ void MeshAnimated::draw(const RenderOption& option)
 	switch(option)
 	{
 		case BOUNDING_BOX:
-			glBindVertexArray(BBOvao);
-			glDrawElements(GL_TRIANGLES, fBBOx.size(), GL_UNSIGNED_SHORT, NULL);
+			glBindVertexArray(BBoxVao);
+			glDrawElements(GL_TRIANGLES, fBBox.size(), GL_UNSIGNED_SHORT, NULL);
 			break;
 
 		default:

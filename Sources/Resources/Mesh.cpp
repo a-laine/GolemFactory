@@ -135,12 +135,12 @@ Mesh::~Mesh()
 	glDeleteVertexArrays(1, &vao);
 
 	//	delete bounding box attributes
-	vBBOx.clear();
-	fBBOx.clear();
+	vBBox.clear();
+	fBBox.clear();
 
-	glDeleteBuffers(1, &vBBOBuffer);
-	glDeleteBuffers(1, &fBBOBuffer);
-	glDeleteVertexArrays(1, &BBOvao);
+	glDeleteBuffers(1, &vBBoxBuffer);
+	glDeleteBuffers(1, &fBBoxBuffer);
+	glDeleteVertexArrays(1, &BBoxVao);
 }
 //
 
@@ -164,28 +164,28 @@ void Mesh::computeBoundingBox()
 	}
 
 	//	bbox vertex array
-	vBBOx.push_back(aabb_min);
-	vBBOx.push_back(glm::vec3(aabb_min.x, aabb_min.y, aabb_max.z));
-	vBBOx.push_back(glm::vec3(aabb_min.x, aabb_max.y, aabb_min.z));
-	vBBOx.push_back(glm::vec3(aabb_min.x, aabb_max.y, aabb_max.z));
-	vBBOx.push_back(glm::vec3(aabb_max.x, aabb_min.y, aabb_min.z));//4
-	vBBOx.push_back(glm::vec3(aabb_max.x, aabb_min.y, aabb_max.z));
-	vBBOx.push_back(glm::vec3(aabb_max.x, aabb_max.y, aabb_min.z));
-	vBBOx.push_back(aabb_max);
+	vBBox.push_back(aabb_min);
+	vBBox.push_back(glm::vec3(aabb_min.x, aabb_min.y, aabb_max.z));
+	vBBox.push_back(glm::vec3(aabb_min.x, aabb_max.y, aabb_min.z));
+	vBBox.push_back(glm::vec3(aabb_min.x, aabb_max.y, aabb_max.z));
+	vBBox.push_back(glm::vec3(aabb_max.x, aabb_min.y, aabb_min.z));//4
+	vBBox.push_back(glm::vec3(aabb_max.x, aabb_min.y, aabb_max.z));
+	vBBox.push_back(glm::vec3(aabb_max.x, aabb_max.y, aabb_min.z));
+	vBBox.push_back(aabb_max);
 
 	//	bbox faces array (please don't change order it's important)
-	fBBOx.push_back(4); fBBOx.push_back(0); fBBOx.push_back(6);
-	fBBOx.push_back(2); fBBOx.push_back(0); fBBOx.push_back(6);
-	fBBOx.push_back(2); fBBOx.push_back(0); fBBOx.push_back(3);
-	fBBOx.push_back(1); fBBOx.push_back(0); fBBOx.push_back(3);
-	fBBOx.push_back(6); fBBOx.push_back(2); fBBOx.push_back(7);
-	fBBOx.push_back(3); fBBOx.push_back(2); fBBOx.push_back(7);
-	fBBOx.push_back(6); fBBOx.push_back(4); fBBOx.push_back(7);
-	fBBOx.push_back(5); fBBOx.push_back(4); fBBOx.push_back(7);
-	fBBOx.push_back(4); fBBOx.push_back(0); fBBOx.push_back(5);
-	fBBOx.push_back(1); fBBOx.push_back(0); fBBOx.push_back(5);
-	fBBOx.push_back(5); fBBOx.push_back(1); fBBOx.push_back(7);
-	fBBOx.push_back(3); fBBOx.push_back(1); fBBOx.push_back(7);
+	fBBox.push_back(4); fBBox.push_back(0); fBBox.push_back(6);
+	fBBox.push_back(2); fBBox.push_back(0); fBBox.push_back(6);
+	fBBox.push_back(2); fBBox.push_back(0); fBBox.push_back(3);
+	fBBox.push_back(1); fBBox.push_back(0); fBBox.push_back(3);
+	fBBox.push_back(6); fBBox.push_back(2); fBBox.push_back(7);
+	fBBox.push_back(3); fBBox.push_back(2); fBBox.push_back(7);
+	fBBox.push_back(6); fBBox.push_back(4); fBBox.push_back(7);
+	fBBox.push_back(5); fBBox.push_back(4); fBBox.push_back(7);
+	fBBox.push_back(4); fBBox.push_back(0); fBBox.push_back(5);
+	fBBox.push_back(1); fBBox.push_back(0); fBBox.push_back(5);
+	fBBox.push_back(5); fBBox.push_back(1); fBBox.push_back(7);
+	fBBox.push_back(3); fBBox.push_back(1); fBBox.push_back(7);
 }
 void Mesh::initializeVBO()
 {
@@ -207,13 +207,13 @@ void Mesh::initializeVBO()
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, faces.size() * sizeof(unsigned short), faces.data(), GL_STATIC_DRAW);
 
 	//	bounding box
-	glGenBuffers(1, &vBBOBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, vBBOBuffer);
-	glBufferData(GL_ARRAY_BUFFER, vBBOx.size() * sizeof(glm::vec3), vBBOx.data(), GL_STATIC_DRAW);
+	glGenBuffers(1, &vBBoxBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vBBoxBuffer);
+	glBufferData(GL_ARRAY_BUFFER, vBBox.size() * sizeof(glm::vec3), vBBox.data(), GL_STATIC_DRAW);
 
-	glGenBuffers(1, &fBBOBuffer);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, fBBOBuffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, fBBOx.size() * sizeof(unsigned short), fBBOx.data(), GL_STATIC_DRAW);
+	glGenBuffers(1, &fBBoxBuffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, fBBoxBuffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, fBBox.size() * sizeof(unsigned short), fBBox.data(), GL_STATIC_DRAW);
 }
 void Mesh::initializeVAO()
 {
@@ -237,14 +237,14 @@ void Mesh::initializeVAO()
 	glBindVertexArray(0);
 
 	//	bounding box
-	glGenVertexArrays(1, &BBOvao);
-	glBindVertexArray(BBOvao);
+	glGenVertexArrays(1, &BBoxVao);
+	glBindVertexArray(BBoxVao);
 
 	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, vBBOBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, vBBoxBuffer);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, fBBOBuffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, fBBoxBuffer);
 	glBindVertexArray(0);
 }
 
@@ -253,8 +253,8 @@ void Mesh::draw(const RenderOption& option)
 	switch (option)
 	{
 		case BOUNDING_BOX:
-			glBindVertexArray(BBOvao);
-			glDrawElements(GL_TRIANGLES, fBBOx.size(), GL_UNSIGNED_SHORT, NULL);
+			glBindVertexArray(BBoxVao);
+			glDrawElements(GL_TRIANGLES, fBBox.size(), GL_UNSIGNED_SHORT, NULL);
 			break;
 
 		default:
@@ -269,8 +269,8 @@ void Mesh::draw(const RenderOption& option)
 //  Set/get functions
 unsigned int Mesh::getNumberVertices() const { return vertices.size(); }
 unsigned int Mesh::getNumberFaces() const { return faces.size(); }
-const std::vector<glm::vec3>* Mesh::getBBoxVertices() const { return &vBBOx; }
-const std::vector<unsigned short>* Mesh::getBBoxFaces() const { return &fBBOx; }
+const std::vector<glm::vec3>* Mesh::getBBoxVertices() const { return &vBBox; }
+const std::vector<unsigned short>* Mesh::getBBoxFaces() const { return &fBBox; }
 const std::vector<glm::vec3>* Mesh::getVertices() const { return &vertices; }
 const std::vector<unsigned short>* Mesh::getFaces() const { return &faces; }
 

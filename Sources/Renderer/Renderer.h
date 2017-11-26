@@ -37,6 +37,7 @@ class Renderer : public Singleton<Renderer>
 		void initGLEW(int verbose = 1);
 		void initializeGrid(const unsigned int& gridSize, const float& elementSize = 1.f, const glm::vec3& color = glm::vec3(0.4f, 0.2f, 0.1f));
 		void render(Camera* renderCam);
+		void renderHUD(Camera* renderCam);
 		//
 
 		//  Set/get functions
@@ -55,6 +56,12 @@ class Renderer : public Singleton<Renderer>
 		Mesh::RenderOption getRenderOption() const;
 		//
 
+		//	Render function
+		void drawInstanceDrawable(InstanceVirtual* ins, const float* view, const float* projection, const glm::mat4& base = glm::mat4(1.f));
+		void drawInstanceAnimatable(InstanceVirtual* ins, const float* view, const float* projection);
+		void drawInstanceContainer(InstanceVirtual* ins, const glm::mat4& view, const glm::mat4& projection, const glm::mat4& model);
+		//
+
 	private:
 		//  Default
 		Renderer();
@@ -63,9 +70,6 @@ class Renderer : public Singleton<Renderer>
 
 		//	Protected functions
 		void loadMVPMatrix(Shader* shader, const float* model, const float* view, const float* projection) const;
-		void drawInstanceDrawable(InstanceVirtual* ins, const float* view, const float* projection, const glm::mat4& base = glm::mat4(1.f));
-		void drawInstanceAnimatable(InstanceVirtual* ins, const float* view, const float* projection);
-		void drawInstanceContainer(InstanceVirtual* ins, const glm::mat4& view, const glm::mat4& projection, const glm::mat4& model);
 		//
 
 		//  Attributes

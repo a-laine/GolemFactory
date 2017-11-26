@@ -26,6 +26,7 @@ glm::mat4 InstanceVirtual::getModelMatrix() const
 
 
 InstanceVirtual::InstanceType InstanceVirtual::getType() const { return type; }
+uint32_t InstanceVirtual::getId() const { return id; }
 glm::vec3 InstanceVirtual::getBBMax() const { return glm::vec3(0.f, 0.f, 0.f); }
 glm::vec3 InstanceVirtual::getBBMin() const { return glm::vec3(0.f, 0.f, 0.f); }
 float InstanceVirtual::getBSRadius() const

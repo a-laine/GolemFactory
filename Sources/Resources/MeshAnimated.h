@@ -38,8 +38,11 @@ class MeshAnimated : public Mesh
 
         //  Attributes
 		GLuint weightsBuffer, bonesBuffer;
-
 		std::vector<glm::ivec3> bones;
 		std::vector<glm::vec3> weights;
+
+		GLuint wBBoxBuffer, bBBoxBuffer;
+		std::vector<glm::ivec3> bBBox;
+		std::vector<glm::vec3> wBBox;
         //
 };

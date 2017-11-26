@@ -26,6 +26,7 @@
 class WidgetManager : public Singleton<WidgetManager>
 {
 	friend class Singleton<WidgetManager>;
+	friend class Renderer;
 
 	public:
 		//	Callback
@@ -33,7 +34,6 @@ class WidgetManager : public Singleton<WidgetManager>
 		//
 
 		//	Public functions
-		void draw(Shader* s, const glm::mat4& base, const float* view, const float* projection);
 		void update(const float& elapsedTime, const bool& clickButtonPressed);
 		void loadHud(const std::string& hudName);
 

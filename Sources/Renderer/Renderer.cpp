@@ -170,15 +170,9 @@ void Renderer::render(Camera* renderCam)
 	SceneManager::getInstance()->getInstanceList(instanceList);
 	std::sort(instanceList.begin(), instanceList.end());
 
-	std::vector<std::pair<float, InstanceVirtual*> > rayList;
-	SceneManager::getInstance()->getInstanceOnRay(rayList, SceneManager::INSTANCE_MESH, 100);
-	std::sort(rayList.begin(), rayList.end());
-
 	//	draw instance list
 	for (auto it = instanceList.begin(); it != instanceList.end(); ++it)
 	{
-		if (!rayList.empty() && it->second == rayList.front().second)
-			continue;
 		switch (it->second->getType())
 		{
 			case InstanceVirtual::DRAWABLE:
@@ -196,8 +190,68 @@ void Renderer::render(Camera* renderCam)
 	}
 
 	//	HUD
-	projection = glm::perspective(glm::radians(ANGLE_VERTICAL_HUD_PROJECTION), (float)width / height, 0.1f, 1500.f);
-	WidgetManager::getInstance()->draw(defaultShader[HUD], glm::translate(glm::mat4(1.f), DISTANCE_HUD_CAMERA*camera->getForward()) * camera->getModelMatrix(), &view[0][0], &projection[0][0]);
+	//projection = glm::perspective(glm::radians(ANGLE_VERTICAL_HUD_PROJECTION), (float)width / height, 0.1f, 1500.f);
+	//WidgetManager::getInstance()->draw(defaultShader[HUD], glm::translate(glm::mat4(1.f), DISTANCE_HUD_CAMERA*camera->getForward()) * camera->getModelMatrix(), &view[0][0], &projection[0][0]);
+}
+void Renderer::renderHUD(Camera* renderCam)
+{
+	if (!window || !camera || !renderCam) return;
+
+	// bind matrix
+	glm::mat4 view = renderCam->getViewMatrix();
+
+	int width, height;
+	glfwGetWindowSize(window, &width, &height);
+	glm::mat4 projection = glm::perspective(glm::radians(ANGLE_VERTICAL_HUD_PROJECTION), (float)width / height, 0.1f, 1500.f);
+	glm::mat4 base = glm::translate(glm::mat4(1.f), DISTANCE_HUD_CAMERA*camera->getForward()) * camera->getModelMatrix();
+
+	//	change opengl states
+	glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+	glEnable(GL_STENCIL_TEST);
+	glEnable(GL_BLEND);
+
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glActiveTexture(GL_TEXTURE0);
+	uint8_t stencilMask = 0x00;
+
+	//	draw all widget in hudList
+	auto wList = WidgetManager::getInstance()->hudList;
+	for (std::map<std::string, std::vector<Layer*> >::iterator it = wList.begin(); it != wList.end(); ++it)
+	{
+		for (unsigned int i = 0; i < it->second.size(); i++)
+		{
+			if (it->second[i]->isVisible())		// layer visible
+			{
+				glm::mat4 model = base * it->second[i]->getModelMatrix();
+				std::vector<WidgetVirtual*>& list = it->second[i]->getWidgetList();
+				for (std::vector<WidgetVirtual*>::iterator it2 = list.begin(); it2 != list.end(); ++it2)
+				{
+					if ((*it2)->isVisible())	// widget visible
+					{
+						//	Get shader
+						Shader* shader = nullptr;
+						if (!defaultShader[HUD]) shader = (*it2)->getShader();
+						if (!shader) continue;
+						shader->enable();
+
+						//	Enable mvp matrix
+						int loc = shader->getUniformLocation("model");
+						if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, &glm::translate(model, (*it2)->getPosition())[0][0]);
+						loc = shader->getUniformLocation("view");
+						if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, &view[0][0]);
+						loc = shader->getUniformLocation("projection");
+						if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, &projection[0][0]);
+
+						//	Draw
+						(*it2)->draw(shader, stencilMask, model);
+						instanceDrawn++;
+						trianglesDrawn += (*it2)->getNumberFaces();
+					}
+				}
+			}
+		}
+	}
+	glDisable(GL_BLEND);
 }
 //
 
@@ -212,6 +266,10 @@ void Renderer::loadMVPMatrix(Shader* shader, const float* model, const float* vi
 	loc = shader->getUniformLocation("projection");
 	if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, projection);
 }
+//
+
+
+//	Render function
 void Renderer::drawInstanceDrawable(InstanceVirtual* ins, const float* view, const float* projection, const glm::mat4& base)
 {
 	//	Get shader
@@ -236,12 +294,6 @@ void Renderer::drawInstanceDrawable(InstanceVirtual* ins, const float* view, con
 	ins->getMesh()->draw(renderOption);
 	instanceDrawn++;
 	trianglesDrawn += ins->getMesh()->getNumberFaces();
-
-	/*
-	glm::mat4 model = glm::translate(glm::mat4(1.f), ins->getPosition());
-	model = glm::translate(model, glm::vec3(0.f, 0.f, ins->getSize().z * (1.f + ins->getMesh()->sizeZ.y - ins->getMesh()->sizeZ.x))) * camera->getOrientationMatrix();
-	drawWidgetVirtual(dummyPlaceHolder, &model[0][0], view, projection);
-	*/
 }
 void Renderer::drawInstanceAnimatable(InstanceVirtual* ins, const float* view, const float* projection)
 {
@@ -270,12 +322,6 @@ void Renderer::drawInstanceAnimatable(InstanceVirtual* ins, const float* view, c
 	ins->getMesh()->draw(renderOption);
 	instanceDrawn++;
 	trianglesDrawn += ins->getMesh()->getNumberFaces();
-
-	/*
-	glm::mat4 model = glm::translate(glm::mat4(1.f), ins->getPosition());
-	model = glm::translate(model, glm::vec3(0.f, 0.f, ins->getSize().z * (1.f + ins->getMesh()->sizeZ.y - ins->getMesh()->sizeZ.x))) * camera->getOrientationMatrix();
-	drawWidgetVirtual(dummyPlaceHolder, &model[0][0], view, projection);
-	*/
 }
 void Renderer::drawInstanceContainer(InstanceVirtual* ins, const glm::mat4& view, const glm::mat4& projection, const glm::mat4& model)
 {

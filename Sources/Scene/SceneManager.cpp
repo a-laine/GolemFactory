@@ -144,13 +144,13 @@ void SceneManager::getInstanceOnRay(std::vector<std::pair<float, InstanceVirtual
 		//	initialize and test root in frustrum
 		std::vector<std::pair<NodeVirtual*, unsigned int> > path;
 		NodeVirtual* node = world[i];
-		int distance = node->isOnRay(camPosition, camDirection, camVertical, camLeft);
-		if (distance == std::numeric_limits<int>::lowest())
+		float distance = node->isOnRay(camPosition, camDirection, camVertical, camLeft);
+		if (distance == std::numeric_limits<float>::lowest())
 			continue;
 		else
 		{
 			for (unsigned int i = 0; i < node->instanceList.size(); i++)
-				list.push_back(std::pair<int, InstanceVirtual*>(distance, node->instanceList[i]));
+				list.push_back(std::pair<float, InstanceVirtual*>(distance, node->instanceList[i]));
 		}
 
 		//	init path and iterate on tree
@@ -169,15 +169,15 @@ void SceneManager::getInstanceOnRay(std::vector<std::pair<float, InstanceVirtual
 			//	test if node in frustrum and iterate if not
 			node = path.back().first->children[path.back().second];
 			distance = node->isOnRay(camPosition, camDirection, camVertical, camLeft);
-			if (distance != std::numeric_limits<int>::lowest())
+			if (distance != std::numeric_limits<float>::lowest())
 			{
 				//	get instance list of node
 				for (unsigned int i = 0; i < node->instanceList.size(); i++)
-					list.push_back(std::pair<int, InstanceVirtual*>(distance, node->instanceList[i]));
+					list.push_back(std::pair<float, InstanceVirtual*>(distance, node->instanceList[i]));
 			}
 
 			//	iterate (go down in tree or change branch)
-			if (!node->children.empty() && distance != std::numeric_limits<int>::lowest())
+			if (!node->children.empty() && distance != std::numeric_limits<float>::lowest())
 				path.push_back(std::pair<NodeVirtual*, int>(node, 0));
 			else path.back().second++; // change branch
 		}
@@ -212,7 +212,7 @@ void SceneManager::getInstanceOnRay(std::vector<std::pair<float, InstanceVirtual
 				if (glm::dot(normal, camDirection) == 0.f) continue;
 				if (glm::dot(normal, camDirection) > 0.f) normal *= -1.f;
 				float depth = glm::dot(normal, p1 - camPosition) / glm::dot(normal, camDirection);
-				if (depth > maxDistance) continue;
+				if (depth > maxDistance || depth < 0.f) continue;
 				glm::vec3 intersection = camPosition + depth * camDirection - p1;
 
 				//	check if point is inside triangle
@@ -257,7 +257,7 @@ void SceneManager::getInstanceOnRay(std::vector<std::pair<float, InstanceVirtual
 				if (glm::dot(normal, camDirection) == 0.f) continue;
 				if (glm::dot(normal, camDirection) > 0.f) normal *= -1.f;
 				float depth = glm::dot(normal, p1 - camPosition) / glm::dot(normal, camDirection);
-				if (depth > maxDistance) continue;
+				if (depth > maxDistance || depth < 0.f) continue;
 				glm::vec3 intersection = camPosition + depth * camDirection - p1;
 
 				//	check if point is inside triangle

@@ -53,6 +53,7 @@ int main()
 	ResourceVirtual::logVerboseLevel = ResourceVirtual::ALL;
 	ResourceManager::getInstance()->setRepository(resourceRepository);
 	InstanceManager::getInstance()->setMaxNumberOfInstances(1000000);
+	ResourceManager::getInstance()->getShader("wired");
 	
 	// Init Renderer;
 	Camera camera;
@@ -67,11 +68,12 @@ int main()
 	Renderer::getInstance()->setCamera(&camera2);
 	Renderer::getInstance()->setWindow(window);
 	Renderer::getInstance()->initializeGrid(GRID_SIZE, GRID_ELEMENT_SIZE, glm::vec3(24/255.f, 202/255.f, 230/255.f));	// blue tron
+	Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getShader("greenGrass"));
 	//Renderer::getInstance()->setShader(Renderer::INSTANCE_ANIMATABLE, ResourceManager::getInstance()->getShader("wiredSkinning"));
 	//Renderer::getInstance()->setShader(Renderer::INSTANCE_ANIMATABLE, ResourceManager::getInstance()->getShader("skeletonDebug"));
 	//Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE, ResourceManager::getInstance()->getShader("wired"));
 
-	//
+	//	HUD
 	int width, height;
 	glfwGetWindowSize(window, &width, &height);
 	WidgetManager::getInstance()->setInitialWindowSize(width, height);
@@ -86,8 +88,8 @@ int main()
 		InstanceAnimatable* peasant = InstanceManager::getInstance()->getInstanceAnimatable("peasant", "human", "simple_peasant", "skinning");
 			float scale = 1.7f / (peasant->getBBMax() - peasant->getBBMin()).z;
 			peasant->setSize(glm::vec3(scale));
-			peasant->setPosition(glm::vec3(0.f, 0.f, -scale * peasant->getMesh()->aabb_min.z));
-			//SceneManager::getInstance()->addStaticObject(peasant);
+			peasant->setPosition(glm::vec3(20.f, 0.f, -scale * peasant->getMesh()->aabb_min.z));
+			SceneManager::getInstance()->addStaticObject(peasant);
 
 		InstanceDrawable* bigTree = InstanceManager::getInstance()->getInstanceDrawable();
 			bigTree->setMesh("firTree1.obj");
@@ -110,9 +112,51 @@ int main()
 		// begin loop
 		double startTime = glfwGetTime();
 		glfwGetWindowSize(window, &width, &height);
-
-		// Render frame
+				
+		// Render scene
 		Renderer::getInstance()->render(&camera);
+
+		//	Picking on scene
+		std::vector<std::pair<float, InstanceVirtual*> > rayList;
+		SceneManager::getInstance()->getInstanceOnRay(rayList, SceneManager::INSTANCE_MESH, 1000);
+		std::sort(rayList.begin(), rayList.end());
+
+		if (!rayList.empty())
+		{
+			std::string type;
+			switch (rayList[0].second->getType())
+			{
+			case InstanceVirtual::ANIMATABLE:	type = "animatable";	break;
+			case InstanceVirtual::DRAWABLE:		type = "drawable";		break;
+			case InstanceVirtual::CONTAINER:	type = "container";		break;
+			default: type = "virtual"; break;
+			}
+			glm::vec3 p = camera.getPosition() + rayList[0].first * camera.getForward();
+
+			WidgetManager::getInstance()->setString("interaction", "Distance : " + ToolBox::to_string_with_precision(rayList[0].first, 5) +
+				" m\nPosition : (" + ToolBox::to_string_with_precision(p.x, 5) + " , " + ToolBox::to_string_with_precision(p.y, 5) + " , " + ToolBox::to_string_with_precision(p.z, 5) +
+				")\nInstance on ray : " + std::to_string(rayList.size()) +
+				"\nFirst instance pointed id : " + std::to_string(rayList[0].second->getId()) +
+				"\n  type : " + type);
+
+			Mesh::RenderOption option = Renderer::getInstance()->getRenderOption();
+			Shader* s = Renderer::getInstance()->getShader(Renderer::INSTANCE_DRAWABLE);
+			Renderer::getInstance()->setRenderOption(Mesh::BOUNDING_BOX);
+			Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE, ResourceManager::getInstance()->getShader("wired"));
+
+			glm::mat4 projection = glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f);
+			Renderer::getInstance()->drawInstanceDrawable(rayList[0].second, &camera.getViewMatrix()[0][0], &projection[0][0]);
+
+			Renderer::getInstance()->setRenderOption(option);
+			Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE, s);
+		}
+		else
+		{
+			WidgetManager::getInstance()->setString("interaction", "Distance : (inf)\nPosition : ()\nInstance on ray : 0\nFirst instance pointed id : (null)\n ");
+		}
+
+		// Render scene
+		Renderer::getInstance()->renderHUD(&camera);
 
 		//  handle events
 		EventHandler::getInstance()->handleEvent();
@@ -169,11 +213,13 @@ int main()
 				{
 					Renderer::getInstance()->setRenderOption(Mesh::BOUNDING_BOX);
 					Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE, ResourceManager::getInstance()->getShader("wired"));
+					WidgetManager::getInstance()->append("console", "wired");
 				}
 				else 
 				{
 					Renderer::getInstance()->setRenderOption(Mesh::DEFAULT);
 					Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE, nullptr);
+					WidgetManager::getInstance()->append("console", "default");
 				}
 			}
 		}
@@ -201,17 +247,10 @@ int main()
 		averageCompleteTime = 0.99f * averageCompleteTime + 0.01f * completeTime;
 		WidgetManager::getInstance()->setString("runtime speed", 
 			"FPS : " + std::to_string((int)(1000.f / completeTime)) + "\navg : " + std::to_string((int)(1000.f / averageCompleteTime)) + 
-			"\n\nTime : " + std::to_string(completeTime) + " ms\navg : " + std::to_string(averageCompleteTime) + " ms");
+			"\n\nTime : " + ToolBox::to_string_with_precision(completeTime) + " ms\navg : " + ToolBox::to_string_with_precision(averageCompleteTime) + " ms");
 		WidgetManager::getInstance()->setString("drawcalls",
 			"Instances :\n  " + std::to_string(Renderer::getInstance()->getNbDrawnInstances() + WidgetManager::getInstance()->getNbDrawnWidgets()) + 
 			"\n\nTriangles :\n  " + std::to_string(Renderer::getInstance()->getNbDrawnTriangles() + WidgetManager::getInstance()->getNbDrawnTriangles()));
-
-		dummy += elapseTime;
-		if (dummy > 500.0)
-		{
-			dummy -= 500.0;
-			//WidgetManager::getInstance()->append("console", std::to_string(glfwGetTime()));
-		}
 		WidgetManager::getInstance()->update((float)elapseTime, EventHandler::getInstance()->isActivated(USE1));
 
 		//	Move avatar if needed

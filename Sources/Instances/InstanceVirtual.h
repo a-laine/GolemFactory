@@ -57,6 +57,7 @@ class InstanceVirtual
 		glm::mat4 getModelMatrix() const;
 		
 		InstanceType getType() const;
+		uint32_t getId() const;
 		virtual glm::vec3 getBBMax() const;
 		virtual glm::vec3 getBBMin() const;
 		virtual float getBSRadius() const;

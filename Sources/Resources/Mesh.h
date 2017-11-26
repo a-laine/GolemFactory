@@ -83,8 +83,8 @@ class Mesh : public ResourceVirtual
 		std::vector<glm::vec3> colors;
         std::vector<unsigned short> faces;
 
-		GLuint  BBOvao, vBBOBuffer, fBBOBuffer;
-		std::vector<glm::vec3> vBBOx;
-		std::vector<unsigned short> fBBOx;
+		GLuint  BBoxVao, vBBoxBuffer, fBBoxBuffer;
+		std::vector<glm::vec3> vBBox;
+		std::vector<unsigned short> fBBox;
         //
 };
