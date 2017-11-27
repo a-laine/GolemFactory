@@ -146,11 +146,11 @@ void Renderer::render(Camera* renderCam)
 	if (dummy >= 6.28) dummy = 0.0;
 
 	// bind matrix
-	glm::mat4 view = renderCam->getViewMatrix();
+	glm::mat4 view(renderCam->getViewMatrix());
 
 	int width, height;
 	glfwGetWindowSize(window, &width, &height);
-	glm::mat4 projection = glm::perspective(glm::radians(renderCam->getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f);
+	glm::mat4 projection(glm::perspective(glm::radians(renderCam->getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f));
 	
 	// opengl state
 	glEnable(GL_DEPTH_TEST);
