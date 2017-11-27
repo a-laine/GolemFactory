@@ -1,5 +1,8 @@
 #include "Renderer.h"
 
+#define BATCH_SIZE 30
+
+
 //  Default
 Renderer::Renderer() : renderOption(Mesh::DEFAULT)
 {
@@ -135,6 +138,7 @@ void Renderer::render(Camera* renderCam)
 {
 	trianglesDrawn = 0;
 	instanceDrawn = 0;
+	lastShader = nullptr;
 	if (!window || !camera || !renderCam) return;
 	
 	// dummy animation timeline
@@ -171,27 +175,54 @@ void Renderer::render(Camera* renderCam)
 	std::sort(instanceList.begin(), instanceList.end());
 
 	//	draw instance list
+	std::map<Shader*, std::vector<InstanceVirtual*> > batches;
 	for (auto it = instanceList.begin(); it != instanceList.end(); ++it)
 	{
-		switch (it->second->getType())
+		batches[it->second->getShader()].push_back(it->second);
+		if (batches[it->second->getShader()].size() > BATCH_SIZE)
 		{
-			case InstanceVirtual::DRAWABLE:
-				drawInstanceDrawable(it->second, &view[0][0], &projection[0][0]);
-				break;
-			case InstanceVirtual::ANIMATABLE:
-				drawInstanceAnimatable(it->second, &view[0][0], &projection[0][0]);
-				break;
-			case InstanceVirtual::CONTAINER:
-				drawInstanceContainer(it->second, view, projection, glm::mat4(1.f));
-				break;
-			default:
-				break;
+			std::vector<InstanceVirtual*>& batch = batches[it->second->getShader()];
+			for (unsigned int i = 0; i < BATCH_SIZE + 1; i++)
+			{
+				switch (batch[i]->getType())
+				{
+					case InstanceVirtual::DRAWABLE:
+						drawInstanceDrawable(batch[i], &view[0][0], &projection[0][0]);
+						break;
+					case InstanceVirtual::ANIMATABLE:
+						drawInstanceAnimatable(batch[i], &view[0][0], &projection[0][0]);
+						break;
+					case InstanceVirtual::CONTAINER:
+						drawInstanceContainer(batch[i], view, projection, glm::mat4(1.f));
+						break;
+					default:
+						break;
+				}
+			}
+			batch.clear();
 		}
 	}
-
-	//	HUD
-	//projection = glm::perspective(glm::radians(ANGLE_VERTICAL_HUD_PROJECTION), (float)width / height, 0.1f, 1500.f);
-	//WidgetManager::getInstance()->draw(defaultShader[HUD], glm::translate(glm::mat4(1.f), DISTANCE_HUD_CAMERA*camera->getForward()) * camera->getModelMatrix(), &view[0][0], &projection[0][0]);
+	for (auto it = batches.begin(); it != batches.end(); ++it)
+	{
+		std::vector<InstanceVirtual*>& batch = it->second;
+		for (unsigned int i = 0; i < batch.size(); i++)
+		{
+			switch (batch[i]->getType())
+			{
+				case InstanceVirtual::DRAWABLE:
+					drawInstanceDrawable(batch[i], &view[0][0], &projection[0][0]);
+					break;
+				case InstanceVirtual::ANIMATABLE:
+					drawInstanceAnimatable(batch[i], &view[0][0], &projection[0][0]);
+					break;
+				case InstanceVirtual::CONTAINER:
+					drawInstanceContainer(batch[i], view, projection, glm::mat4(1.f));
+					break;
+				default:
+					break;
+			}
+		}
+	}
 }
 void Renderer::renderHUD(Camera* renderCam)
 {
@@ -228,19 +259,11 @@ void Renderer::renderHUD(Camera* renderCam)
 				{
 					if ((*it2)->isVisible())	// widget visible
 					{
-						//	Get shader
+						//	Get shader and prepare matrix
 						Shader* shader = nullptr;
 						if (!defaultShader[HUD]) shader = (*it2)->getShader();
+						loadMVPMatrix(shader, &glm::translate(model, (*it2)->getPosition())[0][0], &view[0][0], &projection[0][0]);
 						if (!shader) continue;
-						shader->enable();
-
-						//	Enable mvp matrix
-						int loc = shader->getUniformLocation("model");
-						if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, &glm::translate(model, (*it2)->getPosition())[0][0]);
-						loc = shader->getUniformLocation("view");
-						if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, &view[0][0]);
-						loc = shader->getUniformLocation("projection");
-						if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, &projection[0][0]);
 
 						//	Draw
 						(*it2)->draw(shader, stencilMask, model);
@@ -257,14 +280,25 @@ void Renderer::renderHUD(Camera* renderCam)
 
 
 //	Protected functions
-void Renderer::loadMVPMatrix(Shader* shader, const float* model, const float* view, const float* projection) const
+void Renderer::loadMVPMatrix(Shader* shader, const float* model, const float* view, const float* projection)
 {
-	int loc = shader->getUniformLocation("model");
-	if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, model);
-	loc = shader->getUniformLocation("view");
-	if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, view);
-	loc = shader->getUniformLocation("projection");
-	if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, projection);
+	if (shader == lastShader && shader)
+	{
+		int loc = shader->getUniformLocation("model");
+		if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, model);
+	}
+	else if (shader)
+	{
+		shader->enable();
+		int loc = shader->getUniformLocation("model");
+		if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, model);
+		loc = shader->getUniformLocation("view");
+		if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, view);
+		loc = shader->getUniformLocation("projection");
+		if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, projection);
+		lastShader = shader;
+	}
+	else  lastShader = nullptr;
 }
 //
 
@@ -272,23 +306,11 @@ void Renderer::loadMVPMatrix(Shader* shader, const float* model, const float* vi
 //	Render function
 void Renderer::drawInstanceDrawable(InstanceVirtual* ins, const float* view, const float* projection, const glm::mat4& base)
 {
-	//	Get shader
+	//	Get shader and prepare matrix
 	Shader* shaderToUse = defaultShader[INSTANCE_DRAWABLE];
 	if (!shaderToUse) shaderToUse = ins->getShader();
+		loadMVPMatrix(shaderToUse, &(base * ins->getModelMatrix())[0][0], view, projection);
 	if (!shaderToUse) return;
-	shaderToUse->enable();
-
-	//	Enable mvp matrix
-	loadMVPMatrix(shaderToUse, &(base * ins->getModelMatrix())[0][0], view, projection);
-
-	//	Map with wind if instance sensible to wind
-	/*int loc = shaderToUse->getUniformLocation("wind");
-	if (loc >= 0)
-	{
-		double phase = 0.05*ins->getPosition().x + 0.05*ins->getSize().z;
-		glm::vec4 wind(0.1 * sin(dummy + phase), 0.0, 0.0, 0.0);
-		glUniform4fv(loc, 1, &wind.x);
-	}*/
 
 	//	Draw mesh
 	ins->getMesh()->draw(renderOption);
@@ -297,14 +319,11 @@ void Renderer::drawInstanceDrawable(InstanceVirtual* ins, const float* view, con
 }
 void Renderer::drawInstanceAnimatable(InstanceVirtual* ins, const float* view, const float* projection)
 {
-	//	Get shader
+	//	Get shader and prepare matrix
 	Shader* shaderToUse = defaultShader[INSTANCE_ANIMATABLE];
 	if (!shaderToUse) shaderToUse = ins->getShader();
-	if (!shaderToUse) return;
-	shaderToUse->enable();
-
-	//	Enable mvp matrix
 	loadMVPMatrix(shaderToUse, &ins->getModelMatrix()[0][0], view, projection);
+	if (!shaderToUse) return;
 
 	//	Load skeleton pose matrix list for vertex skinning calculation
 	std::vector<glm::mat4> pose = ins->getPose();

@@ -233,7 +233,7 @@ void initializeForestScene(bool emptyPlace)
 			else if (r < 80)
 			{
 				meshName = "firTree1.obj";
-				shaderName = "tree";
+				shaderName = "default";
 				sDispersion = 0.2f;
 				sOffset = 1.7f;
 			}

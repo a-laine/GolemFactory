@@ -69,7 +69,7 @@ class Renderer : public Singleton<Renderer>
 		//
 
 		//	Protected functions
-		void loadMVPMatrix(Shader* shader, const float* model, const float* view, const float* projection) const;
+		void loadMVPMatrix(Shader* shader, const float* model, const float* view, const float* projection);
 		//
 
 		//  Attributes
@@ -84,6 +84,7 @@ class Renderer : public Singleton<Renderer>
 
 		unsigned int instanceDrawn, trianglesDrawn;
 		double dummy;
+		Shader* lastShader;
 		//
 };
 

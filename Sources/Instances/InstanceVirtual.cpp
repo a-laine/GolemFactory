@@ -1,27 +1,32 @@
 #include "InstanceVirtual.h"
 
 //  Default
-InstanceVirtual::InstanceVirtual(InstanceType instanceType) : type(instanceType), id(0), count(0), position(0.f, 0.f, 0.f), size(1.f, 1.f, 1.f), orientation(1.f) {}
+InstanceVirtual::InstanceVirtual(InstanceType instanceType) : 
+	type(instanceType), id(0), count(0), position(0.f, 0.f, 0.f), size(1.f, 1.f, 1.f), orientation(1.f), modelMatrixNeedUpdate(true), model(1.f)
+{}
 InstanceVirtual::~InstanceVirtual() {}
 //
 
 
 //	Set/Get functions
-void InstanceVirtual::setPosition(glm::vec3 p) { position = p; }
-void InstanceVirtual::setSize(glm::vec3 s) { size = s; }
-void InstanceVirtual::setOrientation(glm::mat4 m) { orientation = m; }
+void InstanceVirtual::setPosition(glm::vec3 p) { position = p; modelMatrixNeedUpdate = true; }
+void InstanceVirtual::setSize(glm::vec3 s) { size = s; modelMatrixNeedUpdate = true; }
+void InstanceVirtual::setOrientation(glm::mat4 m) { orientation = m; modelMatrixNeedUpdate = true; }
 
 
 glm::vec3 InstanceVirtual::getPosition() const{ return position; }
 glm::vec3 InstanceVirtual::getSize() const  { return size; }
 glm::mat4 InstanceVirtual::getOrientation() const { return orientation; }
-glm::mat4 InstanceVirtual::getModelMatrix() const
+glm::mat4 InstanceVirtual::getModelMatrix()
 {
-	glm::mat4 model(1.0);
-	model = glm::translate(model, position);
-	model = model * orientation;
-	model = glm::scale(model, size);
-	return model;
+	if (!modelMatrixNeedUpdate) return model;
+	else
+	{
+		model = glm::translate(glm::mat4(1.0), position);
+		model = model * orientation;
+		model = glm::scale(model, size);
+		return model;
+	}
 }
 
 

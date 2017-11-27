@@ -198,29 +198,30 @@ void SceneManager::getInstanceOnRay(std::vector<std::pair<float, InstanceVirtual
 			for (unsigned int i = 0; i < fBBox.size(); i += 6)
 			{
 				//	compute triangles vertices in world space
-				glm::vec3 p1 = glm::vec3(model * glm::vec4(vBBox[fBBox[i]], 1.f));
-				glm::vec3 p2 = glm::vec3(model * glm::vec4(vBBox[fBBox[i + 1]], 1.f));
-				glm::vec3 p3 = glm::vec3(model * glm::vec4(vBBox[fBBox[i + 2]], 1.f));
+				
 
 				//	compute local base
-				glm::vec3 v1 = p2 - p1;
-				glm::vec3 v2 = p3 - p1;
+				glm::vec3 p1 = glm::vec3(model * glm::vec4(vBBox[fBBox[i]], 1.f));				//	vertex 1 of triangle
+				glm::vec3 v1 = glm::vec3(model * glm::vec4(vBBox[fBBox[i + 1]], 1.f)) - p1;		//	vertex 2 of triangle - vertex 1 of triangle
+				glm::vec3 v2 = glm::vec3(model * glm::vec4(vBBox[fBBox[i + 2]], 1.f)) - p1;		//	vertex 3 of triangle - vertex 1 of triangle
 				glm::vec3 normal = glm::cross(v1, v2);
 				if (normal == glm::vec3(0.f)) continue;
 				glm::normalize(normal);
 
 				//	compute intersection point
-				if (glm::dot(normal, camDirection) == 0.f) continue;
-				if (glm::dot(normal, camDirection) > 0.f) normal *= -1.f;
+				float proj = glm::dot(normal, camDirection);
+				if (proj == 0.f) continue;
+				if (proj > 0.f) normal *= -1.f;
 				float depth = glm::dot(normal, p1 - camPosition) / glm::dot(normal, camDirection);
 				if (depth > maxDistance || depth < 0.f) continue;
 				glm::vec3 intersection = camPosition + depth * camDirection - p1;
 
 				//	check if point is inside triangle
-				float magnitute = glm::dot(v2, v2) * glm::dot(v1, v1) - glm::dot(v1, v2) * glm::dot(v1, v2);
+				float dotv1v2 = glm::dot(v1, v2);
+				float magnitute = glm::dot(v2, v2) * glm::dot(v1, v1) - dotv1v2 * dotv1v2;
 				glm::vec2 barry;
-				barry.x = (glm::dot(v2, v2) * glm::dot(intersection, v1) - glm::dot(v2, v1) * glm::dot(intersection, v2)) / magnitute;
-				barry.y = (glm::dot(v1, v1) * glm::dot(intersection, v2) - glm::dot(v2, v1) * glm::dot(intersection, v1)) / magnitute;
+				barry.x = (glm::dot(v2, v2) * glm::dot(intersection, v1) - dotv1v2 * glm::dot(intersection, v2)) / magnitute;
+				barry.y = (glm::dot(v1, v1) * glm::dot(intersection, v2) - dotv1v2 * glm::dot(intersection, v1)) / magnitute;
 				if (barry.x < 0.f || barry.y < 0.f || barry.x > 1.f || barry.y > 1.f) continue;
 				else refinedList.push_back(std::pair<float, InstanceVirtual*>(depth, it->second));
 				break;
@@ -243,30 +244,28 @@ void SceneManager::getInstanceOnRay(std::vector<std::pair<float, InstanceVirtual
 			glm::mat4 model = it->second->getModelMatrix();
 			for (unsigned int i = 0; i < faces.size(); i += 3)
 			{
-				//	compute triangles vertices in world space
-				glm::vec3 p1 = glm::vec3(model * glm::vec4(vertices[faces[i]], 1.f));
-				glm::vec3 p2 = glm::vec3(model * glm::vec4(vertices[faces[i + 1]], 1.f));
-				glm::vec3 p3 = glm::vec3(model * glm::vec4(vertices[faces[i + 2]], 1.f));
-
 				//	compute local base
-				glm::vec3 v1 = p2 - p1;
-				glm::vec3 v2 = p3 - p1;
+				glm::vec3 p1 = glm::vec3(model * glm::vec4(vertices[faces[i]], 1.f));				//	vertex 1 of triangle
+				glm::vec3 v1 = glm::vec3(model * glm::vec4(vertices[faces[i + 1]], 1.f)) - p1;		//	vertex 2 of triangle - vertex 1 of triangle
+				glm::vec3 v2 = glm::vec3(model * glm::vec4(vertices[faces[i + 2]], 1.f)) - p1;		//	vertex 3 of triangle - vertex 1 of triangle
 				glm::vec3 normal = glm::cross(v1, v2);
 				if (normal == glm::vec3(0.f)) continue;
 				glm::normalize(normal);
 
 				//	compute intersection point
-				if (glm::dot(normal, camDirection) == 0.f) continue;
-				if (glm::dot(normal, camDirection) > 0.f) normal *= -1.f;
+				float proj = glm::dot(normal, camDirection);
+				if (proj == 0.f) continue;
+				if (proj > 0.f) normal *= -1.f;
 				float depth = glm::dot(normal, p1 - camPosition) / glm::dot(normal, camDirection);
 				if (depth > maxDistance || depth < 0.f) continue;
 				glm::vec3 intersection = camPosition + depth * camDirection - p1;
 
 				//	check if point is inside triangle
-				float magnitute = glm::dot(v2, v2) * glm::dot(v1, v1) - glm::dot(v1, v2) * glm::dot(v1, v2);
+				float dotv1v2 = glm::dot(v1, v2);
+				float magnitute = glm::dot(v2, v2) * glm::dot(v1, v1) - dotv1v2 * dotv1v2;
 				glm::vec2 barry;
-				barry.x = (glm::dot(v2, v2) * glm::dot(intersection, v1) - glm::dot(v2, v1) * glm::dot(intersection, v2)) / magnitute;
-				barry.y = (glm::dot(v1, v1) * glm::dot(intersection, v2) - glm::dot(v2, v1) * glm::dot(intersection, v1)) / magnitute;
+				barry.x = (glm::dot(v2, v2) * glm::dot(intersection, v1) - dotv1v2 * glm::dot(intersection, v2)) / magnitute;
+				barry.y = (glm::dot(v1, v1) * glm::dot(intersection, v2) - dotv1v2 * glm::dot(intersection, v1)) / magnitute;
 				if (barry.x < 0.f || barry.y < 0.f || barry.x + barry.y > 1.f) continue;
 				else refinedList.push_back(std::pair<float, InstanceVirtual*>(depth, it->second));
 				break;

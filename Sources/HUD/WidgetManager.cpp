@@ -333,7 +333,7 @@ void WidgetManager::loadDebugHud()
 		layerList.insert(layer3);
 
 	//	console
-	WidgetConsole* console = new WidgetConsole();
+	WidgetConsole* console = new WidgetConsole(WidgetVirtual::VISIBLE | WidgetVirtual::RESPONSIVE);
 		console->setPosition(glm::vec3(0.f, 0.01f, 0.f), WidgetVirtual::ALL);
 		console->setSize(glm::vec2(2.1f, 0.5f), WidgetVirtual::ALL);
 		console->setSizeChar(0.07f);
@@ -383,7 +383,7 @@ void WidgetManager::loadDebugHud()
 		image->setSize(glm::vec2(0.1f, 0.1f), WidgetVirtual::ALL);
 		image->initialize();
 		widgetList.insert(image);
-	Layer* layer6 = new Layer(Layer::VISIBLE);
+	Layer* layer6 = new Layer(Layer::VISIBLE | Layer::RESPONSIVE);
 		layer6->setSize(0.05f);
 		layer6->setScreenPosition(glm::vec3(0.f, 0.f, 0.f));
 		layer6->setPosition(layer6->getScreenPosition());

@@ -54,7 +54,7 @@ class InstanceVirtual
 		glm::vec3 getPosition() const;
 		glm::vec3 getSize() const;
 		glm::mat4 getOrientation() const;
-		glm::mat4 getModelMatrix() const;
+		glm::mat4 getModelMatrix();
 		
 		InstanceType getType() const;
 		uint32_t getId() const;
@@ -80,5 +80,8 @@ class InstanceVirtual
 		glm::vec3 position;			//!< Instance position
 		glm::vec3 size;				//!< Instance size (or scale) factor
 		glm::mat4 orientation;		//!< Instance orientation
+
+		bool modelMatrixNeedUpdate;
+		glm::mat4 model;
 		//
 };
