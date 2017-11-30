@@ -19,9 +19,10 @@ class SceneManager : public Singleton<SceneManager>
 		//	Miscellaneous
 		enum Grain
 		{
-			COARSE,
-			INSTANCE_BB,
-			INSTANCE_MESH
+			COARSE = 0,
+			INSTANCE_BB = 1,
+			INSTANCE_CAPSULE = 2,
+			INSTANCE_MESH = 3
 		};
 		//
 
@@ -31,7 +32,7 @@ class SceneManager : public Singleton<SceneManager>
 		//
 
 		//  Set/get functions
-		void setCameraAttributes(glm::vec3 position, glm::vec3 direction, glm::vec3 vertical, glm::vec3 left, float verticalAngle, float horizontalAngle);
+		void setCameraAttributes(const glm::vec3& position, const glm::vec3& direction, const glm::vec3& vertical, const glm::vec3& left, const float& verticalAngle, const float& horizontalAngle);
 		void setViewDistance(float distance,int depth);
 		void setWorldSize(glm::vec3 size);
 		void setWorldPosition(glm::vec3 position);

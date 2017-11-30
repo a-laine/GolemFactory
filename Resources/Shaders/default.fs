@@ -13,7 +13,7 @@ layout (location = 0) out vec3 fragColor;
 void main()
 {
 	float costeta = clamp( dot(normalize(fragmentNormal), normalize(lightDirectionCameraSpace)), 0,1 );
-	fragColor = fragmentColor * (0.5*costeta + 0.9);
+	fragColor = fragmentColor * (0.4*costeta + 0.6);
 }
 
 

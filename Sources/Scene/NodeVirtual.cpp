@@ -80,35 +80,54 @@ bool NodeVirtual::removeObject(InstanceVirtual* obj)
 }
 
 
-void NodeVirtual::split()
+void NodeVirtual::split(const int& targetDepth, const int& depth)
 {
-	if (!children.empty())return;
-	int xChild = (division&X) >> dX;
-	int yChild = (division&Y) >> dY;
-	int zChild = (division&Z) >> dZ;
-
-	for (int i = 0; i < xChild; i++)
+	if (children.empty() && targetDepth >= depth)
 	{
-		float xpos = position.x - size.x / 2 + size.x / xChild / 2 + i*size.x / xChild;
-		for (int j = 0; j < yChild; j++)
+		int xChild = (division&X) >> dX;
+		int yChild = (division&Y) >> dY;
+		int zChild = (division&Z) >> dZ;
+
+		for (int i = 0; i < xChild; i++)
 		{
-			float ypos = position.y - size.y / 2 + size.y / yChild / 2 + j*size.y / yChild;
-			for (int k = 0; k < zChild; k++)
+			float xpos = position.x - size.x / 2 + size.x / xChild / 2 + i*size.x / xChild;
+			for (int j = 0; j < yChild; j++)
 			{
-				float zpos = position.z - size.z / 2 + size.z / zChild / 2 + k*size.z / zChild;
-				NodeVirtual* n = new NodeVirtual(this,division);
-					n->setPosition(glm::vec3(xpos,ypos,zpos));
-					n->setSize(glm::vec3(size.x / xChild, size.y / yChild, size.z / zChild));
-					children.push_back(n);
+				float ypos = position.y - size.y / 2 + size.y / yChild / 2 + j*size.y / yChild;
+				for (int k = 0; k < zChild; k++)
+				{
+					float zpos = position.z - size.z / 2 + size.z / zChild / 2 + k*size.z / zChild;
+					NodeVirtual* n = new NodeVirtual(this,division);
+						n->setPosition(glm::vec3(xpos,ypos,zpos));
+						n->setSize(glm::vec3(size.x / xChild, size.y / yChild, size.z / zChild));
+						children.push_back(n);
+				}
 			}
 		}
+
+		if (targetDepth > depth)
+			for (unsigned int i = 0; i < children.size(); i++)
+				children[i]->split(targetDepth, depth + 1);
+	}
+	else if(targetDepth >= depth)
+	{
+		for (unsigned int i = 0; i < children.size(); i++)
+			children[i]->split(targetDepth, depth + 1);
 	}
 }
-void NodeVirtual::merge()
+void NodeVirtual::merge(const int& targetDepth, const int& depth)
 {
-	for (unsigned int i = 0; i < children.size(); i++)
-		delete children[i];
-	children.clear();
+	if (targetDepth <= depth)
+	{
+		for (unsigned int i = 0; i < children.size(); i++)
+			delete children[i];
+		children.clear();
+	}
+	else if (!children.empty())
+	{
+		for (unsigned int i = 0; i < children.size(); i++)
+			children[i]->merge(targetDepth, depth);
+	}
 }
 void NodeVirtual::add(NodeVirtual* n)
 {

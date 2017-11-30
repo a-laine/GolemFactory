@@ -2,18 +2,26 @@
 
 #include <glm/gtc/matrix_access.hpp>
 
+
+#define MAX_DISTANCE_VIEW	32000
+#define MIN_DISTANCE_VIEW	10
+#define MAX_TREE_DEPTH		5
+#define MIN_TREE_DEPTH		2
+
+
+
 //  Default
 SceneManager::SceneManager()
 {
-	setViewDistance(100, 2);
-	NodeVirtual* n = new NodeVirtual(nullptr, 0x040401);
-		n->setPosition(glm::vec3(0.f, 0.f, 10.f));
-		n->setSize(glm::vec3(100.f, 100.f, 20.f));
-		n->split();
-	world.push_back(n);
+	const float initialDistance = MAX_DISTANCE_VIEW;
+	const int initialDepth = MIN_TREE_DEPTH;
 
-	for (unsigned int i = 0; i < world[0]->children.size(); i++)
-		world[0]->children[i]->split();
+	setViewDistance(initialDistance, initialDepth);
+	NodeVirtual* n = new NodeVirtual(nullptr, 0x040401);
+		n->setPosition(glm::vec3(0.f, 0.f, initialDistance / 10.f));
+		n->setSize(glm::vec3(initialDistance, initialDistance, initialDistance / 5.f));
+		n->split(2,0);
+	world.push_back(n);
 }
 SceneManager::~SceneManager()
 {
@@ -27,17 +35,21 @@ SceneManager::~SceneManager()
 //  Scene modifier
 bool SceneManager::addStaticObject(InstanceVirtual* obj)
 {
-	return world[0]->addObject(obj);
+	for (unsigned int i = 0; i < world.size(); i++)
+		if (world[i]->addObject(obj)) return true;
+	return false;
 }
 bool SceneManager::removeObject(InstanceVirtual* obj)
 {
-	return world[0]->removeObject(obj);
+	for (unsigned int i = 0; i < world.size(); i++)
+		if (world[i]->removeObject(obj)) return true;
+	return false;
 }
 //
 
 
 //  Set/get functions
-void SceneManager::setCameraAttributes(glm::vec3 position, glm::vec3 direction, glm::vec3 vertical, glm::vec3 left, float verticalAngle, float horizontalAngle)
+void SceneManager::setCameraAttributes(const glm::vec3& position, const glm::vec3& direction, const glm::vec3& vertical, const glm::vec3& left, const float& verticalAngle, const float& horizontalAngle)
 {
 	camPosition = position;
 	camDirection = direction;
@@ -46,43 +58,45 @@ void SceneManager::setCameraAttributes(glm::vec3 position, glm::vec3 direction, 
 	camVertical = vertical;
 	camLeft = left;
 }
-void SceneManager::setViewDistance(float distance,int depth)
+void SceneManager::setViewDistance(float distance, int depth)
 {
 	//	take care of user definition variable (and replace by acceptable value if not in input)
-	if (depth < 1)
+	if (depth < MIN_TREE_DEPTH)
 	{
-		depth = 1;
+		depth = MIN_TREE_DEPTH;
 		std::cerr << "WARNING : in scene manager 'setViewDistance' : new depth too low -> depth set to " << depth << " instead." << std::endl;
 	}
-	else if (depth > 5)
+	else if (depth > MAX_TREE_DEPTH)
 	{
-		depth = 5;
+		depth = MAX_TREE_DEPTH;
 		std::cerr << "WARNING : in scene manager 'setViewDistance' : new depth too high -> depth set to " << depth << " instead." << std::endl;
 	}
 
-	if (distance < 0.1)
+	if (distance < MIN_DISTANCE_VIEW)
 	{
-		distance = 10;
+		distance = MIN_DISTANCE_VIEW;
 		std::cerr << "WARNING : in scene manager 'setViewDistance' : new depth too low -> depth set to " << distance << "meter instead." << std::endl;
 	}
-	else if (distance > 32000)
+	else if (distance > MAX_DISTANCE_VIEW)
 	{
-		distance = 32000;
+		distance = MAX_DISTANCE_VIEW;
 		std::cerr << "WARNING : in scene manager 'setViewDistance' : new depth too high -> depth set to " << distance << "meter instead." << std::endl;
 	}
 
 	//	compute distance stack
 	viewMaxDistance.clear();
 	for (int i = 0; i < depth; i++)
-		viewMaxDistance.push_back(distance/(float)pow(2,i));
+		viewMaxDistance.push_back(distance / (float)pow(2,i));
 }
 void SceneManager::setWorldSize(glm::vec3 size)
 {
-	world[0]->setSize(size);
+	for (unsigned int i = 0; i < world.size(); i++)
+		world[i]->setSize(size);
 }
 void SceneManager::setWorldPosition(glm::vec3 position)
 {
-	world[0]->setPosition(position);
+	for (unsigned int i = 0; i < world.size(); i++)
+		world[i]->setPosition(position);
 }
 
 
@@ -188,6 +202,7 @@ void SceneManager::getInstanceOnRay(std::vector<std::pair<float, InstanceVirtual
 	std::vector<std::pair<float, InstanceVirtual*> > refinedList;
 	for (auto it = list.begin(); it != list.end(); ++it)
 	{
+		if (it->second->getType() == InstanceVirtual::ANIMATABLE) continue;
 		Mesh* m = it->second->getMesh();
 		if (!m) continue;
 		else
@@ -197,9 +212,6 @@ void SceneManager::getInstanceOnRay(std::vector<std::pair<float, InstanceVirtual
 			glm::mat4 model = it->second->getModelMatrix();
 			for (unsigned int i = 0; i < fBBox.size(); i += 6)
 			{
-				//	compute triangles vertices in world space
-				
-
 				//	compute local base
 				glm::vec3 p1 = glm::vec3(model * glm::vec4(vBBox[fBBox[i]], 1.f));				//	vertex 1 of triangle
 				glm::vec3 v1 = glm::vec3(model * glm::vec4(vBBox[fBBox[i + 1]], 1.f)) - p1;		//	vertex 2 of triangle - vertex 1 of triangle
@@ -229,7 +241,7 @@ void SceneManager::getInstanceOnRay(std::vector<std::pair<float, InstanceVirtual
 		}
 	}
 	list.swap(refinedList);
-	if (grain == INSTANCE_BB) return;
+	if (grain == INSTANCE_BB || grain == INSTANCE_CAPSULE) return;
 
 	//	refine list checking instance meshes
 	refinedList.clear();

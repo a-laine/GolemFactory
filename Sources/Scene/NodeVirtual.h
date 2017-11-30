@@ -89,12 +89,12 @@ class NodeVirtual
 		/*!
 		 *	\brief Divide (split) node depending on node division byte
 		 */
-		virtual void split();
+		virtual void split(const int& targetDepth = 1, const int& depth = 1);
 
 		/*!
 		 *	\brief Merge node (delete children)
 		 */
-		virtual void merge();
+		virtual void merge(const int& targetDepth = 1, const int& depth = 1);
 
 		
 		virtual void add(NodeVirtual* n);
