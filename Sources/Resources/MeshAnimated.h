@@ -29,6 +29,9 @@ class MeshAnimated : public Mesh
 
 		//	Set / get functions
 		bool isValid() const;
+
+		const std::vector<glm::ivec3>* getBones() const;
+		const std::vector<glm::vec3>* getWeights() const;
 		//
 
 	protected:

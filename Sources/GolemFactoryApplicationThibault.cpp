@@ -62,12 +62,16 @@ int main()
 	initManagers();
 
 	//	Test scene
-		initializeForestScene(false);
+		//initializeForestScene(false);
 
 		avatar = InstanceManager::getInstance()->getInstanceAnimatable("peasant", "human", "simple_peasant", "skinning");
 			float scale = 1.7f / (avatar->getBBMax() - avatar->getBBMin()).z;
 			avatar->setSize(glm::vec3(scale));
-			avatar->setPosition(glm::vec3(20.f, 0.f, -scale * avatar->getMesh()->aabb_min.z));
+			avatar->setPosition(glm::vec3(0.f, 0.f, -scale * avatar->getMesh()->aabb_min.z));
+
+			camera.setMode(Camera::TRACKBALL);
+			camera.setRadius(4);
+			Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getShader("wired"));
 
 	// init loop time tracking
 	double elapseTime = 16.;
@@ -75,6 +79,7 @@ int main()
 	int width, height;
 
 	//	game loop
+	exit(0);
 	std::cout << "game loop initiated" << std::endl;
 	while (!glfwWindowShouldClose(window))
 	{

@@ -26,6 +26,8 @@ class InstanceAnimatable : public InstanceDrawable
 		void animate(float step);
 		void launchAnimation(const std::string& labelName, const bool& flaged = false);
 		void stopAnimation(const std::string& labelName);
+
+		void computeCapsules();
 		//
 
 		//	Set/get functions
@@ -69,5 +71,7 @@ class InstanceAnimatable : public InstanceDrawable
 		Mutex locker;
 		std::vector<glm::mat4> pose;
 		std::list<AnimationTrack> currentAnimations;
+		
+		std::vector<float> capsules;
 		//
 };

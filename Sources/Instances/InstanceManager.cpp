@@ -103,6 +103,7 @@ InstanceAnimatable* InstanceManager::getInstanceAnimatable(std::string meshName,
 		if (ins) delete ins;
 		return nullptr;
 	}
+	ins->computeCapsules();
 	return ins;
 }
 InstanceAnimatable* InstanceManager::getInstanceAnimatable(std::string meshName, std::string skeletonName, std::string animationName, std::string shaderName)
@@ -112,17 +113,13 @@ InstanceAnimatable* InstanceManager::getInstanceAnimatable(std::string meshName,
 	{
 		ins->setSkeleton(skeletonName);
 		ins->setAnimation(animationName);
-
-		/*std::vector<Joint> joints = ins->getSkeleton()->getJoints();
-		for (unsigned int i = 0; i < joints.size(); i++)
-			std::cout << i << " : " << joints[i].name << std::endl;*/
 	}
-
 	if (!ins || !add(ins))
 	{
 		if (ins) delete ins;
 		return nullptr;
 	}
+	ins->computeCapsules();
 	return ins;
 }
 InstanceContainer* InstanceManager::getInstanceContainer()

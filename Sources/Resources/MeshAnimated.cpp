@@ -294,4 +294,7 @@ bool MeshAnimated::isValid() const
 	if (!Mesh::isValid()) return false;
 	else return glIsBuffer(bonesBuffer) && glIsBuffer(weightsBuffer);
 }
+
+const std::vector<glm::ivec3>* MeshAnimated::getBones() const { return &bones; }
+const std::vector<glm::vec3>* MeshAnimated::getWeights() const { return &weights; }
 //

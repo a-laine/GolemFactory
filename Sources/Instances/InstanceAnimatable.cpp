@@ -1,5 +1,7 @@
 #include "InstanceAnimatable.h"
 
+#include <glm/gtc/matrix_access.hpp>
+
 //  Default
 InstanceAnimatable::InstanceAnimatable(const std::string& meshName, const std::string& shaderName) : InstanceDrawable(meshName, shaderName), skeleton(nullptr), animation(nullptr)
 {
@@ -131,6 +133,55 @@ void InstanceAnimatable::stopAnimation(const std::string& labelName)
 	for (std::list<AnimationTrack>::iterator it = currentAnimations.begin(); it != currentAnimations.end(); ++it)
 		if (it->name == labelName)
 			it->loop = false;
+}
+
+void InstanceAnimatable::computeCapsules()
+{
+	if (!capsules.empty()) capsules.clear();
+	if (!mesh || !skeleton || !mesh->getBones() || !mesh->getWeights()) return;
+
+	capsules.assign(skeleton->getJoints().size(), 0.f);
+	std::vector<glm::mat4> bind = skeleton->getInverseBindPose();
+	const std::vector<glm::vec3>* vertices = mesh->getVertices();
+	const std::vector<glm::ivec3>* bones = mesh->getBones();
+	const std::vector<glm::vec3>* weights = mesh->getWeights();
+	std::vector<Joint> joints = skeleton->getJoints();
+
+	for (unsigned int i = 0; i < vertices->size(); i++)
+	{
+		for (int j = 0; j < 3; j++)
+		{
+			if ((*weights)[i][j] != 0.f)
+			{
+				int bone = (*bones)[i][j];
+				glm::vec3 v = (*vertices)[i] - glm::vec3(glm::column(bind[bone], 3)); // vertex coordinate relative to parent joint
+				Joint& joint = joints[bone];
+
+				if (joint.sons.empty()) // capsule is a sphere
+				{
+					capsules[bone] = std::max(capsules[bone], glm::length(v));
+
+					auto ddd = (*vertices)[i];
+					std::cout << ddd.x << ' ' << ddd.y << ' ' << ddd.z << std::endl;
+					ddd = glm::vec3(glm::column(bind[bone], 3));
+					std::cout << ddd.x << ' ' << ddd.y << ' ' << ddd.z << std::endl;
+				}
+			}
+		}
+	}
+
+
+	/*
+		inverse_bind_pose * vertex_position = vertex_position_relative_to_joint				-> alias p1
+		bind_pose[column 3] = joint_origin_position_in_mesh_space
+		joint.relativeBindTransform[column 3] = joint_origin_position_in_parent_space		-> alias p2
+
+		bone_segment = p2 - vec3(0,0,0)
+		revelant_distance = relative_distance(bone_segment, p1)
+	*/
+
+	for (unsigned int i = 0; i < capsules.size(); i++)
+		std::cout << joints[i].name <<" : "<<capsules[i] << std::endl;
 }
 //
 
