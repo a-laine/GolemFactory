@@ -273,6 +273,8 @@ void SceneManager::getInstanceOnRay(std::vector<std::pair<float, InstanceVirtual
 				for (int j = 0; j < 3; j++)
 				{
 					/*
+						WARNNING : CRYPTIC PART INCOMING, READ EXPLANATION BEFORE CRYING
+
 						faces[i + lambda] -> define index for vertex lambda of triangle
 						(*bones)[alpha][j] -> define composante j (x, y, or z), of bone vector definition for vertex alpha
 						pose[beta] -> define pose matrix for bone of index beta (idem for ibind)

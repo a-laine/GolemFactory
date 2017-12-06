@@ -140,38 +140,37 @@ void InstanceAnimatable::computeCapsules()
 	if (!capsules.empty()) capsules.clear();
 	if (!mesh || !skeleton || !mesh->getBones() || !mesh->getWeights()) return;
 
-	capsules.assign(skeleton->getJoints().size(), 0.f);
-	std::vector<glm::mat4> bind = skeleton->getInverseBindPose();
-	const std::vector<glm::vec3>* vertices = mesh->getVertices();
+	std::vector<glm::mat4> ibind = skeleton->getInverseBindPose();
+	const std::vector<glm::vec3>& vertices = *mesh->getVertices();
 	const std::vector<glm::ivec3>* bones = mesh->getBones();
 	const std::vector<glm::vec3>* weights = mesh->getWeights();
 	std::vector<Joint> joints = skeleton->getJoints();
+	if (ibind.empty() || pose.empty() || !bones || !weights || joints.empty()) return;;
+	capsules.assign(skeleton->getJoints().size(), 0.f);
 
-	for (unsigned int i = 0; i < vertices->size(); i++)
+	for (unsigned int i = 0; i < vertices.size(); i++)
 	{
 		for (int j = 0; j < 3; j++)
 		{
 			float weight = (*weights)[i][j];
 			if (weight != 0.f)
 			{
-				int bone = (*bones)[i][j];
-
-
 				/*
+					WARNNING : CRYPTIC PART INCOMING, READ EXPLANATION BEFORE CRYING
+
 					inverse_bind_pose * vertex_position = vertex_position_relative_to_joint				-> alias p1
 					bind_pose[column 3] = joint_origin_position_in_mesh_space
 					joint.relativeBindTransform[column 3] = joint_origin_position_in_parent_space		-> alias p2
 
 					bone_segment = p2 - vec3(0,0,0)
-					revelant_distance = relative_distance(bone_segment, p1)
+					revelant_distance = relative_distance_to_segment(bone_segment, p1)
 				*/
 
+				glm::vec3 p1 = glm::vec3(ibind[(*bones)[i][j]] * glm::vec4(vertices[i], 1.f));
+				glm::vec3 p2 = glm::vec3(glm::column(joints[(*bones)[i][j]].relativeBindTransform, 3));
 			}
 		}
 	}
-
-
-
 
 	for (unsigned int i = 0; i < capsules.size(); i++)
 		std::cout << joints[i].name <<" : "<<capsules[i] << std::endl;
