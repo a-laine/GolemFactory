@@ -151,34 +151,27 @@ void InstanceAnimatable::computeCapsules()
 	{
 		for (int j = 0; j < 3; j++)
 		{
-			if ((*weights)[i][j] != 0.f)
+			float weight = (*weights)[i][j];
+			if (weight != 0.f)
 			{
 				int bone = (*bones)[i][j];
-				glm::vec3 v = (*vertices)[i] - glm::vec3(glm::column(bind[bone], 3)); // vertex coordinate relative to parent joint
-				Joint& joint = joints[bone];
 
-				if (joint.sons.empty()) // capsule is a sphere
-				{
-					capsules[bone] = std::max(capsules[bone], glm::length(v));
 
-					auto ddd = (*vertices)[i];
-					std::cout << ddd.x << ' ' << ddd.y << ' ' << ddd.z << std::endl;
-					ddd = glm::vec3(glm::column(bind[bone], 3));
-					std::cout << ddd.x << ' ' << ddd.y << ' ' << ddd.z << std::endl;
-				}
+				/*
+					inverse_bind_pose * vertex_position = vertex_position_relative_to_joint				-> alias p1
+					bind_pose[column 3] = joint_origin_position_in_mesh_space
+					joint.relativeBindTransform[column 3] = joint_origin_position_in_parent_space		-> alias p2
+
+					bone_segment = p2 - vec3(0,0,0)
+					revelant_distance = relative_distance(bone_segment, p1)
+				*/
+
 			}
 		}
 	}
 
 
-	/*
-		inverse_bind_pose * vertex_position = vertex_position_relative_to_joint				-> alias p1
-		bind_pose[column 3] = joint_origin_position_in_mesh_space
-		joint.relativeBindTransform[column 3] = joint_origin_position_in_parent_space		-> alias p2
 
-		bone_segment = p2 - vec3(0,0,0)
-		revelant_distance = relative_distance(bone_segment, p1)
-	*/
 
 	for (unsigned int i = 0; i < capsules.size(); i++)
 		std::cout << joints[i].name <<" : "<<capsules[i] << std::endl;

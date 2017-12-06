@@ -62,16 +62,17 @@ int main()
 	initManagers();
 
 	//	Test scene
-		//initializeForestScene(false);
+		initializeForestScene(false);
 
 		avatar = InstanceManager::getInstance()->getInstanceAnimatable("peasant", "human", "simple_peasant", "skinning");
 			float scale = 1.7f / (avatar->getBBMax() - avatar->getBBMin()).z;
 			avatar->setSize(glm::vec3(scale));
-			avatar->setPosition(glm::vec3(0.f, 0.f, -scale * avatar->getMesh()->aabb_min.z));
+			avatar->setPosition(glm::vec3(20.f, 20.f, -scale * avatar->getMesh()->aabb_min.z));
+			SceneManager::getInstance()->addStaticObject(avatar);
 
-			camera.setMode(Camera::TRACKBALL);
+			/*camera.setMode(Camera::TRACKBALL);
 			camera.setRadius(4);
-			Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getShader("wired"));
+			Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getShader("wired"));*/
 
 	// init loop time tracking
 	double elapseTime = 16.;
@@ -79,7 +80,6 @@ int main()
 	int width, height;
 
 	//	game loop
-	exit(0);
 	std::cout << "game loop initiated" << std::endl;
 	while (!glfwWindowShouldClose(window))
 	{
@@ -355,16 +355,23 @@ void picking(int width, int height)
 			"\nFirst instance pointed id : " + std::to_string(rayList[0].second->getId()) +
 			"\n  type : " + type);
 
-		Mesh::RenderOption option = Renderer::getInstance()->getRenderOption();
-		Shader* s = Renderer::getInstance()->getShader(Renderer::INSTANCE_DRAWABLE);
-		Renderer::getInstance()->setRenderOption(Mesh::BOUNDING_BOX);
-		Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE, ResourceManager::getInstance()->getShader("wired"));
+		if (rayList[0].second->getType() == InstanceVirtual::ANIMATABLE)
+		{
+			WidgetManager::getInstance()->append("console", "awsome draw !");
+		}
+		else
+		{
+			Mesh::RenderOption option = Renderer::getInstance()->getRenderOption();
+			Shader* s = Renderer::getInstance()->getShader(Renderer::INSTANCE_DRAWABLE);
+			Renderer::getInstance()->setRenderOption(Mesh::BOUNDING_BOX);
+			Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE, ResourceManager::getInstance()->getShader("wired"));
 
-		glm::mat4 projection = glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f);
-		Renderer::getInstance()->drawInstanceDrawable(rayList[0].second, &camera.getViewMatrix()[0][0], &projection[0][0]);
+			glm::mat4 projection = glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f);
+			Renderer::getInstance()->drawInstanceDrawable(rayList[0].second, &camera.getViewMatrix()[0][0], &projection[0][0]);
 
-		Renderer::getInstance()->setRenderOption(option);
-		Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE, s);
+			Renderer::getInstance()->setRenderOption(option);
+			Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE, s);
+		}
 	}
 	else
 	{
