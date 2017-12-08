@@ -135,6 +135,7 @@ void InstanceAnimatable::stopAnimation(const std::string& labelName)
 			it->loop = false;
 }
 
+
 void InstanceAnimatable::computeCapsules()
 {
 	if (!capsules.empty()) capsules.clear();
@@ -150,10 +151,23 @@ void InstanceAnimatable::computeCapsules()
 
 	for (unsigned int i = 0; i < vertices.size(); i++)
 	{
+		glm::vec4 tmpv(0.f);
+		for (int k = 0; k < 3; k++)
+			tmpv += ibind[(*bones)[i][k]] * (*weights)[i][k] * glm::vec4(vertices[i], 1.f);
+
+		std::cout << tmpv.x << ' ' << tmpv.y << ' ' << tmpv.z << std::endl;
+
 		for (int j = 0; j < 3; j++)
 		{
-			float weight = (*weights)[i][j];
-			if (weight != 0.f)
+			/*glm::vec3 origin = glm::vec3(glm::column(joints[(*bones)[i][j]].relativeBindTransform, 3));
+			glm::vec3 end;
+			if ()
+			{
+				end = glm::vec3(glm::column(joints[(*bones)[i][j]].relativeBindTransform, 3));
+			}
+			glm::vec3 p = glm::vec3(tmpv) - origin;
+			*/
+			//if ((*weights)[i][j] != 0.f)
 			{
 				/*
 					WARNNING : CRYPTIC PART INCOMING, READ EXPLANATION BEFORE CRYING
@@ -166,8 +180,8 @@ void InstanceAnimatable::computeCapsules()
 					revelant_distance = relative_distance_to_segment(bone_segment, p1)
 				*/
 
-				glm::vec3 p1 = glm::vec3(ibind[(*bones)[i][j]] * glm::vec4(vertices[i], 1.f));
-				glm::vec3 p2 = glm::vec3(glm::column(joints[(*bones)[i][j]].relativeBindTransform, 3));
+				//glm::vec3 p1 = glm::vec3(ibind[(*bones)[i][j]] * glm::vec4(vertices[i], 1.f));
+				//glm::vec3 p2 = glm::vec3(glm::column(joints[(*bones)[i][j]].relativeBindTransform, 3));
 			}
 		}
 	}
