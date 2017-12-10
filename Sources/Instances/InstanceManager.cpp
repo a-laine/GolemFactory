@@ -104,6 +104,7 @@ InstanceAnimatable* InstanceManager::getInstanceAnimatable(std::string meshName,
 		return nullptr;
 	}
 	ins->computeCapsules();
+	ins->initializeVBOVAO();
 	return ins;
 }
 InstanceAnimatable* InstanceManager::getInstanceAnimatable(std::string meshName, std::string skeletonName, std::string animationName, std::string shaderName)
@@ -120,6 +121,7 @@ InstanceAnimatable* InstanceManager::getInstanceAnimatable(std::string meshName,
 		return nullptr;
 	}
 	ins->computeCapsules();
+	ins->initializeVBOVAO();
 	return ins;
 }
 InstanceContainer* InstanceManager::getInstanceContainer()

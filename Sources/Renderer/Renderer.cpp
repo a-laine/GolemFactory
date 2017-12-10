@@ -4,7 +4,7 @@
 
 
 //  Default
-Renderer::Renderer() : renderOption(Mesh::DEFAULT)
+Renderer::Renderer() : renderOption(DEFAULT)
 {
 	window = nullptr;
 	camera = nullptr;
@@ -12,6 +12,8 @@ Renderer::Renderer() : renderOption(Mesh::DEFAULT)
 	defaultShader[GRID] = nullptr;
 	defaultShader[INSTANCE_ANIMATABLE] = nullptr;
 	defaultShader[INSTANCE_DRAWABLE] = nullptr;
+	defaultShader[INSTANCE_ANIMATABLE_BB] = nullptr;
+	defaultShader[INSTANCE_DRAWABLE_BB] = nullptr;
 	defaultShader[HUD] = nullptr;
 
 	gridVAO = 0;
@@ -307,20 +309,27 @@ void Renderer::loadMVPMatrix(Shader* shader, const float* model, const float* vi
 void Renderer::drawInstanceDrawable(InstanceVirtual* ins, const float* view, const float* projection, const glm::mat4& base)
 {
 	//	Get shader and prepare matrix
-	Shader* shaderToUse = defaultShader[INSTANCE_DRAWABLE];
+	Shader* shaderToUse;
+
+	if (renderOption == BOUNDING_BOX) shaderToUse = defaultShader[INSTANCE_DRAWABLE_BB];
+	else shaderToUse = defaultShader[INSTANCE_DRAWABLE];
 	if (!shaderToUse) shaderToUse = ins->getShader();
 		loadMVPMatrix(shaderToUse, &(base * ins->getModelMatrix())[0][0], view, projection);
 	if (!shaderToUse) return;
 
 	//	Draw mesh
-	ins->getMesh()->draw(renderOption);
+	if (renderOption == BOUNDING_BOX) ins->getMesh()->drawBB();
+	else ins->getMesh()->draw();
 	instanceDrawn++;
 	trianglesDrawn += ins->getMesh()->getNumberFaces();
 }
 void Renderer::drawInstanceAnimatable(InstanceVirtual* ins, const float* view, const float* projection)
 {
 	//	Get shader and prepare matrix
-	Shader* shaderToUse = defaultShader[INSTANCE_ANIMATABLE];
+	Shader* shaderToUse;
+
+	if (renderOption == BOUNDING_BOX) shaderToUse = defaultShader[INSTANCE_ANIMATABLE_BB];
+	else shaderToUse = defaultShader[INSTANCE_ANIMATABLE];
 	if (!shaderToUse) shaderToUse = ins->getShader();
 	loadMVPMatrix(shaderToUse, &ins->getModelMatrix()[0][0], view, projection);
 	if (!shaderToUse) return;
@@ -338,7 +347,16 @@ void Renderer::drawInstanceAnimatable(InstanceVirtual* ins, const float* view, c
 	if (loc >= 0) glUniformMatrix4fv(loc, bind.size(), FALSE, (float*)bind.data());
 
 	//	Draw mesh
-	ins->getMesh()->draw(renderOption);
+	if (renderOption == BOUNDING_BOX)
+	{
+		InstanceAnimatable* tmpIns = static_cast<InstanceAnimatable*>(ins);
+		/*std::vector<float> radius = tmpIns->getCapsules();
+		int loc = shaderToUse->getUniformLocation("capsuleRadius");
+		if (loc >= 0) glUniformMatrix4fv(loc, radius.size(), FALSE, (float*)radius.data());*/
+
+		tmpIns->drawBB();
+	}
+	else ins->getMesh()->draw();
 	instanceDrawn++;
 	trianglesDrawn += ins->getMesh()->getNumberFaces();
 }
@@ -369,7 +387,7 @@ void Renderer::setShader(ShaderIdentifier id, Shader* s)
 	else defaultShader[id] = nullptr;
 }
 void Renderer::setGridVisible(bool enable) { drawGrid = enable; }
-void Renderer::setRenderOption(const Mesh::RenderOption& option) { renderOption = option; }
+void Renderer::setRenderOption(const RenderOption& option) { renderOption = option; }
 
 
 Camera* Renderer::getCamera() { return camera; }
@@ -383,5 +401,5 @@ Shader* Renderer::getShader(ShaderIdentifier id)
 bool Renderer::isGridVisible() { return drawGrid; }
 unsigned int Renderer::getNbDrawnInstances() const { return instanceDrawn; }
 unsigned int Renderer::getNbDrawnTriangles() const { return trianglesDrawn; }
-Mesh::RenderOption Renderer::getRenderOption() const { return renderOption; }
+Renderer::RenderOption Renderer::getRenderOption() const { return renderOption; }
 //

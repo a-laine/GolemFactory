@@ -62,7 +62,7 @@ int main()
 	initManagers();
 
 	//	Test scene
-		initializeForestScene(false);
+		//initializeForestScene(false);
 
 		avatar = InstanceManager::getInstance()->getInstanceAnimatable("peasant", "human", "simple_peasant", "skinning");
 			float scale = 1.7f / (avatar->getBBMax() - avatar->getBBMin()).z;
@@ -70,9 +70,10 @@ int main()
 			avatar->setPosition(glm::vec3(20.f, 20.f, -scale * avatar->getMesh()->aabb_min.z));
 			SceneManager::getInstance()->addStaticObject(avatar);
 
-			/*camera.setMode(Camera::TRACKBALL);
+			camera.setMode(Camera::TRACKBALL);
 			camera.setRadius(4);
-			Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getShader("wired"));*/
+			Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getShader("wired"));
+			//Renderer::getInstance()->setRenderOption(Renderer::BOUNDING_BOX);
 
 	// init loop time tracking
 	double elapseTime = 16.;
@@ -303,21 +304,19 @@ void initManagers()
 	ResourceManager::getInstance()->setRepository(resourceRepository);
 	InstanceManager::getInstance()->setMaxNumberOfInstances(1000000);
 
-	ResourceManager::getInstance()->getShader("wired");
-	ResourceManager::getInstance()->getShader("wiredSkinning");
-	ResourceManager::getInstance()->getShader("skeletonDebug");
-
 	//	Renderer
 	camera.setMode(Camera::FREEFLY);
 	camera.setAllRadius(2.f, 0.5f, 10.f);
-	camera.setPosition(glm::vec3(0, -10, 10));
+	camera.setPosition(glm::vec3(0, 20, 20));
 	camera2.setMode(Camera::FREEFLY);
 	camera2.setAllRadius(2.f, 0.5f, 10.f);
-	camera2.setPosition(glm::vec3(0, -10, 10));
+	camera2.setPosition(glm::vec3(0, 20, 20));
 	Renderer::getInstance()->setWindow(window);
 	Renderer::getInstance()->initializeGrid(GRID_SIZE, GRID_ELEMENT_SIZE, glm::vec3(24 / 255.f, 202 / 255.f, 230 / 255.f));	// blue tron
 	Renderer::getInstance()->setCamera(&camera2);
 	Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getShader("greenGrass"));
+	Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE_BB, ResourceManager::getInstance()->getShader("wired"));
+	Renderer::getInstance()->setShader(Renderer::INSTANCE_ANIMATABLE_BB, ResourceManager::getInstance()->getShader("skeletonBB"));
 
 	//	HUD
 	int width, height;
@@ -355,23 +354,13 @@ void picking(int width, int height)
 			"\nFirst instance pointed id : " + std::to_string(rayList[0].second->getId()) +
 			"\n  type : " + type);
 
+		Renderer::RenderOption option = Renderer::getInstance()->getRenderOption();
+		Renderer::getInstance()->setRenderOption(option == Renderer::DEFAULT ? Renderer::BOUNDING_BOX : Renderer::DEFAULT);
+		glm::mat4 projection = glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f);
 		if (rayList[0].second->getType() == InstanceVirtual::ANIMATABLE)
-		{
-			WidgetManager::getInstance()->append("console", "awsome draw !");
-		}
-		else
-		{
-			Mesh::RenderOption option = Renderer::getInstance()->getRenderOption();
-			Shader* s = Renderer::getInstance()->getShader(Renderer::INSTANCE_DRAWABLE);
-			Renderer::getInstance()->setRenderOption(Mesh::BOUNDING_BOX);
-			Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE, ResourceManager::getInstance()->getShader("wired"));
-
-			glm::mat4 projection = glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f);
-			Renderer::getInstance()->drawInstanceDrawable(rayList[0].second, &camera.getViewMatrix()[0][0], &projection[0][0]);
-
-			Renderer::getInstance()->setRenderOption(option);
-			Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE, s);
-		}
+			Renderer::getInstance()->drawInstanceAnimatable(static_cast<InstanceAnimatable*>(rayList[0].second), &camera.getViewMatrix()[0][0], &projection[0][0]);
+		else Renderer::getInstance()->drawInstanceDrawable(rayList[0].second, &camera.getViewMatrix()[0][0], &projection[0][0]);
+		Renderer::getInstance()->setRenderOption(option);
 	}
 	else
 	{
@@ -430,17 +419,15 @@ void events()
 		else if (v[i] == F9) WidgetManager::getInstance()->setActiveHUD((WidgetManager::getInstance()->getActiveHUD() == "debug" ? "" : "debug"));
 		else if (v[i] == F3)
 		{
-			if (Renderer::getInstance()->getRenderOption() == Mesh::DEFAULT)
+			if (Renderer::getInstance()->getRenderOption() == Renderer::DEFAULT)
 			{
-				Renderer::getInstance()->setRenderOption(Mesh::BOUNDING_BOX);
-				Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE, ResourceManager::getInstance()->getShader("wired"));
-				WidgetManager::getInstance()->append("console", "wired");
+				Renderer::getInstance()->setRenderOption(Renderer::BOUNDING_BOX);
+				//WidgetManager::getInstance()->append("console", "wired");
 			}
 			else
 			{
-				Renderer::getInstance()->setRenderOption(Mesh::DEFAULT);
-				Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE, nullptr);
-				WidgetManager::getInstance()->append("console", "default");
+				Renderer::getInstance()->setRenderOption(Renderer::DEFAULT);
+				//WidgetManager::getInstance()->append("console", "default");
 			}
 		}
 	}
@@ -448,7 +435,7 @@ void events()
 void updates(float elapseTime, int width, int height)
 {
 	//	animate avatar
-	avatar->animate(elapseTime);
+	avatar->animate(elapseTime*0.1f);
 
 	//	Compute HUD picking parameters
 	if (EventHandler::getInstance()->getCursorMode())

@@ -18,7 +18,7 @@ class Skeleton : public ResourceVirtual
 		~Skeleton();
 		//
 
-		//	Public functions
+		//	Set/get functions
 		bool isValid() const;
 
 		std::vector<glm::mat4x4> getInverseBindPose() const;
@@ -31,15 +31,15 @@ class Skeleton : public ResourceVirtual
 		//
 
 	protected:
+		//	Protected functions
+		void computeBindPose(const glm::mat4& parentPose, unsigned int joint);
+		//
+
 		//	Attributes
 		std::vector<unsigned int> roots;
 		std::vector<Joint> joints;
 
 		std::vector<glm::mat4> inverseBindPose;
 		std::vector<glm::mat4> bindPose;
-		//
-
-		//	Protected functions
-		void computeBindPose(const glm::mat4& parentPose, unsigned int joint);
 		//
 };

@@ -18,6 +18,10 @@ InstanceAnimatable::~InstanceAnimatable()
 	ResourceManager::getInstance()->release(shader);
 	ResourceManager::getInstance()->release(skeleton);
 	ResourceManager::getInstance()->release(animation);
+
+	glDeleteBuffers(1, &segIndexBuffer);
+	glDeleteBuffers(1, &segRadiusBuffer);
+	glDeleteVertexArrays(1, &vao);
 }
 //
 
@@ -141,6 +145,7 @@ void InstanceAnimatable::computeCapsules()
 	if (!capsules.empty()) capsules.clear();
 	if (!mesh || !skeleton || !mesh->getBones() || !mesh->getWeights()) return;
 
+	//	get all lists
 	std::vector<glm::mat4> ibind = skeleton->getInverseBindPose();
 	const std::vector<glm::vec3>& vertices = *mesh->getVertices();
 	const std::vector<glm::ivec3>* bones = mesh->getBones();
@@ -149,45 +154,78 @@ void InstanceAnimatable::computeCapsules()
 	if (ibind.empty() || pose.empty() || !bones || !weights || joints.empty()) return;;
 	capsules.assign(skeleton->getJoints().size(), 0.f);
 
+	//	inflating bones
 	for (unsigned int i = 0; i < vertices.size(); i++)
 	{
-		glm::vec4 tmpv(0.f);
-		for (int k = 0; k < 3; k++)
-			tmpv += ibind[(*bones)[i][k]] * (*weights)[i][k] * glm::vec4(vertices[i], 1.f);
-
-		std::cout << tmpv.x << ' ' << tmpv.y << ' ' << tmpv.z << std::endl;
-
+		float maxDistance = 0.f;
 		for (int j = 0; j < 3; j++)
 		{
-			/*glm::vec3 origin = glm::vec3(glm::column(joints[(*bones)[i][j]].relativeBindTransform, 3));
-			glm::vec3 end;
-			if ()
+			int bone = (*bones)[i][j];
+			glm::vec3 v = glm::vec3(ibind[bone] * glm::vec4(vertices[i], 1.f));
+			if (joints[bone].sons.size() == 1)
 			{
-				end = glm::vec3(glm::column(joints[(*bones)[i][j]].relativeBindTransform, 3));
+				glm::vec3 end = glm::vec3(glm::column(joints[joints[bone].sons[0]].relativeBindTransform, 3));
+				float d = glm::dot(v, end) / glm::length(end);
+				if(d < 0.f) maxDistance += (*weights)[i][j] * glm::length(v);
+				else if(d > 1.f) maxDistance += (*weights)[i][j] * glm::length(v - end);
+				else maxDistance += (*weights)[i][j] * glm::length(v - d * glm::normalize(end));
 			}
-			glm::vec3 p = glm::vec3(tmpv) - origin;
-			*/
-			//if ((*weights)[i][j] != 0.f)
+			else maxDistance += (*weights)[i][j] * glm::length(v);
+		}
+		for (int j = 0; j < 3; j++)
+			capsules[(*bones)[i][j]] = std::max(capsules[(*bones)[i][j]], maxDistance);
+	}
+
+	//	contruct capsule drawing buffers
+	for (unsigned int i = 0; i < joints.size(); i++)
+	{
+		if (joints[i].sons.empty())
+		{
+			segmentIndex.push_back(glm::ivec2(i, i));
+			segmentRadius.push_back(capsules[i]);
+		}
+		else
+		{
+			for (unsigned int j = 0; j < joints[i].sons.size(); j++)
 			{
-				/*
-					WARNNING : CRYPTIC PART INCOMING, READ EXPLANATION BEFORE CRYING
-
-					inverse_bind_pose * vertex_position = vertex_position_relative_to_joint				-> alias p1
-					bind_pose[column 3] = joint_origin_position_in_mesh_space
-					joint.relativeBindTransform[column 3] = joint_origin_position_in_parent_space		-> alias p2
-
-					bone_segment = p2 - vec3(0,0,0)
-					revelant_distance = relative_distance_to_segment(bone_segment, p1)
-				*/
-
-				//glm::vec3 p1 = glm::vec3(ibind[(*bones)[i][j]] * glm::vec4(vertices[i], 1.f));
-				//glm::vec3 p2 = glm::vec3(glm::column(joints[(*bones)[i][j]].relativeBindTransform, 3));
+				segmentIndex.push_back(glm::ivec2(i, joints[i].sons[j]));
+				segmentRadius.push_back(capsules[i]);
 			}
 		}
 	}
-
 	for (unsigned int i = 0; i < capsules.size(); i++)
 		std::cout << joints[i].name <<" : "<<capsules[i] << std::endl;
+}
+void InstanceAnimatable::initializeVBOVAO()
+{
+	//	generate vbo
+	glGenBuffers(1, &segIndexBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, segIndexBuffer);
+	glBufferData(GL_ARRAY_BUFFER, segmentIndex.size() * sizeof(glm::ivec2), segmentIndex.data(), GL_STATIC_DRAW);
+
+	glGenBuffers(1, &segRadiusBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, segRadiusBuffer);
+	glBufferData(GL_ARRAY_BUFFER, segmentRadius.size() * sizeof(float), segmentRadius.data(), GL_STATIC_DRAW);
+
+	//	generate vao
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
+
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, segIndexBuffer);
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, NULL);
+
+	glEnableVertexAttribArray(1);
+	glBindBuffer(GL_ARRAY_BUFFER, segRadiusBuffer);
+	glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 0, NULL);
+
+	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, blBuffer);
+	glBindVertexArray(0);
+}
+void InstanceAnimatable::drawBB()
+{
+	glBindVertexArray(vao);
+	glDrawArrays(GL_POINTS, 0, segmentIndex.size());
 }
 //
 
@@ -198,6 +236,7 @@ bool InstanceAnimatable::isAnimationRunning(const std::string& animationName)
 		if (it->name == animationName && it->uselessTime <= 0.f) return true;
 	return false;
 }
+
 
 void InstanceAnimatable::setAnimation(std::string animationName)
 {
@@ -222,7 +261,6 @@ void InstanceAnimatable::setAnimation(Animation* a)
 		pose = animation->getKeyPose(0, skeleton->roots, skeleton->joints);
 	locker.lock();
 }
-
 void InstanceAnimatable::setSkeleton(std::string skeletonName)
 {
 	ResourceManager::getInstance()->release(skeleton);
@@ -244,6 +282,7 @@ void InstanceAnimatable::setSkeleton(Skeleton* s)
 		pose = animation->getKeyPose(0, skeleton->roots, skeleton->joints);
 	locker.lock();
 }
+
 
 Skeleton* InstanceAnimatable::getSkeleton() const { return skeleton; }
 Animation* InstanceAnimatable::getAnimation() const { return animation; }
@@ -269,6 +308,7 @@ glm::vec3 InstanceAnimatable::getJointPosition(const std::string& jointName)
 	locker.lock();
 	return p;
 }
+std::vector<float> InstanceAnimatable::getCapsules() const { return capsules; }
 //
 
 //	Private functions

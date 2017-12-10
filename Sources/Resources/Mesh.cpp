@@ -248,20 +248,15 @@ void Mesh::initializeVAO()
 	glBindVertexArray(0);
 }
 
-void Mesh::draw(const RenderOption& option)
+void Mesh::draw()
 {
-	switch (option)
-	{
-		case BOUNDING_BOX:
-			glBindVertexArray(BBoxVao);
-			glDrawElements(GL_TRIANGLES, fBBox.size(), GL_UNSIGNED_SHORT, NULL);
-			break;
-
-		default:
-			glBindVertexArray(vao);
-			glDrawElements(GL_TRIANGLES, faces.size(), GL_UNSIGNED_SHORT, NULL);
-			break;
-	}
+	glBindVertexArray(vao);
+	glDrawElements(GL_TRIANGLES, faces.size(), GL_UNSIGNED_SHORT, NULL);
+}
+void Mesh::drawBB()
+{
+	glBindVertexArray(BBoxVao);
+	glDrawElements(GL_TRIANGLES, fBBox.size(), GL_UNSIGNED_SHORT, NULL);
 }
 //
 

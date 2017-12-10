@@ -113,7 +113,8 @@ Skeleton::Skeleton(const std::string& path, const std::string& skeletonName) : R
 Skeleton::~Skeleton() {}
 //
 
-//	Public functions
+
+//	Set/get functions
 bool Skeleton::isValid() const { return !(roots.empty() || joints.empty()); }
 
 std::vector<glm::mat4> Skeleton::getInverseBindPose() const { return inverseBindPose; }

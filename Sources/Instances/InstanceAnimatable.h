@@ -28,6 +28,9 @@ class InstanceAnimatable : public InstanceDrawable
 		void stopAnimation(const std::string& labelName);
 
 		void computeCapsules();
+		void initializeVBOVAO();
+
+		virtual void drawBB();
 		//
 
 		//	Set/get functions
@@ -42,6 +45,7 @@ class InstanceAnimatable : public InstanceDrawable
 		Animation* getAnimation() const;
 		std::vector<glm::mat4> getPose() const;
 		glm::vec3 getJointPosition(const std::string& jointName);
+		std::vector<float> getCapsules() const;
 		//
 
 	protected:
@@ -71,7 +75,10 @@ class InstanceAnimatable : public InstanceDrawable
 		Mutex locker;
 		std::vector<glm::mat4> pose;
 		std::list<AnimationTrack> currentAnimations;
-		
 		std::vector<float> capsules;
+
+		std::vector<glm::ivec2> segmentIndex;
+		std::vector<float> segmentRadius;
+		GLuint  vao, segIndexBuffer, segRadiusBuffer;
 		//
 };

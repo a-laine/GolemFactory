@@ -29,7 +29,15 @@ class Renderer : public Singleton<Renderer>
 			INSTANCE_DRAWABLE = 1,
 			INSTANCE_ANIMATABLE,
 			HUD,
-			GRID
+			GRID,
+
+			INSTANCE_DRAWABLE_BB,
+			INSTANCE_ANIMATABLE_BB
+		};
+		enum RenderOption
+		{
+			DEFAULT,
+			BOUNDING_BOX
 		};
 		//
 
@@ -45,7 +53,7 @@ class Renderer : public Singleton<Renderer>
 		void setWindow(GLFWwindow* win);
 		void setShader(ShaderIdentifier id, Shader* s);
 		void setGridVisible(bool enable);
-		void setRenderOption(const Mesh::RenderOption& option);
+		void setRenderOption(const RenderOption& option);
 		
 		Camera* getCamera();
 		GLFWwindow* getWindow();
@@ -53,7 +61,7 @@ class Renderer : public Singleton<Renderer>
 		bool isGridVisible();
 		unsigned int getNbDrawnInstances() const;
 		unsigned int getNbDrawnTriangles() const;
-		Mesh::RenderOption getRenderOption() const;
+		RenderOption getRenderOption() const;
 		//
 
 		//	Render function
@@ -76,7 +84,7 @@ class Renderer : public Singleton<Renderer>
 		GLFWwindow* window;
 		Camera* camera;
 		std::map<ShaderIdentifier, Shader*> defaultShader;
-		Mesh::RenderOption renderOption;
+		RenderOption renderOption;
 
 		bool drawGrid;
 		unsigned int vboGridSize;

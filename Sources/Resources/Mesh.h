@@ -13,11 +13,6 @@ class Mesh : public ResourceVirtual
 
     public:
 		//  Miscellaneous
-		enum RenderOption
-		{
-			DEFAULT,
-			BOUNDING_BOX
-		};
 		enum ConfigurationFlags
 		{
 			WELL_LOADED = 1 << 0,
@@ -42,7 +37,8 @@ class Mesh : public ResourceVirtual
 		virtual void initializeVBO();
 		virtual void initializeVAO();
 
-		virtual void draw(const RenderOption& option = DEFAULT);
+		virtual void draw();
+		virtual void drawBB();
         //
 
         //  Set/get functions
