@@ -18,6 +18,8 @@
 #include "HUD/WidgetBoard.h"
 #include "HUD/WidgetLabel.h"
 #include "HUD/WidgetConsole.h"
+#include "HUD/WidgetRadioButton.h"
+
 
 #define ANGLE_VERTICAL_HUD_PROJECTION 45.f
 #define DISTANCE_HUD_CAMERA 0.15f
@@ -38,9 +40,11 @@ class WidgetManager : public Singleton<WidgetManager>
 		void loadHud(const std::string& hudName);
 
 		void addAssociation(WidgetVirtual* w, const std::string& associationName);
+		void setBoolean(const std::string& associationName, const bool& b);
 		void setString(const std::string& associationName, const std::string& s);
 		void append(const std::string& associationName, const std::string& s);
 		std::string getString(const std::string& associationName);
+		bool getBoolean(const std::string& associationName);
 
 		void addWidget(WidgetVirtual* w);
 		void addLayer(Layer* l);
@@ -66,6 +70,8 @@ class WidgetManager : public Singleton<WidgetManager>
 
 		//	Protected functions
 		void loadDebugHud();
+		void loadHelpHud();
+		void loadRenderingHud();
 		//
 
 		//	Attributes

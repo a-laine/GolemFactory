@@ -17,7 +17,7 @@ float edgeFactor()
 
 void main()
 {
-	if(edgeFactor() < 1.0) fragColor = vec3(1.0 , 0.0 , 0.0);
+	if(edgeFactor() < 1.0) fragColor = vec3(0.5 , 0.0 , 0.0);
 	else discard;
 }
 

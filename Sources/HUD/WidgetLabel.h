@@ -33,10 +33,10 @@ class WidgetLabel : public WidgetVirtual
 		//
 
 		//	Public functions
-		void update(const float& elapseTime);
-		void initialize(const std::string& t, uint8_t textConfiguration = AlignmentMode::CENTER);
-		void draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model);
-		bool intersect(const glm::mat4& base, const glm::vec3& ray);
+		virtual void update(const float& elapseTime);
+		virtual void initialize(const std::string& txt, uint8_t textConfiguration = AlignmentMode::CENTER);
+		virtual void draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model);
+		virtual bool intersect(const glm::mat4& base, const glm::vec3& ray);
 		
 		void setString(const std::string& newText);
 		std::string getString() const;
@@ -55,7 +55,7 @@ class WidgetLabel : public WidgetVirtual
 	protected:
 		//	Protected functions
 		void initVBOtext();
-		void updateBuffers();
+		virtual void updateBuffers();
 		void updateVBOs();
 		void parseText();
 		glm::vec2 getLineOrigin(const unsigned int& lineIndex, const uint8_t& textConfiguration);

@@ -2,15 +2,15 @@
 
 
 //	string define
-#define MAX_LINE				20			//	max nb of line in text string
+#define MAX_LINE				40			//	max nb of line in text string
 #define TEXT_MAX_CHAR			1000		//	max char in string to reserve vbo buffer size
 
 //	drawing define
 #define ELEVATOR_MARGIN_FACTOR	0.5f		//	factor relative to border length (%)
 #define TEXTURE_OFFSET			0.00586f	//	offset for texture overlap
 #define TEXT_DEPTH_OFFSET		-0.01f		//	offset position for texture batch and elevator
-#define LINE_MARGIN_LEFT		0.7f		//	left margin relative to size of char (%)
 #define ELEVATOR_LENGTH_FACTOR  3.f
+#define TAB_SIZE				9.f
 
 //	batch index define
 #define BATCH_INDEX_BORDER				0
@@ -23,7 +23,7 @@
 
 //  Default
 WidgetConsole::WidgetConsole(const uint8_t& config, const std::string& shaderName) : 
-	WidgetBoard(config | NEED_UPDATE | SPECIAL, shaderName), sizeChar(0.1f), firstCursory(0.f), elevator(0.f), elevatorLength(0.f), elevatorRange(0.f)
+	WidgetBoard(config | NEED_UPDATE | SPECIAL, shaderName), sizeChar(0.1f), margin(0.07f), firstCursory(0.f), elevator(0.f), elevatorLength(0.f), elevatorRange(0.f)
 {
 	type = CONSOLE;
 	font = nullptr;
@@ -42,7 +42,6 @@ void WidgetConsole::update(const float& elapseTime)
 	colors[CURRENT] = 0.9f * colors[CURRENT] + 0.1f * colors[s];
 	positions[CURRENT] = positions[s];
 	sizes[CURRENT] = sizes[s];
-	lastConfiguration = configuration;
 
 	//	update buffers if needed
 	updateCooldown += elapseTime;
@@ -68,7 +67,6 @@ void WidgetConsole::initialize(const float& bThickness, const float& bWidth, con
 	colors[CURRENT] = colors[(State)(configuration & STATE_MASK)];
 	positions[CURRENT] = positions[(State)(configuration & STATE_MASK)];
 	sizes[CURRENT] = sizes[(State)(configuration & STATE_MASK)];
-	lastConfiguration = configuration;
 
 	borderThickness = bThickness;
 	borderWidth = bWidth;
@@ -217,7 +215,7 @@ bool WidgetConsole::mouseEvent(const glm::mat4& base, const glm::vec3& ray, cons
 		float cursory = (intersection.y / parentscale + sizes[CURRENT].y/2 - elevatorLength) / elevatorRange;
 
 		if ((configuration & STATE_MASK) != ACTIVE)
-			firstCursory = cursory;
+			firstCursory = cursory - elevator;
 
 		elevator = glm::clamp(cursory - firstCursory, 0.f, 1.f);
 		setState(ACTIVE);
@@ -240,6 +238,11 @@ void WidgetConsole::setSizeChar(const float& f)
 	sizeChar = f;
 	configuration |= SPECIAL;
 }
+void WidgetConsole::setMargin(const float& f)
+{
+	margin = f;
+	configuration |= SPECIAL;
+}
 void WidgetConsole::append(const std::string& s)
 {
 	if (!s.empty())
@@ -253,6 +256,7 @@ void WidgetConsole::append(const std::string& s)
 
 Font* WidgetConsole::getFont() const { return font; }
 float WidgetConsole::getSizeChar() const { return sizeChar; }
+float WidgetConsole::getMargin() const { return margin; }
 //
 
 
@@ -322,7 +326,7 @@ void WidgetConsole::updateBuffers(const bool& firstInit)
 		clippingShape.vertices.push_back(glm::vec3(dimension.x - borderWidth, TEXT_DEPTH_OFFSET, -dimension.z));
 		clippingShape.faces.push_back(0); clippingShape.faces.push_back(index + 1); clippingShape.faces.push_back(index + 2);
 
-		elevatorMin = glm::vec3(dimension.x - 0.5f * ELEVATOR_MARGIN_FACTOR * borderWidth, TEXT_DEPTH_OFFSET, -dimension.z + 0.5f * ELEVATOR_MARGIN_FACTOR * borderWidth);
+		elevatorMin = glm::vec3(dimension.x - 0.5f * ELEVATOR_MARGIN_FACTOR * borderWidth, TEXT_DEPTH_OFFSET, -dimension.z + borderWidth - 0.5f * ELEVATOR_MARGIN_FACTOR * borderWidth);
 	}
 	else
 	{
@@ -446,7 +450,7 @@ void WidgetConsole::updateTextBuffer()
 	for (unsigned int i = 0; i < text.size(); i++)
 	{
 		//	init parameters
-		glm::vec2 o(positions[CURRENT].x - 0.5f * sizes[CURRENT].x - borderThickness + sizeChar * LINE_MARGIN_LEFT,
+		glm::vec2 o(positions[CURRENT].x - 0.5f * sizes[CURRENT].x - borderThickness + margin,
 			positions[CURRENT].z + borderThickness - 0.5f * sizes[CURRENT].y + sizeChar * (linesLength.size() - 1 - line));
 		Font::Patch patch = font->getPatch(text[i]);
 		float charLength = std::abs((patch.corner2.x - patch.corner1.x) / (patch.corner2.y - patch.corner1.y));
@@ -460,8 +464,7 @@ void WidgetConsole::updateTextBuffer()
 				break;
 
 			case '\t':
-				x = sizeChar * ((int)(x / sizeChar) + 1);
-				x += sizeChar*charLength;
+				x = TAB_SIZE * sizeChar * ((int)(x / (TAB_SIZE * sizeChar)) + 1);
 				break;
 
 			default:

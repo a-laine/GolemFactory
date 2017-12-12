@@ -22,10 +22,12 @@ class WidgetConsole : public WidgetBoard
 		//	Set / get functions
 		void setFont(const std::string& fontName);
 		void setSizeChar(const float& f);
+		void setMargin(const float& f);
 		void append(const std::string& s);
 
 		Font* getFont() const;
 		float getSizeChar() const;
+		float getMargin() const;
 		//
 
 	protected:
@@ -41,6 +43,7 @@ class WidgetConsole : public WidgetBoard
 		std::string text;
 		std::vector<float> linesLength;
 		float sizeChar;
+		float margin;
 		float firstCursory;
 		float elevator, elevatorLength, elevatorRange;
 		//

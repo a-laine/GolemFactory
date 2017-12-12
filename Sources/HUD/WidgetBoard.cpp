@@ -16,7 +16,6 @@ void WidgetBoard::initialize(const float& bThickness, const float& bWidth, const
 	colors[CURRENT] = colors[(State)(configuration & STATE_MASK)];
 	positions[CURRENT] = positions[(State)(configuration & STATE_MASK)];
 	sizes[CURRENT] = sizes[(State)(configuration & STATE_MASK)];
-	lastConfiguration = configuration;
 
 	borderThickness = bThickness;
 	borderWidth = bWidth;
@@ -67,7 +66,6 @@ void WidgetBoard::update(const float& elapseTime)
 	colors[CURRENT] = 0.9f * colors[CURRENT] + 0.1f * colors[s];
 	positions[CURRENT] = positions[s];
 	sizes[CURRENT] = sizes[s];
-	lastConfiguration = configuration;
 
 	//	update buffers if needed
 	if (configuration & RESPONSIVE)

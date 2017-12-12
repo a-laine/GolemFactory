@@ -31,7 +31,6 @@
 //	global attributes
 GLFWwindow* window = nullptr;
 Camera camera, camera2;
-bool syncronizedCamera = true;
 InstanceAnimatable* avatar = nullptr;
 
 double completeTime = 16.;
@@ -73,7 +72,6 @@ int main()
 			camera.setMode(Camera::TRACKBALL);
 			camera.setRadius(4);
 			Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getShader("wired"));
-			//Renderer::getInstance()->setRenderOption(Renderer::BOUNDING_BOX);
 
 	// init loop time tracking
 	double elapseTime = 16.;
@@ -89,11 +87,14 @@ int main()
 		glfwGetWindowSize(window, &width, &height);
 				
 		// Render scene & picking
+		if (WidgetManager::getInstance()->getBoolean("BBrendering"))
+			Renderer::getInstance()->setRenderOption(Renderer::BOUNDING_BOX);
+		else Renderer::getInstance()->setRenderOption(Renderer::DEFAULT);
 		Renderer::getInstance()->render(&camera);
 		picking(width, height);
 		glm::mat4 projection = glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f);
 		Renderer::getInstance()->drawInstanceAnimatable(avatar, &camera.getViewMatrix()[0][0], &projection[0][0]);
-		Renderer::getInstance()->renderHUD(&camera);
+		Renderer::getInstance()->renderHUD(&camera2);
 
 		//  handle events
 		events();
@@ -322,7 +323,7 @@ void initManagers()
 	int width, height;
 	glfwGetWindowSize(window, &width, &height);
 	WidgetManager::getInstance()->setInitialWindowSize(width, height);
-	WidgetManager::getInstance()->loadHud("");
+	WidgetManager::getInstance()->loadHud("default");
 
 	// init scene
 	SceneManager::getInstance()->setViewDistance(1000.f, 2);
@@ -331,7 +332,6 @@ void initManagers()
 }
 void picking(int width, int height)
 {
-
 	std::vector<std::pair<float, InstanceVirtual*> > rayList;
 	SceneManager::getInstance()->getInstanceOnRay(rayList, SceneManager::INSTANCE_MESH, 1000);
 	std::sort(rayList.begin(), rayList.end());
@@ -354,13 +354,16 @@ void picking(int width, int height)
 			"\nFirst instance pointed id : " + std::to_string(rayList[0].second->getId()) +
 			"\n  type : " + type);
 
-		Renderer::RenderOption option = Renderer::getInstance()->getRenderOption();
-		Renderer::getInstance()->setRenderOption(option == Renderer::DEFAULT ? Renderer::BOUNDING_BOX : Renderer::DEFAULT);
-		glm::mat4 projection = glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f);
-		if (rayList[0].second->getType() == InstanceVirtual::ANIMATABLE)
-			Renderer::getInstance()->drawInstanceAnimatable(static_cast<InstanceAnimatable*>(rayList[0].second), &camera.getViewMatrix()[0][0], &projection[0][0]);
-		else Renderer::getInstance()->drawInstanceDrawable(rayList[0].second, &camera.getViewMatrix()[0][0], &projection[0][0]);
-		Renderer::getInstance()->setRenderOption(option);
+		if (WidgetManager::getInstance()->getBoolean("BBpicking"))
+		{
+			Renderer::RenderOption option = Renderer::getInstance()->getRenderOption();
+			Renderer::getInstance()->setRenderOption(option == Renderer::DEFAULT ? Renderer::BOUNDING_BOX : Renderer::DEFAULT);
+			glm::mat4 projection = glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f);
+			if (rayList[0].second->getType() == InstanceVirtual::ANIMATABLE)
+				Renderer::getInstance()->drawInstanceAnimatable(static_cast<InstanceAnimatable*>(rayList[0].second), &camera.getViewMatrix()[0][0], &projection[0][0]);
+			else Renderer::getInstance()->drawInstanceDrawable(rayList[0].second, &camera.getViewMatrix()[0][0], &projection[0][0]);
+			Renderer::getInstance()->setRenderOption(option);
+		}
 	}
 	else
 	{
@@ -415,21 +418,9 @@ void events()
 		}
 
 		//	debug action
-		else if (v[i] == F12) syncronizedCamera = !syncronizedCamera;
-		else if (v[i] == F9) WidgetManager::getInstance()->setActiveHUD((WidgetManager::getInstance()->getActiveHUD() == "debug" ? "" : "debug"));
-		else if (v[i] == F3)
-		{
-			if (Renderer::getInstance()->getRenderOption() == Renderer::DEFAULT)
-			{
-				Renderer::getInstance()->setRenderOption(Renderer::BOUNDING_BOX);
-				//WidgetManager::getInstance()->append("console", "wired");
-			}
-			else
-			{
-				Renderer::getInstance()->setRenderOption(Renderer::DEFAULT);
-				//WidgetManager::getInstance()->append("console", "default");
-			}
-		}
+		else if (v[i] == HELP) WidgetManager::getInstance()->setActiveHUD((WidgetManager::getInstance()->getActiveHUD() == "help" ? "" : "help"));
+		else if (v[i] == F9)   WidgetManager::getInstance()->setActiveHUD((WidgetManager::getInstance()->getActiveHUD() == "debug" ? "" : "debug"));
+		else if (v[i] == F10)  WidgetManager::getInstance()->setActiveHUD((WidgetManager::getInstance()->getActiveHUD() == "rendering" ? "" : "rendering"));
 	}
 }
 void updates(float elapseTime, int width, int height)
@@ -490,6 +481,7 @@ void updates(float elapseTime, int width, int height)
 		camera.setFrustrumAngleVertical(angle);
 		camera.setFrustrumAngleHorizontalFromScreenRatio((float)width / height);
 	}
-	if (syncronizedCamera) camera2 = camera;
+	if (WidgetManager::getInstance()->getBoolean("syncCamera"))
+		camera2 = camera;
 }
 //

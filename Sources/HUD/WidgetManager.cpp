@@ -11,10 +11,29 @@ WidgetManager::~WidgetManager()
 }
 //
 
+
 //	Public functions
 void WidgetManager::loadHud(const std::string& hudName)
 {
-	loadDebugHud();
+	if (hudName == "default")
+	{
+		if (hudList.find("debug") == hudList.end()) loadDebugHud();
+		if (hudList.find("help") == hudList.end())loadHelpHud();
+		if (hudList.find("rendering") == hudList.end())loadRenderingHud();
+
+		//	push away all HUD but active
+		for (auto it = hudList.begin(); it != hudList.end(); ++it)
+		{
+			if (it->first == activeHud) continue;
+			for (unsigned int i = 0; i < it->second.size(); i++)
+			{
+				glm::vec3 direction = it->second[i]->getScreenPosition();
+				if (direction == glm::vec3(0.f)) direction = glm::vec3(0.f, 0.f, 1.f);
+				it->second[i]->setTargetPosition(it->second[i]->getScreenPosition() + 0.1f * glm::normalize(direction));
+				it->second[i]->setPosition(it->second[i]->getScreenPosition() + 0.1f * glm::normalize(direction));
+			}
+		}
+	}
 }
 void WidgetManager::update(const float& elapsedTime, const bool& clickButtonPressed)
 {
@@ -101,7 +120,16 @@ void WidgetManager::addAssociation(WidgetVirtual* w, const std::string& associat
 {
 	associations[associationName] = w;
 }
-void  WidgetManager::setString(const std::string& associationName, const std::string& s)
+void WidgetManager::setBoolean(const std::string& associationName, const bool& b)
+{
+	try
+	{
+		WidgetVirtual* w = associations.at(associationName);
+		if (w) w->setBoolean(b);
+	}
+	catch (const std::out_of_range &) {}
+}
+void WidgetManager::setString(const std::string& associationName, const std::string& s)
 {
 	try
 	{
@@ -119,7 +147,7 @@ void WidgetManager::append(const std::string& associationName, const std::string
 	}
 	catch (const std::out_of_range &) {}
 }
-std::string  WidgetManager::getString(const std::string& associationName)
+std::string WidgetManager::getString(const std::string& associationName)
 {
 	try
 	{
@@ -127,6 +155,17 @@ std::string  WidgetManager::getString(const std::string& associationName)
 		if (w) return w->getString();
 	}
 	catch (const std::out_of_range &) {}
+	return "";
+}
+bool WidgetManager::getBoolean(const std::string& associationName)
+{
+	try
+	{
+		WidgetVirtual* w = associations.at(associationName);
+		if (w) return w->getBoolean();
+	}
+	catch (const std::out_of_range &) {}
+	return false;
 }
 
 
@@ -144,6 +183,7 @@ void WidgetManager::removeWidget(WidgetVirtual* w)
 void WidgetManager::addLayer(Layer* l) { layerList.insert(l); }
 void WidgetManager::removeLayer(Layer* l) { layerList.erase(l); }
 //
+
 
 //	Set / get functions
 void WidgetManager::setInitialWindowSize(const int& width, const int& height)
@@ -164,7 +204,7 @@ void WidgetManager::setActiveHUD(const std::string& s)
 		}
 	}
 
-	//	push all widget from former HUD
+	//	push away all widget from former HUD
 	it = hudList.find(activeHud);
 	if (it != hudList.end())
 	{
@@ -192,7 +232,8 @@ unsigned int WidgetManager::getNbDrawnWidgets() const { return widgetDrawn; }
 unsigned int WidgetManager::getNbDrawnTriangles() const { return trianglesDrawn; }
 //
 
-//	callbacks functions
+
+//	Callbacks functions
 void WidgetManager::resizeCallback(int w, int h)
 {
 	std::map<std::string, std::vector<Layer*> >& hudList = WidgetManager::getInstance()->hudList;
@@ -254,6 +295,7 @@ void WidgetManager::resizeCallback(int w, int h)
 	WidgetManager::getInstance()->lastHeight = h;
 }
 //
+
 
 //	Protected functions
 void WidgetManager::loadDebugHud()
@@ -379,7 +421,7 @@ void WidgetManager::loadDebugHud()
 		
 	//	hit cross
 	WidgetImage* image = new WidgetImage("hitcross.png");
-		image->setPosition(glm::vec3(0.f, 0.f, 0.f), WidgetVirtual::ALL);
+		image->setPosition(glm::vec3(0.f, 0.2f, 0.f), WidgetVirtual::ALL);
 		image->setSize(glm::vec2(0.1f, 0.1f), WidgetVirtual::ALL);
 		image->initialize();
 		widgetList.insert(image);
@@ -391,13 +433,214 @@ void WidgetManager::loadDebugHud()
 		layer6->add(image);
 		layerList.insert(layer6);
 
-	//	push on HUD
+	//	push HUD
 	hudList["debug"].push_back(layer1);
 	hudList["debug"].push_back(layer2);
 	hudList["debug"].push_back(layer3);
 	hudList["debug"].push_back(layer4);
 	hudList["debug"].push_back(layer5);
 	hudList["debug"].push_back(layer6);
-	activeHud = "debug";
+}
+void WidgetManager::loadHelpHud()
+{
+	//	top title
+	WidgetBoard* board1 = new WidgetBoard(WidgetVirtual::VISIBLE | WidgetVirtual::RESPONSIVE);
+		board1->setPosition(glm::vec3(0.f, 0.01f, 0.f), WidgetVirtual::ALL);
+		board1->setSize(glm::vec2(2.4f, 0.3f), WidgetVirtual::ALL);
+		board1->initialize(0.02f, 0.1f, WidgetBoard::BOTTOM_LEFT | WidgetBoard::BOTTOM_RIGHT);
+		board1->setColor(glm::vec4(0.5f, 0.f, 0.2f, 1.f), WidgetVirtual::ALL);
+		board1->setColor(glm::vec4(0.5f, 0.5f, 0.5f, 1.f), WidgetVirtual::HOVER);
+		widgetList.insert(board1);
+	WidgetLabel* label1 = new WidgetLabel(WidgetVirtual::VISIBLE | WidgetVirtual::RESPONSIVE);
+		label1->setPosition(glm::vec3(0.f, 0.f, 0.f), WidgetVirtual::ALL);
+		label1->setSizeChar(0.15f);
+		label1->setSize(glm::vec2(2.3f, 0.2f), WidgetVirtual::ALL);
+		label1->setFont("Data Control");
+		label1->initialize("Help / command", WidgetLabel::CLIPPING);
+		widgetList.insert(label1);
+	Layer* layer1 = new Layer();
+		layer1->setSize(0.05f);
+		layer1->setScreenPosition(glm::vec3(0.f, 0.003f, 0.054f));
+		layer1->setPosition(layer1->getScreenPosition());
+		layer1->setTargetPosition(layer1->getScreenPosition());
+		layer1->add(board1);
+		layer1->add(label1);
+		layerList.insert(layer1);
+
+	//	central panel
+	WidgetConsole* console = new WidgetConsole(WidgetVirtual::VISIBLE | WidgetVirtual::RESPONSIVE);
+		console->setPosition(glm::vec3(0.f, 0.01f, 0.f), WidgetVirtual::ALL);
+		console->setSize(glm::vec2(2.6f, 2.f), WidgetVirtual::ALL);
+		console->setSizeChar(0.07f);
+		console->setMargin(0.15f);
+		console->setFont("Data Control");
+		console->initialize(0.02f, 0.15f, WidgetBoard::TOP_RIGHT | WidgetBoard::TOP_LEFT | WidgetBoard::BOTTOM_RIGHT | WidgetBoard::BOTTOM_LEFT);
+		console->setColor(glm::vec4(0.f,  0.5f,  0.f, 1.f), WidgetVirtual::ALL);
+		console->setColor(glm::vec4(0.5f, 0.5f, 0.5f, 1.f), WidgetVirtual::HOVER);
+		console->setColor(glm::vec4(0.2f, 0.2f, 0.2f, 1.f), WidgetVirtual::ACTIVE);
+		widgetList.insert(console);
+	Layer* layer2 = new Layer(Layer::VISIBLE | Layer::RESPONSIVE);
+		layer2->setSize(0.05f);
+		layer2->setScreenPosition(glm::vec3(0.f, 0.f, -0.01f));
+		layer2->setPosition(layer2->getScreenPosition());
+		layer2->setTargetPosition(layer2->getScreenPosition());
+		layer2->add(console);
+		layerList.insert(layer2);
+
+	//	push on HUD
+	hudList["help"].push_back(layer1);
+	hudList["help"].push_back(layer2);
+
+	//	push text
+	console->append(" ");
+	console->append("Special :");
+	console->append(" View mouse\t\t\tF2");
+	console->append(" Quit\t\t\tESCAPE");
+	console->append(" ");
+
+	console->append("Commands :");
+	console->append(" move forward\t\t\tz");
+	console->append(" move backward\t\ts");
+	console->append(" move left\t\t\tq");
+	console->append(" move right\t\t\td");
+	console->append(" run\t\t\tSHIFT");
+	console->append(" sneaky\t\t\tCTRL_LEFT");
+	console->append(" ");
+
+	console->append("Avatar action :");
+	console->append(" hello\t\t\t1");
+	console->append(" yes\t\t\t2");
+	console->append(" no\t\t\t3");
+	console->append(" ");
+
+	console->append("HUD :");
+	console->append(" Help\t\t\tF1");
+	console->append(" Debug\t\t\tF9");
+	console->append(" Rendering option\t\tF10");
+	console->append(" ");
+
+	console->append(" ");
+	console->append(" ");
+	console->append(" ");
+	console->append(" ");
+	console->append(" ");
+}
+void WidgetManager::loadRenderingHud()
+{
+	//	top title
+	WidgetBoard* board1 = new WidgetBoard(WidgetVirtual::VISIBLE | WidgetVirtual::RESPONSIVE);
+		board1->setPosition(glm::vec3(0.f, 0.01f, 0.f), WidgetVirtual::ALL);
+		board1->setSize(glm::vec2(2.4f, 0.3f), WidgetVirtual::ALL);
+		board1->initialize(0.02f, 0.1f, WidgetBoard::BOTTOM_LEFT | WidgetBoard::BOTTOM_RIGHT);
+		board1->setColor(glm::vec4(0.5f, 0.f, 0.2f, 1.f), WidgetVirtual::ALL);
+		board1->setColor(glm::vec4(0.5f, 0.5f, 0.5f, 1.f), WidgetVirtual::HOVER);
+		widgetList.insert(board1);
+	WidgetLabel* label1 = new WidgetLabel(WidgetVirtual::VISIBLE | WidgetVirtual::RESPONSIVE);
+		label1->setPosition(glm::vec3(0.f, 0.f, 0.f), WidgetVirtual::ALL);
+		label1->setSizeChar(0.15f);
+		label1->setSize(glm::vec2(2.3f, 0.2f), WidgetVirtual::ALL);
+		label1->setFont("Data Control");
+		label1->initialize("Rendering options", WidgetLabel::CLIPPING);
+		widgetList.insert(label1);
+	Layer* layer1 = new Layer();
+		layer1->setSize(0.05f);
+		layer1->setScreenPosition(glm::vec3(0.f, 0.003f, 0.054f));
+		layer1->setPosition(layer1->getScreenPosition());
+		layer1->setTargetPosition(layer1->getScreenPosition());
+		layer1->add(board1);
+		layer1->add(label1);
+		layerList.insert(layer1);
+
+	//	panel left
+	Layer* layer2;
+	{
+		WidgetBoard* board2 = new WidgetConsole(WidgetVirtual::VISIBLE | WidgetVirtual::RESPONSIVE);
+			board2->setPosition(glm::vec3(0.f, 0.01f, 0.f), WidgetVirtual::ALL);
+			board2->setSize(glm::vec2(2.1f, 1.8f), WidgetVirtual::ALL);
+			board2->initialize(0.02f, 0.15f, WidgetBoard::TOP_LEFT | WidgetBoard::BOTTOM_LEFT);
+			board2->setColor(glm::vec4(0.5f, 0.5f, 0.f, 1.f), WidgetVirtual::ALL);
+			board2->setColor(glm::vec4(0.5f, 0.5f, 0.5f, 1.f), WidgetVirtual::HOVER);
+			board2->setColor(glm::vec4(0.2f, 0.2f, 0.2f, 1.f), WidgetVirtual::ACTIVE);
+			widgetList.insert(board2);
+
+		WidgetRadioButton* button1 = new WidgetRadioButton(WidgetVirtual::VISIBLE | WidgetVirtual::RESPONSIVE);
+			button1->setPosition(glm::vec3(0.f, 0.f, 0.7f), WidgetVirtual::ALL);
+			button1->setSizeChar(0.07f);
+			button1->setSize(glm::vec2(2.f, 0.07f), WidgetVirtual::ALL);
+			button1->setFont("Data Control");
+			button1->setTextureOn("checkbox_checked.png");
+			button1->setTextureOff("checkbox_unchecked.png");
+			button1->setColor(glm::vec4(0.8f, 0.f, 0.f, 1.f), WidgetVirtual::HOVER);
+			button1->setColor(glm::vec4(0.8f, 0.f, 0.f, 1.f), WidgetVirtual::ACTIVE);
+			button1->initialize("bounding box rendering", WidgetLabel::CLIPPING | WidgetLabel::LEFT);
+			addAssociation(button1, "BBrendering");
+			widgetList.insert(button1);
+
+		WidgetRadioButton* button2 = new WidgetRadioButton(WidgetVirtual::VISIBLE | WidgetVirtual::RESPONSIVE);
+			button2->setPosition(glm::vec3(0.f, 0.f, 0.62f), WidgetVirtual::ALL);
+			button2->setSizeChar(0.07f);
+			button2->setSize(glm::vec2(2.f, 0.07f), WidgetVirtual::ALL);
+			button2->setFont("Data Control");
+			button2->setTextureOn("checkbox_checked.png");
+			button2->setTextureOff("checkbox_unchecked.png");
+			button2->setColor(glm::vec4(0.8f, 0.f, 0.f, 1.f), WidgetVirtual::HOVER);
+			button2->setColor(glm::vec4(0.8f, 0.f, 0.f, 1.f), WidgetVirtual::ACTIVE);
+			button2->initialize("draw bounding box on picked instance", WidgetLabel::CLIPPING | WidgetLabel::LEFT);
+			addAssociation(button2, "BBpicking");
+			widgetList.insert(button2);
+
+		WidgetRadioButton* button3 = new WidgetRadioButton(WidgetVirtual::VISIBLE | WidgetVirtual::RESPONSIVE);
+			button3->setPosition(glm::vec3(0.f, 0.f, 0.54f), WidgetVirtual::ALL);
+			button3->setSizeChar(0.07f);
+			button3->setSize(glm::vec2(2.f, 0.07f), WidgetVirtual::ALL);
+			button3->setFont("Data Control");
+			button3->setTextureOn("checkbox_checked.png");
+			button3->setTextureOff("checkbox_unchecked.png");
+			button3->setColor(glm::vec4(0.8f, 0.f, 0.f, 1.f), WidgetVirtual::HOVER);
+			button3->setColor(glm::vec4(0.8f, 0.f, 0.f, 1.f), WidgetVirtual::ACTIVE);
+			button3->setBoolean(true);
+			button3->initialize("syncronize render camera", WidgetLabel::CLIPPING | WidgetLabel::LEFT);
+			addAssociation(button3, "syncCamera");
+			widgetList.insert(button3);
+
+		layer2 = new Layer();
+			layer2->setSize(0.05f);
+			layer2->setScreenPosition(glm::vec3(-0.055f, 0.f, -0.01f));
+			layer2->setPosition(layer2->getScreenPosition());
+			layer2->setTargetPosition(layer2->getScreenPosition());
+			layer2->add(board2);
+			layer2->add(button1);
+			layer2->add(button2);
+			layer2->add(button3);
+			layerList.insert(layer2);
+	}
+
+	//	panel right
+	Layer* layer3;
+	{
+		WidgetBoard* board2 = new WidgetConsole(WidgetVirtual::VISIBLE | WidgetVirtual::RESPONSIVE);
+			board2->setPosition(glm::vec3(0.f, 0.01f, 0.f), WidgetVirtual::ALL);
+			board2->setSize(glm::vec2(2.1f, 1.8f), WidgetVirtual::ALL);
+			board2->initialize(0.02f, 0.15f, WidgetBoard::TOP_RIGHT | WidgetBoard::BOTTOM_RIGHT);
+			board2->setColor(glm::vec4(0.5f, 0.5f, 0.f, 1.f), WidgetVirtual::ALL);
+			board2->setColor(glm::vec4(0.5f, 0.5f, 0.5f, 1.f), WidgetVirtual::HOVER);
+			board2->setColor(glm::vec4(0.2f, 0.2f, 0.2f, 1.f), WidgetVirtual::ACTIVE);
+			widgetList.insert(board2);
+		layer3 = new Layer();
+			layer3->setSize(0.05f);
+			layer3->setScreenPosition(glm::vec3(0.055f, 0.f, -0.01f));
+			layer3->setPosition(layer3->getScreenPosition());
+			layer3->setTargetPosition(layer3->getScreenPosition());
+			layer3->add(board2);
+			layerList.insert(layer3);
+	}
+
+
+	//	push HUD
+	hudList["rendering"].push_back(layer1);
+	hudList["rendering"].push_back(layer2);
+	hudList["rendering"].push_back(layer3);
+
+	activeHud = "rendering";
 }
 //

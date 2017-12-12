@@ -2,7 +2,7 @@
 
 
 //  Default
-WidgetVirtual::WidgetVirtual(const WidgetType& t, const uint8_t& config, const std::string& shaderName) : type(t), configuration(config), lastConfiguration(config)
+WidgetVirtual::WidgetVirtual(const WidgetType& t, const uint8_t& config, const std::string& shaderName) : type(t), configuration(config)
 {
 	sizes[DEFAULT] = glm::vec2(1.f);
 	sizes[HOVER] = glm::vec2(1.f);
@@ -69,7 +69,6 @@ void WidgetVirtual::update(const float& elapseTime)
 	colors[CURRENT] = colors[s];
 	positions[CURRENT] = positions[s];
 	sizes[CURRENT] = sizes[s];
-	lastConfiguration = configuration;
 }
 bool WidgetVirtual::intersect(const glm::mat4& base, const glm::vec3& ray)
 {
@@ -108,9 +107,11 @@ bool WidgetVirtual::intersect(const glm::mat4& base, const glm::vec3& ray)
 bool WidgetVirtual::mouseEvent(const glm::mat4& base, const glm::vec3& ray, const float& parentscale, const bool& clicked) { return false; }
 
 
+void WidgetVirtual::setBoolean(const bool& b) {}
 void WidgetVirtual::setString(const std::string& s) {}
 std::string WidgetVirtual::getString() const { return ""; }
 void WidgetVirtual::append(const std::string& s) {}
+bool WidgetVirtual::getBoolean() const { return false; }
 //
 
 

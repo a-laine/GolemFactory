@@ -58,9 +58,11 @@ class WidgetVirtual
 		virtual bool intersect(const glm::mat4& base, const glm::vec3& ray);
 		virtual bool mouseEvent(const glm::mat4& base, const glm::vec3& ray, const float& parentscale, const bool& clicked);
 
+		virtual void setBoolean(const bool& b);
 		virtual void setString(const std::string& s);
 		virtual void append(const std::string& s);
 		virtual std::string getString() const;
+		virtual bool getBoolean() const;
 		//
 
 		//  Set/get functions
@@ -95,7 +97,7 @@ class WidgetVirtual
 
 		//  Attributes
 		WidgetType type;
-		uint8_t configuration, lastConfiguration;
+		uint8_t configuration;
 		std::map<State, glm::vec2> sizes;
 		std::map<State, glm::vec3> positions;
 		std::map<State, glm::vec4> colors;

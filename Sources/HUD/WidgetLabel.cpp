@@ -28,17 +28,16 @@ WidgetLabel::~WidgetLabel()
 
 
 //	Public functions
-void WidgetLabel::initialize(const std::string& t, uint8_t textConfig)
+void WidgetLabel::initialize(const std::string& txt, uint8_t textConfig)
 {
 	//	init
 	State s = (State)(configuration & STATE_MASK);
 	colors[CURRENT] = colors[s];
 	positions[CURRENT] = positions[s];
 	sizes[CURRENT] = sizes[s];
-	lastConfiguration = configuration;
 	if (!font) return;
 		
-	text = t;
+	text = txt;
 	textConfiguration = textConfig;
 	parseText();
 
@@ -58,7 +57,6 @@ void WidgetLabel::update(const float& elapseTime)
 	colors[CURRENT] = colors[s];
 	positions[CURRENT] = positions[s];
 	sizes[CURRENT] = sizes[s];
-	lastConfiguration = configuration;
 
 	//	update buffers if needed
 	updateCooldown += elapseTime;
@@ -101,9 +99,9 @@ bool WidgetLabel::intersect(const glm::mat4& base, const glm::vec3& ray)
 	for (unsigned int j = 0; j < batchList[BATCH_INDEX_TEXT].faces.size(); j += 3)
 	{
 		//	compute triangles vertices in eyes space
-		glm::vec3 p1 = glm::vec3(base * glm::vec4(batchList[0].vertices[batchList[0].faces[j]], 1.f));
-		glm::vec3 p2 = glm::vec3(base * glm::vec4(batchList[0].vertices[batchList[0].faces[j + 1]], 1.f));
-		glm::vec3 p3 = glm::vec3(base * glm::vec4(batchList[0].vertices[batchList[0].faces[j + 2]], 1.f));
+		glm::vec3 p1 = glm::vec3(base * glm::vec4(batchList[BATCH_INDEX_TEXT].vertices[batchList[BATCH_INDEX_TEXT].faces[j]], 1.f));
+		glm::vec3 p2 = glm::vec3(base * glm::vec4(batchList[BATCH_INDEX_TEXT].vertices[batchList[BATCH_INDEX_TEXT].faces[j + 1]], 1.f));
+		glm::vec3 p3 = glm::vec3(base * glm::vec4(batchList[BATCH_INDEX_TEXT].vertices[batchList[BATCH_INDEX_TEXT].faces[j + 2]], 1.f));
 
 		//	compute local base (triangle edge), and triangle normal
 		glm::vec3 v1 = p2 - p1;
@@ -305,7 +303,7 @@ void WidgetLabel::parseText()
 }
 glm::vec2 WidgetLabel::getLineOrigin(const unsigned int& lineIndex, const uint8_t& textConfiguration)
 {
-	glm::vec2 origin(positions[CURRENT].x, positions[CURRENT].z);
+	glm::vec2 origin(0.f, 0.f);
 	glm::vec2 size(sizes[CURRENT]);
 	switch (textConfiguration & (HORIZONTAL_MASK | VERTICAL_MASK))
 	{
