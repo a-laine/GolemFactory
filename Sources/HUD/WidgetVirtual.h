@@ -16,7 +16,8 @@ class WidgetVirtual
 			BOARD,
 			IMAGE,
 			LABEL,
-			CONSOLE
+			CONSOLE,
+			RADIO_BUTTON
 		};
 		enum OrphanFlags
 		{
@@ -97,6 +98,8 @@ class WidgetVirtual
 		void initializeVAOs();
 
 		void indentLine(std::ostream& out, const int& i) const;
+		void serializeHeader(std::ostream& out, const int& indentation, std::string name, int& number);
+		void serializeTailer(std::ostream& out, const int& i) const;
 		//
 
 		//  Attributes

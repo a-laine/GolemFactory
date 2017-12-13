@@ -36,6 +36,43 @@ WidgetConsole::~WidgetConsole()
 
 
 //	Public functions
+void WidgetConsole::serialize(std::ostream& out, const int& indentation, std::string name, int& number)
+{
+	//	serialize WidgetVirtual part
+	serializeHeader(out, indentation, name, number);
+
+	//	special board attributes
+	indentLine(out, indentation + 1); out << "cornerConfiguration : " << (int)cornerConfiguration << ';' << std::endl;
+	indentLine(out, indentation + 1); out << "borderWidth : " << borderWidth << ';' << std::endl;
+	indentLine(out, indentation + 1); out << "borderThickness : " << borderThickness << ';' << std::endl;
+
+	//	write font
+	if (font)
+	{
+		indentLine(out, indentation + 1); out << "font : \"" << font->name << "\";" << std::endl;
+	}
+
+	//	write text string
+	indentLine(out, indentation + 1);
+	std::string txt = text;
+	for (std::string::size_type i = 0; i != std::string::npos;)
+	{
+		i = txt.find("\n", i);
+		if (i != std::string::npos)
+		{
+			txt.replace(i, 2, "\\n");
+			i += 3;
+		}
+	}
+	out << "text : \"" << txt << "\";" << std::endl;
+
+	//	other attributes
+	indentLine(out, indentation + 1); out << "margin : " << margin << ';' << std::endl;
+	indentLine(out, indentation + 1); out << "sizeChar : " << sizeChar << ';' << std::endl;
+
+	//	tail
+	serializeTailer(out, indentation);
+}
 void WidgetConsole::update(const float& elapseTime)
 {
 	State s = (State)(configuration & STATE_MASK);

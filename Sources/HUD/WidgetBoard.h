@@ -25,6 +25,7 @@ class WidgetBoard : public WidgetVirtual
 		//
 
 		//  Public functions
+		virtual void serialize(std::ostream& out, const int& indentation, std::string name, int& number);
 		virtual void initialize(const float& bThickness, const float& bWidth, const uint8_t& corner = 0x00);
 		virtual void draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model);
 		virtual void update(const float& elapseTime);

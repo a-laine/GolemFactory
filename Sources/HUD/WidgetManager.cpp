@@ -642,11 +642,5 @@ void WidgetManager::loadRenderingHud()
 	hudList["rendering"].push_back(layer3);
 
 	activeHud = "rendering";
-
-
-
-	int index = 0;
-	board1->serialize(std::cout, 0, "", index);
-	label1->serialize(std::cout, 0, "dummyTest", index);
 }
 //

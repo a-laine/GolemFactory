@@ -18,7 +18,7 @@
 WidgetRadioButton::WidgetRadioButton(const uint8_t& config, const std::string& shaderName) : 
 	WidgetLabel(config, shaderName), checked(false), onTexture(nullptr), offTexture(nullptr), lastEventState(false)
 {
-
+	type = RADIO_BUTTON;
 }
 WidgetRadioButton::~WidgetRadioButton()
 {
@@ -28,6 +28,48 @@ WidgetRadioButton::~WidgetRadioButton()
 //
 
 //	Public functions
+void WidgetRadioButton::serialize(std::ostream& out, const int& indentation, std::string name, int& number)
+{
+	//	serialize WidgetVirtual part
+	serializeHeader(out, indentation, name, number);
+
+	//	write font
+	if (font)
+	{
+		indentLine(out, indentation + 1); out << "font : \"" << font->name << "\";" << std::endl;
+	}
+
+	//	write text string
+	indentLine(out, indentation + 1);
+	std::string txt = text;
+	for (std::string::size_type i = 0; i != std::string::npos;)
+	{
+		i = txt.find("\n", i);
+		if (i != std::string::npos)
+		{
+			txt.replace(i, 2, "\\n");
+			i += 3;
+		}
+	}
+	out << "text : \"" << txt << "\";" << std::endl;
+
+	//	other attributes
+	indentLine(out, indentation + 1); out << "textConfiguration : " << (int)textConfiguration << ';' << std::endl;
+	indentLine(out, indentation + 1); out << "sizeChar : " << sizeChar << ';' << std::endl;
+	if (onTexture)
+	{
+		indentLine(out, indentation + 1);
+		out << "onTexture : \"" << onTexture->name << "\";" << std::endl;
+	}
+	if (offTexture)
+	{
+		indentLine(out, indentation + 1);
+		out << "offTexture : \"" << offTexture->name << "\";" << std::endl;
+	}
+
+	//	tail
+	serializeTailer(out, indentation);
+}
 void WidgetRadioButton::update(const float& elapseTime)
 {
 	State s = (State)(configuration & STATE_MASK);

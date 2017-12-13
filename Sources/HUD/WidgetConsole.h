@@ -12,6 +12,7 @@ class WidgetConsole : public WidgetBoard
 		//
 
 		//	Public functions
+		void serialize(std::ostream& out, const int& indentation, std::string name, int& number);
 		void update(const float& elapseTime);
 		void initialize(const float& borderThickness, const float& borderWidth, const uint8_t& corner = 0x00);
 		void draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model);
