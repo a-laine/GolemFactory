@@ -558,8 +558,8 @@ void WidgetManager::loadRenderingHud()
 			board2->setPosition(glm::vec3(0.f, 0.01f, 0.f), WidgetVirtual::ALL);
 			board2->setSize(glm::vec2(2.1f, 1.8f), WidgetVirtual::ALL);
 			board2->initialize(0.02f, 0.15f, WidgetBoard::TOP_LEFT | WidgetBoard::BOTTOM_LEFT);
-			board2->setColor(glm::vec4(0.5f, 0.5f, 0.f, 1.f), WidgetVirtual::ALL);
-			board2->setColor(glm::vec4(0.5f, 0.5f, 0.5f, 1.f), WidgetVirtual::HOVER);
+			board2->setColor(glm::vec4(0.f, 0.f, 0.5f, 1.f), WidgetVirtual::ALL);
+			board2->setColor(glm::vec4(0.4f, 0.4f, 0.4f, 1.f), WidgetVirtual::HOVER);
 			board2->setColor(glm::vec4(0.2f, 0.2f, 0.2f, 1.f), WidgetVirtual::ACTIVE);
 			widgetList.insert(board2);
 
@@ -570,8 +570,8 @@ void WidgetManager::loadRenderingHud()
 			button1->setFont("Data Control");
 			button1->setTextureOn("checkbox_checked.png");
 			button1->setTextureOff("checkbox_unchecked.png");
-			button1->setColor(glm::vec4(0.8f, 0.f, 0.f, 1.f), WidgetVirtual::HOVER);
-			button1->setColor(glm::vec4(0.8f, 0.f, 0.f, 1.f), WidgetVirtual::ACTIVE);
+			button1->setColor(glm::vec4(0.8f, 0.3f, 0.3f, 1.f), WidgetVirtual::HOVER);
+			button1->setColor(glm::vec4(0.8f, 0.3f, 0.3f, 1.f), WidgetVirtual::ACTIVE);
 			button1->initialize("bounding box rendering", WidgetLabel::CLIPPING | WidgetLabel::LEFT);
 			addAssociation(button1, "BBrendering");
 			widgetList.insert(button1);
@@ -583,8 +583,8 @@ void WidgetManager::loadRenderingHud()
 			button2->setFont("Data Control");
 			button2->setTextureOn("checkbox_checked.png");
 			button2->setTextureOff("checkbox_unchecked.png");
-			button2->setColor(glm::vec4(0.8f, 0.f, 0.f, 1.f), WidgetVirtual::HOVER);
-			button2->setColor(glm::vec4(0.8f, 0.f, 0.f, 1.f), WidgetVirtual::ACTIVE);
+			button2->setColor(glm::vec4(0.8f, 0.3f, 0.3f, 1.f), WidgetVirtual::HOVER);
+			button2->setColor(glm::vec4(0.8f, 0.3f, 0.3f, 1.f), WidgetVirtual::ACTIVE);
 			button2->initialize("draw bounding box on picked instance", WidgetLabel::CLIPPING | WidgetLabel::LEFT);
 			addAssociation(button2, "BBpicking");
 			widgetList.insert(button2);
@@ -596,8 +596,8 @@ void WidgetManager::loadRenderingHud()
 			button3->setFont("Data Control");
 			button3->setTextureOn("checkbox_checked.png");
 			button3->setTextureOff("checkbox_unchecked.png");
-			button3->setColor(glm::vec4(0.8f, 0.f, 0.f, 1.f), WidgetVirtual::HOVER);
-			button3->setColor(glm::vec4(0.8f, 0.f, 0.f, 1.f), WidgetVirtual::ACTIVE);
+			button3->setColor(glm::vec4(0.8f, 0.3f, 0.3f, 1.f), WidgetVirtual::HOVER);
+			button3->setColor(glm::vec4(0.8f, 0.3f, 0.3f, 1.f), WidgetVirtual::ACTIVE);
 			button3->setBoolean(true);
 			button3->initialize("syncronize render camera", WidgetLabel::CLIPPING | WidgetLabel::LEFT);
 			addAssociation(button3, "syncCamera");
@@ -622,8 +622,8 @@ void WidgetManager::loadRenderingHud()
 			board2->setPosition(glm::vec3(0.f, 0.01f, 0.f), WidgetVirtual::ALL);
 			board2->setSize(glm::vec2(2.1f, 1.8f), WidgetVirtual::ALL);
 			board2->initialize(0.02f, 0.15f, WidgetBoard::TOP_RIGHT | WidgetBoard::BOTTOM_RIGHT);
-			board2->setColor(glm::vec4(0.5f, 0.5f, 0.f, 1.f), WidgetVirtual::ALL);
-			board2->setColor(glm::vec4(0.5f, 0.5f, 0.5f, 1.f), WidgetVirtual::HOVER);
+			board2->setColor(glm::vec4(0.f, 0.f, 0.5f, 1.f), WidgetVirtual::ALL);
+			board2->setColor(glm::vec4(0.4f, 0.4f, 0.4f, 1.f), WidgetVirtual::HOVER);
 			board2->setColor(glm::vec4(0.2f, 0.2f, 0.2f, 1.f), WidgetVirtual::ACTIVE);
 			widgetList.insert(board2);
 		layer3 = new Layer();
@@ -642,5 +642,11 @@ void WidgetManager::loadRenderingHud()
 	hudList["rendering"].push_back(layer3);
 
 	activeHud = "rendering";
+
+
+
+	int index = 0;
+	board1->serialize(std::cout, 0, "", index);
+	label1->serialize(std::cout, 0, "dummyTest", index);
 }
 //

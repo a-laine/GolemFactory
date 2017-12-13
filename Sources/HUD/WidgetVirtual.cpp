@@ -45,6 +45,25 @@ WidgetVirtual::~WidgetVirtual()
 
 
 //	Public functions
+void WidgetVirtual::serialize(std::ostream& out, const int& indentation, std::string name, int& number)
+{
+	//	write name
+	indentLine(out, indentation);
+	if (name.empty()) out << "unknownWidget_" << number++ << " : {" << std::endl;
+	else out << name << " : {" << std::endl;
+
+	//	write type
+	indentLine(out, indentation + 1);
+	switch (type)
+	{
+		case VIRTUAL:  out << "type : \"VIRTUAL\"" << std::endl; break;
+		default: break;
+	}
+
+	//	end
+	indentLine(out, indentation);
+	out << "};" << std::endl;
+}
 void WidgetVirtual::draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model)
 {
 	//	texture related stuff
@@ -268,5 +287,10 @@ void WidgetVirtual::initializeVAOs()
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, batchList[i].facesBuffer);
 		glBindVertexArray(0);
 	}
+}
+void WidgetVirtual::indentLine(std::ostream& out, const int& i) const
+{
+	for (int j = 0; j < i; j++)
+		out << '\t';
 }
 //

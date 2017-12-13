@@ -53,6 +53,8 @@ class WidgetVirtual
 		//
 
 		//	Public functions
+		virtual void serialize(std::ostream& out, const int& indentation, std::string name, int& number);
+
 		virtual void draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model);
 		virtual void update(const float& elapseTime);
 		virtual bool intersect(const glm::mat4& base, const glm::vec3& ray);
@@ -93,6 +95,8 @@ class WidgetVirtual
 		void drawClippingShape(const unsigned int& batchIndex, const bool& enableClipping, Shader* s, uint8_t& stencilMask);
 		void initializeVBO(const unsigned int& batchIndex, int VBOtype = GL_STATIC_DRAW);
 		void initializeVAOs();
+
+		void indentLine(std::ostream& out, const int& i) const;
 		//
 
 		//  Attributes

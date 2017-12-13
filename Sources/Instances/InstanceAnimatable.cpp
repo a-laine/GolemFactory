@@ -193,8 +193,6 @@ void InstanceAnimatable::computeCapsules()
 			}
 		}
 	}
-	for (unsigned int i = 0; i < capsules.size(); i++)
-		std::cout << joints[i].name <<" : "<<capsules[i] << std::endl;
 }
 void InstanceAnimatable::initializeVBOVAO()
 {
