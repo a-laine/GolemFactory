@@ -7,6 +7,8 @@
 
 class WidgetContainer
 {
+	friend class WidgetSaver;
+
 	public:
 		//  Default
 		WidgetContainer();

@@ -6,6 +6,11 @@
 #include <sys/stat.h>
 #include <iomanip>
 
+#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
+
+#include "Utiles/Parser/Variant.h"
+
 class ToolBox
 {
 	public:
@@ -19,4 +24,11 @@ class ToolBox
 			out << std::setprecision(n) << a_value;
 			return out.str();
 		}
+
+		//	vector and matrix serialization
+		static Variant getFromVec2(const glm::vec2& vec);
+		static Variant getFromVec3(const glm::vec3& vec);
+		static Variant getFromVec4(const glm::vec4& vec);
+		static Variant getFromQuat(const glm::fquat& quat);
+		static Variant getFromMat4(const glm::mat4& mat);
 };

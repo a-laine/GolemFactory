@@ -12,6 +12,8 @@
 
 class Layer : public WidgetContainer
 {
+	friend class WidgetSaver;
+
 	public:
 		//  Miscellaneous
 		enum Flags

@@ -1,5 +1,6 @@
 #include "AnimationSaver.h"
 #include "Utiles/Parser/Writer.h"
+#include "Utiles/ToolBox.h"
 
 //	Public functions
 void AnimationSaver::save(Animation* animation, const std::string& resourcesPath, std::string fileName)
@@ -65,27 +66,30 @@ void AnimationSaver::save(Animation* animation, const std::string& resourcesPath
 			if (i == 0 || epsilon(timeLine[i].poses[j].position, timeLine[i - 1].poses[j].position, 0.001f))
 			{
 				insertion++;
-				joint.insert("t", Variant::ArrayType());
+				joint.insert("t", ToolBox::getFromVec3(timeLine[i].poses[j].position));
+				/*joint.insert("t", Variant::ArrayType());
 				for (int k = 0; k < 3; k++)
-					joint["t"].getArray().push_back(Variant(timeLine[i].poses[j].position[k]));
+					joint["t"].getArray().push_back(Variant(timeLine[i].poses[j].position[k]));*/
 			}
 
 			//	save joint scale
 			if (i == 0 || epsilon(timeLine[i].poses[j].scale, timeLine[i - 1].poses[j].scale, 0.001f))
 			{
 				insertion++;
-				joint.insert("s", Variant::ArrayType());
+				joint.insert("s", ToolBox::getFromVec3(timeLine[i].poses[j].scale));
+				/*joint.insert("s", Variant::ArrayType());
 				for (int k = 0; k < 3; k++)
-					joint["s"].getArray().push_back(Variant(timeLine[i].poses[j].scale[k]));
+					joint["s"].getArray().push_back(Variant(timeLine[i].poses[j].scale[k]));*/
 			}
 
 			//	save joint rotation
 			if (i == 0 || epsilon(timeLine[i].poses[j].rotation, timeLine[i - 1].poses[j].rotation, 0.001f))
 			{
 				insertion++;
-				joint.insert("r", Variant::ArrayType());
+				joint.insert("r", ToolBox::getFromQuat(timeLine[i].poses[j].rotation));
+				/*joint.insert("r", Variant::ArrayType());
 				for (int k = 0; k < 4; k++)
-					joint["r"].getArray().push_back(Variant(timeLine[i].poses[j].rotation[k]));
+					joint["r"].getArray().push_back(Variant(timeLine[i].poses[j].rotation[k]));*/
 			}
 
 			//

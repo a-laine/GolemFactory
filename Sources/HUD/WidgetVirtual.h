@@ -8,6 +8,8 @@
 
 class WidgetVirtual
 {
+	friend class WidgetSaver;
+
 	public:
 		//  Miscellaneous
 		enum WidgetType

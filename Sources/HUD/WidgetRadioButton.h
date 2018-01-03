@@ -4,6 +4,8 @@
 
 class WidgetRadioButton : public WidgetLabel
 {
+	friend class WidgetSaver;
+
 	public:
 		//  Default
 		WidgetRadioButton(const uint8_t& config = VISIBLE, const std::string& shaderName = "defaultWidget");

@@ -134,4 +134,42 @@ bool ToolBox::isPathExist(const std::string& fileName)
 	struct stat buffer;
 	return (stat(fileName.c_str(), &buffer) == 0);
 }
+
+
+Variant ToolBox::getFromVec2(const glm::vec2& vec)
+{
+	Variant& v = Variant(Variant::ArrayType());
+	for (int i = 0; i < 2; i++)
+		v.getArray().push_back(Variant(vec[i]));
+	return v;
+}
+Variant ToolBox::getFromVec3(const glm::vec3& vec)
+{
+	Variant& v = Variant(Variant::ArrayType());
+	for (int i = 0; i < 3; i++)
+		v.getArray().push_back(Variant(vec[i]));
+	return v;
+}
+Variant ToolBox::getFromVec4(const glm::vec4& vec)
+{
+	Variant& v = Variant(Variant::ArrayType());
+	for (int i = 0; i < 4; i++)
+		v.getArray().push_back(Variant(vec[i]));
+	return v;
+}
+Variant ToolBox::getFromQuat(const glm::fquat& quat)
+{
+	Variant& v = Variant(Variant::ArrayType());
+	for (int i = 0; i < 4; i++)
+		v.getArray().push_back(Variant(quat[i]));
+	return v;
+}
+Variant ToolBox::getFromMat4(const glm::mat4& mat)
+{
+	Variant& v = Variant(Variant::ArrayType());
+	for (int i = 0; i < 4; i++)
+		for (int j = 0; j < 4; j++)
+			v.getArray().push_back(Variant(mat[i][j]));
+	return v;
+}
 //

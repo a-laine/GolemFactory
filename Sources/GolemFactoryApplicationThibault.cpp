@@ -20,7 +20,7 @@
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-
+#include "Resources/Loader/SkeletonSaver.h"
 
 #define GRID_SIZE 100
 #define GRID_ELEMENT_SIZE 5.f

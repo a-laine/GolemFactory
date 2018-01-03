@@ -1,6 +1,6 @@
 #include "SkeletonSaver.h"
 #include "Utiles/Parser/Writer.h"
-
+#include "Utiles/ToolBox.h"
 
 //	Public functions
 void SkeletonSaver::save(Skeleton* skeleton, const std::string& resourcesPath, std::string fileName)
@@ -42,10 +42,7 @@ void SkeletonSaver::save(Skeleton* skeleton, const std::string& resourcesPath, s
 			jointVariant["sons"].getArray().push_back(Variant(jointList[jointList[i].sons[j]].name));
 
 		//	create bind matrix array
-		jointVariant.insert("relativeBindTransform", Variant(Variant::ArrayType()));
-		for (int j = 0; j < 4; j++)
-			for (int k = 0; k < 4; k++)
-				jointVariant["relativeBindTransform"].getArray().push_back(Variant(jointList[i].relativeBindTransform[j][k]));
+		jointVariant.insert("relativeBindTransform", ToolBox::getFromMat4(jointList[i].relativeBindTransform));
 	}
 
 	//	save into file

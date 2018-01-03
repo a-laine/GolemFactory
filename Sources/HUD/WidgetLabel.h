@@ -4,6 +4,8 @@
 
 class WidgetLabel : public WidgetVirtual
 {
+	friend class WidgetSaver;
+
 	public:
 		//	Miscellaneous
 		enum AlignmentMode

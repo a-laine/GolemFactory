@@ -5,6 +5,8 @@
 
 class WidgetConsole : public WidgetBoard
 {
+	friend class WidgetSaver;
+
 	public:
 		//  Default
 		WidgetConsole(const uint8_t& config = VISIBLE, const std::string& shaderName = "defaultWidget");

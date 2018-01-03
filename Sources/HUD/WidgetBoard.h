@@ -8,6 +8,8 @@
 
 class WidgetBoard : public WidgetVirtual
 {
+	friend class WidgetSaver;
+
 	public:
 		//  Miscellaneous
 		enum CornerConfig
