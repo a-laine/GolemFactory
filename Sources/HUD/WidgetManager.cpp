@@ -672,9 +672,7 @@ void WidgetManager::loadRenderingHud()
 	hudList["rendering"].push_back(layer1);
 	hudList["rendering"].push_back(layer2);
 	hudList["rendering"].push_back(layer3);
-
-	activeHud = "rendering";
-
+	
 	//	save into file
 	std::ofstream file(ResourceManager::getInstance()->getRepository() + "GUI/rendering.gui", std::ofstream::out);
 	Writer writer(&file);
