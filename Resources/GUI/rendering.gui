@@ -72,7 +72,7 @@
                 "positionAll" : [0.00000, 0.00000, 0.54000 ],
                 "sizeAll" : [2.00000, 0.07000 ],
                 "sizeChar" : 0.07000,
-                "text" : "syncronize render camera",
+                "text" : "synchronize render camera",
                 "textConfiguration" : 36,
                 "type" : "RADIO_BUTTON" },
             "unknown_3" : {

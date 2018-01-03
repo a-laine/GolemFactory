@@ -77,7 +77,6 @@ int main()
 	double elapseTime = 16.;
 	double dummy = 0;
 	int width, height;
-	exit(0);
 
 	//	game loop
 	std::cout << "game loop initiated" << std::endl;
