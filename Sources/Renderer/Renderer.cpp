@@ -256,7 +256,7 @@ void Renderer::renderHUD(Camera* renderCam)
 			if (it->second[i]->isVisible())		// layer visible
 			{
 				glm::mat4 model = base * it->second[i]->getModelMatrix();
-				std::vector<WidgetVirtual*>& list = it->second[i]->getWidgetList();
+				std::vector<WidgetVirtual*>& list = it->second[i]->getChildrenList();
 				for (std::vector<WidgetVirtual*>::iterator it2 = list.begin(); it2 != list.end(); ++it2)
 				{
 					if ((*it2)->isVisible())	// widget visible

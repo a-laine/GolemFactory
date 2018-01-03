@@ -42,6 +42,10 @@ void ResourceManager::setRepository(const std::string& path)
 {
     repository = path;
 }
+std::string ResourceManager::getRepository() const
+{
+	return repository;
+}
 void ResourceManager::release(ResourceVirtual* resource)
 {
 	//	prevent fail & decrement resources user counter

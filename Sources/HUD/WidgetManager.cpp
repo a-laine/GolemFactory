@@ -1,5 +1,6 @@
 #include "WidgetManager.h"
-
+#include "Utiles/Parser/Writer.h"
+#include "Loader/WidgetSaver.h"
 
 //  Default
 WidgetManager::WidgetManager() : widgetDrawn(0), trianglesDrawn(0), pickingRay(0.f) {}
@@ -48,7 +49,7 @@ void WidgetManager::update(const float& elapsedTime, const bool& clickButtonPres
 				if (it->second[i]->isVisible())		// layer visible
 				{
 					glm::mat4 model = pickingBase * it->second[i]->getModelMatrix();
-					std::vector<WidgetVirtual*>& list = it->second[i]->getWidgetList();
+					std::vector<WidgetVirtual*>& list = it->second[i]->getChildrenList();
 					for (std::vector<WidgetVirtual*>::iterator it2 = list.begin(); it2 != list.end(); ++it2)
 					{
 						if ((*it2)->isVisible())	// widget visible
@@ -277,7 +278,7 @@ void WidgetManager::resizeCallback(int w, int h)
 			}
 
 			//	check all widgets attach to it
-			std::vector<WidgetVirtual*>& list = it->second[i]->getWidgetList();
+			std::vector<WidgetVirtual*>& list = it->second[i]->getChildrenList();
 			for (std::vector<WidgetVirtual*>::iterator it2 = list.begin(); it2 != list.end(); ++it2)
 			{
 				if ((*it2)->isResponsive())		// widget responsive
@@ -320,8 +321,8 @@ void WidgetManager::loadDebugHud()
 		layer1->setScreenPosition(glm::vec3(0.f, 0.003f, 0.054f));
 		layer1->setPosition(layer1->getScreenPosition());
 		layer1->setTargetPosition(layer1->getScreenPosition());
-		layer1->add(board1);
-		layer1->add(label1);
+		layer1->addChild(board1);
+		layer1->addChild(label1);
 		layerList.insert(layer1);
 
 	//	runtime speed
@@ -345,8 +346,8 @@ void WidgetManager::loadDebugHud()
 		layer2->setScreenPosition(glm::vec3(-0.091f, 0.f, 0.049f));
 		layer2->setPosition(layer2->getScreenPosition());
 		layer2->setTargetPosition(layer2->getScreenPosition());
-		layer2->add(board2);
-		layer2->add(label2);
+		layer2->addChild(board2);
+		layer2->addChild(label2);
 		layerList.insert(layer2);
 
 	//	Draw calls
@@ -370,8 +371,8 @@ void WidgetManager::loadDebugHud()
 		layer3->setScreenPosition(glm::vec3(0.091f, 0.f, 0.049f));
 		layer3->setPosition(layer3->getScreenPosition());
 		layer3->setTargetPosition(layer3->getScreenPosition());
-		layer3->add(board3);
-		layer3->add(label3);
+		layer3->addChild(board3);
+		layer3->addChild(label3);
 		layerList.insert(layer3);
 
 	//	console
@@ -391,7 +392,7 @@ void WidgetManager::loadDebugHud()
 		layer4->setScreenPosition(glm::vec3(-0.055f, 0.f, -0.049f));
 		layer4->setPosition(layer4->getScreenPosition());
 		layer4->setTargetPosition(layer4->getScreenPosition());
-		layer4->add(console);
+		layer4->addChild(console);
 		layerList.insert(layer4);
 
 	//	picking
@@ -415,8 +416,8 @@ void WidgetManager::loadDebugHud()
 		layer5->setScreenPosition(glm::vec3(0.055f, 0.f, -0.049f));
 		layer5->setPosition(layer5->getScreenPosition());
 		layer5->setTargetPosition(layer5->getScreenPosition());
-		layer5->add(board5);
-		layer5->add(label5);
+		layer5->addChild(board5);
+		layer5->addChild(label5);
 		layerList.insert(layer5);
 		
 	//	hit cross
@@ -430,7 +431,7 @@ void WidgetManager::loadDebugHud()
 		layer6->setScreenPosition(glm::vec3(0.f, 0.f, 0.f));
 		layer6->setPosition(layer6->getScreenPosition());
 		layer6->setTargetPosition(layer6->getScreenPosition());
-		layer6->add(image);
+		layer6->addChild(image);
 		layerList.insert(layer6);
 
 	//	push HUD
@@ -440,6 +441,22 @@ void WidgetManager::loadDebugHud()
 	hudList["debug"].push_back(layer4);
 	hudList["debug"].push_back(layer5);
 	hudList["debug"].push_back(layer6);
+
+	//	save into file
+	std::ofstream file(ResourceManager::getInstance()->getRepository() + "GUI/debug.gui", std::ofstream::out);
+	Writer writer(&file);
+	file << std::fixed;
+	file.precision(5);
+	writer.setInlineArray(true);
+	int startingUnknownIndex = 0;
+	Variant hud; hud.createMap();
+
+	for (unsigned int i = 0; i < hudList["debug"].size(); ++i)
+	{
+		Variant tmp = WidgetSaver::serialize(hudList["debug"][i], associations, startingUnknownIndex);
+		hud.insert("layer_" + std::to_string(i + 1), tmp);
+	}
+	writer.write(hud);
 }
 void WidgetManager::loadHelpHud()
 {
@@ -463,8 +480,8 @@ void WidgetManager::loadHelpHud()
 		layer1->setScreenPosition(glm::vec3(0.f, 0.003f, 0.054f));
 		layer1->setPosition(layer1->getScreenPosition());
 		layer1->setTargetPosition(layer1->getScreenPosition());
-		layer1->add(board1);
-		layer1->add(label1);
+		layer1->addChild(board1);
+		layer1->addChild(label1);
 		layerList.insert(layer1);
 
 	//	central panel
@@ -484,7 +501,7 @@ void WidgetManager::loadHelpHud()
 		layer2->setScreenPosition(glm::vec3(0.f, 0.f, -0.01f));
 		layer2->setPosition(layer2->getScreenPosition());
 		layer2->setTargetPosition(layer2->getScreenPosition());
-		layer2->add(console);
+		layer2->addChild(console);
 		layerList.insert(layer2);
 
 	//	push on HUD
@@ -495,7 +512,7 @@ void WidgetManager::loadHelpHud()
 	console->append(" ");
 	console->append("Special :");
 	console->append(" View mouse\t\t\tF2");
-	console->append(" Quit\t\t\tESCAPE");
+	console->append("Quit\t\t\tESCAPE");
 	console->append(" ");
 
 	console->append("Commands :");
@@ -524,6 +541,22 @@ void WidgetManager::loadHelpHud()
 	console->append(" ");
 	console->append(" ");
 	console->append(" ");
+
+	//	save into file
+	std::ofstream file(ResourceManager::getInstance()->getRepository() + "GUI/help.gui", std::ofstream::out);
+	Writer writer(&file);
+	file << std::fixed;
+	file.precision(5);
+	writer.setInlineArray(true);
+	int startingUnknownIndex = 0;
+	Variant hud; hud.createMap();
+
+	for (unsigned int i = 0; i < hudList["help"].size(); ++i)
+	{
+		Variant tmp = WidgetSaver::serialize(hudList["help"][i], associations, startingUnknownIndex);
+		hud.insert("layer_" + std::to_string(i + 1), tmp);
+	}
+	writer.write(hud);
 }
 void WidgetManager::loadRenderingHud()
 {
@@ -547,14 +580,14 @@ void WidgetManager::loadRenderingHud()
 		layer1->setScreenPosition(glm::vec3(0.f, 0.003f, 0.054f));
 		layer1->setPosition(layer1->getScreenPosition());
 		layer1->setTargetPosition(layer1->getScreenPosition());
-		layer1->add(board1);
-		layer1->add(label1);
+		layer1->addChild(board1);
+		layer1->addChild(label1);
 		layerList.insert(layer1);
 
 	//	panel left
 	Layer* layer2;
 	{
-		WidgetBoard* board2 = new WidgetConsole(WidgetVirtual::VISIBLE | WidgetVirtual::RESPONSIVE);
+		WidgetBoard* board2 = new WidgetBoard(WidgetVirtual::VISIBLE | WidgetVirtual::RESPONSIVE);
 			board2->setPosition(glm::vec3(0.f, 0.01f, 0.f), WidgetVirtual::ALL);
 			board2->setSize(glm::vec2(2.1f, 1.8f), WidgetVirtual::ALL);
 			board2->initialize(0.02f, 0.15f, WidgetBoard::TOP_LEFT | WidgetBoard::BOTTOM_LEFT);
@@ -599,7 +632,7 @@ void WidgetManager::loadRenderingHud()
 			button3->setColor(glm::vec4(0.8f, 0.3f, 0.3f, 1.f), WidgetVirtual::HOVER);
 			button3->setColor(glm::vec4(0.8f, 0.3f, 0.3f, 1.f), WidgetVirtual::ACTIVE);
 			button3->setBoolean(true);
-			button3->initialize("syncronize render camera", WidgetLabel::CLIPPING | WidgetLabel::LEFT);
+			button3->initialize("synchronize render camera", WidgetLabel::CLIPPING | WidgetLabel::LEFT);
 			addAssociation(button3, "syncCamera");
 			widgetList.insert(button3);
 
@@ -608,17 +641,17 @@ void WidgetManager::loadRenderingHud()
 			layer2->setScreenPosition(glm::vec3(-0.055f, 0.f, -0.01f));
 			layer2->setPosition(layer2->getScreenPosition());
 			layer2->setTargetPosition(layer2->getScreenPosition());
-			layer2->add(board2);
-			layer2->add(button1);
-			layer2->add(button2);
-			layer2->add(button3);
+			layer2->addChild(board2);
+			layer2->addChild(button1);
+			layer2->addChild(button2);
+			layer2->addChild(button3);
 			layerList.insert(layer2);
 	}
 
 	//	panel right
 	Layer* layer3;
 	{
-		WidgetBoard* board2 = new WidgetConsole(WidgetVirtual::VISIBLE | WidgetVirtual::RESPONSIVE);
+		WidgetBoard* board2 = new WidgetBoard(WidgetVirtual::VISIBLE | WidgetVirtual::RESPONSIVE);
 			board2->setPosition(glm::vec3(0.f, 0.01f, 0.f), WidgetVirtual::ALL);
 			board2->setSize(glm::vec2(2.1f, 1.8f), WidgetVirtual::ALL);
 			board2->initialize(0.02f, 0.15f, WidgetBoard::TOP_RIGHT | WidgetBoard::BOTTOM_RIGHT);
@@ -631,10 +664,9 @@ void WidgetManager::loadRenderingHud()
 			layer3->setScreenPosition(glm::vec3(0.055f, 0.f, -0.01f));
 			layer3->setPosition(layer3->getScreenPosition());
 			layer3->setTargetPosition(layer3->getScreenPosition());
-			layer3->add(board2);
+			layer3->addChild(board2);
 			layerList.insert(layer3);
 	}
-
 
 	//	push HUD
 	hudList["rendering"].push_back(layer1);
@@ -642,5 +674,21 @@ void WidgetManager::loadRenderingHud()
 	hudList["rendering"].push_back(layer3);
 
 	activeHud = "rendering";
+
+	//	save into file
+	std::ofstream file(ResourceManager::getInstance()->getRepository() + "GUI/rendering.gui", std::ofstream::out);
+	Writer writer(&file);
+	file << std::fixed;
+	file.precision(5);
+	writer.setInlineArray(true);
+	int startingUnknownIndex = 0;
+	Variant hud; hud.createMap();
+
+	for (unsigned int i = 0; i < hudList["rendering"].size(); ++i)
+	{
+		Variant tmp = WidgetSaver::serialize(hudList["rendering"][i], associations, startingUnknownIndex);
+		hud.insert("layer_" + std::to_string(i + 1), tmp);
+	}
+	writer.write(hud);
 }
 //

@@ -25,8 +25,7 @@ class ResourceManager : public Singleton<ResourceManager>
 
     public:
         //  Public functions
-        void setRepository(const std::string& path);
-        void release(ResourceVirtual* resource);
+		void release(ResourceVirtual* resource);
         void clearGarbage();
 
         Mesh* getMesh(std::string name);
@@ -46,6 +45,9 @@ class ResourceManager : public Singleton<ResourceManager>
         //
 
         //  Set/get functions
+		void setRepository(const std::string& path);
+		std::string getRepository() const;
+
         unsigned int getNumberOfRessources(const ResourceVirtual::ResourceType& type) const;
         std::string getDefaultName(const ResourceVirtual::ResourceType& type) const;
         void setDefaultName(const ResourceVirtual::ResourceType& type, const std::string& name);

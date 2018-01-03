@@ -10,10 +10,15 @@
 - change parsing gfmesh line from "iss<<" to sscanf_s 
 	- for more error file detection
 
+*Widget system :*
+- change renderer hud pass to fully iterative rendering on widgets to support hierarchy
+- add Widget loader static class
+	- choose between iterative pass for loading or recursive (recursive easier to understand but slower)
+- add full hud loading from .gui files
+
 *Font generator :*
  - load a font from ttf file and generate texture atlas
-
-
+ 
 *Scene manager :*
 - change NodeVirtual class for thread safe
 - change SceneManager class for thread safe
@@ -26,31 +31,8 @@
 
 *Instance manager :*
 - add support of instance hierarchy (parent <-> child)
-
-*Widget system :*
-- add hud loading from file
-- add implementation of widget console (whith scroll and expend button)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	- in instance manager or in the instance himself : supported by the entity component system
+	- ex: class InstanceContainer : public Component
 
 
 

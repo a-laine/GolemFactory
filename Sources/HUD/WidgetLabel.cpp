@@ -28,38 +28,6 @@ WidgetLabel::~WidgetLabel()
 
 
 //  Public functions
-void WidgetLabel::serialize(std::ostream& out, const int& indentation, std::string name, int& number)
-{
-	//	serialize WidgetVirtual part
-	serializeHeader(out, indentation, name, number);
-
-	//	write font
-	if (font)
-	{
-		indentLine(out, indentation + 1); out << "font : \"" << font->name << "\";" << std::endl;
-	}
-
-	//	write text string
-	indentLine(out, indentation + 1);
-	std::string txt = text;
-	for (std::string::size_type i = 0; i != std::string::npos;)
-	{
-		i = txt.find("\n", i);
-		if (i != std::string::npos)
-		{
-			txt.replace(i, 2, "\\n");
-			i += 3;
-		}
-	}
-	out << "text : \"" << txt << "\";" << std::endl;
-
-	//	other attributes
-	indentLine(out, indentation + 1); out << "textConfiguration : " << (int)textConfiguration << ';' << std::endl;
-	indentLine(out, indentation + 1); out << "sizeChar : " << sizeChar << ';' << std::endl;
-
-	//	tail
-	serializeTailer(out, indentation);
-}
 void WidgetLabel::initialize(const std::string& txt, uint8_t textConfig)
 {
 	//	init

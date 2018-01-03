@@ -8,9 +8,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include "WidgetVirtual.h"
-#include "WidgetContainer.h"
 
-class Layer : public WidgetContainer
+class Layer
 {
 	friend class WidgetSaver;
 
@@ -48,6 +47,12 @@ class Layer : public WidgetContainer
 		glm::vec3 getPosition() const;
 		glm::vec3 getScreenPosition() const;
 		glm::vec3 getTargetPosition() const;
+		std::vector<WidgetVirtual*>& getChildrenList();
+		//
+
+		//	Hierarchy modifiers
+		virtual void addChild(WidgetVirtual* w);
+		virtual bool removeChild(WidgetVirtual* w);
 		//
 
 	protected:
@@ -58,5 +63,6 @@ class Layer : public WidgetContainer
 		glm::vec3 targetPosition;
 		float size;
 		glm::vec3 eulerAngle;
+		std::vector<WidgetVirtual*> children;
 		//
 };

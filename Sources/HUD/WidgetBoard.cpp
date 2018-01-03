@@ -11,19 +11,6 @@ WidgetBoard::~WidgetBoard() {}
 //
 
 //  Public functions
-void WidgetBoard::serialize(std::ostream& out, const int& indentation, std::string name, int& number)
-{
-	//	serialize WidgetVirtual part
-	serializeHeader(out, indentation, name, number);
-
-	//	special board attributes
-	indentLine(out, indentation + 1); out << "cornerConfiguration : " << (int)cornerConfiguration << ';' << std::endl;
-	indentLine(out, indentation + 1); out << "borderWidth : " << borderWidth << ';' << std::endl;
-	indentLine(out, indentation + 1); out << "borderThickness : " << borderThickness << ';' << std::endl;
-
-	//	tail
-	serializeTailer(out, indentation);
-}
 void WidgetBoard::initialize(const float& bThickness, const float& bWidth, const uint8_t& corner)
 {
 	colors[CURRENT] = colors[(State)(configuration & STATE_MASK)];

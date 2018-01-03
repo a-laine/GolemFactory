@@ -56,8 +56,6 @@ class WidgetVirtual
 		//
 
 		//	Public functions
-		virtual void serialize(std::ostream& out, const int& indentation, std::string name, int& number);
-
 		virtual void draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model);
 		virtual void update(const float& elapseTime);
 		virtual bool intersect(const glm::mat4& base, const glm::vec3& ray);
@@ -91,6 +89,12 @@ class WidgetVirtual
 		bool isVisible() const;
 		bool isResponsive() const;
 		virtual unsigned int getNumberFaces() const;
+		std::vector<WidgetVirtual*>& getChildrenList();
+		//
+
+		//	Hierarchy modifiers
+		virtual void addChild(WidgetVirtual* w);
+		virtual bool removeChild(WidgetVirtual* w);
 		//
 
 	protected:
@@ -100,8 +104,6 @@ class WidgetVirtual
 		void initializeVAOs();
 
 		void indentLine(std::ostream& out, const int& i) const;
-		void serializeHeader(std::ostream& out, const int& indentation, std::string name, int& number);
-		void serializeTailer(std::ostream& out, const int& i) const;
 		//
 
 		//  Attributes
@@ -112,6 +114,7 @@ class WidgetVirtual
 		std::map<State, glm::vec4> colors;
 
 		std::vector<DrawBatch> batchList;
+		std::vector<WidgetVirtual*> children;
 
 		Shader* shader;
 		Texture* texture;

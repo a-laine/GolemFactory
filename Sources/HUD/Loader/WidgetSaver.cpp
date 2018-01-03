@@ -3,11 +3,9 @@
 
 
 //	Public functions
-Variant WidgetSaver::serialize(WidgetVirtual* w, const std::map<std::string, WidgetVirtual*>& association)
+Variant WidgetSaver::serialize(WidgetVirtual* w, std::map<std::string, WidgetVirtual*>& association, int& unknownIndex)
 {
 	Variant rootVariant;   rootVariant.createMap();
-	rootVariant.insert("jointList", Variant::MapType());
-	rootVariant.insert("order", Variant::ArrayType());
 
 	//	write type
 	switch (w->type)
@@ -37,24 +35,24 @@ Variant WidgetSaver::serialize(WidgetVirtual* w, const std::map<std::string, Wid
 
 	//	write positions
 	if (w->positions[WidgetVirtual::DEFAULT] == w->positions[WidgetVirtual::HOVER] && w->positions[WidgetVirtual::DEFAULT] == w->positions[WidgetVirtual::ACTIVE] && w->positions[WidgetVirtual::DEFAULT] == w->positions[WidgetVirtual::CURRENT])
-		rootVariant.insert("sizeAll", ToolBox::getFromVec3(w->positions[WidgetVirtual::DEFAULT]));
+		rootVariant.insert("positionAll", ToolBox::getFromVec3(w->positions[WidgetVirtual::DEFAULT]));
 	else
 	{
-		rootVariant.insert("sizeDefault", ToolBox::getFromVec3(w->positions[WidgetVirtual::DEFAULT]));
-		rootVariant.insert("sizeHover", ToolBox::getFromVec3(w->positions[WidgetVirtual::HOVER]));
-		rootVariant.insert("sizeActive", ToolBox::getFromVec3(w->positions[WidgetVirtual::ACTIVE]));
-		rootVariant.insert("sizeCurrent", ToolBox::getFromVec3(w->positions[WidgetVirtual::CURRENT]));
+		rootVariant.insert("positionDefault", ToolBox::getFromVec3(w->positions[WidgetVirtual::DEFAULT]));
+		rootVariant.insert("positionHover", ToolBox::getFromVec3(w->positions[WidgetVirtual::HOVER]));
+		rootVariant.insert("positionActive", ToolBox::getFromVec3(w->positions[WidgetVirtual::ACTIVE]));
+		rootVariant.insert("positionCurrent", ToolBox::getFromVec3(w->positions[WidgetVirtual::CURRENT]));
 	}
 
 	//	write colors
 	if (w->colors[WidgetVirtual::DEFAULT] == w->colors[WidgetVirtual::HOVER] && w->colors[WidgetVirtual::DEFAULT] == w->colors[WidgetVirtual::ACTIVE] && w->colors[WidgetVirtual::DEFAULT] == w->colors[WidgetVirtual::CURRENT])
-		rootVariant.insert("sizeAll", ToolBox::getFromVec4(w->colors[WidgetVirtual::DEFAULT]));
+		rootVariant.insert("colorAll", ToolBox::getFromVec4(w->colors[WidgetVirtual::DEFAULT]));
 	else
 	{
-		rootVariant.insert("sizeDefault", ToolBox::getFromVec4(w->colors[WidgetVirtual::DEFAULT]));
-		rootVariant.insert("sizeHover", ToolBox::getFromVec4(w->colors[WidgetVirtual::HOVER]));
-		rootVariant.insert("sizeActive", ToolBox::getFromVec4(w->colors[WidgetVirtual::ACTIVE]));
-		rootVariant.insert("sizeCurrent", ToolBox::getFromVec4(w->colors[WidgetVirtual::CURRENT]));
+		rootVariant.insert("colorDefault", ToolBox::getFromVec4(w->colors[WidgetVirtual::DEFAULT]));
+		rootVariant.insert("colorHover", ToolBox::getFromVec4(w->colors[WidgetVirtual::HOVER]));
+		rootVariant.insert("colorActive", ToolBox::getFromVec4(w->colors[WidgetVirtual::ACTIVE]));
+		rootVariant.insert("colorCurrent", ToolBox::getFromVec4(w->colors[WidgetVirtual::CURRENT]));
 	}
 
 	//	write shader and texture name
@@ -90,6 +88,60 @@ Variant WidgetSaver::serialize(WidgetVirtual* w, const std::map<std::string, Wid
 		default: break;
 	}
 
+	//	children
+	if (!w->children.empty())
+	{
+		rootVariant.insert("children", Variant::MapType());
+		for (unsigned int i = 0; i < w->children.size(); ++i)
+		{
+			std::string name = "unknown_" + std::to_string(++unknownIndex);
+			for (std::map<std::string, WidgetVirtual*>::iterator it = association.begin(); it != association.end(); it++)
+			{
+				if (w->children[i] == it->second)
+				{
+					name = it->first;
+					break;
+				}
+			}
+			Variant child = serialize(w->children[i], association, unknownIndex);
+			rootVariant.getMap()["children"].insert(name, child);
+		}
+	}
+
+	//	end
+	return rootVariant;
+}
+Variant WidgetSaver::serialize(Layer* l, std::map<std::string, WidgetVirtual*>& association, int& unknownIndex)
+{
+	Variant rootVariant;   rootVariant.createMap();
+
+	//	write configuration
+	rootVariant.insert("config", Variant((int)l->configuration));
+	rootVariant.insert("screenPosition", ToolBox::getFromVec3(l->screenPosition));
+	rootVariant.insert("targetPosition", ToolBox::getFromVec3(l->targetPosition));
+	rootVariant.insert("eulerAngle", ToolBox::getFromVec3(l->eulerAngle));
+	rootVariant.insert("size", Variant(l->size));
+
+	//	children
+	if (!l->children.empty())
+	{
+		rootVariant.insert("children", Variant::MapType());
+		for (unsigned int i = 0; i < l->children.size(); ++i)
+		{
+			std::string name = "unknown_" + std::to_string(++unknownIndex);
+			for (std::map<std::string, WidgetVirtual*>::iterator it = association.begin(); it != association.end(); it++)
+			{
+				if (l->children[i] == it->second)
+				{
+					name = it->first;
+					break;
+				}
+			}
+			Variant child = serialize(l->children[i], association, unknownIndex);
+			rootVariant.getMap()["children"].insert(name, child);
+		}
+	}
+
 	//	end
 	return rootVariant;
 }
@@ -97,46 +149,58 @@ Variant WidgetSaver::serialize(WidgetVirtual* w, const std::map<std::string, Wid
 
 
 //	Protected functions
-void WidgetSaver::serializeBoard(WidgetBoard* v, Variant& root)
+void WidgetSaver::serializeBoard(WidgetBoard* w, Variant& root)
+{
+	root.insert("cornerConfig", Variant((int)w->cornerConfiguration));
+	root.insert("borderWidth", Variant(w->borderWidth));
+	root.insert("borderThickness", Variant(w->borderThickness));
+}
+void WidgetSaver::serializeImage(WidgetImage* w, Variant& root)
 {
 
 }
-void WidgetSaver::serializeImage(WidgetImage* v, Variant& root)
-{
-
-}
-void WidgetSaver::serializeLabel(WidgetLabel* v, Variant& root)
-{
-
-}
-void WidgetSaver::serializeConsole(WidgetConsole* v, Variant& root)
+void WidgetSaver::serializeLabel(WidgetLabel* w, Variant& root)
 {
 	//	special board attributes
-	root.insert("cornerConfig", Variant((int)v->cornerConfiguration));
-	root.insert("borderWidth", Variant(v->borderWidth));
-	root.insert("borderThickness", Variant(v->borderThickness));
-	root.insert("margin", Variant(v->margin));
-	root.insert("sizeChar", Variant(v->sizeChar));
+	root.insert("sizeChar", Variant(w->sizeChar));
+	root.insert("textConfiguration", Variant((int)w->textConfiguration));
+	if (w->font) root.insert("font", Variant(w->font->name));
+	root.insert("text", formatText(w->text));
+}
+void WidgetSaver::serializeConsole(WidgetConsole* w, Variant& root)
+{
+	//	special board attributes
+	root.insert("cornerConfig", Variant((int)w->cornerConfiguration));
+	root.insert("borderWidth", Variant(w->borderWidth));
+	root.insert("borderThickness", Variant(w->borderThickness));
+	root.insert("margin", Variant(w->margin));
+	root.insert("sizeChar", Variant(w->sizeChar));
+	if (w->font) root.insert("font", Variant(w->font->name));
+	root.insert("text", formatText(w->text));
+}
+void WidgetSaver::serializeRadioButton(WidgetRadioButton* w, Variant& root)
+{
+	//	special board attributes
+	root.insert("sizeChar", Variant(w->sizeChar));
+	root.insert("textConfiguration", Variant((int)w->textConfiguration));
+	if (w->font) root.insert("font", Variant(w->font->name));
+	root.insert("text", formatText(w->text));
+	if (w->onTexture) root.insert("onTexture", Variant(w->onTexture->name));
+	if (w->offTexture) root.insert("offTexture", Variant(w->offTexture->name));
+}
 
-	//	write font
-	if (v->font) root.insert("font", Variant(v->font->name));
-
-	//	write text string
-	std::string txt = v->text;
+Variant WidgetSaver::formatText(std::string txt)
+{
 	for (std::string::size_type i = 0; i != std::string::npos;)
 	{
 		i = txt.find("\n", i);
 		if (i != std::string::npos)
 		{
-			txt.replace(i, 2, "\\n");
-			i += 3;
+			txt.replace(i, 1, "\\n");
+			i += 2;
 		}
 	}
-	root.insert("text", Variant(txt));
-}
-void WidgetSaver::serializeRadioButton(WidgetRadioButton* v, Variant& root)
-{
-
+	return Variant(txt);
 }
 //
 

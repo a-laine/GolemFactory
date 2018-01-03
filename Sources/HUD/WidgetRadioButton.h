@@ -13,7 +13,6 @@ class WidgetRadioButton : public WidgetLabel
 		//
 
 		//	Public functions
-		void serialize(std::ostream& out, const int& indentation, std::string name, int& number);
 		void update(const float& elapseTime);
 		void initialize(const std::string& txt, uint8_t textConfig = AlignmentMode::LEFT);
 		void draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model);

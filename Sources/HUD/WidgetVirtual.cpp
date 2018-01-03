@@ -45,11 +45,6 @@ WidgetVirtual::~WidgetVirtual()
 
 
 //	Public functions
-void WidgetVirtual::serialize(std::ostream& out, const int& indentation, std::string name, int& number)
-{
-	serializeHeader(out, indentation, name, number);
-	serializeTailer(out, indentation);
-}
 void WidgetVirtual::draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model)
 {
 	//	texture related stuff
@@ -211,6 +206,21 @@ unsigned int WidgetVirtual::getNumberFaces() const
 		result += batchList[i].faces.size();
 	return result;
 }
+std::vector<WidgetVirtual*>& WidgetVirtual::getChildrenList() { return children; }
+//
+
+//	Hierarchy modifiers
+void WidgetVirtual::addChild(WidgetVirtual* w) { children.push_back(w); }
+bool WidgetVirtual::removeChild(WidgetVirtual* w)
+{
+	std::vector<WidgetVirtual*>::iterator it = std::find(children.begin(), children.end(), w);
+	if (it != children.end())
+	{
+		children.erase(it);
+		return true;
+	}
+	else return false;
+}
 //
 
 //	Protected functions
@@ -278,87 +288,5 @@ void WidgetVirtual::indentLine(std::ostream& out, const int& i) const
 {
 	for (int j = 0; j < i; j++)
 		out << '\t';
-}
-void WidgetVirtual::serializeHeader(std::ostream& out, const int& indentation, std::string name, int& number)
-{
-	//	write name
-	indentLine(out, indentation);
-	if (name.empty()) out << "unknownWidget_" << number++ << " : {" << std::endl;
-	else out << name << " : {" << std::endl;
-
-	//	write type
-	indentLine(out, indentation + 1);
-	switch (type)
-	{
-		case VIRTUAL:		out << "type : \"VIRTUAL\";" << std::endl;	break;
-		case BOARD:			out << "type : \"BOARD\";" << std::endl;	break;
-		case IMAGE:			out << "type : \"IMAGE\";" << std::endl;	break;
-		case LABEL:			out << "type : \"LABEL\";" << std::endl;	break;
-		case CONSOLE:		out << "type : \"VIRTUAL\";" << std::endl;	break;
-		case RADIO_BUTTON:	out << "type : \"RADIO_BUTTON\";" << std::endl; break;
-		default:			out << "type : \"UNKNOWN\";" << std::endl;	break;
-	}
-
-	//	write configuration
-	indentLine(out, indentation + 1);
-	out << "config : " << (int)configuration << ';' << std::endl;
-
-	//	write sizes
-	if (sizes[DEFAULT] == sizes[HOVER] && sizes[DEFAULT] == sizes[ACTIVE] && sizes[DEFAULT] == sizes[CURRENT])
-	{
-		indentLine(out, indentation + 1); out << "sizeAll : [" << sizes[DEFAULT].x << ',' << sizes[DEFAULT].y << "];" << std::endl;
-	}
-	else
-	{
-		indentLine(out, indentation + 1); out << "sizeDefault : [" << sizes[DEFAULT].x << ',' << sizes[DEFAULT].y << "];" << std::endl;
-		indentLine(out, indentation + 1); out << "sizeHover : [" << sizes[HOVER].x << ',' << sizes[HOVER].y << "];" << std::endl;
-		indentLine(out, indentation + 1); out << "sizeActive : [" << sizes[ACTIVE].x << ',' << sizes[ACTIVE].y << "];" << std::endl;
-		indentLine(out, indentation + 1); out << "sizeCurrent : [" << sizes[CURRENT].x << ',' << sizes[CURRENT].y << "];" << std::endl;
-	}
-
-	//	write positions
-	if (positions[DEFAULT] == positions[HOVER] && positions[DEFAULT] == positions[ACTIVE] && positions[DEFAULT] == positions[CURRENT])
-	{
-		indentLine(out, indentation + 1); out << "positionAll : [" << positions[DEFAULT].x << ',' << positions[DEFAULT].y << ',' << positions[DEFAULT].z << "];" << std::endl;
-	}
-	else
-	{
-		indentLine(out, indentation + 1); out << "positionDefault : [" << positions[DEFAULT].x << ',' << positions[DEFAULT].y << ',' << positions[DEFAULT].z << "];" << std::endl;
-		indentLine(out, indentation + 1); out << "positionHover : [" << positions[HOVER].x << ',' << positions[HOVER].y << ',' << positions[HOVER].z << "];" << std::endl;
-		indentLine(out, indentation + 1); out << "positionActive : [" << positions[ACTIVE].x << ',' << positions[ACTIVE].y << ',' << positions[ACTIVE].z << "];" << std::endl;
-		indentLine(out, indentation + 1); out << "positionCurrent : [" << positions[CURRENT].x << ',' << positions[CURRENT].y << ',' << positions[CURRENT].z << "];" << std::endl;
-	}
-
-	//	write colors
-	if (colors[DEFAULT] == colors[HOVER] && colors[DEFAULT] == colors[ACTIVE] && colors[DEFAULT] == colors[CURRENT])
-	{
-		indentLine(out, indentation + 1); out << "colorAll : [" << colors[DEFAULT].x << ',' << colors[DEFAULT].y << ',' << colors[DEFAULT].z << ',' << colors[DEFAULT].w << "];" << std::endl;
-	}
-	else
-	{
-		indentLine(out, indentation + 1); out << "colorDefault : [" << colors[DEFAULT].x << ',' << colors[DEFAULT].y << ',' << colors[DEFAULT].z << ',' << colors[DEFAULT].w << "];" << std::endl;
-		indentLine(out, indentation + 1); out << "colorHover : [" << colors[HOVER].x << ',' << colors[HOVER].y << ',' << colors[HOVER].z << ',' << colors[HOVER].w << "];" << std::endl;
-		indentLine(out, indentation + 1); out << "colorActive : [" << colors[ACTIVE].x << ',' << colors[ACTIVE].y << ',' << colors[ACTIVE].z << ',' << colors[ACTIVE].w << "];" << std::endl;
-		indentLine(out, indentation + 1); out << "colorCurrent : [" << colors[CURRENT].x << ',' << colors[CURRENT].y << ',' << colors[CURRENT].z << ',' << colors[CURRENT].w << "];" << std::endl;
-	}
-
-	//	write shader name
-	if (shader && shader->name != "defaultWidget")
-	{
-		indentLine(out, indentation + 1);
-		out << "shader : \"" << shader->name << "\";" << std::endl;
-	}
-
-	//	write texture name
-	if (texture)
-	{
-		indentLine(out, indentation + 1);
-		out << "texture : \"" << texture->name << "\";" << std::endl;
-	}
-}
-void WidgetVirtual::serializeTailer(std::ostream& out, const int& i) const
-{
-	indentLine(out, i);
-	out << "};" << std::endl;
 }
 //

@@ -58,4 +58,19 @@ glm::mat4 Layer::getModelMatrix() const
 glm::vec3 Layer::getPosition() const { return position; }
 glm::vec3 Layer::getScreenPosition() const { return screenPosition; }
 glm::vec3 Layer::getTargetPosition() const { return targetPosition; }
+std::vector<WidgetVirtual*>& Layer::getChildrenList() { return children; }
+//
+
+//	Hierarchy modifiers
+void Layer::addChild(WidgetVirtual* w) { children.push_back(w); }
+bool Layer::removeChild(WidgetVirtual* w)
+{
+	std::vector<WidgetVirtual*>::iterator it = std::find(children.begin(), children.end(), w);
+	if (it != children.end())
+	{
+		children.erase(it);
+		return true;
+	}
+	else return false;
+}
 //

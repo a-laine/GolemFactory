@@ -36,7 +36,7 @@ WidgetConsole::~WidgetConsole()
 
 
 //	Public functions
-void WidgetConsole::serialize(std::ostream& out, const int& indentation, std::string name, int& number)
+/*void WidgetConsole::serialize(std::ostream& out, const int& indentation, std::string name, int& number)
 {
 	//	serialize WidgetVirtual part
 	serializeHeader(out, indentation, name, number);
@@ -72,7 +72,7 @@ void WidgetConsole::serialize(std::ostream& out, const int& indentation, std::st
 
 	//	tail
 	serializeTailer(out, indentation);
-}
+}*/
 void WidgetConsole::update(const float& elapseTime)
 {
 	State s = (State)(configuration & STATE_MASK);

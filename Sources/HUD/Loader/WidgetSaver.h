@@ -4,8 +4,8 @@
 
 #include <glm/glm.hpp>
 
+#include "../Layer.h"
 #include "../WidgetVirtual.h"
-#include "../WidgetContainer.h"
 
 #include "../WidgetLabel.h"
 #include "../WidgetImage.h"
@@ -20,7 +20,8 @@ class WidgetSaver
 {
 	public:
 		//	Public functions
-		static Variant serialize(WidgetVirtual* w, const std::map<std::string, WidgetVirtual*>& association);
+		static Variant serialize(WidgetVirtual* w, std::map<std::string, WidgetVirtual*>& association, int& unknownIndex);
+		static Variant serialize(Layer* w, std::map<std::string, WidgetVirtual*>& association, int& unknownIndex);
 		//
 
 	protected:
@@ -30,5 +31,7 @@ class WidgetSaver
 		static void serializeLabel(WidgetLabel* v, Variant& root);
 		static void serializeConsole(WidgetConsole* v, Variant& root);
 		static void serializeRadioButton(WidgetRadioButton* v, Variant& root);
+
+		static Variant formatText(std::string txt);
 		//
 };
