@@ -1,6 +1,6 @@
 #include "InstanceContainer.h"
 
-
+/*
 //  Default
 InstanceContainer::InstanceContainer() : InstanceVirtual(InstanceVirtual::CONTAINER) {}
 InstanceContainer::~InstanceContainer()
@@ -35,3 +35,4 @@ const std::list<InstanceVirtual*>* InstanceContainer::getChildList() const
 	return &child;
 }
 //
+*/

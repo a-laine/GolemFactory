@@ -67,11 +67,66 @@ int main()
 			float scale = 1.7f / (avatar->getBBMax() - avatar->getBBMin()).z;
 			avatar->setSize(glm::vec3(scale));
 			avatar->setPosition(glm::vec3(20.f, 20.f, -scale * avatar->getMesh()->aabb_min.z));
-			SceneManager::getInstance()->addStaticObject(avatar);
+			SceneManager::getInstance()->addObject(avatar);
 
 			camera.setMode(Camera::TRACKBALL);
 			camera.setRadius(4);
 			Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getShader("wired"));
+
+
+
+
+
+	//	test instance
+	InstanceDrawable* bigTree = InstanceManager::getInstance()->getInstanceDrawable();
+	bigTree->setMesh("firTree1.obj");
+	bigTree->setShader("default");
+	
+	//	1
+	const unsigned int TESTNB = 30000;
+	InstanceDrawable* array[TESTNB];
+	glm::vec3 speed[TESTNB];
+	srand(0);
+	double startTestTime = glfwGetTime();
+	for (unsigned int i = 0; i < TESTNB; ++i)
+	{
+		array[i] = InstanceManager::getInstance()->getInstanceDrawable("firTree1.obj");
+		array[i]->setPosition(glm::vec3(((float)(rand() % TESTNB) / TESTNB - 0.5f) * (GRID_SIZE - 1)*GRID_ELEMENT_SIZE, ((float)(rand() % TESTNB) / TESTNB - 0.5f) * (GRID_SIZE - 1)*GRID_ELEMENT_SIZE, 0.f));
+		array[i]->setSize(glm::vec3((float)(rand() % TESTNB) / TESTNB + 1.7f));
+		speed[i] = 20.f * glm::vec3(((float)(rand() % TESTNB) / TESTNB - 0.5f), ((float)(rand() % TESTNB) / TESTNB - 0.5f), 0.f);
+		if(!SceneManager::getInstance()->addObject(array[i])) std::cout << '*';
+		if (i % (TESTNB/100) == 0) std::cout << '.';
+	}
+	double testTime = glfwGetTime() - startTestTime;
+	std::cout << std::endl << "create & insert (" << SceneManager::getInstance()->getNumberInstanceStored() << ") : " << testTime << 's' << std::endl;
+
+	//	2
+	const unsigned int UPDATE = 3000;
+	startTestTime = glfwGetTime();
+	for (unsigned int j = 0; j < UPDATE; ++j)
+	{
+		for (unsigned int i = 0; i < TESTNB; ++i)
+		{
+			array[i]->setPosition(array[i]->getPosition() + 0.016f * speed[i]);
+			SceneManager::getInstance()->updateObject(array[i]);
+			//if (i % (TESTNB / 100) == 0) std::cout << '.';
+		}
+		std::cout << '.';
+	}
+	testTime = glfwGetTime() - startTestTime;
+	std::cout << std::endl << "update (" << SceneManager::getInstance()->getNumberInstanceStored() << ") : " << testTime << 's' << std::endl;
+
+	//	3
+	startTestTime = glfwGetTime();
+	for (unsigned int i = 0; i < TESTNB; ++i)
+	{
+		SceneManager::getInstance()->removeObject(array[i]);
+		InstanceManager::getInstance()->release(array[i]);
+		if (i % (TESTNB / 100) == 0) std::cout << '.';
+	}
+	testTime = glfwGetTime() - startTestTime;
+	std::cout << std::endl << "deletion (" << SceneManager::getInstance()->getNumberInstanceStored() << ") : " << testTime << 's' << std::endl;
+	exit(0);
 
 	// init loop time tracking
 	double elapseTime = 16.;
@@ -169,7 +224,7 @@ void initializeForestScene(bool emptyPlace)
 		bigTree->setMesh("firTree1.obj");
 		bigTree->setShader("default");
 		bigTree->setSize(glm::vec3(5.f, 5.f, 5.f));
-		SceneManager::getInstance()->addStaticObject(bigTree);
+		SceneManager::getInstance()->addObject(bigTree);
 	}
 
 	// village
@@ -211,7 +266,7 @@ void initializeForestScene(bool emptyPlace)
 
 				houseCircle.push_back(p);
 				house->setPosition(glm::vec3(p.x, p.y, 0.f));
-				SceneManager::getInstance()->addStaticObject(house);
+				SceneManager::getInstance()->addObject(house);
 			}
 		}
 	}
@@ -259,7 +314,7 @@ void initializeForestScene(bool emptyPlace)
 			ins->setSize(glm::vec3(s,s,s));
 			ins->setOrientation(a);
 
-			if(!SceneManager::getInstance()->addStaticObject(ins))
+			if(!SceneManager::getInstance()->addObject(ins))
 				fail++;
 		}
 
@@ -303,7 +358,7 @@ void initManagers()
 	MeshLoader::logVerboseLevel = MeshLoader::ALL;
 	ResourceVirtual::logVerboseLevel = ResourceVirtual::ALL;
 	ResourceManager::getInstance()->setRepository(resourceRepository);
-	InstanceManager::getInstance()->setMaxNumberOfInstances(1000000);
+	InstanceManager::getInstance()->setMaxNumberOfInstances(4000000);
 
 	//	Renderer
 	camera.setMode(Camera::FREEFLY);
@@ -327,8 +382,9 @@ void initManagers()
 
 	// init scene
 	SceneManager::getInstance()->setViewDistance(1000.f, 2);
-	SceneManager::getInstance()->setWorldPosition(glm::vec3(0, 0, 25));
+	SceneManager::getInstance()->setWorldPosition(glm::vec3(0, 0, 20));
 	SceneManager::getInstance()->setWorldSize(glm::vec3(GRID_SIZE*GRID_ELEMENT_SIZE, GRID_SIZE*GRID_ELEMENT_SIZE, 50));
+	SceneManager::getInstance()->reserveInstanceTrack(InstanceManager::getInstance()->getInstanceCapacity());
 }
 void picking(int width, int height)
 {

@@ -14,7 +14,7 @@ void InstanceVirtual::setSize(glm::vec3 s) { size = s; modelMatrixNeedUpdate = t
 void InstanceVirtual::setOrientation(glm::mat4 m) { orientation = m; modelMatrixNeedUpdate = true; }
 
 
-glm::vec3 InstanceVirtual::getPosition() const{ return position; }
+glm::vec3 InstanceVirtual::getPosition() const { return position; }
 glm::vec3 InstanceVirtual::getSize() const  { return size; }
 glm::mat4 InstanceVirtual::getOrientation() const { return orientation; }
 glm::mat4 InstanceVirtual::getModelMatrix()

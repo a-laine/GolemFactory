@@ -27,9 +27,10 @@
  */
 class InstanceVirtual
 {
-	friend class NodeVirtual;
+	//friend class NodeVirtual;
+	friend class SceneManager;
 	friend class InstanceManager;
-	friend class InstanceContainer;
+	//friend class InstanceContainer;
 
 	public:
 		//  Miscellaneous
@@ -71,10 +72,12 @@ class InstanceVirtual
 		virtual const std::list<InstanceVirtual*>* getChildList() const;
 		//
 		
+		uint32_t id;
+
 	protected:
 		// Attributes
 		InstanceType type;
-		uint32_t id;				//!< The unique identifying number to design instance
+		//uint32_t id;				//!< The unique identifying number to design instance
 		std::atomic_uint count;		//!< The number of clients pointing the instance.
 		
 		glm::vec3 position;			//!< Instance position

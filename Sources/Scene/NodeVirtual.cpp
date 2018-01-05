@@ -2,7 +2,6 @@
 
 #define FRUSTRUM_COEFF			2.f	//	coefficient for frustrum intersection computation (to avoid artefacts)
 #define RAY_COEFF				0.2f
-#define SIZE_ALLOWANCE_COEFF	0.1f
 
 
 //	Default
@@ -43,23 +42,12 @@ bool NodeVirtual::isLastBranch() const
 }
 bool NodeVirtual::addObject(InstanceVirtual* obj)
 {
-	if (!obj) return false;
-	if (glm::length(obj->getBBMax() - obj->getBBMin()) < SIZE_ALLOWANCE_COEFF * glm::length(size) && !children.empty())
-	{
-		int key = getChildrenKey(obj->getPosition());
-		if (key < 0) return false;
-		else return children[key]->addObject(obj);
-	}
-	else
-	{
-		obj->count++;
-		instanceList.push_back(obj);
-		return true;
-	}
+	instanceList.push_back(obj);
+	return true;
 }
 bool NodeVirtual::removeObject(InstanceVirtual* obj)
 {
-	if (!obj) return false;
+	/*if (!obj) return false;
 	if (glm::length(obj->getBBMax() - obj->getBBMin()) < 0.1f * glm::length(size) && !children.empty())
 	{
 		int key = getChildrenKey(obj->getPosition());
@@ -76,7 +64,17 @@ bool NodeVirtual::removeObject(InstanceVirtual* obj)
 			return true;
 		}
 		else return false;
+	}*/
+
+	auto it = std::find(instanceList.begin(), instanceList.end(), obj);
+	if (it != instanceList.end())
+	{
+		//InstanceManager::getInstance()->release(*it);
+		//instanceList.erase(it);
+		std::cout << '*';
+		return true;
 	}
+	else return false;
 }
 
 
@@ -197,30 +195,17 @@ uint8_t NodeVirtual::getLevel() const
 }
 int NodeVirtual::getChildrenKey(glm::vec3 p) const
 {
-	if (children.empty())
-		return -1;
+	const int xChild = (division & X) >> dX;
+	const int yChild = (division & Y) >> dY;
+	const int zChild = (division & Z) >> dZ;
 
-	int xChild = (division&X) >> dX;
-	int yChild = (division&Y) >> dY;
-	int zChild = (division&Z) >> dZ;
-
-	int x, y, z;
 	p -= position;
-	p += 0.5f*size;
+	p += 0.5f * size;
 
-	x = (int)(p.x / size.x * xChild);
-	if (x >= xChild)
-		return -1;
-	
-	y = (int)(p.y / size.y * yChild);
-	if (y >= yChild)
-		return -1;
-
-	z = (int)(p.z / size.z * zChild);
-	if (z >= zChild)
-		return -1;
-
-	return zChild*yChild*x + zChild*y + z;
+	const int x = (int)(p.x / size.x * xChild);
+	const int y = (int)(p.y / size.y * yChild);
+	const int z = (int)(p.z / size.z * zChild);
+	return zChild * yChild * x + zChild * y + z;
 }
 int NodeVirtual::isInFrustrum(const glm::vec3& camP, const glm::vec3& camD, const glm::vec3& camV, const glm::vec3& camL, const float& camVa, const float& camHa) const
 {

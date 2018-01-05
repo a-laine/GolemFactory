@@ -58,7 +58,7 @@ void InstanceManager::release(InstanceVirtual* ins)
 	//  decrement client count
 	if (!ins || ins->id >= instanceList.size()) return;
 	ins->count--;
-	if (ins->count.load()>0) return;
+	if (ins->count.load() > 0) return;
 
 	//  add to garbage
 	mutexGarbage.lock();
@@ -124,7 +124,7 @@ InstanceAnimatable* InstanceManager::getInstanceAnimatable(std::string meshName,
 	ins->initializeVBOVAO();
 	return ins;
 }
-InstanceContainer* InstanceManager::getInstanceContainer()
+/*InstanceContainer* InstanceManager::getInstanceContainer()
 {
 	InstanceContainer* ins = new InstanceContainer();
 	if (!ins || !add(ins))
@@ -133,7 +133,7 @@ InstanceContainer* InstanceManager::getInstanceContainer()
 		return nullptr;
 	}
 	return ins;
-}
+}*/
 //
 
 

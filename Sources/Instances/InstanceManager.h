@@ -87,7 +87,7 @@ class InstanceManager : public Singleton<InstanceManager>
 		 *
 		 *  The function return null if the instance allocation fail, or if the instance can't be added to container.
 		 */
-		InstanceContainer* getInstanceContainer();
+		//InstanceContainer* getInstanceContainer();
 		//
 
 		//  Set/get functions

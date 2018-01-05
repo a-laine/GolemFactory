@@ -9,6 +9,9 @@
 #define MIN_TREE_DEPTH		2
 
 
+#define SIZE_ALLOWANCE_COEFF	100.f
+#define SIZE_DISALLOWANCE_COEFF 4.f
+
 
 //  Default
 SceneManager::SceneManager()
@@ -33,22 +36,101 @@ SceneManager::~SceneManager()
 
 
 //  Scene modifier
-bool SceneManager::addStaticObject(InstanceVirtual* obj)
+bool SceneManager::addObject(InstanceVirtual* obj) // super optimized (don't touch)
 {
-	for (unsigned int i = 0; i < world.size(); i++)
-		if (world[i]->addObject(obj)) return true;
-	return false;
+	if (!obj || world.empty() || instanceTracking.count(obj->id) != 0) return false;
+
+	//	check if object centroid is inside scene
+	NodeVirtual* node = world[0];
+	glm::vec3 p = obj->position - node->position;
+	if (abs(p.x) >= node->size.x / 2 || abs(p.y) >= node->size.y / 2 || abs(p.z) >= node->size.z / 2) // out of world
+		return false;
+
+	//	search right node in tree
+	p = obj->position;
+	const glm::vec3 v = obj->getBBMax() - obj->getBBMin();
+	const float sobj = glm::dot(v, v) * SIZE_ALLOWANCE_COEFF;
+	while (sobj < glm::dot(node->size, node->size) && !node->children.empty()) // => object AABB diagonal is < of 10% of node AABB diagonal
+		node = node->children[node->getChildrenKey(p)];
+
+	//	add object in scene
+	obj->count++;
+	const InstanceTrack track = { obj->position, node };
+	instanceTracking.emplace(obj->id, track);
+	node->instanceList.push_back(obj);
+	return true;
 }
 bool SceneManager::removeObject(InstanceVirtual* obj)
 {
-	for (unsigned int i = 0; i < world.size(); i++)
-		if (world[i]->removeObject(obj)) return true;
-	return false;
+	if (!obj || world.empty() || instanceTracking.count(obj->id) == 0) return false;
+
+	//	getting object track
+	auto track = instanceTracking.find(obj->id);
+	NodeVirtual* node = track->second.owner;
+	instanceTracking.erase(track);
+	
+	auto it2 = std::find(node->instanceList.begin(), node->instanceList.end(), obj);
+	if (it2 != node->instanceList.end())
+	{
+		node->instanceList.erase(it2);
+		InstanceManager::getInstance()->release(obj);
+		return true;
+	}
+	else return false;
+}
+void SceneManager::updateObject(InstanceVirtual* obj)
+{
+	if (!obj || instanceTracking.count(obj->id) == 0) return;
+
+	//	getting object track
+	auto track = instanceTracking.find(obj->id);
+	NodeVirtual* node = track->second.owner;
+
+	glm::vec3 p = obj->position - node->position;
+	const glm::vec3 s = obj->getBBMax() - obj->getBBMin();
+	const float sobj  = glm::dot(s, s) * SIZE_ALLOWANCE_COEFF;
+	const float sobj2 = glm::dot(s, s) * SIZE_DISALLOWANCE_COEFF;
+
+	//if(abs(obj->position.x) >= 500.f || abs(obj->position.y) >= 500.f) std::cout << "out";
+	if (abs(p.x) >= node->size.x / 2 || abs(p.y) >= node->size.y / 2 || abs(p.z) >= node->size.z / 2 ||	// object move out of node
+		sobj < glm::dot(node->size, node->size) || sobj2 > glm::dot(node->size, node->size))			// object too big
+	{
+		//	remove from former owner
+		auto it2 = std::find(node->instanceList.begin(), node->instanceList.end(), obj);
+		if (it2 != node->instanceList.end())
+			node->instanceList.erase(it2);
+
+		//	search new owner
+		node = world[0];
+		p = obj->position - node->position;
+		if (abs(p.x) >= node->size.x / 2 || abs(p.y) >= node->size.y / 2 || abs(p.z) >= node->size.z / 2) // centroid out of world
+		{
+			instanceTracking.erase(track);
+			InstanceManager::getInstance()->release(obj);
+		}
+		else
+		{
+			p = obj->position;
+			if (node->getChildrenKey(p) > 15) std::cout << node->getChildrenKey(p) << std::endl;
+
+			while (sobj < glm::dot(node->size, node->size) && !node->children.empty()) // => object AABB diagonal is < of 10% of node AABB diagonal
+				node = node->children[node->getChildrenKey(p)];
+
+			node->instanceList.push_back(obj);
+			track->second.owner = node;
+			track->second.position = obj->position;
+		}
+	}
+	else track->second.position = obj->position;
 }
 //
 
 
 //  Set/get functions
+void SceneManager::reserveInstanceTrack(const unsigned int& count)
+{
+	instanceTracking.reserve(count);
+}
 void SceneManager::setCameraAttributes(const glm::vec3& position, const glm::vec3& direction, const glm::vec3& vertical, const glm::vec3& left, const float& verticalAngle, const float& horizontalAngle)
 {
 	camPosition = position;
@@ -347,4 +429,5 @@ void SceneManager::getInstanceOnRay(std::vector<std::pair<float, InstanceVirtual
 	list.swap(refinedList);
 }
 std::vector<float> SceneManager::getMaxViewDistanceStack() { return viewMaxDistance; }
+unsigned int SceneManager::getNumberInstanceStored() const { return instanceTracking.size(); }
 //
