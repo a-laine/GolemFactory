@@ -129,26 +129,10 @@ class NodeVirtual
 
 	protected:
 		//	Protected functions
-		/*!
-		 *  \brief Get node level/depth in tree
-		 *  \return the node level/depth.
-		 */
 		uint8_t getLevel() const;
-		
-		/*!
-		 *  \brief Compute child index from target position
-		 *  \param p : key position
-		 *  \return child index responsible of this position, -1 if position is non valid
-		 */
 		int getChildrenKey(glm::vec3 p) const;
-		
-		/*!
-		 *  \brief Check if node is in frustrum
-		 *  \return the node distance to camera, or std::numeric_limits<int>::lowest if not in frustrum.
-		 */
-		int isInFrustrum(const glm::vec3& camP, const glm::vec3& camD, const glm::vec3& camV, const glm::vec3& camL, const float& camVa, const float& camHa) const;
-
-		float isOnRay(const glm::vec3& camP, const glm::vec3& ray, const glm::vec3& rayV, const glm::vec3& rayL) const;
+		glm::ivec3 getChildrenKeyVector(glm::vec3 p) const;
+		glm::ivec3 getDivisionVector() const;
 		//
 
 		//	Attributes
@@ -158,6 +142,7 @@ class NodeVirtual
 		glm::vec3 position;							//!< Node position in scene coordinate
 		glm::vec3 size;								//!< Node size
 
+	public:
 		std::vector<InstanceVirtual*> instanceList;	//!< Instance container (list of instance attached to node)
 		unsigned int division;						//!< Division byte (see NodeDivisionFlags enum to code/decode it), it's a bitfield
 

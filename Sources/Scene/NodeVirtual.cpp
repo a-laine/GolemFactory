@@ -207,47 +207,20 @@ int NodeVirtual::getChildrenKey(glm::vec3 p) const
 	const int z = (int)(p.z / size.z * zChild);
 	return zChild * yChild * x + zChild * y + z;
 }
-int NodeVirtual::isInFrustrum(const glm::vec3& camP, const glm::vec3& camD, const glm::vec3& camV, const glm::vec3& camL, const float& camVa, const float& camHa) const
+glm::ivec3 NodeVirtual::getChildrenKeyVector(glm::vec3 p) const
 {
-	//	test if in front of camera
-	glm::vec3 p = position - camP;
-	float forwardFloat = glm::dot(p, camD) + FRUSTRUM_COEFF * (abs(size.x * camD.x) + abs(size.y * camD.y) + abs(size.z * camD.z));
-	if (forwardFloat < 0.f)
-		return std::numeric_limits<int>::lowest();
+	const int xChild = (division & X) >> dX;
+	const int yChild = (division & Y) >> dY;
+	const int zChild = (division & Z) >> dZ;
 
-	//	out of horizontal range
-	float maxAbsoluteDimension = (std::max)(size.x, (std::max)(size.y, size.z)) / 2.f;
-	float maxTangentDimension = abs(size.x * camL.x) / 2.f + abs(size.y * camL.y) / 2.f + abs(size.z * camL.z) / 2.f;
-	if (abs(glm::dot(p, camL)) - maxTangentDimension > std::abs(forwardFloat) * tan(glm::radians(camHa)) + FRUSTRUM_COEFF * maxAbsoluteDimension)
-		return std::numeric_limits<int>::lowest();
+	p -= position;
+	p += 0.5f * size;
 
-	//	out of vertical range
-	maxTangentDimension = abs(size.x * camV.x) / 2.f + abs(size.y * camV.y) / 2.f + abs(size.z * camV.z) / 2.f;
-	if (abs(glm::dot(p, camV)) - maxTangentDimension > abs(forwardFloat) * tan(glm::radians(camVa)) + FRUSTRUM_COEFF * maxAbsoluteDimension)
-		return std::numeric_limits<int>::lowest();
+	const int x = (int)(p.x / size.x * xChild);
+	const int y = (int)(p.y / size.y * yChild);
+	const int z = (int)(p.z / size.z * zChild);
 
-	//	return distance to camera in int
-	return (int)glm::length(p);
+	return glm::ivec3(glm::clamp(x, 0, xChild - 1), glm::clamp(y, 0, yChild - 1), glm::clamp(z, 0, zChild - 1));
 }
-float NodeVirtual::isOnRay(const glm::vec3& origin, const glm::vec3& ray, const glm::vec3& rayV, const glm::vec3& rayL) const
-{
-	//	test if in front of camera
-	glm::vec3 p = position - origin;
-	if (glm::dot(p, ray) + 1.f * (abs(size.x * ray.x) + abs(size.y * ray.y) + abs(size.z * ray.z)) < 0.f)
-		return std::numeric_limits<float>::lowest();
-
-	//	out of horizontal range
-	float maxAbsoluteDimension = std::max(size.x, std::max(size.y, size.z)) / 2.f;
-	float maxTangentDimension = abs(size.x * rayL.x) / 2.f + abs(size.y * rayL.y) / 2.f + abs(size.z * rayL.z) / 2.f;
-	if (abs(glm::dot(p, rayL)) - maxTangentDimension > RAY_COEFF * maxAbsoluteDimension)
-		return std::numeric_limits<float>::lowest();
-
-	//	out of vertical range
-	maxTangentDimension = abs(size.x * rayV.x) / 2.f + abs(size.y * rayV.y) / 2.f + abs(size.z * rayV.z) / 2.f;
-	if (abs(glm::dot(p, rayV)) - maxTangentDimension > RAY_COEFF * maxAbsoluteDimension)
-		return std::numeric_limits<float>::lowest();
-
-	//	return distance to camera in int
-	return glm::length(p);
-}
+glm::ivec3 NodeVirtual::getDivisionVector() const { return glm::ivec3((division & X) >> dX, (division & Y) >> dY, (division & Z) >> dZ); }
 //

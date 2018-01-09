@@ -72,6 +72,8 @@ int main()
 			camera.setMode(Camera::TRACKBALL);
 			camera.setRadius(4);
 
+		InstanceDrawable* cube = InstanceManager::getInstance()->getInstanceDrawable("default", "wired");
+
 	// init loop time tracking
 	double elapseTime = 16.;
 	double dummy = 0;
@@ -79,19 +81,44 @@ int main()
 
 	//	game loop
 	std::cout << "game loop initiated" << std::endl;
+
+
+	int aaaa = 0;
+	int bbbb = 0;
+
 	while (!glfwWindowShouldClose(window))
 	{
 		// begin loop
 		double startTime = glfwGetTime();
 		glfwGetWindowSize(window, &width, &height);
 				
+		//	DEBUG
+		const glm::vec3 center = glm::vec3((rand()%(GRID_SIZE*5)) - 2.5f*GRID_SIZE, (rand() % (GRID_SIZE * 5)) - 2.5f*GRID_SIZE, 2);
+		const glm::vec3 halfSize = glm::vec3(3, 3, 4);
+		cube->setPosition(center);
+		cube->setSize(halfSize);
+		glm::mat4 projection = glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f);
+		Renderer::getInstance()->drawInstanceDrawable(cube, &camera.getViewMatrix()[0][0], &projection[0][0]);
+
+		std::vector<NodeVirtual*> list;
+		SceneManager::getInstance()->queryNodeBox(list, center - halfSize, center + halfSize);
+		//std::cout << "result : " << list.size() << std::endl;
+
+		unsigned int instances = 0;
+		for (unsigned int i = 0; i < list.size(); ++i)
+			instances += list[i]->instanceList.size();
+		//std::cout << "instances : " << instances << std::endl;
+		aaaa++;
+		bbbb += instances;
+		std::cout << "instances : " << (float)bbbb/aaaa << std::endl;
+
 		// Render scene & picking
 		if (WidgetManager::getInstance()->getBoolean("BBrendering"))
 			Renderer::getInstance()->setRenderOption(Renderer::BOUNDING_BOX);
 		else Renderer::getInstance()->setRenderOption(Renderer::DEFAULT);
 		Renderer::getInstance()->render(&camera);
 		picking(width, height);
-		glm::mat4 projection = glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f);
+		//glm::mat4 projection = glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f);
 		Renderer::getInstance()->renderHUD(&camera2);
 
 		//  handle events

@@ -12,6 +12,10 @@
 #define SIZE_ALLOWANCE_COEFF	100.f
 #define SIZE_DISALLOWANCE_COEFF 4.f
 
+//	coefficient for intersection test computation (to avoid artefacts)
+#define FRUSTRUM_COEFF			2.f
+#define RAY_COEFF				0.2f
+
 
 //  Default
 SceneManager::SceneManager()
@@ -190,7 +194,7 @@ void SceneManager::getInstanceList(std::vector<std::pair<int, InstanceVirtual*> 
 		//	initialize and test root in frustrum
 		std::vector<std::pair<NodeVirtual*, unsigned int> > path;
 		NodeVirtual* node = world[i];
-		int distance = node->isInFrustrum(camPosition, camDirection, camVertical, camLeft, camVerticalAngle, camHorizontalAngle);
+		int distance = isInFrustrum(node, camPosition, camDirection, camVertical, camLeft, camVerticalAngle, camHorizontalAngle);
 		if (distance == std::numeric_limits<int>::lowest())
 			continue;
 		else
@@ -214,7 +218,7 @@ void SceneManager::getInstanceList(std::vector<std::pair<int, InstanceVirtual*> 
 
 			//	test if node in frustrum and iterate if not
 			node = path.back().first->children[path.back().second];
-			distance = node->isInFrustrum(camPosition, camDirection, camVertical, camLeft, camVerticalAngle, camHorizontalAngle);
+			distance = isInFrustrum(node, camPosition, camDirection, camVertical, camLeft, camVerticalAngle, camHorizontalAngle);
 			if (distance != std::numeric_limits<int>::lowest())
 			{
 				//	get instance list of node
@@ -240,7 +244,7 @@ void SceneManager::getInstanceOnRay(std::vector<std::pair<float, InstanceVirtual
 		//	initialize and test root in frustrum
 		std::vector<std::pair<NodeVirtual*, unsigned int> > path;
 		NodeVirtual* node = world[i];
-		float distance = node->isOnRay(camPosition, camDirection, camVertical, camLeft);
+		float distance = isOnRay(node, camPosition, camDirection, camVertical, camLeft);
 		if (distance == std::numeric_limits<float>::lowest())
 			continue;
 		else
@@ -264,7 +268,7 @@ void SceneManager::getInstanceOnRay(std::vector<std::pair<float, InstanceVirtual
 
 			//	test if node in frustrum and iterate if not
 			node = path.back().first->children[path.back().second];
-			distance = node->isOnRay(camPosition, camDirection, camVertical, camLeft);
+			distance = isOnRay(node, camPosition, camDirection, camVertical, camLeft);
 			if (distance != std::numeric_limits<float>::lowest())
 			{
 				//	get instance list of node
@@ -430,4 +434,121 @@ void SceneManager::getInstanceOnRay(std::vector<std::pair<float, InstanceVirtual
 }
 std::vector<float> SceneManager::getMaxViewDistanceStack() { return viewMaxDistance; }
 unsigned int SceneManager::getNumberInstanceStored() const { return instanceTracking.size(); }
+//
+
+
+//	scene query
+void SceneManager::queryNodeBox(std::vector<NodeVirtual*>& nodeList, const glm::vec3& aabbMin, const glm::vec3& aabbMax, NodeVirtual* node, bool inside)
+{
+	if (!node)
+	{
+		query = 0;
+		for (unsigned int i = 0; i < world.size(); i++)
+			queryNodeBox(nodeList, aabbMin, aabbMax, world[i], false);
+		//std::cout << "query : " << query << std::endl;
+	}
+	else
+	{
+		if (!inside)
+		{
+			query++;
+			int collision = isCollidingBox(node, aabbMin, aabbMax);
+			if (collision > 0)
+			{
+				nodeList.push_back(node);
+				if(collision == 2 && !node->children.empty())	// node fully inside box
+				{
+					for (unsigned int i = 0; i < node->children.size(); i++)
+						queryNodeBox(nodeList, aabbMin, aabbMax, node->children[i], true);
+				}
+				else if(!node->children.empty())	// node is colliding box
+				{
+					const glm::ivec3 childMin = node->getChildrenKeyVector(aabbMin);
+					const glm::ivec3 childMax = node->getChildrenKeyVector(aabbMax);
+					const glm::ivec3 division = node->getDivisionVector();
+
+					for (int i = childMin.x; i < childMax.x + 1; ++i)
+						for (int j = childMin.y; j < childMax.y + 1; ++j)
+							for (int k = childMin.z; k < childMax.z + 1; ++k)
+								queryNodeBox(nodeList, aabbMin, aabbMax, node->children[division.z * division.y * i + division.z * j + k], false);
+				}
+			}
+		}
+		else
+		{
+			nodeList.push_back(node);
+			for(unsigned int i = 0; i < node->children.size(); i++)
+				queryNodeBox(nodeList, aabbMin, aabbMax, node->children[i], true);
+		}
+	}
+}
+void SceneManager::queryInstanceBox(std::vector<InstanceVirtual*>& instanceList, const glm::vec3& aabbMin, const glm::vec3& aabbMax) const
+{
+	
+}
+
+
+
+
+//	Node tests
+int SceneManager::isInFrustrum(const NodeVirtual* const node, const glm::vec3& camP, const glm::vec3& camD, const glm::vec3& camV, const glm::vec3& camL, const float& camVa, const float& camHa) const
+{
+	//	test if in front of camera
+	const glm::vec3 p = node->position - camP;
+	const glm::vec3 size = node->size;
+	float forwardFloat = glm::dot(p, camD) + FRUSTRUM_COEFF * (abs(size.x * camD.x) + abs(size.y * camD.y) + abs(size.z * camD.z));
+	if (forwardFloat < 0.f)
+		return std::numeric_limits<int>::lowest();
+
+	//	out of horizontal range
+	float maxAbsoluteDimension = (std::max)(size.x, (std::max)(size.y, size.z)) / 2.f;
+	float maxTangentDimension = abs(size.x * camL.x) / 2.f + abs(size.y * camL.y) / 2.f + abs(size.z * camL.z) / 2.f;
+	if (abs(glm::dot(p, camL)) - maxTangentDimension > std::abs(forwardFloat) * tan(glm::radians(camHa)) + FRUSTRUM_COEFF * maxAbsoluteDimension)
+		return std::numeric_limits<int>::lowest();
+
+	//	out of vertical range
+	maxTangentDimension = abs(size.x * camV.x) / 2.f + abs(size.y * camV.y) / 2.f + abs(size.z * camV.z) / 2.f;
+	if (abs(glm::dot(p, camV)) - maxTangentDimension > abs(forwardFloat) * tan(glm::radians(camVa)) + FRUSTRUM_COEFF * maxAbsoluteDimension)
+		return std::numeric_limits<int>::lowest();
+
+	//	return distance to camera in int
+	return (int)glm::length(p);
+}
+float SceneManager::isOnRay(const NodeVirtual* const node, const glm::vec3& origin, const glm::vec3& direction, const glm::vec3& directionV, const glm::vec3& directionL) const
+{
+	//	test if in front of camera
+	const glm::vec3 p = node->position - origin;
+	const glm::vec3 size = node->size;
+	if (glm::dot(p, direction) + 1.f * (abs(size.x * direction.x) + abs(size.y * direction.y) + abs(size.z * direction.z)) < 0.f)
+		return std::numeric_limits<float>::lowest();
+
+	//	out of horizontal range
+	float maxAbsoluteDimension = std::max(size.x, std::max(size.y, size.z)) / 2.f;
+	float maxTangentDimension = abs(size.x * directionL.x) / 2.f + abs(size.y * directionL.y) / 2.f + abs(size.z * directionL.z) / 2.f;
+	if (abs(glm::dot(p, directionL)) - maxTangentDimension > RAY_COEFF * maxAbsoluteDimension)
+		return std::numeric_limits<float>::lowest();
+
+	//	out of vertical range
+	maxTangentDimension = abs(size.x * directionV.x) / 2.f + abs(size.y * directionV.y) / 2.f + abs(size.z * directionV.z) / 2.f;
+	if (abs(glm::dot(p, directionV)) - maxTangentDimension > RAY_COEFF * maxAbsoluteDimension)
+		return std::numeric_limits<float>::lowest();
+
+	//	return distance to camera in int
+	return glm::length(p);
+}
+
+
+int SceneManager::isCollidingBox(const NodeVirtual* const node, const glm::vec3& aabbMin, const glm::vec3& aabbMax) const
+{
+	const glm::vec3 boxSize = 0.5f * (aabbMax - aabbMin);
+	const glm::vec3 nodeSize = 0.5f * node->size;
+	glm::vec3 p = node->position - 0.5f * (aabbMax + aabbMin);
+		p.x = std::abs(p.x);
+		p.y = std::abs(p.y);
+		p.z = std::abs(p.z);
+
+	if (p.x >  boxSize.x + nodeSize.x || p.y >  boxSize.y + nodeSize.y || p.z >  boxSize.z + nodeSize.z) return 0;
+	if (p.x <= boxSize.x - nodeSize.x && p.y <= boxSize.y - nodeSize.y && p.z <= boxSize.z - nodeSize.z) return 2;
+	else return 1;
+}
 //
