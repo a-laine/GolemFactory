@@ -47,8 +47,8 @@ class SceneManager : public Singleton<SceneManager>
 		//
 
 		//	scene query
-		void queryNodeBox(std::vector<NodeVirtual*>& nodeList, const glm::vec3& aabbMin, const glm::vec3& aabbMax, NodeVirtual* root = nullptr, bool inside = false);
-		void queryInstanceBox(std::vector<InstanceVirtual*>& instanceList, const glm::vec3& aabbMin, const glm::vec3& aabbMax) const;
+		void queryNodeBox(std::vector<NodeVirtual*>& nodeList, const glm::vec3& aabbMin, const glm::vec3& aabbMax);
+		void queryInstanceBox(std::vector<InstanceVirtual*>& instanceList, const glm::vec3& center, const glm::vec3& halfSize);
 		//
 
 	private:
@@ -71,7 +71,9 @@ class SceneManager : public Singleton<SceneManager>
 		int isInFrustrum(const NodeVirtual* const node, const glm::vec3& camP, const glm::vec3& camD, const glm::vec3& camV, const glm::vec3& camL, const float& camVa, const float& camHa) const;
 		float isOnRay(const NodeVirtual* const node, const glm::vec3& origin, const glm::vec3& direction, const glm::vec3& directionV, const glm::vec3& directionL) const;
 		
-		int isCollidingBox(const NodeVirtual* const node, const glm::vec3& aabbMin, const glm::vec3& aabbMax) const;
+		int8_t isCollidingBox(const NodeVirtual* const node, const glm::vec3& center, const glm::vec3& halfSize) const;
+
+		void queryNodeBoxRecursive(std::vector<NodeVirtual*>& nodeList, const glm::vec3& center, const glm::vec3& halfSize, NodeVirtual* const node, const bool& inside);
 		//
 
 		//  Attributes
@@ -85,9 +87,5 @@ class SceneManager : public Singleton<SceneManager>
 		glm::vec3 camLeft;					//!< Camera left vector
 		float camVerticalAngle;				//!< Frustrum angle vertical
 		float camHorizontalAngle;			//!< Frustrum angle horizontal
-
-
-
-		unsigned int query;
 		//
 };

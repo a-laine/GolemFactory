@@ -28,7 +28,7 @@ class NodeVirtual
 		/*! \enum NodeDivisionFlags
 		 *	\brief Used to code and decode node division on different axis.
 		 */
-		enum NodeDivisionFlags
+		/*enum NodeDivisionFlags
 		{
 			X = 0xFF0000,	//!< X mask to decode bitfield
 			dX = 16,		//!< X shift to code/decode bitfield
@@ -36,7 +36,7 @@ class NodeVirtual
 			dY = 8,			//!< Y shift to code/decode bitfield
 			Z = 0x0000FF,	//!< Z mask to decode bitfield
 			dZ = 0			//!< Z shift to code/decode bitfield
-		};
+		};*/
 		//
 
 		//	Default
@@ -45,7 +45,7 @@ class NodeVirtual
 		 *  \param p : the node parent
 		 *  \param d : the node division byte
 		 */
-		NodeVirtual(NodeVirtual* p = nullptr, unsigned int d = 0x000000);
+		NodeVirtual(NodeVirtual* p = nullptr, glm::ivec3 d = ione);
 
 		/*!
 		 *  \brief Destructor
@@ -142,11 +142,14 @@ class NodeVirtual
 		glm::vec3 position;							//!< Node position in scene coordinate
 		glm::vec3 size;								//!< Node size
 
-	public:
 		std::vector<InstanceVirtual*> instanceList;	//!< Instance container (list of instance attached to node)
-		unsigned int division;						//!< Division byte (see NodeDivisionFlags enum to code/decode it), it's a bitfield
+		glm::ivec3 division;
+	//unsigned int division;						//!< Division byte (see NodeDivisionFlags enum to code/decode it), it's a bitfield
 
 		InstanceDrawable* debuginstance;			//!< Debug
+
+		static const glm::ivec3 izero;
+		static const glm::ivec3 ione;
 		//
 };
 

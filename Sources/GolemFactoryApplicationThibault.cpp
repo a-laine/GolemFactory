@@ -69,23 +69,32 @@ int main()
 			avatar->setSize(glm::vec3(scale));
 			avatar->setPosition(glm::vec3(20.f, 20.f, -scale * avatar->getMesh()->aabb_min.z));
 			SceneManager::getInstance()->addObject(avatar);
-			camera.setMode(Camera::TRACKBALL);
+			//camera.setMode(Camera::TRACKBALL);
 			camera.setRadius(4);
 
 		InstanceDrawable* cube = InstanceManager::getInstance()->getInstanceDrawable("default", "wired");
+			cube->setPosition(glm::vec3(60, 20, 2));
+			cube->setSize(glm::vec3(5, 5, 4));
+
+	/*std::vector<InstanceVirtual*> list;
+	list.reserve(100);
+	for (int i = 0; i < 20000000; ++i)
+	{
+		const glm::vec3 center = glm::vec3((rand() % (GRID_SIZE * 5)) - 2.5f*GRID_SIZE, (rand() % (GRID_SIZE * 5)) - 2.5f*GRID_SIZE, 2);
+		list.clear();
+		SceneManager::getInstance()->queryInstanceBox(list, center, glm::vec3(3, 3, 4));
+		if (i % 200000 == 0) std::cout << '.';
+	}
+	exit(0);*/
+
+
 
 	// init loop time tracking
 	double elapseTime = 16.;
-	double dummy = 0;
 	int width, height;
 
 	//	game loop
 	std::cout << "game loop initiated" << std::endl;
-
-
-	int aaaa = 0;
-	int bbbb = 0;
-
 	while (!glfwWindowShouldClose(window))
 	{
 		// begin loop
@@ -93,24 +102,35 @@ int main()
 		glfwGetWindowSize(window, &width, &height);
 				
 		//	DEBUG
-		const glm::vec3 center = glm::vec3((rand()%(GRID_SIZE*5)) - 2.5f*GRID_SIZE, (rand() % (GRID_SIZE * 5)) - 2.5f*GRID_SIZE, 2);
-		const glm::vec3 halfSize = glm::vec3(3, 3, 4);
-		cube->setPosition(center);
-		cube->setSize(halfSize);
+		//const glm::vec3 center = glm::vec3(-95, -126, 2);
+		//const glm::vec3 center = glm::vec3((rand()%(GRID_SIZE*5)) - 2.5f*GRID_SIZE, (rand() % (GRID_SIZE * 5)) - 2.5f*GRID_SIZE, 2);
+		//cube->setPosition(center);
+
+		if(EventHandler::getInstance()->isActivated(SLOT1))
+			cube->setPosition(cube->getPosition() + glm::vec3(0.1, 0, 0));
+		else if(EventHandler::getInstance()->isActivated(SLOT2))
+			cube->setPosition(cube->getPosition() - glm::vec3(0.1, 0, 0));
+		if (EventHandler::getInstance()->isActivated(SLOT3))
+			cube->setPosition(cube->getPosition() + glm::vec3(0, 0.1, 0));
+		else if (EventHandler::getInstance()->isActivated(SLOT4))
+			cube->setPosition(cube->getPosition() - glm::vec3(0, 0.1, 0));
+		SceneManager::getInstance()->updateObject(cube);
+		std::cout << "position : (" << cube->getPosition().x << ' ' << cube->getPosition().y << ' ' << cube->getPosition().z << ')' << std::endl;
+
 		glm::mat4 projection = glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f);
 		Renderer::getInstance()->drawInstanceDrawable(cube, &camera.getViewMatrix()[0][0], &projection[0][0]);
 
-		std::vector<NodeVirtual*> list;
-		SceneManager::getInstance()->queryNodeBox(list, center - halfSize, center + halfSize);
-		//std::cout << "result : " << list.size() << std::endl;
+		std::vector<InstanceVirtual*> list;
+		SceneManager::getInstance()->queryInstanceBox(list, cube->getPosition(), cube->getSize());
+		std::cout << "instances : " << list.size() << std::endl << std::endl;
 
-		unsigned int instances = 0;
-		for (unsigned int i = 0; i < list.size(); ++i)
-			instances += list[i]->instanceList.size();
-		//std::cout << "instances : " << instances << std::endl;
-		aaaa++;
-		bbbb += instances;
-		std::cout << "instances : " << (float)bbbb/aaaa << std::endl;
+		if (!WidgetManager::getInstance()->getBoolean("BBrendering"))
+			Renderer::getInstance()->setRenderOption(Renderer::BOUNDING_BOX);
+		else Renderer::getInstance()->setRenderOption(Renderer::DEFAULT);
+		for (unsigned int i = 0; i < list.size(); i++)
+		{
+			Renderer::getInstance()->drawInstanceDrawable(list[i], &camera.getViewMatrix()[0][0], &projection[0][0]);
+		}
 
 		// Render scene & picking
 		if (WidgetManager::getInstance()->getBoolean("BBrendering"))

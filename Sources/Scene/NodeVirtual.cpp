@@ -3,13 +3,17 @@
 #define FRUSTRUM_COEFF			2.f	//	coefficient for frustrum intersection computation (to avoid artefacts)
 #define RAY_COEFF				0.2f
 
+const glm::ivec3 NodeVirtual::izero = glm::ivec3(0);
+const glm::ivec3 NodeVirtual::ione = glm::ivec3(1);
 
 //	Default
-NodeVirtual::NodeVirtual(NodeVirtual* p, unsigned int d) : parent(p),debuginstance(nullptr)
+NodeVirtual::NodeVirtual(NodeVirtual* p, glm::ivec3 d) : parent(p),debuginstance(nullptr)
 {
-	if (!(d&X)) d |= 0x01 << dX;
+	d = glm::max(d, 1);
+
+	/*if (!(d&X)) d |= 0x01 << dX;
 	if (!(d&Y)) d |= 0x01 << dY;
-	if (!(d&Z)) d |= 0x01 << dZ;
+	if (!(d&Z)) d |= 0x01 << dZ;*/
 	division = d;
 
 	position = glm::vec3(0, 0, 0);
@@ -82,22 +86,22 @@ void NodeVirtual::split(const int& targetDepth, const int& depth)
 {
 	if (children.empty() && targetDepth >= depth)
 	{
-		int xChild = (division&X) >> dX;
+		/*int xChild = (division&X) >> dX;
 		int yChild = (division&Y) >> dY;
-		int zChild = (division&Z) >> dZ;
+		int zChild = (division&Z) >> dZ;*/
 
-		for (int i = 0; i < xChild; i++)
+		for (int i = 0; i < division.x; i++)
 		{
-			float xpos = position.x - size.x / 2 + size.x / xChild / 2 + i*size.x / xChild;
-			for (int j = 0; j < yChild; j++)
+			float xpos = position.x - size.x / 2 + size.x / division.x / 2 + i*size.x / division.x;
+			for (int j = 0; j < division.y; j++)
 			{
-				float ypos = position.y - size.y / 2 + size.y / yChild / 2 + j*size.y / yChild;
-				for (int k = 0; k < zChild; k++)
+				float ypos = position.y - size.y / 2 + size.y / division.y / 2 + j*size.y / division.y;
+				for (int k = 0; k < division.z; k++)
 				{
-					float zpos = position.z - size.z / 2 + size.z / zChild / 2 + k*size.z / zChild;
-					NodeVirtual* n = new NodeVirtual(this,division);
-						n->setPosition(glm::vec3(xpos,ypos,zpos));
-						n->setSize(glm::vec3(size.x / xChild, size.y / yChild, size.z / zChild));
+					float zpos = position.z - size.z / 2 + size.z / division.z / 2 + k*size.z / division.z;
+					NodeVirtual* n = new NodeVirtual(this, division);
+						n->setPosition(glm::vec3(xpos, ypos, zpos));
+						n->setSize(glm::vec3(size.x / division.x, size.y / division.y, size.z / division.z));
 						children.push_back(n);
 				}
 			}
@@ -160,22 +164,22 @@ void NodeVirtual::setSize(glm::vec3 s)
 	debuginstance->setSize(glm::vec3(0.4*s.x, 0.4*s.y, 0.2));
 
 	if (children.empty()) return;
-	int xChild = (division&X) >> dX;
+	/*int xChild = (division&X) >> dX;
 	int yChild = (division&Y) >> dY;
-	int zChild = (division&Z) >> dZ;
+	int zChild = (division&Z) >> dZ;*/
 
-	for (int i = 0; i < xChild; i++)
+	for (int i = 0; i < division.x; i++)
 	{
-		float xpos = position.x - size.x / 2 + size.x / xChild / 2 + i*size.x / xChild;
-		for (int j = 0; j < yChild; j++)
+		float xpos = position.x - size.x / 2 + size.x / division.x / 2 + i*size.x / division.x;
+		for (int j = 0; j < division.y; j++)
 		{
-			float ypos = position.y - size.y / 2 + size.y / yChild / 2 + j*size.y / yChild;
-			for (int k = 0; k < zChild; k++)
+			float ypos = position.y - size.y / 2 + size.y / division.y / 2 + j*size.y / division.y;
+			for (int k = 0; k < division.z; k++)
 			{
-				float zpos = position.z - size.z / 2 + size.z / zChild / 2 + k*size.z / zChild;
-				int index = zChild*yChild*i + zChild*j + k;
+				float zpos = position.z - size.z / 2 + size.z / division.z / 2 + k*size.z / division.z;
+				int index = division.z * division.y * i + division.z * j + k;
 				children[index]->setPosition(glm::vec3(xpos, ypos, zpos));
-				children[index]->setSize(glm::vec3(size.x / xChild, size.y / yChild, size.z / zChild));
+				children[index]->setSize(glm::vec3(size.x / division.x, size.y / division.y, size.z / division.z));
 			}
 		}
 	}
@@ -195,32 +199,15 @@ uint8_t NodeVirtual::getLevel() const
 }
 int NodeVirtual::getChildrenKey(glm::vec3 p) const
 {
-	const int xChild = (division & X) >> dX;
-	const int yChild = (division & Y) >> dY;
-	const int zChild = (division & Z) >> dZ;
-
-	p -= position;
-	p += 0.5f * size;
-
-	const int x = (int)(p.x / size.x * xChild);
-	const int y = (int)(p.y / size.y * yChild);
-	const int z = (int)(p.z / size.z * zChild);
-	return zChild * yChild * x + zChild * y + z;
+	p += 0.5f * size - position;
+	glm::ivec3 result = p / size * glm::vec3(division);
+	return division.z * division.y * result.x + division.z * result.y + result.z;
 }
 glm::ivec3 NodeVirtual::getChildrenKeyVector(glm::vec3 p) const
 {
-	const int xChild = (division & X) >> dX;
-	const int yChild = (division & Y) >> dY;
-	const int zChild = (division & Z) >> dZ;
-
-	p -= position;
-	p += 0.5f * size;
-
-	const int x = (int)(p.x / size.x * xChild);
-	const int y = (int)(p.y / size.y * yChild);
-	const int z = (int)(p.z / size.z * zChild);
-
-	return glm::ivec3(glm::clamp(x, 0, xChild - 1), glm::clamp(y, 0, yChild - 1), glm::clamp(z, 0, zChild - 1));
+	p += 0.5f * size - position;
+	glm::ivec3 result = p / size * glm::vec3(division);
+	return glm::clamp(result, izero, division  - ione);
 }
-glm::ivec3 NodeVirtual::getDivisionVector() const { return glm::ivec3((division & X) >> dX, (division & Y) >> dY, (division & Z) >> dZ); }
+glm::ivec3 NodeVirtual::getDivisionVector() const { return division; }
 //

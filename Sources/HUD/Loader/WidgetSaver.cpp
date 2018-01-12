@@ -72,7 +72,6 @@ Variant WidgetSaver::serialize(WidgetVirtual* w, std::map<std::string, WidgetVir
 			if (WidgetImage* image = dynamic_cast<WidgetImage*>(w))
 				serializeImage(image, rootVariant);
 			break;
-			break;
 		case WidgetVirtual::LABEL:
 			if (WidgetLabel* label = dynamic_cast<WidgetLabel*>(w))
 				serializeLabel(label, rootVariant);
@@ -95,7 +94,7 @@ Variant WidgetSaver::serialize(WidgetVirtual* w, std::map<std::string, WidgetVir
 		for (unsigned int i = 0; i < w->children.size(); ++i)
 		{
 			std::string name = "unknown_" + std::to_string(++unknownIndex);
-			for (std::map<std::string, WidgetVirtual*>::iterator it = association.begin(); it != association.end(); it++)
+			for (std::map<std::string, WidgetVirtual*>::iterator it = association.begin(); it != association.end(); ++it)
 			{
 				if (w->children[i] == it->second)
 				{
@@ -129,7 +128,7 @@ Variant WidgetSaver::serialize(Layer* l, std::map<std::string, WidgetVirtual*>& 
 		for (unsigned int i = 0; i < l->children.size(); ++i)
 		{
 			std::string name = "unknown_" + std::to_string(++unknownIndex);
-			for (std::map<std::string, WidgetVirtual*>::iterator it = association.begin(); it != association.end(); it++)
+			for (std::map<std::string, WidgetVirtual*>::iterator it = association.begin(); it != association.end(); ++it)
 			{
 				if (l->children[i] == it->second)
 				{

@@ -24,7 +24,7 @@ SceneManager::SceneManager()
 	const int initialDepth = MIN_TREE_DEPTH;
 
 	setViewDistance(initialDistance, initialDepth);
-	NodeVirtual* n = new NodeVirtual(nullptr, 0x040401);
+	NodeVirtual* n = new NodeVirtual(nullptr, glm::ivec3(4, 4, 1));
 		n->setPosition(glm::vec3(0.f, 0.f, initialDistance / 10.f));
 		n->setSize(glm::vec3(initialDistance, initialDistance, initialDistance / 5.f));
 		n->split(2,0);
@@ -52,8 +52,8 @@ bool SceneManager::addObject(InstanceVirtual* obj) // super optimized (don't tou
 
 	//	search right node in tree
 	p = obj->position;
-	const glm::vec3 v = obj->getBBMax() - obj->getBBMin();
-	const float sobj = glm::dot(v, v) * SIZE_ALLOWANCE_COEFF;
+	glm::vec3 v = obj->getBBMax() - obj->getBBMin();
+	float sobj = glm::dot(v, v) * SIZE_ALLOWANCE_COEFF;
 	while (sobj < glm::dot(node->size, node->size) && !node->children.empty()) // => object AABB diagonal is < of 10% of node AABB diagonal
 		node = node->children[node->getChildrenKey(p)];
 
@@ -438,55 +438,34 @@ unsigned int SceneManager::getNumberInstanceStored() const { return instanceTrac
 
 
 //	scene query
-void SceneManager::queryNodeBox(std::vector<NodeVirtual*>& nodeList, const glm::vec3& aabbMin, const glm::vec3& aabbMax, NodeVirtual* node, bool inside)
+void SceneManager::queryNodeBox(std::vector<NodeVirtual*>& nodeList, const glm::vec3& center, const glm::vec3& halfSize)
 {
-	if (!node)
-	{
-		query = 0;
-		for (unsigned int i = 0; i < world.size(); i++)
-			queryNodeBox(nodeList, aabbMin, aabbMax, world[i], false);
-		//std::cout << "query : " << query << std::endl;
-	}
-	else
-	{
-		if (!inside)
-		{
-			query++;
-			int collision = isCollidingBox(node, aabbMin, aabbMax);
-			if (collision > 0)
-			{
-				nodeList.push_back(node);
-				if(collision == 2 && !node->children.empty())	// node fully inside box
-				{
-					for (unsigned int i = 0; i < node->children.size(); i++)
-						queryNodeBox(nodeList, aabbMin, aabbMax, node->children[i], true);
-				}
-				else if(!node->children.empty())	// node is colliding box
-				{
-					const glm::ivec3 childMin = node->getChildrenKeyVector(aabbMin);
-					const glm::ivec3 childMax = node->getChildrenKeyVector(aabbMax);
-					const glm::ivec3 division = node->getDivisionVector();
+	for (unsigned int i = 0; i < world.size(); i++)
+		queryNodeBoxRecursive(nodeList, center, halfSize, world[i], false);
+}
+void SceneManager::queryInstanceBox(std::vector<InstanceVirtual*>& instanceList, const glm::vec3& center, const glm::vec3& halfSize)
+{
+	//	get all colliding nodes of tree
+	std::vector<NodeVirtual*> nodeList;
+	nodeList.reserve(40);
+	queryNodeBox(nodeList, center, halfSize);
 
-					for (int i = childMin.x; i < childMax.x + 1; ++i)
-						for (int j = childMin.y; j < childMax.y + 1; ++j)
-							for (int k = childMin.z; k < childMax.z + 1; ++k)
-								queryNodeBox(nodeList, aabbMin, aabbMax, node->children[division.z * division.y * i + division.z * j + k], false);
-				}
-			}
-		}
-		else
+	//	get all collision instances
+	for (unsigned int i = 0; i < nodeList.size(); i++)
+	{
+		const std::vector<InstanceVirtual*>& nodeInstanceList = nodeList[i]->instanceList;
+		for (unsigned int j = 0; j < nodeInstanceList.size(); j++)
 		{
-			nodeList.push_back(node);
-			for(unsigned int i = 0; i < node->children.size(); i++)
-				queryNodeBox(nodeList, aabbMin, aabbMax, node->children[i], true);
+			// implement all narrow phase collision test
+
+			//	1: on AABB bounding volume (AABB computed from static bounding volume or sweept volume)
+			//	2: on bounding volume (composing of convex shape)
+			//	3: on mesh
+
+			instanceList.push_back(nodeInstanceList[j]);
 		}
 	}
 }
-void SceneManager::queryInstanceBox(std::vector<InstanceVirtual*>& instanceList, const glm::vec3& aabbMin, const glm::vec3& aabbMax) const
-{
-	
-}
-
 
 
 
@@ -538,17 +517,51 @@ float SceneManager::isOnRay(const NodeVirtual* const node, const glm::vec3& orig
 }
 
 
-int SceneManager::isCollidingBox(const NodeVirtual* const node, const glm::vec3& aabbMin, const glm::vec3& aabbMax) const
+int8_t SceneManager::isCollidingBox(const NodeVirtual* const node, const glm::vec3& center, const glm::vec3& halfSize) const
 {
-	const glm::vec3 boxSize = 0.5f * (aabbMax - aabbMin);
-	const glm::vec3 nodeSize = 0.5f * node->size;
-	glm::vec3 p = node->position - 0.5f * (aabbMax + aabbMin);
-		p.x = std::abs(p.x);
-		p.y = std::abs(p.y);
-		p.z = std::abs(p.z);
+	const glm::vec3 p = glm::max(glm::abs(node->position - center) - (1.f / SIZE_DISALLOWANCE_COEFF) * node->size, 0.f);
+	if (p.x >  halfSize.x + 0.5f * node->size.x || p.y >  halfSize.y + 0.5f * node->size.y || p.z >  halfSize.z + 0.5f * node->size.z) return 0;	// no collision at all
+	if (p.x <= halfSize.x - 0.5f * node->size.x && p.y <= halfSize.y - 0.5f * node->size.y && p.z <= halfSize.z - 0.5f * node->size.z) return 2;	// node fully inside box
+	else return 1; // overlapping
+}
 
-	if (p.x >  boxSize.x + nodeSize.x || p.y >  boxSize.y + nodeSize.y || p.z >  boxSize.z + nodeSize.z) return 0;
-	if (p.x <= boxSize.x - nodeSize.x && p.y <= boxSize.y - nodeSize.y && p.z <= boxSize.z - nodeSize.z) return 2;
-	else return 1;
+
+void SceneManager::queryNodeBoxRecursive(std::vector<NodeVirtual*>& nodeList, const glm::vec3& center, const glm::vec3& halfSize, NodeVirtual* const node, const bool& inside)
+{
+	if (inside)
+	{
+		nodeList.push_back(node);
+		if (!node->children.empty())
+			for (unsigned int i = 0; i < node->children.size(); i++)
+				queryNodeBoxRecursive(nodeList, center, halfSize, node->children[i], true);
+	}
+	else
+	{
+		int8_t collision = isCollidingBox(node, center, halfSize);
+		if (collision > 0)
+		{
+			nodeList.push_back(node);
+			if (!node->children.empty())
+			{
+				if (collision == 2 )	// node fully inside box
+				{
+					for (unsigned int i = 0; i < node->children.size(); i++)
+						queryNodeBoxRecursive(nodeList, center, halfSize, node->children[i], true);
+				}
+				else					// node is simply overlapping box
+				{
+					glm::ivec3 childMin = node->getChildrenKeyVector(center - halfSize - (1.f / SIZE_DISALLOWANCE_COEFF) * node->size);
+					glm::ivec3 childMax = node->getChildrenKeyVector(center + halfSize + (1.f / SIZE_DISALLOWANCE_COEFF) * node->size) + NodeVirtual::ione;
+					glm::ivec3 division = node->division;
+
+					for (int i = childMin.x; i < childMax.x; i++)
+						for (int j = childMin.y; j < childMax.y; j++)
+							for (int k = childMin.z; k < childMax.z; k++)
+								queryNodeBoxRecursive(nodeList, center, halfSize, node->children[division.z * division.y * i + division.z * j + k], false);
+				}
+			}
+
+		}
+	}
 }
 //
