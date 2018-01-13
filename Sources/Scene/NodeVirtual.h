@@ -75,7 +75,7 @@ class NodeVirtual
 		 *  Check if instance size compatible to node size and add instance to container if yes.
 		 *  If not check recursively with children.
 		 */
-		virtual bool addObject(InstanceVirtual* obj);
+		//virtual bool addObject(InstanceVirtual* obj);
 
 		/*!
 		 *	\brief Detach instance to node
@@ -84,7 +84,7 @@ class NodeVirtual
 		 *  Check if instance present in personal container, and remove it if yes.
 		 *  If not check recursively with children.
 		 */
-		virtual bool removeObject(InstanceVirtual* obj);
+		//virtual bool removeObject(InstanceVirtual* obj);
 
 		/*!
 		 *	\brief Divide (split) node depending on node division byte
@@ -106,13 +106,13 @@ class NodeVirtual
 		 *  \brief Change node position
 		 *  \param p : the new node position
 		 */
-		void setPosition(glm::vec3 p);
+		void setPosition(const glm::vec3& p);
 
 		/*!
 		 *  \brief Change node size
 		 *  \param s : the new node size
 		 */
-		void setSize(glm::vec3 s);
+		void setSize(const glm::vec3& s);
 
 		/*!
 		 *  \brief Get node position
@@ -144,10 +144,11 @@ class NodeVirtual
 
 		std::vector<InstanceVirtual*> instanceList;	//!< Instance container (list of instance attached to node)
 		glm::ivec3 division;
-	//unsigned int division;						//!< Division byte (see NodeDivisionFlags enum to code/decode it), it's a bitfield
 
 		InstanceDrawable* debuginstance;			//!< Debug
 
+	private:
+		glm::vec3 allowanceSize;
 		static const glm::ivec3 izero;
 		static const glm::ivec3 ione;
 		//

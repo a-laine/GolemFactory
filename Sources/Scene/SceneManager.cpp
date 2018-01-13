@@ -9,9 +9,6 @@
 #define MIN_TREE_DEPTH		2
 
 
-#define SIZE_ALLOWANCE_COEFF	100.f
-#define SIZE_DISALLOWANCE_COEFF 4.f
-
 //	coefficient for intersection test computation (to avoid artefacts)
 #define FRUSTRUM_COEFF			2.f
 #define RAY_COEFF				0.2f
@@ -52,9 +49,8 @@ bool SceneManager::addObject(InstanceVirtual* obj) // super optimized (don't tou
 
 	//	search right node in tree
 	p = obj->position;
-	glm::vec3 v = obj->getBBMax() - obj->getBBMin();
-	float sobj = glm::dot(v, v) * SIZE_ALLOWANCE_COEFF;
-	while (sobj < glm::dot(node->size, node->size) && !node->children.empty()) // => object AABB diagonal is < of 10% of node AABB diagonal
+	float objectBoundDiameter = glm::length(glm::max(glm::abs(obj->getBBMax()), glm::abs(obj->getBBMin())));
+	while (objectBoundDiameter < node->allowanceSize.x && !node->children.empty()) // => object AABB diagonal is < of 10% of node AABB diagonal
 		node = node->children[node->getChildrenKey(p)];
 
 	//	add object in scene
@@ -91,13 +87,10 @@ void SceneManager::updateObject(InstanceVirtual* obj)
 	NodeVirtual* node = track->second.owner;
 
 	glm::vec3 p = obj->position - node->position;
-	const glm::vec3 s = obj->getBBMax() - obj->getBBMin();
-	const float sobj  = glm::dot(s, s) * SIZE_ALLOWANCE_COEFF;
-	const float sobj2 = glm::dot(s, s) * SIZE_DISALLOWANCE_COEFF;
+	float objectBoundDiameter = glm::length(glm::max(glm::abs(obj->getBBMax()), glm::abs(obj->getBBMin())));
 
-	//if(abs(obj->position.x) >= 500.f || abs(obj->position.y) >= 500.f) std::cout << "out";
 	if (abs(p.x) >= node->size.x / 2 || abs(p.y) >= node->size.y / 2 || abs(p.z) >= node->size.z / 2 ||	// object move out of node
-		sobj < glm::dot(node->size, node->size) || sobj2 > glm::dot(node->size, node->size))			// object too big
+		objectBoundDiameter < node->allowanceSize.x || objectBoundDiameter > 4 * node->allowanceSize.x)			// object too big or too small
 	{
 		//	remove from former owner
 		auto it2 = std::find(node->instanceList.begin(), node->instanceList.end(), obj);
@@ -117,7 +110,7 @@ void SceneManager::updateObject(InstanceVirtual* obj)
 			p = obj->position;
 			if (node->getChildrenKey(p) > 15) std::cout << node->getChildrenKey(p) << std::endl;
 
-			while (sobj < glm::dot(node->size, node->size) && !node->children.empty()) // => object AABB diagonal is < of 10% of node AABB diagonal
+			while (objectBoundDiameter < node->allowanceSize.x && !node->children.empty()) // => object AABB diagonal is < of 10% of node AABB diagonal
 				node = node->children[node->getChildrenKey(p)];
 
 			node->instanceList.push_back(obj);
@@ -434,6 +427,14 @@ void SceneManager::getInstanceOnRay(std::vector<std::pair<float, InstanceVirtual
 }
 std::vector<float> SceneManager::getMaxViewDistanceStack() { return viewMaxDistance; }
 unsigned int SceneManager::getNumberInstanceStored() const { return instanceTracking.size(); }
+glm::vec3 SceneManager::getWorldSize() const
+{
+	return world[0]->getSize();
+}
+glm::vec3 SceneManager::getWorldPosition() const
+{
+	return world[0]->getPosition();
+}
 //
 
 
@@ -447,12 +448,13 @@ void SceneManager::queryInstanceBox(std::vector<InstanceVirtual*>& instanceList,
 {
 	//	get all colliding nodes of tree
 	std::vector<NodeVirtual*> nodeList;
-	nodeList.reserve(40);
+	nodeList.reserve(50);
 	queryNodeBox(nodeList, center, halfSize);
 
 	//	get all collision instances
 	for (unsigned int i = 0; i < nodeList.size(); i++)
 	{
+		//instanceList.push_back(nodeList[i]->debuginstance);
 		const std::vector<InstanceVirtual*>& nodeInstanceList = nodeList[i]->instanceList;
 		for (unsigned int j = 0; j < nodeInstanceList.size(); j++)
 		{
@@ -519,10 +521,11 @@ float SceneManager::isOnRay(const NodeVirtual* const node, const glm::vec3& orig
 
 int8_t SceneManager::isCollidingBox(const NodeVirtual* const node, const glm::vec3& center, const glm::vec3& halfSize) const
 {
-	const glm::vec3 p = glm::max(glm::abs(node->position - center) - (1.f / SIZE_DISALLOWANCE_COEFF) * node->size, 0.f);
+	const glm::vec3 p = glm::max(glm::abs(node->position - center) - node->allowanceSize, 0.f);
 	if (p.x >  halfSize.x + 0.5f * node->size.x || p.y >  halfSize.y + 0.5f * node->size.y || p.z >  halfSize.z + 0.5f * node->size.z) return 0;	// no collision at all
 	if (p.x <= halfSize.x - 0.5f * node->size.x && p.y <= halfSize.y - 0.5f * node->size.y && p.z <= halfSize.z - 0.5f * node->size.z) return 2;	// node fully inside box
 	else return 1; // overlapping
+	
 }
 
 
@@ -550,8 +553,8 @@ void SceneManager::queryNodeBoxRecursive(std::vector<NodeVirtual*>& nodeList, co
 				}
 				else					// node is simply overlapping box
 				{
-					glm::ivec3 childMin = node->getChildrenKeyVector(center - halfSize - (1.f / SIZE_DISALLOWANCE_COEFF) * node->size);
-					glm::ivec3 childMax = node->getChildrenKeyVector(center + halfSize + (1.f / SIZE_DISALLOWANCE_COEFF) * node->size) + NodeVirtual::ione;
+					glm::ivec3 childMin = node->getChildrenKeyVector(center - halfSize - node->allowanceSize);
+					glm::ivec3 childMax = node->getChildrenKeyVector(center + halfSize + node->allowanceSize) + NodeVirtual::ione;
 					glm::ivec3 division = node->division;
 
 					for (int i = childMin.x; i < childMax.x; i++)
@@ -560,7 +563,6 @@ void SceneManager::queryNodeBoxRecursive(std::vector<NodeVirtual*>& nodeList, co
 								queryNodeBoxRecursive(nodeList, center, halfSize, node->children[division.z * division.y * i + division.z * j + k], false);
 				}
 			}
-
 		}
 	}
 }

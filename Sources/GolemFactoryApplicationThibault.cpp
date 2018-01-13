@@ -73,24 +73,39 @@ int main()
 			camera.setRadius(4);
 
 		InstanceDrawable* cube = InstanceManager::getInstance()->getInstanceDrawable("default", "wired");
-			cube->setPosition(glm::vec3(60, 20, 2));
-			cube->setSize(glm::vec3(5, 5, 4));
+			cube->setPosition(glm::vec3(60, 20, 1));
+			cube->setSize(glm::vec3(1.5, 1.5, 1));
 
+
+	std::vector<InstanceDrawable*> testList;
+	for (unsigned int i = 0; i < 30000; i++)
+	{
+		testList.push_back(InstanceManager::getInstance()->getInstanceDrawable("icosphere.obj", "default"));
+		testList.back()->setSize(glm::vec3(0.01f * (rand()%100) + 0.2f));
+		SceneManager::getInstance()->addObject(testList.back());
+	}
 	/*std::vector<InstanceVirtual*> list;
 	list.reserve(100);
-	for (int i = 0; i < 20000000; ++i)
+	long average = 0;
+	const long samples = 2000000;
+	for (long i = 0; i < samples; ++i)
 	{
 		const glm::vec3 center = glm::vec3((rand() % (GRID_SIZE * 5)) - 2.5f*GRID_SIZE, (rand() % (GRID_SIZE * 5)) - 2.5f*GRID_SIZE, 2);
 		list.clear();
-		SceneManager::getInstance()->queryInstanceBox(list, center, glm::vec3(3, 3, 4));
-		if (i % 200000 == 0) std::cout << '.';
+		SceneManager::getInstance()->queryInstanceBox(list, center, glm::vec3(1.5, 1.5, 2));
+		average += list.size();
+		if (i % (samples/100) == 0) std::cout << '.';
 	}
+	std::cout << std::endl << "average instance from broad phase : " << (double)average / samples << std::endl;
 	exit(0);*/
 
 
 
 	// init loop time tracking
+	double averageTime = 0;
+	long samples = 0;
 	double elapseTime = 16.;
+	double dummy = 0;
 	int width, height;
 
 	//	game loop
@@ -106,7 +121,7 @@ int main()
 		//const glm::vec3 center = glm::vec3((rand()%(GRID_SIZE*5)) - 2.5f*GRID_SIZE, (rand() % (GRID_SIZE * 5)) - 2.5f*GRID_SIZE, 2);
 		//cube->setPosition(center);
 
-		if(EventHandler::getInstance()->isActivated(SLOT1))
+		/*if(EventHandler::getInstance()->isActivated(SLOT1))
 			cube->setPosition(cube->getPosition() + glm::vec3(0.1, 0, 0));
 		else if(EventHandler::getInstance()->isActivated(SLOT2))
 			cube->setPosition(cube->getPosition() - glm::vec3(0.1, 0, 0));
@@ -114,19 +129,46 @@ int main()
 			cube->setPosition(cube->getPosition() + glm::vec3(0, 0.1, 0));
 		else if (EventHandler::getInstance()->isActivated(SLOT4))
 			cube->setPosition(cube->getPosition() - glm::vec3(0, 0.1, 0));
-		SceneManager::getInstance()->updateObject(cube);
-		std::cout << "position : (" << cube->getPosition().x << ' ' << cube->getPosition().y << ' ' << cube->getPosition().z << ')' << std::endl;
+
+		cube->setPosition(avatar->getPosition());
+		SceneManager::getInstance()->updateObject(cube);*/
+
+		dummy += 0.1f * elapseTime / 1000.;
+		if (dummy > 2 * glm::pi<double>()) dummy = 0;
+		for (unsigned int i = 0; i < testList.size(); i++)
+		{
+			double phase = i;
+			testList[i]->setPosition((45.f + (i%200))* glm::vec3(cos(dummy + phase), sin(dummy + phase), 0) + glm::vec3(0,0, testList[i]->getSize().z));
+			SceneManager::getInstance()->updateObject(testList[i]);
+		}
+
+		
+		//averageTime *= samples / (samples+1);
+		samples++;
+		std::vector<InstanceVirtual*> list;
+		double testStartTime = glfwGetTime();
+		for (unsigned int i = 0; i < testList.size(); i++)
+		{
+			list.clear();
+			SceneManager::getInstance()->queryInstanceBox(list, testList[i]->getPosition(), testList[i]->getSize());
+		}
+		averageTime += 1000. * (glfwGetTime() - testStartTime);
+		std::cout << averageTime / samples << std::endl;
+
+
+
+		//std::cout << "position : (" << cube->getPosition().x << ' ' << cube->getPosition().y << ' ' << cube->getPosition().z << ')' << std::endl;
 
 		glm::mat4 projection = glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f);
 		Renderer::getInstance()->drawInstanceDrawable(cube, &camera.getViewMatrix()[0][0], &projection[0][0]);
 
-		std::vector<InstanceVirtual*> list;
-		SceneManager::getInstance()->queryInstanceBox(list, cube->getPosition(), cube->getSize());
-		std::cout << "instances : " << list.size() << std::endl << std::endl;
+		//SceneManager::getInstance()->queryInstanceBox(list, cube->getPosition(), cube->getSize());
+		//std::cout << "instances : " << list.size() << std::endl << std::endl;
 
 		if (!WidgetManager::getInstance()->getBoolean("BBrendering"))
 			Renderer::getInstance()->setRenderOption(Renderer::BOUNDING_BOX);
 		else Renderer::getInstance()->setRenderOption(Renderer::DEFAULT);
+		Renderer::getInstance()->drawInstanceDrawable(testList.back(), &camera.getViewMatrix()[0][0], &projection[0][0]);
 		for (unsigned int i = 0; i < list.size(); i++)
 		{
 			Renderer::getInstance()->drawInstanceDrawable(list[i], &camera.getViewMatrix()[0][0], &projection[0][0]);
@@ -279,7 +321,7 @@ void initializeForestScene(bool emptyPlace)
 			{
 				meshName = "firTree1.obj";
 				shaderName = "default";
-				sDispersion = 0.2f;
+				sDispersion = 0.f;// 2f;
 				sOffset = 1.7f;
 			}
 			else continue;
@@ -372,8 +414,8 @@ void initManagers()
 
 	// init scene
 	SceneManager::getInstance()->setViewDistance(1000.f, 2);
-	SceneManager::getInstance()->setWorldPosition(glm::vec3(0, 0, 20));
 	SceneManager::getInstance()->setWorldSize(glm::vec3(GRID_SIZE*GRID_ELEMENT_SIZE, GRID_SIZE*GRID_ELEMENT_SIZE, 50));
+	SceneManager::getInstance()->setWorldPosition(glm::vec3(0, 0, SceneManager::getInstance()->getWorldSize().z / 2 - 5));
 	SceneManager::getInstance()->reserveInstanceTrack(InstanceManager::getInstance()->getInstanceCapacity());
 }
 void picking(int width, int height)

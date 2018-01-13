@@ -44,6 +44,8 @@ class SceneManager : public Singleton<SceneManager>
 		void getInstanceOnRay(std::vector<std::pair<float, InstanceVirtual*> >& list, const Grain& grain = COARSE, const float& maxDistance = std::numeric_limits<float>::max());
 		std::vector<float> getMaxViewDistanceStack();
 		unsigned int getNumberInstanceStored() const;
+		glm::vec3 getWorldSize() const;
+		glm::vec3 getWorldPosition() const;
 		//
 
 		//	scene query
