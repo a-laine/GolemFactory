@@ -1,8 +1,6 @@
 #include "Entity.hpp"
 
 
-namespace gf {
-
 Entity::Entity()
 	: m_refCount(0)
 	, m_scale(1.f)
@@ -18,7 +16,7 @@ const glm::mat4& Entity::getMatrix() const
 
 glm::vec3 Entity::getPosition() const
 {
-	return m_transform[4];
+	return glm::vec3(m_transform[4]);
 }
 
 glm::vec3 Entity::getScale() const
@@ -68,5 +66,3 @@ BoundingVolume& Entity::getBoundingVolume()
 	return m_boundingVolume;
 }
 
-
-} // namespace gf

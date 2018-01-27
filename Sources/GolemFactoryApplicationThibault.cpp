@@ -21,6 +21,7 @@
 #include <glm/gtc/quaternion.hpp>
 
 #include "Resources/Loader/SkeletonSaver.h"
+#include "EntityComponent/Entity.hpp"
 
 #define GRID_SIZE 100
 #define GRID_ELEMENT_SIZE 5.f
@@ -60,6 +61,46 @@ int main()
 	Renderer::getInstance()->initGLEW(0);
 	initManagers();
 
+
+
+
+	gf::Entity* entity = new gf::Entity();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	//	Test scene
 		Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getShader("wired"));
 		initializeForestScene(false);
@@ -84,20 +125,6 @@ int main()
 		testList.back()->setSize(glm::vec3(0.01f * (rand()%100) + 0.2f));
 		SceneManager::getInstance()->addObject(testList.back());
 	}
-	/*std::vector<InstanceVirtual*> list;
-	list.reserve(100);
-	long average = 0;
-	const long samples = 2000000;
-	for (long i = 0; i < samples; ++i)
-	{
-		const glm::vec3 center = glm::vec3((rand() % (GRID_SIZE * 5)) - 2.5f*GRID_SIZE, (rand() % (GRID_SIZE * 5)) - 2.5f*GRID_SIZE, 2);
-		list.clear();
-		SceneManager::getInstance()->queryInstanceBox(list, center, glm::vec3(1.5, 1.5, 2));
-		average += list.size();
-		if (i % (samples/100) == 0) std::cout << '.';
-	}
-	std::cout << std::endl << "average instance from broad phase : " << (double)average / samples << std::endl;
-	exit(0);*/
 
 
 

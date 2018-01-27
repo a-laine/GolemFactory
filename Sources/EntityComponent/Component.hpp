@@ -15,9 +15,6 @@
     private:
 
 
-namespace gf {
-
-
 typedef intptr_t ClassID;
 
 
@@ -34,24 +31,21 @@ typedef intptr_t ClassID;
  */
 class Component
 {
-public:
-	static ClassID getStaticClassID()
-	{
-		return 0;
-	}
+	public:
+		static ClassID getStaticClassID()
+		{
+			return 0;
+		}
 
-	virtual ClassID getClassID()
-	{
-		return getStaticClassID();
-	}
+		virtual ClassID getClassID()
+		{
+			return getStaticClassID();
+		}
 
-protected:
-	Component() = default;
-	Component(const Component& other) = delete;
-	Component(Component&& other) = delete;
-	virtual ~Component() = default;
-	Component& operator=(const Component& other) = delete;
+	protected:
+		Component() = default;
+		Component(const Component& other) = delete;
+		Component(Component&& other) = delete;
+		virtual ~Component() = default;
+		Component& operator=(const Component& other) = delete;
 };
-
-
-} // namespace gf
