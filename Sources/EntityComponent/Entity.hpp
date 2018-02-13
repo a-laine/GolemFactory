@@ -3,7 +3,7 @@
 #include <atomic>
 #include "Component.hpp"
 #include "EntityBase.hpp"
-#include "Utiles/BoundingVolume.hpp"
+#include "Utiles/BoundingVolume.h"
 
 
 
@@ -35,7 +35,7 @@ class Entity : public EntityBase
 		BoundingVolume m_boundingVolume;
 };
 
-
+/*
 class EntityHandler
 {
 	public:
@@ -56,3 +56,4 @@ class EntityHandler
 	private:
 		Entity* m_pointer;
 };
+*/

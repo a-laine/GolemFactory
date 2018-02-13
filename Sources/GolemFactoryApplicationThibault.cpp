@@ -64,7 +64,7 @@ int main()
 
 
 
-	gf::Entity* entity = new gf::Entity();
+	Entity* entity = new Entity();
 
 
 

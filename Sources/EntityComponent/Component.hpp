@@ -1,12 +1,12 @@
 #pragma once
 
+typedef intptr_t ClassID;
 
-
-#define GF_DECLARE_COMPONENT_CLASS_GETSTATICCLASSID() static gf::ClassID getStaticClassID() { \
+#define GF_DECLARE_COMPONENT_CLASS_GETSTATICCLASSID() static ClassID getStaticClassID() { \
     static char GF_DECLARE_COMPONENT_CLASS_GETCLASSID_var; \
-    return reinterpret_cast<gf::ClassID>(&GF_DECLARE_COMPONENT_CLASS_GETCLASSID_var); }
+    return reinterpret_cast<ClassID>(&GF_DECLARE_COMPONENT_CLASS_GETCLASSID_var); }
 
-#define GF_DECLARE_COMPONENT_CLASS_GETCLASSID() virtual gf::ClassID getClassID() override { \
+#define GF_DECLARE_COMPONENT_CLASS_GETCLASSID() virtual ClassID getClassID() override { \
     return getStaticClassID(); }
 
 #define GF_DECLARE_COMPONENT_CLASS() public: \
@@ -15,32 +15,20 @@
     private:
 
 
-typedef intptr_t ClassID;
-
-
 /* Exemple :
- * 
- * class MyComponent : public gf::Component
+ * class MyComponent : public Component
  * {
- * GF_DECLARE_COMPONENT_CLASS()  // REQUIRED
- * public:
- *     MyComponent() {}
- *     virtual ~MyComponent() override {}  // REQUIRED
+ *    GF_DECLARE_COMPONENT_CLASS()  // REQUIRED
+ *    public:
+ *       MyComponent() {}
+ *       virtual ~MyComponent() override {}  // REQUIRED
  * }
- * 
  */
 class Component
 {
 	public:
-		static ClassID getStaticClassID()
-		{
-			return 0;
-		}
-
-		virtual ClassID getClassID()
-		{
-			return getStaticClassID();
-		}
+		static ClassID getStaticClassID() { return 0; }
+		virtual ClassID getClassID() { return getStaticClassID(); }
 
 	protected:
 		Component() = default;

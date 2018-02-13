@@ -1,11 +1,5 @@
 #pragma once
 
-/*!
- *	\file ResourceVirtual.h
- *	\brief Declaration of the ResourceVirtual class.
- *	\author Thibault LAINE
- */
-
 #include <string>
 #include <iostream>
 #include <atomic>
@@ -27,10 +21,6 @@ class ResourceVirtual
 
     public:
         //  Miscellaneous
-		/*!
-		 *	\enum ResourceType
-		 *	\brief The type of the resources
-		 */
         enum ResourceType
         {
             NONE = 0,       //!< Virtual
@@ -42,11 +32,6 @@ class ResourceVirtual
             FONT = 6,       //!< Font
 			SKELETON = 7	//!< Skeleton
         };
-
-		/*!
-		*	\enum VerboseLevel
-		*	\brief The verbose level for logs
-		*/
 		enum VerboseLevel
 		{
 			ERRORS = 1,		//!< Just print errors in log
@@ -56,31 +41,10 @@ class ResourceVirtual
 		//
 
         //  Default
-		/*!
-		 *  \brief Constructor
-		 *  \param resourceName : the resource name
-		 *	\param resourceType : the resource type
-		 */
         ResourceVirtual(const std::string& resourceName = "unknown", ResourceType resourceType = NONE);
-
-		/*!
-		 *  \brief Constructor
-		 *  \param resourceType : the resource type
-		 */
 		ResourceVirtual(ResourceType resourceType = NONE);
+	    virtual ~ResourceVirtual();
 
-		/*!
-		 *  \brief Destructor
-		 */
-        virtual ~ResourceVirtual();
-
-		/*!
-		*	\brief Function to check if the resource was successfully loaded.
-		*
-		*	This is a function that need to be overloaded in herited class for proper use.
-		*
-		*	\return always true (actualy it's a virtual class !)
-		*/
         virtual bool isValid() const;
         //
 

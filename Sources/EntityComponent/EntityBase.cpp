@@ -1,8 +1,5 @@
 #include "EntityBase.hpp"
 
-
-namespace gf {
-
 EntityBase::EntityBase()
 {
 }
@@ -76,7 +73,7 @@ void EntityBase::addComponent(Component* component, ClassID type)
 
 void EntityBase::removeComponent(Component* component)
 {
-	for (int i = 0; i < m_components.size(); i++)
+	for (unsigned int i = 0; i < m_components.size(); i++)
 	{
 		if (m_components[i].comp == component)
 		{
@@ -85,5 +82,3 @@ void EntityBase::removeComponent(Component* component)
 	}
 }
 
-
-} // namespace gf
