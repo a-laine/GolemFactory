@@ -39,7 +39,6 @@ double averageCompleteTime = 16.;
 //
 
 
-
 // prototypes
 GLFWwindow* initGLFW();
 void initializeForestScene(bool emptyPlace = false);
@@ -61,54 +60,18 @@ int main()
 	Renderer::getInstance()->initGLEW(0);
 	initManagers();
 
-
-
-	ComponentResource<Mesh> crMesh(ResourceManager::getInstance()->getMesh("peasant"));
-	ComponentResource<Skeleton> crSkeleton(ResourceManager::getInstance()->getSkeleton("human"));
-	ComponentResource<Animation> crAnimation(ResourceManager::getInstance()->getAnimation("simple_peasant"));
-	ComponentResource<Shader> crShader(ResourceManager::getInstance()->getShader("skinning"));
+	//	ECS test
 	Entity* entity = new Entity();
-	entity->addComponent(&crMesh);
-	entity->addComponent(&crSkeleton);
-	entity->addComponent(&crAnimation);
-	entity->addComponent(&crShader);
+		entity->addComponent(new ComponentResource<Mesh>(ResourceManager::getInstance()->getMesh("peasant")));
+		entity->addComponent(new ComponentResource<Skeleton>(ResourceManager::getInstance()->getSkeleton("human")));
+		entity->addComponent(new ComponentResource<Animation>(ResourceManager::getInstance()->getAnimation("simple_peasant")));
+		entity->addComponent(new ComponentResource<Shader>(ResourceManager::getInstance()->getShader("skinning")));
 
 	std::cout << "component count : " << entity->getNbComponents() << std::endl;
 	std::cout << "   mesh name : " << entity->getComponent<ComponentResource<Mesh> >()->getResource()->name << std::endl;
 	std::cout << "   skeleton name : " << entity->getComponent<ComponentResource<Skeleton> >()->getResource()->name << std::endl;
 	std::cout << "   animation name : " << entity->getComponent<ComponentResource<Animation> >()->getResource()->name << std::endl;
 	std::cout << "   shader name : " << entity->getComponent<ComponentResource<Shader> >()->getResource()->name << std::endl;
-
-	exit(0);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 	//	Test scene
 		Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getShader("wired"));
@@ -119,23 +82,7 @@ int main()
 			avatar->setSize(glm::vec3(scale));
 			avatar->setPosition(glm::vec3(20.f, 20.f, -scale * avatar->getMesh()->aabb_min.z));
 			SceneManager::getInstance()->addObject(avatar);
-			//camera.setMode(Camera::TRACKBALL);
 			camera.setRadius(4);
-
-		InstanceDrawable* cube = InstanceManager::getInstance()->getInstanceDrawable("default", "wired");
-			cube->setPosition(glm::vec3(60, 20, 1));
-			cube->setSize(glm::vec3(1.5, 1.5, 1));
-
-
-	std::vector<InstanceDrawable*> testList;
-	for (unsigned int i = 0; i < 30000; i++)
-	{
-		testList.push_back(InstanceManager::getInstance()->getInstanceDrawable("icosphere.obj", "default"));
-		testList.back()->setSize(glm::vec3(0.01f * (rand()%100) + 0.2f));
-		SceneManager::getInstance()->addObject(testList.back());
-	}
-
-
 
 	// init loop time tracking
 	double averageTime = 0;
@@ -151,64 +98,6 @@ int main()
 		// begin loop
 		double startTime = glfwGetTime();
 		glfwGetWindowSize(window, &width, &height);
-				
-		//	DEBUG
-		//const glm::vec3 center = glm::vec3(-95, -126, 2);
-		//const glm::vec3 center = glm::vec3((rand()%(GRID_SIZE*5)) - 2.5f*GRID_SIZE, (rand() % (GRID_SIZE * 5)) - 2.5f*GRID_SIZE, 2);
-		//cube->setPosition(center);
-
-		/*if(EventHandler::getInstance()->isActivated(SLOT1))
-			cube->setPosition(cube->getPosition() + glm::vec3(0.1, 0, 0));
-		else if(EventHandler::getInstance()->isActivated(SLOT2))
-			cube->setPosition(cube->getPosition() - glm::vec3(0.1, 0, 0));
-		if (EventHandler::getInstance()->isActivated(SLOT3))
-			cube->setPosition(cube->getPosition() + glm::vec3(0, 0.1, 0));
-		else if (EventHandler::getInstance()->isActivated(SLOT4))
-			cube->setPosition(cube->getPosition() - glm::vec3(0, 0.1, 0));
-
-		cube->setPosition(avatar->getPosition());
-		SceneManager::getInstance()->updateObject(cube);*/
-
-		dummy += 0.1f * elapseTime / 1000.;
-		if (dummy > 2 * glm::pi<double>()) dummy = 0;
-		for (unsigned int i = 0; i < testList.size(); i++)
-		{
-			double phase = i;
-			testList[i]->setPosition((45.f + (i%200))* glm::vec3(cos(dummy + phase), sin(dummy + phase), 0) + glm::vec3(0,0, testList[i]->getSize().z));
-			SceneManager::getInstance()->updateObject(testList[i]);
-		}
-
-		
-		//averageTime *= samples / (samples+1);
-		samples++;
-		std::vector<InstanceVirtual*> list;
-		double testStartTime = glfwGetTime();
-		for (unsigned int i = 0; i < testList.size(); i++)
-		{
-			list.clear();
-			SceneManager::getInstance()->queryInstanceBox(list, testList[i]->getPosition(), testList[i]->getSize());
-		}
-		averageTime += 1000. * (glfwGetTime() - testStartTime);
-		std::cout << averageTime / samples << std::endl;
-
-
-
-		//std::cout << "position : (" << cube->getPosition().x << ' ' << cube->getPosition().y << ' ' << cube->getPosition().z << ')' << std::endl;
-
-		glm::mat4 projection = glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f);
-		Renderer::getInstance()->drawInstanceDrawable(cube, &camera.getViewMatrix()[0][0], &projection[0][0]);
-
-		//SceneManager::getInstance()->queryInstanceBox(list, cube->getPosition(), cube->getSize());
-		//std::cout << "instances : " << list.size() << std::endl << std::endl;
-
-		if (!WidgetManager::getInstance()->getBoolean("BBrendering"))
-			Renderer::getInstance()->setRenderOption(Renderer::BOUNDING_BOX);
-		else Renderer::getInstance()->setRenderOption(Renderer::DEFAULT);
-		Renderer::getInstance()->drawInstanceDrawable(testList.back(), &camera.getViewMatrix()[0][0], &projection[0][0]);
-		for (unsigned int i = 0; i < list.size(); i++)
-		{
-			Renderer::getInstance()->drawInstanceDrawable(list[i], &camera.getViewMatrix()[0][0], &projection[0][0]);
-		}
 
 		// Render scene & picking
 		if (WidgetManager::getInstance()->getBoolean("BBrendering"))
@@ -216,7 +105,6 @@ int main()
 		else Renderer::getInstance()->setRenderOption(Renderer::DEFAULT);
 		Renderer::getInstance()->render(&camera);
 		picking(width, height);
-		//glm::mat4 projection = glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f);
 		Renderer::getInstance()->renderHUD(&camera2);
 
 		//  handle events

@@ -18,7 +18,7 @@ void EntityBase::removeComponent(Component* component)
 //
 
 //	Set/Get functions
-unsigned short EntityBase::getNbComponents() const { return m_components.size(); }
+unsigned short EntityBase::getNbComponents() const { return (unsigned short)m_components.size(); }
 ClassID EntityBase::getTypeID(unsigned short index) const { return (index < m_components.size()) ? m_components[index].type : Component::getStaticClassID(); }
 Component* EntityBase::getComponent(unsigned short index) { return (index < m_components.size()) ? m_components[index].comp : nullptr; }
 const Component* EntityBase::getComponent(unsigned short index) const { return (index < m_components.size()) ? m_components[index].comp : nullptr; }
@@ -40,7 +40,7 @@ const Component* EntityBase::getComponent(ClassID type) const
 	}
 	return nullptr;
 }
-void EntityBase::getAllComponents(ClassID type, std::vector<Component*> components)
+void EntityBase::getAllComponents(ClassID type, std::vector<Component*>& components)
 {
 	for (auto& elem : m_components)
 	{
@@ -48,7 +48,7 @@ void EntityBase::getAllComponents(ClassID type, std::vector<Component*> componen
 			components.push_back(elem.comp);
 	}
 }
-void EntityBase::getAllComponents(ClassID type, std::vector<const Component*> components) const
+void EntityBase::getAllComponents(ClassID type, std::vector<const Component*>& components) const
 {
 	for (const auto& elem : m_components)
 	{
