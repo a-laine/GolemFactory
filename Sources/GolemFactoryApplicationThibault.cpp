@@ -6,22 +6,22 @@
 #include <list>
 #include <time.h>
 #include <sys/types.h>
+
 #include <GL/glew.h>
-
-#include "Utiles/System.h"
-#include "Utiles/ToolBox.h"
-#include "Events/EventHandler.h"
-#include "Renderer/Renderer.h"
-#include "Generators/HouseGenerator.h"
-
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtc/quaternion.hpp>
 
+#include "Utiles/System.h"
+#include "Utiles/ToolBox.h"
+#include "Events/EventHandler.h"
+#include "Renderer/Renderer.h"
+#include "Generators/HouseGenerator.h"
 #include "Resources/Loader/SkeletonSaver.h"
 #include "EntityComponent/Entity.hpp"
+#include "Resources/ComponentResource.h"
 
 #define GRID_SIZE 100
 #define GRID_ELEMENT_SIZE 5.f
@@ -63,14 +63,23 @@ int main()
 
 
 
-
+	ComponentResource<Mesh> crMesh(ResourceManager::getInstance()->getMesh("peasant"));
+	ComponentResource<Skeleton> crSkeleton(ResourceManager::getInstance()->getSkeleton("human"));
+	ComponentResource<Animation> crAnimation(ResourceManager::getInstance()->getAnimation("simple_peasant"));
+	ComponentResource<Shader> crShader(ResourceManager::getInstance()->getShader("skinning"));
 	Entity* entity = new Entity();
+	entity->addComponent(&crMesh);
+	entity->addComponent(&crSkeleton);
+	entity->addComponent(&crAnimation);
+	entity->addComponent(&crShader);
 
+	std::cout << "component count : " << entity->getNbComponents() << std::endl;
+	std::cout << "   mesh name : " << entity->getComponent<ComponentResource<Mesh> >()->getResource()->name << std::endl;
+	std::cout << "   skeleton name : " << entity->getComponent<ComponentResource<Skeleton> >()->getResource()->name << std::endl;
+	std::cout << "   animation name : " << entity->getComponent<ComponentResource<Animation> >()->getResource()->name << std::endl;
+	std::cout << "   shader name : " << entity->getComponent<ComponentResource<Shader> >()->getResource()->name << std::endl;
 
-
-
-
-
+	exit(0);
 
 
 

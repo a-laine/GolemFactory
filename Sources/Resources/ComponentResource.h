@@ -9,10 +9,7 @@ class ComponentResource : public Component
 	GF_DECLARE_COMPONENT_CLASS()
 	public:
 		//  Default
-		ComponentResource(T* res)
-		{
-
-		};
+		ComponentResource(T* res) : resource(res){};
 		virtual ~ComponentResource() override
 		{
 			ResourceManager::getInstance()->release(resource);
@@ -21,6 +18,11 @@ class ComponentResource : public Component
 
 		//	Set / Get function
 		T* getResource() { return resource; };
+		ResourceVirtual::ResourceType getResourceType()
+		{
+			if (res) return res->type;
+			else return ResourceVirtual::NONE;
+		};
 		//
 
 	protected:

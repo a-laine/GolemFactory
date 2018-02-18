@@ -1,9 +1,15 @@
 #pragma once
 
 #include <atomic>
+
+#include <glm/glm.hpp>
+#include <glm/gtx/quaternion.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 #include "Component.hpp"
 #include "EntityBase.hpp"
-#include "Utiles/BoundingVolume.h"
+
+//#include "Utiles/BoundingVolume.h"
 
 
 
@@ -12,28 +18,38 @@ class Entity : public EntityBase
 	friend class EntityHandler;
 
 	public:
+		//  Default
 		Entity();
+		//
+
+		//	Set/Get functions
+		void setPosition(const glm::vec3& position);
+		void setScale(const glm::vec3& scale);
+		void setOrientation(const glm::quat& orientation);
+		void setTransformation(const glm::vec3& position, const glm::vec3& scale, const glm::fquat& orientation);
 
 		const glm::mat4& getMatrix() const;
 		glm::vec3 getPosition() const;
 		glm::vec3 getScale() const;
-		glm::quat getOrientation() const;
-		void setPosition(const glm::vec3& position);
-		void setScale(const glm::vec3& scale);
-		void setOrientation(const glm::quat& orientation);
-		void setTransformation(const glm::vec3& position, const glm::vec3& scale, const glm::quat& orientation);
+		glm::fquat getOrientation() const;
+		//
 
-		const BoundingVolume& getBoundingVolume() const;
-		BoundingVolume& getBoundingVolume();
+		//const BoundingVolume& getBoundingVolume() const;
+		//BoundingVolume& getBoundingVolume();
 
 	private:
+		//	Attributes
 		// uint32_t flags;
 		std::atomic<uint32_t> m_refCount;
 		glm::vec3 m_scale;
-		glm::quat m_rotation;
+		glm::fquat m_rotation;
 		glm::mat4 m_transform;
-		BoundingVolume m_boundingVolume;
+		//BoundingVolume m_boundingVolume;
+		//
 };
+
+
+
 
 /*
 class EntityHandler
