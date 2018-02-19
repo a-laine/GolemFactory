@@ -1,13 +1,15 @@
 #pragma once
 
+#include <utility>
+
 #include "Shape.h"
 
 
 namespace Intersection
 {
-	//	Public field
 	bool intersect(const Shape& a, const Shape& b);
 
+	//	Specialized functions
 		//	point vs all other
 		inline bool intersect_PointvsPoint(const glm::vec3& point1, const glm::vec3& point2);
 		inline bool intersect_PointvsSegment(const glm::vec3& point, const glm::vec3& segment1, const glm::vec3& segment2);
@@ -49,19 +51,5 @@ namespace Intersection
 
 		//	Capsule
 		inline bool intersect_CapsulevsCapsule(const glm::vec3& capsule1a, const glm::vec3& capsule1b, const float& capsule1Radius, const glm::vec3& capsule2a, const glm::vec3& capsule2b, const float& capsule2Radius);
-	//
-
-
-	//	Private field
-	namespace
-	{
-		inline bool intersect_PointvsShape(const Shape& point, const Shape& b);
-		inline bool intersect_SegmentvsShape(const Shape& segment, const Shape& b);
-		inline bool intersect_TrianglevsShape(const Shape& triangle, const Shape& b);
-		inline bool intersect_OrientedBoxvsShape(const Shape& obox, const Shape& b);
-		inline bool intersect_AxisAlignedBoxvsShape(const Shape& aabox, const Shape& b);
-		inline bool intersect_SpherevsShape(const Shape& sphere, const Shape& b);
-		inline bool intersect_CapsulevsShape(const Shape& capsule, const Shape& b);
-	}
 	//
 };
