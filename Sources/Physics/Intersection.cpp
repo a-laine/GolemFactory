@@ -228,11 +228,22 @@ inline bool Intersection::intersect_PointvsTriangle(const glm::vec3& point, cons
 }
 inline bool Intersection::intersect_PointvsOrientedBox(const glm::vec3& point, const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax)
 {
+	glm::vec3 bmin = glm::vec3(boxTranform*glm::vec4(boxMin, 1.f));
+	glm::vec3 bdiag = glm::vec3(boxTranform*glm::vec4(boxMax, 1.f)) - bmin;
+	glm::vec3 bx = glm::normalize(glm::vec3(boxTranform*glm::vec4(1.f, 0.f, 0.f, 0.f)));
+	glm::vec3 by = glm::normalize(glm::vec3(boxTranform*glm::vec4(0.f, 1.f, 0.f, 0.f)));
+	glm::vec3 bz = glm::normalize(glm::vec3(boxTranform*glm::vec4(0.f, 0.f, 1.f, 0.f)));
 
+	glm::vec3 p = point - bmin;
+	if (glm::dot(p, bx) < 0.f || glm::dot(p, by) < 0.f || glm::dot(p, bz) < 0.f) return false;
+	else if (glm::dot(p, bx) > glm::dot(bdiag, bx) || glm::dot(p, by) > glm::dot(bdiag, by) || glm::dot(p, bz) > glm::dot(bdiag, bz)) return false;
+	else return true;
 }
 inline bool Intersection::intersect_PointvsAxisAlignedBox(const glm::vec3& point, const glm::vec3& boxMin, const glm::vec3& boxMax)
 {
-
+	if(point.x < boxMin.x || point.y < boxMin.y || point.z < boxMin.z) return false;
+	else if (point.x > boxMax.x || point.y > boxMax.y || point.z > boxMax.z) return false;
+	else return true;
 }
 inline bool Intersection::intersect_PointvsSphere(const glm::vec3& point, const glm::vec3& sphereCenter, const float& sphereRadius)
 {
@@ -254,3 +265,160 @@ inline bool Intersection::intersect_PointvsCapsule(const glm::vec3& point, const
 	}
 }
 //
+
+//	Specialized functions : segment
+inline bool Intersection::intersect_SegmentvsSegment(const glm::vec3& segment1a, const glm::vec3& segment1b, const glm::vec3& segment2a, const glm::vec3& segment2b)
+{
+	glm::vec3 s1 = segment1b - segment1a;
+	glm::vec3 s2 = segment2b - segment2a;
+	glm::vec3 u1 = glm::normalize(s1);
+	glm::vec3 u2 = glm::normalize(s2);
+	glm::vec3 n = glm::cross(u1, u2);
+
+	if (glm::dot(n, n) == 0.f)	// parallel or one segment is a point
+	{
+		if (u1 == glm::vec3(0.f))
+			return intersect_PointvsSegment(segment1b, segment2a, segment2b);
+		else if (u2 == glm::vec3(0.f))
+			return intersect_PointvsSegment(segment2b, segment2a, segment2b);
+		else // segment are parallel
+		{
+			glm::vec3 u3 = segment1a - segment2a;
+			glm::vec3 d = u3 - u1 * std::abs(glm::dot(u3, u1));
+			return glm::dot(d, d) == 0.f;
+		}
+	}
+	else
+	{
+		float t1 = std::min(glm::length(s1), std::max(0.f, glm::determinant(glm::mat3(segment1a - segment2a, u2, n)) / glm::dot(n, n)));
+		float t2 = std::min(glm::length(s2), std::max(0.f, glm::determinant(glm::mat3(segment1a - segment2a, u1, n)) / glm::dot(n, n)));
+		glm::vec3 d = segment2a + u2*t2 - (segment1a + u1*t1);
+		return glm::dot(d, d) == 0.f;
+	}
+}
+inline bool Intersection::intersect_SegmentvsTriangle(const glm::vec3& segment1, const glm::vec3& segment2, const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3)
+{
+	return false;
+}
+inline bool Intersection::intersect_SegmentvsOrientedBox(const glm::vec3& segment1a, const glm::vec3& segment1b, const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax)
+{
+	return false;
+}
+inline bool Intersection::intersect_SegmentvsAxisAlignedBox(const glm::vec3& segment1a, const glm::vec3& segment1b, const glm::vec3& boxMin, const glm::vec3& boxMax)
+{
+	return false;
+}
+inline bool Intersection::intersect_SegmentvsSphere(const glm::vec3& segment1a, const glm::vec3& segment1b, const glm::vec3& sphereCenter, const float& sphereRadius)
+{
+	return false;
+}
+inline bool Intersection::intersect_SegmentvsCapsule(const glm::vec3& segment1a, const glm::vec3& segment1b, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
+{
+	return false;
+}
+//
+
+//	Specialized functions : triangle
+inline bool Intersection::intersect_TrianglevsTriangle(const glm::vec3& triangle1a, const glm::vec3&triangle1b, const glm::vec3& triangle1c, const glm::vec3& triangle2a, const glm::vec3& triangle2b, const glm::vec3& triangle2c)
+{
+	return false;
+}
+inline bool Intersection::intersect_TrianglevsOrientedBox(const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax)
+{
+	return false;
+}
+inline bool Intersection::intersect_TrianglevsAxisAlignedBox(const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, const glm::vec3& boxMin, const glm::vec3& boxMax)
+{
+	return false;
+}
+inline bool Intersection::intersect_TrianglevsSphere(const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, const glm::vec3& sphereCenter, const float& sphereRadius)
+{
+	return false;
+}
+inline bool Intersection::intersect_TrianglevsCapsule(const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
+{
+	return false;
+}
+//
+
+//	Specialized functions : oriented box
+inline bool Intersection::intersect_OrientedBoxvsOrientedBox(const glm::mat4& box1Tranform, const glm::vec3& box1Min, const glm::vec3& box1Max, const glm::mat4& box2Tranform, const glm::vec3& box2Min, const glm::vec3& box2Max)
+{
+	return false;
+}
+inline bool Intersection::intersect_OrientedBoxvsAxisAlignedBox(const glm::mat4& box1Tranform, const glm::vec3& box1Min, const glm::vec3& box1Max, const glm::vec3& box2Min, const glm::vec3& box2Max)
+{
+	return false;
+}
+inline bool Intersection::intersect_OrientedBoxvsSphere(const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax, const glm::vec3& sphereCenter, const float& sphereRadius)
+{
+	return false;
+}
+inline bool Intersection::intersect_OrientedBoxvsCapsule(const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
+{
+	return false;
+}
+//
+
+//	Specialized functions : axis aligned box
+inline bool Intersection::intersect_AxisAlignedBoxvsAxisAlignedBox(const glm::vec3& box1Min, const glm::vec3& box1Max, const glm::vec3& box2Min, const glm::vec3& box2Max)
+{
+	return box1Min.x <= box2Max.x && box1Min.y <= box2Max.y && box1Min.z <= box2Max.z && box2Min.x <= box1Max.x && box2Min.y <= box1Max.y && box2Min.z <= box1Max.z;
+}
+inline bool Intersection::intersect_AxisAlignedBoxvsSphere(const glm::vec3& boxMin, const glm::vec3& boxMax, const glm::vec3& sphereCenter, const float& sphereRadius)
+{
+	return false;
+}
+inline bool Intersection::intersect_AxisAlignedBoxvsCapsule(const glm::vec3& boxMin, const glm::vec3& boxMax, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
+{
+	return false;
+}
+//
+
+//	Specialized functions : sphere
+inline bool Intersection::intersect_SpherevsSphere(const glm::vec3& sphere1Center, const float& sphere1Radius, const glm::vec3& sphere2Center, const float& sphere2Radius)
+{
+	return glm::length(sphere2Center - sphere1Center) <= sphere1Radius + sphere2Radius;
+}
+inline bool Intersection::intersect_SpherevsCapsule(const glm::vec3& sphereCenter, const float& sphereRadius, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
+{
+	glm::vec3 u1 = capsule2 - capsule1;
+	glm::vec3 u2 = sphereCenter - capsule1;
+	glm::vec3 I = capsule1 + u1 * std::min(1.f, std::max(0.f, glm::dot(u2, u1)));
+	return glm::length(sphereCenter - I) <= sphereRadius + capsuleRadius;
+}
+//
+
+//	Specialized functions : capsule
+inline bool Intersection::intersect_CapsulevsCapsule(const glm::vec3& capsule1a, const glm::vec3& capsule1b, const float& capsule1Radius, const glm::vec3& capsule2a, const glm::vec3& capsule2b, const float& capsule2Radius)
+{
+	//	see http://www.realtimerendering.com/intersections.html#I304 : ray/ray algorithm
+	glm::vec3 s1 = capsule1b - capsule1a;
+	glm::vec3 s2 = capsule2b - capsule2a;
+	glm::vec3 u1 = glm::normalize(s1);
+	glm::vec3 u2 = glm::normalize(s2);
+	glm::vec3 n = glm::cross(u1, u2);
+
+	if (glm::dot(n, n) == 0.f)	// parallel or one segment is a point
+	{
+		if (u1 == glm::vec3(0.f))
+			return intersect_SpherevsCapsule(capsule1b, capsule1Radius, capsule2a, capsule2b, capsule2Radius);
+		else if (u2 == glm::vec3(0.f))
+			return intersect_SpherevsCapsule(capsule2b, capsule2Radius, capsule1a, capsule1b, capsule1Radius);
+		else // segment are parallel
+		{
+			glm::vec3 u3 = capsule1a - capsule2a;
+			glm::vec3 d = u3 - u1 * std::abs(glm::dot(u3, u1));
+			return glm::length(d) <= capsule1Radius + capsule2Radius;
+		}
+	}
+	else
+	{
+		float t1 = std::min(glm::length(s1), std::max(0.f, glm::determinant(glm::mat3(capsule1a - capsule2a, u2, n)) / glm::dot(n, n)));
+		float t2 = std::min(glm::length(s2), std::max(0.f, glm::determinant(glm::mat3(capsule1a - capsule2a, u1, n)) / glm::dot(n, n)));
+		glm::vec3 d = capsule2a + u2*t2 - (capsule1a + u1*t1);
+		return glm::length(d) <= capsule1Radius + capsule2Radius;
+	}
+}
+//
+
