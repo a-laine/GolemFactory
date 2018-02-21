@@ -1,5 +1,8 @@
 #include "Intersection.h"
 
+// https://github.com/gszauer/GamePhysicsCookbook/blob/master/Code/Geometry3D.cpp
+// http://www.realtimerendering.com/intersections.html 
+
 //	Private field
 namespace
 {
