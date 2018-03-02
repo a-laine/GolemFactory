@@ -53,7 +53,7 @@ void EventHandlerEnum::loadKeyMapping(const std::string& path,std::string filena
 
 			//	remove unrevelant char from line begining
 			auto it = line.begin();
-			while (std::isspace(*it))
+			while (it != line.end() && std::isspace(*it))
 				it = line.erase(it);
 
 			//	extract key and value for map insertion

@@ -264,7 +264,8 @@ bool Shader::loadShader(ShaderType shaderType, std::string fileName, GLuint& sha
     }
 
     // Compile shader source
-    glShaderSource(shader,1,(const GLchar**)(&source),NULL);
+	const char* sourceData = source.data();
+    glShaderSource(shader,1,(const GLchar**)(&sourceData),NULL);
     glCompileShader(shader);
 
     GLint compile_status = GL_TRUE;
