@@ -2,6 +2,7 @@
 
 
 #ifndef NDEBUG
+#include <cassert>
 #define GF_ASSERT_ON
 #endif // !NDEBUG
 
@@ -14,5 +15,5 @@
 #endif // GF_ASSERT_ON
 
 #define GF_ASSERT_VARIADIC_IMPL(condition, message, ...) GF_ASSERT_IMPL(condition, __FILE__, __LINE__, message)
-#define GF_ASSERT_IMPL(condition, file, line, message) ((condition) ? ((void) 0) : (*((int*) 0) = 0))
+#define GF_ASSERT_IMPL(condition, file, line, message)   assert(condition)
 
