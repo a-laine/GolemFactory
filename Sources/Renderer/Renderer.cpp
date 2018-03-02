@@ -1,5 +1,7 @@
 #include "Renderer.h"
 
+#include <Scene\SceneQueryTests.h>
+
 #define BATCH_SIZE 30
 
 
@@ -169,21 +171,19 @@ void Renderer::render(Camera* renderCam)
 	}
 
 	//	get instance list
-	SceneManager::getInstance()->setCameraAttributes(camera->getPosition(), camera->getForward(), camera->getVertical(), camera->getLeft(),
+	std::vector<InstanceVirtual*> instanceList;
+	DefaultSceneManagerFrustrumTest sceneTest(camera->getPosition(), camera->getForward(), camera->getVertical(), camera->getLeft(),
 		camera->getFrustrumAngleVertical() / 1.6f, camera->getFrustrumAngleVertical() / 1.6f);
-	
-	std::vector<std::pair<int, InstanceVirtual*> > instanceList;
-	SceneManager::getInstance()->getInstanceList(instanceList);
-	std::sort(instanceList.begin(), instanceList.end());
+	SceneManager::getInstance()->getObjects(instanceList, sceneTest);
 
 	//	draw instance list
 	std::map<Shader*, std::vector<InstanceVirtual*> > batches;
-	for (auto it = instanceList.begin(); it != instanceList.end(); ++it)
+	for (InstanceVirtual* object : instanceList)
 	{
-		batches[it->second->getShader()].push_back(it->second);
-		if (batches[it->second->getShader()].size() > BATCH_SIZE)
+		batches[object->getShader()].push_back(object);
+		if (batches[object->getShader()].size() > BATCH_SIZE)
 		{
-			std::vector<InstanceVirtual*>& batch = batches[it->second->getShader()];
+			std::vector<InstanceVirtual*>& batch = batches[object->getShader()];
 			for (unsigned int i = 0; i < BATCH_SIZE + 1; i++)
 			{
 				switch (batch[i]->getType())

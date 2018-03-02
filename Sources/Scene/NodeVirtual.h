@@ -1,13 +1,5 @@
 #pragma once
 
-/*!
- *	\file NodeVirtual.h
- *	\brief Declaration of the Event class.
- *	\author Thibault LAINE
- */
-
-#include <iostream>
-#include <algorithm>
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 
@@ -21,137 +13,87 @@
  */
 class NodeVirtual
 {
-	friend class SceneManager;
+	public:
+		class NodeRange
+		{
+			friend class NodeVirtual;
+
+			public:
+				NodeRange(std::vector<NodeVirtual>& nodes) : begin(nodes.data()), end(nodes.data() + nodes.size()) {}
+				NodeRange(NodeVirtual* first, NodeVirtual* last) : begin(first), end(last) {}
+				void next() { if(begin != end) ++begin; }
+				NodeVirtual* get() { return begin; }
+				bool empty() const { return begin == end; }
+
+			private:
+				NodeVirtual* begin;
+				NodeVirtual* end;
+		};
+
+		NodeVirtual();
+		NodeVirtual(const NodeVirtual& other) = delete;
+		NodeVirtual(NodeVirtual&& other) = default;
+		virtual ~NodeVirtual();
+
+		void init(const glm::vec3 bbMin, const glm::vec3 bbMax, const glm::ivec3& nodeDivision, unsigned int depth);
+		void clearChildren();
+		void split(unsigned int newDepth);
+		void merge(unsigned int newDepth);
+
+		bool isLeaf() const;
+		glm::vec3 getCenter() const;
+		glm::vec3 getSize() const;
+		glm::vec3 getBBMax() const;
+		glm::vec3 getBBMin() const;
+		int getChildrenCount() const;
+		bool isInside(const glm::vec3& point) const;
+		bool isTooSmall(const glm::vec3& size) const;
+		bool isTooBig(const glm::vec3& size) const;
+		
+		void addObject(InstanceVirtual* object);
+		bool removeObject(InstanceVirtual* object);
+		void addNode(NodeVirtual* node);
+		bool removeNode(NodeVirtual* node);
+
+		NodeVirtual* getChildAt(const glm::vec3& pos);
+		void getChildren(std::vector<NodeVirtual*>& result);
+		void getChildren(std::vector<NodeRange>& result);
+		void getChildrenInBox(std::vector<NodeVirtual*>& result, const glm::vec3& boxMin, const glm::vec3& boxMax);
+		void getChildrenInBox(std::vector<NodeRange>& result, const glm::vec3& boxMin, const glm::vec3& boxMax);
+
+		template<typename ObjectCollector>
+		void getObjectList(ObjectCollector& collector);
+		template<>
+		void getObjectList<std::vector<InstanceVirtual*>>(std::vector<InstanceVirtual*>& collector);
 
 	public:
-		//  Miscellaneous
-		/*! \enum NodeDivisionFlags
-		 *	\brief Used to code and decode node division on different axis.
-		 */
-		/*enum NodeDivisionFlags
-		{
-			X = 0xFF0000,	//!< X mask to decode bitfield
-			dX = 16,		//!< X shift to code/decode bitfield
-			Y = 0x00FF00,	//!< Y mask to decode bitfield
-			dY = 8,			//!< Y shift to code/decode bitfield
-			Z = 0x0000FF,	//!< Z mask to decode bitfield
-			dZ = 0			//!< Z shift to code/decode bitfield
-		};*/
-		//
-
-		//	Default
-		/*!
-		 *  \brief Constructor
-		 *  \param p : the node parent
-		 *  \param d : the node division byte
-		 */
-		NodeVirtual(NodeVirtual* p = nullptr, glm::ivec3 d = ione);
-
-		/*!
-		 *  \brief Destructor
-		 *  
-		 *  Release instance attached to, and merge
-		 */
-		virtual ~NodeVirtual();
-		//
-
-		//	Public functions
-		/*!
-		 *	\brief Get number of children
-		 *	\return number of children, zero if node is a leaf
-		 */
-		int getChildrenCount() const;
-
-		/*!
-		 *	\brief Check is node is last branch
-		 *	\return true if node children are leaves
-		 */
-		bool isLastBranch() const;
-
-		/*!
-		 *	\brief Attach instance to node
-		 *	\return true if instance successfully added
-		 *  
-		 *  Check if instance size compatible to node size and add instance to container if yes.
-		 *  If not check recursively with children.
-		 */
-		//virtual bool addObject(InstanceVirtual* obj);
-
-		/*!
-		 *	\brief Detach instance to node
-		 *	\return true if instance successfully removed
-		 *
-		 *  Check if instance present in personal container, and remove it if yes.
-		 *  If not check recursively with children.
-		 */
-		//virtual bool removeObject(InstanceVirtual* obj);
-
-		/*!
-		 *	\brief Divide (split) node depending on node division byte
-		 */
-		virtual void split(const int& targetDepth = 1, const int& depth = 1);
-
-		/*!
-		 *	\brief Merge node (delete children)
-		 */
-		virtual void merge(const int& targetDepth = 1, const int& depth = 1);
-
-		
-		virtual void add(NodeVirtual* n);
-		virtual bool remove(NodeVirtual* n);
-		//
-
-		//Set/Get functions
-		/*!
-		 *  \brief Change node position
-		 *  \param p : the new node position
-		 */
-		void setPosition(const glm::vec3& p);
-
-		/*!
-		 *  \brief Change node size
-		 *  \param s : the new node size
-		 */
-		void setSize(const glm::vec3& s);
-
-		/*!
-		 *  \brief Get node position
-		 *  \return the new node position.
-		 */
-		glm::vec3 getPosition() const;
-		
-		/*!
-		 *  \brief Get node size
-		 *  \return the new node size.
-		 */
-		glm::vec3 getSize() const;
-		//
-
-	protected:
-		//	Protected functions
-		uint8_t getLevel() const;
-		int getChildrenKey(glm::vec3 p) const;
-		glm::ivec3 getChildrenKeyVector(glm::vec3 p) const;
-		glm::ivec3 getDivisionVector() const;
-		//
-
-		//	Attributes
-		NodeVirtual* parent;						//!< Pointer to parent node (nullptr if root)
-		std::vector<NodeVirtual*> children;			//!< Subdivision children container (empty if leaf)
-		std::vector<NodeVirtual*> adoptedChildren;	//!< Children added to, for special tree
-		glm::vec3 position;							//!< Node position in scene coordinate
-		glm::vec3 size;								//!< Node size
-
-		std::vector<InstanceVirtual*> instanceList;	//!< Instance container (list of instance attached to node)
-		glm::ivec3 division;
-
-		InstanceDrawable* debuginstance;			//!< Debug
+		float allowanceSize;
 
 	private:
-		glm::vec3 allowanceSize;
-		static const glm::ivec3 izero;
-		static const glm::ivec3 ione;
-		//
+		glm::vec3 position;							//!< Node position in scene coordinate
+		glm::vec3 halfSize;								//!< Node size
+		glm::ivec3 division;
+
+		std::vector<NodeVirtual> children;			//!< Subdivision children container (empty if leaf)
+		std::vector<NodeVirtual*> adoptedChildren;	//!< Children added to, for special tree
+		std::vector<InstanceVirtual*> objectList;	//!< Instance container (list of instance attached to node)
+
+		InstanceDrawable* debuginstance;			//!< Debug
 };
 
+
+
+
+template<typename ObjectCollector>
+void NodeVirtual::getObjectList(ObjectCollector& collector)
+{
+	for(InstanceVirtual* object : m_objectList)
+		collector(this, object);
+}
+
+template<>
+void NodeVirtual::getObjectList<std::vector<InstanceVirtual*>>(std::vector<InstanceVirtual*>& collector)
+{
+	collector.insert(collector.end(), objectList.begin(), objectList.end());
+}
 

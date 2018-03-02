@@ -293,7 +293,7 @@ std::string checkResourcesDirectory()
 	if (ToolBox::isPathExist(directory)) return directory;
 	
 	//	return the default resource path for portable applications
-	std::cout << "FATAL WARRNING : Fail to found ressource repo" << std::endl;
+	std::cout << "FATAL WARRNING : Fail to find ressource repo" << std::endl;
 	return "Resources/";
 }
 
@@ -337,15 +337,15 @@ void initManagers()
 	WidgetManager::getInstance()->loadHud("default");
 
 	// init scene
-	SceneManager::getInstance()->setViewDistance(1000.f, 2);
-	SceneManager::getInstance()->setWorldSize(glm::vec3(GRID_SIZE*GRID_ELEMENT_SIZE, GRID_SIZE*GRID_ELEMENT_SIZE, 50));
-	SceneManager::getInstance()->setWorldPosition(glm::vec3(0, 0, SceneManager::getInstance()->getWorldSize().z / 2 - 5));
+	const glm::vec3 worldHalfSize = glm::vec3(GRID_SIZE*GRID_ELEMENT_SIZE, GRID_SIZE*GRID_ELEMENT_SIZE, 50) * 0.5f;
+	const glm::vec3 worldPos = glm::vec3(0, 0, worldHalfSize.z - 5);
+	SceneManager::getInstance()->init(worldPos - worldHalfSize, worldPos + worldHalfSize, glm::ivec3(4, 4, 1), 2);
 	SceneManager::getInstance()->reserveInstanceTrack(InstanceManager::getInstance()->getInstanceCapacity());
 }
 void picking(int width, int height)
 {
 	std::vector<std::pair<float, InstanceVirtual*> > rayList;
-	SceneManager::getInstance()->getInstanceOnRay(rayList, SceneManager::INSTANCE_MESH, 1000);
+	//SceneManager::getInstance()->getObjectsOnRay(rayList, camera.getPosition(), camera.getForward(), 1000);
 	std::sort(rayList.begin(), rayList.end());
 
 	if (!rayList.empty())

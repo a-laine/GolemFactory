@@ -1,14 +1,10 @@
 #pragma once
 
-#include <iostream>
 #include <vector>
 #include <unordered_map>
-#include <algorithm>
-#include <GL/glew.h>
 #include <glm/glm.hpp>
 
 #include "Utiles/Singleton.h"
-#include "Utiles/Mutex.h"
 #include "NodeVirtual.h"
 
 
@@ -17,77 +13,152 @@ class SceneManager : public Singleton<SceneManager>
 	friend class Singleton<SceneManager>;
 
 	public:
-		//	Miscellaneous
-		enum Grain
+		enum CollisionType
 		{
-			COARSE = 0,
-			INSTANCE_BB = 1,
-			INSTANCE_CAPSULE = 2,
-			INSTANCE_MESH = 3
+			NONE = 0, //!< No collision
+			INSIDE,   //!< Object fully inside
+			OVERLAP   //!< Shapes are overlapping
 		};
-		//
 
-		//  Scene modifier
-		bool addObject(InstanceVirtual* obj);
-		bool removeObject(InstanceVirtual* obj);
-		void updateObject(InstanceVirtual* obj);
-		//
 
-		//  Set/get functions
+		void init(const glm::vec3& bbMin, const glm::vec3& bbMax, const glm::ivec3& nodeDivision, unsigned int depth);
+
 		void reserveInstanceTrack(const unsigned int& count);
-		void setCameraAttributes(const glm::vec3& position, const glm::vec3& direction, const glm::vec3& vertical, const glm::vec3& left, const float& verticalAngle, const float& horizontalAngle);
-		void setViewDistance(float distance, int depth);
-		void setWorldSize(glm::vec3 size);
-		void setWorldPosition(glm::vec3 position);
+		unsigned int getObjectCount() const;
 
-		void getInstanceList(std::vector<std::pair<int, InstanceVirtual*> >& list, const Grain& grain = COARSE);
-		void getInstanceOnRay(std::vector<std::pair<float, InstanceVirtual*> >& list, const Grain& grain = COARSE, const float& maxDistance = std::numeric_limits<float>::max());
-		std::vector<float> getMaxViewDistanceStack();
-		unsigned int getNumberInstanceStored() const;
-		glm::vec3 getWorldSize() const;
-		glm::vec3 getWorldPosition() const;
-		//
+		bool addObject(InstanceVirtual* object);
+		bool removeObject(InstanceVirtual* object);
+		bool updateObject(InstanceVirtual* object);
 
-		//	scene query
-		void queryNodeBox(std::vector<NodeVirtual*>& nodeList, const glm::vec3& aabbMin, const glm::vec3& aabbMax);
-		void queryInstanceBox(std::vector<InstanceVirtual*>& instanceList, const glm::vec3& center, const glm::vec3& halfSize);
-		//
+		void getAllObjects(std::vector<InstanceVirtual*>& result);
+		void getObjectsOnRay(std::vector<InstanceVirtual*>& result, const glm::vec3& position, const glm::vec3& direction, float maxDistance);
+		void getObjectsInBox(std::vector<InstanceVirtual*>& result, const glm::vec3& bbMin, const glm::vec3& bbMax);
+
+		template<typename CollisionTest, typename EntityCollector>
+		void getObjects(EntityCollector& result, CollisionTest collisionTest) {
+			if(!world.empty())  getObjects(world[0], result, collisionTest);
+		}
+		template<typename CollisionTest, typename EntityCollector>
+		void getObjectsInBox(EntityCollector& result, CollisionTest collisionTest) {
+			if(!world.empty())  getObjectsInBox(world[0], result, collisionTest, testOnlyNodes);
+		}
 
 	private:
-		//	Miscellaneous
 		struct InstanceTrack
 		{
 			glm::vec3 position;
 			NodeVirtual* owner;
 		};
-		//
 
 
+		SceneManager();
+		SceneManager(const SceneManager& other) = delete;
+		SceneManager(SceneManager&& other) = default;
+		~SceneManager();
 
-		//  Default
-		SceneManager();		//!< Default constructor.
-		~SceneManager();	//!< Default destructor.
-		//
+		SceneManager& operator=(const SceneManager& other) = delete;
+		SceneManager& operator=(SceneManager&& other) = default;
 
-		//	Node tests
-		int isInFrustrum(const NodeVirtual* const node, const glm::vec3& camP, const glm::vec3& camD, const glm::vec3& camV, const glm::vec3& camL, const float& camVa, const float& camHa) const;
-		float isOnRay(const NodeVirtual* const node, const glm::vec3& origin, const glm::vec3& direction, const glm::vec3& directionV, const glm::vec3& directionL) const;
-		
-		int8_t isCollidingBox(const NodeVirtual* const node, const glm::vec3& center, const glm::vec3& halfSize) const;
 
-		void queryNodeBoxRecursive(std::vector<NodeVirtual*>& nodeList, const glm::vec3& center, const glm::vec3& halfSize, NodeVirtual* const node, const bool& inside);
-		//
+		template<typename CollisionTest, typename EntityCollector = EntityList>
+		void getObjects(NodeVirtual* node, EntityCollector& result, CollisionTest collisionTest);
+		template<typename CollisionTest, typename EntityCollector = EntityList>
+		void getObjectsInBox(NodeVirtual* node, EntityCollector& result, CollisionTest collisionTest);
+
 
 		//  Attributes
 		std::vector<NodeVirtual*> world;
-		std::unordered_map<uint32_t, InstanceTrack> instanceTracking;
-		std::vector<float> viewMaxDistance;
-
-		glm::vec3 camPosition;				//!< Camera position
-		glm::vec3 camDirection;				//!< Camera forward vector
-		glm::vec3 camVertical;				//!< Camera relative vertical vector
-		glm::vec3 camLeft;					//!< Camera left vector
-		float camVerticalAngle;				//!< Frustrum angle vertical
-		float camHorizontalAngle;			//!< Frustrum angle horizontal
-		//
+		std::unordered_map<InstanceVirtual*, InstanceTrack> instanceTracking;
 };
+
+
+
+
+
+
+
+template<typename CollisionTest, typename EntityCollector>
+void SceneManager::getObjects(NodeVirtual* node, EntityCollector& result, CollisionTest collisionTest)
+{
+	//	initialize and test root
+	CollisionType collision = (CollisionType) collisionTest(node);
+	if(collision == NONE)
+		return;
+	node->getObjectList(result);
+
+	//	init path and iterate on tree
+	std::vector<NodeVirtual::NodeRange> path;
+	if(!node->isLeaf())
+		node->getChildren(path);
+	while(!path.empty())
+	{
+		if(path.back().empty())
+		{
+			path.pop_back();
+			continue;
+		}
+
+		// process node
+		node = path.back().get();
+		collision = (CollisionType) collisionTest(node);
+		if(collision != NONE)
+			node->getObjectList(result);
+
+		//	iterate
+		path.back().next(); // node processed
+		if(!node->isLeaf() && collision != NONE)
+			node->getChildren(path);
+	}
+}
+
+
+template<typename CollisionTest, typename EntityCollector>
+void SceneManager::getObjectsInBox(NodeVirtual* node, EntityCollector& result, CollisionTest collisionTest)
+{
+	//	initialize and test root in box
+	std::vector<NodeVirtual*> fullyInsideNodes;
+	std::vector<NodeVirtual*> overlappingNodes;
+	CollisionType collision = collisionTest(node);
+	switch(collision)
+	{
+		case INSIDE:  fullyInsideNodes.push_back(node); break;
+		case OVERLAP: overlappingNodes.push_back(node); break;
+		default:      return;
+	}
+
+	//	init path and iterate on tree
+	std::vector<NodeVirtual::NodeRange> path;
+	if(!node->isLeaf())
+		collisionTest.getChildren(node, path);
+	while(!path.empty())
+	{
+		if(path.back().empty())
+		{
+			path.pop_back();
+			continue;
+		}
+
+		// process node
+		node = path.back().get();
+		collision = collisionTest(node);
+		switch(collision)
+		{
+			case INSIDE:  fullyInsideNodes.push_back(node); break;
+			case OVERLAP: overlappingNodes.push_back(node); break;
+			default:      break;
+		}
+
+		// iterate
+		path.back().next(); // node processed
+		if(!node->isLeaf() && collision == OVERLAP)
+			collisionTest.getChildren(node, path);
+	}
+
+	for(NodeVirtual* node : fullyInsideNodes)
+		getObjects(node, result, [](NodeVirtual* node) -> CollisionType { return OVERLAP; });
+
+	for(NodeVirtual* node : overlappingNodes)
+		node->getObjectList(result);
+}
+
+

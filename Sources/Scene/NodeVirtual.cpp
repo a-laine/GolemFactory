@@ -1,160 +1,224 @@
 #include "NodeVirtual.h"
 
-const glm::ivec3 NodeVirtual::izero = glm::ivec3(0);
-const glm::ivec3 NodeVirtual::ione = glm::ivec3(1);
+#include <glm/gtx/component_wise.hpp>
+#include <Utiles/Assert.hpp>
+
 
 //	Default
-NodeVirtual::NodeVirtual(NodeVirtual* p, glm::ivec3 d) : parent(p), position(izero), size(ione),  debuginstance(nullptr), allowanceSize(ione)
+NodeVirtual::NodeVirtual()
+	: position(0)
+	, halfSize(0)
+	, division(0)
+	, debuginstance(nullptr)
+	, allowanceSize(1)
 {
-	division = glm::max(d, 1);
 	debuginstance = InstanceManager::getInstance()->getInstanceDrawable("cube2.obj", "wired");
 }
+
 NodeVirtual::~NodeVirtual()
 {
 	//	free instance
-	for (unsigned int i = 0; i < instanceList.size(); i++)
-		InstanceManager::getInstance()->release(instanceList[i]);
-	instanceList.clear();
+	for (unsigned int i = 0; i < objectList.size(); i++)
+		InstanceManager::getInstance()->release(objectList[i]);
 	InstanceManager::getInstance()->release(debuginstance);
 
 	//	delete all children
-	merge();
 	for (unsigned int i = 0; i < adoptedChildren.size(); i++)
 		delete adoptedChildren[i];
 }
-//
 
 
-//	Public functions
-int NodeVirtual::getChildrenCount() const { return children.size() + adoptedChildren.size(); }
-bool NodeVirtual::isLastBranch() const
+void NodeVirtual::init(const glm::vec3 bbMin, const glm::vec3 bbMax, const glm::ivec3& nodeDivision, unsigned int depth)
 {
-	if (!children.empty() && children[0]->children.empty()) return true;
-	return false;
-}
+	GF_ASSERT(children.empty());
+	position = (bbMax + bbMin) * 0.5f;
+	halfSize = (bbMax - bbMin) * 0.5f;
+	allowanceSize = glm::compMin(halfSize) * 2;
 
-
-void NodeVirtual::split(const int& targetDepth, const int& depth)
-{
-	if (children.empty() && targetDepth >= depth)
+	if(depth > 0)
 	{
-		for (int i = 0; i < division.x; i++)
+		division = nodeDivision;
+		children.resize(nodeDivision.x * nodeDivision.y * nodeDivision.z);
+		glm::vec3 min;
+		glm::vec3 childSize = getSize() / glm::vec3(nodeDivision);
+		unsigned int index = 0;
+		for(int x = 0; x < nodeDivision.x; x++)
 		{
-			float xpos = position.x - size.x / 2 + size.x / division.x / 2 + i*size.x / division.x;
-			for (int j = 0; j < division.y; j++)
+			min.x = bbMin.x + x * childSize.x;
+			for(int y = 0; y < nodeDivision.y; y++)
 			{
-				float ypos = position.y - size.y / 2 + size.y / division.y / 2 + j*size.y / division.y;
-				for (int k = 0; k < division.z; k++)
+				min.y = bbMin.y + y * childSize.y;
+				for(int z = 0; z < nodeDivision.z; z++)
 				{
-					float zpos = position.z - size.z / 2 + size.z / division.z / 2 + k*size.z / division.z;
-					NodeVirtual* n = new NodeVirtual(this, division);
-						n->setPosition(glm::vec3(xpos, ypos, zpos));
-						n->setSize(glm::vec3(size.x / division.x, size.y / division.y, size.z / division.z));
-						children.push_back(n);
+					min.z = bbMin.z + z * childSize.z;
+					children[index].init(min, min + childSize, nodeDivision, depth - 1);
+					index++;
 				}
 			}
 		}
+	}
+}
 
-		if (targetDepth > depth)
-			for (unsigned int i = 0; i < children.size(); i++)
-				children[i]->split(targetDepth, depth + 1);
-	}
-	else if(targetDepth >= depth)
+void NodeVirtual::clearChildren()
+{
+	children.clear();
+}
+
+void NodeVirtual::split(unsigned int newDepth)
+{
+	if(newDepth > 0)
 	{
-		for (unsigned int i = 0; i < children.size(); i++)
-			children[i]->split(targetDepth, depth + 1);
+		if(children.empty())
+		{
+			init(getBBMin(), getBBMax(), division, newDepth);
+		}
+		else
+		{
+			for(NodeVirtual& node : children)
+				node.split(newDepth - 1);
+		}
 	}
 }
-void NodeVirtual::merge(const int& targetDepth, const int& depth)
+
+void NodeVirtual::merge(unsigned int newDepth)
 {
-	if (targetDepth <= depth)
+	if(newDepth > 0)
 	{
-		for (unsigned int i = 0; i < children.size(); i++)
-			delete children[i];
-		children.clear();
+		for(NodeVirtual& node : children)
+			node.merge(newDepth - 1);
 	}
-	else if (!children.empty())
+	else
 	{
-		for (unsigned int i = 0; i < children.size(); i++)
-			children[i]->merge(targetDepth, depth);
+		clearChildren();
 	}
 }
-void NodeVirtual::add(NodeVirtual* n)
+
+
+glm::vec3 NodeVirtual::getCenter() const { return position; }
+glm::vec3 NodeVirtual::getSize() const { return halfSize * 2.f; }
+glm::vec3 NodeVirtual::getBBMax() const { return position + halfSize; }
+glm::vec3 NodeVirtual::getBBMin() const { return position - halfSize; }
+int NodeVirtual::getChildrenCount() const { return children.size() + adoptedChildren.size(); }
+bool NodeVirtual::isLeaf() const { return children.empty(); }
+
+bool NodeVirtual::isInside(const glm::vec3& point) const
 {
-	adoptedChildren.push_back(n);
-	n->parent = this;
+	glm::vec3 p = point - getCenter();
+	glm::vec3 s = getSize() * 0.5f;
+	return glm::abs(p.x) <= s.x && glm::abs(p.y) <= s.y && glm::abs(p.z) <= s.z;
 }
-bool NodeVirtual::remove(NodeVirtual* n)
+
+bool NodeVirtual::isTooSmall(const glm::vec3& size) const
 {
-	std::vector<NodeVirtual*>::iterator it = std::find(adoptedChildren.begin(), adoptedChildren.end(), n);
-	if (it != adoptedChildren.end())
+	return glm::dot(size, size) < allowanceSize * allowanceSize;
+}
+
+bool NodeVirtual::isTooBig(const glm::vec3& size) const
+{
+	return glm::dot(size, size) > 4 * 4 * allowanceSize * allowanceSize;
+}
+
+
+void NodeVirtual::addObject(InstanceVirtual* object)
+{
+	objectList.push_back(object);
+	InstanceManager::getInstance()->get(object->getId());
+}
+
+bool NodeVirtual::removeObject(InstanceVirtual* object)
+{
+	auto it = std::find(objectList.begin(), objectList.end(), object);
+	if(it != objectList.end())
+	{
+		if(it + 1 != objectList.end())
+			std::swap(*it, objectList.back());
+		objectList.pop_back();
+		InstanceManager::getInstance()->release(object);
+		return true;
+	}
+	return false;
+}
+
+void NodeVirtual::addNode(NodeVirtual* node)
+{
+	adoptedChildren.push_back(node);
+}
+
+bool NodeVirtual::removeNode(NodeVirtual* node)
+{
+	auto it = std::find(adoptedChildren.begin(), adoptedChildren.end(), node);
+	if(it != adoptedChildren.end())
 	{
 		adoptedChildren.erase(it);
-		n->parent = nullptr;
 		return true;
 	}
 	else return false;
 }
-//
 
 
-//Set/Get functions
-void NodeVirtual::setPosition(const glm::vec3& p)
+NodeVirtual* NodeVirtual::getChildAt(const glm::vec3& pos)
 {
-	for (unsigned int i = 0; i < children.size(); i++)
-		children[i]->setPosition(children[i]->position - position + p);
-	position = p;
-	debuginstance->setPosition(glm::vec3(p.x, p.y, p.z));
+	const glm::vec3 childSizeInv = glm::vec3(division) / getSize();
+	const glm::ivec3 result = (pos - getBBMin()) * childSizeInv;
+	int index = division.z * division.y * result.x + division.z * result.y + result.z;
+	return children.data() + index;
 }
-void NodeVirtual::setSize(const glm::vec3& s)
-{
-	size = s;
-	allowanceSize = glm::vec3(std::min(s.x, std::min(s.y, s.z)));
-	debuginstance->setSize(0.5f * s);
 
-	if (children.empty()) return;
-	for (int i = 0; i < division.x; i++)
-	{
-		float xpos = position.x - size.x / 2 + size.x / division.x / 2 + i*size.x / division.x;
-		for (int j = 0; j < division.y; j++)
-		{
-			float ypos = position.y - size.y / 2 + size.y / division.y / 2 + j*size.y / division.y;
-			for (int k = 0; k < division.z; k++)
+void NodeVirtual::getChildren(std::vector<NodeVirtual*>& result)
+{
+	for(NodeVirtual& node : children)
+		result.push_back(&node);
+}
+
+void NodeVirtual::getChildren(std::vector<NodeRange>& result)
+{
+	result.push_back(NodeRange(children));
+}
+
+void NodeVirtual::getChildrenInBox(std::vector<NodeVirtual*>& result, const glm::vec3& boxMin, const glm::vec3& boxMax)
+{
+	const glm::vec3 childSizeInv = glm::vec3(division) / getSize();
+	glm::ivec3 childMin = (boxMin - getBBMin()) * childSizeInv;
+	glm::ivec3 childMax = (boxMax - getBBMin()) * childSizeInv;
+
+	const glm::ivec3 clampMin = glm::ivec3(0);
+	const glm::ivec3 clampMax = division - glm::ivec3(1);
+	glm::clamp(childMin, clampMin, clampMax);
+	glm::clamp(childMax, clampMin, clampMax);
+
+	for(int x = childMin.x; x < childMax.x; x++)
+		for(int y = childMin.y; y < childMax.y; y++)
+			for(int z = childMin.z; z < childMax.z; z++)
 			{
-				float zpos = position.z - size.z / 2 + size.z / division.z / 2 + k*size.z / division.z;
-				int index = division.z * division.y * i + division.z * j + k;
-				children[index]->setPosition(glm::vec3(xpos, ypos, zpos));
-				children[index]->setSize(glm::vec3(size.x / division.x, size.y / division.y, size.z / division.z));
+				unsigned int index = division.z * division.y * x + division.z * y + z;
+				result.push_back(children.data() + index);
 			}
+}
+
+void NodeVirtual::getChildrenInBox(std::vector<NodeRange>& result, const glm::vec3& boxMin, const glm::vec3& boxMax)
+{
+	const glm::vec3 childSizeInv = glm::vec3(division) / getSize();
+	glm::ivec3 childMin = (boxMin - getBBMin()) * childSizeInv;
+	glm::ivec3 childMax = (boxMax - getBBMin()) * childSizeInv;
+
+	const glm::ivec3 clampMin = glm::ivec3(0);
+	const glm::ivec3 clampMax = division - glm::ivec3(1);
+	glm::clamp(childMin, clampMin, clampMax);
+	glm::clamp(childMax, clampMin, clampMax);
+
+	for(int x = childMin.x; x < childMax.x; x++)
+	{
+		for(int y = childMin.y; y < childMax.y; y++)
+		{
+			int index = division.z * division.y * x + division.z * y;
+			NodeVirtual* first = children.data() + (index + childMin.z);
+			NodeVirtual* last  = children.data() + (index + childMax.z);
+			if(!result.empty() && result.back().end == first)
+				result.back().end = last;
+			else
+				result.push_back(NodeRange(first, last));
 		}
 	}
 }
 
 
-glm::vec3 NodeVirtual::getPosition() const { return position; }
-glm::vec3 NodeVirtual::getSize() const { return size; }
-//
-
-
-//	Protected functions
-uint8_t NodeVirtual::getLevel() const
-{
-	if (parent) return parent->getLevel() + 1;
-	else return 0;
-}
-int NodeVirtual::getChildrenKey(glm::vec3 p) const
-{
-	p += 0.5f * size - position;
-	glm::ivec3 result = p / size * glm::vec3(division);
-	return division.z * division.y * result.x + division.z * result.y + result.z;
-}
-glm::ivec3 NodeVirtual::getChildrenKeyVector(glm::vec3 p) const
-{
-	p += 0.5f * size - position;
-		p.x *= division.x / size.x;
-		p.y *= division.y / size.y;
-		p.z *= division.z / size.z;
-	return glm::clamp(glm::ivec3(p), izero, division  - ione);
-}
-glm::ivec3 NodeVirtual::getDivisionVector() const { return division; }
-//
