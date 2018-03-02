@@ -22,6 +22,7 @@ glm::mat4 InstanceVirtual::getModelMatrix()
 	if (!modelMatrixNeedUpdate) return model;
 	else
 	{
+		modelMatrixNeedUpdate = false;
 		model = glm::translate(glm::mat4(1.0), position);
 		model = model * orientation;
 		model = glm::scale(model, size);
