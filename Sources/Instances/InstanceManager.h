@@ -9,7 +9,6 @@
 #include <atomic>
 #include <algorithm>
 
-#include "Utiles/Singleton.h"
 #include "Utiles/Mutex.h"
 #include "InstanceVirtual.h"
 #include "InstanceDrawable.h"
@@ -26,11 +25,22 @@
   *  Third is to provide correctfully initialised InstanceDrawable, and InstanceContainer.
   *
   */
-class InstanceManager : public Singleton<InstanceManager>
+class InstanceManager
 {
-	friend class Singleton<InstanceManager>;
-
 	public:
+		//  Default
+		/*!
+		*  \brief Constructor
+		*  \param maximum : the maximum of instance
+		*/
+		InstanceManager(unsigned int maximum = 20000);
+
+		/*!
+		*  \brief Destructor
+		*/
+		~InstanceManager();
+		//
+
 		//  Public functions
 		/*!
 		 *  \brief Add an instance to the container
@@ -59,35 +69,6 @@ class InstanceManager : public Singleton<InstanceManager>
 		 *  Normally you can call this function from a different thread to gain performance.
 		 */
 		void clearGarbage();
-
-		/*!
-		 *  \brief Instanciate a new InstanceDrawable object
-		 *  \param meshName : the mesh name for the instance. If not specified the default mesh is used.
-		 *  \param shaderName : the shader name for the instance. If not specified the default shader is used.
-		 *  \return a valid pointer on the newly InstanceDrawable created, or null an error occur.
-		 *
-		 *  The function return null if the instance allocation fail, or if the instance can't be added to container.
-		 */
-		InstanceDrawable* getInstanceDrawable(std::string meshName = "default", std::string shaderName = "default");
-
-		/*!
-		*  \brief Instanciate a new getInstanceAnimatable object
-		*  \param meshName : the mesh name for the instance. If not specified the default mesh is used.
-		*  \param shaderName : the shader name for the instance. If not specified the default shader is used.
-		*  \return a valid pointer on the newly getInstanceAnimatable created, or null an error occur.
-		*
-		*  The function return null if the instance allocation fail, or if the instance can't be added to container.
-		*/
-		InstanceAnimatable* getInstanceAnimatable(std::string meshName = "default", std::string shaderName = "default");
-		InstanceAnimatable* getInstanceAnimatable(std::string meshName, std::string skeletonName, std::string animationName, std::string shaderName);
-
-		/*!
-		 *  \brief Instanciate a new InstanceContainer object
-		 *  \return a valid pointer on the newly InstanceContainer created, or null an error occur.
-		 *
-		 *  The function return null if the instance allocation fail, or if the instance can't be added to container.
-		 */
-		//InstanceContainer* getInstanceContainer();
 		//
 
 		//  Set/get functions
@@ -146,19 +127,6 @@ class InstanceManager : public Singleton<InstanceManager>
 
 
 	private:
-		//  Default
-		/*!
-		 *  \brief Constructor
-		 *  \param maximum : the maximum of instance
-		 */
-		InstanceManager(unsigned int maximum = 20000);
-
-		/*!
-		 *  \brief Destructor
-		 */
-		~InstanceManager();
-		//
-
 		//  Private functions
 		/*!
 		 *  \brief Get a valid ID

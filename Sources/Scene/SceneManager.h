@@ -4,14 +4,11 @@
 #include <unordered_map>
 #include <glm/glm.hpp>
 
-#include "Utiles/Singleton.h"
 #include "NodeVirtual.h"
 
 
-class SceneManager : public Singleton<SceneManager>
+class SceneManager
 {
-	friend class Singleton<SceneManager>;
-
 	public:
 		enum CollisionType
 		{
@@ -21,7 +18,16 @@ class SceneManager : public Singleton<SceneManager>
 		};
 
 
+		SceneManager();
+		SceneManager(const SceneManager& other) = delete;
+		SceneManager(SceneManager&& other);
+		~SceneManager();
+
+		SceneManager& operator=(const SceneManager& other) = delete;
+		SceneManager& operator=(SceneManager&& other);
+
 		void init(const glm::vec3& bbMin, const glm::vec3& bbMax, const glm::ivec3& nodeDivision, unsigned int depth);
+		void clear();
 
 		void reserveInstanceTrack(const unsigned int& count);
 		unsigned int getObjectCount() const;
@@ -34,11 +40,11 @@ class SceneManager : public Singleton<SceneManager>
 		void getObjectsOnRay(std::vector<InstanceVirtual*>& result, const glm::vec3& position, const glm::vec3& direction, float maxDistance);
 		void getObjectsInBox(std::vector<InstanceVirtual*>& result, const glm::vec3& bbMin, const glm::vec3& bbMax);
 
-		template<typename CollisionTest, typename EntityCollector>
+		template<typename EntityCollector, typename CollisionTest>
 		void getObjects(EntityCollector& result, CollisionTest collisionTest) {
 			if(!world.empty())  getObjects(world[0], result, collisionTest);
 		}
-		template<typename CollisionTest, typename EntityCollector>
+		template<typename EntityCollector, typename CollisionTest>
 		void getObjectsInBox(EntityCollector& result, CollisionTest collisionTest) {
 			if(!world.empty())  getObjectsInBox(world[0], result, collisionTest, testOnlyNodes);
 		}
@@ -50,19 +56,9 @@ class SceneManager : public Singleton<SceneManager>
 			NodeVirtual* owner;
 		};
 
-
-		SceneManager();
-		SceneManager(const SceneManager& other) = delete;
-		SceneManager(SceneManager&& other) = default;
-		~SceneManager();
-
-		SceneManager& operator=(const SceneManager& other) = delete;
-		SceneManager& operator=(SceneManager&& other) = default;
-
-
-		template<typename CollisionTest, typename EntityCollector = EntityList>
+		template<typename EntityCollector, typename CollisionTest>
 		void getObjects(NodeVirtual* node, EntityCollector& result, CollisionTest collisionTest);
-		template<typename CollisionTest, typename EntityCollector = EntityList>
+		template<typename EntityCollector, typename CollisionTest>
 		void getObjectsInBox(NodeVirtual* node, EntityCollector& result, CollisionTest collisionTest);
 
 
@@ -77,7 +73,7 @@ class SceneManager : public Singleton<SceneManager>
 
 
 
-template<typename CollisionTest, typename EntityCollector>
+template<typename EntityCollector, typename CollisionTest>
 void SceneManager::getObjects(NodeVirtual* node, EntityCollector& result, CollisionTest collisionTest)
 {
 	//	initialize and test root
@@ -112,17 +108,16 @@ void SceneManager::getObjects(NodeVirtual* node, EntityCollector& result, Collis
 }
 
 
-template<typename CollisionTest, typename EntityCollector>
+template<typename EntityCollector, typename CollisionTest>
 void SceneManager::getObjectsInBox(NodeVirtual* node, EntityCollector& result, CollisionTest collisionTest)
 {
 	//	initialize and test root in box
 	std::vector<NodeVirtual*> fullyInsideNodes;
-	std::vector<NodeVirtual*> overlappingNodes;
 	CollisionType collision = collisionTest(node);
 	switch(collision)
 	{
 		case INSIDE:  fullyInsideNodes.push_back(node); break;
-		case OVERLAP: overlappingNodes.push_back(node); break;
+		case OVERLAP: node->getObjectList(result); break;
 		default:      return;
 	}
 
@@ -144,7 +139,7 @@ void SceneManager::getObjectsInBox(NodeVirtual* node, EntityCollector& result, C
 		switch(collision)
 		{
 			case INSIDE:  fullyInsideNodes.push_back(node); break;
-			case OVERLAP: overlappingNodes.push_back(node); break;
+			case OVERLAP: node->getObjectList(result); break;
 			default:      break;
 		}
 
@@ -155,10 +150,7 @@ void SceneManager::getObjectsInBox(NodeVirtual* node, EntityCollector& result, C
 	}
 
 	for(NodeVirtual* node : fullyInsideNodes)
-		getObjects(node, result, [](NodeVirtual* node) -> CollisionType { return OVERLAP; });
-
-	for(NodeVirtual* node : overlappingNodes)
-		node->getObjectList(result);
+		getObjects(node, result, [](NodeVirtual*) -> CollisionType { return OVERLAP; });
 }
 
 

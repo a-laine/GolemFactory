@@ -71,14 +71,12 @@ class NodeVirtual
 
 	private:
 		glm::vec3 position;							//!< Node position in scene coordinate
-		glm::vec3 halfSize;								//!< Node size
+		glm::vec3 halfSize;							//!< Half of node size
 		glm::ivec3 division;
 
 		std::vector<NodeVirtual> children;			//!< Subdivision children container (empty if leaf)
 		std::vector<NodeVirtual*> adoptedChildren;	//!< Children added to, for special tree
 		std::vector<InstanceVirtual*> objectList;	//!< Instance container (list of instance attached to node)
-
-		InstanceDrawable* debuginstance;			//!< Debug
 };
 
 
@@ -87,7 +85,7 @@ class NodeVirtual
 template<typename ObjectCollector>
 void NodeVirtual::getObjectList(ObjectCollector& collector)
 {
-	for(InstanceVirtual* object : m_objectList)
+	for(InstanceVirtual* object : objectList)
 		collector(this, object);
 }
 

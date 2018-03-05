@@ -1,6 +1,7 @@
 #include "Renderer.h"
 
-#include <Scene\SceneQueryTests.h>
+#include <World/World.h>
+#include <Scene/SceneQueryTests.h>
 
 #define BATCH_SIZE 30
 
@@ -143,7 +144,7 @@ void Renderer::render(Camera* renderCam)
 	trianglesDrawn = 0;
 	instanceDrawn = 0;
 	lastShader = nullptr;
-	if (!window || !camera || !renderCam) return;
+	if (!window || !camera || !world || !renderCam) return;
 	
 	// dummy animation timeline
 	dummy += 0.16 / 3.f;
@@ -174,7 +175,7 @@ void Renderer::render(Camera* renderCam)
 	std::vector<InstanceVirtual*> instanceList;
 	DefaultSceneManagerFrustrumTest sceneTest(camera->getPosition(), camera->getForward(), camera->getVertical(), camera->getLeft(),
 		camera->getFrustrumAngleVertical() / 1.6f, camera->getFrustrumAngleVertical() / 1.6f);
-	SceneManager::getInstance()->getObjects(instanceList, sceneTest);
+	world->getSceneManager().getObjects(instanceList, sceneTest);
 
 	//	draw instance list
 	std::map<Shader*, std::vector<InstanceVirtual*> > batches;
@@ -377,6 +378,7 @@ void Renderer::drawInstanceContainer(InstanceVirtual* ins, const glm::mat4& view
 
 //  Set/get functions
 void Renderer::setCamera(Camera* cam) { camera = cam; }
+void Renderer::setWorld(World* currentWorld) { world = currentWorld; }
 void Renderer::setWindow(GLFWwindow* win) { window = win; }
 void Renderer::setShader(ShaderIdentifier id, Shader* s)
 {
@@ -391,6 +393,7 @@ void Renderer::setRenderOption(const RenderOption& option) { renderOption = opti
 
 
 Camera* Renderer::getCamera() { return camera; }
+World* Renderer::getWorld() { return world; }
 GLFWwindow* Renderer::getWindow() { return window; }
 Shader* Renderer::getShader(ShaderIdentifier id)
 {

@@ -14,7 +14,10 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "Resources/ComponentResource.h" 
+#include "Resources/ResourceManager.h" 
+
+
+class World;
 
 
 /*! \class InstanceVirtual
@@ -27,10 +30,7 @@
  */
 class InstanceVirtual
 {
-	//friend class NodeVirtual;
-	friend class SceneManager;
 	friend class InstanceManager;
-	//friend class InstanceContainer;
 
 	public:
 		//  Miscellaneous
@@ -52,11 +52,15 @@ class InstanceVirtual
 		void setSize(glm::vec3 s);
 		void setOrientation(glm::mat4 m);
 
+		void setParentWorld(World* parentWorld);
+
 		glm::vec3 getPosition() const;
 		glm::vec3 getSize() const;
 		glm::mat4 getOrientation() const;
 		glm::mat4 getModelMatrix();
-		
+
+		World* getParentWorld() const;
+
 		InstanceType getType() const;
 		uint32_t getId() const;
 		virtual glm::vec3 getBBMax() const;
@@ -83,6 +87,8 @@ class InstanceVirtual
 		glm::vec3 position;			//!< Instance position
 		glm::vec3 size;				//!< Instance size (or scale) factor
 		glm::mat4 orientation;		//!< Instance orientation
+
+		World* world;
 
 		bool modelMatrixNeedUpdate;
 		glm::mat4 model;

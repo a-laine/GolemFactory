@@ -84,56 +84,6 @@ void InstanceManager::clearGarbage()
 		if (element) delete element;
 	garbageCopy.clear();
 }
-
-InstanceDrawable* InstanceManager::getInstanceDrawable(std::string meshName, std::string shaderName)
-{
-	InstanceDrawable* ins = new InstanceDrawable(meshName, shaderName);
-	if (!ins || !add(ins))
-	{
-		if(ins) delete ins;
-		return nullptr;
-	}
-	return ins;
-}
-InstanceAnimatable* InstanceManager::getInstanceAnimatable(std::string meshName, std::string shaderName)
-{
-	InstanceAnimatable* ins = new InstanceAnimatable(meshName, shaderName);
-	if (!ins || !add(ins))
-	{
-		if (ins) delete ins;
-		return nullptr;
-	}
-	ins->computeCapsules();
-	ins->initializeVBOVAO();
-	return ins;
-}
-InstanceAnimatable* InstanceManager::getInstanceAnimatable(std::string meshName, std::string skeletonName, std::string animationName, std::string shaderName)
-{
-	InstanceAnimatable* ins = new InstanceAnimatable(meshName, shaderName);
-	if (ins)
-	{
-		ins->setSkeleton(skeletonName);
-		ins->setAnimation(animationName);
-	}
-	if (!ins || !add(ins))
-	{
-		if (ins) delete ins;
-		return nullptr;
-	}
-	ins->computeCapsules();
-	ins->initializeVBOVAO();
-	return ins;
-}
-/*InstanceContainer* InstanceManager::getInstanceContainer()
-{
-	InstanceContainer* ins = new InstanceContainer();
-	if (!ins || !add(ins))
-	{
-		if (ins) delete ins;
-		return nullptr;
-	}
-	return ins;
-}*/
 //
 
 

@@ -2,7 +2,7 @@
 
 //  Default
 InstanceVirtual::InstanceVirtual(InstanceType instanceType) : 
-	type(instanceType), id(0), count(0), position(0.f, 0.f, 0.f), size(1.f, 1.f, 1.f), orientation(1.f), modelMatrixNeedUpdate(true), model(1.f)
+	type(instanceType), id(0), count(0), position(0.f, 0.f, 0.f), size(1.f, 1.f, 1.f), orientation(1.f), world(nullptr), modelMatrixNeedUpdate(true), model(1.f)
 {}
 InstanceVirtual::~InstanceVirtual() {}
 //
@@ -12,6 +12,8 @@ InstanceVirtual::~InstanceVirtual() {}
 void InstanceVirtual::setPosition(glm::vec3 p) { position = p; modelMatrixNeedUpdate = true; }
 void InstanceVirtual::setSize(glm::vec3 s) { size = s; modelMatrixNeedUpdate = true; }
 void InstanceVirtual::setOrientation(glm::mat4 m) { orientation = m; modelMatrixNeedUpdate = true; }
+
+void InstanceVirtual::setParentWorld(World* parentWorld) { world = parentWorld; }
 
 
 glm::vec3 InstanceVirtual::getPosition() const { return position; }
@@ -30,6 +32,7 @@ glm::mat4 InstanceVirtual::getModelMatrix()
 	}
 }
 
+World* InstanceVirtual::getParentWorld() const { return world; }
 
 InstanceVirtual::InstanceType InstanceVirtual::getType() const { return type; }
 uint32_t InstanceVirtual::getId() const { return id; }

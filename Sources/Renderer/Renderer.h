@@ -13,7 +13,6 @@
 #include "Utiles/Singleton.h"
 #include "Resources/ResourceManager.h"
 #include "Instances/InstanceManager.h"
-#include "Scene/SceneManager.h"
 
 #include "HUD/WidgetManager.h"
 
@@ -50,12 +49,14 @@ class Renderer : public Singleton<Renderer>
 
 		//  Set/get functions
 		void setCamera(Camera* cam);
+		void setWorld(World* currentWorld);
 		void setWindow(GLFWwindow* win);
 		void setShader(ShaderIdentifier id, Shader* s);
 		void setGridVisible(bool enable);
 		void setRenderOption(const RenderOption& option);
 		
 		Camera* getCamera();
+		World* getWorld();
 		GLFWwindow* getWindow();
 		Shader* getShader(ShaderIdentifier id);
 		bool isGridVisible();
@@ -83,6 +84,7 @@ class Renderer : public Singleton<Renderer>
 		//  Attributes
 		GLFWwindow* window;
 		Camera* camera;
+		World* world;
 		std::map<ShaderIdentifier, Shader*> defaultShader;
 		RenderOption renderOption;
 

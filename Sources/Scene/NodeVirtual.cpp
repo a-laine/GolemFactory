@@ -1,7 +1,10 @@
 #include "NodeVirtual.h"
 
 #include <glm/gtx/component_wise.hpp>
+
+#include <World/World.h>
 #include <Utiles/Assert.hpp>
+
 
 
 //	Default
@@ -9,18 +12,18 @@ NodeVirtual::NodeVirtual()
 	: position(0)
 	, halfSize(0)
 	, division(0)
-	, debuginstance(nullptr)
 	, allowanceSize(1)
 {
-	debuginstance = InstanceManager::getInstance()->getInstanceDrawable("cube2.obj", "wired");
 }
 
 NodeVirtual::~NodeVirtual()
 {
 	//	free instance
 	for (unsigned int i = 0; i < objectList.size(); i++)
-		InstanceManager::getInstance()->release(objectList[i]);
-	InstanceManager::getInstance()->release(debuginstance);
+	{
+		World* world = objectList[i]->getParentWorld();
+		world->releaseObject(objectList[i]);
+	}
 
 	//	delete all children
 	for (unsigned int i = 0; i < adoptedChildren.size(); i++)
@@ -122,7 +125,7 @@ bool NodeVirtual::isTooBig(const glm::vec3& size) const
 void NodeVirtual::addObject(InstanceVirtual* object)
 {
 	objectList.push_back(object);
-	InstanceManager::getInstance()->get(object->getId());
+	object->getParentWorld()->getObject(object);
 }
 
 bool NodeVirtual::removeObject(InstanceVirtual* object)
@@ -133,7 +136,7 @@ bool NodeVirtual::removeObject(InstanceVirtual* object)
 		if(it + 1 != objectList.end())
 			std::swap(*it, objectList.back());
 		objectList.pop_back();
-		InstanceManager::getInstance()->release(object);
+		object->getParentWorld()->releaseObject(object);
 		return true;
 	}
 	return false;
