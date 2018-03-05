@@ -19,6 +19,8 @@
 #include "Events/EventHandler.h"
 #include "Renderer/Renderer.h"
 #include "Generators/HouseGenerator.h"
+#include "World/World.h"
+#include "Scene/SceneQueryTests.h"
 #include "Resources/Loader/SkeletonSaver.h"
 #include "EntityComponent/Entity.hpp"
 #include "Resources/ComponentResource.h"
@@ -31,6 +33,7 @@
 
 //	global attributes
 GLFWwindow* window = nullptr;
+World world;
 Camera camera, camera2;
 InstanceAnimatable* avatar = nullptr;
 
@@ -77,12 +80,13 @@ int main()
 		Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getShader("wired"));
 		initializeForestScene(false);
 
-		avatar = InstanceManager::getInstance()->getInstanceAnimatable("peasant", "human", "simple_peasant", "skinning");
-			float scale = 1.7f / (avatar->getBBMax() - avatar->getBBMin()).z;
-			avatar->setSize(glm::vec3(scale));
-			avatar->setPosition(glm::vec3(20.f, 20.f, -scale * avatar->getMesh()->aabb_min.z));
-			SceneManager::getInstance()->addObject(avatar);
+		avatar = static_cast<InstanceAnimatable*>(world.getEntityFactory().createObject("peasent", [](InstanceVirtual* object) {
+			float scale = 1.7f / (object->getBBMax() - object->getBBMin()).z;
+			object->setSize(glm::vec3(scale));
+			object->setPosition(glm::vec3(20.f, 20.f, -scale * object->getMesh()->aabb_min.z));
+			//camera.setMode(Camera::TRACKBALL);
 			camera.setRadius(4);
+		}));
 
 	// init loop time tracking
 	double averageTime = 0;
@@ -112,7 +116,7 @@ int main()
 		updates((float)elapseTime, width, height);
 
 		//	clear garbages
-		InstanceManager::getInstance()->clearGarbage();
+		world.clearGarbage();
 		ResourceManager::getInstance()->clearGarbage();
 
 		// End loop
@@ -124,7 +128,7 @@ int main()
 
 	//	end
 	std::cout << "ending game" << std::endl;
-	InstanceManager::getInstance()->clearGarbage();
+	world.clearGarbage();
 	ResourceManager::getInstance()->clearGarbage();
 	glfwDestroyWindow(window);
 	glfwTerminate();
@@ -166,8 +170,7 @@ void initializeForestScene(bool emptyPlace)
 
 	// init instance placement
 	int fail = 0;
-	std::string meshName;
-	std::string shaderName;
+	std::string objectType;
 	float sDispersion;
 	float sOffset;
 	HouseGenerator hg;
@@ -176,11 +179,7 @@ void initializeForestScene(bool emptyPlace)
 	//	center tree in place
 	if (!emptyPlace)
 	{
-		InstanceDrawable* bigTree = InstanceManager::getInstance()->getInstanceDrawable();
-		bigTree->setMesh("firTree1.obj");
-		bigTree->setShader("default");
-		bigTree->setSize(glm::vec3(5.f, 5.f, 5.f));
-		SceneManager::getInstance()->addObject(bigTree);
+		world.getEntityFactory().createObject("tree", glm::vec3(0), glm::vec3(5.f, 5.f, 5.f));
 	}
 
 	// village
@@ -205,7 +204,7 @@ void initializeForestScene(bool emptyPlace)
 				a = glm::rotate(a, angle + 0.4f * ((((rand() % 100) / 50.f) - 1.f)), glm::vec3(0, 0, 1));
 			
 			InstanceDrawable* house = static_cast<InstanceDrawable*>(hg.getHouse(rand(), 20, 30));
-			if (house && InstanceManager::getInstance()->add(house))
+			if (house && world.manageObject(house))
 			{
 				glm::vec3 p = glm::vec3(radius * cos(angle), radius * sin(angle), house->getBSRadius());
 				house->setOrientation(glm::rotate(glm::mat4(1.0), 1.57f + angle, glm::vec3(0, 0, 1)));
@@ -222,7 +221,7 @@ void initializeForestScene(bool emptyPlace)
 
 				houseCircle.push_back(p);
 				house->setPosition(glm::vec3(p.x, p.y, 0.f));
-				SceneManager::getInstance()->addObject(house);
+				world.getSceneManager().addObject(house);
 			}
 		}
 	}
@@ -232,46 +231,32 @@ void initializeForestScene(bool emptyPlace)
 	for (int i = 0; i < GRID_SIZE; i++)
 		for (int j = 0; j < GRID_SIZE; j++)
 		{
+			glm::vec3 p(GRID_ELEMENT_SIZE*i - (GRID_SIZE * GRID_ELEMENT_SIZE) / 2 + GRID_ELEMENT_SIZE * ((rand() % 10) / 20.f - 0.25f),
+				GRID_ELEMENT_SIZE*j - (GRID_SIZE * GRID_ELEMENT_SIZE) / 2 + GRID_ELEMENT_SIZE * ((rand() % 10) / 20.f - 0.25f),
+				0);
+
+			if(glm::length(p) < villageRadius[2] + 5.f * GRID_ELEMENT_SIZE)
+				continue;
+
 			int r = rand() % 100;
-			
 			if (r < 20)
 			{
-				meshName = "rock1.obj";
-				shaderName = "default";
+				objectType = "rock";
 				sDispersion = 0.4f;
 				sOffset = 1.f;
 			}
 			else if (r < 80)
 			{
-				meshName = "firTree1.obj";
-				shaderName = "default";
+				objectType = "tree";
 				sDispersion = 0.f;// 2f;
 				sOffset = 1.7f;
 			}
 			else continue;
-			
-			glm::vec3 p(GRID_ELEMENT_SIZE*i - (GRID_SIZE * GRID_ELEMENT_SIZE) / 2 + GRID_ELEMENT_SIZE * ((rand() % 10) / 20.f - 0.25f),
-						GRID_ELEMENT_SIZE*j - (GRID_SIZE * GRID_ELEMENT_SIZE) / 2 + GRID_ELEMENT_SIZE * ((rand() % 10) / 20.f - 0.25f),
-						0);
-
-			if (glm::length(p) < villageRadius[2] + 5.f * GRID_ELEMENT_SIZE)
-				continue;
-				
 
 			float s = sOffset + sDispersion * ((rand() % 100) / 50.f - 1.f);
 			glm::mat4 a = glm::rotate(glm::mat4(1.0), glm::radians((rand() % 3600) / 10.f), glm::vec3(0, 0, 1));
-			InstanceDrawable* ins = InstanceManager::getInstance()->getInstanceDrawable();
-			if (!ins) continue;
 
-			ins->setMesh(meshName);
-			ins->setShader(shaderName);
-			
-			ins->setPosition(p);
-			ins->setSize(glm::vec3(s,s,s));
-			ins->setOrientation(a);
-
-			if(!SceneManager::getInstance()->addObject(ins))
-				fail++;
+			world.getEntityFactory().createObject(objectType, p, glm::vec3(s, s, s), a);
 		}
 
 	//	debug
@@ -310,11 +295,16 @@ void initManagers()
 	EventHandler::getInstance()->setCursorMode(false);
 	EventHandler::getInstance()->setResizeCallback(WidgetManager::resizeCallback);
 
-	// Init Resources manager & instance manager
+	// Init Resources manager
 	MeshLoader::logVerboseLevel = MeshLoader::ALL;
 	ResourceVirtual::logVerboseLevel = ResourceVirtual::ALL;
 	ResourceManager::getInstance()->setRepository(resourceRepository);
-	InstanceManager::getInstance()->setMaxNumberOfInstances(4000000);
+
+	// Init world
+	const glm::vec3 worldHalfSize = glm::vec3(GRID_SIZE*GRID_ELEMENT_SIZE, GRID_SIZE*GRID_ELEMENT_SIZE, 50) * 0.5f;
+	const glm::vec3 worldPos = glm::vec3(0, 0, worldHalfSize.z - 5);
+	world.getSceneManager().init(worldPos - worldHalfSize, worldPos + worldHalfSize, glm::ivec3(4, 4, 1), 2);
+	world.setMaxObjectCount(4000000);
 
 	//	Renderer
 	camera.setMode(Camera::FREEFLY);
@@ -335,23 +325,17 @@ void initManagers()
 	glfwGetWindowSize(window, &width, &height);
 	WidgetManager::getInstance()->setInitialWindowSize(width, height);
 	WidgetManager::getInstance()->loadHud("default");
-
-	// init scene
-	const glm::vec3 worldHalfSize = glm::vec3(GRID_SIZE*GRID_ELEMENT_SIZE, GRID_SIZE*GRID_ELEMENT_SIZE, 50) * 0.5f;
-	const glm::vec3 worldPos = glm::vec3(0, 0, worldHalfSize.z - 5);
-	SceneManager::getInstance()->init(worldPos - worldHalfSize, worldPos + worldHalfSize, glm::ivec3(4, 4, 1), 2);
-	SceneManager::getInstance()->reserveInstanceTrack(InstanceManager::getInstance()->getInstanceCapacity());
 }
 void picking(int width, int height)
 {
-	std::vector<std::pair<float, InstanceVirtual*> > rayList;
-	//SceneManager::getInstance()->getObjectsOnRay(rayList, camera.getPosition(), camera.getForward(), 1000);
-	std::sort(rayList.begin(), rayList.end());
+	DefaultSceneManagerRayTest test(camera.getPosition(), camera.getForward(), 1000);
+	DefaultRayPickingCollector collector;
+	world.getSceneManager().getObjects(collector, test);
 
-	if (!rayList.empty())
+	if (collector.getObject() != nullptr)
 	{
 		std::string type;
-		switch (rayList[0].second->getType())
+		switch (collector.getObject()->getType())
 		{
 			case InstanceVirtual::ANIMATABLE:	type = "animatable";	break;
 			case InstanceVirtual::DRAWABLE:		type = "drawable";		break;
@@ -362,8 +346,7 @@ void picking(int width, int height)
 
 		WidgetManager::getInstance()->setString("interaction", "Distance : " + ToolBox::to_string_with_precision(rayList[0].first, 5) +
 			" m\nPosition : (" + ToolBox::to_string_with_precision(p.x, 5) + " , " + ToolBox::to_string_with_precision(p.y, 5) + " , " + ToolBox::to_string_with_precision(p.z, 5) +
-			")\nInstance on ray : " + std::to_string(rayList.size()) +
-			"\nFirst instance pointed id : " + std::to_string(rayList[0].second->getId()) +
+			")\nFirst instance pointed id : " + std::to_string(rayList[0].second->getId()) +
 			"\n  type : " + type);
 
 		if (WidgetManager::getInstance()->getBoolean("BBpicking"))
@@ -371,9 +354,9 @@ void picking(int width, int height)
 			Renderer::RenderOption option = Renderer::getInstance()->getRenderOption();
 			Renderer::getInstance()->setRenderOption(option == Renderer::DEFAULT ? Renderer::BOUNDING_BOX : Renderer::DEFAULT);
 			glm::mat4 projection = glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f);
-			if (rayList[0].second->getType() == InstanceVirtual::ANIMATABLE)
-				Renderer::getInstance()->drawInstanceAnimatable(static_cast<InstanceAnimatable*>(rayList[0].second), &camera.getViewMatrix()[0][0], &projection[0][0]);
-			else Renderer::getInstance()->drawInstanceDrawable(rayList[0].second, &camera.getViewMatrix()[0][0], &projection[0][0]);
+			if (collector.getObject()->getType() == InstanceVirtual::ANIMATABLE)
+				Renderer::getInstance()->drawInstanceAnimatable(static_cast<InstanceAnimatable*>(collector.getObject()), &camera.getViewMatrix()[0][0], &projection[0][0]);
+			else Renderer::getInstance()->drawInstanceDrawable(collector.getObject(), &camera.getViewMatrix()[0][0], &projection[0][0]);
 			Renderer::getInstance()->setRenderOption(option);
 		}
 	}
@@ -474,7 +457,7 @@ void updates(float elapseTime, int width, int height)
 		if (avatar->isAnimationRunning("run")) speed = 0.1f;
 		avatar->setPosition(avatar->getPosition() + speed * glm::normalize(glm::vec3(forward.x, forward.y, 0.f)));
 		if (speed != 0.f) avatar->setOrientation(glm::rotate(glm::pi<float>() / 2.f + atan2(forward.y, forward.x), glm::vec3(0.f, 0.f, 1.f)));
-		SceneManager::getInstance()->updateObject(avatar);
+		world.updateObject(avatar);
 	}
 
 	//Animate camera
