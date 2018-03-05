@@ -6,7 +6,7 @@
 template<class T>
 class ComponentResource : public Component
 {
-	GF_DECLARE_COMPONENT_CLASS()
+	GF_DECLARE_COMPONENT_CLASS(ComponentResource, Component)
 	public:
 		//  Default
 		ComponentResource(T* res) : resource(res){};
