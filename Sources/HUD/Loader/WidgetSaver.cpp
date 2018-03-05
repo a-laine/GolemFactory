@@ -65,24 +65,19 @@ Variant WidgetSaver::serialize(WidgetVirtual* w, std::map<std::string, WidgetVir
 	switch (w->type)
 	{
 		case WidgetVirtual::BOARD:
-			if (WidgetBoard* board = dynamic_cast<WidgetBoard*>(w))
-				serializeBoard(board, rootVariant);
+			serializeBoard(static_cast<WidgetBoard*>(w), rootVariant);
 			break;
 		case WidgetVirtual::IMAGE:
-			if (WidgetImage* image = dynamic_cast<WidgetImage*>(w))
-				serializeImage(image, rootVariant);
+			serializeImage(static_cast<WidgetImage*>(w), rootVariant);
 			break;
 		case WidgetVirtual::LABEL:
-			if (WidgetLabel* label = dynamic_cast<WidgetLabel*>(w))
-				serializeLabel(label, rootVariant);
+			serializeLabel(static_cast<WidgetLabel*>(w), rootVariant);
 			break;
 		case WidgetVirtual::CONSOLE:
-			if (WidgetConsole* console = dynamic_cast<WidgetConsole*>(w))
-				serializeConsole(console, rootVariant);
+			serializeConsole(static_cast<WidgetConsole*>(w), rootVariant);
 			break;
 		case WidgetVirtual::RADIO_BUTTON:
-			if (WidgetRadioButton* radiobutton = dynamic_cast<WidgetRadioButton*>(w))
-				serializeRadioButton(radiobutton, rootVariant);
+			serializeRadioButton(static_cast<WidgetRadioButton*>(w), rootVariant);
 			break;
 		default: break;
 	}

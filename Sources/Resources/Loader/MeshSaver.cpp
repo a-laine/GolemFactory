@@ -21,7 +21,7 @@ void MeshSaver::save(Mesh* mesh, const std::string& resourcesPath, std::string f
 
 	//	try a cast into MeshAnimated and save apropriately
 	MeshAnimated* m = nullptr;
-	if (mesh->hasSkeleton()) m = dynamic_cast<MeshAnimated*>(mesh);
+	if (mesh->hasSkeleton()) m = static_cast<MeshAnimated*>(mesh);
 
 	if (m) save(m, file, scaleModifier);
 	else save(mesh, file, scaleModifier);
