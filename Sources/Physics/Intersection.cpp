@@ -172,6 +172,14 @@ namespace
 		}
 		else return false;
 	};
+
+	//	Utils
+	inline float projectBox(const glm::vec3& axis, const glm::vec3& boxHalfSize)
+	{
+		//	axis is in absolute base
+		//	boxHalfSize is in box local space (origin is box center)
+		return std::abs(boxHalfSize.x*axis.x) + std::abs(boxHalfSize.y*axis.y) + std::abs(boxHalfSize.z*axis.z);
+	}
 }
 //
 
@@ -317,7 +325,32 @@ inline bool Intersection::intersect_SegmentvsSphere(const glm::vec3& segment1a, 
 }
 inline bool Intersection::intersect_SegmentvsCapsule(const glm::vec3& segment1a, const glm::vec3& segment1b, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
 {
-	return false;
+	glm::vec3 s1 = segment1b - segment1a;
+	glm::vec3 s2 = capsule2 - capsule1;
+	glm::vec3 u1 = glm::normalize(s1);
+	glm::vec3 u2 = glm::normalize(s2);
+	glm::vec3 n = glm::cross(u1, u2);
+
+	if (glm::dot(n, n) == 0.f)	// parallel or one segment is a point
+	{
+		if (u1 == glm::vec3(0.f))
+			return intersect_PointvsCapsule(segment1a, capsule1, capsule2, capsuleRadius);
+		else if (u2 == glm::vec3(0.f))
+			return intersect_SegmentvsSphere(segment1a, segment1b, capsule1, capsuleRadius);
+		else // segment are parallel
+		{
+			glm::vec3 u3 = segment1a - capsule1;
+			glm::vec3 d = u3 - u1 * std::abs(glm::dot(u3, u1));
+			return glm::length(d) <= capsuleRadius;
+		}
+	}
+	else
+	{
+		float t1 = std::min(glm::length(s1), std::max(0.f, glm::determinant(glm::mat3(segment1a - capsule1, u2, n)) / glm::dot(n, n)));
+		float t2 = std::min(glm::length(s2), std::max(0.f, glm::determinant(glm::mat3(segment1a - capsule1, u1, n)) / glm::dot(n, n)));
+		glm::vec3 d = capsule1 + u2*t2 - (segment1a + u1*t1);
+		return glm::length(d) <= capsuleRadius;
+	}
 }
 //
 
@@ -347,11 +380,53 @@ inline bool Intersection::intersect_TrianglevsCapsule(const glm::vec3& triangle1
 //	Specialized functions : oriented box
 inline bool Intersection::intersect_OrientedBoxvsOrientedBox(const glm::mat4& box1Tranform, const glm::vec3& box1Min, const glm::vec3& box1Max, const glm::mat4& box2Tranform, const glm::vec3& box2Min, const glm::vec3& box2Max)
 {
-	return false;
+	//	axis to check in absolute base
+	glm::vec3 xb1 = glm::vec3(box1Tranform*glm::vec4(1.f, 0.f, 0.f, 0.f));
+	glm::vec3 yb1 = glm::vec3(box1Tranform*glm::vec4(0.f, 1.f, 0.f, 0.f));
+	glm::vec3 zb1 = glm::vec3(box1Tranform*glm::vec4(0.f, 0.f, 1.f, 0.f));
+	glm::vec3 xb2 = glm::vec3(box2Tranform*glm::vec4(1.f, 0.f, 0.f, 0.f));
+	glm::vec3 yb2 = glm::vec3(box2Tranform*glm::vec4(0.f, 1.f, 0.f, 0.f));
+	glm::vec3 zb2 = glm::vec3(box2Tranform*glm::vec4(0.f, 0.f, 1.f, 0.f));
+
+	//	box position and halfSize
+	glm::vec3 distance = 0.5f*glm::vec3(box1Tranform*glm::vec4(box1Min + box1Max, 1.f)) - 0.5f*glm::vec3(box1Tranform*glm::vec4(box2Min + box2Max, 1.f));
+	glm::vec3 sb1 = box1Max - box1Min;
+	glm::vec3 sb2 = box2Max - box2Min;
+
+	//	first test pass
+	if      (std::abs(glm::dot(xb1, distance)) > projectBox(xb1, sb1) + projectBox(xb1, sb2)) return false;
+	else if (std::abs(glm::dot(yb1, distance)) > projectBox(yb1, sb1) + projectBox(yb1, sb2)) return false;
+	else if (std::abs(glm::dot(zb1, distance)) > projectBox(zb1, sb1) + projectBox(zb1, sb2)) return false;
+	else if (std::abs(glm::dot(xb2, distance)) > projectBox(xb2, sb1) + projectBox(xb2, sb2)) return false;
+	else if (std::abs(glm::dot(yb2, distance)) > projectBox(yb2, sb1) + projectBox(yb2, sb2)) return false;
+	else if (std::abs(glm::dot(zb2, distance)) > projectBox(zb2, sb1) + projectBox(zb2, sb2)) return false;
+	
+	//	secondary axis checking
+	glm::vec3 xb1xb2 = glm::normalize(glm::cross(xb1, xb2));
+	glm::vec3 xb1yb2 = glm::normalize(glm::cross(xb1, yb2));
+	glm::vec3 xb1zb2 = glm::normalize(glm::cross(xb1, zb2));
+	glm::vec3 yb1xb2 = glm::normalize(glm::cross(yb1, xb2));
+	glm::vec3 yb1yb2 = glm::normalize(glm::cross(yb1, yb2));
+	glm::vec3 yb1zb2 = glm::normalize(glm::cross(yb1, zb2));
+	glm::vec3 zb1xb2 = glm::normalize(glm::cross(zb1, xb2));
+	glm::vec3 zb1yb2 = glm::normalize(glm::cross(zb1, yb2));
+	glm::vec3 zb1zb2 = glm::normalize(glm::cross(zb1, zb2));
+
+	//	second test pass
+	if      (std::abs(glm::dot(xb1xb2, distance)) > projectBox(xb1xb2, sb1) + projectBox(xb1xb2, sb2)) return false;
+	else if (std::abs(glm::dot(xb1yb2, distance)) > projectBox(xb1yb2, sb1) + projectBox(xb1yb2, sb2)) return false;
+	else if (std::abs(glm::dot(xb1zb2, distance)) > projectBox(xb1zb2, sb1) + projectBox(xb1zb2, sb2)) return false;
+	else if (std::abs(glm::dot(yb1xb2, distance)) > projectBox(yb1xb2, sb1) + projectBox(yb1xb2, sb2)) return false;
+	else if (std::abs(glm::dot(yb1yb2, distance)) > projectBox(yb1yb2, sb1) + projectBox(yb1yb2, sb2)) return false;//
+	else if (std::abs(glm::dot(yb1zb2, distance)) > projectBox(yb1zb2, sb1) + projectBox(yb1zb2, sb2)) return false;
+	else if (std::abs(glm::dot(zb1xb2, distance)) > projectBox(zb1xb2, sb1) + projectBox(zb1xb2, sb2)) return false;
+	else if (std::abs(glm::dot(zb1yb2, distance)) > projectBox(zb1yb2, sb1) + projectBox(zb1yb2, sb2)) return false;
+	else if (std::abs(glm::dot(zb1zb2, distance)) > projectBox(zb1zb2, sb1) + projectBox(zb1zb2, sb2)) return false;
+	else return true;
 }
 inline bool Intersection::intersect_OrientedBoxvsAxisAlignedBox(const glm::mat4& box1Tranform, const glm::vec3& box1Min, const glm::vec3& box1Max, const glm::vec3& box2Min, const glm::vec3& box2Max)
 {
-	return false;
+	return intersect_OrientedBoxvsOrientedBox(box1Tranform, box1Min, box1Max, glm::mat4(1.f), box2Min, box2Max);
 }
 inline bool Intersection::intersect_OrientedBoxvsSphere(const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax, const glm::vec3& sphereCenter, const float& sphereRadius)
 {
@@ -370,6 +445,7 @@ inline bool Intersection::intersect_AxisAlignedBoxvsAxisAlignedBox(const glm::ve
 }
 inline bool Intersection::intersect_AxisAlignedBoxvsSphere(const glm::vec3& boxMin, const glm::vec3& boxMax, const glm::vec3& sphereCenter, const float& sphereRadius)
 {
+	//	https://www.gamasutra.com/view/feature/131790/simple_intersection_tests_for_games.php?print=1
 	return false;
 }
 inline bool Intersection::intersect_AxisAlignedBoxvsCapsule(const glm::vec3& boxMin, const glm::vec3& boxMax, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
@@ -395,7 +471,6 @@ inline bool Intersection::intersect_SpherevsCapsule(const glm::vec3& sphereCente
 //	Specialized functions : capsule
 inline bool Intersection::intersect_CapsulevsCapsule(const glm::vec3& capsule1a, const glm::vec3& capsule1b, const float& capsule1Radius, const glm::vec3& capsule2a, const glm::vec3& capsule2b, const float& capsule2Radius)
 {
-	//	see http://www.realtimerendering.com/intersections.html#I304 : ray/ray algorithm
 	glm::vec3 s1 = capsule1b - capsule1a;
 	glm::vec3 s2 = capsule2b - capsule2a;
 	glm::vec3 u1 = glm::normalize(s1);

@@ -2,7 +2,7 @@
 
 #include <glm/glm.hpp>
 
-
+class Sphere;
 class Shape
 {
 	public:
@@ -24,6 +24,10 @@ class Shape
 		Shape(const ShapeType& shapeType = NONE);
 		//
 
+		//	Public functions
+		virtual Sphere toSphere() const;
+		//
+
 		//	Attributes
 		ShapeType type;
 		//
@@ -37,6 +41,10 @@ class Point : public Shape
 		Point(const glm::vec3& position);
 		//
 
+		//	Public functions
+		Sphere toSphere() const;
+		//
+
 		//	Attributes
 		glm::vec3 p;
 		//
@@ -46,6 +54,10 @@ class Segment : public Shape
 	public:
 		//	Default
 		Segment(const glm::vec3& a, const glm::vec3& b);
+		//
+
+		//	Public functions
+		Sphere toSphere() const;
 		//
 
 		//	Attributes
@@ -59,6 +71,10 @@ class Triangle : public Shape
 		Triangle(const glm::vec3& a, const glm::vec3& b, const glm::vec3& c);
 		//
 
+		//	Public functions
+		Sphere toSphere() const;
+		//
+
 		//	Attributes
 		glm::vec3 p1, p2, p3;
 		//
@@ -68,6 +84,10 @@ class OrientedBox : public Shape
 	public:
 		//	Default
 		OrientedBox(const glm::mat4& transformationMatrix, const glm::vec3& localMin, const glm::vec3& localMax);
+		//
+
+		//	Public functions
+		Sphere toSphere() const;
 		//
 
 		//	Attributes
@@ -82,6 +102,10 @@ class AxisAlignedBox : public Shape
 		AxisAlignedBox(const glm::vec3& cornerMin, const glm::vec3& cornerMax);
 		//
 
+		//	Public functions
+		Sphere toSphere() const;
+		//
+
 		//	Attributes
 		glm::vec3 min, max;
 		//
@@ -91,6 +115,10 @@ class Sphere : public Shape
 	public:
 		//	Default
 		Sphere(const glm::vec3& position, const float& r);
+		//
+
+		//	Public functions
+		Sphere toSphere() const;
 		//
 
 		//	Attributes
@@ -103,6 +131,10 @@ class Capsule : public Shape
 	public:
 		//	Default
 		Capsule(const glm::vec3& a, const glm::vec3& b, const float& r);
+		//
+
+		//	Public functions
+		Sphere toSphere() const;
 		//
 
 		//	Attributes
