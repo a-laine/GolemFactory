@@ -366,7 +366,7 @@ unsigned int EventHandlerEnum::getNumberOfEvent()
 {
 	unsigned int nb;
 	mutex.lock();
-	nb = userMapping.size();
+	nb = (unsigned int)userMapping.size();
 	mutex.unlock();
 	return nb;
 }

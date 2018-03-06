@@ -33,7 +33,7 @@ std::string ToolBox::openAndCleanCStyleFile(std::string targetFile, std::string 
 				}
 				else parsingCommentBlockIndex--;	//	parsing backward for end of block detection
 			}
-			else parsingCommentBlockIndex = commentBlockEntry.size() - 1;	//	parsing block fail so reset parameter
+			else parsingCommentBlockIndex = (int)commentBlockEntry.size() - 1;	//	parsing block fail so reset parameter
 		}
 		else if (actuallyParsingCommentLine)
 		{

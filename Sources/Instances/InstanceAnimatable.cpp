@@ -121,7 +121,7 @@ void InstanceAnimatable::launchAnimation(const std::string& labelName, const boo
 	std::map<std::string, KeyLabel>::iterator it = animation->labels.find(labelName);
 	if (it != animation->labels.end())
 	{
-		AnimationTrack at(skeleton->joints.size(), labelName);
+		AnimationTrack at((unsigned int)skeleton->joints.size(), labelName);
 			at.start = it->second.start;
 			at.stop = it->second.stop;
 			at.exit = it->second.exit_key;
@@ -223,7 +223,7 @@ void InstanceAnimatable::initializeVBOVAO()
 void InstanceAnimatable::drawBB()
 {
 	glBindVertexArray(vao);
-	glDrawArrays(GL_POINTS, 0, segmentIndex.size());
+	glDrawArrays(GL_POINTS, 0, (int)segmentIndex.size());
 }
 //
 

@@ -137,14 +137,14 @@ void WidgetConsole::draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model
 		loc = s->getUniformLocation("color");
 		if (loc >= 0) glUniform4fv(loc, 1, &colors[CURRENT].x);
 		glBindVertexArray(batchList[BATCH_INDEX_BORDER].vao);
-		glDrawElements(GL_TRIANGLES, batchList[BATCH_INDEX_BORDER].faces.size(), GL_UNSIGNED_SHORT, NULL);
+		glDrawElements(GL_TRIANGLES, (int)batchList[BATCH_INDEX_BORDER].faces.size(), GL_UNSIGNED_SHORT, NULL);
 
 		//	draw center at different alpha
 		glm::vec4 color = glm::vec4(colors[CURRENT].x, colors[CURRENT].y, colors[CURRENT].z, 0.5f * colors[CURRENT].w);
 		loc = s->getUniformLocation("color");
 		if (loc >= 0) glUniform4fv(loc, 1, &color.x);
 		glBindVertexArray(batchList[BATCH_INDEX_CENTER].vao);
-		glDrawElements(GL_TRIANGLES, batchList[BATCH_INDEX_CENTER].faces.size(), GL_UNSIGNED_SHORT, NULL);
+		glDrawElements(GL_TRIANGLES, (int)batchList[BATCH_INDEX_CENTER].faces.size(), GL_UNSIGNED_SHORT, NULL);
 
 	//	elevator
 	float selection = sizeChar * linesLength.size() - (sizes[CURRENT].y - 2.f * borderThickness);
@@ -161,7 +161,7 @@ void WidgetConsole::draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model
 			if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, &glm::translate(model, positions[CURRENT] + glm::vec3(0.f, 0.f, selectionPart))[0][0]);
 
 			glBindVertexArray(batchList[BATCH_INDEX_ELEVATOR].vao);
-			glDrawElements(GL_TRIANGLES, batchList[BATCH_INDEX_ELEVATOR].faces.size(), GL_UNSIGNED_SHORT, NULL);
+			glDrawElements(GL_TRIANGLES, (int)batchList[BATCH_INDEX_ELEVATOR].faces.size(), GL_UNSIGNED_SHORT, NULL);
 
 			//	reset model matrix on shader
 			loc = s->getUniformLocation("model");
@@ -191,7 +191,7 @@ void WidgetConsole::draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model
 		if (loc >= 0) glUniform4fv(loc, 1, &glm::vec4(1.f)[0]);
 
 		glBindVertexArray(batchList[BATCH_INDEX_TEXT].vao);
-		glDrawElements(GL_TRIANGLES, batchList[BATCH_INDEX_TEXT].faces.size(), GL_UNSIGNED_SHORT, NULL);
+		glDrawElements(GL_TRIANGLES, (int)batchList[BATCH_INDEX_TEXT].faces.size(), GL_UNSIGNED_SHORT, NULL);
 
 		//	reset model matrix on shader
 		loc = s->getUniformLocation("model");
@@ -356,7 +356,7 @@ void WidgetConsole::updateBuffers(const bool& firstInit)
 	}
 	if (cornerConfiguration & BOTTOM_RIGHT)
 	{
-		unsigned int index = clippingShape.vertices.size() - 1;
+		unsigned int index = (int)clippingShape.vertices.size() - 1;
 		clippingShape.vertices.push_back(glm::vec3(dimension.x - ELEVATOR_MARGIN_FACTOR * borderWidth, TEXT_DEPTH_OFFSET, -dimension.z + ELEVATOR_MARGIN_FACTOR * borderWidth));
 		clippingShape.faces.push_back(0); clippingShape.faces.push_back(index); clippingShape.faces.push_back(index + 1);
 
@@ -367,7 +367,7 @@ void WidgetConsole::updateBuffers(const bool& firstInit)
 	}
 	else
 	{
-		unsigned int index = clippingShape.vertices.size() - 1;
+		unsigned int index = (int)clippingShape.vertices.size() - 1;
 		clippingShape.vertices.push_back(glm::vec3(dimension.x - ELEVATOR_MARGIN_FACTOR * borderWidth, TEXT_DEPTH_OFFSET, -dimension.z));
 		clippingShape.faces.push_back(0); clippingShape.faces.push_back(index); clippingShape.faces.push_back(index + 1);
 
@@ -375,7 +375,7 @@ void WidgetConsole::updateBuffers(const bool& firstInit)
 	}
 	if (cornerConfiguration & BOTTOM_LEFT)
 	{
-		unsigned int index = clippingShape.vertices.size() - 1;
+		unsigned int index = (int)clippingShape.vertices.size() - 1;
 		clippingShape.vertices.push_back(glm::vec3(-dimension.x + borderWidth, TEXT_DEPTH_OFFSET, -dimension.z));
 		clippingShape.faces.push_back(0); clippingShape.faces.push_back(index); clippingShape.faces.push_back(index + 1);
 
@@ -384,13 +384,13 @@ void WidgetConsole::updateBuffers(const bool& firstInit)
 	}
 	else
 	{
-		unsigned int index = clippingShape.vertices.size() - 1;
+		unsigned int index = (int)clippingShape.vertices.size() - 1;
 		clippingShape.vertices.push_back(glm::vec3(-dimension.x, TEXT_DEPTH_OFFSET, -dimension.z));
 		clippingShape.faces.push_back(0); clippingShape.faces.push_back(index); clippingShape.faces.push_back(index + 1);
 	}
 	if (cornerConfiguration & TOP_LEFT)
 	{
-		unsigned int index = clippingShape.vertices.size() - 1;
+		unsigned int index = (int)clippingShape.vertices.size() - 1;
 		clippingShape.vertices.push_back(glm::vec3(-dimension.x, TEXT_DEPTH_OFFSET, dimension.z - borderWidth));
 		clippingShape.faces.push_back(0); clippingShape.faces.push_back(index); clippingShape.faces.push_back(index + 1);
 
@@ -399,7 +399,7 @@ void WidgetConsole::updateBuffers(const bool& firstInit)
 	}
 	else
 	{
-		unsigned int index = clippingShape.vertices.size() - 1;
+		unsigned int index = (int)clippingShape.vertices.size() - 1;
 		clippingShape.vertices.push_back(glm::vec3(-dimension.x, TEXT_DEPTH_OFFSET, dimension.z));
 		clippingShape.faces.push_back(0); clippingShape.faces.push_back(index); clippingShape.faces.push_back(index + 1);
 	}
@@ -569,7 +569,7 @@ void WidgetConsole::parseText()
 	//	remove extra line
 	if (linesLength.size() > MAX_LINE)
 	{
-		int eraseLineCount = linesLength.size() - MAX_LINE;
+		int eraseLineCount = (int)linesLength.size() - MAX_LINE;
 		text.erase(0, lineIndexes[eraseLineCount - 1].second + 1);
 		linesLength.erase(linesLength.begin(), linesLength.begin() + eraseLineCount);
 	}

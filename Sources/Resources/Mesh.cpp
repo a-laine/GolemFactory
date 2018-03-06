@@ -251,19 +251,19 @@ void Mesh::initializeVAO()
 void Mesh::draw()
 {
 	glBindVertexArray(vao);
-	glDrawElements(GL_TRIANGLES, faces.size(), GL_UNSIGNED_SHORT, NULL);
+	glDrawElements(GL_TRIANGLES, (int)faces.size(), GL_UNSIGNED_SHORT, NULL);
 }
 void Mesh::drawBB()
 {
 	glBindVertexArray(BBoxVao);
-	glDrawElements(GL_TRIANGLES, fBBox.size(), GL_UNSIGNED_SHORT, NULL);
+	glDrawElements(GL_TRIANGLES, (int)fBBox.size(), GL_UNSIGNED_SHORT, NULL);
 }
 //
 
 
 //  Set/get functions
-unsigned int Mesh::getNumberVertices() const { return vertices.size(); }
-unsigned int Mesh::getNumberFaces() const { return faces.size(); }
+unsigned int Mesh::getNumberVertices() const { return (unsigned int)vertices.size(); }
+unsigned int Mesh::getNumberFaces() const { return (unsigned int)faces.size(); }
 const std::vector<glm::vec3>* Mesh::getBBoxVertices() const { return &vBBox; }
 const std::vector<unsigned short>* Mesh::getBBoxFaces() const { return &fBBox; }
 const std::vector<glm::vec3>* Mesh::getVertices() const { return &vertices; }

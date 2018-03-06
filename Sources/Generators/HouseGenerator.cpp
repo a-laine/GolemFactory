@@ -324,7 +324,7 @@ void HouseGenerator::createAndPlaceHouseBlock()
 }
 void HouseGenerator::createAndPlaceDecorationBlock()
 {
-	unsigned int index = blockList.size();
+	unsigned int index = (unsigned int)blockList.size();
 	int doorCount = 1 + superficy / houseFieldFloor / 40;
 	int fireplaceCount = 1 + superficy / 70;
 	int factor = 0;
@@ -897,7 +897,7 @@ char HouseGenerator::getRelativePosRoof(const int& ref, const unsigned int& i, c
 void HouseGenerator::pushMesh(Mesh* m, const glm::vec3& p, const glm::vec3& o, const glm::vec3& s)
 {
 	if (!m) return;
-	unsigned int facesStart = verticesArray.size();
+	unsigned int facesStart = (unsigned int)verticesArray.size();
 
 	//	Compute orientation matrix
 	glm::mat4 orientation(1.f);

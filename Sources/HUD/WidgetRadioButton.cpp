@@ -90,7 +90,7 @@ void WidgetRadioButton::draw(Shader* s, uint8_t& stencilMask, const glm::mat4& m
 	if (loc >= 0) glUniform4fv(loc, 1, &colors[CURRENT].x);
 
 	glBindVertexArray(batchList[BATCH_INDEX_TEXT].vao);
-	glDrawElements(GL_TRIANGLES, batchList[BATCH_INDEX_TEXT].faces.size(), GL_UNSIGNED_SHORT, NULL);//BATCH_INDEX_TEXT
+	glDrawElements(GL_TRIANGLES, (int)batchList[BATCH_INDEX_TEXT].faces.size(), GL_UNSIGNED_SHORT, NULL);//BATCH_INDEX_TEXT
 
 	//	unclip zone (batch 1)
 	if (textConfiguration & CLIPPING)
@@ -121,7 +121,7 @@ void WidgetRadioButton::draw(Shader* s, uint8_t& stencilMask, const glm::mat4& m
 	loc = s->getUniformLocation("color");
 	if (loc >= 0) glUniform4fv(loc, 1, &white.x);
 	glBindVertexArray(batchList[BATCH_INDEX_CHECKBOX].vao);
-	glDrawElements(GL_TRIANGLES, batchList[BATCH_INDEX_CHECKBOX].faces.size(), GL_UNSIGNED_SHORT, NULL);
+	glDrawElements(GL_TRIANGLES, (int)batchList[BATCH_INDEX_CHECKBOX].faces.size(), GL_UNSIGNED_SHORT, NULL);
 }
 bool WidgetRadioButton::intersect(const glm::mat4& base, const glm::vec3& ray)
 {

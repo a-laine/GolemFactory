@@ -484,13 +484,13 @@ unsigned int ResourceManager::getNumberOfRessources(const ResourceVirtual::Resou
 {
     switch(type)
     {
-        case ResourceVirtual::FONT:			return fontList.size();
-        case ResourceVirtual::MESH:			return meshList.size();
-        case ResourceVirtual::SHADER:		return shaderList.size();
-        case ResourceVirtual::TEXTURE:		return textureList.size();
-		case ResourceVirtual::ANIMATION:	return animationList.size();
-		case ResourceVirtual::SKELETON:		return skeletonList.size();
-		default: return fontList.size() + shaderList.size() + textureList.size() + meshList.size() + animationList.size() + skeletonList.size();
+        case ResourceVirtual::FONT:			return (unsigned int)fontList.size();
+        case ResourceVirtual::MESH:			return (unsigned int)meshList.size();
+        case ResourceVirtual::SHADER:		return (unsigned int)shaderList.size();
+        case ResourceVirtual::TEXTURE:		return (unsigned int)textureList.size();
+		case ResourceVirtual::ANIMATION:	return (unsigned int)animationList.size();
+		case ResourceVirtual::SKELETON:		return (unsigned int)skeletonList.size();
+		default: return (int)(fontList.size() + shaderList.size() + textureList.size() + meshList.size() + animationList.size() + skeletonList.size());
     }
 }
 std::string ResourceManager::getDefaultName(const ResourceVirtual::ResourceType& type) const

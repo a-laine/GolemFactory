@@ -88,7 +88,7 @@ void WidgetLabel::draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model)
 	if (loc >= 0) glUniform4fv(loc, 1, &colors[CURRENT].x);
 
 	glBindVertexArray(batchList[BATCH_INDEX_TEXT].vao);
-	glDrawElements(GL_TRIANGLES, batchList[BATCH_INDEX_TEXT].faces.size(), GL_UNSIGNED_SHORT, NULL);
+	glDrawElements(GL_TRIANGLES, (int)batchList[BATCH_INDEX_TEXT].faces.size(), GL_UNSIGNED_SHORT, NULL);
 
 	//	unclip zone (batch 1)
 	if (textConfiguration & CLIPPING)

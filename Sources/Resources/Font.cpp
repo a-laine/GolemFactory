@@ -174,7 +174,7 @@ Font::Patch Font::getPatch(char c) const
 char Font::getDefaultChar() const { return (char)defaultChar; }
 char Font::getBeginChar() const { return (char)begin; }
 char Font::getEndChar() const { return (char)end; }
-int Font::getArraySize() const { return charTable.size(); }
+int Font::getArraySize() const { return (int)charTable.size(); }
 //
 
 //  Private functions

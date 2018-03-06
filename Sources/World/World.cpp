@@ -25,7 +25,7 @@ unsigned int World::getObjectCount() const
 
 bool World::manageObject(InstanceVirtual* object)
 {
-	bool ok = instanceManager.add(object);
+	bool ok = instanceManager.add(object) != nullptr;
 	if(ok) object->setParentWorld(this);
 	return ok;
 }

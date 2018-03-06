@@ -273,12 +273,12 @@ void MeshAnimated::initializeVAO()
 void MeshAnimated::draw()
 {
 	glBindVertexArray(vao);
-	glDrawElements(GL_TRIANGLES, faces.size(), GL_UNSIGNED_SHORT, NULL);
+	glDrawElements(GL_TRIANGLES, (int)faces.size(), GL_UNSIGNED_SHORT, NULL);
 }
 void MeshAnimated::drawBB()
 {
 	glBindVertexArray(BBoxVao);
-	glDrawElements(GL_TRIANGLES, fBBox.size(), GL_UNSIGNED_SHORT, NULL);
+	glDrawElements(GL_TRIANGLES, (int)fBBox.size(), GL_UNSIGNED_SHORT, NULL);
 }
 //
 

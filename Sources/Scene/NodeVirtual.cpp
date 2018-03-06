@@ -101,7 +101,7 @@ glm::vec3 NodeVirtual::getCenter() const { return position; }
 glm::vec3 NodeVirtual::getSize() const { return halfSize * 2.f; }
 glm::vec3 NodeVirtual::getBBMax() const { return position + halfSize; }
 glm::vec3 NodeVirtual::getBBMin() const { return position - halfSize; }
-int NodeVirtual::getChildrenCount() const { return children.size() + adoptedChildren.size(); }
+int NodeVirtual::getChildrenCount() const { return (int)(children.size() + adoptedChildren.size()); }
 bool NodeVirtual::isLeaf() const { return children.empty(); }
 
 bool NodeVirtual::isInside(const glm::vec3& point) const

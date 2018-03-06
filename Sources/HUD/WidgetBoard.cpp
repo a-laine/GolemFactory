@@ -50,7 +50,7 @@ void WidgetBoard::draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model)
 	if (loc >= 0) glUniform4fv(loc, 1, &colors[CURRENT].x);
 
 	glBindVertexArray(batchList[BATCH_INDEX_BORDER].vao);
-	glDrawElements(GL_TRIANGLES, batchList[BATCH_INDEX_BORDER].faces.size(), GL_UNSIGNED_SHORT, NULL);
+	glDrawElements(GL_TRIANGLES, (int)batchList[BATCH_INDEX_BORDER].faces.size(), GL_UNSIGNED_SHORT, NULL);
 
 	//	draw center at different alpha
 	glm::vec4 color(colors[CURRENT].x, colors[CURRENT].y, colors[CURRENT].z, 0.5f * colors[CURRENT].w);
@@ -58,7 +58,7 @@ void WidgetBoard::draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model)
 	if (loc >= 0) glUniform4fv(loc, 1, &color.x);
 
 	glBindVertexArray(batchList[BATCH_INDEX_CENTER].vao);
-	glDrawElements(GL_TRIANGLES, batchList[BATCH_INDEX_CENTER].faces.size(), GL_UNSIGNED_SHORT, NULL);
+	glDrawElements(GL_TRIANGLES, (int)batchList[BATCH_INDEX_CENTER].faces.size(), GL_UNSIGNED_SHORT, NULL);
 }
 void WidgetBoard::update(const float& elapseTime)
 {
@@ -195,7 +195,7 @@ void WidgetBoard::updateBuffers(const bool& firstInit)
 	if (cornerConfiguration & BOTTOM_RIGHT)
 	{
 		//	center
-		unsigned int index = center.vertices.size() - 1;
+		unsigned int index = (int)center.vertices.size() - 1;
 		center.vertices.push_back(glm::vec3(dimension.x, 0.f, -dimension.z + borderWidth));
 		center.faces.push_back(0); center.faces.push_back(index); center.faces.push_back(index + 1);
 
@@ -203,7 +203,7 @@ void WidgetBoard::updateBuffers(const bool& firstInit)
 		center.faces.push_back(0); center.faces.push_back(index + 1); center.faces.push_back(index + 2);
 
 		//	vertex index + 1
-		index = border.vertices.size() - 1;
+		index = (int)border.vertices.size() - 1;
 		border.vertices.push_back(glm::vec3(dimension.x, 0.f, -dimension.z + borderWidth));
 		border.vertices.push_back(glm::vec3(dimension.x + borderThickness, 0.f, -dimension.z + borderWidth));
 
@@ -221,7 +221,7 @@ void WidgetBoard::updateBuffers(const bool& firstInit)
 		border.faces.push_back(borderCornerIndex);  border.faces.push_back(index + 3);		border.faces.push_back(index + 4);
 
 		//	vertex index + 1
-		index = border.vertices.size() - 1;
+		index = (int)border.vertices.size() - 1;
 		border.vertices.push_back(glm::vec3(dimension.x - borderWidth, 0.f, -dimension.z));
 		border.vertices.push_back(glm::vec3(dimension.x - borderWidth + borderThickness* sin(6 * pi / 8), 0.f, -dimension.z + borderThickness * cos(6 * pi / 8)));
 
@@ -241,12 +241,12 @@ void WidgetBoard::updateBuffers(const bool& firstInit)
 	else
 	{
 		//	center
-		unsigned int index = center.vertices.size() - 1;
+		unsigned int index = (int)center.vertices.size() - 1;
 		center.vertices.push_back(glm::vec3(dimension.x, 0.f, -dimension.z));
 		center.faces.push_back(0); center.faces.push_back(index); center.faces.push_back(index + 1);
 
 		//	vertex index + 1
-		index = border.vertices.size() - 1;
+		index = (int)border.vertices.size() - 1;
 		border.vertices.push_back(glm::vec3(dimension.x, 0.f, -dimension.z));
 		border.vertices.push_back(glm::vec3(dimension.x + borderThickness, 0.f, -dimension.z));
 
@@ -272,7 +272,7 @@ void WidgetBoard::updateBuffers(const bool& firstInit)
 	if (cornerConfiguration & BOTTOM_LEFT)
 	{
 		//	center
-		unsigned int index = center.vertices.size() - 1;
+		unsigned int index = (int)center.vertices.size() - 1;
 		center.vertices.push_back(glm::vec3(-dimension.x + borderWidth, 0.f, -dimension.z));
 		center.faces.push_back(0); center.faces.push_back(index); center.faces.push_back(index + 1);
 
@@ -280,7 +280,7 @@ void WidgetBoard::updateBuffers(const bool& firstInit)
 		center.faces.push_back(0); center.faces.push_back(index + 1); center.faces.push_back(index + 2);
 
 		//	vertex index + 1
-		index = border.vertices.size() - 1;
+		index = (int)border.vertices.size() - 1;
 		border.vertices.push_back(glm::vec3(-dimension.x + borderWidth, 0.f, -dimension.z));
 		border.vertices.push_back(glm::vec3(-dimension.x + borderWidth, 0.f, -dimension.z - borderThickness));
 
@@ -298,7 +298,7 @@ void WidgetBoard::updateBuffers(const bool& firstInit)
 		border.faces.push_back(borderCornerIndex);  border.faces.push_back(index + 3);		border.faces.push_back(index + 4);
 
 		//	vertex index + 1
-		index = border.vertices.size() - 1;
+		index = (int)border.vertices.size() - 1;
 		border.vertices.push_back(glm::vec3(-dimension.x, 0.f, -dimension.z + borderWidth));
 		border.vertices.push_back(glm::vec3(-dimension.x + borderThickness* sin(10 * pi / 8), 0.f, -dimension.z + borderWidth + borderThickness * cos(10 * pi / 8)));
 
@@ -318,12 +318,12 @@ void WidgetBoard::updateBuffers(const bool& firstInit)
 	else
 	{
 		//	center
-		unsigned int index = center.vertices.size() - 1;
+		unsigned int index = (int)center.vertices.size() - 1;
 		center.vertices.push_back(glm::vec3(-dimension.x, 0.f, -dimension.z));
 		center.faces.push_back(0); center.faces.push_back(index); center.faces.push_back(index + 1);
 
 		//	vertex index + 1
-		index = border.vertices.size() - 1;
+		index = (int)border.vertices.size() - 1;
 		border.vertices.push_back(glm::vec3(-dimension.x, 0.f, -dimension.z));
 		border.vertices.push_back(glm::vec3(-dimension.x, 0.f, -dimension.z - borderThickness));
 
@@ -349,7 +349,7 @@ void WidgetBoard::updateBuffers(const bool& firstInit)
 	if (cornerConfiguration & TOP_LEFT)
 	{
 		//	center
-		unsigned int index = center.vertices.size() - 1;
+		unsigned int index = (int)center.vertices.size() - 1;
 		center.vertices.push_back(glm::vec3(-dimension.x, 0.f, dimension.z - borderWidth));
 		center.faces.push_back(0); center.faces.push_back(index); center.faces.push_back(index + 1);
 
@@ -357,7 +357,7 @@ void WidgetBoard::updateBuffers(const bool& firstInit)
 		center.faces.push_back(0); center.faces.push_back(index + 1); center.faces.push_back(index + 2);
 
 		//	vertex index + 1
-		index = border.vertices.size() - 1;
+		index = (int)border.vertices.size() - 1;
 		border.vertices.push_back(glm::vec3(-dimension.x, 0.f, dimension.z - borderWidth));
 		border.vertices.push_back(glm::vec3(-dimension.x - borderThickness, 0.f, dimension.z - borderWidth));
 
@@ -375,7 +375,7 @@ void WidgetBoard::updateBuffers(const bool& firstInit)
 		border.faces.push_back(borderCornerIndex);  border.faces.push_back(index + 3);		border.faces.push_back(index + 4);
 
 		//	vertex index + 1
-		index = border.vertices.size() - 1;
+		index = (int)border.vertices.size() - 1;
 		border.vertices.push_back(glm::vec3(-dimension.x + borderWidth, 0.f, dimension.z));
 		border.vertices.push_back(glm::vec3(-dimension.x + borderWidth + borderThickness* sin(14 * pi / 8), 0.f, dimension.z + borderThickness * cos(14 * pi / 8)));
 
@@ -395,12 +395,12 @@ void WidgetBoard::updateBuffers(const bool& firstInit)
 	else
 	{
 		//	center
-		unsigned int index = center.vertices.size() - 1;
+		unsigned int index = (int)center.vertices.size() - 1;
 		center.vertices.push_back(glm::vec3(-dimension.x, 0.f, dimension.z));
 		center.faces.push_back(0); center.faces.push_back(index); center.faces.push_back(index + 1);
 
 		//	vertex index + 1
-		index = border.vertices.size() - 1;
+		index = (int)border.vertices.size() - 1;
 		border.vertices.push_back(glm::vec3(-dimension.x, 0.f, dimension.z));
 		border.vertices.push_back(glm::vec3(-dimension.x - borderThickness, 0.f, dimension.z));
 

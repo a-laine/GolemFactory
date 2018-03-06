@@ -60,7 +60,7 @@ void WidgetVirtual::draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model
 	for (unsigned int i = 0; i < batchList.size(); i++)
 	{
 		glBindVertexArray(batchList[i].vao);
-		glDrawElements(GL_TRIANGLES, batchList[i].faces.size(), GL_UNSIGNED_SHORT, NULL);
+		glDrawElements(GL_TRIANGLES, (int)batchList[i].faces.size(), GL_UNSIGNED_SHORT, NULL);
 	}
 }
 void WidgetVirtual::update(const float& elapseTime)
@@ -203,7 +203,7 @@ unsigned int WidgetVirtual::getNumberFaces() const
 {
 	unsigned int result = 0;
 	for (unsigned int i = 0; i < batchList.size(); i++)
-		result += batchList[i].faces.size();
+		result += (unsigned int)batchList[i].faces.size();
 	return result;
 }
 std::vector<WidgetVirtual*>& WidgetVirtual::getChildrenList() { return children; }
@@ -245,7 +245,7 @@ void WidgetVirtual::drawClippingShape(const unsigned int& batchIndex, const bool
 	if (loc >= 0) glUniform4fv(loc, 1, &glm::vec4(0.f)[0]);
 
 	glBindVertexArray(batchList[batchIndex].vao);
-	glDrawElements(GL_TRIANGLES, batchList[batchIndex].faces.size(), GL_UNSIGNED_SHORT, NULL);
+	glDrawElements(GL_TRIANGLES, (int)batchList[batchIndex].faces.size(), GL_UNSIGNED_SHORT, NULL);
 
 	glStencilFunc(GL_EQUAL, stencilMask, 0xFF);
 	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);

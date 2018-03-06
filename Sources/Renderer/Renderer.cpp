@@ -338,14 +338,14 @@ void Renderer::drawInstanceAnimatable(InstanceVirtual* ins, const float* view, c
 	//	Load skeleton pose matrix list for vertex skinning calculation
 	std::vector<glm::mat4> pose = ins->getPose();
 	int loc = shaderToUse->getUniformLocation("skeletonPose");
-	if (loc >= 0) glUniformMatrix4fv(loc, pose.size(), FALSE, (float*)pose.data());
+	if (loc >= 0) glUniformMatrix4fv(loc, (int)pose.size(), FALSE, (float*)pose.data());
 
 	//	Load inverse bind pose matrix list for vertex skinning calculation
 	std::vector<glm::mat4> bind;
 	Skeleton* skeleton = ins->getSkeleton();
 	if (skeleton) bind = skeleton->getInverseBindPose();
 	loc = shaderToUse->getUniformLocation("inverseBindPose");
-	if (loc >= 0) glUniformMatrix4fv(loc, bind.size(), FALSE, (float*)bind.data());
+	if (loc >= 0) glUniformMatrix4fv(loc, (int)bind.size(), FALSE, (float*)bind.data());
 
 	//	Draw mesh
 	if (renderOption == BOUNDING_BOX)

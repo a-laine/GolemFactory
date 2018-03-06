@@ -7,6 +7,8 @@
 #include <time.h>
 #include <sys/types.h>
 
+#include "Utiles/System.h"
+
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -14,7 +16,6 @@
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-#include "Utiles/System.h"
 #include "Utiles/ToolBox.h"
 #include "Events/EventHandler.h"
 #include "Renderer/Renderer.h"

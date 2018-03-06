@@ -105,8 +105,8 @@ void InstanceManager::reserveInstanceSize(unsigned int size)
 
 unsigned int InstanceManager::getNumberOfInstances() const { return nbInstance.load(); }
 unsigned int InstanceManager::getMaxNumberOfInstances() const { return maxInstance.load(); }
-unsigned int InstanceManager::getInstanceCapacity() const { return instanceList.capacity(); }
-unsigned int InstanceManager::getInstanceSlot() const { return instanceList.size(); }
+unsigned int InstanceManager::getInstanceCapacity() const { return (unsigned int) instanceList.capacity(); }
+unsigned int InstanceManager::getInstanceSlot() const { return (unsigned int) instanceList.size(); }
 //
 
 
@@ -127,7 +127,7 @@ uint32_t InstanceManager::getAvalibleId()
 			if (instanceList.capacity() <= instanceList.size())
 				instanceList.reserve(instanceList.size() + 32 * tmp);
 
-			page = summary.size();
+			page = (unsigned int)summary.size();
 			summary.push_back(0);
 			for (int i = 0; i<32; i++)
 				instanceList.push_back(nullptr);

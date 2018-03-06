@@ -61,7 +61,7 @@ void SceneManager::reserveInstanceTrack(const unsigned int& count)
 
 unsigned int SceneManager::getObjectCount() const
 {
-	return instanceTracking.size();
+	return (unsigned int)instanceTracking.size();
 }
 
 
