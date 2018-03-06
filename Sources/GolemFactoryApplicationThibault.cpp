@@ -262,7 +262,7 @@ void initializeForestScene(bool emptyPlace)
 	//	debug
 	if (DEBUG)
 	{
-		std::cout << "Instance count : " << InstanceManager::getInstance()->getNumberOfInstances() << std::endl;
+		std::cout << "Instance count : " << world.getObjectCount() << std::endl;
 		std::cout << "House count : " << vilageHouseCount  << std::endl;
 		std::cout << "Insert fail : " << fail << std::endl;
 	}
@@ -316,6 +316,7 @@ void initManagers()
 	Renderer::getInstance()->setWindow(window);
 	Renderer::getInstance()->initializeGrid(GRID_SIZE, GRID_ELEMENT_SIZE, glm::vec3(24 / 255.f, 202 / 255.f, 230 / 255.f));	// blue tron
 	Renderer::getInstance()->setCamera(&camera2);
+	Renderer::getInstance()->setWorld(&world);
 	Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getShader("greenGrass"));
 	Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE_BB, ResourceManager::getInstance()->getShader("wired"));
 	Renderer::getInstance()->setShader(Renderer::INSTANCE_ANIMATABLE_BB, ResourceManager::getInstance()->getShader("skeletonBB"));
@@ -342,11 +343,11 @@ void picking(int width, int height)
 			case InstanceVirtual::CONTAINER:	type = "container";		break;
 			default: type = "virtual"; break;
 		}
-		glm::vec3 p = camera.getPosition() + rayList[0].first * camera.getForward();
+		glm::vec3 p = camera.getPosition() + collector.getDistance() * camera.getForward();
 
-		WidgetManager::getInstance()->setString("interaction", "Distance : " + ToolBox::to_string_with_precision(rayList[0].first, 5) +
+		WidgetManager::getInstance()->setString("interaction", "Distance : " + ToolBox::to_string_with_precision(collector.getDistance(), 5) +
 			" m\nPosition : (" + ToolBox::to_string_with_precision(p.x, 5) + " , " + ToolBox::to_string_with_precision(p.y, 5) + " , " + ToolBox::to_string_with_precision(p.z, 5) +
-			")\nFirst instance pointed id : " + std::to_string(rayList[0].second->getId()) +
+			")\nFirst instance pointed id : " + std::to_string(collector.getObject()->getId()) +
 			"\n  type : " + type);
 
 		if (WidgetManager::getInstance()->getBoolean("BBpicking"))
