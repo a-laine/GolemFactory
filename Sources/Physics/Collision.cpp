@@ -3,6 +3,9 @@
 #include <iostream>
 #include <string>
 
+#include <glm/gtx/transform.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 #define EPSILON 0.0001f
 
 // https://github.com/gszauer/GamePhysicsCookbook/blob/master/Code/Geometry3D.cpp
@@ -232,8 +235,11 @@ bool Collision::collide(const Shape& a, const Shape& b)
 }
 void Collision::debugUnitaryTest(const int& verboseLevel)
 {
-	{	// point vs ...
+	// point vs ...
+	{
 		Point testPoint = Point(glm::vec3(0, 0, 0));
+		glm::mat4 dummyTranslate = glm::translate(glm::mat4(1.0), glm::vec3(1, 1, 1));
+		glm::mat4 dummyRotate = glm::rotate(0.1f, glm::normalize(glm::vec3(0.5, 1, 3)));
 
 		// ... vs point
 		if (Collision::collide(testPoint, Point(glm::vec3(0, 0, 0))) == false)
@@ -260,6 +266,69 @@ void Collision::debugUnitaryTest(const int& verboseLevel)
 			printError("point", "triangle", 9);
 		if (Collision::collide(testPoint, Triangle(glm::vec3(0, 0, 1), glm::vec3(-1, 0, 1), glm::vec3(2, 0, 1))) == true)
 			printError("point", "triangle", 10);
+
+		// ... vs OB
+		if (Collision::collide(testPoint, OrientedBox(glm::mat4(1.f), glm::vec3(-0.5f), glm::vec3(0.5f))) == false)
+			printError("point", "oriented box", 11);
+		if (Collision::collide(testPoint, OrientedBox(dummyRotate, glm::vec3(-0.5f), glm::vec3(0.5f))) == false)
+			printError("point", "oriented box", 12);
+		if (Collision::collide(testPoint, OrientedBox(dummyTranslate * dummyRotate, glm::vec3(-0.5f), glm::vec3(0.5f))) == true)
+			printError("point", "oriented box", 13);
+		if (Collision::collide(testPoint, OrientedBox(dummyRotate, glm::vec3(0.f), glm::vec3(0.f))) == false)
+			printError("point", "oriented box", 14);
+		if (Collision::collide(testPoint, OrientedBox(dummyTranslate * dummyRotate, glm::vec3(0.f), glm::vec3(0.f))) == true)
+			printError("point", "oriented box", 15);
+
+		// ... vs AAB
+		if (Collision::collide(testPoint, AxisAlignedBox(glm::vec3(-0.5f), glm::vec3(0.5f))) == false)
+			printError("point", "axis aligned box", 16);
+		if (Collision::collide(testPoint, AxisAlignedBox(glm::vec3(0.5f), glm::vec3(1.f))) == true)
+			printError("point", "axis aligned box", 17);
+
+		// ... vs Sphere
+		if (Collision::collide(testPoint, Sphere(glm::vec3(0.f), 1.f)) == false)
+			printError("point", "sphere", 18);
+		if (Collision::collide(testPoint, Sphere(glm::vec3(1.f), 1.f)) == true)
+			printError("point", "sphere", 19);
+		if (Collision::collide(testPoint, Sphere(glm::vec3(0.f), 0.f)) == false)
+			printError("point", "sphere", 20);
+		if (Collision::collide(testPoint, Sphere(glm::vec3(1.f), 0.f)) == true)
+			printError("point", "sphere", 21);
+
+		// ... vs Capsule
+		if (Collision::collide(testPoint, Capsule(glm::vec3(0, 0, -1), glm::vec3(0, 0, 3), 0.5f)) == false)
+			printError("point", "capsule", 22);
+		if (Collision::collide(testPoint, Capsule(glm::vec3(2, 0, -1), glm::vec3(1, 0, 3), 0.5f)) == true)
+			printError("point", "capsule", 23);
+		if (Collision::collide(testPoint, Capsule(glm::vec3(0, 0, -1), glm::vec3(0, 0, 3), 0.f)) == false)
+			printError("point", "capsule", 24);
+		if (Collision::collide(testPoint, Capsule(glm::vec3(2, 0, -1), glm::vec3(-1, 0, 3), 2.f)) == false)
+			printError("point", "capsule", 25);
+	}
+
+	// segment vs ...
+	{
+		Segment testSegment = Segment(glm::vec3(-1, 0, 0), glm::vec3(1, 0, 0));
+
+		// ... vs Segment
+		if (Collision::collide(testSegment, Segment(glm::vec3(0, -3, 0), glm::vec3(0, 1, 0))) == false)
+			printError("segment", "segment", 1);
+		if (Collision::collide(testSegment, Segment(glm::vec3(0, -3, 1), glm::vec3(0, 1, 1))) == true)
+			printError("segment", "segment", 2);
+		if (Collision::collide(testSegment, testSegment) == false)
+			printError("segment", "segment", 3);
+		if (Collision::collide(testSegment, Segment(glm::vec3(-3, 0, 1), glm::vec3(1, 0, 1))) == true)
+			printError("segment", "segment", 4);
+		if (Collision::collide(testSegment, Segment(glm::vec3(0, 0, 0), glm::vec3(0, 0, 0))) == false)
+			printError("segment", "segment", 5);
+		if (Collision::collide(testSegment, Segment(glm::vec3(0, 0, 1), glm::vec3(0, 0, 1))) == true)
+			printError("segment", "segment", 6);
+
+
+
+
+		// ... vs Capsule
+
 	}
 }
 //
@@ -272,7 +341,7 @@ bool Collision::collide_PointvsPoint(const glm::vec3& point1, const glm::vec3& p
 bool Collision::collide_PointvsSegment(const glm::vec3& point, const glm::vec3& segment1, const glm::vec3& segment2)
 {
 	glm::vec3 s = segment2 - segment1;
-	if (glm::dot(s, s) == 0.f) return point == segment1;
+	if (s == glm::vec3(0.f)) return point == segment1;
 	else
 	{
 		glm::vec3 u = glm::normalize(s);
@@ -322,8 +391,8 @@ bool Collision::collide_PointvsOrientedBox(const glm::vec3& point, const glm::ma
 	glm::vec3 bz = glm::normalize(glm::vec3(boxTranform*glm::vec4(0.f, 0.f, 1.f, 0.f)));
 
 	glm::vec3 p = point - bmin;
-	if (glm::dot(p, bx) < 0.f || glm::dot(p, by) < 0.f || glm::dot(p, bz) < 0.f) return false;
-	else if (glm::dot(p, bx) > glm::dot(bdiag, bx) || glm::dot(p, by) > glm::dot(bdiag, by) || glm::dot(p, bz) > glm::dot(bdiag, bz)) return false;
+	if (glm::dot(p, bx) < -EPSILON || glm::dot(p, by) < -EPSILON || glm::dot(p, bz) < -EPSILON) return false;
+	else if (glm::dot(p, bx) > glm::dot(bdiag, bx) + EPSILON || glm::dot(p, by) > glm::dot(bdiag, by) + EPSILON || glm::dot(p, bz) > glm::dot(bdiag, bz) + EPSILON) return false;
 	else return true;
 }
 bool Collision::collide_PointvsAxisAlignedBox(const glm::vec3& point, const glm::vec3& boxMin, const glm::vec3& boxMax)
@@ -335,20 +404,18 @@ bool Collision::collide_PointvsAxisAlignedBox(const glm::vec3& point, const glm:
 bool Collision::collide_PointvsSphere(const glm::vec3& point, const glm::vec3& sphereCenter, const float& sphereRadius)
 {
 	glm::vec3 u = point - sphereCenter;
-	return glm::length(u) <= sphereRadius;
+	return glm::length(u) <= std::max(sphereRadius, EPSILON);
 }
 bool Collision::collide_PointvsCapsule(const glm::vec3& point, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
 {
-	float d1 = glm::length(point - capsule1);
-	glm::vec3 u1 = capsule2 - capsule1;
-
-	if (glm::length(u1) == 0.f) return d1 <= capsuleRadius;
+	glm::vec3 s = capsule2 - capsule1;
+	if (glm::dot(s, s) == 0.f) return glm::length(point - capsule1) <= std::max(capsuleRadius, EPSILON);
 	else
 	{
+		glm::vec3 u = glm::normalize(s);
 		glm::vec3 u2 = point - capsule1;
-		float d2 = glm::length(point - capsule2);
-		float d3 = glm::length(glm::cross(u2, u1)) / glm::length(u1);
-		return d1 <= capsuleRadius && d2 <= capsuleRadius && d3 <= capsuleRadius;
+		glm::vec3 u3 = u2 - glm::dot(u, u2) * u; // distance of point to segment
+		return glm::dot(u3, u3) <= std::max(capsuleRadius, EPSILON) && glm::dot(u, u2) <= glm::length(s) + capsuleRadius && glm::dot(u, u2) >= -capsuleRadius;
 	}
 }
 //
@@ -358,29 +425,32 @@ bool Collision::collide_SegmentvsSegment(const glm::vec3& segment1a, const glm::
 {
 	glm::vec3 s1 = segment1b - segment1a;
 	glm::vec3 s2 = segment2b - segment2a;
-	glm::vec3 u1 = glm::normalize(s1);
-	glm::vec3 u2 = glm::normalize(s2);
-	glm::vec3 n = glm::cross(u1, u2);
+	glm::vec3 n = glm::cross(s1, s2);
 
-	if (glm::dot(n, n) == 0.f)	// parallel or one segment is a point
+	if (n == glm::vec3(0.f))	// parallel or one segment is a point
 	{
-		if (u1 == glm::vec3(0.f))
-			return collide_PointvsSegment(segment1b, segment2a, segment2b);
-		else if (u2 == glm::vec3(0.f))
-			return collide_PointvsSegment(segment2b, segment2a, segment2b);
+		if (s1 == glm::vec3(0.f))
+			return collide_PointvsSegment(segment1a, segment2a, segment2b);
+		else if (s2 == glm::vec3(0.f))
+			return collide_PointvsSegment(segment2a, segment1a, segment1b);
 		else // segment are parallel
 		{
+			glm::vec3 u1 = glm::normalize(s1);
 			glm::vec3 u3 = segment1a - segment2a;
 			glm::vec3 d = u3 - u1 * std::abs(glm::dot(u3, u1));
-			return glm::dot(d, d) == 0.f;
+			return glm::dot(d, d) <= EPSILON;
 		}
 	}
 	else
 	{
-		float t1 = std::min(glm::length(s1), std::max(0.f, glm::determinant(glm::mat3(segment1a - segment2a, u2, n)) / glm::dot(n, n)));
-		float t2 = std::min(glm::length(s2), std::max(0.f, glm::determinant(glm::mat3(segment1a - segment2a, u1, n)) / glm::dot(n, n)));
+		glm::vec3 u1 = glm::normalize(s1);
+		glm::vec3 u2 = glm::normalize(s2);
+		n = glm::normalize(n);
+		float t1 = -glm::determinant(glm::mat3(segment1a - segment2a, u2, n)) / glm::dot(n, n);
+		float t2 = -glm::determinant(glm::mat3(segment1a - segment2a, u1, n)) / glm::dot(n, n);
+		 
 		glm::vec3 d = segment2a + u2*t2 - (segment1a + u1*t1);
-		return glm::dot(d, d) == 0.f;
+		return glm::dot(d, d) <= EPSILON;
 	}
 }
 bool Collision::collide_SegmentvsTriangle(const glm::vec3& segment1, const glm::vec3& segment2, const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3)
@@ -403,29 +473,32 @@ bool Collision::collide_SegmentvsCapsule(const glm::vec3& segment1a, const glm::
 {
 	glm::vec3 s1 = segment1b - segment1a;
 	glm::vec3 s2 = capsule2 - capsule1;
-	glm::vec3 u1 = glm::normalize(s1);
-	glm::vec3 u2 = glm::normalize(s2);
-	glm::vec3 n = glm::cross(u1, u2);
+	glm::vec3 n = glm::cross(s1, s2);
 
-	if (glm::dot(n, n) == 0.f)	// parallel or one segment is a point
+	if (n == glm::vec3(0.f))	// parallel or one segment is a point
 	{
-		if (u1 == glm::vec3(0.f))
+		if (s1 == glm::vec3(0.f))
 			return collide_PointvsCapsule(segment1a, capsule1, capsule2, capsuleRadius);
-		else if (u2 == glm::vec3(0.f))
+		else if (s2 == glm::vec3(0.f))
 			return collide_SegmentvsSphere(segment1a, segment1b, capsule1, capsuleRadius);
 		else // segment are parallel
 		{
+			glm::vec3 u1 = glm::normalize(s1);
 			glm::vec3 u3 = segment1a - capsule1;
 			glm::vec3 d = u3 - u1 * std::abs(glm::dot(u3, u1));
-			return glm::length(d) <= capsuleRadius;
+			return glm::length(d) <= std::max(capsuleRadius, EPSILON);
 		}
 	}
 	else
 	{
-		float t1 = std::min(glm::length(s1), std::max(0.f, glm::determinant(glm::mat3(segment1a - capsule1, u2, n)) / glm::dot(n, n)));
-		float t2 = std::min(glm::length(s2), std::max(0.f, glm::determinant(glm::mat3(segment1a - capsule1, u1, n)) / glm::dot(n, n)));
+		glm::vec3 u1 = glm::normalize(s1);
+		glm::vec3 u2 = glm::normalize(s2);
+		n = glm::normalize(n);
+		float t1 = -glm::determinant(glm::mat3(segment1a - capsule1, u2, n)) / glm::dot(n, n);
+		float t2 = -glm::determinant(glm::mat3(segment1a - capsule1, u1, n)) / glm::dot(n, n);
+
 		glm::vec3 d = capsule1 + u2*t2 - (segment1a + u1*t1);
-		return glm::length(d) <= capsuleRadius;
+		return glm::length(d) <= std::max(capsuleRadius, EPSILON);
 	}
 }
 //
