@@ -1,5 +1,10 @@
 #include "Collision.h"
 
+#include <iostream>
+#include <string>
+
+#define EPSILON 0.0001f
+
 // https://github.com/gszauer/GamePhysicsCookbook/blob/master/Code/Geometry3D.cpp
 // http://www.realtimerendering.com/Collisions.html 
 
@@ -180,6 +185,28 @@ namespace
 		//	boxHalfSize is in box local space (origin is box center)
 		return std::abs(boxHalfSize.x*axis.x) + std::abs(boxHalfSize.y*axis.y) + std::abs(boxHalfSize.z*axis.z);
 	}
+	std::string printShapeName(const Shape& shape)
+	{
+		switch (shape.type)
+		{
+			case Shape::POINT:				return "point";
+			case Shape::SEGMENT:			return "segment";
+			case Shape::TRIANGLE:			return "triangle";
+			case Shape::ORIENTED_BOX:		return "oriented box";
+			case Shape::AXIS_ALIGNED_BOX:	return "axis aligned box";
+			case Shape::SPHERE:				return "sphere";
+			case Shape::CAPSULE:			return "capsule";
+			default:						return "unknown";
+		}
+	}
+	inline void printError(const Shape& shape1, const Shape& shape2, const int& testNumber)
+	{
+		std::cout << "Error collision test " << testNumber << " : (" << printShapeName(shape1) << " vs " << printShapeName(shape2) << ") : return unexpected result."<< std::endl;
+	}
+	inline void printError(const std::string& shape1, const std::string& shape2, const int& testNumber)
+	{
+		std::cout << "Error collision test " << testNumber << " : (" << shape1 << " vs " << shape2 << ") : return unexpected result." << std::endl;
+	}
 }
 //
 
@@ -189,34 +216,72 @@ bool Collision::collide(const Shape& a, const Shape& b)
 	//	order objects
 	Shape& shape1 = (Shape&) a;
 	Shape& shape2 = (Shape&) b;
-	if (a.type < b.type) std::swap(shape1, shape2);
+	if (a.type > b.type) std::swap(shape1, shape2);
 
 	switch (shape1.type)
 	{
-		case Shape::POINT: return collide_PointvsShape(shape1, shape2);
-		case Shape::SEGMENT: return collide_SegmentvsShape(shape1, shape2);
-		case Shape::TRIANGLE: return collide_TrianglevsShape(shape1, shape2);
-		case Shape::ORIENTED_BOX: return collide_OrientedBoxvsShape(shape1, shape2);
-		case Shape::AXIS_ALIGNED_BOX: return collide_AxisAlignedBoxvsShape(shape1, shape2);
-		case Shape::SPHERE: return collide_SpherevsShape(shape1, shape2);
-		case Shape::CAPSULE: return collide_CapsulevsShape(shape1, shape2);
-		default: return false;
+		case Shape::POINT:				return collide_PointvsShape(shape1, shape2);
+		case Shape::SEGMENT:			return collide_SegmentvsShape(shape1, shape2);
+		case Shape::TRIANGLE:			return collide_TrianglevsShape(shape1, shape2);
+		case Shape::ORIENTED_BOX:		return collide_OrientedBoxvsShape(shape1, shape2);
+		case Shape::AXIS_ALIGNED_BOX:	return collide_AxisAlignedBoxvsShape(shape1, shape2);
+		case Shape::SPHERE:				return collide_SpherevsShape(shape1, shape2);
+		case Shape::CAPSULE:			return collide_CapsulevsShape(shape1, shape2);
+		default:						return false;
+	}
+}
+void Collision::debugUnitaryTest(const int& verboseLevel)
+{
+	{	// point vs ...
+		Point testPoint = Point(glm::vec3(0, 0, 0));
+
+		// ... vs point
+		if (Collision::collide(testPoint, Point(glm::vec3(0, 0, 0))) == false)
+			printError("point", "point", 1);
+		if (Collision::collide(testPoint, Point(glm::vec3(0, 0, 1))) == true) 
+			printError("point", "point", 2);
+
+		// ... vs segment
+		if (Collision::collide(testPoint, Segment(glm::vec3(0, 0, -1), glm::vec3(0, 0, 1))) == false)
+			printError("point", "segment", 3);
+		if (Collision::collide(testPoint, Segment(glm::vec3(1, 0, -1), glm::vec3(1, 0, 1))) == true)
+			printError("point", "segment", 4);
+		if (Collision::collide(testPoint, Segment(glm::vec3(0, 0, 1), glm::vec3(0, 0, 1))) == true)
+			printError("point", "segment", 5);
+		if (Collision::collide(testPoint, Segment(glm::vec3(0, 0, 0), glm::vec3(0, 0, 0))) == false)
+			printError("point", "segment", 6);
+
+		// ... vs triangle
+		if (Collision::collide(testPoint, Triangle(glm::vec3(-1, 0, -1), glm::vec3(1, 0, -1), glm::vec3(0, 0, 1))) == false)
+			printError("point", "triangle", 7);
+		if (Collision::collide(testPoint, Triangle(glm::vec3(-1, 1, -1), glm::vec3(1, 1, -1), glm::vec3(0, 1, 1))) == true)
+			printError("point", "triangle", 8);
+		if (Collision::collide(testPoint, Triangle(glm::vec3(0, 0, 0), glm::vec3(-1, 0, 0), glm::vec3(2, 0, 0))) == false)
+			printError("point", "triangle", 9);
+		if (Collision::collide(testPoint, Triangle(glm::vec3(0, 0, 1), glm::vec3(-1, 0, 1), glm::vec3(2, 0, 1))) == true)
+			printError("point", "triangle", 10);
 	}
 }
 //
 
 //	Specialized functions : point
-inline bool Collision::collide_PointvsPoint(const glm::vec3& point1, const glm::vec3& point2)
+bool Collision::collide_PointvsPoint(const glm::vec3& point1, const glm::vec3& point2)
 {
 	return point1 == point2;
 }
-inline bool Collision::collide_PointvsSegment(const glm::vec3& point, const glm::vec3& segment1, const glm::vec3& segment2)
+bool Collision::collide_PointvsSegment(const glm::vec3& point, const glm::vec3& segment1, const glm::vec3& segment2)
 {
-	glm::vec3 u1 = segment2 - segment1;
-	glm::vec3 u2 = point - segment1;
-	return glm::length(glm::cross(u1, u2)) == 0.f && glm::dot(u1, u2) >= 0.f && glm::dot(u1, u2) <= glm::length(u1);
+	glm::vec3 s = segment2 - segment1;
+	if (glm::dot(s, s) == 0.f) return point == segment1;
+	else
+	{
+		glm::vec3 u = glm::normalize(s);
+		glm::vec3 u2 = point - segment1;
+		glm::vec3 u3 = u2 - glm::dot(u, u2) * u; // distance of point to segment
+		return glm::dot(u3, u3) <= EPSILON && glm::dot(u, u2) <= glm::length(s) && glm::dot(u, u2) >= EPSILON;
+	}
 }
-inline bool Collision::collide_PointvsTriangle(const glm::vec3& point, const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3)
+bool Collision::collide_PointvsTriangle(const glm::vec3& point, const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3)
 {
 	//	check if point is coplanar to triangle
 	glm::vec3 u1 = triangle2 - triangle1;
@@ -224,7 +289,18 @@ inline bool Collision::collide_PointvsTriangle(const glm::vec3& point, const glm
 	glm::vec3 n = glm::cross(u1, u2);
 	glm::vec3 p = point - triangle1;
 
-	if (glm::dot(p, n) == 0.f && n != glm::vec3(0.f))
+	if(n == glm::vec3(0.f)) // flat triangle
+	{
+		glm::vec3 u3 = triangle3 - triangle2;
+		float d1 = glm::dot(u1, u1);
+		float d2 = glm::dot(u2, u2);
+		float d3 = glm::dot(u3, u3);
+		
+		if (d1 >= d2 && d1 >= d3) return collide_PointvsSegment(point, triangle1, triangle2);
+		else if (d2 >= d1 && d2 >= d3) return collide_PointvsSegment(point, triangle1, triangle3);
+		else return collide_PointvsSegment(point, triangle3, triangle2);
+	}
+	else if (glm::dot(p, n) <= EPSILON)
 	{
 		glm::normalize(n);
 
@@ -237,7 +313,7 @@ inline bool Collision::collide_PointvsTriangle(const glm::vec3& point, const glm
 	}
 	else return false;
 }
-inline bool Collision::collide_PointvsOrientedBox(const glm::vec3& point, const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax)
+bool Collision::collide_PointvsOrientedBox(const glm::vec3& point, const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax)
 {
 	glm::vec3 bmin = glm::vec3(boxTranform*glm::vec4(boxMin, 1.f));
 	glm::vec3 bdiag = glm::vec3(boxTranform*glm::vec4(boxMax, 1.f)) - bmin;
@@ -250,18 +326,18 @@ inline bool Collision::collide_PointvsOrientedBox(const glm::vec3& point, const 
 	else if (glm::dot(p, bx) > glm::dot(bdiag, bx) || glm::dot(p, by) > glm::dot(bdiag, by) || glm::dot(p, bz) > glm::dot(bdiag, bz)) return false;
 	else return true;
 }
-inline bool Collision::collide_PointvsAxisAlignedBox(const glm::vec3& point, const glm::vec3& boxMin, const glm::vec3& boxMax)
+bool Collision::collide_PointvsAxisAlignedBox(const glm::vec3& point, const glm::vec3& boxMin, const glm::vec3& boxMax)
 {
 	if(point.x < boxMin.x || point.y < boxMin.y || point.z < boxMin.z) return false;
 	else if (point.x > boxMax.x || point.y > boxMax.y || point.z > boxMax.z) return false;
 	else return true;
 }
-inline bool Collision::collide_PointvsSphere(const glm::vec3& point, const glm::vec3& sphereCenter, const float& sphereRadius)
+bool Collision::collide_PointvsSphere(const glm::vec3& point, const glm::vec3& sphereCenter, const float& sphereRadius)
 {
 	glm::vec3 u = point - sphereCenter;
 	return glm::length(u) <= sphereRadius;
 }
-inline bool Collision::collide_PointvsCapsule(const glm::vec3& point, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
+bool Collision::collide_PointvsCapsule(const glm::vec3& point, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
 {
 	float d1 = glm::length(point - capsule1);
 	glm::vec3 u1 = capsule2 - capsule1;
@@ -278,7 +354,7 @@ inline bool Collision::collide_PointvsCapsule(const glm::vec3& point, const glm:
 //
 
 //	Specialized functions : segment
-inline bool Collision::collide_SegmentvsSegment(const glm::vec3& segment1a, const glm::vec3& segment1b, const glm::vec3& segment2a, const glm::vec3& segment2b)
+bool Collision::collide_SegmentvsSegment(const glm::vec3& segment1a, const glm::vec3& segment1b, const glm::vec3& segment2a, const glm::vec3& segment2b)
 {
 	glm::vec3 s1 = segment1b - segment1a;
 	glm::vec3 s2 = segment2b - segment2a;
@@ -307,23 +383,23 @@ inline bool Collision::collide_SegmentvsSegment(const glm::vec3& segment1a, cons
 		return glm::dot(d, d) == 0.f;
 	}
 }
-inline bool Collision::collide_SegmentvsTriangle(const glm::vec3& segment1, const glm::vec3& segment2, const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3)
+bool Collision::collide_SegmentvsTriangle(const glm::vec3& segment1, const glm::vec3& segment2, const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3)
 {
 	return false;
 }
-inline bool Collision::collide_SegmentvsOrientedBox(const glm::vec3& segment1a, const glm::vec3& segment1b, const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax)
+bool Collision::collide_SegmentvsOrientedBox(const glm::vec3& segment1a, const glm::vec3& segment1b, const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax)
 {
 	return false;
 }
-inline bool Collision::collide_SegmentvsAxisAlignedBox(const glm::vec3& segment1a, const glm::vec3& segment1b, const glm::vec3& boxMin, const glm::vec3& boxMax)
+bool Collision::collide_SegmentvsAxisAlignedBox(const glm::vec3& segment1a, const glm::vec3& segment1b, const glm::vec3& boxMin, const glm::vec3& boxMax)
 {
 	return false;
 }
-inline bool Collision::collide_SegmentvsSphere(const glm::vec3& segment1a, const glm::vec3& segment1b, const glm::vec3& sphereCenter, const float& sphereRadius)
+bool Collision::collide_SegmentvsSphere(const glm::vec3& segment1a, const glm::vec3& segment1b, const glm::vec3& sphereCenter, const float& sphereRadius)
 {
 	return false;
 }
-inline bool Collision::collide_SegmentvsCapsule(const glm::vec3& segment1a, const glm::vec3& segment1b, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
+bool Collision::collide_SegmentvsCapsule(const glm::vec3& segment1a, const glm::vec3& segment1b, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
 {
 	glm::vec3 s1 = segment1b - segment1a;
 	glm::vec3 s2 = capsule2 - capsule1;
@@ -355,30 +431,30 @@ inline bool Collision::collide_SegmentvsCapsule(const glm::vec3& segment1a, cons
 //
 
 //	Specialized functions : triangle
-inline bool Collision::collide_TrianglevsTriangle(const glm::vec3& triangle1a, const glm::vec3&triangle1b, const glm::vec3& triangle1c, const glm::vec3& triangle2a, const glm::vec3& triangle2b, const glm::vec3& triangle2c)
+bool Collision::collide_TrianglevsTriangle(const glm::vec3& triangle1a, const glm::vec3&triangle1b, const glm::vec3& triangle1c, const glm::vec3& triangle2a, const glm::vec3& triangle2b, const glm::vec3& triangle2c)
 {
 	return false;
 }
-inline bool Collision::collide_TrianglevsOrientedBox(const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax)
+bool Collision::collide_TrianglevsOrientedBox(const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax)
 {
 	return false;
 }
-inline bool Collision::collide_TrianglevsAxisAlignedBox(const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, const glm::vec3& boxMin, const glm::vec3& boxMax)
+bool Collision::collide_TrianglevsAxisAlignedBox(const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, const glm::vec3& boxMin, const glm::vec3& boxMax)
 {
 	return false;
 }
-inline bool Collision::collide_TrianglevsSphere(const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, const glm::vec3& sphereCenter, const float& sphereRadius)
+bool Collision::collide_TrianglevsSphere(const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, const glm::vec3& sphereCenter, const float& sphereRadius)
 {
 	return false;
 }
-inline bool Collision::collide_TrianglevsCapsule(const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
+bool Collision::collide_TrianglevsCapsule(const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
 {
 	return false;
 }
 //
 
 //	Specialized functions : oriented box
-inline bool Collision::collide_OrientedBoxvsOrientedBox(const glm::mat4& box1Tranform, const glm::vec3& box1Min, const glm::vec3& box1Max, const glm::mat4& box2Tranform, const glm::vec3& box2Min, const glm::vec3& box2Max)
+bool Collision::collide_OrientedBoxvsOrientedBox(const glm::mat4& box1Tranform, const glm::vec3& box1Min, const glm::vec3& box1Max, const glm::mat4& box2Tranform, const glm::vec3& box2Min, const glm::vec3& box2Max)
 {
 	//	axis to check in absolute base
 	glm::vec3 xb1 = glm::vec3(box1Tranform*glm::vec4(1.f, 0.f, 0.f, 0.f));
@@ -417,33 +493,33 @@ inline bool Collision::collide_OrientedBoxvsOrientedBox(const glm::mat4& box1Tra
 	else if (std::abs(glm::dot(xb1yb2, distance)) > projectBox(xb1yb2, sb1) + projectBox(xb1yb2, sb2)) return false;
 	else if (std::abs(glm::dot(xb1zb2, distance)) > projectBox(xb1zb2, sb1) + projectBox(xb1zb2, sb2)) return false;
 	else if (std::abs(glm::dot(yb1xb2, distance)) > projectBox(yb1xb2, sb1) + projectBox(yb1xb2, sb2)) return false;
-	else if (std::abs(glm::dot(yb1yb2, distance)) > projectBox(yb1yb2, sb1) + projectBox(yb1yb2, sb2)) return false;//
+	else if (std::abs(glm::dot(yb1yb2, distance)) > projectBox(yb1yb2, sb1) + projectBox(yb1yb2, sb2)) return false;
 	else if (std::abs(glm::dot(yb1zb2, distance)) > projectBox(yb1zb2, sb1) + projectBox(yb1zb2, sb2)) return false;
 	else if (std::abs(glm::dot(zb1xb2, distance)) > projectBox(zb1xb2, sb1) + projectBox(zb1xb2, sb2)) return false;
 	else if (std::abs(glm::dot(zb1yb2, distance)) > projectBox(zb1yb2, sb1) + projectBox(zb1yb2, sb2)) return false;
 	else if (std::abs(glm::dot(zb1zb2, distance)) > projectBox(zb1zb2, sb1) + projectBox(zb1zb2, sb2)) return false;
 	else return true;
 }
-inline bool Collision::collide_OrientedBoxvsAxisAlignedBox(const glm::mat4& box1Tranform, const glm::vec3& box1Min, const glm::vec3& box1Max, const glm::vec3& box2Min, const glm::vec3& box2Max)
+bool Collision::collide_OrientedBoxvsAxisAlignedBox(const glm::mat4& box1Tranform, const glm::vec3& box1Min, const glm::vec3& box1Max, const glm::vec3& box2Min, const glm::vec3& box2Max)
 {
 	return collide_OrientedBoxvsOrientedBox(box1Tranform, box1Min, box1Max, glm::mat4(1.f), box2Min, box2Max);
 }
-inline bool Collision::collide_OrientedBoxvsSphere(const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax, const glm::vec3& sphereCenter, const float& sphereRadius)
+bool Collision::collide_OrientedBoxvsSphere(const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax, const glm::vec3& sphereCenter, const float& sphereRadius)
 {
 	return false;
 }
-inline bool Collision::collide_OrientedBoxvsCapsule(const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
+bool Collision::collide_OrientedBoxvsCapsule(const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
 {
 	return false;
 }
 //
 
 //	Specialized functions : axis aligned box
-inline bool Collision::collide_AxisAlignedBoxvsAxisAlignedBox(const glm::vec3& box1Min, const glm::vec3& box1Max, const glm::vec3& box2Min, const glm::vec3& box2Max)
+bool Collision::collide_AxisAlignedBoxvsAxisAlignedBox(const glm::vec3& box1Min, const glm::vec3& box1Max, const glm::vec3& box2Min, const glm::vec3& box2Max)
 {
 	return box1Min.x <= box2Max.x && box1Min.y <= box2Max.y && box1Min.z <= box2Max.z && box2Min.x <= box1Max.x && box2Min.y <= box1Max.y && box2Min.z <= box1Max.z;
 }
-inline bool Collision::collide_AxisAlignedBoxvsSphere(const glm::vec3& boxMin, const glm::vec3& boxMax, const glm::vec3& sphereCenter, const float& sphereRadius)
+bool Collision::collide_AxisAlignedBoxvsSphere(const glm::vec3& boxMin, const glm::vec3& boxMax, const glm::vec3& sphereCenter, const float& sphereRadius)
 {
 	//	https://www.gamasutra.com/view/feature/131790/simple_Collision_tests_for_games.php?print=1
 	return false;
@@ -455,11 +531,11 @@ inline bool Collision::collide_AxisAlignedBoxvsCapsule(const glm::vec3& boxMin, 
 //
 
 //	Specialized functions : sphere
-inline bool Collision::collide_SpherevsSphere(const glm::vec3& sphere1Center, const float& sphere1Radius, const glm::vec3& sphere2Center, const float& sphere2Radius)
+bool Collision::collide_SpherevsSphere(const glm::vec3& sphere1Center, const float& sphere1Radius, const glm::vec3& sphere2Center, const float& sphere2Radius)
 {
 	return glm::length(sphere2Center - sphere1Center) <= sphere1Radius + sphere2Radius;
 }
-inline bool Collision::collide_SpherevsCapsule(const glm::vec3& sphereCenter, const float& sphereRadius, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
+bool Collision::collide_SpherevsCapsule(const glm::vec3& sphereCenter, const float& sphereRadius, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
 {
 	glm::vec3 u1 = capsule2 - capsule1;
 	glm::vec3 u2 = sphereCenter - capsule1;
@@ -469,7 +545,7 @@ inline bool Collision::collide_SpherevsCapsule(const glm::vec3& sphereCenter, co
 //
 
 //	Specialized functions : capsule
-inline bool Collision::collide_CapsulevsCapsule(const glm::vec3& capsule1a, const glm::vec3& capsule1b, const float& capsule1Radius, const glm::vec3& capsule2a, const glm::vec3& capsule2b, const float& capsule2Radius)
+bool Collision::collide_CapsulevsCapsule(const glm::vec3& capsule1a, const glm::vec3& capsule1b, const float& capsule1Radius, const glm::vec3& capsule2a, const glm::vec3& capsule2b, const float& capsule2Radius)
 {
 	glm::vec3 s1 = capsule1b - capsule1a;
 	glm::vec3 s2 = capsule2b - capsule2a;

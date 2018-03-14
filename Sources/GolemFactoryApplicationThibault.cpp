@@ -26,6 +26,8 @@
 #include "EntityComponent/Entity.hpp"
 #include "Resources/ComponentResource.h"
 
+#include "Physics\Collision.h"
+
 #define GRID_SIZE 100
 #define GRID_ELEMENT_SIZE 5.f
 #define DEBUG 0
@@ -76,6 +78,11 @@ int main()
 	std::cout << "   skeleton name : " << entity->getComponent<ComponentResource<Skeleton> >()->getResource()->name << std::endl;
 	std::cout << "   animation name : " << entity->getComponent<ComponentResource<Animation> >()->getResource()->name << std::endl;
 	std::cout << "   shader name : " << entity->getComponent<ComponentResource<Shader> >()->getResource()->name << std::endl;
+
+	//	Collision test
+	Collision::debugUnitaryTest(2);
+
+	return 0;
 
 	//	Test scene
 		Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getShader("wired"));
