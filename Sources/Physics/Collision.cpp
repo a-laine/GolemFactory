@@ -309,6 +309,8 @@ void Collision::debugUnitaryTest(const int& verboseLevel)
 	// segment vs ...
 	{
 		Segment testSegment = Segment(glm::vec3(-1, 0, 0), glm::vec3(1, 0, 0));
+		glm::mat4 dummyTranslate = glm::translate(glm::mat4(1.0), glm::vec3(2, 2, 2));
+		glm::mat4 dummyRotate = glm::rotate(0.1f, glm::normalize(glm::vec3(0.5, 1, 3)));
 
 		// ... vs Segment
 		if (Collision::collide(testSegment, Segment(glm::vec3(0, -3, 0), glm::vec3(0, 1, 0))) == false)
@@ -323,12 +325,28 @@ void Collision::debugUnitaryTest(const int& verboseLevel)
 			printError("segment", "segment", 5);
 		if (Collision::collide(testSegment, Segment(glm::vec3(0, 0, 1), glm::vec3(0, 0, 1))) == true)
 			printError("segment", "segment", 6);
+		
+		// ... vs Triangle
+		if (Collision::collide(testSegment, Triangle(glm::vec3(0, -1, -1), glm::vec3(0, 1, -1), glm::vec3(0, 0, 1))) == false)
+			printError("segment", "triangle", 7);
+		if (Collision::collide(testSegment, Triangle(glm::vec3(2, -1, -1), glm::vec3(2, 1, -1), glm::vec3(2, 0, 1))) == true)
+			printError("segment", "triangle", 8);
+		if (Collision::collide(testSegment, Triangle(glm::vec3(0,  1, -1), glm::vec3(0, 3, -1), glm::vec3(0, 2, 1))) == true)
+			printError("segment", "triangle", 9);
+		if (Collision::collide(testSegment, Triangle(glm::vec3(-2, -1, -1), glm::vec3(-2, 1, -1), glm::vec3(-2, 0, 1))) == true)
+			printError("segment", "triangle", 10);
 
-
-
-
-		// ... vs Capsule
-
+		// ... vs OB
+		if (Collision::collide(testSegment, OrientedBox(glm::mat4(1.f), glm::vec3(-0.5f), glm::vec3(0.5f))) == false)
+			printError("segment", "oriented box", 11);
+		if (Collision::collide(testSegment, OrientedBox(dummyRotate, glm::vec3(-0.5f), glm::vec3(0.5f))) == false)
+			printError("segment", "oriented box", 12);
+		if (Collision::collide(testSegment, OrientedBox(dummyTranslate * dummyRotate, glm::vec3(-0.5f), glm::vec3(0.5f))) == true)
+			printError("segment", "oriented box", 13);
+		if (Collision::collide(testSegment, OrientedBox(dummyRotate, glm::vec3(0.f), glm::vec3(0.f))) == false)
+			printError("segment", "oriented box", 14);
+		if (Collision::collide(testSegment, OrientedBox(dummyTranslate * dummyRotate, glm::vec3(0.f), glm::vec3(0.f))) == true)
+			printError("segment", "oriented box", 15);
 	}
 }
 //
@@ -474,18 +492,16 @@ bool Collision::collide_SegmentvsTriangle(const glm::vec3& segment1, const glm::
 	}
 
 	//	compute intersection point between ray and plane
-	glm::vec3 u = segment2 - segment1;
-	if (u == glm::vec3(0.f)) return collide_PointvsTriangle(segment1, triangle1, triangle2, triangle3);
+	glm::vec3 s = segment2 - segment1;
+	if (s == glm::vec3(0.f)) return collide_PointvsTriangle(segment1, triangle1, triangle2, triangle3);
 
 	n = glm::normalize(n);
-	float proj = glm::dot(n, u);
-	if (proj == 0.f) return false; // segment parallel to triangle plane
-	if (proj > 0.f) n *= -1.f;
+	if (glm::dot(n, s) == 0.f) return false; // segment parallel to triangle plane
+	glm::vec3 u = glm::normalize(s);
 
 	float depth = glm::dot(n, triangle1 - segment1) / glm::dot(n, u);
 	if (depth > glm::length(u) || depth < 0.f) return false; // too far or beind
 	glm::vec3 intersection = segment1 + depth*u - triangle1;
-
 
 	//	checking barycentric coordinates
 	float crossDot = glm::dot(v1, v2);
@@ -496,34 +512,96 @@ bool Collision::collide_SegmentvsTriangle(const glm::vec3& segment1, const glm::
 	barry.y = (glm::dot(v1, v1) * glm::dot(intersection, v2) - crossDot * glm::dot(intersection, v1)) / magnitute;
 	return !(barry.x < 0.f || barry.y < 0.f || barry.x + barry.y > 1.f);
 }
-bool Collision::collide_SegmentvsOrientedBox(const glm::vec3& segment1a, const glm::vec3& segment1b, const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax)
+bool Collision::collide_SegmentvsOrientedBox(const glm::vec3& segment1, const glm::vec3& segment2, const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax)
+{
+	//http://www.opengl-tutorial.org/fr/miscellaneous/clicking-on-objects/picking-with-custom-ray-obb-function/
+
+	if (segment2 == segment1) return collide_PointvsOrientedBox(segment1, boxTranform, boxMin, boxMax);
+	glm::vec3 u = glm::normalize(segment2 - segment1);
+	glm::vec3 delta = glm::vec3(boxTranform[3]) - segment1;
+
+	float tmin = 0.f;
+	float tmax = std::numeric_limits<float>::max();
+
+	//	test on the two axis of local x
+	glm::vec3 bx = glm::vec3(boxTranform[0]);
+	float e = glm::dot(bx, delta);
+	if (glm::dot(bx, u) == 0.f) // segment parallel to selected plane
+	{
+		if (-e + boxMin.x > 0.0f || -e + boxMax.x < 0.0f) return false;
+	}
+	else
+	{
+		float t1 = (e + boxMin.x) / glm::dot(bx, u); // Intersection with the "left" plane
+		float t2 = (e + boxMax.x) / glm::dot(bx, u); // Intersection with the "right" plane
+		if (t1 > t2) std::swap(t1, t2);
+
+		if (t2 < tmax) tmax = t2;
+		if (t1 > tmin) tmin = t1;
+		if (tmax < tmin) return false;
+	}
+
+	//	test on the two axis of local y
+	glm::vec3 by = glm::vec3(boxTranform[1]);
+	e = glm::dot(by, delta);
+	if (glm::dot(by, u) == 0.f) // segment parallel to selected plane
+	{
+		if (-e + boxMin.y > 0.0f || -e + boxMax.y < 0.0f) return false;
+	}
+	else
+	{
+		float t1 = (e + boxMin.y) / glm::dot(by, u); // Intersection with the "left" plane
+		float t2 = (e + boxMax.y) / glm::dot(by, u); // Intersection with the "right" plane
+		if (t1 > t2) std::swap(t1, t2);
+
+		if (t2 < tmax) tmax = t2;
+		if (t1 > tmin) tmin = t1;
+		if (tmax < tmin) return false;
+	}
+
+	//	test on the two axis of local z
+	glm::vec3 bz = glm::vec3(boxTranform[2]);
+	e = glm::dot(bz, delta);
+	if (glm::dot(bz, u) == 0.f) // segment parallel to selected plane
+	{
+		if (-e + boxMin.z > 0.0f || -e + boxMax.z < 0.0f) return false;
+	}
+	else
+	{
+		float t1 = (e + boxMin.z) / glm::dot(bz, u); // Intersection with the "left" plane
+		float t2 = (e + boxMax.z) / glm::dot(bz, u); // Intersection with the "right" plane
+		if (t1 > t2) std::swap(t1, t2);
+
+		if (t2 < tmax) tmax = t2;
+		if (t1 > tmin) tmin = t1;
+		if (tmax < tmin) return false;
+	}
+	return tmin <= glm::length(segment2 - segment1);
+}
+bool Collision::collide_SegmentvsAxisAlignedBox(const glm::vec3& segment1, const glm::vec3& segment2, const glm::vec3& boxMin, const glm::vec3& boxMax)
 {
 	return false;
 }
-bool Collision::collide_SegmentvsAxisAlignedBox(const glm::vec3& segment1a, const glm::vec3& segment1b, const glm::vec3& boxMin, const glm::vec3& boxMax)
+bool Collision::collide_SegmentvsSphere(const glm::vec3& segment1, const glm::vec3& segment2, const glm::vec3& sphereCenter, const float& sphereRadius)
 {
 	return false;
 }
-bool Collision::collide_SegmentvsSphere(const glm::vec3& segment1a, const glm::vec3& segment1b, const glm::vec3& sphereCenter, const float& sphereRadius)
+bool Collision::collide_SegmentvsCapsule(const glm::vec3& segment1, const glm::vec3& segment2, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
 {
-	return false;
-}
-bool Collision::collide_SegmentvsCapsule(const glm::vec3& segment1a, const glm::vec3& segment1b, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
-{
-	glm::vec3 s1 = segment1b - segment1a;
+	glm::vec3 s1 = segment2 - segment1;
 	glm::vec3 s2 = capsule2 - capsule1;
 	glm::vec3 n = glm::cross(s1, s2);
 
 	if (n == glm::vec3(0.f))	// parallel or one segment is a point
 	{
 		if (s1 == glm::vec3(0.f))
-			return collide_PointvsCapsule(segment1a, capsule1, capsule2, capsuleRadius);
+			return collide_PointvsCapsule(segment1, capsule1, capsule2, capsuleRadius);
 		else if (s2 == glm::vec3(0.f))
-			return collide_SegmentvsSphere(segment1a, segment1b, capsule1, capsuleRadius);
+			return collide_SegmentvsSphere(segment1, segment2, capsule1, capsuleRadius);
 		else // segment are parallel
 		{
 			glm::vec3 u1 = glm::normalize(s1);
-			glm::vec3 u3 = segment1a - capsule1;
+			glm::vec3 u3 = segment1 - capsule1;
 			glm::vec3 d = u3 - u1 * std::abs(glm::dot(u3, u1));
 			return glm::length(d) <= std::max(capsuleRadius, EPSILON);
 		}
@@ -533,10 +611,10 @@ bool Collision::collide_SegmentvsCapsule(const glm::vec3& segment1a, const glm::
 		glm::vec3 u1 = glm::normalize(s1);
 		glm::vec3 u2 = glm::normalize(s2);
 		n = glm::normalize(n);
-		float t1 = -glm::determinant(glm::mat3(segment1a - capsule1, u2, n)) / glm::dot(n, n);
-		float t2 = -glm::determinant(glm::mat3(segment1a - capsule1, u1, n)) / glm::dot(n, n);
+		float t1 = -glm::determinant(glm::mat3(segment1 - capsule1, u2, n)) / glm::dot(n, n);
+		float t2 = -glm::determinant(glm::mat3(segment1 - capsule1, u1, n)) / glm::dot(n, n);
 
-		glm::vec3 d = capsule1 + u2*t2 - (segment1a + u1*t1);
+		glm::vec3 d = capsule1 + u2*t2 - (segment1 + u1*t1);
 		return glm::length(d) <= std::max(capsuleRadius, EPSILON);
 	}
 }
