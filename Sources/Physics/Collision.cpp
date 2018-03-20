@@ -5,11 +5,19 @@
 
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/component_wise.hpp>
 
 #define EPSILON 0.0001f
 
 // https://github.com/gszauer/GamePhysicsCookbook/blob/master/Code/Geometry3D.cpp
 // http://www.realtimerendering.com/Collisions.html 
+
+
+
+/**	TODO
+	- le blindage ne doit etre fais qu'une fois : ex : collide_SegmentvsXXXXXXXX
+		le test if(segment1 == segment2) est fais bien en amont pour prevenir la duplication de code
+**/
 
 //	Private field
 namespace
@@ -580,11 +588,26 @@ bool Collision::collide_SegmentvsOrientedBox(const glm::vec3& segment1, const gl
 }
 bool Collision::collide_SegmentvsAxisAlignedBox(const glm::vec3& segment1, const glm::vec3& segment2, const glm::vec3& boxMin, const glm::vec3& boxMax)
 {
-	return false;
+	if (segment2 == segment1) return collide_PointvsAxisAlignedBox(segment1, boxMin, boxMax);
+
+	glm::vec3 s = segment2 - segment1;
+	glm::vec3 u = glm::normalize(s);
+	glm::vec3 t1 = (boxMin - segment1) / u;
+	glm::vec3 t2 = (boxMax - segment1) / u;
+	float tnear = glm::compMax(glm::min(t1, t2));
+	float tfar = glm::compMin(glm::max(t1, t2));
+	if (tfar >= tnear && tfar >= 0 && tnear <= glm::length(s)) return true;
+	else return false;
 }
 bool Collision::collide_SegmentvsSphere(const glm::vec3& segment1, const glm::vec3& segment2, const glm::vec3& sphereCenter, const float& sphereRadius)
 {
-	return false;
+	if (segment2 == segment1) return collide_PointvsSphere(segment1, sphereCenter, sphereRadius);
+
+	glm::vec3 s = segment2 - segment1;
+	glm::vec3 u = glm::normalize(s);
+	glm::vec3 u2 = sphereCenter - segment1;
+	glm::vec3 u3 = u2 - glm::dot(u, u2) * u; // distance (actualy a vector) of sphere center to ray
+	return glm::dot(u3, u3) <= sphereRadius*sphereRadius && glm::dot(u, u2) <= glm::length(s) && glm::dot(u, u2) >= 0.f;
 }
 bool Collision::collide_SegmentvsCapsule(const glm::vec3& segment1, const glm::vec3& segment2, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
 {
