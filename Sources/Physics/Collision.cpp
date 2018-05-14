@@ -17,6 +17,8 @@
 /**	TODO
 	- le blindage ne doit etre fais qu'une fois : ex : collide_SegmentvsXXXXXXXX
 		le test if(segment1 == segment2) est fais bien en amont pour prevenir la duplication de code
+
+	- l'optimisation se fera en derniers !!!
 **/
 
 //	Private field
@@ -719,7 +721,34 @@ bool Collision::collide_OrientedBoxvsAxisAlignedBox(const glm::mat4& box1Tranfor
 }
 bool Collision::collide_OrientedBoxvsSphere(const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax, const glm::vec3& sphereCenter, const float& sphereRadius)
 {
-	return false;
+	//	for help read https://github.com/gszauer/GamePhysicsCookbook/blob/master/Code/Geometry3D.cpp
+	//	line 165
+
+	glm::vec3 bcenter = 0.5f * (glm::vec3(boxTranform*glm::vec4(boxMax, 1.f)) + glm::vec3(boxTranform*glm::vec4(boxMin, 1.f)));
+	glm::vec3 bsize = 0.5f * glm::abs(boxMax - boxMin);
+	glm::vec3 bx = glm::normalize(glm::vec3(boxTranform*glm::vec4(1.f, 0.f, 0.f, 0.f)));	// box local x
+	glm::vec3 by = glm::normalize(glm::vec3(boxTranform*glm::vec4(0.f, 1.f, 0.f, 0.f)));	// box local y
+	glm::vec3 bz = glm::normalize(glm::vec3(boxTranform*glm::vec4(0.f, 0.f, 1.f, 0.f)));	// box local z
+
+	glm::vec3 p = sphereCenter - bcenter;
+	glm::vec3 boxClosestPoint = bcenter;
+
+	float d = glm::dot(bx, p);
+	if (d > bsize.x) d = bsize.x;
+	else if (d < -bsize.x) d = -bsize.x;
+	boxClosestPoint += d* bx;
+
+	d = glm::dot(by, p);
+	if (d > bsize.y) d = bsize.y;
+	else if (d < -bsize.y) d = -bsize.y;
+	boxClosestPoint += d* by;
+
+	d = glm::dot(bz, p);
+	if (d > bsize.z) d = bsize.z;
+	else if (d < -bsize.z) d = -bsize.z;
+	boxClosestPoint += d* bz;
+
+	return collide_PointvsSphere(boxClosestPoint, sphereCenter, sphereRadius);
 }
 bool Collision::collide_OrientedBoxvsCapsule(const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
 {
@@ -734,8 +763,20 @@ bool Collision::collide_AxisAlignedBoxvsAxisAlignedBox(const glm::vec3& box1Min,
 }
 bool Collision::collide_AxisAlignedBoxvsSphere(const glm::vec3& boxMin, const glm::vec3& boxMax, const glm::vec3& sphereCenter, const float& sphereRadius)
 {
-	//	https://www.gamasutra.com/view/feature/131790/simple_Collision_tests_for_games.php?print=1
-	return false;
+	//	special case of obb/sphere
+	glm::vec3 bcenter = 0.5f * (boxMax + boxMin);
+	glm::vec3 bsize = 0.5f * glm::abs(boxMax - boxMin);
+	glm::vec3 p = sphereCenter - bcenter;
+
+	if (p.x > bsize.x) p.x = bsize.x;
+	else if (p.x < -bsize.x) p.x = -bsize.x;
+	if (p.y > bsize.y) p.y = bsize.y;
+	else if (p.y < -bsize.y) p.y = -bsize.y;
+	if (p.z > bsize.z) p.z = bsize.z;
+	else if (p.z < -bsize.z) p.z = -bsize.z;
+
+	glm::vec3 boxClosestPoint = sphereCenter + p;
+	return collide_PointvsSphere(boxClosestPoint, sphereCenter, sphereRadius);
 }
 inline bool Collision::collide_AxisAlignedBoxvsCapsule(const glm::vec3& boxMin, const glm::vec3& boxMax, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
 {
