@@ -19,7 +19,7 @@
 		le test if(segment1 == segment2) est fais bien en amont pour prevenir la duplication de code
 
 	- l'optimisation se fera en derniers !!!
-		- simplifier les appels a projectBox et projectCapsule pour les cas particuliers d'axes
+		- simplifier les appels a projectHalfBox et projectHalfCapsule pour les cas particuliers d'axes
 		- try expand function of special case for optimisation (ex: collide_OrientedBoxvsAxisAlignedBox, collide_AxisAlignedBoxvsCapsule, ...)
 **/
 
@@ -194,14 +194,14 @@ namespace
 	};
 
 	//	Utils
-	inline float projectBox(const glm::vec3& axis, const glm::vec3& boxHalfSize)
+	inline float projectHalfBox(const glm::vec3& axis, const glm::vec3& boxHalfSize)
 	{
 		//	axis is in absolute base
 		//	boxHalfSize is in box local space (origin is box center)
 		//	equivalent to :  glm::dot(boxHalfSize, glm::abs(axis))
 		return std::abs(boxHalfSize.x*axis.x) + std::abs(boxHalfSize.y*axis.y) + std::abs(boxHalfSize.z*axis.z);
 	}
-	inline float projectCapsule(const glm::vec3& axis, const glm::vec3& capsuleSegment, const float& capsuleRadius)
+	inline float projectHalfCapsule(const glm::vec3& axis, const glm::vec3& capsuleSegment, const float& capsuleRadius)
 	{
 		//	axis is in absolute base
 		return capsuleRadius + 0.5f * std::abs(glm::dot(capsuleSegment, axis));
@@ -376,10 +376,10 @@ bool Collision::collide_PointvsPoint(const glm::vec3& point1, const glm::vec3& p
 }
 bool Collision::collide_PointvsSegment(const glm::vec3& point, const glm::vec3& segment1, const glm::vec3& segment2)
 {
-	glm::vec3 s = segment2 - segment1;
-	if (s == glm::vec3(0.f)) return point == segment1;
+	if (segment1 == segment2) return point == segment1;
 	else
 	{
+		glm::vec3 s = segment2 - segment1;
 		glm::vec3 u = glm::normalize(s);
 		glm::vec3 u2 = point - segment1;
 		glm::vec3 u3 = u2 - glm::dot(u, u2) * u; // distance of point to segment
@@ -423,9 +423,9 @@ bool Collision::collide_PointvsOrientedBox(const glm::vec3& point, const glm::ma
 {
 	glm::vec3 bmin = glm::vec3(boxTranform*glm::vec4(boxMin, 1.f));
 	glm::vec3 bdiag = glm::vec3(boxTranform*glm::vec4(boxMax, 1.f)) - bmin;
-	glm::vec3 bx = glm::normalize(glm::vec3(boxTranform*glm::vec4(1.f, 0.f, 0.f, 0.f)));
-	glm::vec3 by = glm::normalize(glm::vec3(boxTranform*glm::vec4(0.f, 1.f, 0.f, 0.f)));
-	glm::vec3 bz = glm::normalize(glm::vec3(boxTranform*glm::vec4(0.f, 0.f, 1.f, 0.f)));
+	glm::vec3 bx = glm::vec3(boxTranform[0]);
+	glm::vec3 by = glm::vec3(boxTranform[1]);
+	glm::vec3 bz = glm::vec3(boxTranform[2]);
 
 	glm::vec3 p = point - bmin;
 	if (glm::dot(p, bx) < -EPSILON || glm::dot(p, by) < -EPSILON || glm::dot(p, bz) < -EPSILON) return false;
@@ -440,16 +440,15 @@ bool Collision::collide_PointvsAxisAlignedBox(const glm::vec3& point, const glm:
 }
 bool Collision::collide_PointvsSphere(const glm::vec3& point, const glm::vec3& sphereCenter, const float& sphereRadius)
 {
-	glm::vec3 u = point - sphereCenter;
-	return glm::length(u) <= std::max(sphereRadius, EPSILON);
+	return glm::length(point - sphereCenter) <= std::max(sphereRadius, EPSILON);
 }
 bool Collision::collide_PointvsCapsule(const glm::vec3& point, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
 {
-	glm::vec3 s = capsule2 - capsule1;
-	if (glm::dot(s, s) == 0.f) return glm::length(point - capsule1) <= std::max(capsuleRadius, EPSILON);
+	if (capsule2 == capsule1) return glm::length(point - capsule1) <= std::max(capsuleRadius, EPSILON);
 	else
 	{
-		glm::vec3 u = glm::normalize(s);
+		glm::vec3 s = capsule2 - capsule1;
+		glm::vec3 u = glm::normalize(capsule2 - capsule1);
 		glm::vec3 u2 = point - capsule1;
 		glm::vec3 u3 = u2 - glm::dot(u, u2) * u; // distance of point to segment
 		return glm::dot(u3, u3) <= std::max(capsuleRadius, EPSILON) && glm::dot(u, u2) <= glm::length(s) + capsuleRadius && glm::dot(u, u2) >= -capsuleRadius;
@@ -693,12 +692,12 @@ bool Collision::collide_OrientedBoxvsOrientedBox(const glm::mat4& box1Tranform, 
 	glm::vec3 sb2 = 0.5f * glm::abs(box2Max - box2Min);
 
 	//	first test pass
-	if      (std::abs(glm::dot(xb1, distance)) > projectBox(xb1, sb1) + projectBox(xb1, sb2)) return false;
-	else if (std::abs(glm::dot(yb1, distance)) > projectBox(yb1, sb1) + projectBox(yb1, sb2)) return false;
-	else if (std::abs(glm::dot(zb1, distance)) > projectBox(zb1, sb1) + projectBox(zb1, sb2)) return false;
-	else if (std::abs(glm::dot(xb2, distance)) > projectBox(xb2, sb1) + projectBox(xb2, sb2)) return false;
-	else if (std::abs(glm::dot(yb2, distance)) > projectBox(yb2, sb1) + projectBox(yb2, sb2)) return false;
-	else if (std::abs(glm::dot(zb2, distance)) > projectBox(zb2, sb1) + projectBox(zb2, sb2)) return false;
+	if      (std::abs(glm::dot(xb1, distance)) > projectHalfBox(xb1, sb1) + projectHalfBox(xb1, sb2)) return false;
+	else if (std::abs(glm::dot(yb1, distance)) > projectHalfBox(yb1, sb1) + projectHalfBox(yb1, sb2)) return false;
+	else if (std::abs(glm::dot(zb1, distance)) > projectHalfBox(zb1, sb1) + projectHalfBox(zb1, sb2)) return false;
+	else if (std::abs(glm::dot(xb2, distance)) > projectHalfBox(xb2, sb1) + projectHalfBox(xb2, sb2)) return false;
+	else if (std::abs(glm::dot(yb2, distance)) > projectHalfBox(yb2, sb1) + projectHalfBox(yb2, sb2)) return false;
+	else if (std::abs(glm::dot(zb2, distance)) > projectHalfBox(zb2, sb1) + projectHalfBox(zb2, sb2)) return false;
 	
 	//	secondary axis checking
 	glm::vec3 xb1xb2 = glm::normalize(glm::cross(xb1, xb2));
@@ -712,15 +711,15 @@ bool Collision::collide_OrientedBoxvsOrientedBox(const glm::mat4& box1Tranform, 
 	glm::vec3 zb1zb2 = glm::normalize(glm::cross(zb1, zb2));
 
 	//	second test pass
-	if      (std::abs(glm::dot(xb1xb2, distance)) > projectBox(xb1xb2, sb1) + projectBox(xb1xb2, sb2)) return false;
-	else if (std::abs(glm::dot(xb1yb2, distance)) > projectBox(xb1yb2, sb1) + projectBox(xb1yb2, sb2)) return false;
-	else if (std::abs(glm::dot(xb1zb2, distance)) > projectBox(xb1zb2, sb1) + projectBox(xb1zb2, sb2)) return false;
-	else if (std::abs(glm::dot(yb1xb2, distance)) > projectBox(yb1xb2, sb1) + projectBox(yb1xb2, sb2)) return false;
-	else if (std::abs(glm::dot(yb1yb2, distance)) > projectBox(yb1yb2, sb1) + projectBox(yb1yb2, sb2)) return false;
-	else if (std::abs(glm::dot(yb1zb2, distance)) > projectBox(yb1zb2, sb1) + projectBox(yb1zb2, sb2)) return false;
-	else if (std::abs(glm::dot(zb1xb2, distance)) > projectBox(zb1xb2, sb1) + projectBox(zb1xb2, sb2)) return false;
-	else if (std::abs(glm::dot(zb1yb2, distance)) > projectBox(zb1yb2, sb1) + projectBox(zb1yb2, sb2)) return false;
-	else if (std::abs(glm::dot(zb1zb2, distance)) > projectBox(zb1zb2, sb1) + projectBox(zb1zb2, sb2)) return false;
+	if      (std::abs(glm::dot(xb1xb2, distance)) > projectHalfBox(xb1xb2, sb1) + projectHalfBox(xb1xb2, sb2)) return false;
+	else if (std::abs(glm::dot(xb1yb2, distance)) > projectHalfBox(xb1yb2, sb1) + projectHalfBox(xb1yb2, sb2)) return false;
+	else if (std::abs(glm::dot(xb1zb2, distance)) > projectHalfBox(xb1zb2, sb1) + projectHalfBox(xb1zb2, sb2)) return false;
+	else if (std::abs(glm::dot(yb1xb2, distance)) > projectHalfBox(yb1xb2, sb1) + projectHalfBox(yb1xb2, sb2)) return false;
+	else if (std::abs(glm::dot(yb1yb2, distance)) > projectHalfBox(yb1yb2, sb1) + projectHalfBox(yb1yb2, sb2)) return false;
+	else if (std::abs(glm::dot(yb1zb2, distance)) > projectHalfBox(yb1zb2, sb1) + projectHalfBox(yb1zb2, sb2)) return false;
+	else if (std::abs(glm::dot(zb1xb2, distance)) > projectHalfBox(zb1xb2, sb1) + projectHalfBox(zb1xb2, sb2)) return false;
+	else if (std::abs(glm::dot(zb1yb2, distance)) > projectHalfBox(zb1yb2, sb1) + projectHalfBox(zb1yb2, sb2)) return false;
+	else if (std::abs(glm::dot(zb1zb2, distance)) > projectHalfBox(zb1zb2, sb1) + projectHalfBox(zb1zb2, sb2)) return false;
 	else return true;
 }
 bool Collision::collide_OrientedBoxvsAxisAlignedBox(const glm::mat4& box1Tranform, const glm::vec3& box1Min, const glm::vec3& box1Max, const glm::vec3& box2Min, const glm::vec3& box2Max)
@@ -774,19 +773,19 @@ bool Collision::collide_OrientedBoxvsCapsule(const glm::mat4& boxTranform, const
 	glm::vec3 sb = boxMax - boxMin;
 
 	//	first pass test
-	if		(std::abs(glm::dot(x, distance)) > projectBox(x, sb) + projectCapsule(x, segment, capsuleRadius)) return false;
-	else if (std::abs(glm::dot(y, distance)) > projectBox(y, sb) + projectCapsule(y, segment, capsuleRadius)) return false;
-	else if (std::abs(glm::dot(z, distance)) > projectBox(z, sb) + projectCapsule(z, segment, capsuleRadius)) return false;
-	else if (std::abs(glm::dot(u, distance)) > projectBox(u, sb) + projectCapsule(u, segment, capsuleRadius)) return false;
+	if		(std::abs(glm::dot(x, distance)) > projectHalfBox(x, sb) + projectHalfCapsule(x, segment, capsuleRadius)) return false;
+	else if (std::abs(glm::dot(y, distance)) > projectHalfBox(y, sb) + projectHalfCapsule(y, segment, capsuleRadius)) return false;
+	else if (std::abs(glm::dot(z, distance)) > projectHalfBox(z, sb) + projectHalfCapsule(z, segment, capsuleRadius)) return false;
+	else if (std::abs(glm::dot(u, distance)) > projectHalfBox(u, sb) + projectHalfCapsule(u, segment, capsuleRadius)) return false;
 
 	//	second pass
 	glm::vec3 ux = glm::normalize(glm::cross(u, x));
 	glm::vec3 uy = glm::normalize(glm::cross(u, y));
 	glm::vec3 uz = glm::normalize(glm::cross(u, z));
 
-	if		(std::abs(glm::dot(ux, distance)) > projectBox(ux, sb) + projectCapsule(ux, segment, capsuleRadius)) return false;
-	else if (std::abs(glm::dot(uy, distance)) > projectBox(uy, sb) + projectCapsule(uy, segment, capsuleRadius)) return false;
-	else if (std::abs(glm::dot(uz, distance)) > projectBox(uz, sb) + projectCapsule(uz, segment, capsuleRadius)) return false;
+	if		(std::abs(glm::dot(ux, distance)) > projectHalfBox(ux, sb) + projectHalfCapsule(ux, segment, capsuleRadius)) return false;
+	else if (std::abs(glm::dot(uy, distance)) > projectHalfBox(uy, sb) + projectHalfCapsule(uy, segment, capsuleRadius)) return false;
+	else if (std::abs(glm::dot(uz, distance)) > projectHalfBox(uz, sb) + projectHalfCapsule(uz, segment, capsuleRadius)) return false;
 	else return true;
 }
 //
