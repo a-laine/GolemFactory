@@ -19,6 +19,8 @@
 		le test if(segment1 == segment2) est fais bien en amont pour prevenir la duplication de code
 
 	- l'optimisation se fera en derniers !!!
+		- simplifier les appels a projectBox et projectCapsule pour les cas particuliers d'axes
+		- try expand function of special case for optimisation (ex: collide_OrientedBoxvsAxisAlignedBox, collide_AxisAlignedBoxvsCapsule, ...)
 **/
 
 //	Private field
@@ -196,7 +198,13 @@ namespace
 	{
 		//	axis is in absolute base
 		//	boxHalfSize is in box local space (origin is box center)
+		//	equivalent to :  glm::dot(boxHalfSize, glm::abs(axis))
 		return std::abs(boxHalfSize.x*axis.x) + std::abs(boxHalfSize.y*axis.y) + std::abs(boxHalfSize.z*axis.z);
+	}
+	inline float projectCapsule(const glm::vec3& axis, const glm::vec3& capsuleSegment, const float& capsuleRadius)
+	{
+		//	axis is in absolute base
+		return capsuleRadius + 0.5f * std::abs(glm::dot(capsuleSegment, axis));
 	}
 	std::string printShapeName(const Shape& shape)
 	{
@@ -672,17 +680,17 @@ bool Collision::collide_TrianglevsCapsule(const glm::vec3& triangle1, const glm:
 bool Collision::collide_OrientedBoxvsOrientedBox(const glm::mat4& box1Tranform, const glm::vec3& box1Min, const glm::vec3& box1Max, const glm::mat4& box2Tranform, const glm::vec3& box2Min, const glm::vec3& box2Max)
 {
 	//	axis to check in absolute base
-	glm::vec3 xb1 = glm::vec3(box1Tranform*glm::vec4(1.f, 0.f, 0.f, 0.f));
-	glm::vec3 yb1 = glm::vec3(box1Tranform*glm::vec4(0.f, 1.f, 0.f, 0.f));
-	glm::vec3 zb1 = glm::vec3(box1Tranform*glm::vec4(0.f, 0.f, 1.f, 0.f));
-	glm::vec3 xb2 = glm::vec3(box2Tranform*glm::vec4(1.f, 0.f, 0.f, 0.f));
-	glm::vec3 yb2 = glm::vec3(box2Tranform*glm::vec4(0.f, 1.f, 0.f, 0.f));
-	glm::vec3 zb2 = glm::vec3(box2Tranform*glm::vec4(0.f, 0.f, 1.f, 0.f));
+	glm::vec3 xb1 = glm::vec3(box1Tranform[0]);
+	glm::vec3 yb1 = glm::vec3(box1Tranform[1]);
+	glm::vec3 zb1 = glm::vec3(box1Tranform[2]);
+	glm::vec3 xb2 = glm::vec3(box2Tranform[0]);
+	glm::vec3 yb2 = glm::vec3(box2Tranform[1]);
+	glm::vec3 zb2 = glm::vec3(box2Tranform[2]);
 
-	//	box position and halfSize
+	//	distance between objects centroids and boxes diagonal sizes (half of them)
 	glm::vec3 distance = 0.5f*glm::vec3(box1Tranform*glm::vec4(box1Min + box1Max, 1.f)) - 0.5f*glm::vec3(box1Tranform*glm::vec4(box2Min + box2Max, 1.f));
-	glm::vec3 sb1 = box1Max - box1Min;
-	glm::vec3 sb2 = box2Max - box2Min;
+	glm::vec3 sb1 = 0.5f * glm::abs(box1Max - box1Min);
+	glm::vec3 sb2 = 0.5f * glm::abs(box2Max - box2Min);
 
 	//	first test pass
 	if      (std::abs(glm::dot(xb1, distance)) > projectBox(xb1, sb1) + projectBox(xb1, sb2)) return false;
@@ -726,9 +734,9 @@ bool Collision::collide_OrientedBoxvsSphere(const glm::mat4& boxTranform, const 
 
 	glm::vec3 bcenter = 0.5f * (glm::vec3(boxTranform*glm::vec4(boxMax, 1.f)) + glm::vec3(boxTranform*glm::vec4(boxMin, 1.f)));
 	glm::vec3 bsize = 0.5f * glm::abs(boxMax - boxMin);
-	glm::vec3 bx = glm::normalize(glm::vec3(boxTranform*glm::vec4(1.f, 0.f, 0.f, 0.f)));	// box local x
-	glm::vec3 by = glm::normalize(glm::vec3(boxTranform*glm::vec4(0.f, 1.f, 0.f, 0.f)));	// box local y
-	glm::vec3 bz = glm::normalize(glm::vec3(boxTranform*glm::vec4(0.f, 0.f, 1.f, 0.f)));	// box local z
+	glm::vec3 bx = glm::vec3(boxTranform[0]);	// box local x
+	glm::vec3 by = glm::vec3(boxTranform[1]);	// box local y
+	glm::vec3 bz = glm::vec3(boxTranform[2]);	// box local z
 
 	glm::vec3 p = sphereCenter - bcenter;
 	glm::vec3 boxClosestPoint = bcenter;
@@ -752,7 +760,34 @@ bool Collision::collide_OrientedBoxvsSphere(const glm::mat4& boxTranform, const 
 }
 bool Collision::collide_OrientedBoxvsCapsule(const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
 {
-	return false;
+	if (capsule1 == capsule2) return collide_OrientedBoxvsSphere(boxTranform, boxMin, boxMax, capsule1, capsuleRadius);
+
+	// special case of SAT
+	glm::vec3 x = glm::vec3(boxTranform[0]);
+	glm::vec3 y = glm::vec3(boxTranform[1]);
+	glm::vec3 z = glm::vec3(boxTranform[2]);
+	glm::vec3 segment = capsule2 - capsule1;
+	glm::vec3 u = glm::normalize(segment);
+
+	//	distance between objects centroids and box diagonal size
+	glm::vec3 distance = 0.5f*glm::vec3(boxTranform*glm::vec4(boxMin + boxMax, 1.f)) - 0.5f*(capsule1 + capsule2);
+	glm::vec3 sb = boxMax - boxMin;
+
+	//	first pass test
+	if		(std::abs(glm::dot(x, distance)) > projectBox(x, sb) + projectCapsule(x, segment, capsuleRadius)) return false;
+	else if (std::abs(glm::dot(y, distance)) > projectBox(y, sb) + projectCapsule(y, segment, capsuleRadius)) return false;
+	else if (std::abs(glm::dot(z, distance)) > projectBox(z, sb) + projectCapsule(z, segment, capsuleRadius)) return false;
+	else if (std::abs(glm::dot(u, distance)) > projectBox(u, sb) + projectCapsule(u, segment, capsuleRadius)) return false;
+
+	//	second pass
+	glm::vec3 ux = glm::normalize(glm::cross(u, x));
+	glm::vec3 uy = glm::normalize(glm::cross(u, y));
+	glm::vec3 uz = glm::normalize(glm::cross(u, z));
+
+	if		(std::abs(glm::dot(ux, distance)) > projectBox(ux, sb) + projectCapsule(ux, segment, capsuleRadius)) return false;
+	else if (std::abs(glm::dot(uy, distance)) > projectBox(uy, sb) + projectCapsule(uy, segment, capsuleRadius)) return false;
+	else if (std::abs(glm::dot(uz, distance)) > projectBox(uz, sb) + projectCapsule(uz, segment, capsuleRadius)) return false;
+	else return true;
 }
 //
 
@@ -778,9 +813,10 @@ bool Collision::collide_AxisAlignedBoxvsSphere(const glm::vec3& boxMin, const gl
 	glm::vec3 boxClosestPoint = sphereCenter + p;
 	return collide_PointvsSphere(boxClosestPoint, sphereCenter, sphereRadius);
 }
-inline bool Collision::collide_AxisAlignedBoxvsCapsule(const glm::vec3& boxMin, const glm::vec3& boxMax, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
+bool Collision::collide_AxisAlignedBoxvsCapsule(const glm::vec3& boxMin, const glm::vec3& boxMax, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
 {
-	return false;
+	if (capsule1 == capsule2) return collide_AxisAlignedBoxvsSphere(boxMin, boxMax, capsule1, capsuleRadius);
+	else return collide_OrientedBoxvsCapsule(glm::mat4(1.f), boxMin, boxMax, capsule1, capsule2, capsuleRadius);
 }
 //
 
