@@ -319,7 +319,7 @@ unsigned int EventHandlerString::getNumberOfEvent()
 {
 	unsigned int nb;
 	mutex.lock();
-	nb = keyboardListeners.size();
+	nb = (unsigned int) keyboardListeners.size();
 	mutex.unlock();
 	return nb;
 }

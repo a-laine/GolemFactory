@@ -241,212 +241,352 @@ void Collision::debugUnitaryTest(const int& verboseLevel)
 {
 	// point vs ...
 	{
-		const int debugLineStart = __LINE__;
 		Point testPoint = Point(glm::vec3(0, 0, 0));
 		glm::mat4 dummyTranslate = glm::translate(glm::mat4(1.0), glm::vec3(1, 1, 1));
 		glm::mat4 dummyRotate = glm::rotate(0.1f, glm::normalize(glm::vec3(0.5, 1, 3)));
 
 		// ... vs point
-		if (Collision::collide(testPoint, Point(glm::vec3(0, 0, 0))) == false)
-			printError("point", "point", debugLineStart + 6);
-		if (Collision::collide(testPoint, Point(glm::vec3(0, 0, 1))) == true) 
-			printError("point", "point", debugLineStart + 8);
+		if (Collision::collide(testPoint, Point(glm::vec3(0, 0, 0))) == false && verboseLevel)
+			printError("point", "point", __LINE__ - 1);
+		if (Collision::collide(testPoint, Point(glm::vec3(0, 0, 1))) == true && verboseLevel)
+			printError("point", "point", __LINE__ - 1);
 
 		// ... vs segment
-		if (Collision::collide(testPoint, Segment(glm::vec3(0, 0, -1), glm::vec3(0, 0, 1))) == false)
-			printError("point", "segment", debugLineStart + 12);
-		if (Collision::collide(testPoint, Segment(glm::vec3(1, 0, -1), glm::vec3(1, 0, 1))) == true)
-			printError("point", "segment", debugLineStart + 14);
-		if (Collision::collide(testPoint, Segment(glm::vec3(0, 0, 1), glm::vec3(0, 0, 1))) == true)
-			printError("point", "segment", debugLineStart + 16);
-		if (Collision::collide(testPoint, Segment(glm::vec3(0, 0, 0), glm::vec3(0, 0, 0))) == false)
-			printError("point", "segment", debugLineStart + 18);
+		if (Collision::collide(testPoint, Segment(glm::vec3(0, 0, -1), glm::vec3(0, 0, 1))) == false && verboseLevel)
+			printError("point", "segment", __LINE__ - 1);
+		if (Collision::collide(testPoint, Segment(glm::vec3(1, 0, -1), glm::vec3(1, 0, 1))) == true && verboseLevel)
+			printError("point", "segment", __LINE__ - 1);
+		if (Collision::collide(testPoint, Segment(glm::vec3(0, 0, 1), glm::vec3(0, 0, 1))) == true && verboseLevel)
+			printError("point", "segment", __LINE__ - 1);
+		if (Collision::collide(testPoint, Segment(glm::vec3(0, 0, 0), glm::vec3(0, 0, 0))) == false && verboseLevel)
+			printError("point", "segment", __LINE__ - 1);
 
 		// ... vs triangle
-		if (Collision::collide(testPoint, Triangle(glm::vec3(-1, 0, -1), glm::vec3(1, 0, -1), glm::vec3(0, 0, 1))) == false)
-			printError("point", "triangle", debugLineStart + 22);
-		if (Collision::collide(testPoint, Triangle(glm::vec3(-1, 1, -1), glm::vec3(1, 1, -1), glm::vec3(0, 1, 1))) == true)
-			printError("point", "triangle", debugLineStart + 24);
-		if (Collision::collide(testPoint, Triangle(glm::vec3(0, 0, 0), glm::vec3(-1, 0, 0), glm::vec3(2, 0, 0))) == false)
-			printError("point", "triangle", debugLineStart + 26);
-		if (Collision::collide(testPoint, Triangle(glm::vec3(0, 0, 1), glm::vec3(-1, 0, 1), glm::vec3(2, 0, 1))) == true)
-			printError("point", "triangle", debugLineStart + 28);
+		if (Collision::collide(testPoint, Triangle(glm::vec3(-1, 0, -1), glm::vec3(1, 0, -1), glm::vec3(0, 0, 1))) == false && verboseLevel)
+			printError("point", "triangle", __LINE__ - 1);
+		if (Collision::collide(testPoint, Triangle(glm::vec3(-1, 1, -1), glm::vec3(1, 1, -1), glm::vec3(0, 1, 1))) == true && verboseLevel)
+			printError("point", "triangle", __LINE__ - 1);
+		if (Collision::collide(testPoint, Triangle(glm::vec3(0, 0, 0), glm::vec3(-1, 0, 0), glm::vec3(2, 0, 0))) == false && verboseLevel)
+			printError("point", "triangle", __LINE__ - 1);
+		if (Collision::collide(testPoint, Triangle(glm::vec3(0, 0, 1), glm::vec3(-1, 0, 1), glm::vec3(2, 0, 1))) == true && verboseLevel)
+			printError("point", "triangle", __LINE__ - 1);
 
 		// ... vs OB
-		if (Collision::collide(testPoint, OrientedBox(glm::mat4(1.f), glm::vec3(-0.5f), glm::vec3(0.5f))) == false)
-			printError("point", "oriented box", debugLineStart + 32);
-		if (Collision::collide(testPoint, OrientedBox(dummyRotate, glm::vec3(-0.5f), glm::vec3(0.5f))) == false)
-			printError("point", "oriented box", debugLineStart + 34);
-		if (Collision::collide(testPoint, OrientedBox(dummyTranslate * dummyRotate, glm::vec3(-0.5f), glm::vec3(0.5f))) == true)
-			printError("point", "oriented box", debugLineStart + 36);
-		if (Collision::collide(testPoint, OrientedBox(dummyRotate, glm::vec3(0.f), glm::vec3(0.f))) == false)
-			printError("point", "oriented box", debugLineStart + 38);
-		if (Collision::collide(testPoint, OrientedBox(dummyTranslate * dummyRotate, glm::vec3(0.f), glm::vec3(0.f))) == true)
-			printError("point", "oriented box", debugLineStart + 40);
+		if (Collision::collide(testPoint, OrientedBox(glm::mat4(1.f), glm::vec3(-0.5f), glm::vec3(0.5f))) == false && verboseLevel)
+			printError("point", "oriented box", __LINE__ - 1);
+		if (Collision::collide(testPoint, OrientedBox(dummyRotate, glm::vec3(-0.5f), glm::vec3(0.5f))) == false && verboseLevel)
+			printError("point", "oriented box", __LINE__ - 1);
+		if (Collision::collide(testPoint, OrientedBox(dummyTranslate * dummyRotate, glm::vec3(-0.5f), glm::vec3(0.5f))) == true && verboseLevel)
+			printError("point", "oriented box", __LINE__ - 1);
+		if (Collision::collide(testPoint, OrientedBox(dummyRotate, glm::vec3(0.f), glm::vec3(0.f))) == false && verboseLevel)
+			printError("point", "oriented box", __LINE__ - 1);
+		if (Collision::collide(testPoint, OrientedBox(dummyTranslate * dummyRotate, glm::vec3(0.f), glm::vec3(0.f))) == true && verboseLevel)
+			printError("point", "oriented box", __LINE__ - 1);
 
 		// ... vs AAB
-		if (Collision::collide(testPoint, AxisAlignedBox(glm::vec3(-0.5f), glm::vec3(0.5f))) == false)
-			printError("point", "axis aligned box", debugLineStart + 44);
-		if (Collision::collide(testPoint, AxisAlignedBox(glm::vec3(0.5f), glm::vec3(1.f))) == true)
-			printError("point", "axis aligned box", debugLineStart + 46);
+		if (Collision::collide(testPoint, AxisAlignedBox(glm::vec3(-0.5f), glm::vec3(0.5f))) == false && verboseLevel)
+			printError("point", "axis aligned box", __LINE__ - 1);
+		if (Collision::collide(testPoint, AxisAlignedBox(glm::vec3(0.5f), glm::vec3(1.f))) == true && verboseLevel)
+			printError("point", "axis aligned box", __LINE__ - 1);
 
 		// ... vs Sphere
-		if (Collision::collide(testPoint, Sphere(glm::vec3(0.f), 1.f)) == false)
-			printError("point", "sphere", debugLineStart + 50);
-		if (Collision::collide(testPoint, Sphere(glm::vec3(1.f), 1.f)) == true)
-			printError("point", "sphere", debugLineStart + 52);
-		if (Collision::collide(testPoint, Sphere(glm::vec3(0.f), 0.f)) == false)
-			printError("point", "sphere", debugLineStart + 54);
-		if (Collision::collide(testPoint, Sphere(glm::vec3(1.f), 0.f)) == true)
-			printError("point", "sphere", debugLineStart + 56);
+		if (Collision::collide(testPoint, Sphere(glm::vec3(0.f), 1.f)) == false && verboseLevel)
+			printError("point", "sphere", __LINE__ - 1);
+		if (Collision::collide(testPoint, Sphere(glm::vec3(1.f), 1.f)) == true && verboseLevel)
+			printError("point", "sphere", __LINE__ - 1);
+		if (Collision::collide(testPoint, Sphere(glm::vec3(0.f), 0.f)) == false && verboseLevel)
+			printError("point", "sphere", __LINE__ - 1);
+		if (Collision::collide(testPoint, Sphere(glm::vec3(1.f), 0.f)) == true && verboseLevel)
+			printError("point", "sphere", __LINE__ - 1);
 
 		// ... vs Capsule
-		if (Collision::collide(testPoint, Capsule(glm::vec3(0, 0, -1), glm::vec3(0, 0, 3), 0.5f)) == false)
-			printError("point", "capsule", debugLineStart + 60);
-		if (Collision::collide(testPoint, Capsule(glm::vec3(2, 0, -1), glm::vec3(1, 0, 3), 0.5f)) == true)
-			printError("point", "capsule", debugLineStart + 62);
-		if (Collision::collide(testPoint, Capsule(glm::vec3(0, 0, -1), glm::vec3(0, 0, 3), 0.f)) == false)
-			printError("point", "capsule", debugLineStart + 64);
-		if (Collision::collide(testPoint, Capsule(glm::vec3(2, 0, -1), glm::vec3(-1, 0, 3), 2.f)) == false)
-			printError("point", "capsule", debugLineStart + 66);
+		if (Collision::collide(testPoint, Capsule(glm::vec3(0, 0, -1), glm::vec3(0, 0, 3), 0.5f)) == false && verboseLevel)
+			printError("point", "capsule", __LINE__ - 1);
+		if (Collision::collide(testPoint, Capsule(glm::vec3(2, 0, -1), glm::vec3(1, 0, 3), 0.5f)) == true && verboseLevel)
+			printError("point", "capsule", __LINE__ - 1);
+		if (Collision::collide(testPoint, Capsule(glm::vec3(0, 0, -1), glm::vec3(0, 0, 3), 0.f)) == false && verboseLevel)
+			printError("point", "capsule", __LINE__ - 1);
+		if (Collision::collide(testPoint, Capsule(glm::vec3(2, 0, -1), glm::vec3(-1, 0, 3), 2.f)) == false && verboseLevel)
+			printError("point", "capsule", __LINE__ - 1);
 	}
 
 	// segment vs ...
 	{
-		const int debugLineStart = __LINE__;
 		Segment testSegment = Segment(glm::vec3(-1, 0, 0), glm::vec3(1, 0, 0));
 		glm::mat4 dummyTranslate = glm::translate(glm::mat4(1.0), glm::vec3(2, 2, 2));
 		glm::mat4 dummyRotate = glm::rotate(0.1f, glm::normalize(glm::vec3(0.5, 1, 3)));
 
 		// ... vs Segment
-		if (Collision::collide(testSegment, Segment(glm::vec3(0, -3, 0), glm::vec3(0, 1, 0))) == false)
-			printError("segment", "segment", debugLineStart + 6);
-		if (Collision::collide(testSegment, Segment(glm::vec3(0, -3, 1), glm::vec3(0, 1, 1))) == true)
-			printError("segment", "segment", debugLineStart + 8);
-		if (Collision::collide(testSegment, testSegment) == false)
-			printError("segment", "segment", debugLineStart + 10);
-		if (Collision::collide(testSegment, Segment(glm::vec3(-3, 0, 1), glm::vec3(1, 0, 1))) == true)
-			printError("segment", "segment", debugLineStart + 12);
-		if (Collision::collide(testSegment, Segment(glm::vec3(0, 0, 0), glm::vec3(0, 0, 0))) == false)
-			printError("segment", "segment", debugLineStart + 14);
-		if (Collision::collide(testSegment, Segment(glm::vec3(0, 0, 1), glm::vec3(0, 0, 1))) == true)
-			printError("segment", "segment", debugLineStart + 16);
+		if (Collision::collide(testSegment, Segment(glm::vec3(0, -3, 0), glm::vec3(0, 1, 0))) == false && verboseLevel)
+			printError("segment", "segment", __LINE__ - 1);
+		if (Collision::collide(testSegment, Segment(glm::vec3(0, -3, 1), glm::vec3(0, 1, 1))) == true && verboseLevel)
+			printError("segment", "segment", __LINE__ - 1);
+		if (Collision::collide(testSegment, testSegment) == false && verboseLevel)
+			printError("segment", "segment", __LINE__ - 1);
+		if (Collision::collide(testSegment, Segment(glm::vec3(-3, 0, 1), glm::vec3(1, 0, 1))) == true && verboseLevel)
+			printError("segment", "segment", __LINE__ - 1);
+		if (Collision::collide(testSegment, Segment(glm::vec3(0, 0, 0), glm::vec3(0, 0, 0))) == false && verboseLevel)
+			printError("segment", "segment", __LINE__ - 1);
+		if (Collision::collide(testSegment, Segment(glm::vec3(0, 0, 1), glm::vec3(0, 0, 1))) == true && verboseLevel)
+			printError("segment", "segment", __LINE__ - 1);
 		
 		// ... vs Triangle
-		if (Collision::collide(testSegment, Triangle(glm::vec3(0, -1, -1), glm::vec3(0, 1, -1), glm::vec3(0, 0, 1))) == false)
-			printError("segment", "triangle", debugLineStart + 20);
-		if (Collision::collide(testSegment, Triangle(glm::vec3(2, -1, -1), glm::vec3(2, 1, -1), glm::vec3(2, 0, 1))) == true)
-			printError("segment", "triangle", debugLineStart + 22);
-		if (Collision::collide(testSegment, Triangle(glm::vec3(0,  1, -1), glm::vec3(0, 3, -1), glm::vec3(0, 2, 1))) == true)
-			printError("segment", "triangle", debugLineStart + 24);
-		if (Collision::collide(testSegment, Triangle(glm::vec3(-2, -1, -1), glm::vec3(-2, 1, -1), glm::vec3(-2, 0, 1))) == true)
-			printError("segment", "triangle", debugLineStart + 26);
+		if (Collision::collide(testSegment, Triangle(glm::vec3(0, -1, -1), glm::vec3(0, 1, -1), glm::vec3(0, 0, 1))) == false && verboseLevel)
+			printError("segment", "triangle", __LINE__ - 1);
+		if (Collision::collide(testSegment, Triangle(glm::vec3(2, -1, -1), glm::vec3(2, 1, -1), glm::vec3(2, 0, 1))) == true && verboseLevel)
+			printError("segment", "triangle", __LINE__ - 1);
+		if (Collision::collide(testSegment, Triangle(glm::vec3(0,  1, -1), glm::vec3(0, 3, -1), glm::vec3(0, 2, 1))) == true && verboseLevel)
+			printError("segment", "triangle", __LINE__ - 1);
+		if (Collision::collide(testSegment, Triangle(glm::vec3(-2, -1, -1), glm::vec3(-2, 1, -1), glm::vec3(-2, 0, 1))) == true && verboseLevel)
+			printError("segment", "triangle", __LINE__ - 1);
 
 		// ... vs OB
-		if (Collision::collide(testSegment, OrientedBox(glm::mat4(1.f), glm::vec3(-0.5f), glm::vec3(0.5f))) == false)
-			printError("segment", "oriented box", debugLineStart + 30);
-		if (Collision::collide(testSegment, OrientedBox(dummyRotate, glm::vec3(-0.5f), glm::vec3(0.5f))) == false)
-			printError("segment", "oriented box", debugLineStart + 32);
-		if (Collision::collide(testSegment, OrientedBox(dummyTranslate * dummyRotate, glm::vec3(-0.5f), glm::vec3(0.5f))) == true)
-			printError("segment", "oriented box", debugLineStart + 34);
-		if (Collision::collide(testSegment, OrientedBox(dummyRotate, glm::vec3(0.f), glm::vec3(0.f))) == false)
-			printError("segment", "oriented box", debugLineStart + 36);
-		if (Collision::collide(testSegment, OrientedBox(dummyTranslate * dummyRotate, glm::vec3(0.f), glm::vec3(0.f))) == true)
-			printError("segment", "oriented box", debugLineStart + 38);
+		if (Collision::collide(testSegment, OrientedBox(glm::mat4(1.f), glm::vec3(-0.5f), glm::vec3(0.5f))) == false && verboseLevel)
+			printError("segment", "oriented box", __LINE__ - 1);
+		if (Collision::collide(testSegment, OrientedBox(dummyRotate, glm::vec3(-0.5f), glm::vec3(0.5f))) == false && verboseLevel)
+			printError("segment", "oriented box", __LINE__ - 1);
+		if (Collision::collide(testSegment, OrientedBox(dummyTranslate * dummyRotate, glm::vec3(-0.5f), glm::vec3(0.5f))) == true && verboseLevel)
+			printError("segment", "oriented box", __LINE__ - 1);
+		if (Collision::collide(testSegment, OrientedBox(dummyRotate, glm::vec3(0.f), glm::vec3(0.f))) == false && verboseLevel)
+			printError("segment", "oriented box", __LINE__ - 1);
+		if (Collision::collide(testSegment, OrientedBox(dummyTranslate * dummyRotate, glm::vec3(0.f), glm::vec3(0.f))) == true && verboseLevel)
+			printError("segment", "oriented box", __LINE__ - 1);
 
 		// ... vs AAB
-		if (Collision::collide(testSegment, AxisAlignedBox(glm::vec3(-0.5f), glm::vec3(0.5f))) == false)
-			printError("segment", "axis aligned box", debugLineStart + 42);
-		if (Collision::collide(testSegment, AxisAlignedBox(glm::vec3(0.5f), glm::vec3(1.f))) == true)
-			printError("segment", "axis aligned box", debugLineStart + 44);
+		if (Collision::collide(testSegment, AxisAlignedBox(glm::vec3(-0.5f), glm::vec3(0.5f))) == false && verboseLevel)
+			printError("segment", "axis aligned box", __LINE__ - 1);
+		if (Collision::collide(testSegment, AxisAlignedBox(glm::vec3(0.5f), glm::vec3(1.f))) == true && verboseLevel)
+			printError("segment", "axis aligned box", __LINE__ - 1);
 
 		// ... vs Sphere
-		if (Collision::collide(testSegment, Sphere(glm::vec3(0.f), 1.f)) == false)
-			printError("segment", "sphere", debugLineStart + 50);
-		if (Collision::collide(testSegment, Sphere(glm::vec3(1.f), 1.f)) == true)
-			printError("segment", "sphere", debugLineStart + 52);
-		if (Collision::collide(testSegment, Sphere(glm::vec3(1.f), 1.5f)) == false)
-			printError("segment", "sphere", debugLineStart + 54);
-		if (Collision::collide(testSegment, Sphere(glm::vec3(0.f), 0.f)) == false)
-			printError("segment", "sphere", debugLineStart + 56);
-		if (Collision::collide(testSegment, Sphere(glm::vec3(1.f), 0.f)) == true)
-			printError("segment", "sphere", debugLineStart + 58);
-		if (Collision::collide(testSegment, Sphere(glm::vec3(0.f, 0.f, 1.f), 1.f)) == false)
-			printError("segment", "sphere", debugLineStart + 60);
+		if (Collision::collide(testSegment, Sphere(glm::vec3(0.f), 1.f)) == false && verboseLevel)
+			printError("segment", "sphere", __LINE__ - 1);
+		if (Collision::collide(testSegment, Sphere(glm::vec3(1.f), 1.f)) == true && verboseLevel)
+			printError("segment", "sphere", __LINE__ - 1);
+		if (Collision::collide(testSegment, Sphere(glm::vec3(1.f), 1.5f)) == false && verboseLevel)
+			printError("segment", "sphere", __LINE__ - 1);
+		if (Collision::collide(testSegment, Sphere(glm::vec3(0.f), 0.f)) == false && verboseLevel)
+			printError("segment", "sphere", __LINE__ - 1);
+		if (Collision::collide(testSegment, Sphere(glm::vec3(1.f), 0.f)) == true && verboseLevel)
+			printError("segment", "sphere", __LINE__ - 1);
+		if (Collision::collide(testSegment, Sphere(glm::vec3(0.f, 0.f, 1.f), 1.f)) == false && verboseLevel)
+			printError("segment", "sphere", __LINE__ - 1);
 
 		// ... vs Capsule
-		if (Collision::collide(testSegment, Capsule(glm::vec3(0, 0, -1), glm::vec3(0, 0, 3), 0.5f)) == false)
-			printError("segment", "capsule", debugLineStart + 64);
-		if (Collision::collide(testSegment, Capsule(glm::vec3(0, 2, -1), glm::vec3(0, 1, 3), 0.5f)) == true)
-			printError("segment", "capsule", debugLineStart + 66);
-		if (Collision::collide(testSegment, Capsule(glm::vec3(0, 0, -1), glm::vec3(0, 0, 3), 0.f)) == false)
-			printError("segment", "capsule", debugLineStart + 68);
-		if (Collision::collide(testSegment, Capsule(glm::vec3(0, 2, -1), glm::vec3(0, -1, 3), 2.f)) == false)
-			printError("segment", "capsule", debugLineStart + 70);
+		if (Collision::collide(testSegment, Capsule(glm::vec3(0, 0, -1), glm::vec3(0, 0, 3), 0.5f)) == false && verboseLevel)
+			printError("segment", "capsule", __LINE__ - 1);
+		if (Collision::collide(testSegment, Capsule(glm::vec3(0, 2, -1), glm::vec3(0, 1, 3), 0.5f)) == true && verboseLevel)
+			printError("segment", "capsule", __LINE__ - 1);
+		if (Collision::collide(testSegment, Capsule(glm::vec3(0, 0, -1), glm::vec3(0, 0, 3), 0.f)) == false && verboseLevel)
+			printError("segment", "capsule", __LINE__ - 1);
+		if (Collision::collide(testSegment, Capsule(glm::vec3(0, 2, -1), glm::vec3(0, -1, 3), 2.f)) == false && verboseLevel)
+			printError("segment", "capsule", __LINE__ - 1);
 	}
 
 	// triangle vs ...
 	{
-		const int debugLineStart = __LINE__;
 		Triangle testTriangle = Triangle(glm::vec3(-1.f, 0, -1.f), glm::vec3(1.f, 0, -1.f), glm::vec3(0, 0, 1.f));
 		glm::mat4 dummyTranslate = glm::translate(glm::mat4(1.0), glm::vec3(2, 2, 2));
 		glm::mat4 dummyRotate = glm::rotate(0.1f, glm::normalize(glm::vec3(0.5, 1, 3)));
 
 		// ... vs Triangle
-		if (Collision::collide(testTriangle, Triangle(glm::vec3(0, -1, -1), glm::vec3(0, 1, -1), glm::vec3(0, 0, 1))) == false)
-			printError("triangle", "triangle", debugLineStart + 6);
-		if (Collision::collide(testTriangle, Triangle(glm::vec3(2, -1, -1), glm::vec3(2, 1, -1), glm::vec3(2, 0, 1))) == true)
-			printError("triangle", "triangle", debugLineStart + 8);
-		if (Collision::collide(testTriangle, Triangle(glm::vec3(0, 1, -1), glm::vec3(0, 3, -1), glm::vec3(0, 2, 1))) == true)
-			printError("triangle", "triangle", debugLineStart + 10);
-		if (Collision::collide(testTriangle, Triangle(glm::vec3(-2, -1, -1), glm::vec3(-2, 1, -1), glm::vec3(-2, 0, 1))) == true)
-			printError("triangle", "triangle", debugLineStart + 12);
+		if (Collision::collide(testTriangle, Triangle(glm::vec3(0, -1, -1), glm::vec3(0, 1, -1), glm::vec3(0, 0, 1))) == false && verboseLevel)
+			printError("triangle", "triangle", __LINE__ - 1);
+		if (Collision::collide(testTriangle, Triangle(glm::vec3(2, -1, -1), glm::vec3(2, 1, -1), glm::vec3(2, 0, 1))) == true && verboseLevel)
+			printError("triangle", "triangle", __LINE__ - 1);
+		if (Collision::collide(testTriangle, Triangle(glm::vec3(0, 1, -1), glm::vec3(0, 3, -1), glm::vec3(0, 2, 1))) == true && verboseLevel)
+			printError("triangle", "triangle", __LINE__ - 1);
+		if (Collision::collide(testTriangle, Triangle(glm::vec3(-2, -1, -1), glm::vec3(-2, 1, -1), glm::vec3(-2, 0, 1))) == true && verboseLevel)
+			printError("triangle", "triangle", __LINE__ - 1);
 
 		// ... vs OB
-		if (Collision::collide(testTriangle, OrientedBox(glm::mat4(1.f), glm::vec3(-0.5f), glm::vec3(0.5f))) == false)
-			printError("triangle", "oriented box", debugLineStart + 16);
-		if (Collision::collide(testTriangle, OrientedBox(dummyRotate, glm::vec3(-0.5f), glm::vec3(0.5f))) == false)
-			printError("triangle", "oriented box", debugLineStart + 18);
-		if (Collision::collide(testTriangle, OrientedBox(dummyTranslate * dummyRotate, glm::vec3(-0.5f), glm::vec3(0.5f))) == true)
-			printError("triangle", "oriented box", debugLineStart + 20);
-		if (Collision::collide(testTriangle, OrientedBox(dummyRotate, glm::vec3(0.f), glm::vec3(0.f))) == false)
-			printError("triangle", "oriented box", debugLineStart + 22);
-		if (Collision::collide(testTriangle, OrientedBox(dummyTranslate * dummyRotate, glm::vec3(0.f), glm::vec3(0.f))) == true)
-			printError("triangle", "oriented box", debugLineStart + 24);
+		if (Collision::collide(testTriangle, OrientedBox(glm::mat4(1.f), glm::vec3(-0.5f), glm::vec3(0.5f))) == false && verboseLevel)
+			printError("triangle", "oriented box", __LINE__ - 1);
+		if (Collision::collide(testTriangle, OrientedBox(dummyRotate, glm::vec3(-0.5f), glm::vec3(0.5f))) == false && verboseLevel)
+			printError("triangle", "oriented box", __LINE__ - 1);
+		if (Collision::collide(testTriangle, OrientedBox(dummyTranslate * dummyRotate, glm::vec3(-0.5f), glm::vec3(0.5f))) == true && verboseLevel)
+			printError("triangle", "oriented box", __LINE__ - 1);
+		if (Collision::collide(testTriangle, OrientedBox(dummyRotate, glm::vec3(0.f), glm::vec3(0.f))) == false && verboseLevel)
+			printError("triangle", "oriented box", __LINE__ - 1);
+		if (Collision::collide(testTriangle, OrientedBox(dummyTranslate * dummyRotate, glm::vec3(0.f), glm::vec3(0.f))) == true && verboseLevel)
+			printError("triangle", "oriented box", __LINE__ - 1);
 
 		// ... vs AAB
-		if (Collision::collide(testTriangle, AxisAlignedBox(glm::vec3(-0.5f), glm::vec3(0.5f))) == false)
-			printError("triangle", "axis aligned box", debugLineStart + 28);
-		if (Collision::collide(testTriangle, AxisAlignedBox(glm::vec3(0.5f), glm::vec3(1.f))) == true)
-			printError("triangle", "axis aligned box", debugLineStart + 30);
+		if (Collision::collide(testTriangle, AxisAlignedBox(glm::vec3(-0.5f), glm::vec3(0.5f))) == false && verboseLevel)
+			printError("triangle", "axis aligned box", __LINE__ - 1);
+		if (Collision::collide(testTriangle, AxisAlignedBox(glm::vec3(0.5f), glm::vec3(1.f))) == true && verboseLevel)
+			printError("triangle", "axis aligned box", __LINE__ - 1);
 
 		// ... vs Sphere
-		if (Collision::collide(testTriangle, Sphere(glm::vec3(0.f), 1.f)) == false)
-			printError("triangle", "sphere", debugLineStart + 34);
-		if (Collision::collide(testTriangle, Sphere(glm::vec3(1.f), 1.f)) == true)
-			printError("triangle", "sphere", debugLineStart + 36);
-		if (Collision::collide(testTriangle, Sphere(glm::vec3(1.f), 2.f)) == false)
-			printError("triangle", "sphere", debugLineStart + 38);
-		if (Collision::collide(testTriangle, Sphere(glm::vec3(0.f), 0.f)) == false)
-			printError("triangle", "sphere", debugLineStart + 40);
-		if (Collision::collide(testTriangle, Sphere(glm::vec3(1.f), 0.f)) == true)
-			printError("triangle", "sphere", debugLineStart + 42);
-		if (Collision::collide(testTriangle, Sphere(glm::vec3(0.f, 0.f, 1.f), 1.f)) == false)
-			printError("triangle", "sphere", debugLineStart + 44);
+		if (Collision::collide(testTriangle, Sphere(glm::vec3(0.f), 1.f)) == false && verboseLevel)
+			printError("triangle", "sphere", __LINE__ - 1);
+		if (Collision::collide(testTriangle, Sphere(glm::vec3(1.f), 1.f)) == true && verboseLevel)
+			printError("triangle", "sphere", __LINE__ - 1);
+		if (Collision::collide(testTriangle, Sphere(glm::vec3(1.f), 2.f)) == false && verboseLevel)
+			printError("triangle", "sphere", __LINE__ - 1);
+		if (Collision::collide(testTriangle, Sphere(glm::vec3(0.f), 0.f)) == false && verboseLevel)
+			printError("triangle", "sphere", __LINE__ - 1);
+		if (Collision::collide(testTriangle, Sphere(glm::vec3(1.f), 0.f)) == true && verboseLevel)
+			printError("triangle", "sphere", __LINE__ - 1);
+		if (Collision::collide(testTriangle, Sphere(glm::vec3(0.f, 0.f, 1.f), 1.f)) == false && verboseLevel)
+			printError("triangle", "sphere", __LINE__ - 1);
 
 		// ... vs Capsule
-		if (Collision::collide(testTriangle, Capsule(glm::vec3(0, 0, -1), glm::vec3(0, 0, 3), 0.5f)) == false)
-			printError("triangle", "capsule", debugLineStart + 48);
-		if (Collision::collide(testTriangle, Capsule(glm::vec3(0, 2, -1), glm::vec3(0, 1, 3), 0.5f)) == true)
-			printError("triangle", "capsule", debugLineStart + 50);
-		if (Collision::collide(testTriangle, Capsule(glm::vec3(0, 0, -1), glm::vec3(0, 0, 3), 0.f)) == false)
-			printError("triangle", "capsule", debugLineStart + 52);
-		if (Collision::collide(testTriangle, Capsule(glm::vec3(0, 2, -1), glm::vec3(0, -1, 3), 2.f)) == false)
-			printError("triangle", "capsule", debugLineStart + 54);
-		if (Collision::collide(testTriangle, Capsule(glm::vec3(0, 0, -1), glm::vec3(0, 1, 3), 0.5f)) == false)
-			printError("triangle", "capsule", debugLineStart + 56);
-		if (Collision::collide(testTriangle, Capsule(glm::vec3(0, -1, -1), glm::vec3(0, 1, 1), 0.f)) == false)
-			printError("triangle", "capsule", debugLineStart + 58);
+		if (Collision::collide(testTriangle, Capsule(glm::vec3(0, 0, -1), glm::vec3(0, 0, 3), 0.5f)) == false && verboseLevel)
+			printError("triangle", "capsule", __LINE__ - 1);
+		if (Collision::collide(testTriangle, Capsule(glm::vec3(0, 2, -1), glm::vec3(0, 1, 3), 0.5f)) == true && verboseLevel)
+			printError("triangle", "capsule", __LINE__ - 1);
+		if (Collision::collide(testTriangle, Capsule(glm::vec3(0, 0, -1), glm::vec3(0, 0, 3), 0.f)) == false && verboseLevel)
+			printError("triangle", "capsule", __LINE__ - 1);
+		if (Collision::collide(testTriangle, Capsule(glm::vec3(0, 2, -1), glm::vec3(0, -1, 3), 2.f)) == false && verboseLevel)
+			printError("triangle", "capsule", __LINE__ - 1);
+		if (Collision::collide(testTriangle, Capsule(glm::vec3(0, 0, -1), glm::vec3(0, 1, 3), 0.5f)) == false && verboseLevel)
+			printError("triangle", "capsule", __LINE__ - 1);
+		if (Collision::collide(testTriangle, Capsule(glm::vec3(0, -1, -1), glm::vec3(0, 1, 1), 0.f)) == false && verboseLevel)
+			printError("triangle", "capsule", __LINE__ - 1);
+		
+		if (Collision::collide(Triangle(glm::vec3(-10.f, 0, -10.f), glm::vec3(10.f, 0, -10.f), glm::vec3(0, 0, 10.f)), Capsule(glm::vec3(0, 0, -1), glm::vec3(0, 0, 3), 0.1f)) == false && verboseLevel)
+			printError("triangle", "capsule", __LINE__ - 1);
+	}
+
+	// oriented box vs ...
+	{
+		OrientedBox testOrientedBox = OrientedBox(glm::mat4(1.f), glm::vec3(-1.f), glm::vec3(1.f));
+		glm::mat4 dummyTranslate = glm::translate(glm::mat4(1.0), glm::vec3(2, 2, 2));
+		glm::mat4 dummyRotate = glm::rotate(0.1f, glm::normalize(glm::vec3(0.5, 1, 3)));
+
+		// ... vs OrientedBox
+		if (Collision::collide(testOrientedBox, OrientedBox(glm::mat4(1.f), glm::vec3(-0.5f), glm::vec3(0.5f))) == false && verboseLevel)
+			printError("oriented box", "oriented box", __LINE__ - 1);
+		if (Collision::collide(testOrientedBox, OrientedBox(dummyTranslate, glm::vec3(-0.5f), glm::vec3(0.5f))) == true && verboseLevel)
+			printError("oriented box", "oriented box", __LINE__ - 1);
+		if (Collision::collide(testOrientedBox, OrientedBox(dummyRotate, glm::vec3(-0.5f), glm::vec3(0.5f))) == false && verboseLevel)
+			printError("oriented box", "oriented box", __LINE__ - 1);
+		if (Collision::collide(testOrientedBox, OrientedBox(dummyTranslate*dummyRotate, glm::vec3(-0.5f), glm::vec3(0.5f))) == true && verboseLevel)
+			printError("oriented box", "oriented box", __LINE__ - 1);
+
+		// ... vs AAB
+		if (Collision::collide(testOrientedBox, AxisAlignedBox(glm::vec3(-0.5f), glm::vec3(0.5f))) == false && verboseLevel)
+			printError("oriented box", "axis aligned box", __LINE__ - 1);
+		if (Collision::collide(testOrientedBox, AxisAlignedBox(glm::vec3(2.f), glm::vec3(3.f))) == true && verboseLevel)
+			printError("oriented box", "axis aligned box", __LINE__ - 1);
+
+		// ... vs Sphere
+		if (Collision::collide(testOrientedBox, Sphere(glm::vec3(0.f), 1.f)) == false && verboseLevel)
+			printError("oriented box", "sphere", __LINE__ - 1);
+		if (Collision::collide(testOrientedBox, Sphere(glm::vec3(3.f), 1.f)) == true && verboseLevel)
+			printError("oriented box", "sphere", __LINE__ - 1);
+		if (Collision::collide(testOrientedBox, Sphere(glm::vec3(1.f), 0.2f)) == false && verboseLevel)
+			printError("oriented box", "sphere", __LINE__ - 1);
+		if (Collision::collide(testOrientedBox, Sphere(glm::vec3(0.f), 0.f)) == false && verboseLevel)
+			printError("oriented box", "sphere", __LINE__ - 1);
+		if (Collision::collide(testOrientedBox, Sphere(glm::vec3(2.f), 0.f)) == true && verboseLevel)
+			printError("oriented box", "sphere", __LINE__ - 1);
+		if (Collision::collide(testOrientedBox, Sphere(glm::vec3(0.f, 0.f, 1.f), 0.1f)) == false && verboseLevel)
+			printError("oriented box", "sphere", __LINE__ - 1);
+
+		// ... vs Capsule
+		if (Collision::collide(testOrientedBox, Capsule(glm::vec3(0, 0, -1), glm::vec3(0, 0, 3), 0.5f)) == false && verboseLevel)
+			printError("oriented box", "capsule", __LINE__ - 1);
+		if (Collision::collide(testOrientedBox, Capsule(glm::vec3(0, 3, -1), glm::vec3(0, 2, 3), 0.5f)) == true && verboseLevel)
+			printError("oriented box", "capsule", __LINE__ - 1);
+		if (Collision::collide(testOrientedBox, Capsule(glm::vec3(0, 0, -1), glm::vec3(0, 0, 3), 0.f)) == false && verboseLevel)
+			printError("oriented box", "capsule", __LINE__ - 1);
+		if (Collision::collide(testOrientedBox, Capsule(glm::vec3(0, 2, -1), glm::vec3(0, -1, 3), 2.f)) == false && verboseLevel)
+			printError("oriented box", "capsule", __LINE__ - 1);
+		if (Collision::collide(testOrientedBox, Capsule(glm::vec3(0, 0, -1), glm::vec3(0, 1, 3), 0.5f)) == false && verboseLevel)
+			printError("oriented box", "capsule", __LINE__ - 1);
+		if (Collision::collide(testOrientedBox, Capsule(glm::vec3(0, -1, -1), glm::vec3(0, 1, 1), 0.f)) == false && verboseLevel)
+			printError("oriented box", "capsule", __LINE__ - 1);
+	}
+
+	// axis aligned box vs ...
+	{
+		AxisAlignedBox testAAB = AxisAlignedBox(glm::vec3(-1.f), glm::vec3(1.f));
+
+		// ... vs AAB
+		if (Collision::collide(testAAB, AxisAlignedBox(glm::vec3(-0.5f), glm::vec3(0.5f))) == false && verboseLevel)
+			printError("axis aligned box", "axis aligned box", __LINE__ - 1);
+		if (Collision::collide(testAAB, AxisAlignedBox(glm::vec3(2.f), glm::vec3(3.f))) == true && verboseLevel)
+			printError("axis aligned box", "axis aligned box", __LINE__ - 1);
+		if (Collision::collide(testAAB, AxisAlignedBox(glm::vec3(-1.f, -1.f, 1.f), glm::vec3(1.f, 1.f, 2.f))) == false && verboseLevel)
+			printError("axis aligned box", "axis aligned box", __LINE__ - 1);
+		if (Collision::collide(testAAB, AxisAlignedBox(glm::vec3(1.f), glm::vec3(3.f))) == false && verboseLevel)
+			printError("axis aligned box", "axis aligned box", __LINE__ - 1);
+
+		// ... vs Sphere
+		if (Collision::collide(testAAB, Sphere(glm::vec3(0.f), 1.f)) == false && verboseLevel)
+			printError("axis aligned box", "sphere", __LINE__ - 1);
+		if (Collision::collide(testAAB, Sphere(glm::vec3(3.f), 1.f)) == true && verboseLevel)
+			printError("axis aligned box", "sphere", __LINE__ - 1);
+		if (Collision::collide(testAAB, Sphere(glm::vec3(1.f), 0.2f)) == false && verboseLevel)
+			printError("axis aligned box", "sphere", __LINE__ - 1);
+		if (Collision::collide(testAAB, Sphere(glm::vec3(0.f), 0.f)) == false && verboseLevel)
+			printError("axis aligned box", "sphere", __LINE__ - 1);
+		if (Collision::collide(testAAB, Sphere(glm::vec3(2.f), 0.f)) == true && verboseLevel)
+			printError("axis aligned box", "sphere", __LINE__ - 1);
+		if (Collision::collide(testAAB, Sphere(glm::vec3(0.f, 0.f, 1.f), 0.1f)) == false && verboseLevel)
+			printError("axis aligned box", "sphere", __LINE__ - 1);
+
+		// ... vs Capsule
+		if (Collision::collide(testAAB, Capsule(glm::vec3(0, 0, -1), glm::vec3(0, 0, 3), 0.5f)) == false && verboseLevel)
+			printError("axis aligned box", "capsule", __LINE__ - 1);
+		if (Collision::collide(testAAB, Capsule(glm::vec3(0, 3, -1), glm::vec3(0, 2, 3), 0.5f)) == true && verboseLevel)
+			printError("axis aligned box", "capsule", __LINE__ - 1);
+		if (Collision::collide(testAAB, Capsule(glm::vec3(0, 0, -1), glm::vec3(0, 0, 3), 0.f)) == false && verboseLevel)
+			printError("axis aligned box", "capsule", __LINE__ - 1);
+		if (Collision::collide(testAAB, Capsule(glm::vec3(0, 2, -1), glm::vec3(0, -1, 3), 2.f)) == false && verboseLevel)
+			printError("axis aligned box", "capsule", __LINE__ - 1);
+		if (Collision::collide(testAAB, Capsule(glm::vec3(0, 0, -1), glm::vec3(0, 1, 3), 0.5f)) == false && verboseLevel)
+			printError("axis aligned box", "capsule", __LINE__ - 1);
+		if (Collision::collide(testAAB, Capsule(glm::vec3(0, -1, -1), glm::vec3(0, 1, 1), 0.f)) == false && verboseLevel)
+			printError("axis aligned box", "capsule", __LINE__ - 1);
+	}
+
+	// shere vs ...
+	{
+		Sphere testSphere = Sphere(glm::vec3(0.f), 1.f);
+
+		// ... vs Sphere
+		if (Collision::collide(testSphere, Sphere(glm::vec3(0.f), 1.f)) == false && verboseLevel)
+			printError("sphere", "sphere", __LINE__ - 1);
+		if (Collision::collide(testSphere, Sphere(glm::vec3(3.f), 1.f)) == true && verboseLevel)
+			printError("sphere", "sphere", __LINE__ - 1);
+		if (Collision::collide(testSphere, Sphere(glm::vec3(0.5f), 0.5f)) == false && verboseLevel)
+			printError("sphere", "sphere", __LINE__ - 1);
+
+		// ... vs Capsule
+		if (Collision::collide(testSphere, Capsule(glm::vec3(0, 0, -1), glm::vec3(0, 0, 3), 0.5f)) == false && verboseLevel)
+			printError("sphere", "capsule", __LINE__ - 1);
+		if (Collision::collide(testSphere, Capsule(glm::vec3(0, 3, -1), glm::vec3(0, 2, 3), 0.5f)) == true && verboseLevel)
+			printError("sphere", "capsule", __LINE__ - 1);
+		if (Collision::collide(testSphere, Capsule(glm::vec3(0, 0, -1), glm::vec3(0, 0, 3), 0.f)) == false && verboseLevel)
+			printError("sphere", "capsule", __LINE__ - 1);
+		if (Collision::collide(testSphere, Capsule(glm::vec3(0, 2, -1), glm::vec3(0, -1, 3), 2.f)) == false && verboseLevel)
+			printError("sphere", "capsule", __LINE__ - 1);
+		if (Collision::collide(testSphere, Capsule(glm::vec3(0, 0, -1), glm::vec3(0, 1, 3), 0.5f)) == false && verboseLevel)
+			printError("sphere", "capsule", __LINE__ - 1);
+		if (Collision::collide(testSphere, Capsule(glm::vec3(0, -1, -1), glm::vec3(0, 1, 1), 0.f)) == false && verboseLevel)
+			printError("sphere", "capsule", __LINE__ - 1);
+	}
+
+	// capsule vs ...
+	{
+		Capsule testCapsule = Capsule(glm::vec3(0, 0, -1), glm::vec3(0, 0, 1), 1.f);
+
+		// ... vs Capsule
+		if (Collision::collide(testCapsule, Capsule(glm::vec3(0, 0, -1), glm::vec3(0, 0, 3), 0.5f)) == false && verboseLevel)
+			printError("capsule", "capsule", __LINE__ - 1);
+		if (Collision::collide(testCapsule, Capsule(glm::vec3(0, 3, -1), glm::vec3(0, 2, 3), 0.5f)) == true && verboseLevel)
+			printError("capsule", "capsule", __LINE__ - 1);
+		if (Collision::collide(testCapsule, Capsule(glm::vec3(0, 0, -1), glm::vec3(0, 0, 3), 0.f)) == false && verboseLevel)
+			printError("capsule", "capsule", __LINE__ - 1);
+		if (Collision::collide(testCapsule, Capsule(glm::vec3(0, 2, -1), glm::vec3(0, -1, 3), 2.f)) == false && verboseLevel)
+			printError("capsule", "capsule", __LINE__ - 1);
+		if (Collision::collide(testCapsule, Capsule(glm::vec3(0, 0, -1), glm::vec3(0, 1, 3), 0.5f)) == false && verboseLevel)
+			printError("capsule", "capsule", __LINE__ - 1);
+		if (Collision::collide(testCapsule, Capsule(glm::vec3(0, -1, -1), glm::vec3(0, 1, 1), 0.f)) == false && verboseLevel)
+			printError("capsule", "capsule", __LINE__ - 1);
 	}
 }
 //

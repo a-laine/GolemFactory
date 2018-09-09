@@ -26,8 +26,7 @@ bool Collision::collide_AxisAlignedBoxvsSphere(const glm::vec3& boxMin, const gl
 	if (p.z > bsize.z) p.z = bsize.z;
 	else if (p.z < -bsize.z) p.z = -bsize.z;
 
-	glm::vec3 boxClosestPoint = sphereCenter + p;
-	return collide_PointvsSphere(boxClosestPoint, sphereCenter, sphereRadius);
+	return collide_PointvsSphere(bcenter + p, sphereCenter, sphereRadius);
 }
 bool Collision::collide_AxisAlignedBoxvsCapsule(const glm::vec3& boxMin, const glm::vec3& boxMax, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
 {

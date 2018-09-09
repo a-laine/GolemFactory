@@ -98,25 +98,25 @@ bool Collision::collide_OrientedBoxvsCapsule(const glm::mat4& boxTranform, const
 	glm::vec3 closestBoxPoint = bcenter;
 	glm::vec3 closestSegmentPoint = getSegmentClosestPoint(capsule1, capsule2, closestBoxPoint);
 
-	float d = glm::dot(bx, closestBoxPoint - closestSegmentPoint);
+	float d = glm::dot(bx, closestSegmentPoint - closestBoxPoint);
 	if (d > bsize.x) d = bsize.x;
 	else if (d < -bsize.x) d = -bsize.x;
 	closestBoxPoint += d* bx;
 	closestSegmentPoint = getSegmentClosestPoint(capsule1, capsule2, closestBoxPoint);
 
-	d = glm::dot(by, closestBoxPoint - closestSegmentPoint);
+	d = glm::dot(by, closestSegmentPoint - closestBoxPoint);
 	if (d > bsize.y) d = bsize.y;
 	else if (d < -bsize.y) d = -bsize.y;
 	closestBoxPoint += d* by;
 	closestSegmentPoint = getSegmentClosestPoint(capsule1, capsule2, closestBoxPoint);
 
-	d = glm::dot(bz, closestBoxPoint - closestSegmentPoint);
+	d = glm::dot(bz, closestSegmentPoint - closestBoxPoint);
 	if (d > bsize.z) d = bsize.z;
 	else if (d < -bsize.z) d = -bsize.z;
 	closestBoxPoint += d* bz;
 	closestSegmentPoint = getSegmentClosestPoint(capsule1, capsule2, closestBoxPoint);
 
-	return glm::length(closestBoxPoint - closestSegmentPoint) > capsuleRadius;
+	return glm::length(closestBoxPoint - closestSegmentPoint) <= capsuleRadius;
 }
 //
 

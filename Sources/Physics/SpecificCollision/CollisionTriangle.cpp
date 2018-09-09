@@ -3,7 +3,6 @@
 #include "CollisionSegment.h"
 #include "CollisionUtils.h"
 
-#include <iostream>
 
 //	Specialized functions : triangle
 bool Collision::collide_TrianglevsTriangle(const glm::vec3& triangle1a, const glm::vec3&triangle1b, const glm::vec3& triangle1c, const glm::vec3& triangle2a, const glm::vec3& triangle2b, const glm::vec3& triangle2c)
@@ -18,7 +17,7 @@ bool Collision::collide_TrianglevsTriangle(const glm::vec3& triangle1a, const gl
 }
 bool Collision::collide_TrianglevsOrientedBox(const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax)
 {
-	//	special cases
+	//	flat triangle
 	if (triangle1 == triangle2) return collide_SegmentvsOrientedBox(triangle1, triangle3, boxTranform, boxMin, boxMax);
 	else if (triangle1 == triangle3) return collide_SegmentvsOrientedBox(triangle1, triangle2, boxTranform, boxMin, boxMax);
 	else if (triangle2 == triangle3) return collide_SegmentvsOrientedBox(triangle1, triangle2, boxTranform, boxMin, boxMax);
@@ -29,37 +28,41 @@ bool Collision::collide_TrianglevsOrientedBox(const glm::vec3& triangle1, const 
 	glm::vec3 z = glm::vec3(boxTranform[2]);
 	glm::vec3 edge1 = triangle2 - triangle1;
 	glm::vec3 edge2 = triangle3 - triangle1;
-	glm::vec3 n = glm::cross(edge1, edge2);
+	glm::vec3 e1 = glm::normalize(edge1);
+	glm::vec3 e2 = glm::normalize(edge2);
+	glm::vec3 n = glm::normalize(glm::cross(edge1, edge2));
 	glm::vec3 distance = glm::vec3(boxTranform*glm::vec4(0.5f*(boxMin + boxMax), 1.f)) - triangle1;
 	glm::vec3 sb = 0.5f * glm::abs(boxMax - boxMin);
 
 	//	first pass
-	if      (std::abs(glm::dot(x, distance)) > projectHalfBox(x, sb) + projectTriangle(x, edge1, edge2)) return false;
-	else if (std::abs(glm::dot(y, distance)) > projectHalfBox(y, sb) + projectTriangle(y, edge1, edge2)) return false;
-	else if (std::abs(glm::dot(z, distance)) > projectHalfBox(z, sb) + projectTriangle(z, edge1, edge2)) return false;
-	else if (std::abs(glm::dot(n, distance)) > projectHalfBox(n, sb)/* + projectTriangle(n, edge1, edge2)*/) return false;
+	if      (glm::dot(x, distance) > projectHalfBox(x, sb) + projectTriangle(x, edge1, edge2)) return false;
+	else if (glm::dot(y, distance) > projectHalfBox(y, sb) + projectTriangle(y, edge1, edge2)) return false;
+	else if (glm::dot(z, distance) > projectHalfBox(z, sb) + projectTriangle(z, edge1, edge2)) return false;
+	else if (glm::dot(n, distance) > projectHalfBox(n, sb)) return false;
+	else if (glm::dot(e1, distance) > projectHalfBox(e1, sb) + projectTriangle(e1, edge1, edge2)) return false;
+	else if (glm::dot(e2, distance) > projectHalfBox(e2, sb) + projectTriangle(e2, edge1, edge2)) return false;
 
-	glm::vec3 edge3 = triangle3 - triangle2;
-	glm::vec3 xe1 = glm::cross(x, edge1);
-	glm::vec3 ye1 = glm::cross(y, edge1);
-	glm::vec3 ze1 = glm::cross(z, edge1);
-	glm::vec3 xe2 = glm::cross(x, edge2);
-	glm::vec3 ye2 = glm::cross(y, edge2);
-	glm::vec3 ze2 = glm::cross(z, edge2);
-	glm::vec3 xe3 = glm::cross(x, edge3);
-	glm::vec3 ye3 = glm::cross(y, edge3);
-	glm::vec3 ze3 = glm::cross(z, edge3);
+	glm::vec3 e3 = glm::normalize(triangle3 - triangle2);
+	glm::vec3 xe1 = glm::normalize(glm::cross(x, e1));
+	glm::vec3 ye1 = glm::normalize(glm::cross(y, e1));
+	glm::vec3 ze1 = glm::normalize(glm::cross(z, e1));
+	glm::vec3 xe2 = glm::normalize(glm::cross(x, e2));
+	glm::vec3 ye2 = glm::normalize(glm::cross(y, e2));
+	glm::vec3 ze2 = glm::normalize(glm::cross(z, e2));
+	glm::vec3 xe3 = glm::normalize(glm::cross(x, e3));
+	glm::vec3 ye3 = glm::normalize(glm::cross(y, e3));
+	glm::vec3 ze3 = glm::normalize(glm::cross(z, e3));
 
 	//	second pass
-	if      (std::abs(glm::dot(xe1, distance)) > projectHalfBox(xe1, sb) + projectTriangle(xe1, edge1, edge2)) return false;
-	else if (std::abs(glm::dot(xe2, distance)) > projectHalfBox(xe2, sb) + projectTriangle(xe2, edge1, edge2)) return false;
-	else if (std::abs(glm::dot(xe3, distance)) > projectHalfBox(xe3, sb) + projectTriangle(xe3, edge1, edge2)) return false;
-	else if (std::abs(glm::dot(ye1, distance)) > projectHalfBox(ye1, sb) + projectTriangle(ye1, edge1, edge2)) return false;
-	else if (std::abs(glm::dot(ye2, distance)) > projectHalfBox(ye2, sb) + projectTriangle(ye2, edge1, edge2)) return false;
-	else if (std::abs(glm::dot(ye3, distance)) > projectHalfBox(ye3, sb) + projectTriangle(ye3, edge1, edge2)) return false;
-	else if (std::abs(glm::dot(ze1, distance)) > projectHalfBox(ze1, sb) + projectTriangle(ze1, edge1, edge2)) return false;
-	else if (std::abs(glm::dot(ze2, distance)) > projectHalfBox(ze2, sb) + projectTriangle(ze2, edge1, edge2)) return false;
-	else if (std::abs(glm::dot(ze3, distance)) > projectHalfBox(ze3, sb) + projectTriangle(ze3, edge1, edge2)) return false;
+	if      (glm::dot(xe1, distance) > projectHalfBox(xe1, sb) + projectTriangle(xe1, edge1, edge2)) return false;
+	else if (glm::dot(xe2, distance) > projectHalfBox(xe2, sb) + projectTriangle(xe2, edge1, edge2)) return false;
+	else if (glm::dot(xe3, distance) > projectHalfBox(xe3, sb) + projectTriangle(xe3, edge1, edge2)) return false;
+	else if (glm::dot(ye1, distance) > projectHalfBox(ye1, sb) + projectTriangle(ye1, edge1, edge2)) return false;
+	else if (glm::dot(ye2, distance) > projectHalfBox(ye2, sb) + projectTriangle(ye2, edge1, edge2)) return false;
+	else if (glm::dot(ye3, distance) > projectHalfBox(ye3, sb) + projectTriangle(ye3, edge1, edge2)) return false;
+	else if (glm::dot(ze1, distance) > projectHalfBox(ze1, sb) + projectTriangle(ze1, edge1, edge2)) return false;
+	else if (glm::dot(ze2, distance) > projectHalfBox(ze2, sb) + projectTriangle(ze2, edge1, edge2)) return false;
+	else if (glm::dot(ze3, distance) > projectHalfBox(ze3, sb) + projectTriangle(ze3, edge1, edge2)) return false;
 	else return true;
 }
 bool Collision::collide_TrianglevsAxisAlignedBox(const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, const glm::vec3& boxMin, const glm::vec3& boxMax)
@@ -78,29 +81,16 @@ bool Collision::collide_TrianglevsSphere(const glm::vec3& triangle1, const glm::
 	glm::vec3 p = (sphereCenter - triangle1) - glm::dot(sphereCenter - triangle1, n) * n;
 
 	//	getting closest point in triangle from barycentric coordinates
-	float crossDot = glm::dot(u1, u2);
-	float magnitute = glm::dot(u1, u1)*glm::dot(u2, u2) - crossDot*crossDot;
-	glm::vec2 barry;
-	barry.x = (glm::dot(u2, u2) * glm::dot(p, u1) - crossDot * glm::dot(p, u2)) / magnitute;
-	barry.y = (glm::dot(u1, u1) * glm::dot(p, u2) - crossDot * glm::dot(p, u1)) / magnitute;
+	glm::vec2 bary = getBarycentricCoordinates(u1, u2, p);
+	if (bary.x < 0.f) bary.x = 0.f;
+	if (bary.y < 0.f) bary.y = 0.f;
+	if (bary.x + bary.y > 1.f) bary /= (bary.x + bary.y);
 
-	if (barry.x < 0.f) barry.x = 0.f;
-	if (barry.y < 0.f) barry.y = 0.f;
-	if (barry.x + barry.y > 1.f) barry /= (barry.x + barry.y);
-
-	glm::vec3 closest = triangle1 + barry.x*u1 + barry.y*u2;
+	glm::vec3 closest = triangle1 + bary.x*u1 + bary.y*u2;
 	return collide_PointvsSphere(closest, sphereCenter, sphereRadius);
 }
 bool Collision::collide_TrianglevsCapsule(const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
 {
-	/*
-		1. compute intersection point between segment extended line and triangle plane
-		2. with previous point compute the closest point which is on triangle
-		3. with this point get the closest one which is on capsule segment
-		4. simply check the shortest distance with capsule radius
-	*/
-
-
 	//	begin and eliminate special cases
 	if (capsule1 == capsule2) return collide_TrianglevsSphere(triangle1, triangle2, triangle3, capsule1, capsuleRadius);
 
@@ -122,42 +112,46 @@ bool Collision::collide_TrianglevsCapsule(const glm::vec3& triangle1, const glm:
 	//	compute intersection point between ray and plane
 	n = glm::normalize(n);
 	glm::vec3 s = capsule2 - capsule1;
-	if (glm::dot(n, s) == 0.f) // segment parallel to triangle plane -> solve by SAT
+	if (glm::dot(n, s) == 0.f) // segment parallel to triangle plane
 	{
-		if (std::abs(glm::dot(n, capsule1 - triangle1)) > capsuleRadius) return false; // segment too far on direction n
-		glm::vec3 a = capsule1 - glm::dot(n, capsule1 - triangle1) * n;
+		float S = glm::dot(n, capsule1 - triangle1);						// distance [capsule seg, triangle plane]
+		if (std::abs(S) > capsuleRadius) return false;						// segment too far on direction n
+		glm::vec3 a = capsule1 - glm::dot(n, capsule1 - triangle1) * n;		// capsule seg projection on plane
 		glm::vec3 b = capsule2 - glm::dot(n, capsule2 - triangle1) * n;
 
-		/*
-			3. if a or b inside triangle ->COLLIDE                 (ou inversement)
+		// test if one of extremity of projection segment is inside triangle
+		glm::vec2 bary = getBarycentricCoordinates(v1, v2, a);
+		if (bary.x <= 1.f && bary.y <= 1.f && bary.x + bary.y <= 1.f) return true;
+		bary = getBarycentricCoordinates(v1, v2, b);
+		if (bary.x <= 1.f && bary.y <= 1.f && bary.x + bary.y <= 1.f) return true;
 
-			   d1 = distance seg[a,b] / seg[1,2]
-			   d2 = distance seg[a,b] / seg[1,3]
-			   d3 = distance seg[a,b] / seg[3,2]
+		// test projection segment against triangle
+		std::pair<glm::vec3, glm::vec3> s1 = getSegmentsClosestSegment(a, b, triangle1, triangle2);
+		std::pair<glm::vec3, glm::vec3> s2 = getSegmentsClosestSegment(a, b, triangle1, triangle3);
+		std::pair<glm::vec3, glm::vec3> s3 = getSegmentsClosestSegment(a, b, triangle3, triangle2);
 
-			   if min(d1, d2, d3) < projected radius
-		*/
+		float d1 = glm::length(s1.first - s1.second);						// distance seg[a,b] / seg[1,2]
+		float d2 = glm::length(s2.first - s2.second);						// distance seg[a,b] / seg[1,3]
+		float d3 = glm::length(s3.first - s3.second);						// distance seg[a,b] / seg[3,2]
 		
-		
-		std::cout << "Collision : collide_TrianglevsCapsule : special case not supported : segment parallel to triangle plane" << std::endl;
-		return false;
+		float size = sqrt(capsuleRadius * capsuleRadius - S * S) + COLLISION_EPSILON;	//	r²sin² = r² - r²cos² = r² - S²
+		return d1<size || d2<size || d3<size;								//	seg[a,b] is far enough to triangle
 	}
-	glm::vec3 u = glm::normalize(s);
-	glm::vec3 intersection = capsule1 + glm::dot(n, triangle1 - capsule1) / glm::dot(n, u)*u - triangle1;
+	else // standard case
+	{
+		glm::vec3 u = glm::normalize(s);
+		glm::vec3 intersection = capsule1 + glm::dot(n, triangle1 - capsule1) / glm::dot(n, u)*u -triangle1;
 
-	//	checking barycentric coordinates
-	float crossDot = glm::dot(v1, v2);
-	float magnitute = glm::dot(v1, v1)*glm::dot(v2, v2) - crossDot*crossDot;
-	glm::vec2 barry;
+		//	checking barycentric coordinates
+		glm::vec2 bary = getBarycentricCoordinates(v1, v2, intersection);
+		if (bary.x < 0.f) bary.x = 0.f;
+		if (bary.y < 0.f) bary.y = 0.f;
+		if (bary.x + bary.y > 1.f) bary /= (bary.x + bary.y);
 
-	barry.x = (glm::dot(v2, v2) * glm::dot(intersection, v1) - crossDot * glm::dot(intersection, v2)) / magnitute;
-	barry.y = (glm::dot(v1, v1) * glm::dot(intersection, v2) - crossDot * glm::dot(intersection, v1)) / magnitute;
-	if (barry.x < 0.f) barry.x = 0.f;
-	if (barry.y < 0.f) barry.y = 0.f;
-	if (barry.x + barry.y > 1.f) barry /= (barry.x + barry.y);
-
-	glm::vec3 closestTrianglePoint = triangle1 + barry.x*v1 + barry.y*v2;
-	glm::vec3 closestSegmentPoint = getSegmentClosestPoint(capsule1, capsule2, closestTrianglePoint);
-	return glm::length(closestSegmentPoint - closestTrianglePoint) < capsuleRadius;
+		// compute and compare minimal distance to capsule radius
+		glm::vec3 closestTrianglePoint = triangle1 + bary.x*v1 + bary.y*v2;
+		glm::vec3 closestSegmentPoint = getSegmentClosestPoint(capsule1, capsule2, closestTrianglePoint);
+		return glm::length(closestSegmentPoint - closestTrianglePoint) <= capsuleRadius;
+	}
 }
 //

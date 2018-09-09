@@ -68,13 +68,8 @@ bool Collision::collide_SegmentvsTriangle(const glm::vec3& segment1, const glm::
 	glm::vec3 intersection = segment1 + depth*u - triangle1;
 
 	//	checking barycentric coordinates
-	float crossDot = glm::dot(v1, v2);
-	float magnitute = glm::dot(v1, v1)*glm::dot(v2, v2) - crossDot*crossDot;
-	glm::vec2 barry;
-
-	barry.x = (glm::dot(v2, v2) * glm::dot(intersection, v1) - crossDot * glm::dot(intersection, v2)) / magnitute;
-	barry.y = (glm::dot(v1, v1) * glm::dot(intersection, v2) - crossDot * glm::dot(intersection, v1)) / magnitute;
-	return !(barry.x < 0.f || barry.y < 0.f || barry.x + barry.y > 1.f);
+	glm::vec2 bary = getBarycentricCoordinates(v1, v2, intersection);
+	return !(bary.x < 0.f || bary.y < 0.f || bary.x + bary.y > 1.f);
 }
 bool Collision::collide_SegmentvsOrientedBox(const glm::vec3& segment1, const glm::vec3& segment2, const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax)
 {

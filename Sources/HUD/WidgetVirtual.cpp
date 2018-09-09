@@ -1,5 +1,5 @@
 #include "WidgetVirtual.h"
-
+#include "../Physics/SpecificCollision/CollisionUtils.h"
 
 //  Default
 WidgetVirtual::WidgetVirtual(const WidgetType& t, const uint8_t& config, const std::string& shaderName) : type(t), configuration(config)
@@ -94,11 +94,8 @@ bool WidgetVirtual::intersect(const glm::mat4& base, const glm::vec3& ray)
 			glm::vec3 intersection = depth * ray - p1;
 
 			//	check if point is inside triangle (checking barycentric coordinates)
-			float magnitute = glm::dot(v2, v2)*glm::dot(v1, v1) - glm::dot(v1, v2)*glm::dot(v1, v2);
-			glm::vec2 barry;
-				barry.x = (glm::dot(v2, v2) * glm::dot(intersection, v1) - glm::dot(v2, v1) * glm::dot(intersection, v2)) / magnitute;
-				barry.y = (glm::dot(v1, v1) * glm::dot(intersection, v2) - glm::dot(v2, v1) * glm::dot(intersection, v1)) / magnitute;
-			if (barry.x < 0.f || barry.y < 0.f || barry.x + barry.y > 1.f) continue;
+			glm::vec2 bary = getBarycentricCoordinates(v1, v2, intersection);
+			if (bary.x < 0.f || bary.y < 0.f || bary.x + bary.y > 1.f) continue;
 			else return true;
 		}
 	}
