@@ -2,6 +2,7 @@
 
 #include <glm/gtx/component_wise.hpp>
 #include "SceneManager.h"
+#include "../Physics/Collision.h"
 
 
 //	coefficient for intersection test computation (to avoid artefacts)
@@ -12,29 +13,31 @@
 class DefaultSceneManagerBoxTest
 {
 	public:
-		DefaultSceneManagerBoxTest(const glm::vec3& bbMin, const glm::vec3& bbMax)
-			: center((bbMin + bbMax) * 0.5f)
-			, halfSize((bbMax - bbMin) * 0.5f)
-		{}
+		DefaultSceneManagerBoxTest(const glm::vec3& cornerMin, const glm::vec3& cornerMax)
+			: bbMin(cornerMin) , bbMax(cornerMax) {}
 
 		SceneManager::CollisionType operator() (const NodeVirtual* node) const
 		{
-			glm::vec3 nodeHalfSize = node->getSize() * 0.5f;
+			if (Collision::collide_AxisAlignedBoxvsAxisAlignedBox(bbMin, bbMax, node->getBBMin(), node->getBBMax()))
+				return SceneManager::OVERLAP;
+			else return SceneManager::NONE;
+
+			/*glm::vec3 nodeHalfSize = node->getSize() * 0.5f;
 			glm::vec3 allowance(node->allowanceSize);
 			const glm::vec3 p = glm::max(glm::abs(node->getCenter() - center) - allowance, 0.f);
 			if(p.x >  halfSize.x + nodeHalfSize.x || p.y >  halfSize.y + nodeHalfSize.y || p.z >  halfSize.z + nodeHalfSize.z) return SceneManager::NONE;
 			if(p.x <= halfSize.x - nodeHalfSize.x && p.y <= halfSize.y - nodeHalfSize.y && p.z <= halfSize.z - nodeHalfSize.z) return SceneManager::INSIDE;
-			else return SceneManager::OVERLAP;
+			else return SceneManager::OVERLAP;*/
 		}
 
 		void getChildren(NodeVirtual* node, std::vector<NodeVirtual::NodeRange>& path) const
 		{
-			node->getChildrenInBox(path, center - halfSize, center + halfSize);
+			node->getChildrenInBox(path, bbMin, bbMax);
 		}
 
 	private:
-		glm::vec3 center;
-		glm::vec3 halfSize;
+		glm::vec3 bbMin;
+		glm::vec3 bbMax;
 };
 
 class DefaultSceneManagerRayTest
@@ -46,11 +49,15 @@ class DefaultSceneManagerRayTest
 
 		SceneManager::CollisionType operator() (const NodeVirtual* node) const
 		{
-			const glm::vec3 t1 = (node->getBBMin() - position) / direction;
+			if (Collision::collide_SegmentvsAxisAlignedBox(position, position+distance*direction, node->getBBMin(), node->getBBMax()))
+				return SceneManager::OVERLAP;
+			else return SceneManager::NONE;
+
+			/*const glm::vec3 t1 = (node->getBBMin() - position) / direction;
 			const glm::vec3 t2 = (node->getBBMax() - position) / direction;
 			float tnear = glm::compMax(glm::min(t1, t2));
 			float tfar = glm::compMin(glm::max(t1, t2));
-			return (tfar >= tnear && tfar >= 0 && tnear <= distance) ? SceneManager::OVERLAP : SceneManager::NONE;
+			return (tfar >= tnear && tfar >= 0 && tnear <= distance) ? SceneManager::OVERLAP : SceneManager::NONE;*/
 		}
 
 	private:
@@ -92,7 +99,6 @@ class DefaultSceneManagerFrustrumTest
 				return SceneManager::NONE;
 
 			//	return distance to camera in int
-			//return (int) glm::length(p);
 			return SceneManager::OVERLAP;
 		}
 
@@ -108,18 +114,18 @@ class DefaultSceneManagerFrustrumTest
 class DefaultRayPickingCollector
 {
 	public:
-		DefaultRayPickingCollector() : nearestObject(nullptr), distance(std::numeric_limits<float>::max()) {}
+		DefaultRayPickingCollector(const glm::vec3& pos, const glm::vec3& dir, float maxDist)
+			: position(pos), direction(dir), distance(maxDist){}
 
-		void operator() (const NodeVirtual* node, InstanceVirtual* object)
-		{
-			// TODO raycast object more precisely (BB, physics shape, mesh)
-		}
-
-		InstanceVirtual* getObject() const { return nearestObject; }
-		float getDistance() const { return distance; }
+		void operator() (NodeVirtual* node, InstanceVirtual* object);
+		std::map<float, InstanceVirtual*>& getObjects();
+		InstanceVirtual* getNearestObject() const;
+		float getNearestDistance() const;
 
 	private:
-		InstanceVirtual* nearestObject;
+		std::map<float, InstanceVirtual*> objectOnRay;
+		glm::vec3 position;
+		glm::vec3 direction;
 		float distance;
 };
 

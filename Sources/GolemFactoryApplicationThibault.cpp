@@ -80,9 +80,8 @@ int main()
 	std::cout << "   shader name : " << entity->getComponent<ComponentResource<Shader> >()->getResource()->name << std::endl;
 
 	//	Collision test
-	Collision::debugUnitaryTest(2);
-
-	return 0;
+		WidgetManager::getInstance()->setActiveHUD("debug");
+		Collision::debugUnitaryTest(2);
 
 	//	Test scene
 		Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getShader("wired"));
@@ -261,7 +260,7 @@ void initializeForestScene(bool emptyPlace)
 			}
 			else continue;
 
-			float s = sOffset + sDispersion * ((rand() % 100) / 50.f - 1.f);
+			float s = 1.f;// sOffset + sDispersion * ((rand() % 100) / 50.f - 1.f);
 			glm::mat4 a = glm::rotate(glm::mat4(1.0), glm::radians((rand() % 3600) / 10.f), glm::vec3(0, 0, 1));
 
 			world.getEntityFactory().createObject(objectType, p, glm::vec3(s, s, s), a);
@@ -337,25 +336,25 @@ void initManagers()
 }
 void picking(int width, int height)
 {
-	DefaultSceneManagerRayTest test(camera.getPosition(), camera.getForward(), 1000);
-	DefaultRayPickingCollector collector;
-	world.getSceneManager().getObjects(collector, test);
+	DefaultSceneManagerRayTest sceneNodeTest(camera.getPosition(), camera.getForward(), 1000);
+	DefaultRayPickingCollector collector(camera.getPosition(), camera.getForward(), 1000);
+	world.getSceneManager().getObjects(collector, sceneNodeTest);
 
-	if (collector.getObject() != nullptr)
+	if (!collector.getObjects().empty())
 	{
 		std::string type;
-		switch (collector.getObject()->getType())
+		switch (collector.getNearestObject()->getType())
 		{
 			case InstanceVirtual::ANIMATABLE:	type = "animatable";	break;
 			case InstanceVirtual::DRAWABLE:		type = "drawable";		break;
 			case InstanceVirtual::CONTAINER:	type = "container";		break;
 			default: type = "virtual"; break;
 		}
-		glm::vec3 p = camera.getPosition() + collector.getDistance() * camera.getForward();
+		glm::vec3 p = camera.getPosition() + collector.getNearestDistance() * camera.getForward();
 
-		WidgetManager::getInstance()->setString("interaction", "Distance : " + ToolBox::to_string_with_precision(collector.getDistance(), 5) +
+		WidgetManager::getInstance()->setString("interaction", "Distance : " + ToolBox::to_string_with_precision(collector.getNearestDistance(), 5) +
 			" m\nPosition : (" + ToolBox::to_string_with_precision(p.x, 5) + " , " + ToolBox::to_string_with_precision(p.y, 5) + " , " + ToolBox::to_string_with_precision(p.z, 5) +
-			")\nFirst instance pointed id : " + std::to_string(collector.getObject()->getId()) +
+			")\nFirst instance pointed id : " + std::to_string(collector.getNearestObject()->getId()) +
 			"\n  type : " + type);
 
 		if (WidgetManager::getInstance()->getBoolean("BBpicking"))
@@ -363,9 +362,9 @@ void picking(int width, int height)
 			Renderer::RenderOption option = Renderer::getInstance()->getRenderOption();
 			Renderer::getInstance()->setRenderOption(option == Renderer::DEFAULT ? Renderer::BOUNDING_BOX : Renderer::DEFAULT);
 			glm::mat4 projection = glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f);
-			if (collector.getObject()->getType() == InstanceVirtual::ANIMATABLE)
-				Renderer::getInstance()->drawInstanceAnimatable(static_cast<InstanceAnimatable*>(collector.getObject()), &camera.getViewMatrix()[0][0], &projection[0][0]);
-			else Renderer::getInstance()->drawInstanceDrawable(collector.getObject(), &camera.getViewMatrix()[0][0], &projection[0][0]);
+			if (collector.getNearestObject()->getType() == InstanceVirtual::ANIMATABLE)
+				Renderer::getInstance()->drawInstanceAnimatable(static_cast<InstanceAnimatable*>(collector.getNearestObject()), &camera.getViewMatrix()[0][0], &projection[0][0]);
+			else Renderer::getInstance()->drawInstanceDrawable(collector.getNearestObject(), &camera.getViewMatrix()[0][0], &projection[0][0]);
 			Renderer::getInstance()->setRenderOption(option);
 		}
 	}

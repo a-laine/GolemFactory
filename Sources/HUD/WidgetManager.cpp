@@ -618,6 +618,7 @@ void WidgetManager::loadRenderingHud()
 			button2->setTextureOff("checkbox_unchecked.png");
 			button2->setColor(glm::vec4(0.8f, 0.3f, 0.3f, 1.f), WidgetVirtual::HOVER);
 			button2->setColor(glm::vec4(0.8f, 0.3f, 0.3f, 1.f), WidgetVirtual::ACTIVE);
+			button2->setBoolean(true);
 			button2->initialize("draw bounding box on picked instance", WidgetLabel::CLIPPING | WidgetLabel::LEFT);
 			addAssociation(button2, "BBpicking");
 			widgetList.insert(button2);
@@ -631,7 +632,7 @@ void WidgetManager::loadRenderingHud()
 			button3->setTextureOff("checkbox_unchecked.png");
 			button3->setColor(glm::vec4(0.8f, 0.3f, 0.3f, 1.f), WidgetVirtual::HOVER);
 			button3->setColor(glm::vec4(0.8f, 0.3f, 0.3f, 1.f), WidgetVirtual::ACTIVE);
-			button3->setBoolean(true);
+			button3->setBoolean(false);
 			button3->initialize("synchronize render camera", WidgetLabel::CLIPPING | WidgetLabel::LEFT);
 			addAssociation(button3, "syncCamera");
 			widgetList.insert(button3);

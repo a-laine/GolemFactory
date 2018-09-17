@@ -120,6 +120,10 @@ bool NodeVirtual::isTooBig(const glm::vec3& size) const
 {
 	return glm::dot(size, size) > 4 * 4 * allowanceSize * allowanceSize;
 }
+glm::vec3 NodeVirtual::getPosition() const
+{
+	return position;
+}
 
 
 void NodeVirtual::addObject(InstanceVirtual* object)

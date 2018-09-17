@@ -8,7 +8,7 @@
 /*! \class NodeVirtual
  *  \brief Base class for node implementation.
  *
- *	 A node can be represented by a cube container.
+ *	A node can be represented by a cube container.
  *  For more information about scene manager node read about quadtree or octtree implementation in literature
  */
 class NodeVirtual
@@ -49,6 +49,7 @@ class NodeVirtual
 		bool isInside(const glm::vec3& point) const;
 		bool isTooSmall(const glm::vec3& size) const;
 		bool isTooBig(const glm::vec3& size) const;
+		glm::vec3 getPosition() const;
 		
 		void addObject(InstanceVirtual* object);
 		bool removeObject(InstanceVirtual* object);
@@ -64,7 +65,7 @@ class NodeVirtual
 		template<typename ObjectCollector>
 		void getObjectList(ObjectCollector& collector);
 		template<>
-		void getObjectList<std::vector<InstanceVirtual*>>(std::vector<InstanceVirtual*>& collector);
+		void getObjectList(std::vector<InstanceVirtual*>& collector);
 
 	public:
 		float allowanceSize;
