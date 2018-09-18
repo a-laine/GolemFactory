@@ -67,7 +67,7 @@ int main()
 	initManagers();
 
 	//	ECS test
-	Entity* entity = new Entity();
+	/*Entity* entity = new Entity();
 		entity->addComponent(new ComponentResource<Mesh>(ResourceManager::getInstance()->getMesh("peasant")));
 		entity->addComponent(new ComponentResource<Skeleton>(ResourceManager::getInstance()->getSkeleton("human")));
 		entity->addComponent(new ComponentResource<Animation>(ResourceManager::getInstance()->getAnimation("simple_peasant")));
@@ -77,7 +77,7 @@ int main()
 	std::cout << "   mesh name : " << entity->getComponent<ComponentResource<Mesh> >()->getResource()->name << std::endl;
 	std::cout << "   skeleton name : " << entity->getComponent<ComponentResource<Skeleton> >()->getResource()->name << std::endl;
 	std::cout << "   animation name : " << entity->getComponent<ComponentResource<Animation> >()->getResource()->name << std::endl;
-	std::cout << "   shader name : " << entity->getComponent<ComponentResource<Shader> >()->getResource()->name << std::endl;
+	std::cout << "   shader name : " << entity->getComponent<ComponentResource<Shader> >()->getResource()->name << std::endl;*/
 
 	//	Collision test
 		WidgetManager::getInstance()->setActiveHUD("debug");
@@ -260,7 +260,7 @@ void initializeForestScene(bool emptyPlace)
 			}
 			else continue;
 
-			float s = 1.f;// sOffset + sDispersion * ((rand() % 100) / 50.f - 1.f);
+			float s = sOffset + sDispersion * ((rand() % 100) / 50.f - 1.f);
 			glm::mat4 a = glm::rotate(glm::mat4(1.0), glm::radians((rand() % 3600) / 10.f), glm::vec3(0, 0, 1));
 
 			world.getEntityFactory().createObject(objectType, p, glm::vec3(s, s, s), a);
@@ -336,8 +336,8 @@ void initManagers()
 }
 void picking(int width, int height)
 {
-	DefaultSceneManagerRayTest sceneNodeTest(camera.getPosition(), camera.getForward(), 1000);
-	DefaultRayPickingCollector collector(camera.getPosition(), camera.getForward(), 1000);
+	DefaultSceneManagerRayTest sceneNodeTest(camera.getPosition(), camera.getForward(), 100);
+	DefaultRayPickingCollector collector(camera.getPosition(), camera.getForward(), 100);
 	world.getSceneManager().getObjects(collector, sceneNodeTest);
 
 	if (!collector.getObjects().empty())
@@ -354,7 +354,8 @@ void picking(int width, int height)
 
 		WidgetManager::getInstance()->setString("interaction", "Distance : " + ToolBox::to_string_with_precision(collector.getNearestDistance(), 5) +
 			" m\nPosition : (" + ToolBox::to_string_with_precision(p.x, 5) + " , " + ToolBox::to_string_with_precision(p.y, 5) + " , " + ToolBox::to_string_with_precision(p.z, 5) +
-			")\nFirst instance pointed id : " + std::to_string(collector.getNearestObject()->getId()) +
+			")\nInstance on ray : " + std::to_string(collector.getObjects().size()) +
+			"\nFirst instance pointed id : " + std::to_string(collector.getNearestObject()->getId()) +
 			"\n  type : " + type);
 
 		if (WidgetManager::getInstance()->getBoolean("BBpicking"))

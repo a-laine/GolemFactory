@@ -1,39 +1,17 @@
 #pragma once
 
 #include <glm/gtx/component_wise.hpp>
+
 #include "SceneManager.h"
-#include "../Physics/Collision.h"
-
-
-//	coefficient for intersection test computation (to avoid artefacts)
-#define RAY_COEFF				0.2f
-#define FRUSTRUM_COEFF			2.f
 
 
 class DefaultSceneManagerBoxTest
 {
 	public:
-		DefaultSceneManagerBoxTest(const glm::vec3& cornerMin, const glm::vec3& cornerMax)
-			: bbMin(cornerMin) , bbMax(cornerMax) {}
+		DefaultSceneManagerBoxTest(const glm::vec3& cornerMin, const glm::vec3& cornerMax);
 
-		SceneManager::CollisionType operator() (const NodeVirtual* node) const
-		{
-			if (Collision::collide_AxisAlignedBoxvsAxisAlignedBox(bbMin, bbMax, node->getBBMin(), node->getBBMax()))
-				return SceneManager::OVERLAP;
-			else return SceneManager::NONE;
-
-			/*glm::vec3 nodeHalfSize = node->getSize() * 0.5f;
-			glm::vec3 allowance(node->allowanceSize);
-			const glm::vec3 p = glm::max(glm::abs(node->getCenter() - center) - allowance, 0.f);
-			if(p.x >  halfSize.x + nodeHalfSize.x || p.y >  halfSize.y + nodeHalfSize.y || p.z >  halfSize.z + nodeHalfSize.z) return SceneManager::NONE;
-			if(p.x <= halfSize.x - nodeHalfSize.x && p.y <= halfSize.y - nodeHalfSize.y && p.z <= halfSize.z - nodeHalfSize.z) return SceneManager::INSIDE;
-			else return SceneManager::OVERLAP;*/
-		}
-
-		void getChildren(NodeVirtual* node, std::vector<NodeVirtual::NodeRange>& path) const
-		{
-			node->getChildrenInBox(path, bbMin, bbMax);
-		}
+		SceneManager::CollisionType operator() (const NodeVirtual* node) const;
+		void getChildren(NodeVirtual* node, std::vector<NodeVirtual::NodeRange>& path) const;
 
 	private:
 		glm::vec3 bbMin;
@@ -43,22 +21,8 @@ class DefaultSceneManagerBoxTest
 class DefaultSceneManagerRayTest
 {
 	public:
-		DefaultSceneManagerRayTest(const glm::vec3& pos, const glm::vec3& dir, float maxDist)
-			: position(pos), direction(dir), distance(maxDist)
-		{}
-
-		SceneManager::CollisionType operator() (const NodeVirtual* node) const
-		{
-			if (Collision::collide_SegmentvsAxisAlignedBox(position, position+distance*direction, node->getBBMin(), node->getBBMax()))
-				return SceneManager::OVERLAP;
-			else return SceneManager::NONE;
-
-			/*const glm::vec3 t1 = (node->getBBMin() - position) / direction;
-			const glm::vec3 t2 = (node->getBBMax() - position) / direction;
-			float tnear = glm::compMax(glm::min(t1, t2));
-			float tfar = glm::compMin(glm::max(t1, t2));
-			return (tfar >= tnear && tfar >= 0 && tnear <= distance) ? SceneManager::OVERLAP : SceneManager::NONE;*/
-		}
+		DefaultSceneManagerRayTest(const glm::vec3& pos, const glm::vec3& dir, float maxDist);
+		SceneManager::CollisionType operator() (const NodeVirtual* node) const;
 
 	private:
 		glm::vec3 position;
@@ -69,38 +33,8 @@ class DefaultSceneManagerRayTest
 class DefaultSceneManagerFrustrumTest
 {
 	public:
-		DefaultSceneManagerFrustrumTest(const glm::vec3& position, const glm::vec3& direction, const glm::vec3& verticalDir, const glm::vec3& leftDir, float verticalAngle, float horizontalAngle)
-			: camP(position)
-			, camD(direction)
-			, camV(verticalDir)
-			, camL(leftDir)
-			, camVa(verticalAngle)
-			, camHa(horizontalAngle)
-		{}
-
-		SceneManager::CollisionType operator() (const NodeVirtual* node) const
-		{
-			//	test if in front of camera
-			const glm::vec3 p = node->getCenter() - camP;
-			const glm::vec3 size = node->getSize();
-			float forwardFloat = glm::dot(p, camD) + FRUSTRUM_COEFF * (abs(size.x * camD.x) + abs(size.y * camD.y) + abs(size.z * camD.z));
-			if(forwardFloat < 0.f)
-				return SceneManager::NONE;
-
-			//	out of horizontal range
-			float maxAbsoluteDimension = (std::max)(size.x, (std::max)(size.y, size.z)) / 2.f;
-			float maxTangentDimension = abs(size.x * camL.x) / 2.f + abs(size.y * camL.y) / 2.f + abs(size.z * camL.z) / 2.f;
-			if(abs(glm::dot(p, camL)) - maxTangentDimension > std::abs(forwardFloat) * tan(glm::radians(camHa)) + FRUSTRUM_COEFF * maxAbsoluteDimension)
-				return SceneManager::NONE;
-
-			//	out of vertical range
-			maxTangentDimension = abs(size.x * camV.x) / 2.f + abs(size.y * camV.y) / 2.f + abs(size.z * camV.z) / 2.f;
-			if(abs(glm::dot(p, camV)) - maxTangentDimension > abs(forwardFloat) * tan(glm::radians(camVa)) + FRUSTRUM_COEFF * maxAbsoluteDimension)
-				return SceneManager::NONE;
-
-			//	return distance to camera in int
-			return SceneManager::OVERLAP;
-		}
+		DefaultSceneManagerFrustrumTest(const glm::vec3& position, const glm::vec3& direction, const glm::vec3& verticalDir, const glm::vec3& leftDir, float verticalAngle, float horizontalAngle);
+		SceneManager::CollisionType operator() (const NodeVirtual* node) const;
 
 	private:
 		glm::vec3 camP;
@@ -114,8 +48,7 @@ class DefaultSceneManagerFrustrumTest
 class DefaultRayPickingCollector
 {
 	public:
-		DefaultRayPickingCollector(const glm::vec3& pos, const glm::vec3& dir, float maxDist)
-			: position(pos), direction(dir), distance(maxDist){}
+		DefaultRayPickingCollector(const glm::vec3& pos, const glm::vec3& dir, float maxDist);
 
 		void operator() (NodeVirtual* node, InstanceVirtual* object);
 		std::map<float, InstanceVirtual*>& getObjects();

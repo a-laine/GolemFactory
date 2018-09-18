@@ -1,5 +1,6 @@
 #include "WidgetLabel.h"
 #include "../Physics/SpecificCollision/CollisionUtils.h"
+#include "../Physics/Collision.h"
 
 
 //	string define
@@ -97,31 +98,35 @@ void WidgetLabel::draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model)
 }
 bool WidgetLabel::intersect(const glm::mat4& base, const glm::vec3& ray)
 {
-	for (unsigned int j = 0; j < batchList[BATCH_INDEX_TEXT].faces.size(); j += 3)
+	if (textConfiguration & CLIPPING)
 	{
-		//	compute triangles vertices in eyes space
-		glm::vec3 p1 = glm::vec3(base * glm::vec4(batchList[BATCH_INDEX_TEXT].vertices[batchList[BATCH_INDEX_TEXT].faces[j]], 1.f));
-		glm::vec3 p2 = glm::vec3(base * glm::vec4(batchList[BATCH_INDEX_TEXT].vertices[batchList[BATCH_INDEX_TEXT].faces[j + 1]], 1.f));
-		glm::vec3 p3 = glm::vec3(base * glm::vec4(batchList[BATCH_INDEX_TEXT].vertices[batchList[BATCH_INDEX_TEXT].faces[j + 2]], 1.f));
+		for (unsigned int j = 0; j < batchList[BATCH_INDEX_CLIPPING].faces.size(); j += 3)
+		{
+			//	compute triangles vertices in eyes space
+			glm::vec3 p1 = glm::vec3(base * glm::vec4(batchList[BATCH_INDEX_CLIPPING].vertices[batchList[BATCH_INDEX_CLIPPING].faces[j]], 1.f));
+			glm::vec3 p2 = glm::vec3(base * glm::vec4(batchList[BATCH_INDEX_CLIPPING].vertices[batchList[BATCH_INDEX_CLIPPING].faces[j + 1]], 1.f));
+			glm::vec3 p3 = glm::vec3(base * glm::vec4(batchList[BATCH_INDEX_CLIPPING].vertices[batchList[BATCH_INDEX_CLIPPING].faces[j + 2]], 1.f));
 
-		//	compute local base (triangle edge), and triangle normal
-		glm::vec3 v1 = p2 - p1;
-		glm::vec3 v2 = p3 - p1;
-		glm::vec3 normal = glm::cross(v1, v2);
-		if (normal == glm::vec3(0.f)) continue;
-		glm::normalize(normal);
-
-		//	compute intersection point
-		if (glm::dot(normal, ray) == 0.f) continue;
-		float depth = glm::dot(normal, p1) / glm::dot(normal, ray);
-		glm::vec3 intersection = depth * ray - p1;
-
-		//	check if point is inside triangle (checking barycentric coordinates)
-		glm::vec2 bary = getBarycentricCoordinates(v1, v2, intersection);
-		if (bary.x < 0.f || bary.y < 0.f || bary.x + bary.y > 1.f) continue;
-		else return true;
+			if (Collision::collide_SegmentvsTriangle(glm::vec3(0.f), 10.f*ray, p1, p2, p3))
+				return true;
+		}
+		return false;
 	}
-	return false;
+	else
+	{
+		for (unsigned int j = 0; j < batchList[BATCH_INDEX_TEXT].faces.size(); j += 3)
+		{
+			//	compute triangles vertices in eyes space
+			glm::vec3 p1 = glm::vec3(base * glm::vec4(batchList[BATCH_INDEX_TEXT].vertices[batchList[BATCH_INDEX_TEXT].faces[j]], 1.f));
+			glm::vec3 p2 = glm::vec3(base * glm::vec4(batchList[BATCH_INDEX_TEXT].vertices[batchList[BATCH_INDEX_TEXT].faces[j + 1]], 1.f));
+			glm::vec3 p3 = glm::vec3(base * glm::vec4(batchList[BATCH_INDEX_TEXT].vertices[batchList[BATCH_INDEX_TEXT].faces[j + 2]], 1.f));
+
+			if (Collision::collide_SegmentvsTriangle(glm::vec3(0.f), 10.f*ray, p1, p2, p3))
+				return true;
+		}
+		return false;
+	}
+
 }
 
 

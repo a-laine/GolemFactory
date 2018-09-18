@@ -1,5 +1,6 @@
 #include "WidgetConsole.h"
 #include "../Physics/SpecificCollision/CollisionUtils.h"
+#include "../Physics/Collision.h"
 
 
 //	string define
@@ -37,43 +38,6 @@ WidgetConsole::~WidgetConsole()
 
 
 //	Public functions
-/*void WidgetConsole::serialize(std::ostream& out, const int& indentation, std::string name, int& number)
-{
-	//	serialize WidgetVirtual part
-	serializeHeader(out, indentation, name, number);
-
-	//	special board attributes
-	indentLine(out, indentation + 1); out << "cornerConfiguration : " << (int)cornerConfiguration << ';' << std::endl;
-	indentLine(out, indentation + 1); out << "borderWidth : " << borderWidth << ';' << std::endl;
-	indentLine(out, indentation + 1); out << "borderThickness : " << borderThickness << ';' << std::endl;
-
-	//	write font
-	if (font)
-	{
-		indentLine(out, indentation + 1); out << "font : \"" << font->name << "\";" << std::endl;
-	}
-
-	//	write text string
-	indentLine(out, indentation + 1);
-	std::string txt = text;
-	for (std::string::size_type i = 0; i != std::string::npos;)
-	{
-		i = txt.find("\n", i);
-		if (i != std::string::npos)
-		{
-			txt.replace(i, 2, "\\n");
-			i += 3;
-		}
-	}
-	out << "text : \"" << txt << "\";" << std::endl;
-
-	//	other attributes
-	indentLine(out, indentation + 1); out << "margin : " << margin << ';' << std::endl;
-	indentLine(out, indentation + 1); out << "sizeChar : " << sizeChar << ';' << std::endl;
-
-	//	tail
-	serializeTailer(out, indentation);
-}*/
 void WidgetConsole::update(const float& elapseTime)
 {
 	State s = (State)(configuration & STATE_MASK);
@@ -212,28 +176,9 @@ bool WidgetConsole::intersect(const glm::mat4& base, const glm::vec3& ray)
 			glm::vec3 p1 = glm::vec3(base * glm::vec4(batchList[i].vertices[batchList[i].faces[j]], 1.f));
 			glm::vec3 p2 = glm::vec3(base * glm::vec4(batchList[i].vertices[batchList[i].faces[j + 1]], 1.f));
 			glm::vec3 p3 = glm::vec3(base * glm::vec4(batchList[i].vertices[batchList[i].faces[j + 2]], 1.f));
-
-			//	compute local base (triangle edge), and triangle normal
-			glm::vec3 v1 = p2 - p1;
-			glm::vec3 v2 = p3 - p1;
-			glm::vec3 normal = glm::cross(v1, v2);
-			if (normal == glm::vec3(0.f)) continue;
-			glm::normalize(normal);
-
-			//	compute intersection point
-			if (glm::dot(normal, ray) == 0.f) continue;
-			float depth = glm::dot(normal, p1) / glm::dot(normal, ray);
-			glm::vec3 intersection = depth * ray - p1;
-
-			//	check if point is inside triangle (checking barycentric coordinates)
-			/*float magnitute = glm::dot(v2, v2)*glm::dot(v1, v1) - glm::dot(v1, v2)*glm::dot(v1, v2);
-			glm::vec2 bary;
-			bary.x = (glm::dot(v2, v2) * glm::dot(intersection, v1) - glm::dot(v2, v1) * glm::dot(intersection, v2)) / magnitute;
-			bary.y = (glm::dot(v1, v1) * glm::dot(intersection, v2) - glm::dot(v2, v1) * glm::dot(intersection, v1)) / magnitute;
-			if (bary.x < 0.f || bary.y < 0.f || bary.x + bary.y > 1.f) continue;*/
-			glm::vec2 bary = getBarycentricCoordinates(v1, v2, intersection);
-			if (bary.x < 0.f || bary.y < 0.f || bary.x + bary.y > 1.f) continue;
-			else return true;
+			
+			if (Collision::collide_SegmentvsTriangle(glm::vec3(0.f), 10.f*ray, p1, p2, p3))
+				return true;
 		}
 	}
 	return false;

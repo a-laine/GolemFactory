@@ -59,12 +59,13 @@ bool Collision::collide_SegmentvsTriangle(const glm::vec3& segment1, const glm::
 	glm::vec3 s = segment2 - segment1;
 	if (s == glm::vec3(0.f)) return collide_PointvsTriangle(segment1, triangle1, triangle2, triangle3);
 
-	n = glm::normalize(n);
+	glm::normalize(n);
 	if (glm::dot(n, s) == 0.f) return false; // segment parallel to triangle plane
 	glm::vec3 u = glm::normalize(s);
+	if (glm::dot(n, s) > 0.f) n *= -1.f;
 
 	float depth = glm::dot(n, triangle1 - segment1) / glm::dot(n, u);
-	if (depth > glm::length(u) || depth < 0.f) return false; // too far or beind
+	if (depth > glm::length(s) || depth < 0.f) return false; // too far or beind
 	glm::vec3 intersection = segment1 + depth*u - triangle1;
 
 	//	checking barycentric coordinates
@@ -84,6 +85,7 @@ bool Collision::collide_SegmentvsOrientedBox(const glm::vec3& segment1, const gl
 
 	//	test on the two axis of local x
 	glm::vec3 bx = glm::vec3(boxTranform[0]);
+	glm::normalize(bx);
 	float e = glm::dot(bx, delta);
 	if (glm::dot(bx, u) == 0.f) // segment parallel to selected plane
 	{
@@ -102,6 +104,7 @@ bool Collision::collide_SegmentvsOrientedBox(const glm::vec3& segment1, const gl
 
 	//	test on the two axis of local y
 	glm::vec3 by = glm::vec3(boxTranform[1]);
+	glm::normalize(by);
 	e = glm::dot(by, delta);
 	if (glm::dot(by, u) == 0.f) // segment parallel to selected plane
 	{
@@ -120,6 +123,7 @@ bool Collision::collide_SegmentvsOrientedBox(const glm::vec3& segment1, const gl
 
 	//	test on the two axis of local z
 	glm::vec3 bz = glm::vec3(boxTranform[2]);
+	glm::normalize(bz);
 	e = glm::dot(bz, delta);
 	if (glm::dot(bz, u) == 0.f) // segment parallel to selected plane
 	{

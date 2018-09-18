@@ -1,5 +1,6 @@
 #include "WidgetVirtual.h"
 #include "../Physics/SpecificCollision/CollisionUtils.h"
+#include "../Physics/Collision.h"
 
 //  Default
 WidgetVirtual::WidgetVirtual(const WidgetType& t, const uint8_t& config, const std::string& shaderName) : type(t), configuration(config)
@@ -81,22 +82,8 @@ bool WidgetVirtual::intersect(const glm::mat4& base, const glm::vec3& ray)
 			glm::vec3 p2 = glm::vec3(base * glm::vec4(batchList[i].vertices[batchList[i].faces[j + 1]], 1.f));
 			glm::vec3 p3 = glm::vec3(base * glm::vec4(batchList[i].vertices[batchList[i].faces[j + 2]], 1.f));
 
-			//	compute local base (triangle edge), and triangle normal
-			glm::vec3 v1 = p2 - p1;
-			glm::vec3 v2 = p3 - p1;
-			glm::vec3 normal = glm::cross(v1, v2);
-			if (normal == glm::vec3(0.f)) continue;
-			glm::normalize(normal);
-
-			//	compute intersection point
-			if (glm::dot(normal, ray) == 0.f) continue;
-			float depth = glm::dot(normal, p1) / glm::dot(normal, ray);
-			glm::vec3 intersection = depth * ray - p1;
-
-			//	check if point is inside triangle (checking barycentric coordinates)
-			glm::vec2 bary = getBarycentricCoordinates(v1, v2, intersection);
-			if (bary.x < 0.f || bary.y < 0.f || bary.x + bary.y > 1.f) continue;
-			else return true;
+			if (Collision::collide_SegmentvsTriangle(glm::vec3(0.f), 10.f*ray, p1, p2, p3))
+				return true;
 		}
 	}
 	return false;
