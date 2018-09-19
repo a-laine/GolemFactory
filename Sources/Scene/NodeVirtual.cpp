@@ -1,21 +1,12 @@
-#include "NodeVirtual.h"
-
 #include <glm/gtx/component_wise.hpp>
 
-#include <World/World.h>
-#include <Utiles/Assert.hpp>
-
+#include "NodeVirtual.h"
+#include "World/World.h"
+#include "Utiles/Assert.hpp"
 
 
 //	Default
-NodeVirtual::NodeVirtual()
-	: position(0)
-	, halfSize(0)
-	, division(0)
-	, allowanceSize(1)
-{
-}
-
+NodeVirtual::NodeVirtual() : position(0.f) , halfSize(0.f) , division(0) , allowanceSize(1.f){}
 NodeVirtual::~NodeVirtual()
 {
 	//	free instance

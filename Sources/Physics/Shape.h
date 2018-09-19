@@ -38,7 +38,7 @@ class Point : public Shape
 {
 	public:
 		//	Default
-		Point(const glm::vec3& position);
+		Point(const glm::vec3& position = glm::vec3(0.f));
 		//
 
 		//	Public functions
@@ -53,7 +53,7 @@ class Segment : public Shape
 {
 	public:
 		//	Default
-		Segment(const glm::vec3& a, const glm::vec3& b);
+		Segment(const glm::vec3& a = glm::vec3(0.f), const glm::vec3& b = glm::vec3(0.f));
 		//
 
 		//	Public functions
@@ -68,7 +68,7 @@ class Triangle : public Shape
 {
 	public:
 		//	Default
-		Triangle(const glm::vec3& a, const glm::vec3& b, const glm::vec3& c);
+		Triangle(const glm::vec3& a = glm::vec3(0.f), const glm::vec3& b = glm::vec3(0.f), const glm::vec3& c = glm::vec3(0.f));
 		//
 
 		//	Public functions
@@ -83,7 +83,7 @@ class OrientedBox : public Shape
 {
 	public:
 		//	Default
-		OrientedBox(const glm::mat4& transformationMatrix, const glm::vec3& localMin, const glm::vec3& localMax);
+		OrientedBox(const glm::mat4& transformationMatrix = glm::mat4(1.f), const glm::vec3& localMin = glm::vec3(0.f), const glm::vec3& localMax = glm::vec3(0.f));
 		//
 
 		//	Public functions
@@ -99,7 +99,7 @@ class AxisAlignedBox : public Shape
 {
 	public:
 		//	Default
-		AxisAlignedBox(const glm::vec3& cornerMin, const glm::vec3& cornerMax);
+		AxisAlignedBox(const glm::vec3& cornerMin = glm::vec3(0.f), const glm::vec3& cornerMax = glm::vec3(0.f));
 		//
 
 		//	Public functions
@@ -114,7 +114,7 @@ class Sphere : public Shape
 {
 	public:
 		//	Default
-		Sphere(const glm::vec3& position, const float& r);
+		Sphere(const glm::vec3& position = glm::vec3(0.f), const float& r = 0.f);
 		//
 
 		//	Public functions
@@ -130,7 +130,7 @@ class Capsule : public Shape
 {
 	public:
 		//	Default
-		Capsule(const glm::vec3& a, const glm::vec3& b, const float& r);
+		Capsule(const glm::vec3& a = glm::vec3(0.f), const glm::vec3& b = glm::vec3(0.f), const float& r = 0.f);
 		//
 
 		//	Public functions

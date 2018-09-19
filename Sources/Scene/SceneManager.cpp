@@ -1,17 +1,12 @@
-#include "SceneManager.h"
-
 #include <algorithm>
 #include <glm/gtc/matrix_access.hpp>
-#include <Utiles/Assert.hpp>
+
+#include "SceneManager.h"
+#include "Utiles/Assert.hpp"
 #include "SceneQueryTests.h"
 
 
-
-
-SceneManager::SceneManager()
-{
-}
-
+SceneManager::SceneManager(){}
 SceneManager::SceneManager(SceneManager&& other)
 {
 	world = std::move(other.world);
@@ -19,12 +14,12 @@ SceneManager::SceneManager(SceneManager&& other)
 	other.world.clear();
 	other.instanceTracking.clear();
 }
-
 SceneManager::~SceneManager()
 {
 	for (unsigned int i = 0; i < world.size(); i++)
 		delete world[i];
 }
+
 
 SceneManager& SceneManager::operator=(SceneManager&& other)
 {
@@ -45,7 +40,6 @@ void SceneManager::init(const glm::vec3& bbMin, const glm::vec3& bbMax, const gl
 	n->init(bbMin, bbMax, nodeDivision, depth);
 	world.push_back(n);
 }
-
 void SceneManager::clear()
 {
 	for(unsigned int i = 0; i < world.size(); i++)
@@ -53,16 +47,8 @@ void SceneManager::clear()
 	world.clear();
 	instanceTracking.clear();
 }
-
-void SceneManager::reserveInstanceTrack(const unsigned int& count)
-{
-	instanceTracking.reserve(count);
-}
-
-unsigned int SceneManager::getObjectCount() const
-{
-	return (unsigned int)instanceTracking.size();
-}
+void SceneManager::reserveInstanceTrack(const unsigned int& count) { instanceTracking.reserve(count); }
+unsigned int SceneManager::getObjectCount() const { return (unsigned int)instanceTracking.size(); }
 
 
 bool SceneManager::addObject(InstanceVirtual* object)
@@ -75,7 +61,8 @@ bool SceneManager::addObject(InstanceVirtual* object)
 	if(!node->isInside(object->getPosition()))
 		return false;
 
-	while(!node->isLeaf() && node->isTooSmall(object->getBBMax() - object->getBBMin()))
+	const OrientedBox box = object->getBoundingVolume();
+	while(!node->isLeaf() && node->isTooSmall(box.max - box.min))
 		node = node->getChildAt(object->getPosition());
 
 	node->addObject(object);
@@ -105,7 +92,7 @@ bool SceneManager::updateObject(InstanceVirtual* object)
 	auto track = instanceTracking.find(object);
 	NodeVirtual* node = track->second.owner;
 
-	glm::vec3 objectSize = object->getBBMax() - object->getBBMin();
+	const glm::vec3 objectSize = object->getBoundingVolume().max - object->getBoundingVolume().min;
 	if (!node->isInside(object->getPosition()) || node->isTooSmall(objectSize) || node->isTooBig(objectSize))
 	{
 		node->removeObject(object);
@@ -118,7 +105,7 @@ bool SceneManager::updateObject(InstanceVirtual* object)
 		}
 		else
 		{
-			while(!node->isLeaf() && node->isTooSmall(object->getBBMax() - object->getBBMin()))
+			while(!node->isLeaf() && node->isTooSmall(objectSize))
 				node = node->getChildAt(object->getPosition());
 			node->addObject(object);
 			track->second.owner = node;

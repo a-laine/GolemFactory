@@ -9,8 +9,8 @@ std::string Mesh::extension = ".mesh";
 //
 
 //  Default
-Mesh::Mesh(const std::string& meshName) : ResourceVirtual(meshName, ResourceVirtual::MESH), configuration(0x00) {}
-Mesh::Mesh(const std::string& path, const std::string& meshName) : ResourceVirtual(meshName, ResourceVirtual::MESH), configuration(0x00)
+Mesh::Mesh(const std::string& meshName) : ResourceVirtual(meshName, ResourceVirtual::MESH), configuration(0x00), boundingBox(glm::vec3(0.f), glm::vec3(0.f)) {}
+Mesh::Mesh(const std::string& path, const std::string& meshName) : ResourceVirtual(meshName, ResourceVirtual::MESH), configuration(0x00), boundingBox(glm::vec3(0.f), glm::vec3(0.f))
 {
 	//	open file
 	std::string tmpExtension = Mesh::extension;
@@ -148,30 +148,35 @@ Mesh::~Mesh()
 //	Public functions
 void Mesh::computeBoundingBox()
 {
-	aabb_min = glm::vec3(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
-	aabb_max = glm::vec3(std::numeric_limits<float>::min(), std::numeric_limits<float>::min(), std::numeric_limits<float>::min());
+	boundingBox.min = glm::vec3(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
+	boundingBox.max = glm::vec3(std::numeric_limits<float>::min(), std::numeric_limits<float>::min(), std::numeric_limits<float>::min());
 
 	for (unsigned int i = 0; i < vertices.size(); i++)
 	{
-		aabb_min.x = std::min(aabb_min.x, vertices[i].x);
-		aabb_max.x = std::max(aabb_max.x, vertices[i].x);
+		/*
+		boundingBox.min.x = std::min(boundingBox.min.x, vertices[i].x);
+		boundingBox.max.x = std::max(boundingBox.max.x, vertices[i].x);
 
-		aabb_min.y = std::min(aabb_min.y, vertices[i].y);
-		aabb_max.y = std::max(aabb_max.y, vertices[i].y);
+		boundingBox.min.y = std::min(boundingBox.min.y, vertices[i].y);
+		boundingBox.max.y = std::max(boundingBox.max.y, vertices[i].y);
 
-		aabb_min.z = std::min(aabb_min.z, vertices[i].z);
-		aabb_max.z = std::max(aabb_max.z, vertices[i].z);
+		boundingBox.min.z = std::min(boundingBox.min.z, vertices[i].z);
+		boundingBox.max.z = std::max(boundingBox.max.z, vertices[i].z);
+		*/
+
+		boundingBox.min = glm::min(boundingBox.min, vertices[i]);
+		boundingBox.max = glm::max(boundingBox.max, vertices[i]);
 	}
 
 	//	bbox vertex array
-	vBBox.push_back(aabb_min);
-	vBBox.push_back(glm::vec3(aabb_min.x, aabb_min.y, aabb_max.z));
-	vBBox.push_back(glm::vec3(aabb_min.x, aabb_max.y, aabb_min.z));
-	vBBox.push_back(glm::vec3(aabb_min.x, aabb_max.y, aabb_max.z));
-	vBBox.push_back(glm::vec3(aabb_max.x, aabb_min.y, aabb_min.z));//4
-	vBBox.push_back(glm::vec3(aabb_max.x, aabb_min.y, aabb_max.z));
-	vBBox.push_back(glm::vec3(aabb_max.x, aabb_max.y, aabb_min.z));
-	vBBox.push_back(aabb_max);
+	vBBox.push_back(boundingBox.min);
+	vBBox.push_back(glm::vec3(boundingBox.min.x, boundingBox.min.y, boundingBox.max.z));
+	vBBox.push_back(glm::vec3(boundingBox.min.x, boundingBox.max.y, boundingBox.min.z));
+	vBBox.push_back(glm::vec3(boundingBox.min.x, boundingBox.max.y, boundingBox.max.z));
+	vBBox.push_back(glm::vec3(boundingBox.max.x, boundingBox.min.y, boundingBox.min.z));//4
+	vBBox.push_back(glm::vec3(boundingBox.max.x, boundingBox.min.y, boundingBox.max.z));
+	vBBox.push_back(glm::vec3(boundingBox.max.x, boundingBox.max.y, boundingBox.min.z));
+	vBBox.push_back(boundingBox.max);
 
 	//	bbox faces array (please don't change order it's important)
 	fBBox.push_back(4); fBBox.push_back(0); fBBox.push_back(6);
@@ -270,6 +275,7 @@ const std::vector<glm::vec3>* Mesh::getVertices() const { return &vertices; }
 const std::vector<unsigned short>* Mesh::getFaces() const { return &faces; }
 const std::vector<glm::ivec3>* Mesh::getBones() const { return nullptr; }
 const std::vector<glm::vec3>* Mesh::getWeights() const { return nullptr; }
+AxisAlignedBox Mesh::getBoundingBox() const { return boundingBox; };
 
 bool Mesh::hasSkeleton() const { return (configuration & HAS_SKELETON) != 0; }
 bool Mesh::isValid() const

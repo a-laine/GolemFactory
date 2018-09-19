@@ -1,5 +1,8 @@
 #pragma once
 
+#include <cstdint>
+
+
 typedef intptr_t ClassID;
 
 #define GF_DECLARE_COMPONENT_CLASS_GETSTATICCLASSID() static ClassID getStaticClassID() { \

@@ -11,9 +11,9 @@
 
 #include "Utiles/Mutex.h"
 #include "InstanceVirtual.h"
-#include "InstanceDrawable.h"
+/*#include "InstanceDrawable.h"
 #include "InstanceContainer.h"
-#include "InstanceAnimatable.h"
+#include "InstanceAnimatable.h"*/
 
 
  /*! \class InstanceManager

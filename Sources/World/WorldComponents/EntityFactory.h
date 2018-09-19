@@ -6,8 +6,6 @@
 
 class World;
 class InstanceVirtual;
-class InstanceDrawable;
-class InstanceAnimatable;
 
 class EntityFactory
 {
@@ -22,11 +20,10 @@ class EntityFactory
 	private:
 		InstanceVirtual* createByType(const std::string& type);
 		void addToScene(InstanceVirtual* object);
-
-		InstanceDrawable* createDrawable(const std::string& meshName, const std::string& shaderName);
-		InstanceAnimatable* createAnimatable(const std::string& meshName, const std::string& shaderName);
-		InstanceAnimatable* createAnimatable(const std::string& meshName, const std::string& skeletonName, const std::string& animationName, const std::string& shaderName);
-		//InstanceContainer* createContainer();
+		
+		InstanceVirtual* createDrawable(const std::string& meshName, const std::string& shaderName);
+		//InstanceVirtual* createAnimatable(const std::string& meshName, const std::string& shaderName);
+		InstanceVirtual* createAnimatable(const std::string& meshName, const std::string& skeletonName, const std::string& animationName, const std::string& shaderName);
 
 		World* world;
 };

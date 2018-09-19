@@ -1,9 +1,11 @@
-#include "HouseGenerator.h"
-
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 #include <glm/gtc/quaternion.hpp>
+
+#include "HouseGenerator.h"
+#include "Resources/ComponentResource.h"
+
 
 //  Attributes
 glm::vec3 HouseGenerator::stoneColor = glm::vec3(0.2f, 0.2f, 0.2f);
@@ -92,12 +94,9 @@ InstanceVirtual* HouseGenerator::getHouse(unsigned int seed, int d, int p)
 	else prosperity = p;
 
 	std::string houseName = "house" + std::to_string(seed) + '_' + std::to_string(density) + '_' + std::to_string(prosperity);
-	//std::cout << houseName << std::endl;
-
 	initHouseField(prosperity);
 
 	//	generate house
-	//createAndPlaceDebugHouseBlock(1);
 	createAndPlaceHouseBlock();
 	createAndPlaceDecorationBlock();
 	createAndPlaceRoofBlock();
@@ -107,17 +106,15 @@ InstanceVirtual* HouseGenerator::getHouse(unsigned int seed, int d, int p)
 	constructRoofMesh();
 	optimizeMesh();
 
-	/*
-	std::cout << "   vertex count : " << verticesArray.size() << std::endl;
-	std::cout << "   faces count : " << facesArray.size() << std::endl << std::endl;
-	*/
 
 	//	end
 	Mesh* mesh = new Mesh(houseName, verticesArray, normalesArray, colorArray, facesArray);
-	ResourceManager::getInstance()->addMesh(mesh);				//	add mesh to resources manager for instance creation
-	InstanceDrawable* house = new InstanceDrawable(houseName);	//	create instance
-	ResourceManager::getInstance()->release(mesh);				//	House generator release mesh pointer
-	return house;												//	User has to add this instance to instance manager
+		ResourceManager::getInstance()->addMesh(mesh);
+	InstanceVirtual* house = new InstanceVirtual();
+		house->addComponent(new ComponentResource<Mesh>(ResourceManager::getInstance()->getMesh(houseName)));
+		house->addComponent(new ComponentResource<Shader>(ResourceManager::getInstance()->getShader("default")));
+	ResourceManager::getInstance()->release(mesh);
+	return house;
 }
 //
 

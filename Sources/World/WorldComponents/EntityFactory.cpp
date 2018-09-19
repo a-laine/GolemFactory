@@ -1,11 +1,8 @@
 #include "EntityFactory.h"
-
-#include <World/World.h>
-#include <Instances/InstanceVirtual.h>
-#include <Instances/InstanceDrawable.h>
-#include <Instances/InstanceContainer.h>
-#include <Instances/InstanceAnimatable.h>
-
+#include "World/World.h"
+#include "Instances/InstanceVirtual.h"
+#include "Resources/ComponentResource.h"
+#include "EntityComponent/AnimationEngine.h"
 
 
 EntityFactory::EntityFactory(World* parentWorld)
@@ -57,9 +54,11 @@ void EntityFactory::addToScene(InstanceVirtual* object)
 	world->getSceneManager().addObject(object);
 }
 
-InstanceDrawable* EntityFactory::createDrawable(const std::string& meshName, const std::string& shaderName)
+InstanceVirtual* EntityFactory::createDrawable(const std::string& meshName, const std::string& shaderName)
 {
-	InstanceDrawable* ins = new InstanceDrawable(meshName, shaderName);
+	InstanceVirtual* ins = new InstanceVirtual();
+		ins->addComponent(new ComponentResource<Mesh>(ResourceManager::getInstance()->getMesh(meshName)));
+		ins->addComponent(new ComponentResource<Shader>(ResourceManager::getInstance()->getShader(shaderName)));
 	if(!ins || !world->manageObject(ins))
 	{
 		if(ins) delete ins;
@@ -68,9 +67,11 @@ InstanceDrawable* EntityFactory::createDrawable(const std::string& meshName, con
 	return ins;
 }
 
-InstanceAnimatable* EntityFactory::createAnimatable(const std::string& meshName, const std::string& shaderName)
+/*InstanceVirtual* EntityFactory::createAnimatable(const std::string& meshName, const std::string& shaderName)
 {
-	InstanceAnimatable* ins = new InstanceAnimatable(meshName, shaderName);
+	InstanceVirtual* ins = new InstanceVirtual();
+		ins->addComponent(new ComponentResource<Mesh>(ResourceManager::getInstance()->getMesh(meshName)));
+		ins->addComponent(new ComponentResource<Shader>(ResourceManager::getInstance()->getShader(shaderName)));
 	if(!ins || !world->manageObject(ins))
 	{
 		if(ins) delete ins;
@@ -78,32 +79,25 @@ InstanceAnimatable* EntityFactory::createAnimatable(const std::string& meshName,
 	}
 	ins->computeCapsules();
 	ins->initializeVBOVAO();
-	return ins;
-}
-
-InstanceAnimatable* EntityFactory::createAnimatable(const std::string& meshName, const std::string& skeletonName, const std::string& animationName, const std::string& shaderName)
-{
-	InstanceAnimatable* ins = new InstanceAnimatable(meshName, shaderName);
-	if(!ins || !world->manageObject(ins))
-	{
-		if(ins) delete ins;
-		return nullptr;
-	}
-	ins->setSkeleton(skeletonName);
-	ins->setAnimation(animationName);
-	ins->computeCapsules();
-	ins->initializeVBOVAO();
-	return ins;
-}
-
-/*InstanceContainer* EntityFactory::createContainer()
-{
-	InstanceContainer* ins = new InstanceContainer();
-	if (!ins || !world->manageObject(ins))
-	{
-		if (ins) delete ins;
-		return nullptr;
-	}
 	return ins;
 }*/
+
+InstanceVirtual* EntityFactory::createAnimatable(const std::string& meshName, const std::string& skeletonName, const std::string& animationName, const std::string& shaderName)
+{
+	InstanceVirtual* ins = new InstanceVirtual();
+		ins->addComponent(new ComponentResource<Mesh>(ResourceManager::getInstance()->getMesh(meshName)));
+		ins->addComponent(new ComponentResource<Shader>(ResourceManager::getInstance()->getShader(shaderName)));
+		ins->addComponent(new ComponentResource<Skeleton>(ResourceManager::getInstance()->getSkeleton(skeletonName)));
+		ins->addComponent(new ComponentResource<Animation>(ResourceManager::getInstance()->getAnimation(animationName)));
+		ins->addComponent(new AnimationEngine(skeletonName, animationName));
+
+	if(!ins || !world->manageObject(ins))
+	{
+		if(ins) delete ins;
+		return nullptr;
+	}
+
+	ins->getComponent<AnimationEngine>()->computeCapsules(ins->getComponent<ComponentResource<Mesh> >()->getResource());
+	return ins;
+}
 

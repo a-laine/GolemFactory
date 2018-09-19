@@ -5,6 +5,8 @@
 #include <glm/glm.hpp>
 
 #include "ResourceVirtual.h"
+#include "Physics/Shape.h"
+
 
 class Mesh : public ResourceVirtual
 {
@@ -56,11 +58,13 @@ class Mesh : public ResourceVirtual
 		const std::vector<unsigned short>* getFaces() const;
 		virtual const std::vector<glm::ivec3>* getBones() const;
 		virtual const std::vector<glm::vec3>* getWeights() const;
+		AxisAlignedBox getBoundingBox() const;
         //
 
 		//	Attributes
 		static std::string extension;
-		glm::vec3 aabb_min, aabb_max;
+		//AxisAlignedBox boundingBox;
+		//glm::vec3 aabb_min, aabb_max;
 		//
 
 	protected:
@@ -70,6 +74,8 @@ class Mesh : public ResourceVirtual
 
         //  Attributes
         uint8_t configuration;
+		AxisAlignedBox boundingBox;
+
 		GLuint  vao,
 				verticesBuffer,
 				colorsBuffer,
