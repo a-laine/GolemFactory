@@ -77,7 +77,7 @@ void DefaultRayPickingCollector::operator() (NodeVirtual* node, InstanceVirtual*
 	Mesh* mesh = object->getComponent<ComponentResource<Mesh> >()->getResource();
 	if (!mesh) return;
 
-	Skeleton* skeleton = object->getComponent<ComponentResource<Skeleton> >()->getResource();
+	Skeleton* skeleton = (object->getComponent<ComponentResource<Skeleton> >() ? object->getComponent<ComponentResource<Skeleton> >()->getResource() : nullptr);
 	bool animatable = mesh->isAnimable() && skeleton;
 
 
@@ -89,7 +89,6 @@ void DefaultRayPickingCollector::operator() (NodeVirtual* node, InstanceVirtual*
 	}
 	else
 	{
-		
 		OrientedBox box = object->getBoundingVolume();
 		if (!Collision::collide_SegmentvsOrientedBox( position, position + distance*direction, box.transform, box.min, box.max))
 			return;

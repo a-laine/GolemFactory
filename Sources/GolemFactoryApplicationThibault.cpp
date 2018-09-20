@@ -476,7 +476,9 @@ void updates(float elapseTime, int width, int height)
 	}
 
 	//Animate camera
-	if (camera.getMode() == Camera::TRACKBALL) camera.setTarget(avatarAnimEngine->getJointPosition("Head"));
+	if (camera.getMode() == Camera::TRACKBALL)
+		camera.setTarget(avatar->getPosition() + avatar->getSize()*avatarAnimEngine->getJointPosition("Head"));
+
 	camera.animate((float)elapseTime,
 		EventHandler::getInstance()->isActivated(FORWARD), EventHandler::getInstance()->isActivated(BACKWARD),
 		EventHandler::getInstance()->isActivated(LEFT), EventHandler::getInstance()->isActivated(RIGHT),
