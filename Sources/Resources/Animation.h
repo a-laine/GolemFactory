@@ -12,7 +12,7 @@
 class Animation : public ResourceVirtual
 {
     friend class ResourceManager;
-	friend class AnimationEngine;
+	friend class AnimationComponent;
     public:
         //  Default
 		Animation(const std::string& animationName, const std::vector<KeyFrame>& keyFrames);

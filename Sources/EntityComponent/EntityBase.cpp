@@ -2,7 +2,13 @@
 
 //	Default
 EntityBase::EntityBase() {}
-EntityBase::~EntityBase() {}
+EntityBase::~EntityBase()
+{
+	for(Element& elem : m_components)
+	{
+		delete elem.comp;
+	}
+}
 //
 
 //	Public functions
@@ -24,7 +30,7 @@ Component* EntityBase::getComponent(unsigned short index) { return (index < m_co
 const Component* EntityBase::getComponent(unsigned short index) const { return (index < m_components.size()) ? m_components[index].comp : nullptr; }
 Component* EntityBase::getComponent(ClassID type)
 {
-	for (auto& elem : m_components)
+	for (Element& elem : m_components)
 	{
 		if (elem.type == type)
 			return elem.comp;
@@ -33,7 +39,7 @@ Component* EntityBase::getComponent(ClassID type)
 }
 const Component* EntityBase::getComponent(ClassID type) const
 {
-	for (const auto& elem : m_components)
+	for (const Element& elem : m_components)
 	{
 		if (elem.type == type)
 			return elem.comp;
@@ -42,7 +48,7 @@ const Component* EntityBase::getComponent(ClassID type) const
 }
 void EntityBase::getAllComponents(ClassID type, std::vector<Component*>& components)
 {
-	for (auto& elem : m_components)
+	for (Element& elem : m_components)
 	{
 		if (elem.type == type)
 			components.push_back(elem.comp);
@@ -50,7 +56,7 @@ void EntityBase::getAllComponents(ClassID type, std::vector<Component*>& compone
 }
 void EntityBase::getAllComponents(ClassID type, std::vector<const Component*>& components) const
 {
-	for (const auto& elem : m_components)
+	for (const Element& elem : m_components)
 	{
 		if (elem.type == type)
 			components.push_back(elem.comp);

@@ -1,8 +1,10 @@
 #pragma once
 
+#include <map>
 #include <glm/gtx/component_wise.hpp>
 
-#include "SceneManager.h"
+#include <EntityComponent/Entity.hpp>
+#include <Scene/SceneManager.h>
 
 
 class DefaultSceneManagerBoxTest
@@ -50,13 +52,13 @@ class DefaultRayPickingCollector
 	public:
 		DefaultRayPickingCollector(const glm::vec3& pos, const glm::vec3& dir, float maxDist);
 
-		void operator() (NodeVirtual* node, InstanceVirtual* object);
-		std::map<float, InstanceVirtual*>& getObjects();
-		InstanceVirtual* getNearestObject() const;
+		void operator() (NodeVirtual* node, Entity* object);
+		std::map<float, Entity*>& getObjects();
+		Entity* getNearestObject() const;
 		float getNearestDistance() const;
 
 	private:
-		std::map<float, InstanceVirtual*> objectOnRay;
+		std::map<float, Entity*> objectOnRay;
 		glm::vec3 position;
 		glm::vec3 direction;
 		float distance;

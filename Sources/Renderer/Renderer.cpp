@@ -13,6 +13,7 @@ Renderer::Renderer() : renderOption(DEFAULT)
 {
 	window = nullptr;
 	camera = nullptr;
+	world = nullptr;
 
 	defaultShader[GRID] = nullptr;
 	defaultShader[INSTANCE_ANIMATABLE] = nullptr;
@@ -174,59 +175,35 @@ void Renderer::render(Camera* renderCam)
 	}
 
 	//	get instance list
-	std::vector<InstanceVirtual*> instanceList;
+	std::vector<Entity*> instanceList;
 	DefaultSceneManagerFrustrumTest sceneTest(camera->getPosition(), camera->getForward(), camera->getVertical(), camera->getLeft(),
 		camera->getFrustrumAngleVertical() / 1.6f, camera->getFrustrumAngleVertical() / 1.6f);
 	world->getSceneManager().getObjects(instanceList, sceneTest);
 
 	//	draw instance list
-	std::map<Shader*, std::vector<InstanceVirtual*> > batches;
-	for (InstanceVirtual* object : instanceList)
+	std::map<Shader*, std::vector<Entity*> > batches;
+	for (Entity* object : instanceList)
 	{
-		ComponentResource<Shader>* objectComponentShader = object->getComponent<ComponentResource<Shader> >();
-		if (!objectComponentShader) continue;
+		DrawableComponent* comp = object->getComponent<DrawableComponent>();
+		if(!comp) continue;
 
-		batches[objectComponentShader->getResource()].push_back(object);
-		if (batches[objectComponentShader->getResource()].size() > BATCH_SIZE)
+		batches[comp->getShader()].push_back(object);
+		if (batches[comp->getShader()].size() > BATCH_SIZE)
 		{
-			std::vector<InstanceVirtual*>& batch = batches[objectComponentShader->getResource()];
+			std::vector<Entity*>& batch = batches[comp->getShader()];
 			for (unsigned int i = 0; i < BATCH_SIZE + 1; i++)
 			{
-				switch (batch[i]->getRenderingType())
-				{
-					case InstanceVirtual::DRAWABLE:
-						drawInstanceDrawable(batch[i], &view[0][0], &projection[0][0]);
-						break;
-					case InstanceVirtual::ANIMATABLE:
-						drawInstanceAnimatable(batch[i], &view[0][0], &projection[0][0]);
-						break;
-					default:
-						break;
-				}
-				if (batch[i]->getChildList())
-					drawInstanceContainer(batch[i], view, projection, glm::mat4(1.f));
+				drawObject(batch[i], &view[0][0], &projection[0][0]);
 			}
 			batch.clear();
 		}
 	}
 	for (auto it = batches.begin(); it != batches.end(); ++it)
 	{
-		std::vector<InstanceVirtual*>& batch = it->second;
+		std::vector<Entity*>& batch = it->second;
 		for (unsigned int i = 0; i < batch.size(); i++)
 		{
-			switch (batch[i]->getRenderingType())
-			{
-				case InstanceVirtual::DRAWABLE:
-					drawInstanceDrawable(batch[i], &view[0][0], &projection[0][0]);
-					break;
-				case InstanceVirtual::ANIMATABLE:
-					drawInstanceAnimatable(batch[i], &view[0][0], &projection[0][0]);
-					break;
-				default:
-					break;
-			}
-			if(batch[i]->getChildList())
-				drawInstanceContainer(batch[i], view, projection, glm::mat4(1.f));
+			drawObject(batch[i], &view[0][0], &projection[0][0]);
 		}
 	}
 }
@@ -310,71 +287,47 @@ void Renderer::loadMVPMatrix(Shader* shader, const float* model, const float* vi
 
 
 //	Render function
-void Renderer::drawInstanceDrawable(InstanceVirtual* ins, const float* view, const float* projection, const glm::mat4& base)
+void Renderer::drawObject(Entity* object, const float* view, const float* projection)
 {
+	ShaderIdentifier shaderType = INSTANCE_DRAWABLE;
+	ShaderIdentifier shaderBBType = INSTANCE_DRAWABLE_BB;
+	DrawableComponent* drawableComp = object->getComponent<DrawableComponent>();
+	SkeletonComponent* skeletonComp = object->getComponent<SkeletonComponent>();
+	if(!drawableComp) return;
+	if(skeletonComp)
+	{
+		shaderType = INSTANCE_ANIMATABLE;
+		shaderBBType = INSTANCE_ANIMATABLE_BB;
+	}
+
 	//	Get shader and prepare matrix
 	Shader* shaderToUse;
+	if(renderOption == BOUNDING_BOX) shaderToUse = defaultShader[shaderBBType];
+	else shaderToUse = defaultShader[shaderType];
+	if(!shaderToUse) shaderToUse = drawableComp->getShader();
+	loadMVPMatrix(shaderToUse, &object->getMatrix()[0][0], view, projection);
+	if(!shaderToUse) return;
 
-	if (renderOption == BOUNDING_BOX) shaderToUse = defaultShader[INSTANCE_DRAWABLE_BB];
-	else shaderToUse = defaultShader[INSTANCE_DRAWABLE];
-	if (!shaderToUse) shaderToUse = ins->getComponent<ComponentResource<Shader> >()->getResource();
-	loadMVPMatrix(shaderToUse, &(base * ins->getModelMatrix())[0][0], view, projection);
-	if (!shaderToUse) return;
+	if(skeletonComp)
+	{
+		//	Load skeleton pose matrix list for vertex skinning calculation
+		std::vector<glm::mat4> pose = skeletonComp->getPose();
+		int loc = shaderToUse->getUniformLocation("skeletonPose");
+		if(loc >= 0) glUniformMatrix4fv(loc, pose.size(), FALSE, (float*) pose.data());
+
+		//	Load inverse bind pose matrix list for vertex skinning calculation
+		std::vector<glm::mat4> bind;
+		Skeleton* skeleton = skeletonComp->getSkeleton();
+		if(skeleton) bind = skeleton->getInverseBindPose();
+		loc = shaderToUse->getUniformLocation("inverseBindPose");
+		if(loc >= 0) glUniformMatrix4fv(loc, bind.size(), FALSE, (float*) bind.data());
+	}
 
 	//	Draw mesh
-	if (renderOption == BOUNDING_BOX) ins->getComponent<ComponentResource<Mesh> >()->getResource()->drawBB();
-	else ins->getComponent<ComponentResource<Mesh> >()->getResource()->draw();
+	if(renderOption == BOUNDING_BOX) drawableComp->getMesh()->drawBB();
+	else drawableComp->getMesh()->draw();
 	instanceDrawn++;
-	trianglesDrawn += ins->getComponent<ComponentResource<Mesh> >()->getResource()->getNumberFaces();
-}
-void Renderer::drawInstanceAnimatable(InstanceVirtual* ins, const float* view, const float* projection)
-{
-	//	Get shader and prepare matrix
-	Shader* shaderToUse;
-
-	if (renderOption == BOUNDING_BOX) shaderToUse = defaultShader[INSTANCE_ANIMATABLE_BB];
-	else shaderToUse = defaultShader[INSTANCE_ANIMATABLE];
-	if (!shaderToUse) shaderToUse = ins->getComponent<ComponentResource<Shader> >()->getResource();
-	loadMVPMatrix(shaderToUse, &ins->getModelMatrix()[0][0], view, projection);
-	if (!shaderToUse) return;
-
-	//	Load skeleton pose matrix list for vertex skinning calculation
-	std::vector<glm::mat4> pose = ins->getComponent<AnimationEngine>()->getPose();
-	int loc = shaderToUse->getUniformLocation("skeletonPose");
-	if (loc >= 0) glUniformMatrix4fv(loc, (int)pose.size(), FALSE, (float*)pose.data());
-
-	//	Load inverse bind pose matrix list for vertex skinning calculation
-	std::vector<glm::mat4> bind;
-	Skeleton* skeleton = ins->getComponent<ComponentResource<Skeleton> >()->getResource();
-	if (skeleton) bind = skeleton->getInverseBindPose();
-	loc = shaderToUse->getUniformLocation("inverseBindPose");
-	if (loc >= 0) glUniformMatrix4fv(loc, (int)bind.size(), FALSE, (float*)bind.data());
-
-	//	Draw mesh
-	if (renderOption == BOUNDING_BOX)
-	{
-		/*InstanceAnimatable* tmpIns = static_cast<InstanceAnimatable*>(ins);
-		std::vector<float> radius = tmpIns->getCapsules();
-		int loc = shaderToUse->getUniformLocation("capsuleRadius");
-		if (loc >= 0) glUniformMatrix4fv(loc, radius.size(), FALSE, (float*)radius.data());
-
-		tmpIns->drawBB();*/
-	}
-	else ins->getComponent<ComponentResource<Mesh> >()->getResource()->draw();
-	instanceDrawn++;
-	trianglesDrawn += ins->getComponent<ComponentResource<Mesh> >()->getResource()->getNumberFaces();
-}
-void Renderer::drawInstanceContainer(InstanceVirtual* ins, const glm::mat4& view, const glm::mat4& projection, const glm::mat4& model)
-{
-	glm::mat4 modelMatrix = model * ins->getModelMatrix();
-	auto instanceList = *ins->getChildList();
-	for (auto it = instanceList.begin(); it != instanceList.end(); it++)
-	{
-		if ((*it)->getRenderingType() == InstanceVirtual::DRAWABLE)
-			drawInstanceDrawable(*it, &view[0][0], &projection[0][0], modelMatrix);
-		if ((*it)->getChildList())
-			drawInstanceDrawable(*it, &view[0][0], &projection[0][0], modelMatrix);
-	}
+	trianglesDrawn += drawableComp->getMesh()->getNumberFaces();
 }
 //
 

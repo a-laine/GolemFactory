@@ -1,10 +1,15 @@
+#include "HouseGenerator.h"
+
+#include <iostream>
+#include <utility>
+#include <string>
+#include <algorithm>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/rotate_vector.hpp>
-#include <glm/gtc/quaternion.hpp>
 
-#include "HouseGenerator.h"
-#include "Resources/ComponentResource.h"
+#include <EntityComponent/Entity.hpp>
+#include <Renderer/DrawableComponent.h>
 
 
 //  Attributes
@@ -55,14 +60,14 @@ HouseGenerator::HouseGenerator()
 	assetLibrary["roofEndCorner"] = ResourceManager::getInstance()->getMesh("House/HouseRoofEnd4.obj");
 
 	//	Elementary blocks
-	blockLibrary.push_back(glm::ivec3(8, 5, 3));	// 120 m²
-	blockLibrary.push_back(glm::ivec3(8, 5, 2));	// 80 m²
-	blockLibrary.push_back(glm::ivec3(6, 4, 3));	// 72 m²
-	blockLibrary.push_back(glm::ivec3(6, 4, 2));	// 48 m²
-	blockLibrary.push_back(glm::ivec3(6, 4, 1));	// 24 m²
-	blockLibrary.push_back(glm::ivec3(4, 3, 1));	// 12 m²
-	blockLibrary.push_back(glm::ivec3(3, 2, 1));	// 6 m²
-	blockLibrary.push_back(glm::ivec3(3, 1, 1));	// 3 m²
+	blockLibrary.push_back(glm::ivec3(8, 5, 3));	// 120 mï¿½
+	blockLibrary.push_back(glm::ivec3(8, 5, 2));	// 80 mï¿½
+	blockLibrary.push_back(glm::ivec3(6, 4, 3));	// 72 mï¿½
+	blockLibrary.push_back(glm::ivec3(6, 4, 2));	// 48 mï¿½
+	blockLibrary.push_back(glm::ivec3(6, 4, 1));	// 24 mï¿½
+	blockLibrary.push_back(glm::ivec3(4, 3, 1));	// 12 mï¿½
+	blockLibrary.push_back(glm::ivec3(3, 2, 1));	// 6 mï¿½
+	blockLibrary.push_back(glm::ivec3(3, 1, 1));	// 3 mï¿½
 }
 HouseGenerator::~HouseGenerator()
 {
@@ -83,7 +88,7 @@ HouseGenerator::~HouseGenerator()
 //
 
 //  Public functions
-InstanceVirtual* HouseGenerator::getHouse(unsigned int seed, int d, int p)
+void HouseGenerator::getHouse(Entity* house, unsigned int seed, int d, int p)
 {
 	// initialize
 	randomEngine.seed(seed);
@@ -109,12 +114,9 @@ InstanceVirtual* HouseGenerator::getHouse(unsigned int seed, int d, int p)
 
 	//	end
 	Mesh* mesh = new Mesh(houseName, verticesArray, normalesArray, colorArray, facesArray);
-		ResourceManager::getInstance()->addMesh(mesh);
-	InstanceVirtual* house = new InstanceVirtual();
-		house->addComponent(new ComponentResource<Mesh>(ResourceManager::getInstance()->getMesh(houseName)));
-		house->addComponent(new ComponentResource<Shader>(ResourceManager::getInstance()->getShader("default")));
-	ResourceManager::getInstance()->release(mesh);
-	return house;
+	ResourceManager::getInstance()->addMesh(mesh);				//	add mesh to resources manager for instance creation
+	house->addComponent(new DrawableComponent(houseName));
+	ResourceManager::getInstance()->release(mesh);				//	House generator release mesh pointer
 }
 //
 

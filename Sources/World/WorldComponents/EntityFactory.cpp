@@ -1,103 +1,88 @@
 #include "EntityFactory.h"
-#include "World/World.h"
-#include "Instances/InstanceVirtual.h"
-#include "Resources/ComponentResource.h"
-#include "EntityComponent/AnimationEngine.h"
 
+#include <Utiles/Assert.hpp>
+#include <World/World.h>
+#include <EntityComponent/Entity.hpp>
+#include <Renderer/DrawableComponent.h>
+#include <Animation/SkeletonComponent.h>
+#include <Animation/AnimationComponent.h>
 
 EntityFactory::EntityFactory(World* parentWorld)
 	: world(parentWorld)
 {}
 
-InstanceVirtual* EntityFactory::createObject(const std::string& type, const glm::vec3& position, const glm::vec3& scale)
+Entity* EntityFactory::createObject(const std::string& type, const glm::vec3& position, const glm::vec3& scale, const glm::quat& orientation)
 {
-	InstanceVirtual* object = createByType(type);
+	Entity* object = createByType(type);
 	if(object)
 	{
-		object->setPosition(position);
-		object->setSize(scale);
+		object->setTransformation(position, scale, orientation);
 		addToScene(object);
 	}
 	return object;
 }
 
-InstanceVirtual* EntityFactory::createObject(const std::string& type, const glm::vec3& position, const glm::vec3& scale, const glm::mat4& orientation)
+Entity* EntityFactory::createObject(const std::vector<Component*>& components, const glm::vec3& position, const glm::vec3& scale, const glm::quat& orientation)
 {
-	InstanceVirtual* object = createByType(type);
-	if(object)
-	{
-		object->setPosition(position);
-		object->setSize(scale);
-		object->setOrientation(orientation);
-		addToScene(object);
-	}
+	Entity* object = createEntity();
+	addComponents(object, components);
+	object->setTransformation(position, scale, orientation);
+	addToScene(object);
 	return object;
 }
 
-InstanceVirtual* EntityFactory::createByType(const std::string& type)
+Entity* EntityFactory::createEntity()
 {
-	if(type == "peasent")
-		return createAnimatable("peasant", "human", "simple_peasant", "skinning");
+	return world->getNewEntity();
+}
+
+Entity* EntityFactory::createByType(const std::string& type)
+{
+	Entity* object = createEntity();
+	if(type == "peasant")
+		createAnimatable(object, "peasant", "human", "simple_peasant", "skinning");
 	else if(type == "sphere")
-		return createDrawable("icosphere.obj", "default");
+		createDrawable(object, "icosphere.obj", "default");
 	else if(type == "cube")
-		return createDrawable("default", "wired");
+		createDrawable(object, "default", "wired");
 	else if(type == "tree")
-		return createDrawable("firTree1.obj", "default");
+		createDrawable(object, "firTree1.obj", "default");
 	else if(type == "rock")
-		return createDrawable("rock1.obj", "default");
-	return nullptr;
+		createDrawable(object, "rock1.obj", "default");
+	else { GF_ASSERT(0); }
+	return object;
 }
 
-void EntityFactory::addToScene(InstanceVirtual* object)
+void EntityFactory::addToScene(Entity* object)
 {
-	world->getSceneManager().addObject(object);
+	world->addToScene(object);
 }
 
-InstanceVirtual* EntityFactory::createDrawable(const std::string& meshName, const std::string& shaderName)
+void EntityFactory::createDrawable(Entity* object, const std::string& meshName, const std::string& shaderName)
 {
-	InstanceVirtual* ins = new InstanceVirtual();
-		ins->addComponent(new ComponentResource<Mesh>(ResourceManager::getInstance()->getMesh(meshName)));
-		ins->addComponent(new ComponentResource<Shader>(ResourceManager::getInstance()->getShader(shaderName)));
-	if(!ins || !world->manageObject(ins))
-	{
-		if(ins) delete ins;
-		return nullptr;
-	}
-	return ins;
+	DrawableComponent* drawable = new DrawableComponent(meshName, shaderName);
+	object->addComponent(drawable);
+    object->setBoundingVolume(OrientedBox(glm::mat4(1.f), drawable->getMeshBBMin(), drawable->getMeshBBMax()));
 }
 
-/*InstanceVirtual* EntityFactory::createAnimatable(const std::string& meshName, const std::string& shaderName)
+void EntityFactory::createAnimatable(Entity* object, const std::string& meshName, const std::string& skeletonName, const std::string& animationName, const std::string& shaderName)
 {
-	InstanceVirtual* ins = new InstanceVirtual();
-		ins->addComponent(new ComponentResource<Mesh>(ResourceManager::getInstance()->getMesh(meshName)));
-		ins->addComponent(new ComponentResource<Shader>(ResourceManager::getInstance()->getShader(shaderName)));
-	if(!ins || !world->manageObject(ins))
-	{
-		if(ins) delete ins;
-		return nullptr;
-	}
-	ins->computeCapsules();
-	ins->initializeVBOVAO();
-	return ins;
-}*/
+	DrawableComponent* drawable = new DrawableComponent(meshName, shaderName);
+	SkeletonComponent* skeleton = new SkeletonComponent(skeletonName);
+	AnimationComponent* animation = new AnimationComponent(animationName);
+	skeleton->computeCapsules(drawable->getMesh());
+	skeleton->initializeVBOVAO();
+	object->addComponent(drawable);
+	object->addComponent(skeleton);
+	object->addComponent(animation);
+    object->setBoundingVolume(OrientedBox(glm::mat4(1.f), drawable->getMeshBBMin(), drawable->getMeshBBMax()));
+}
 
-InstanceVirtual* EntityFactory::createAnimatable(const std::string& meshName, const std::string& skeletonName, const std::string& animationName, const std::string& shaderName)
+void EntityFactory::addComponents(Entity* object, const std::vector<Component*>& components)
 {
-	InstanceVirtual* ins = new InstanceVirtual();
-		ins->addComponent(new ComponentResource<Mesh>(ResourceManager::getInstance()->getMesh(meshName)));
-		ins->addComponent(new ComponentResource<Shader>(ResourceManager::getInstance()->getShader(shaderName)));
-		ins->addComponent(new ComponentResource<Skeleton>(ResourceManager::getInstance()->getSkeleton(skeletonName)));
-		ins->addComponent(new ComponentResource<Animation>(ResourceManager::getInstance()->getAnimation(animationName)));
-		ins->addComponent(new AnimationEngine(skeletonName, animationName));
-
-	if(!ins || !world->manageObject(ins))
+	for(Component* comp : components)
 	{
-		if(ins) delete ins;
-		return nullptr;
+		object->addComponent(comp, comp->getClassID());
 	}
-
-	ins->getComponent<AnimationEngine>()->computeCapsules(ins->getComponent<ComponentResource<Mesh> >()->getResource());
-	return ins;
 }
 

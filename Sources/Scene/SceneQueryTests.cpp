@@ -1,7 +1,10 @@
 #include "SceneQueryTests.h"
-#include "Physics/Collision.h"
-#include "Resources/ComponentResource.h"
-#include "EntityComponent/AnimationEngine.h"
+
+#include <Physics/Collision.h>
+#include <EntityComponent/Entity.hpp>
+#include <EntityComponent/AnimationEngine.h>
+#include <Renderer/DrawableComponent.h>
+#include <Animation/SkeletonComponent.h>
 
 
 //	coefficient for intersection test computation (to avoid artefacts)
@@ -72,14 +75,13 @@ DefaultRayPickingCollector::DefaultRayPickingCollector(const glm::vec3& pos, con
 {}
 
 
-void DefaultRayPickingCollector::operator() (NodeVirtual* node, InstanceVirtual* object)
+void DefaultRayPickingCollector::operator() (NodeVirtual* node, Entity* object)
 {
-	Mesh* mesh = object->getComponent<ComponentResource<Mesh> >()->getResource();
+	Mesh* mesh = (object->getComponent<DrawableComponent>() ? object->getComponent<DrawableComponent>()->getMesh() : nullptr);
 	if (!mesh) return;
 
-	Skeleton* skeleton = (object->getComponent<ComponentResource<Skeleton> >() ? object->getComponent<ComponentResource<Skeleton> >()->getResource() : nullptr);
+	Skeleton* skeleton = (object->getComponent<SkeletonComponent>() ? object->getComponent<SkeletonComponent>()->getSkeleton() : nullptr);
 	bool animatable = mesh->isAnimable() && skeleton;
-
 
 
 	//	first pass test -> test ray vs object OBB or capsules
@@ -97,13 +99,13 @@ void DefaultRayPickingCollector::operator() (NodeVirtual* node, InstanceVirtual*
 	//	second test -> test ray vs all object triangles
 	const std::vector<glm::vec3>& vertices = *mesh->getVertices();
 	const std::vector<unsigned short>& faces = *mesh->getFaces();
-	glm::mat4 model = object->getModelMatrix();
+	glm::mat4 model = object->getMatrix();
 	float collisionDistance = std::numeric_limits<float>::max();
 
 	if (animatable)
 	{
 		const std::vector<glm::mat4> ibind = skeleton->getInverseBindPose();
-		const std::vector<glm::mat4> pose = object->getComponent<AnimationEngine>()->getPose();
+		const std::vector<glm::mat4> pose = object->getComponent<SkeletonComponent>()->getPose();
 		const std::vector<glm::ivec3>* bones = mesh->getBones();
 		const std::vector<glm::vec3>* weights = mesh->getWeights();
 		if (ibind.empty() || pose.empty() || !bones || !weights) return;
@@ -164,8 +166,8 @@ void DefaultRayPickingCollector::operator() (NodeVirtual* node, InstanceVirtual*
 	//	pass all collision test
 	objectOnRay[collisionDistance] = object;
 }
-std::map<float, InstanceVirtual*>& DefaultRayPickingCollector::getObjects() { return objectOnRay; }
-InstanceVirtual* DefaultRayPickingCollector::getNearestObject() const
+std::map<float, Entity*>& DefaultRayPickingCollector::getObjects() { return objectOnRay; }
+Entity* DefaultRayPickingCollector::getNearestObject() const
 {
 	if (objectOnRay.empty()) return nullptr;
 	else return objectOnRay.begin()->second;

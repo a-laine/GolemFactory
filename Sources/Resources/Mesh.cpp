@@ -275,7 +275,7 @@ const std::vector<glm::vec3>* Mesh::getVertices() const { return &vertices; }
 const std::vector<unsigned short>* Mesh::getFaces() const { return &faces; }
 const std::vector<glm::ivec3>* Mesh::getBones() const { return nullptr; }
 const std::vector<glm::vec3>* Mesh::getWeights() const { return nullptr; }
-AxisAlignedBox Mesh::getBoundingBox() const { return boundingBox; };
+const AxisAlignedBox& Mesh::getBoundingBox() const { return boundingBox; };
 
 bool Mesh::hasSkeleton() const { return (configuration & HAS_SKELETON) != 0; }
 bool Mesh::isValid() const

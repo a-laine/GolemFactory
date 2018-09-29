@@ -51,7 +51,7 @@ void SceneManager::reserveInstanceTrack(const unsigned int& count) { instanceTra
 unsigned int SceneManager::getObjectCount() const { return (unsigned int)instanceTracking.size(); }
 
 
-bool SceneManager::addObject(InstanceVirtual* object)
+bool SceneManager::addObject(Entity* object)
 {
 	GF_ASSERT(object);
 	if (world.empty() || instanceTracking.count(object) != 0)
@@ -70,7 +70,7 @@ bool SceneManager::addObject(InstanceVirtual* object)
 	return true;
 }
 
-bool SceneManager::removeObject(InstanceVirtual* object)
+bool SceneManager::removeObject(Entity* object)
 {
 	GF_ASSERT(object);
 	if (world.empty() || instanceTracking.count(object) == 0)
@@ -83,7 +83,7 @@ bool SceneManager::removeObject(InstanceVirtual* object)
 	return node->removeObject(object);
 }
 
-bool SceneManager::updateObject(InstanceVirtual* object)
+bool SceneManager::updateObject(Entity* object)
 {
 	GF_ASSERT(object);
 	if (world.empty() || instanceTracking.count(object) == 0)
@@ -116,7 +116,7 @@ bool SceneManager::updateObject(InstanceVirtual* object)
 }
 
 
-void SceneManager::getAllObjects(std::vector<InstanceVirtual*>& result)
+void SceneManager::getAllObjects(std::vector<Entity*>& result)
 {
 	if(!world.empty())
 	{
@@ -124,7 +124,7 @@ void SceneManager::getAllObjects(std::vector<InstanceVirtual*>& result)
 	}
 }
 
-void SceneManager::getObjectsOnRay(std::vector<InstanceVirtual*>& result, const glm::vec3& position, const glm::vec3& direction, float maxDistance)
+void SceneManager::getObjectsOnRay(std::vector<Entity*>& result, const glm::vec3& position, const glm::vec3& direction, float maxDistance)
 {
 	if(world.empty())
 		return;
@@ -133,7 +133,7 @@ void SceneManager::getObjectsOnRay(std::vector<InstanceVirtual*>& result, const 
 	getObjects(world[0], result, test);
 }
 
-void SceneManager::getObjectsInBox(std::vector<InstanceVirtual*>& result, const glm::vec3& bbMin, const glm::vec3& bbMax)
+void SceneManager::getObjectsInBox(std::vector<Entity*>& result, const glm::vec3& bbMin, const glm::vec3& bbMax)
 {
 	if(world.empty())
 		return;

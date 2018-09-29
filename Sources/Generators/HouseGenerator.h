@@ -1,14 +1,13 @@
 #pragma once
 
-#include <iostream>
 #include <vector>
-#include <utility>
-#include <string>
+#include <map>
+#include <list>
 #include <random>
-#include <algorithm>
+#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
 
-#include "Resources/ResourceManager.h"
-#include "Instances/InstanceManager.h"
+#include <Resources/ResourceManager.h>
 
 
 /*
@@ -17,6 +16,8 @@
 		- issue : bug in roof mesh generation : visible on house519_20_30
 */
 
+
+class Entity;
 
 class HouseGenerator
 {
@@ -27,7 +28,7 @@ class HouseGenerator
         //
 
         //  Public functions
-		InstanceVirtual* getHouse(unsigned int seed, int _density = -1, int _prosperity = -1);
+		void getHouse(Entity* house, unsigned int seed, int _density = -1, int _prosperity = -1);
         //
 
 		//  Attributes

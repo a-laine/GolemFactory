@@ -13,7 +13,7 @@ NodeVirtual::~NodeVirtual()
 	for (unsigned int i = 0; i < objectList.size(); i++)
 	{
 		World* world = objectList[i]->getParentWorld();
-		world->releaseObject(objectList[i]);
+		world->releaseOwnership(objectList[i]);
 	}
 
 	//	delete all children
@@ -117,13 +117,13 @@ glm::vec3 NodeVirtual::getPosition() const
 }
 
 
-void NodeVirtual::addObject(InstanceVirtual* object)
+void NodeVirtual::addObject(Entity* object)
 {
 	objectList.push_back(object);
-	object->getParentWorld()->getObject(object);
+	object->getParentWorld()->getOwnership(object);
 }
 
-bool NodeVirtual::removeObject(InstanceVirtual* object)
+bool NodeVirtual::removeObject(Entity* object)
 {
 	auto it = std::find(objectList.begin(), objectList.end(), object);
 	if(it != objectList.end())
@@ -131,7 +131,7 @@ bool NodeVirtual::removeObject(InstanceVirtual* object)
 		if(it + 1 != objectList.end())
 			std::swap(*it, objectList.back());
 		objectList.pop_back();
-		object->getParentWorld()->releaseObject(object);
+		object->getParentWorld()->releaseOwnership(object);
 		return true;
 	}
 	return false;

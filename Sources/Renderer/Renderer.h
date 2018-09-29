@@ -12,7 +12,10 @@
 #include "Utiles/Camera.h"
 #include "Utiles/Singleton.h"
 #include "Resources/ResourceManager.h"
-#include "Instances/InstanceManager.h"
+#include "EntityComponent/Entity.hpp"
+#include "DrawableComponent.h"
+#include "Animation/SkeletonComponent.h"
+
 #include "HUD/WidgetManager.h"
 
 
@@ -65,9 +68,7 @@ class Renderer : public Singleton<Renderer>
 		//
 
 		//	Render function
-		void drawInstanceDrawable(InstanceVirtual* ins, const float* view, const float* projection, const glm::mat4& base = glm::mat4(1.f));
-		void drawInstanceAnimatable(InstanceVirtual* ins, const float* view, const float* projection);
-		void drawInstanceContainer(InstanceVirtual* ins, const glm::mat4& view, const glm::mat4& projection, const glm::mat4& model);
+		void drawObject(Entity* object, const float* view, const float* projection);
 		//
 
 	private:

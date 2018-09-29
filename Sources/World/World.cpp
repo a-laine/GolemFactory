@@ -8,50 +8,49 @@ World::World()
 
 World::~World()
 {
-	// clean sceneManager before instanceManager deletion
+	// clean sceneManager before entityManager deletion
 	sceneManager.clear();
 }
 
 void World::setMaxObjectCount(unsigned int count)
 {
-	instanceManager.setMaxNumberOfInstances(count);
 	sceneManager.reserveInstanceTrack(count);
 }
 
 unsigned int World::getObjectCount() const
 {
-	return instanceManager.getNumberOfInstances();
+	return entityManager.getObjectCount();
 }
 
-bool World::manageObject(InstanceVirtual* object)
+bool World::addToScene(Entity* object)
 {
-	bool ok = instanceManager.add(object) != nullptr;
-	if(ok) object->setParentWorld(this);
-	return ok;
+	return sceneManager.addObject(object);
 }
 
-InstanceVirtual* World::getObject(InstanceVirtual* object)
-{
-	return instanceManager.get(object->getId());
-}
-
-InstanceVirtual* World::getObject(uint32_t objectId)
-{
-	return instanceManager.get(objectId);
-}
-
-void World::releaseObject(InstanceVirtual* object)
-{
-	instanceManager.release(object);
-}
-
-bool World::updateObject(InstanceVirtual* object)
+bool World::updateObject(Entity* object)
 {
 	return sceneManager.updateObject(object);
 }
 
+Entity* World::getNewEntity()
+{
+	Entity* object = entityManager.getNewEntity();
+	object->setParentWorld(this);
+	return object;
+}
+
+void World::getOwnership(Entity* object)
+{
+	entityManager.getOwnership(object);
+}
+
+void World::releaseOwnership(Entity* object)
+{
+	entityManager.releaseOwnership(object);
+}
+
 void World::clearGarbage()
 {
-	instanceManager.clearGarbage();
+	entityManager.clearGarbage();
 }
 

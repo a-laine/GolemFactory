@@ -1,11 +1,14 @@
 #pragma once
 
 #include <string>
+#include <vector>
 #include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 
 class World;
-class InstanceVirtual;
+class Entity;
+class Component;
 
 class EntityFactory
 {
@@ -13,31 +16,59 @@ class EntityFactory
 		EntityFactory(World* parentWorld);
 
 		template<typename Callback>
-		InstanceVirtual* createObject(const std::string& type, Callback cb);
-		InstanceVirtual* createObject(const std::string& type, const glm::vec3& position, const glm::vec3& scale);
-		InstanceVirtual* createObject(const std::string& type, const glm::vec3& position, const glm::vec3& scale, const glm::mat4& orientation);
+		Entity* createObject(const std::string& type, Callback cb);
+		Entity* createObject(const std::string& type, const glm::vec3& position, const glm::vec3& scale = glm::vec3(1.f), const glm::quat& orientation = glm::quat());
+
+		template<typename Callback>
+		Entity* createObject(Callback cb);
+		template<typename Callback>
+		Entity* createObject(const std::vector<Component*>& components, Callback cb);
+		Entity* createObject(const std::vector<Component*>& components, const glm::vec3& position, const glm::vec3& scale = glm::vec3(1.f), const glm::quat& orientation = glm::quat());
 
 	private:
-		InstanceVirtual* createByType(const std::string& type);
-		void addToScene(InstanceVirtual* object);
+		Entity* createEntity();
+		Entity* createByType(const std::string& type);
+
+		void addToScene(Entity* object);
+
+		void createDrawable(Entity* object, const std::string& meshName, const std::string& shaderName);
+		void createAnimatable(Entity* object, const std::string& meshName, const std::string& skeletonName, const std::string& animationName, const std::string& shaderName);
 		
-		InstanceVirtual* createDrawable(const std::string& meshName, const std::string& shaderName);
-		//InstanceVirtual* createAnimatable(const std::string& meshName, const std::string& shaderName);
-		InstanceVirtual* createAnimatable(const std::string& meshName, const std::string& skeletonName, const std::string& animationName, const std::string& shaderName);
+		void addComponents(Entity* object, const std::vector<Component*>& components);
 
 		World* world;
 };
 
 
+
 template<typename Callback>
-InstanceVirtual* EntityFactory::createObject(const std::string& type, Callback cb)
+Entity* EntityFactory::createObject(const std::string& type, Callback cb)
 {
-	InstanceVirtual* object = createByType(type);
+	Entity* object = createByType(type);
 	if(object)
 	{
 		cb(object);
 		addToScene(object);
 	}
+	return object;
+}
+
+template<typename Callback>
+Entity* EntityFactory::createObject(Callback cb)
+{
+	Entity* object = createEntity();
+	cb(object);
+	addToScene(object);
+	return object;
+}
+
+template<typename Callback>
+Entity* EntityFactory::createObject(const std::vector<Component*>& components, Callback cb)
+{
+	Entity* object = createEntity();
+	addComponents(object, components);
+	cb(object);
+	addToScene(object);
 	return object;
 }
 

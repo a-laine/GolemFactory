@@ -32,13 +32,13 @@ class SceneManager
 		void reserveInstanceTrack(const unsigned int& count);
 		unsigned int getObjectCount() const;
 
-		bool addObject(InstanceVirtual* object);
-		bool removeObject(InstanceVirtual* object);
-		bool updateObject(InstanceVirtual* object);
+		bool addObject(Entity* object);
+		bool removeObject(Entity* object);
+		bool updateObject(Entity* object);
 
-		void getAllObjects(std::vector<InstanceVirtual*>& result);
-		void getObjectsOnRay(std::vector<InstanceVirtual*>& result, const glm::vec3& position, const glm::vec3& direction, float maxDistance);
-		void getObjectsInBox(std::vector<InstanceVirtual*>& result, const glm::vec3& bbMin, const glm::vec3& bbMax);
+		void getAllObjects(std::vector<Entity*>& result);
+		void getObjectsOnRay(std::vector<Entity*>& result, const glm::vec3& position, const glm::vec3& direction, float maxDistance);
+		void getObjectsInBox(std::vector<Entity*>& result, const glm::vec3& bbMin, const glm::vec3& bbMax);
 
 		template<typename EntityCollector, typename CollisionTest>
 		void getObjects(EntityCollector& result, CollisionTest collisionTest) {
@@ -64,7 +64,7 @@ class SceneManager
 
 		//  Attributes
 		std::vector<NodeVirtual*> world;
-		std::unordered_map<InstanceVirtual*, InstanceTrack> instanceTracking;
+		std::unordered_map<Entity*, InstanceTrack> instanceTracking;
 };
 
 

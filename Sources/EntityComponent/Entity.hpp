@@ -6,16 +6,18 @@
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "Component.hpp"
-#include "EntityBase.hpp"
+#include <Physics/Shape.h>
+#include <EntityComponent/Component.hpp>
+#include <EntityComponent/EntityBase.hpp>
 
 //#include "Utiles/BoundingVolume.h"
 
 
+class World;
 
 class Entity : public EntityBase
 {
-	friend class EntityHandler;
+	friend class EntityManager;
 
 	public:
 		//  Default
@@ -27,11 +29,17 @@ class Entity : public EntityBase
 		void setScale(const glm::vec3& scale);
 		void setOrientation(const glm::quat& orientation);
 		void setTransformation(const glm::vec3& position, const glm::vec3& scale, const glm::fquat& orientation);
+		void setParentWorld(World* parentWorld);
+        void setBoundingVolume(const OrientedBox& bbox);
 
+
+        uint64_t getId() const;
 		const glm::mat4& getMatrix() const;
 		glm::vec3 getPosition() const;
 		glm::vec3 getScale() const;
 		glm::fquat getOrientation() const;
+		World* getParentWorld() const;
+		const OrientedBox& getBoundingVolume() const;
 		//
 
 		//const BoundingVolume& getBoundingVolume() const;
@@ -40,36 +48,13 @@ class Entity : public EntityBase
 	private:
 		//	Attributes
 		// uint32_t flags;
+		World* m_parentWorld;
 		std::atomic<uint32_t> m_refCount;
 		glm::vec3 m_scale;
 		glm::fquat m_rotation;
 		glm::mat4 m_transform;
-		//BoundingVolume m_boundingVolume;
+        OrientedBox m_boundingVolume;
 		//
 };
 
 
-
-
-/*
-class EntityHandler
-{
-	public:
-		EntityHandler() : m_pointer(nullptr) {}
-		EntityHandler(Entity* pointer) : m_pointer(pointer) { m_pointer->m_refCount++; }
-		EntityHandler(const EntityHandler& other) : m_pointer(other.m_pointer) { m_pointer->m_refCount++; }
-		EntityHandler(EntityHandler&& other) : m_pointer(other.m_pointer) { other.m_pointer = nullptr; }
-		EntityHandler& operator=(const EntityHandler& other) { m_pointer = other.m_pointer; m_pointer->m_refCount++; }
-		EntityHandler& operator=(EntityHandler&& other) { m_pointer = other.m_pointer; other.m_pointer = nullptr; }
-		~EntityHandler() {
-			m_pointer->m_refCount--;
-			if (m_pointer->m_refCount <= 0)
-				delete m_pointer; // TODO
-		}
-		Entity* getObject() { return m_pointer; }
-		operator bool() { return m_pointer != nullptr; }
-
-	private:
-		Entity* m_pointer;
-};
-*/

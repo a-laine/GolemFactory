@@ -3,7 +3,7 @@
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 
-#include "Instances/InstanceManager.h"
+#include <EntityComponent/Entity.hpp>
 
 /*! \class NodeVirtual
  *  \brief Base class for node implementation.
@@ -51,8 +51,8 @@ class NodeVirtual
 		bool isTooBig(const glm::vec3& size) const;
 		glm::vec3 getPosition() const;
 		
-		void addObject(InstanceVirtual* object);
-		bool removeObject(InstanceVirtual* object);
+		void addObject(Entity* object);
+		bool removeObject(Entity* object);
 		void addNode(NodeVirtual* node);
 		bool removeNode(NodeVirtual* node);
 
@@ -65,7 +65,7 @@ class NodeVirtual
 		template<typename ObjectCollector>
 		void getObjectList(ObjectCollector& collector);
 		template<>
-		void getObjectList(std::vector<InstanceVirtual*>& collector);
+		void getObjectList(std::vector<Entity*>& collector);
 
 	public:
 		float allowanceSize;
@@ -77,7 +77,7 @@ class NodeVirtual
 
 		std::vector<NodeVirtual> children;			//!< Subdivision children container (empty if leaf)
 		std::vector<NodeVirtual*> adoptedChildren;	//!< Children added to, for special tree
-		std::vector<InstanceVirtual*> objectList;	//!< Instance container (list of instance attached to node)
+		std::vector<Entity*> objectList;	//!< Instance container (list of instance attached to node)
 };
 
 
@@ -86,12 +86,12 @@ class NodeVirtual
 template<typename ObjectCollector>
 void NodeVirtual::getObjectList(ObjectCollector& collector)
 {
-	for(InstanceVirtual* object : objectList)
+	for(Entity* object : objectList)
 		collector(this, object);
 }
 
 template<>
-void NodeVirtual::getObjectList<std::vector<InstanceVirtual*>>(std::vector<InstanceVirtual*>& collector)
+void NodeVirtual::getObjectList<std::vector<Entity*>>(std::vector<Entity*>& collector)
 {
 	collector.insert(collector.end(), objectList.begin(), objectList.end());
 }

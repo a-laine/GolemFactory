@@ -58,7 +58,7 @@ class Mesh : public ResourceVirtual
 		const std::vector<unsigned short>* getFaces() const;
 		virtual const std::vector<glm::ivec3>* getBones() const;
 		virtual const std::vector<glm::vec3>* getWeights() const;
-		AxisAlignedBox getBoundingBox() const;
+		const AxisAlignedBox& getBoundingBox() const;
         //
 
 		//	Attributes

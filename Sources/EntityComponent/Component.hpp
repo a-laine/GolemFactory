@@ -35,6 +35,10 @@ class Component
 {
 	public:
 		static ClassID getStaticClassID() { return 0; }
+
+
+		virtual ~Component() = default;
+
 		virtual ClassID getClassID() { return getStaticClassID(); }
 		virtual bool isIdInHierarchy(ClassID id) { return id == getStaticClassID(); }
 
@@ -54,6 +58,6 @@ class Component
 		Component() = default;
 		Component(const Component& other) = delete;
 		Component(Component&& other) = delete;
-		virtual ~Component() = default;
 		Component& operator=(const Component& other) = delete;
+		Component& operator=(Component&& other) = delete;
 };

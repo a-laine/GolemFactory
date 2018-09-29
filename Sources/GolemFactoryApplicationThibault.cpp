@@ -1,4 +1,4 @@
-// Golem Factory 1.0.cpp : define console application entry point
+// Golem Factory 1.0.cppï¿½: define console application entry point
 //
 
 
@@ -19,13 +19,15 @@
 #include "Utiles/ToolBox.h"
 #include "Events/EventHandler.h"
 #include "Renderer/Renderer.h"
+#include "Animation/Animator.h"
 #include "Generators/HouseGenerator.h"
 #include "World/World.h"
 #include "Scene/SceneQueryTests.h"
 #include "Resources/Loader/SkeletonSaver.h"
 #include "EntityComponent/Entity.hpp"
-#include "Resources/ComponentResource.h"
-#include "EntityComponent/AnimationEngine.h"
+#include "Renderer/DrawableComponent.h"
+#include "Animation/SkeletonComponent.h"
+#include "Animation/AnimationComponent.h"
 
 #include "Physics/Collision.h"
 
@@ -39,7 +41,7 @@
 GLFWwindow* window = nullptr;
 World world;
 Camera camera, camera2;
-InstanceVirtual* avatar = nullptr;
+Entity* avatar = nullptr;
 
 double completeTime = 16.;
 double averageCompleteTime = 16.;
@@ -67,19 +69,6 @@ int main()
 	Renderer::getInstance()->initGLEW(0);
 	initManagers();
 
-	//	ECS test
-	/*Entity* avatar = new Entity();
-		avatar->addComponent(new ComponentResource<Mesh>(ResourceManager::getInstance()->getMesh("peasant")));
-		avatar->addComponent(new ComponentResource<Skeleton>(ResourceManager::getInstance()->getSkeleton("human")));
-		avatar->addComponent(new ComponentResource<Animation>(ResourceManager::getInstance()->getAnimation("simple_peasant")));
-		avatar->addComponent(new ComponentResource<Shader>(ResourceManager::getInstance()->getShader("skinning")));
-
-	std::cout << "component count : " << entity->getNbComponents() << std::endl;
-	std::cout << "   mesh name : " << entity->getComponent<ComponentResource<Mesh> >()->getResource()->name << std::endl;
-	std::cout << "   skeleton name : " << entity->getComponent<ComponentResource<Skeleton> >()->getResource()->name << std::endl;
-	std::cout << "   animation name : " << entity->getComponent<ComponentResource<Animation> >()->getResource()->name << std::endl;
-	std::cout << "   shader name : " << entity->getComponent<ComponentResource<Shader> >()->getResource()->name << std::endl;*/
-
 	//	Collision test
 		WidgetManager::getInstance()->setActiveHUD("debug");
 		Collision::debugUnitaryTest(2);
@@ -88,12 +77,14 @@ int main()
 		Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getShader("wired"));
 		initializeForestScene(false);
 
-		avatar = world.getEntityFactory().createObject("peasent", [](InstanceVirtual* object) {
+		avatar = world.getEntityFactory().createObject("peasant", [](Entity* object)
+		{
+			Mesh* mesh = object->getComponent<DrawableComponent>()->getMesh();
 			OrientedBox box = object->getBoundingVolume();
 			float scale = 1.7f / (box.max - box.min).z;
-			object->setSize(glm::vec3(scale));
-			float feetPos = object->getComponent<ComponentResource<Mesh> >()->getResource()->getBoundingBox().min.z;
-			object->setPosition(glm::vec3(20.f, 20.f, -scale * feetPos));
+			object->setScale(glm::vec3(scale));
+			glm::vec3 pos = glm::vec3(20.f, 20.f, -scale * mesh->getBoundingBox().min.z);
+			object->setPosition(pos);
 			//camera.setMode(Camera::TRACKBALL);
 			camera.setRadius(4);
 		});
@@ -213,12 +204,10 @@ void initializeForestScene(bool emptyPlace)
 			else
 				a = glm::rotate(a, angle + 0.4f * ((((rand() % 100) / 50.f) - 1.f)), glm::vec3(0, 0, 1));
 			
-			InstanceVirtual* house = hg.getHouse(rand(), 20, 30);
-			if (house && world.manageObject(house))
+			world.getEntityFactory().createObject([radius, angle, &houseCircle, &hg](Entity* house)
 			{
+                hg.getHouse(house, rand(), 20, 30);
 				glm::vec3 p = glm::vec3(radius * cos(angle), radius * sin(angle), house->getBoundingVolume().toSphere().radius);
-				house->setOrientation(glm::rotate(glm::mat4(1.0), 1.57f + angle, glm::vec3(0, 0, 1)));
-
 				for (unsigned int k = 0; k < houseCircle.size(); k++)
 				{
 					float delta = glm::length(glm::vec3(houseCircle[k].x - p.x, houseCircle[k].y - p.y, 0.f));
@@ -231,8 +220,8 @@ void initializeForestScene(bool emptyPlace)
 
 				houseCircle.push_back(p);
 				house->setPosition(glm::vec3(p.x, p.y, 0.f));
-				world.getSceneManager().addObject(house);
-			}
+				house->setOrientation(glm::rotate(glm::mat4(1.0), 1.57f + angle, glm::vec3(0, 0, 1)));
+			});
 		}
 	}
 	
@@ -264,7 +253,7 @@ void initializeForestScene(bool emptyPlace)
 			else continue;
 
 			float s = sOffset + sDispersion * ((rand() % 100) / 50.f - 1.f);
-			glm::mat4 a = glm::rotate(glm::mat4(1.0), glm::radians((rand() % 3600) / 10.f), glm::vec3(0, 0, 1));
+			glm::quat a = glm::rotate(glm::quat(), glm::radians((rand() % 3600) / 10.f), glm::vec3(0, 0, 1));
 
 			world.getEntityFactory().createObject(objectType, p, glm::vec3(s, s, s), a);
 		}
@@ -324,12 +313,15 @@ void initManagers()
 	camera2.setAllRadius(2.f, 0.5f, 10.f);
 	camera2.setPosition(glm::vec3(0, 20, 20));
 	Renderer::getInstance()->setWindow(window);
+	Renderer::getInstance()->setWorld(&world);
 	Renderer::getInstance()->initializeGrid(GRID_SIZE, GRID_ELEMENT_SIZE, glm::vec3(24 / 255.f, 202 / 255.f, 230 / 255.f));	// blue tron
 	Renderer::getInstance()->setCamera(&camera2);
-	Renderer::getInstance()->setWorld(&world);
 	Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getShader("greenGrass"));
 	Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE_BB, ResourceManager::getInstance()->getShader("wired"));
 	Renderer::getInstance()->setShader(Renderer::INSTANCE_ANIMATABLE_BB, ResourceManager::getInstance()->getShader("skeletonBB"));
+
+	// Animator
+	Animator::getInstance();
 
 	//	HUD
 	int width, height;
@@ -346,13 +338,11 @@ void picking(int width, int height)
 	if (!collector.getObjects().empty())
 	{
 		std::string type;
-		switch (collector.getNearestObject()->getRenderingType())
-		{
-			case InstanceVirtual::ANIMATABLE:	type = "animatable";	break;
-			case InstanceVirtual::DRAWABLE:		type = "drawable";		break;
-			case InstanceVirtual::CONTAINER:	type = "container";		break;
-			default: type = "virtual"; break;
-		}
+		AnimationComponent* compAnim = collector.getNearestObject()->getComponent<AnimationComponent>();
+		DrawableComponent* compDraw = collector.getNearestObject()->getComponent<DrawableComponent>();
+		if(compAnim)       type = "animatable";
+		else if(compDraw)  type = "drawable";
+		else            type = "empty entity";
 		glm::vec3 p = camera.getPosition() + collector.getNearestDistance() * camera.getForward();
 
 		WidgetManager::getInstance()->setString("interaction", "Distance : " + ToolBox::to_string_with_precision(collector.getNearestDistance(), 5) +
@@ -366,9 +356,9 @@ void picking(int width, int height)
 			Renderer::RenderOption option = Renderer::getInstance()->getRenderOption();
 			Renderer::getInstance()->setRenderOption(option == Renderer::DEFAULT ? Renderer::BOUNDING_BOX : Renderer::DEFAULT);
 			glm::mat4 projection = glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f);
-			if (collector.getNearestObject()->getRenderingType() == InstanceVirtual::ANIMATABLE)
-				Renderer::getInstance()->drawInstanceAnimatable(collector.getNearestObject(), &camera.getViewMatrix()[0][0], &projection[0][0]);
-			else Renderer::getInstance()->drawInstanceDrawable(collector.getNearestObject(), &camera.getViewMatrix()[0][0], &projection[0][0]);
+			if (compAnim)
+				Renderer::getInstance()->drawObject(collector.getNearestObject(), &camera.getViewMatrix()[0][0], &projection[0][0]);
+			else Renderer::getInstance()->drawObject(collector.getNearestObject(), &camera.getViewMatrix()[0][0], &projection[0][0]);
 			Renderer::getInstance()->setRenderOption(option);
 		}
 	}
@@ -382,7 +372,6 @@ void events()
 	EventHandler::getInstance()->handleEvent();
 	std::vector<UserEventType> v;
 	EventHandler::getInstance()->getFrameEvent(v);
-	AnimationEngine* avatarAnimEngine = avatar->getComponent<AnimationEngine>();
 
 	for (unsigned int i = 0; i < v.size(); i++)
 	{
@@ -396,33 +385,36 @@ void events()
 		}
 
 		//	avatar related
-		else if (v[i] == SLOT1) avatarAnimEngine->launchAnimation("hello");
-		else if (v[i] == SLOT2) avatarAnimEngine->launchAnimation("yes");
-		else if (v[i] == SLOT3) avatarAnimEngine->launchAnimation("no");
+		else if (v[i] == SLOT1) Animator::getInstance()->launchAnimation(avatar, "hello");
+		else if (v[i] == SLOT2) Animator::getInstance()->launchAnimation(avatar, "yes");
+		else if (v[i] == SLOT3) Animator::getInstance()->launchAnimation(avatar, "no");
 		else if (v[i] == FORWARD)
 		{
 			if (EventHandler::getInstance()->isActivated(FORWARD) && camera.getMode() == Camera::TRACKBALL)
 			{
-				if (EventHandler::getInstance()->isActivated(RUN)) avatarAnimEngine->launchAnimation("run");
-				else avatarAnimEngine->launchAnimation("walk");
+				if (EventHandler::getInstance()->isActivated(RUN)) Animator::getInstance()->launchAnimation(avatar, "run");
+				else Animator::getInstance()->launchAnimation(avatar, "walk");
 			}
 			else
 			{
-				avatarAnimEngine->stopAnimation("run");
-				avatarAnimEngine->stopAnimation("walk");
+				Animator::getInstance()->stopAnimation(avatar, "run");
+				Animator::getInstance()->stopAnimation(avatar, "walk");
 			}
 		}
 		else if (v[i] == RUN)
 		{
 			if (EventHandler::getInstance()->isActivated(RUN))
 			{
-				if (EventHandler::getInstance()->isActivated(FORWARD) && camera.getMode() == Camera::TRACKBALL) avatarAnimEngine->launchAnimation("run");
-				else avatarAnimEngine->stopAnimation("run");
+				if (EventHandler::getInstance()->isActivated(FORWARD) && camera.getMode() == Camera::TRACKBALL)
+					Animator::getInstance()->launchAnimation(avatar, "run");
+				else
+					Animator::getInstance()->stopAnimation(avatar, "run");
 			}
 			else
 			{
-				avatarAnimEngine->stopAnimation("run");
-				if (EventHandler::getInstance()->isActivated(FORWARD) && camera.getMode() == Camera::TRACKBALL) avatarAnimEngine->launchAnimation("walk");
+				Animator::getInstance()->stopAnimation(avatar, "run");
+				if (EventHandler::getInstance()->isActivated(FORWARD) && camera.getMode() == Camera::TRACKBALL)
+					Animator::getInstance()->launchAnimation(avatar, "walk");
 			}
 		}
 
@@ -435,8 +427,7 @@ void events()
 void updates(float elapseTime, int width, int height)
 {
 	//	animate avatar
-	AnimationEngine* avatarAnimEngine = avatar->getComponent<AnimationEngine>();
-	avatarAnimEngine->animate(elapseTime);
+	Animator::getInstance()->animate(avatar, elapseTime);
 
 	//	Compute HUD picking parameters
 	if (EventHandler::getInstance()->getCursorMode())
@@ -468,8 +459,8 @@ void updates(float elapseTime, int width, int height)
 	{
 		glm::vec3 forward = camera.getForward();
 		float speed = 0.f;
-		if (avatarAnimEngine->isAnimationRunning("walk")) speed = 0.025f;
-		if (avatarAnimEngine->isAnimationRunning("run")) speed = 0.1f;
+		if (Animator::getInstance()->isAnimationRunning(avatar, "walk")) speed = 0.025f;
+		if (Animator::getInstance()->isAnimationRunning(avatar, "run")) speed = 0.1f;
 		avatar->setPosition(avatar->getPosition() + speed * glm::normalize(glm::vec3(forward.x, forward.y, 0.f)));
 		if (speed != 0.f) avatar->setOrientation(glm::rotate(glm::pi<float>() / 2.f + atan2(forward.y, forward.x), glm::vec3(0.f, 0.f, 1.f)));
 		world.updateObject(avatar);
@@ -477,8 +468,10 @@ void updates(float elapseTime, int width, int height)
 
 	//Animate camera
 	if (camera.getMode() == Camera::TRACKBALL)
-		camera.setTarget(avatar->getPosition() + avatar->getSize()*avatarAnimEngine->getJointPosition("Head"));
-
+	{
+		glm::vec4 headPosition = avatar->getMatrix() * glm::vec4(avatar->getComponent<SkeletonComponent>()->getJointPosition("Head"), 1);
+		camera.setTarget(headPosition);
+	}
 	camera.animate((float)elapseTime,
 		EventHandler::getInstance()->isActivated(FORWARD), EventHandler::getInstance()->isActivated(BACKWARD),
 		EventHandler::getInstance()->isActivated(LEFT), EventHandler::getInstance()->isActivated(RIGHT),

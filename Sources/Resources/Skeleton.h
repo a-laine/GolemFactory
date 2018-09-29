@@ -9,7 +9,8 @@
 
 class Skeleton : public ResourceVirtual
 {
-	friend class AnimationEngine;
+	friend class AnimationComponent;
+	friend class SkeletonComponent;
 
 	public:
 		//	Default

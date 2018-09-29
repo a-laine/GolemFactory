@@ -1,10 +1,8 @@
 #pragma once
 
 #include <Scene/SceneManager.h>
-#include <Instances/InstanceManager.h>
 #include <World/WorldComponents/EntityFactory.h>
-
-#include "Utiles/Singleton.h"
+#include <World/WorldComponents/EntityManager.h>
 
 
 
@@ -22,11 +20,12 @@ class World
 		void setMaxObjectCount(unsigned int count);
 		unsigned int getObjectCount() const;
 
-		bool updateObject(InstanceVirtual* object);
-		bool manageObject(InstanceVirtual* object);
-		InstanceVirtual* getObject(InstanceVirtual* object);
-		InstanceVirtual* getObject(uint32_t objectId);
-		void releaseObject(InstanceVirtual* object);
+		bool addToScene(Entity* object);
+		bool updateObject(Entity* object);
+		Entity* getNewEntity();
+		void getOwnership(Entity* object);
+		void releaseOwnership(Entity* object);
+
 		void clearGarbage();
 
 		SceneManager& getSceneManager() { return sceneManager; }
@@ -36,7 +35,7 @@ class World
 
 	private:
 		SceneManager sceneManager;
-		InstanceManager instanceManager;
 		EntityFactory entityFactory;
+		EntityManager entityManager;
 };
 
