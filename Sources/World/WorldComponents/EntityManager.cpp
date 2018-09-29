@@ -29,11 +29,13 @@ Entity* EntityManager::getNewEntity()
 
 void EntityManager::getOwnership(Entity* object)
 {
+    GF_ASSERT(object);
 	object->m_refCount++;
 }
 
 void EntityManager::releaseOwnership(Entity* object)
 {
+    GF_ASSERT(object);
 	object->m_refCount--;
 	if(object->m_refCount == 0)
 	{
