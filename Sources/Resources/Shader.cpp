@@ -1,6 +1,6 @@
 #include "Shader.h"
 
-#include <Resources/ShaderLoader.h>
+#include <Resources/Loader/ShaderLoader.h>
 #include <Utiles/Parser/Reader.h>
 #include <Utiles/Assert.hpp>
 

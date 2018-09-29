@@ -2,7 +2,7 @@
 
 #include <Utiles/Parser/Reader.h>
 #include <Utiles/Assert.hpp>
-#include <Resources/FontLoader.h>
+#include <Resources/Loader/FontLoader.h>
 
 //  Static attributes
 char const * const Font::directory = "Font/";

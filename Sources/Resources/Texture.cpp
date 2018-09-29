@@ -1,7 +1,7 @@
 #include "Texture.h"
 
 #include <Utiles/Assert.hpp>
-#include <Resources/TextureLoader.h>
+#include <Resources/Loader/TextureLoader.h>
 #include <Resources/Loader/ImageLoader.h>
 
 //  Static attributes

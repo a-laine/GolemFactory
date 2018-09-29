@@ -1,7 +1,7 @@
 #include "Animation.h"
 
 #include <Utiles/Assert.hpp>
-#include <Resources/AnimationLoader.h>
+#include <Resources/Loader/AnimationLoader.h>
 
 //  Static attributes
 char const * const Animation::directory = "Animations/";

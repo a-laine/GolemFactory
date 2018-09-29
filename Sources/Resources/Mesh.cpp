@@ -2,7 +2,7 @@
 
 #include <Utiles/Assert.hpp>
 #include <Resources/Loader/MeshLoader.h>
-#include <Resources/AssimpLoader.h>
+#include <Resources/Loader/AssimpLoader.h>
 
 
 //  Static attributes
