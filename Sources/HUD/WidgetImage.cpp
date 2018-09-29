@@ -5,7 +5,7 @@
 //  Default
 WidgetImage::WidgetImage(const std::string& textureName, const uint8_t& config, const std::string& shaderName) : WidgetVirtual(WidgetVirtual::IMAGE, config, shaderName)
 {
-	texture = ResourceManager::getInstance()->getTexture2D(textureName);
+	texture = ResourceManager::getInstance()->getResource<Texture>(textureName, Texture::TEXTURE_2D);
 }
 WidgetImage::~WidgetImage() {}
 //

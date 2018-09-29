@@ -1,11 +1,10 @@
 #pragma once
 
 #include <vector>
-#include <GL/glew.h>
 
 #include "ResourceVirtual.h"
 #include "Joint.h"
-#include "Utiles/Parser/Variant.h"
+
 
 class Skeleton : public ResourceVirtual
 {
@@ -13,25 +12,30 @@ class Skeleton : public ResourceVirtual
 	friend class SkeletonComponent;
 
 	public:
-		//	Default
-		Skeleton(const std::string& skeletonName, const std::vector<unsigned int>& rootsList, const std::vector<Joint>& jointsList);
-		Skeleton(const std::string& path, const std::string& skeletonName);
+        static char const * const directory;
+        static char const * const extension;
+
+        static std::string getIdentifier(const std::string& resourceName);
+        static const std::string& getDefaultName();
+        static void setDefaultName(const std::string& name);
+
+        //	Default
+		Skeleton(const std::string& skeletonName);
 		~Skeleton();
 		//
 
-		//	Set/get functions
-		bool isValid() const;
-
+        void initialize(const std::vector<unsigned int>& rootsList, const std::vector<Joint>& jointsList);
+        void initialize(std::vector<unsigned int>&& rootsList, std::vector<Joint>&& jointsList);
 		std::vector<glm::mat4x4> getInverseBindPose() const;
 		std::vector<glm::mat4x4> getBindPose() const;
 		std::vector<Joint> getJoints() const;
-		//
-
-		//	Attributes
-		static std::string extension;   //!< Default extension
+        std::string getIdentifier() const override;
+        std::string getLoaderId(const std::string& resourceName) const;
 		//
 
 	protected:
+        static std::string defaultName;
+
 		//	Protected functions
 		void computeBindPose(const glm::mat4& parentPose, unsigned int joint);
 		//

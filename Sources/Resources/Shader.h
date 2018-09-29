@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <map>
+#include <vector>
 #include <GL/glew.h>
 
 #include "ResourceVirtual.h"
@@ -9,6 +10,13 @@
 class Shader : public ResourceVirtual
 {
     public:
+        static char const * const directory;
+        static char const * const extension;
+
+        static std::string getIdentifier(const std::string& resourceName);
+        static const std::string& getDefaultName();
+        static void setDefaultName(const std::string& name);
+
         //  Miscellaneous
         enum ShaderType
         {
@@ -21,16 +29,18 @@ class Shader : public ResourceVirtual
 
             PROGRAM_SH = 6      //!< shader program (vertex + fragment + ...)
         };
+
+        static std::string toString(ShaderType shaderType);
         //
 
         //  Default
-        Shader(const std::string& path, const std::string& shaderName);
+        Shader(const std::string& shaderName);
         ~Shader();
-
-        bool isValid() const;
         //
 
         //  Public functions
+        void initialize(GLuint  vertexSh, GLuint fragSh, GLuint geomShr, GLuint tessControlSh, GLuint tessEvalSh, GLuint prog,
+            const std::map<std::string, std::string>& attType, const std::vector<std::string>& textures);
         void enable();
 
         GLuint getProgram() const;
@@ -40,17 +50,13 @@ class Shader : public ResourceVirtual
 
 		int getUniformLocation(const std::string& uniform);
 		std::string getUniformType(const std::string& uniform);
-        //
 
-        //  Attributes
-        static std::string extension;   //!< Default extension used for infos files
+        std::string getIdentifier() const override;
+        std::string getLoaderId(const std::string& resourceName) const;
         //
 
     private:
-        //  Private functions
-        bool loadShader(ShaderType shaderType, std::string filename,GLuint& shader); //!< Load a shader in a specific place, with a specific source code defined in filename
-		std::string toString(const ShaderType& shaderType) const;
-        //
+        static std::string defaultName;
 
         //  Attributes
         GLuint  vertexShader,								//!< Vertex shader opengl id

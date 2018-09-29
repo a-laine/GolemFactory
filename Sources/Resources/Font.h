@@ -7,8 +7,6 @@
  */
 
 #include <vector>
-#include <fstream>
-#include <sstream>
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 
@@ -24,6 +22,13 @@
 class Font : public ResourceVirtual
 {
     public:
+        static char const * const directory;
+        static char const * const extension;
+
+        static std::string getIdentifier(const std::string& resourceName);
+        static const std::string& getDefaultName();
+        static void setDefaultName(const std::string& name);
+
         //  Miscellaneous
 		/*!
 		 *	\struct Patch
@@ -40,28 +45,14 @@ class Font : public ResourceVirtual
         //  Default
 		/*!
 		 *  \brief Constructor
-		 *  \param path : the directory location of the resource file
 		 *	\param fontName : the resource name
 		 */
-        Font(const std::string& path, const std::string& fontName);
+        Font(const std::string& fontName);
 
 		/*!
 		 *  \brief Destructor
 		 */
         ~Font();
-
-		/*!
-		 *	\brief Function to check if the resource was successfully loaded.
-		 *
-		 *	This is a function is an overload of the herited function from ResourceVirtual class.
-		 *	It's possible that the function return true even if the drawing is empty : 
-		 *	actualy the function check just if texture was successfully loaded in OpenGl,
-		 *	not if the char array association was succesfully loaded.
-		 *
-		 *	\return true if texture was successfully loaded in OpenGl
-		 */
-        bool isValid() const;
-        //
 
         //  Set/get functions
 		/*!
@@ -76,20 +67,26 @@ class Font : public ResourceVirtual
         char getBeginChar() const;
         char getEndChar() const;
         int getArraySize() const;
+        std::string getIdentifier() const override;
+        std::string getLoaderId(const std::string& resourceName) const;
         //
 
         //  Public functions
+        void initialize(uint8_t* image, const glm::vec2& imageSize, unsigned short beginC, unsigned short endC, unsigned short defaultC, const std::vector<Patch>& table);
+        void initialize(uint8_t* image, const glm::vec2& imageSize, unsigned short beginC, unsigned short endC, unsigned short defaultC, std::vector<Patch>&& table);
         Patch getPatch(char c) const;
         //
 
         //  Attributes
         GLuint texture;                 //!< Texture Id
 		glm::vec2 size;					//!< Texture size
-        static std::string extension;   //!< Default extension used for infos files
         //
 
     private:
+        static std::string defaultName;
+
         //  Private functions
+        bool initOpenGL(uint8_t* image, int sizeX, int sizeY);
         void clear();                   //!< Clear if an error occur in initialization
         //
 

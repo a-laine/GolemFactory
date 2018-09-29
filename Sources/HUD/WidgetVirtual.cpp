@@ -20,7 +20,7 @@ WidgetVirtual::WidgetVirtual(const WidgetType& t, const uint8_t& config, const s
 	colors[ACTIVE] = glm::vec4(1.f);
 	colors[CURRENT] = glm::vec4(1.f);
 
-	shader = ResourceManager::getInstance()->getShader(shaderName);
+	shader = ResourceManager::getInstance()->getResource<Shader>(shaderName);
 	texture = nullptr;
 }
 WidgetVirtual::~WidgetVirtual()
@@ -152,13 +152,13 @@ void WidgetVirtual::setResponsive(const bool& responsive)
 void WidgetVirtual::setTexture(const std::string& textureName)
 {
 	ResourceManager::getInstance()->release(texture);
-	if (!textureName.empty()) texture = ResourceManager::getInstance()->getTexture(textureName);
+	if (!textureName.empty()) texture = ResourceManager::getInstance()->getResource<Texture>(textureName);
 	else texture = nullptr;
 }
 void WidgetVirtual::setShader(const std::string& shaderName)
 {
 	ResourceManager::getInstance()->release(shader);
-	shader = ResourceManager::getInstance()->getShader(shaderName);
+	shader = ResourceManager::getInstance()->getResource<Shader>(shaderName);
 }
 
 

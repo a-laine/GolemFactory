@@ -14,6 +14,13 @@ class Mesh : public ResourceVirtual
 	friend class MeshSaver;
 
     public:
+        static char const * const directory;
+        static char const * const extension;
+
+        static std::string getIdentifier(const std::string& resourceName);
+        static const std::string& getDefaultName();
+        static void setDefaultName(const std::string& name);
+
 		//  Miscellaneous
 		enum ConfigurationFlags
 		{
@@ -24,18 +31,19 @@ class Mesh : public ResourceVirtual
 		//
 
         //  Default
-		Mesh(const std::string& meshName = "unknown.unknown");
-		Mesh(const std::string& path, const std::string& meshName);
-		Mesh(const std::string& meshName, const std::vector<glm::vec3>& verticesArray, 
-			const std::vector<glm::vec3>& normalesArray, const std::vector<glm::vec3>& colorArray, 
-			const std::vector<unsigned short>& facesArray);
-		Mesh(const Mesh& original);
+		Mesh(const std::string& meshName);
 		virtual ~Mesh();
 		//
 
 		//	Public functions
 		void computeBoundingBox();
 
+        void initialize(const std::vector<glm::vec3>& verticesArray, const std::vector<glm::vec3>& normalsArray,
+            const std::vector<glm::vec3>& colorArray, const std::vector<unsigned short>& facesArray,
+            const std::vector<glm::ivec3>& bonesArray, const std::vector<glm::vec3>& weightsArray);
+        void initialize(std::vector<glm::vec3>&& verticesArray, std::vector<glm::vec3>&& normalsArray,
+            std::vector<glm::vec3>&& colorArray, std::vector<unsigned short>&& facesArray,
+            std::vector<glm::ivec3>&& bonesArray, std::vector<glm::vec3>&& weightsArray);
 		virtual void initializeVBO();
 		virtual void initializeVAO();
 
@@ -46,8 +54,9 @@ class Mesh : public ResourceVirtual
         //  Set/get functions
 		bool hasSkeleton() const;
 		bool isAnimable() const;
-		virtual bool isValid() const;
-		bool isFromGolemFactoryFormat() const;
+
+        std::string getIdentifier() const override;
+        std::string getLoaderId(const std::string& resourceName) const;
 
         unsigned int getNumberVertices() const;
         unsigned int getNumberFaces() const;
@@ -61,15 +70,15 @@ class Mesh : public ResourceVirtual
 		const AxisAlignedBox& getBoundingBox() const;
         //
 
-		//	Attributes
-		static std::string extension;
-		//AxisAlignedBox boundingBox;
-		//glm::vec3 aabb_min, aabb_max;
-		//
+	private:
+        static std::string defaultName;
 
-	protected:
+        void clear();
+
+
 		//	Temporary loading structures
 		struct gfvertex { int v, vn, c; };
+        struct gfvertex_extended { int v, vn, c, w, b; };
 		//
 
         //  Attributes
@@ -83,12 +92,21 @@ class Mesh : public ResourceVirtual
 				facesBuffer;
 
         std::vector<glm::vec3> vertices;
-		std::vector<glm::vec3> normales;
+		std::vector<glm::vec3> normals;
 		std::vector<glm::vec3> colors;
         std::vector<unsigned short> faces;
 
 		GLuint  BBoxVao, vBBoxBuffer, fBBoxBuffer;
 		std::vector<glm::vec3> vBBox;
 		std::vector<unsigned short> fBBox;
+
+        // Animated
+        GLuint weightsBuffer, bonesBuffer;
+        std::vector<glm::ivec3> bones;
+        std::vector<glm::vec3> weights;
+
+        GLuint wBBoxBuffer, bBBoxBuffer;
+        std::vector<glm::ivec3> bBBox;
+        std::vector<glm::vec3> wBBox;
         //
 };

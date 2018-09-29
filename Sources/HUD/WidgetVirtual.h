@@ -2,9 +2,17 @@
 
 #include <iostream>
 
+#include <GL/glew.h>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/transform.hpp>
 
-#include "Resources/ResourceManager.h"
+#include <Resources/ResourceManager.h>
+#include "Resources/Mesh.h"
+#include "Resources/Texture.h"
+#include "Resources/Shader.h"
+#include "Resources/Font.h"
+
 
 class WidgetVirtual
 {

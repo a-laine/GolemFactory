@@ -215,7 +215,7 @@ bool WidgetConsole::mouseEvent(const glm::mat4& base, const glm::vec3& ray, cons
 void WidgetConsole::setFont(const std::string& fontName)
 {
 	ResourceManager::getInstance()->release(font);
-	font = ResourceManager::getInstance()->getFont(fontName);
+	font = ResourceManager::getInstance()->getResource<Font>(fontName);
 	configuration |= SPECIAL;
 }
 void WidgetConsole::setSizeChar(const float& f)

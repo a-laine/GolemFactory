@@ -1,25 +1,40 @@
 #include "ResourceVirtual.h"
 
 //	Static attributes
-ResourceVirtual::VerboseLevel ResourceVirtual::logVerboseLevel = (ResourceVirtual::VerboseLevel) ResourceVirtual::NONE;
+ResourceVirtual::VerboseLevel ResourceVirtual::logVerboseLevel = ResourceVirtual::NONE;
 //
 
 //  Default
-ResourceVirtual::ResourceVirtual(const std::string& resourceName, ResourceType resourceType) : name(resourceName), type(resourceType)
+ResourceVirtual::ResourceVirtual(const std::string& resourceName)
+    : name(resourceName)
+    , count(0)
+    , state(INVALID)
 {
-    count = 0;
 }
-ResourceVirtual::ResourceVirtual(ResourceType resourceType) : name("unknown"), type(resourceType)
+ResourceVirtual::ResourceVirtual()
+    : name("unknown")
+    , count(0)
+    , state(INVALID)
 {
-	count = 0;
 }
-ResourceVirtual::~ResourceVirtual(){}
+ResourceVirtual::~ResourceVirtual() {}
 //
 
 //  Public functions
 bool ResourceVirtual::isValid() const
 {
-	return true;
+	return state == VALID;
+}
+
+std::string ResourceVirtual::getIdentifier() const
+{
+    return name;
+}
+
+void ResourceVirtual::assign(const ResourceVirtual* other)
+{
+    State s = other->state;
+    state = s;
 }
 //
 

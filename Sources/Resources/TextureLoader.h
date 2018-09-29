@@ -1,33 +1,19 @@
 #pragma once
 
-#include <string>
-#include <cstdint>
 #include <glm/glm.hpp>
 
-#include <Resources/IResourceLoader.h>
+#include "Resources/IResourceLoader.h"
 
 
-class ImageLoader : public IResourceLoader
+
+class TextureLoader : public IResourceLoader
 {
     public:
-        enum Mode {
-            DEFAULT = 0, // only used for req_comp
-
-            GREY       = 1,
-            GREY_ALPHA = 2,
-            RGB        = 3,
-            RGB_ALPHA  = 4
-        };
-        static uint8_t* loadFromFile(std::string file,int& width,int& heigth, int& channel, Mode forceChannel);
-        static void freeImage(uint8_t* data);
-
-
-        ImageLoader();
+        TextureLoader();
 
         bool load(const std::string& resourceDirectory, const std::string& fileName) override;
         void initialize(ResourceVirtual* resource) override;
         void getResourcesToRegister(std::vector<ResourceVirtual*>& resourceList) override;
-
 
     private:
         std::string getFileName(const std::string& resourceDirectory, const std::string& fileName) const;
@@ -35,4 +21,6 @@ class ImageLoader : public IResourceLoader
         glm::vec3 size;
         uint8_t* textureData;
         uint8_t configuration;
+        bool isImage;
 };
+

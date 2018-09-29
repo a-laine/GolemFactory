@@ -18,6 +18,7 @@
 
 
 class Entity;
+class Mesh;
 
 class HouseGenerator
 {

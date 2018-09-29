@@ -1,12 +1,15 @@
 #include "AnimationComponent.h"
 
 #include <Resources/ResourceManager.h>
+#include <Resources/Skeleton.h>
+#include <Resources/Animation.h>
+#include <Resources/Mesh.h>
 
 
 
 AnimationComponent::AnimationComponent(const std::string& animationName)
 {
-	m_animation = ResourceManager::getInstance()->getAnimation(animationName);
+	m_animation = ResourceManager::getInstance()->getResource<Animation>(animationName);
 }
 
 AnimationComponent::~AnimationComponent()
@@ -18,7 +21,7 @@ void AnimationComponent::setAnimation(std::string animationName)
 {
 	currentAnimations.clear();
 	ResourceManager::getInstance()->release(m_animation);
-	m_animation = ResourceManager::getInstance()->getAnimation(animationName);
+	m_animation = ResourceManager::getInstance()->getResource<Animation>(animationName);
 }
 
 void AnimationComponent::setAnimation(Animation* animation)
@@ -26,7 +29,7 @@ void AnimationComponent::setAnimation(Animation* animation)
 	currentAnimations.clear();
 	ResourceManager::getInstance()->release(m_animation);
 	if(animation)
-		m_animation = ResourceManager::getInstance()->getAnimation(animation->name);
+		m_animation = ResourceManager::getInstance()->getResource<Animation>(animation);
 	else
 		m_animation = nullptr;
 }

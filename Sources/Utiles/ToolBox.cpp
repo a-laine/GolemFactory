@@ -1,5 +1,9 @@
 #include "ToolBox.h"
 
+#include <fstream>
+#include <cctype>
+#include <sys/stat.h>
+
 
 //	Public functions
 std::string ToolBox::openAndCleanCStyleFile(std::string targetFile, std::string commentBlockEntry, std::string commentLineEntry)

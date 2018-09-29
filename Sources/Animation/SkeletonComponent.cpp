@@ -1,12 +1,14 @@
 #include "SkeletonComponent.h"
 
 #include <Resources/ResourceManager.h>
+#include <Resources/Skeleton.h>
+#include <Resources/Mesh.h>
 
 
 
 SkeletonComponent::SkeletonComponent(const std::string& skeletonName)
 {
-	m_skeleton = ResourceManager::getInstance()->getSkeleton(skeletonName);
+	m_skeleton = ResourceManager::getInstance()->getResource<Skeleton>(skeletonName);
 	if(m_skeleton)
 		pose = m_skeleton->getBindPose();
 }
@@ -23,7 +25,7 @@ SkeletonComponent::~SkeletonComponent()
 void SkeletonComponent::setSkeleton(std::string skeletonName)
 {
 	ResourceManager::getInstance()->release(m_skeleton);
-	m_skeleton = ResourceManager::getInstance()->getSkeleton(skeletonName);
+	m_skeleton = ResourceManager::getInstance()->getResource<Skeleton>(skeletonName);
 
 	locker.lock();
 	pose.clear();
@@ -34,7 +36,7 @@ void SkeletonComponent::setSkeleton(std::string skeletonName)
 void SkeletonComponent::setSkeleton(Skeleton* skeleton)
 {
 	ResourceManager::getInstance()->release(m_skeleton);
-	if(skeleton) m_skeleton = ResourceManager::getInstance()->getSkeleton(skeleton->name);
+	if(skeleton) m_skeleton = ResourceManager::getInstance()->getResource<Skeleton>(skeleton);
 	else m_skeleton = nullptr;
 
 	locker.lock();

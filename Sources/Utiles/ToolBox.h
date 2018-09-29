@@ -1,9 +1,7 @@
 #pragma once
 
 #include <string>
-#include <fstream>
-#include <cctype>
-#include <sys/stat.h>
+#include <sstream>
 #include <iomanip>
 
 #include <glm/glm.hpp>

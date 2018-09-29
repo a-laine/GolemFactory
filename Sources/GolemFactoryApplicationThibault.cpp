@@ -17,6 +17,7 @@
 #include <glm/gtc/quaternion.hpp>
 
 #include "Utiles/ToolBox.h"
+#include "HUD/WidgetManager.h"
 #include "Events/EventHandler.h"
 #include "Renderer/Renderer.h"
 #include "Animation/Animator.h"
@@ -28,6 +29,21 @@
 #include "Renderer/DrawableComponent.h"
 #include "Animation/SkeletonComponent.h"
 #include "Animation/AnimationComponent.h"
+
+#include <Resources/Texture.h>
+#include <Resources/Font.h>
+#include <Resources/Shader.h>
+#include <Resources/Mesh.h>
+#include <Resources/Skeleton.h>
+#include <Resources/Animation.h>
+#include <Resources/AnimationLoader.h>
+#include <Resources/FontLoader.h>
+#include <Resources/AssimpLoader.h>
+#include <Resources/Loader/MeshLoader.h>
+#include <Resources/ShaderLoader.h>
+#include <Resources/SkeletonLoader.h>
+#include <Resources/Loader/ImageLoader.h>
+#include <Resources/TextureLoader.h>
 
 #include "Physics/Collision.h"
 
@@ -74,7 +90,7 @@ int main()
 		Collision::debugUnitaryTest(2);
 
 	//	Test scene
-		Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getShader("wired"));
+		Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("wired"));
 		initializeForestScene(false);
 
 		avatar = world.getEntityFactory().createObject("peasant", [](Entity* object)
@@ -167,7 +183,7 @@ void initializeForestScene(bool emptyPlace)
 {
 	// blue sky & green grass!!
 	glClearColor(0.6f, 0.85f, 0.91f, 0.f);
-	Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getShader("greenGrass"));
+	Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("greenGrass"));
 
 	// init instance placement
 	int fail = 0;
@@ -295,9 +311,22 @@ void initManagers()
 	EventHandler::getInstance()->setResizeCallback(WidgetManager::resizeCallback);
 
 	// Init Resources manager
-	MeshLoader::logVerboseLevel = MeshLoader::ALL;
 	ResourceVirtual::logVerboseLevel = ResourceVirtual::ALL;
 	ResourceManager::getInstance()->setRepository(resourceRepository);
+    Texture::setDefaultName("10points.png");
+    Font::setDefaultName("Comic Sans MS");
+    Shader::setDefaultName("default");
+    Mesh::setDefaultName("cube2.obj");
+    Skeleton::setDefaultName("human");
+    Animation::setDefaultName("human");
+    ResourceManager::getInstance()->addNewResourceLoader(".animation", new AnimationLoader());
+    ResourceManager::getInstance()->addNewResourceLoader(".font", new FontLoader());
+    ResourceManager::getInstance()->addNewResourceLoader("assimp", new AssimpLoader(AssimpLoader::MESH));
+    ResourceManager::getInstance()->addNewResourceLoader(".mesh", new MeshLoader());
+    ResourceManager::getInstance()->addNewResourceLoader(".shader", new ShaderLoader());
+    ResourceManager::getInstance()->addNewResourceLoader(".skeleton", new SkeletonLoader());
+    ResourceManager::getInstance()->addNewResourceLoader("image", new ImageLoader());
+    ResourceManager::getInstance()->addNewResourceLoader(".texture", new TextureLoader());
 
 	// Init world
 	const glm::vec3 worldHalfSize = glm::vec3(GRID_SIZE*GRID_ELEMENT_SIZE, GRID_SIZE*GRID_ELEMENT_SIZE, 50) * 0.5f;
@@ -316,9 +345,9 @@ void initManagers()
 	Renderer::getInstance()->setWorld(&world);
 	Renderer::getInstance()->initializeGrid(GRID_SIZE, GRID_ELEMENT_SIZE, glm::vec3(24 / 255.f, 202 / 255.f, 230 / 255.f));	// blue tron
 	Renderer::getInstance()->setCamera(&camera2);
-	Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getShader("greenGrass"));
-	Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE_BB, ResourceManager::getInstance()->getShader("wired"));
-	Renderer::getInstance()->setShader(Renderer::INSTANCE_ANIMATABLE_BB, ResourceManager::getInstance()->getShader("skeletonBB"));
+	Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("greenGrass"));
+	Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE_BB, ResourceManager::getInstance()->getResource<Shader>("wired"));
+	Renderer::getInstance()->setShader(Renderer::INSTANCE_ANIMATABLE_BB, ResourceManager::getInstance()->getResource<Shader>("skeletonBB"));
 
 	// Animator
 	Animator::getInstance();

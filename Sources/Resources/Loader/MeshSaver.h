@@ -5,8 +5,7 @@
 
 #include <glm/glm.hpp>
 
-#include "../Mesh.h"
-#include "../MeshAnimated.h"
+#include <Resources/Mesh.h>
 
 
 class MeshSaver
@@ -53,7 +52,7 @@ class MeshSaver
 		//
 
 		//	Protected functions
-		static void save(Mesh* mesh, std::ofstream& file, glm::vec3 scaleModifier);
-		static void save(MeshAnimated* mesh, std::ofstream& file, glm::vec3 scaleModifier);
+		static void saveStatic(Mesh* mesh, std::ofstream& file, glm::vec3 scaleModifier);
+		static void saveAnimated(Mesh* mesh, std::ofstream& file, glm::vec3 scaleModifier);
 		//
 };

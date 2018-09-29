@@ -1,22 +1,17 @@
 #pragma once
 
-#include <iostream>
 #include <GL/glew.h>
-
-#include "Utiles/Mutex.h"
 
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
+#include <Utiles/Mutex.h>
+#include <Utiles/Camera.h>
+#include <Utiles/Singleton.h>
+#include <World/World.h>
 
-#include "Utiles/Camera.h"
-#include "Utiles/Singleton.h"
-#include "Resources/ResourceManager.h"
-#include "EntityComponent/Entity.hpp"
-#include "DrawableComponent.h"
-#include "Animation/SkeletonComponent.h"
 
-#include "HUD/WidgetManager.h"
+class Shader;
 
 
 class Renderer : public Singleton<Renderer>

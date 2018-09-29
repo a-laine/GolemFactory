@@ -154,7 +154,7 @@ void WidgetLabel::append(const std::string& s)
 void WidgetLabel::setFont(const std::string& fontName)
 {
 	ResourceManager::getInstance()->release(font);
-	font = ResourceManager::getInstance()->getFont(fontName);
+	font = ResourceManager::getInstance()->getResource<Font>(fontName);
 	configuration |= NEED_UPDATE;
 }
 void WidgetLabel::setSizeChar(const float& f)

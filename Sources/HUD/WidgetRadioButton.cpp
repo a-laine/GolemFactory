@@ -167,12 +167,12 @@ bool WidgetRadioButton::mouseEvent(const glm::mat4& base, const glm::vec3& ray, 
 void WidgetRadioButton::setTextureOn(const std::string& name)
 {
 	ResourceManager::getInstance()->release(onTexture);
-	onTexture = ResourceManager::getInstance()->getTexture2D(name, Texture::USE_MIPMAP);
+	onTexture = ResourceManager::getInstance()->getResource<Texture>(name, Texture::TEXTURE_2D | Texture::USE_MIPMAP);
 }
 void WidgetRadioButton::setTextureOff(const std::string& name)
 {
 	ResourceManager::getInstance()->release(offTexture);
-	offTexture = ResourceManager::getInstance()->getTexture2D(name, Texture::USE_MIPMAP);
+	offTexture = ResourceManager::getInstance()->getResource<Texture>(name, Texture::TEXTURE_2D | Texture::USE_MIPMAP);
 }
 
 void WidgetRadioButton::setBoolean(const bool& b) { checked = b; }

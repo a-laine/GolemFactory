@@ -1,8 +1,14 @@
 #include "Renderer.h"
-#include "World/World.h"
-#include "Scene/SceneQueryTests.h"
-#include "Resources/ComponentResource.h"
-#include "EntityComponent/AnimationEngine.h"
+
+#include <iostream>
+
+#include <EntityComponent/Entity.hpp>
+#include <HUD/WidgetManager.h>
+#include <Scene/SceneQueryTests.h>
+#include <Resources/ResourceManager.h>
+#include <Resources/Skeleton.h>
+#include <Renderer/DrawableComponent.h>
+#include <Animation/SkeletonComponent.h>
 
 
 #define BATCH_SIZE 30
@@ -63,7 +69,7 @@ void Renderer::initializeGrid(const unsigned int& gridSize,const float& elementS
 {
 	if (glIsVertexArray(gridVAO)) return;
 
-	defaultShader[GRID] = ResourceManager::getInstance()->getShader("wired");
+	defaultShader[GRID] = ResourceManager::getInstance()->getResource<Shader>("wired");
 
 	//	generate grid vertex buffer
 	float* vertexBufferGrid = new float[3 * (gridSize + 1)*(gridSize + 1)];
@@ -341,7 +347,7 @@ void Renderer::setShader(ShaderIdentifier id, Shader* s)
 	std::map<ShaderIdentifier, Shader*>::iterator it = defaultShader.find(id);
 	if(it != defaultShader.end()) ResourceManager::getInstance()->release(defaultShader[id]);
 
-	if (s) defaultShader[id] = ResourceManager::getInstance()->getShader(s->name);
+	if (s) defaultShader[id] = ResourceManager::getInstance()->getResource<Shader>(s);
 	else defaultShader[id] = nullptr;
 }
 void Renderer::setGridVisible(bool enable) { drawGrid = enable; }

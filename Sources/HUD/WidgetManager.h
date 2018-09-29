@@ -1,24 +1,22 @@
 #pragma once
 
 #include <iostream>
+#include <set>
+#include <list>
 
 #include <GL/glew.h>
-
-#include "Utiles/Mutex.h"
-
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 
-#include "Utiles/Singleton.h"
-
-#include "Events/EventHandler.h"
-
-#include "HUD/Layer.h"
-#include "HUD/WidgetImage.h"
-#include "HUD/WidgetBoard.h"
-#include "HUD/WidgetLabel.h"
-#include "HUD/WidgetConsole.h"
-#include "HUD/WidgetRadioButton.h"
+#include <Utiles/Mutex.h>
+#include <Utiles/Singleton.h>
+#include <Events/EventHandler.h>
+#include <HUD/Layer.h>
+#include <HUD/WidgetImage.h>
+#include <HUD/WidgetBoard.h>
+#include <HUD/WidgetLabel.h>
+#include <HUD/WidgetConsole.h>
+#include <HUD/WidgetRadioButton.h>
 
 
 #define ANGLE_VERTICAL_HUD_PROJECTION 45.f

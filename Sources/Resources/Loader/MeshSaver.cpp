@@ -19,12 +19,8 @@ void MeshSaver::save(Mesh* mesh, const std::string& resourcesPath, std::string f
 	file << "# Vertex count : " << mesh->vertices.size() << std::endl;
 	file << "# Faces count : " << mesh->faces.size() << std::endl;
 
-	//	try a cast into MeshAnimated and save apropriately
-	MeshAnimated* m = nullptr;
-	if (mesh->hasSkeleton()) m = static_cast<MeshAnimated*>(mesh);
-
-	if (m) save(m, file, scaleModifier);
-	else save(mesh, file, scaleModifier);
+	if (mesh->hasSkeleton()) saveAnimated(mesh, file, scaleModifier);
+	else saveStatic(mesh, file, scaleModifier);
 
 	//	end
 	file.close();
@@ -32,7 +28,7 @@ void MeshSaver::save(Mesh* mesh, const std::string& resourcesPath, std::string f
 //
 
 //	Protected functions
-void MeshSaver::save(Mesh* mesh, std::ofstream& file, glm::vec3 scaleModifier)
+void MeshSaver::saveStatic(Mesh* mesh, std::ofstream& file, glm::vec3 scaleModifier)
 {
 	//	finish header
 	file << "# Static mesh" << std::endl << std::endl << std::endl;
@@ -55,8 +51,8 @@ void MeshSaver::save(Mesh* mesh, std::ofstream& file, glm::vec3 scaleModifier)
 	file << std::endl;
 
 	//	normales compression & write
-	for (unsigned int i = 0; i < mesh->normales.size(); i++)
-		normales.insert(vec3(mesh->normales[i]));
+	for (unsigned int i = 0; i < mesh->normals.size(); i++)
+		normales.insert(vec3(mesh->normals[i]));
 	file << "#  normales" << std::endl;
 	for (std::set<vec3>::iterator it = normales.begin(); it != normales.end(); ++it)
 		file << "vn " << (int)(it->x / truncature + truncature / 2) * truncature
@@ -82,7 +78,7 @@ void MeshSaver::save(Mesh* mesh, std::ofstream& file, glm::vec3 scaleModifier)
 		for (int j = 0; j < 3; j++)
 		{
 			glm::vec3 v = mesh->vertices[mesh->faces[i + j]];
-			glm::vec3 vn = mesh->normales[mesh->faces[i + j]];
+			glm::vec3 vn = mesh->normals[mesh->faces[i + j]];
 			glm::vec3 c = mesh->colors[mesh->faces[i + j]];
 
 			//	search vertex index
@@ -107,7 +103,7 @@ void MeshSaver::save(Mesh* mesh, std::ofstream& file, glm::vec3 scaleModifier)
 	}
 	file << std::endl;
 }
-void MeshSaver::save(MeshAnimated* mesh, std::ofstream& file, glm::vec3 scaleModifier)
+void MeshSaver::saveAnimated(Mesh* mesh, std::ofstream& file, glm::vec3 scaleModifier)
 {
 	//	finish header
 	file << "# Animatable mesh : contain bones and / or weights" << std::endl << std::endl << std::endl;
@@ -132,8 +128,8 @@ void MeshSaver::save(MeshAnimated* mesh, std::ofstream& file, glm::vec3 scaleMod
 	file << std::endl;
 
 	//	normales compression & write
-	for (unsigned int i = 0; i < mesh->normales.size(); i++)
-		normales.insert(vec3(mesh->normales[i]));
+	for (unsigned int i = 0; i < mesh->normals.size(); i++)
+		normales.insert(vec3(mesh->normals[i]));
 	file << "#  normales" << std::endl;
 	for (std::set<vec3>::iterator it = normales.begin(); it != normales.end(); ++it)
 		file << "vn " << (int)(it->x / truncature + truncature / 2) * truncature
@@ -177,7 +173,7 @@ void MeshSaver::save(MeshAnimated* mesh, std::ofstream& file, glm::vec3 scaleMod
 		for (int j = 0; j < 3; j++)
 		{
 			glm::vec3 v = mesh->vertices[mesh->faces[i + j]];
-			glm::vec3 vn = mesh->normales[mesh->faces[i + j]];
+			glm::vec3 vn = mesh->normals[mesh->faces[i + j]];
 			glm::vec3 c = mesh->colors[mesh->faces[i + j]];
 			glm::vec3 w = mesh->weights[mesh->faces[i + j]];
 			glm::ivec3 b = mesh->bones[mesh->faces[i + j]];

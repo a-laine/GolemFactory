@@ -21,19 +21,9 @@ class ResourceVirtual
 
     public:
         //  Miscellaneous
-        enum ResourceType
-        {
-            NONE = 0,       //!< Virtual
-            TEXTURE = 1,    //!< Texture
-            SHADER = 2,     //!< Shader
-            MESH = 3,       //!< Mesh
-            SOUND = 4,      //!< Sound and music
-            ANIMATION = 5,  //!< Animation
-            FONT = 6,       //!< Font
-			SKELETON = 7	//!< Skeleton
-        };
 		enum VerboseLevel
 		{
+            NONE = 0,
 			ERRORS = 1,		//!< Just print errors in log
 			WARNINGS = 2,	//!< Print errors and logs
 			ALL = 3			//!< Print all logs (errors, warning and optionnal informations)
@@ -41,25 +31,32 @@ class ResourceVirtual
 		//
 
         //  Default
-        ResourceVirtual(const std::string& resourceName = "unknown", ResourceType resourceType = NONE);
-		ResourceVirtual(ResourceType resourceType = NONE);
+        ResourceVirtual(const std::string& resourceName = "unknown");
+		ResourceVirtual();
 	    virtual ~ResourceVirtual();
 
-        virtual bool isValid() const;
+        bool isValid() const;
+        virtual std::string getIdentifier() const;
+        virtual void assign(const ResourceVirtual* other);
         //
 
         //  Attributes
 		static VerboseLevel logVerboseLevel;	//!< The verbose level define for all resources
         std::string name;						//!< The resource name.
-        ResourceType type;						//!< The resource type.
         //
+
+
+        static void printErrorLog(const std::string& resourceName, const int& errorLine, bool& printHeader);
 
     protected:
+        enum State
+        {
+            INVALID,
+            LOADING,
+            VALID
+        };
         //	Attributes
         std::atomic_uint count;					//!< The number of clients using the resource.
+        std::atomic<State> state;
         //
-
-		//	Protected functions	
-		void printErrorLog(const std::string& resourceName, const int& errorLine, bool& printHeader);
-		//
 };

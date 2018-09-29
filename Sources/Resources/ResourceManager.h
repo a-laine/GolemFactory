@@ -4,18 +4,11 @@
 #include <map>
 #include <string>
 
-#include "Utiles/Singleton.h"
-#include "Utiles/Mutex.h"
-
-#include "Texture.h"
-#include "Shader.h"
-#include "Font.h"
-#include "Mesh.h"
-#include "MeshAnimated.h"
-#include "Skeleton.h"
-#include "Animation.h"
-
-#include "Loader/MeshLoader.h"
+#include <Utiles/Singleton.h>
+#include <Utiles/Mutex.h>
+#include <Utiles/Assert.hpp>
+#include <Resources/ResourceVirtual.h>
+#include <Resources/IResourceLoader.h>
 
 
 
@@ -28,29 +21,23 @@ class ResourceManager : public Singleton<ResourceManager>
 		void release(ResourceVirtual* resource);
         void clearGarbage();
 
-        Mesh* getMesh(std::string name);
-        Texture* getTexture(std::string name, uint8_t conf = 0x00);
-        Texture* getTexture2D(const std::string& name, uint8_t conf = 0x00);
-        Shader* getShader(std::string name);
-        Font* getFont(std::string name);
-		Skeleton* getSkeleton(std::string name);
-		Animation* getAnimation(std::string name);
+        template<typename T, typename... Args>
+        T* getResource(const std::string& name, Args&&... args);
+        template<typename T>
+        T* getResource(T* resource);
 
-		void addMesh(Mesh* mesh);
-		void addTexture(Texture* texture);
-		void addShader(Shader* shader);
-		void addFont(Font* font);
-		void addSkeleton(Skeleton* skeleton);
-		void addAnimation(Animation* animation);
+        void addResource(ResourceVirtual* resource);
+        template<typename T, typename... Args>
+        void addDefaultResource(const std::string& name, Args&&... args);
+
+        void addNewResourceLoader(const std::string& id, IResourceLoader* loader);
         //
 
         //  Set/get functions
 		void setRepository(const std::string& path);
 		std::string getRepository() const;
 
-        unsigned int getNumberOfRessources(const ResourceVirtual::ResourceType& type) const;
-        std::string getDefaultName(const ResourceVirtual::ResourceType& type) const;
-        void setDefaultName(const ResourceVirtual::ResourceType& type, const std::string& name);
+        unsigned int getNumberOfRessources() const;
         //
 
 
@@ -61,8 +48,10 @@ class ResourceManager : public Singleton<ResourceManager>
         //
 
 		//  Private functions
-		Mesh* loadFromAssimp(const std::string& fileName);
-		Mesh* loadFromGolemFactoryFormat(const std::string& fileName, bool haveExtention) const;
+        void loadResource_internal(ResourceVirtual* resource, const std::string& fileName, const std::string& loaderId);
+        bool addResource_internal(ResourceVirtual* resource);
+        ResourceVirtual* findResource_internal(const std::string& identifier);
+        IResourceLoader* findLoader_internal(const std::string& loaderId);
 		//
 
         //  Attributes
@@ -70,19 +59,59 @@ class ResourceManager : public Singleton<ResourceManager>
         std::vector<ResourceVirtual*> garbage;			//!< The list of resources to delete.
 
         Mutex mutexList;								//!< A mutex to prevent lists collisions.
-        std::map<std::string, Texture*> textureList;	//!< The textures container.
-        std::map<std::string, Font*> fontList;			//!< The fonts container.
-        std::map<std::string, Shader*> shaderList;		//!< The shader container.
-        std::map<std::string, Mesh*> meshList;			//!< The mesh container.
-		std::map<std::string, Skeleton*> skeletonList;	//!< The skeleton container.
-		std::map<std::string, Animation*> animationList;//!< The animation container.
+        std::map<std::string, ResourceVirtual*> resources;
 
         std::string repository;							//!< The repository path.
-        std::string defaultTexture;						//!< The default texture name.
-        std::string defaultFont;						//!< The default font name.
-        std::string defaultShader;						//!< The default shader name.
-        std::string defaultMesh;						//!< The default mesh name.
-		std::string defaultSkeleton;					//!< The default skeleton name.
-		std::string defaultAnimation;					//!< The default animation name.
+        std::map<std::string, IResourceLoader*> loaders;
         //
 };
+
+
+
+template<typename T, typename... Args>
+T* ResourceManager::getResource(const std::string& name, Args&&... args)
+{
+    const std::string& realName = (name == "default") ? T::getDefaultName() : name;
+    T* resource = static_cast<T*>(findResource_internal(T::getIdentifier(realName)));
+
+    if(!resource)
+    {
+        resource = new T(realName, std::forward<Args>(args) ...);
+        bool inserted = addResource_internal(resource);
+        GF_ASSERT(!inserted, "Resource with same name doesn't correspond");
+
+        std::string loaderId = resource->getLoaderId(realName);
+		loadResource_internal(resource, realName, loaderId);
+		if(!resource->isValid())
+		{
+            loaderId = resource->getLoaderId(T::getDefaultName());
+			loadResource_internal(resource, T::getDefaultName(), loaderId);
+		}
+    }
+
+    resource->count++;
+    return resource;
+}
+
+template<typename T>
+T* ResourceManager::getResource(T* resource)
+{
+    GF_ASSERT(resource);
+    bool inserted = addResource_internal(resource);
+    GF_ASSERT(!inserted, "Resource with same name doesn't correspond");
+    resource->count++;
+    return resource;
+}
+
+template<typename T, typename... Args>
+void ResourceManager::addDefaultResource(const std::string& name, Args&&... args)
+{
+    T* resource = new T(name, std::forward<Args>(args) ...);
+    bool inserted = addResource_internal(resource);
+    GF_ASSERT(!inserted, "Resource with same name doesn't correspond");
+    resource->count++;
+
+    std::string loaderId = resource->getLoaderId(name);
+    loadResource_internal(resource, name, loaderId);
+}
+

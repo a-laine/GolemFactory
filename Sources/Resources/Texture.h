@@ -1,6 +1,5 @@
 #pragma once
 
-#include <fstream>
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 
@@ -9,6 +8,13 @@
 class Texture : public ResourceVirtual
 {
     public:
+        static char const * const directory;
+        static char const * const extension;
+
+        static std::string getIdentifier(const std::string& resourceName);
+        static const std::string& getDefaultName();
+        static void setDefaultName(const std::string& name);
+
         //  Miscellaneous
         enum TextureConfiguration
         {
@@ -29,10 +35,10 @@ class Texture : public ResourceVirtual
         //
 
         //  Default
-		Texture(const std::string& path, const std::string& fontName, uint8_t conf = 0x0);
+		Texture(const std::string& fontName, uint8_t conf = 0x0);
         ~Texture();
 
-        bool isValid() const;
+        void initialize(const glm::vec3& imageSize, const uint8_t* data, uint8_t config = 0);
         //
 
         //  Set/get functions
@@ -40,14 +46,21 @@ class Texture : public ResourceVirtual
         GLenum getGLenumType();
         GLuint getTextureId() const;
         GLuint* getTextureIdPointer();
+
+        std::string getIdentifier() const override;
+        std::string getLoaderId(const std::string& resourceName) const;
         //
 
         //  Attributes
         glm::vec3 size;                //!< Texture size
-        static std::string extension;   //!< Default extension used for infos files
         //
 
     private:
+        static std::string defaultName;
+
+        void initOpenGL(const uint8_t* textureData, const std::string& textureName);
+
+
         //  Attributes
         GLuint texture;                 //!< Texture Id
         uint8_t configuration;          //!< Texture configuration byte

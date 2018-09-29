@@ -1,7 +1,6 @@
 #pragma once
 
 #include <vector>
-#include <fstream>
 #include <map>
 #include <GL/glew.h>
 
@@ -11,17 +10,26 @@
 
 class Animation : public ResourceVirtual
 {
-    friend class ResourceManager;
 	friend class AnimationComponent;
     public:
+        static char const * const directory;
+        static char const * const extension;
+
+        static std::string getIdentifier(const std::string& resourceName);
+        static const std::string& getDefaultName();
+        static void setDefaultName(const std::string& name);
+
         //  Default
-		Animation(const std::string& animationName, const std::vector<KeyFrame>& keyFrames);
-		Animation(const std::string& path, const std::string& animationName);
+		Animation(const std::string& animationName);
         ~Animation();
 		//
 
 		//	Public functions
-        bool isValid() const;
+        void initialize(const std::vector<KeyFrame>& animations, const std::map<std::string, KeyLabel>& names);
+        void initialize(std::vector<KeyFrame>&& animations, std::map<std::string, KeyLabel>&& names);
+        void initialize(const std::vector<KeyFrame>& animations);
+        void initialize(std::vector<KeyFrame>&& animations);
+        void clear();
 		//
 
 		//	Set/get functions
@@ -29,13 +37,13 @@ class Animation : public ResourceVirtual
 		std::pair<int, int> getBoundingKeyFrameIndex(float time) const;
 		std::vector<KeyFrame> getTimeLine() const;
 		std::map<std::string, KeyLabel> getLabels() const;
+        std::string getIdentifier() const override;
+        std::string getLoaderId(const std::string& resourceName) const;
         //
 
-		//	Attributes
-		static std::string extension;   //!< Default extension
-		//
-
     protected:
+        static std::string defaultName;
+
 		//	Protected functions
 		void computePose(const unsigned int& keyFrame, std::vector<glm::mat4>& pose, const glm::mat4& parentPose, unsigned int joint, const std::vector<Joint>& hierarchy) const;
 		//
@@ -43,6 +51,5 @@ class Animation : public ResourceVirtual
         //	Attributes
 		std::vector<KeyFrame> timeLine;
 		std::map<std::string, KeyLabel> labels;
-		std::vector<glm::mat4> inverseBindPose;
 		//
 };

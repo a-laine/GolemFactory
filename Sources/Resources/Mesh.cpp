@@ -1,151 +1,96 @@
 #include "Mesh.h"
-#include "Utiles/ToolBox.h"
 
-#include <fstream>
-#include <sstream>
+#include <Utiles/Assert.hpp>
+#include <Resources/Loader/MeshLoader.h>
+#include <Resources/AssimpLoader.h>
+
 
 //  Static attributes
-std::string Mesh::extension = ".mesh";
+char const * const Mesh::directory = "Meshes/";
+char const * const Mesh::extension = ".mesh";
+std::string Mesh::defaultName;
 //
 
 //  Default
-Mesh::Mesh(const std::string& meshName) : ResourceVirtual(meshName, ResourceVirtual::MESH), configuration(0x00), boundingBox(glm::vec3(0.f), glm::vec3(0.f)) {}
-Mesh::Mesh(const std::string& path, const std::string& meshName) : ResourceVirtual(meshName, ResourceVirtual::MESH), configuration(0x00), boundingBox(glm::vec3(0.f), glm::vec3(0.f))
-{
-	//	open file
-	std::string tmpExtension = Mesh::extension;
-	if (meshName.find(Mesh::extension) != std::string::npos)
-		tmpExtension = "";
-	std::ifstream file(path + meshName + tmpExtension);
-	if (!file.good())
-	{
-		if (logVerboseLevel > 0)
-			std::cerr << "ERROR : loading mesh : " << meshName << " : fail to open file" << std::endl;
-		return;
-	}
-
-	
-	//	initialization
-	int lineIndex = 0;
-	std::string line;
-	std::vector<glm::vec3> tmpv, tmpvn, tmpc;
-
-	//	loading
-	bool errorOccured = false;
-	while (!file.eof())
-	{
-		std::getline(file, line);
-		lineIndex++;
-
-		if (line.empty()) continue;
-		ToolBox::clearWhitespace(line);
-
-		if (line.substr(0, 2) == "v ")
-		{
-			//	try to push a new vertex to vertex array
-			std::istringstream iss(line.substr(2));
-			glm::vec3 v;
-			iss >> v.x; iss >> v.y; iss >> v.z;
-			if (iss.fail()) printErrorLog(meshName, lineIndex, errorOccured);
-			tmpv.push_back(v);
-		}
-		else if (line.substr(0, 3) == "vn ")
-		{
-			//	try to push a new vertex normal to normales array
-			std::istringstream iss(line.substr(2));
-			glm::vec3 vn;
-			iss >> vn.x; iss >> vn.y; iss >> vn.z;
-			if (iss.fail()) printErrorLog(meshName, lineIndex, errorOccured);
-			tmpvn.push_back(vn);
-		}
-		else if (line.substr(0, 2) == "c ")
-		{
-			//	try to push a new vertex color to colors array
-			std::istringstream iss(line.substr(2));
-			glm::vec3 c;
-			iss >> c.x; iss >> c.y; iss >> c.z;
-			if (iss.fail()) printErrorLog(meshName, lineIndex, errorOccured);
-			tmpc.push_back(c);
-		}
-		else if (line.substr(0, 2) == "f ")
-		{
-			gfvertex v1, v2, v3;
-			if (sscanf_s(line.c_str(), "f %i//%i/%i %i//%i/%i %i//%i/%i",
-				&v1.v, &v1.vn, &v1.c,
-				&v2.v, &v2.vn, &v2.c,
-				&v3.v, &v3.vn, &v3.c) == 9)
-			{
-				//	check if requested indexes are present in arrays
-				int outrange = 0;
-				if (v1.v<0 || v1.v >= (int)tmpv.size()) outrange++;
-				if (v2.v<0 || v2.v >= (int)tmpv.size()) outrange++;
-				if (v3.v<0 || v3.v >= (int)tmpv.size()) outrange++;
-
-				if (v1.vn<0 || v1.vn >= (int)tmpvn.size()) outrange++;
-				if (v2.vn<0 || v2.vn >= (int)tmpvn.size()) outrange++;
-				if (v3.vn<0 || v3.vn >= (int)tmpvn.size()) outrange++;
-
-				if (v1.c<0 || v1.c >= (int)tmpc.size()) outrange++;
-				if (v2.c<0 || v2.c >= (int)tmpc.size()) outrange++;
-				if (v3.c<0 || v3.c >= (int)tmpc.size()) outrange++;
-
-				//	push vertex attributes in arrays, print errors if not
-				if (outrange) printErrorLog(meshName, lineIndex, errorOccured);
-				else
-				{
-					faces.push_back((unsigned short)vertices.size());
-					faces.push_back((unsigned short)vertices.size() + 1);
-					faces.push_back((unsigned short)vertices.size() + 2);
-
-					vertices.push_back(tmpv[v1.v]);		vertices.push_back(tmpv[v2.v]);		vertices.push_back(tmpv[v3.v]);
-					normales.push_back(tmpvn[v1.vn]);	normales.push_back(tmpvn[v2.vn]);	normales.push_back(tmpvn[v3.vn]);
-					colors.push_back(tmpc[v1.c]);		colors.push_back(tmpc[v2.c]);		colors.push_back(tmpc[v3.c]);
-				}
-			}
-			else printErrorLog(meshName, lineIndex, errorOccured);
-		}
-	}
-
-	//	end
-	file.close();
-	configuration = WELL_LOADED;
-	computeBoundingBox();
-	initializeVBO();
-	initializeVAO();
-}
-Mesh::Mesh(const std::string& meshName, const std::vector<glm::vec3>& verticesArray, const std::vector<glm::vec3>& normalesArray, const std::vector<glm::vec3>& colorArray, const std::vector<unsigned short>& facesArray)
-	: ResourceVirtual(meshName, ResourceVirtual::MESH), configuration(WELL_LOADED), vertices(verticesArray), normales(normalesArray), colors(colorArray), faces(facesArray)
-{
-	computeBoundingBox();
-	initializeVBO();
-	initializeVAO();
-}
+Mesh::Mesh(const std::string& meshName)
+    : ResourceVirtual(meshName)
+    , configuration(0x00)
+    , boundingBox(glm::vec3(0.f), glm::vec3(0.f))
+    , vao(0), verticesBuffer(0), colorsBuffer(0), normalsBuffer(0), facesBuffer(0)
+    , BBoxVao(0), vBBoxBuffer(0), fBBoxBuffer(0)
+    , weightsBuffer(0), bonesBuffer(0)
+    , wBBoxBuffer(0), bBBoxBuffer(0)
+{}
 Mesh::~Mesh()
 {
-	//	delete mesh attributes
-	vertices.clear();
-	normales.clear();
-	colors.clear();
-	faces.clear();
-
-	glDeleteBuffers(1, &verticesBuffer);
-	glDeleteBuffers(1, &normalsBuffer);
-	glDeleteBuffers(1, &colorsBuffer);
-	glDeleteBuffers(1, &facesBuffer);
-	glDeleteVertexArrays(1, &vao);
-
-	//	delete bounding box attributes
-	vBBox.clear();
-	fBBox.clear();
-
-	glDeleteBuffers(1, &vBBoxBuffer);
-	glDeleteBuffers(1, &fBBoxBuffer);
-	glDeleteVertexArrays(1, &BBoxVao);
+	clear();
 }
 //
 
 
 //	Public functions
+void Mesh::initialize(const std::vector<glm::vec3>& verticesArray, const std::vector<glm::vec3>& normalsArray,
+    const std::vector<glm::vec3>& colorArray, const std::vector<unsigned short>& facesArray,
+    const std::vector<glm::ivec3>& bonesArray, const std::vector<glm::vec3>& weightsArray)
+{
+    GF_ASSERT(state == INVALID);
+    state = LOADING;
+
+    configuration = WELL_LOADED;
+    if(!bonesArray.empty() && !weightsArray.empty())
+        configuration |= HAS_SKELETON;
+    vertices = verticesArray;
+    normals = normalsArray;
+    colors = colorArray;
+    faces = facesArray;
+    bones = bonesArray;
+    weights = weightsArray;
+
+    computeBoundingBox();
+    initializeVBO();
+    initializeVAO();
+
+    if(!glIsBuffer(verticesBuffer) || !glIsBuffer(normalsBuffer) || !glIsBuffer(colorsBuffer) || !glIsBuffer(facesBuffer) || !glIsVertexArray(vao) ||
+        (hasSkeleton() && (!glIsBuffer(bonesBuffer) || !glIsBuffer(weightsBuffer))))
+    {
+        clear();
+        state = INVALID;
+    }
+    else
+        state = VALID;
+}
+
+void Mesh::initialize(std::vector<glm::vec3>&& verticesArray, std::vector<glm::vec3>&& normalsArray,
+    std::vector<glm::vec3>&& colorArray, std::vector<unsigned short>&& facesArray,
+    std::vector<glm::ivec3>&& bonesArray, std::vector<glm::vec3>&& weightsArray)
+{
+    GF_ASSERT(state == INVALID);
+    state = LOADING;
+
+    configuration = WELL_LOADED;
+    if(!bonesArray.empty() && !weightsArray.empty())
+        configuration |= HAS_SKELETON;
+    vertices = std::move(verticesArray);
+    normals = std::move(normalsArray);
+    colors = std::move(colorArray);
+    faces = std::move(facesArray);
+    bones = std::move(bonesArray);
+    weights = std::move(weightsArray);
+
+    computeBoundingBox();
+    initializeVBO();
+    initializeVAO();
+
+    if(!glIsBuffer(verticesBuffer) || !glIsBuffer(normalsBuffer) || !glIsBuffer(colorsBuffer) || !glIsBuffer(facesBuffer) || !glIsVertexArray(vao) ||
+        (hasSkeleton() && (!glIsBuffer(bonesBuffer) || !glIsBuffer(weightsBuffer))))
+    {
+        clear();
+        state = INVALID;
+    }
+    else
+        state = VALID;
+}
+
 void Mesh::computeBoundingBox()
 {
 	boundingBox.min = glm::vec3(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
@@ -191,6 +136,15 @@ void Mesh::computeBoundingBox()
 	fBBox.push_back(1); fBBox.push_back(0); fBBox.push_back(5);
 	fBBox.push_back(5); fBBox.push_back(1); fBBox.push_back(7);
 	fBBox.push_back(3); fBBox.push_back(1); fBBox.push_back(7);
+
+    if(hasSkeleton())
+    {
+        for(unsigned int i = 0; i < vBBox.size(); i++)
+        {
+            bBBox.push_back(glm::ivec3(0, 0, 0));
+            wBBox.push_back(glm::vec3(1.f, 0.f, 0.f));
+        }
+    }
 }
 void Mesh::initializeVBO()
 {
@@ -201,7 +155,7 @@ void Mesh::initializeVBO()
 
 	glGenBuffers(1, &normalsBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, normalsBuffer);
-	glBufferData(GL_ARRAY_BUFFER, normales.size() * sizeof(glm::vec3), normales.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), normals.data(), GL_STATIC_DRAW);
 
 	glGenBuffers(1, &colorsBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, colorsBuffer);
@@ -219,6 +173,27 @@ void Mesh::initializeVBO()
 	glGenBuffers(1, &fBBoxBuffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, fBBoxBuffer);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, fBBox.size() * sizeof(unsigned short), fBBox.data(), GL_STATIC_DRAW);
+
+    if(hasSkeleton())
+    {
+        //	mesh
+        glGenBuffers(1, &bonesBuffer);
+        glBindBuffer(GL_ARRAY_BUFFER, bonesBuffer);
+        glBufferData(GL_ARRAY_BUFFER, bones.size() * sizeof(glm::ivec3), bones.data(), GL_STATIC_DRAW);
+
+        glGenBuffers(1, &weightsBuffer);
+        glBindBuffer(GL_ARRAY_BUFFER, weightsBuffer);
+        glBufferData(GL_ARRAY_BUFFER, weights.size() * sizeof(glm::vec3), weights.data(), GL_STATIC_DRAW);
+
+        //	bounding box
+        glGenBuffers(1, &bBBoxBuffer);
+        glBindBuffer(GL_ARRAY_BUFFER, bBBoxBuffer);
+        glBufferData(GL_ARRAY_BUFFER, bBBox.size() * sizeof(glm::ivec3), bBBox.data(), GL_STATIC_DRAW);
+
+        glGenBuffers(1, &wBBoxBuffer);
+        glBindBuffer(GL_ARRAY_BUFFER, wBBoxBuffer);
+        glBufferData(GL_ARRAY_BUFFER, wBBox.size() * sizeof(glm::vec3), wBBox.data(), GL_STATIC_DRAW);
+    }
 }
 void Mesh::initializeVAO()
 {
@@ -238,6 +213,17 @@ void Mesh::initializeVAO()
 	glBindBuffer(GL_ARRAY_BUFFER, colorsBuffer);
 	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
+    if(hasSkeleton())
+    {
+        glEnableVertexAttribArray(3);
+        glBindBuffer(GL_ARRAY_BUFFER, bonesBuffer);
+        glVertexAttribIPointer(3, 3, GL_INT, 0, NULL);
+
+        glEnableVertexAttribArray(4);
+        glBindBuffer(GL_ARRAY_BUFFER, weightsBuffer);
+        glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+    }
+
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, facesBuffer);
 	glBindVertexArray(0);
 
@@ -248,6 +234,17 @@ void Mesh::initializeVAO()
 	glEnableVertexAttribArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, vBBoxBuffer);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
+    if(hasSkeleton())
+    {
+        glEnableVertexAttribArray(3);
+        glBindBuffer(GL_ARRAY_BUFFER, bBBoxBuffer);
+        glVertexAttribIPointer(3, 3, GL_INT, 0, NULL);
+
+        glEnableVertexAttribArray(4);
+        glBindBuffer(GL_ARRAY_BUFFER, wBBoxBuffer);
+        glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+    }
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, fBBoxBuffer);
 	glBindVertexArray(0);
@@ -273,21 +270,64 @@ const std::vector<glm::vec3>* Mesh::getBBoxVertices() const { return &vBBox; }
 const std::vector<unsigned short>* Mesh::getBBoxFaces() const { return &fBBox; }
 const std::vector<glm::vec3>* Mesh::getVertices() const { return &vertices; }
 const std::vector<unsigned short>* Mesh::getFaces() const { return &faces; }
-const std::vector<glm::ivec3>* Mesh::getBones() const { return nullptr; }
-const std::vector<glm::vec3>* Mesh::getWeights() const { return nullptr; }
+const std::vector<glm::ivec3>* Mesh::getBones() const { return &bones; }
+const std::vector<glm::vec3>* Mesh::getWeights() const { return &weights; }
 const AxisAlignedBox& Mesh::getBoundingBox() const { return boundingBox; };
 
 bool Mesh::hasSkeleton() const { return (configuration & HAS_SKELETON) != 0; }
-bool Mesh::isValid() const
-{
-	if (configuration & WELL_LOADED)
-		return glIsBuffer(verticesBuffer) && glIsBuffer(normalsBuffer) && glIsBuffer(colorsBuffer) && glIsBuffer(facesBuffer) && glIsVertexArray(vao);
-	else return false;
-}
 bool Mesh::isAnimable() const { return (configuration & IS_ANIMABLE) != 0; }
-bool Mesh::isFromGolemFactoryFormat() const
+
+std::string Mesh::getIdentifier(const std::string& resourceName)
 {
-	if (name.find_last_of('.') == std::string::npos) return true;
-	return (name.substr(name.find_last_of('.')) == Mesh::extension);
+    return std::string(directory) + resourceName;
 }
+std::string Mesh::getIdentifier() const
+{
+    return getIdentifier(name);
+}
+
+std::string Mesh::getLoaderId(const std::string& resourceName) const
+{
+    size_t ext = resourceName.find_last_of('.');
+    if(ext != std::string::npos && resourceName.substr(ext) != Mesh::extension)
+        return "assimp";
+    else
+        return extension;
+}
+
+const std::string& Mesh::getDefaultName() { return defaultName; }
+void Mesh::setDefaultName(const std::string& name) { defaultName = name; }
 //
+
+void Mesh::clear()
+{
+    //	delete mesh attributes
+    vertices.clear();
+    normals.clear();
+    colors.clear();
+    faces.clear();
+
+    glDeleteBuffers(1, &verticesBuffer);
+    glDeleteBuffers(1, &normalsBuffer);
+    glDeleteBuffers(1, &colorsBuffer);
+    glDeleteBuffers(1, &facesBuffer);
+    glDeleteVertexArrays(1, &vao);
+
+    //	delete bounding box attributes
+    vBBox.clear();
+    fBBox.clear();
+
+    glDeleteBuffers(1, &vBBoxBuffer);
+    glDeleteBuffers(1, &fBBoxBuffer);
+    glDeleteVertexArrays(1, &BBoxVao);
+
+    if(hasSkeleton())
+    {
+        weights.clear();
+        bones.clear();
+        glDeleteBuffers(1, &bonesBuffer);
+        glDeleteBuffers(1, &weightsBuffer);
+    }
+}
+
+

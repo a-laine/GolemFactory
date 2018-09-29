@@ -2,9 +2,10 @@
 
 #include <Physics/Collision.h>
 #include <EntityComponent/Entity.hpp>
-#include <EntityComponent/AnimationEngine.h>
 #include <Renderer/DrawableComponent.h>
 #include <Animation/SkeletonComponent.h>
+#include <Resources/Mesh.h>
+#include <Resources/Skeleton.h>
 
 
 //	coefficient for intersection test computation (to avoid artefacts)

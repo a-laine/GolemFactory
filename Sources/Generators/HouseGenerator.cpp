@@ -10,6 +10,7 @@
 
 #include <EntityComponent/Entity.hpp>
 #include <Renderer/DrawableComponent.h>
+#include <Resources/Mesh.h>
 
 
 //  Attributes
@@ -27,37 +28,37 @@ HouseGenerator::HouseGenerator()
 	prosperity = 0;
 	superficy = 0;
 
-	assetLibrary["debug"] = ResourceManager::getInstance()->getMesh("cube2.obj");
+	assetLibrary["debug"] = ResourceManager::getInstance()->getResource<Mesh>("cube2.obj");
 
 	//	House mesh
-	assetLibrary["wall"] = ResourceManager::getInstance()->getMesh("House/HouseWall.obj");
-	assetLibrary["corner"] = ResourceManager::getInstance()->getMesh("House/HouseCorner.obj");
-	assetLibrary["door"] = ResourceManager::getInstance()->getMesh("House/HouseDoor.obj");
-	assetLibrary["window"] = ResourceManager::getInstance()->getMesh("House/HouseWindow.obj");
-	assetLibrary["fireplace"] = ResourceManager::getInstance()->getMesh("House/HouseFireplace.obj");
+	assetLibrary["wall"] = ResourceManager::getInstance()->getResource<Mesh>("House/HouseWall.obj");
+	assetLibrary["corner"] = ResourceManager::getInstance()->getResource<Mesh>("House/HouseCorner.obj");
+	assetLibrary["door"] = ResourceManager::getInstance()->getResource<Mesh>("House/HouseDoor.obj");
+	assetLibrary["window"] = ResourceManager::getInstance()->getResource<Mesh>("House/HouseWindow.obj");
+	assetLibrary["fireplace"] = ResourceManager::getInstance()->getResource<Mesh>("House/HouseFireplace.obj");
 
 	//	Roof slope meshes
-	assetLibrary["pic"] = ResourceManager::getInstance()->getMesh("House/HouseRoofPic.obj");
-	assetLibrary["slope"] = ResourceManager::getInstance()->getMesh("House/HouseRoofSlope.obj");
-	assetLibrary["inner"] = ResourceManager::getInstance()->getMesh("House/HouseRoofDualSlopeInner.obj");
-	assetLibrary["outter"] = ResourceManager::getInstance()->getMesh("House/HouseRoofDualSlopeOutter.obj");
+	assetLibrary["pic"] = ResourceManager::getInstance()->getResource<Mesh>("House/HouseRoofPic.obj");
+	assetLibrary["slope"] = ResourceManager::getInstance()->getResource<Mesh>("House/HouseRoofSlope.obj");
+	assetLibrary["inner"] = ResourceManager::getInstance()->getResource<Mesh>("House/HouseRoofDualSlopeInner.obj");
+	assetLibrary["outter"] = ResourceManager::getInstance()->getResource<Mesh>("House/HouseRoofDualSlopeOutter.obj");
 	
 
 	//	Roof top meshes
-	assetLibrary["top"] = ResourceManager::getInstance()->getMesh("House/HouseRoofTop.obj");
-	assetLibrary["topEnd"] = ResourceManager::getInstance()->getMesh("House/HouseRoofTopSlope.obj");
-	assetLibrary["topAngle"] = ResourceManager::getInstance()->getMesh("House/HouseRoofTopAngle.obj");
-	assetLibrary["topTee"] = ResourceManager::getInstance()->getMesh("House/HouseRoofTopTee.obj");
+	assetLibrary["top"] = ResourceManager::getInstance()->getResource<Mesh>("House/HouseRoofTop.obj");
+	assetLibrary["topEnd"] = ResourceManager::getInstance()->getResource<Mesh>("House/HouseRoofTopSlope.obj");
+	assetLibrary["topAngle"] = ResourceManager::getInstance()->getResource<Mesh>("House/HouseRoofTopAngle.obj");
+	assetLibrary["topTee"] = ResourceManager::getInstance()->getResource<Mesh>("House/HouseRoofTopTee.obj");
 
 	//	Roof top meshes
-	assetLibrary["slopeTop"] = ResourceManager::getInstance()->getMesh("House/HouseRoofSlopeTop.obj");
-	assetLibrary["topDualSlope"] = ResourceManager::getInstance()->getMesh("House/HouseRoofTopDualSlope.obj");
-	assetLibrary["topDualSlope2"] = ResourceManager::getInstance()->getMesh("House/HouseRoofTopDualSlope2.obj");
-	assetLibrary["dualTopDualSlope"] = ResourceManager::getInstance()->getMesh("House/HouseRoofDualTopDualSlope.obj");
+	assetLibrary["slopeTop"] = ResourceManager::getInstance()->getResource<Mesh>("House/HouseRoofSlopeTop.obj");
+	assetLibrary["topDualSlope"] = ResourceManager::getInstance()->getResource<Mesh>("House/HouseRoofTopDualSlope.obj");
+	assetLibrary["topDualSlope2"] = ResourceManager::getInstance()->getResource<Mesh>("House/HouseRoofTopDualSlope2.obj");
+	assetLibrary["dualTopDualSlope"] = ResourceManager::getInstance()->getResource<Mesh>("House/HouseRoofDualTopDualSlope.obj");
 
 	//	Roof end
-	assetLibrary["roofEnd"] = ResourceManager::getInstance()->getMesh("House/HouseRoofEnd3.obj");
-	assetLibrary["roofEndCorner"] = ResourceManager::getInstance()->getMesh("House/HouseRoofEnd4.obj");
+	assetLibrary["roofEnd"] = ResourceManager::getInstance()->getResource<Mesh>("House/HouseRoofEnd3.obj");
+	assetLibrary["roofEndCorner"] = ResourceManager::getInstance()->getResource<Mesh>("House/HouseRoofEnd4.obj");
 
 	//	Elementary blocks
 	blockLibrary.push_back(glm::ivec3(8, 5, 3));	// 120 m�
@@ -72,7 +73,7 @@ HouseGenerator::HouseGenerator()
 HouseGenerator::~HouseGenerator()
 {
 	for (auto it = assetLibrary.begin(); it != assetLibrary.end(); it++)
-		ResourceManager::getInstance()->release(it->second);
+        ResourceManager::getInstance()->release(it->second);
 
 	if (houseField)
 	{
@@ -113,8 +114,11 @@ void HouseGenerator::getHouse(Entity* house, unsigned int seed, int d, int p)
 
 
 	//	end
-	Mesh* mesh = new Mesh(houseName, verticesArray, normalesArray, colorArray, facesArray);
-	ResourceManager::getInstance()->addMesh(mesh);				//	add mesh to resources manager for instance creation
+	Mesh* mesh = new Mesh(houseName);
+    std::vector<glm::ivec3> bonesArray;
+    std::vector<glm::vec3> weightsArray;
+    mesh->initialize(verticesArray, normalesArray, colorArray, facesArray, bonesArray, weightsArray);
+	ResourceManager::getInstance()->addResource(mesh);				//	add mesh to resources manager for instance creation
 	house->addComponent(new DrawableComponent(houseName));
 	ResourceManager::getInstance()->release(mesh);				//	House generator release mesh pointer
 }
@@ -916,9 +920,9 @@ void HouseGenerator::pushMesh(Mesh* m, const glm::vec3& p, const glm::vec3& o, c
 		glm::vec4 v = model * glm::vec4(m->vertices[i], 1.f);
 		verticesArray.push_back(glm::vec3(v.x, v.y, v.z));
 	}
-	for (unsigned int i = 0; i < m->normales.size(); i++)
+	for (unsigned int i = 0; i < m->normals.size(); i++)
 	{
-		glm::vec4 v = orientation * glm::vec4(m->normales[i], 1.f);
+		glm::vec4 v = orientation * glm::vec4(m->normals[i], 1.f);
 		normalesArray.push_back(glm::vec3(v.x, v.y, v.z));
 	}
 	for (unsigned int i = 0; i < m->colors.size(); i++)
