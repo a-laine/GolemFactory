@@ -9,8 +9,9 @@
 #include <glm/glm.hpp>
 #include <assimp/scene.h>
 
-#include "Joint.h"
-#include "Resources/IResourceLoader.h"
+#include <Resources/Joint.h>
+#include <Resources/IResourceLoader.h>
+
 
 class AssimpLoader : public IResourceLoader
 {

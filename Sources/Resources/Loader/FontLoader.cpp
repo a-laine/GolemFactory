@@ -3,9 +3,9 @@
 #include <iostream>
 #include <sstream>
 
-#include "Utiles/Parser/Reader.h"
-#include "Utiles/ToolBox.h"
-#include "Loader/ImageLoader.h"
+#include <Utiles/Parser/Reader.h>
+#include <Utiles/ToolBox.h>
+#include <Resources/Loader/ImageLoader.h>
 
 
 

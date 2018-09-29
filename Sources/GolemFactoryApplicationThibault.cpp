@@ -36,14 +36,14 @@
 #include <Resources/Mesh.h>
 #include <Resources/Skeleton.h>
 #include <Resources/Animation.h>
-#include <Resources/AnimationLoader.h>
-#include <Resources/FontLoader.h>
-#include <Resources/AssimpLoader.h>
+#include <Resources/Loader/AnimationLoader.h>
+#include <Resources/Loader/FontLoader.h>
+#include <Resources/Loader/AssimpLoader.h>
 #include <Resources/Loader/MeshLoader.h>
-#include <Resources/ShaderLoader.h>
-#include <Resources/SkeletonLoader.h>
+#include <Resources/Loader/ShaderLoader.h>
+#include <Resources/Loader/SkeletonLoader.h>
 #include <Resources/Loader/ImageLoader.h>
-#include <Resources/TextureLoader.h>
+#include <Resources/Loader/TextureLoader.h>
 
 #include "Physics/Collision.h"
 
