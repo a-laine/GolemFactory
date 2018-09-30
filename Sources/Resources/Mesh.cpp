@@ -14,7 +14,6 @@ std::string Mesh::defaultName;
 //  Default
 Mesh::Mesh(const std::string& meshName)
     : ResourceVirtual(meshName)
-    , configuration(0x00)
     , boundingBox(glm::vec3(0.f), glm::vec3(0.f))
     , vao(0), verticesBuffer(0), colorsBuffer(0), normalsBuffer(0), facesBuffer(0)
     , BBoxVao(0), vBBoxBuffer(0), fBBoxBuffer(0)
@@ -36,9 +35,6 @@ void Mesh::initialize(const std::vector<glm::vec3>& verticesArray, const std::ve
     GF_ASSERT(state == INVALID);
     state = LOADING;
 
-    configuration = WELL_LOADED;
-    if(!bonesArray.empty() && !weightsArray.empty())
-        configuration |= HAS_SKELETON;
     vertices = verticesArray;
     normals = normalsArray;
     colors = colorArray;
@@ -67,9 +63,6 @@ void Mesh::initialize(std::vector<glm::vec3>&& verticesArray, std::vector<glm::v
     GF_ASSERT(state == INVALID);
     state = LOADING;
 
-    configuration = WELL_LOADED;
-    if(!bonesArray.empty() && !weightsArray.empty())
-        configuration |= HAS_SKELETON;
     vertices = std::move(verticesArray);
     normals = std::move(normalsArray);
     colors = std::move(colorArray);
@@ -274,8 +267,7 @@ const std::vector<glm::ivec3>* Mesh::getBones() const { return &bones; }
 const std::vector<glm::vec3>* Mesh::getWeights() const { return &weights; }
 const AxisAlignedBox& Mesh::getBoundingBox() const { return boundingBox; };
 
-bool Mesh::hasSkeleton() const { return (configuration & HAS_SKELETON) != 0; }
-bool Mesh::isAnimable() const { return (configuration & IS_ANIMABLE) != 0; }
+bool Mesh::hasSkeleton() const { return !bones.empty() && !weights.empty(); }
 
 std::string Mesh::getIdentifier(const std::string& resourceName)
 {

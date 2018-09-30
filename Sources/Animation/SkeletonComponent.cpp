@@ -52,9 +52,8 @@ Skeleton* SkeletonComponent::getSkeleton() const
 
 unsigned int SkeletonComponent::getNbJoints() const
 {
-	if(m_skeleton)
-		return (unsigned int) m_skeleton->joints.size();
-	return 0;
+    GF_ASSERT(isValid());
+	return (unsigned int) m_skeleton->joints.size();
 }
 
 const std::vector<glm::mat4>& SkeletonComponent::getPose() const
@@ -62,13 +61,21 @@ const std::vector<glm::mat4>& SkeletonComponent::getPose() const
 	return pose;
 }
 
+std::vector<glm::mat4x4> SkeletonComponent::getInverseBindPose() const
+{
+    GF_ASSERT(isValid());
+    return m_skeleton->getInverseBindPose();
+}
+
 glm::vec3 SkeletonComponent::getJointPosition(const std::string& jointName)
 {
+    GF_ASSERT(isValid());
+
 	locker.lock();
-	bool b = pose.empty();
+	bool emptyPose = pose.empty();
 	locker.lock();
 
-	if(!m_skeleton || b)
+	if(emptyPose)
 		return glm::vec3(0.f);
 	int index = -1;
 	for(unsigned int i = 0; i < m_skeleton->joints.size(); i++)
@@ -93,8 +100,14 @@ const std::vector<float>& SkeletonComponent::getCapsules() const
 	return capsules;
 }
 
+bool SkeletonComponent::isValid() const
+{
+    return m_skeleton && m_skeleton->isValid();
+}
+
 void SkeletonComponent::initToBindPose()
 {
+    GF_ASSERT(isValid());
 	locker.lock();
 	pose = m_skeleton->getBindPose();
 	locker.unlock();
@@ -102,6 +115,7 @@ void SkeletonComponent::initToBindPose()
 
 void SkeletonComponent::computePose(const std::vector<JointPose>& input)
 {
+    GF_ASSERT(isValid());
 	std::vector<glm::mat4> blendMatrix(input.size(), glm::mat4(1.f));
 	for(unsigned int i = 0; i < m_skeleton->roots.size(); i++)
 		computePose(blendMatrix, input, glm::mat4(1.f), m_skeleton->roots[i]);
@@ -113,8 +127,9 @@ void SkeletonComponent::computePose(const std::vector<JointPose>& input)
 
 void SkeletonComponent::computeCapsules(Mesh* mesh)
 {
+    GF_ASSERT(isValid());
 	if(!capsules.empty()) capsules.clear();
-	if(!mesh || !m_skeleton || !mesh->getBones() || !mesh->getWeights())
+	if(!mesh || !mesh->getBones() || !mesh->getWeights())
 		return;
 
 	//	get all lists
@@ -170,6 +185,7 @@ void SkeletonComponent::computeCapsules(Mesh* mesh)
 
 void SkeletonComponent::initializeVBOVAO()
 {
+    GF_ASSERT(isValid());
 	//	generate vbo
 	glGenBuffers(1, &segIndexBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, segIndexBuffer);
@@ -197,12 +213,14 @@ void SkeletonComponent::initializeVBOVAO()
 
 void SkeletonComponent::drawBB()
 {
+    GF_ASSERT(isValid());
 	glBindVertexArray(vao);
 	glDrawArrays(GL_POINTS, 0, segmentIndex.size());
 }
 
 void SkeletonComponent::computePose(std::vector<glm::mat4>& result, const std::vector<JointPose>& input, const glm::mat4& parentPose, unsigned int joint)
 {
+    GF_ASSERT(isValid());
 	result[joint] = parentPose * glm::translate(input[joint].position) * glm::toMat4(input[joint].rotation) * glm::scale(input[joint].scale);
 	for(unsigned int i = 0; i < m_skeleton->joints[joint].sons.size(); i++)
 		computePose(result, input, result[joint], m_skeleton->joints[joint].sons[i]);

@@ -94,8 +94,8 @@ std::pair<int, int> Animation::getBoundingKeyFrameIndex(float time) const
 	}
 	return std::pair<int, int>(previous, next);
 }
-std::vector<KeyFrame> Animation::getTimeLine() const { return timeLine; }
-std::map<std::string, KeyLabel> Animation::getLabels() const { return labels; }
+const std::vector<KeyFrame>& Animation::getTimeLine() const { return timeLine; }
+const std::map<std::string, KeyLabel>& Animation::getLabels() const { return labels; }
 
 std::string Animation::getIdentifier(const std::string& resourceName)
 {

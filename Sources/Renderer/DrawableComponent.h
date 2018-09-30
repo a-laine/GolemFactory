@@ -25,6 +25,9 @@ class DrawableComponent : public Component
 		Shader* getShader() const;
 		Mesh* getMesh() const;
 
+        bool isValid() const;
+
+        bool hasSkeleton() const;
 		glm::vec3 getMeshBBMax() const;
 		glm::vec3 getMeshBBMin() const;
 

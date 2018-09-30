@@ -35,8 +35,8 @@ class Animation : public ResourceVirtual
 		//	Set/get functions
 		std::vector<glm::mat4x4> getKeyPose(const unsigned int& keyFramePose ,const std::vector<unsigned int>& roots, const std::vector<Joint>& hierarchy) const;
 		std::pair<int, int> getBoundingKeyFrameIndex(float time) const;
-		std::vector<KeyFrame> getTimeLine() const;
-		std::map<std::string, KeyLabel> getLabels() const;
+		const std::vector<KeyFrame>& getTimeLine() const;
+		const std::map<std::string, KeyLabel>& getLabels() const;
         std::string getIdentifier() const override;
         std::string getLoaderId(const std::string& resourceName) const;
         //

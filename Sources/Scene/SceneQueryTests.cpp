@@ -5,7 +5,6 @@
 #include <Renderer/DrawableComponent.h>
 #include <Animation/SkeletonComponent.h>
 #include <Resources/Mesh.h>
-#include <Resources/Skeleton.h>
 
 
 //	coefficient for intersection test computation (to avoid artefacts)
@@ -78,12 +77,13 @@ DefaultRayPickingCollector::DefaultRayPickingCollector(const glm::vec3& pos, con
 
 void DefaultRayPickingCollector::operator() (NodeVirtual* node, Entity* object)
 {
-	Mesh* mesh = (object->getComponent<DrawableComponent>() ? object->getComponent<DrawableComponent>()->getMesh() : nullptr);
-	if (!mesh) return;
+    DrawableComponent* drawableComp = object->getComponent<DrawableComponent>();
+	if (!drawableComp || !drawableComp->isValid()) return;
 
-	Skeleton* skeleton = (object->getComponent<SkeletonComponent>() ? object->getComponent<SkeletonComponent>()->getSkeleton() : nullptr);
-	bool animatable = mesh->isAnimable() && skeleton;
+    const SkeletonComponent* skeletonComp = object->getComponent<SkeletonComponent>();
+	bool animatable = drawableComp->hasSkeleton() && skeletonComp && skeletonComp->isValid();
 
+    Mesh* mesh = drawableComp->getMesh();
 
 	//	first pass test -> test ray vs object OBB or capsules
 	if (animatable)
@@ -105,7 +105,7 @@ void DefaultRayPickingCollector::operator() (NodeVirtual* node, Entity* object)
 
 	if (animatable)
 	{
-		const std::vector<glm::mat4> ibind = skeleton->getInverseBindPose();
+		const std::vector<glm::mat4> ibind = skeletonComp->getInverseBindPose();
 		const std::vector<glm::mat4> pose = object->getComponent<SkeletonComponent>()->getPose();
 		const std::vector<glm::ivec3>* bones = mesh->getBones();
 		const std::vector<glm::vec3>* weights = mesh->getWeights();

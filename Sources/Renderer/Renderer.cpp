@@ -191,7 +191,7 @@ void Renderer::render(Camera* renderCam)
 	for (Entity* object : instanceList)
 	{
 		DrawableComponent* comp = object->getComponent<DrawableComponent>();
-		if(!comp) continue;
+		if(!comp || !comp->isValid()) continue;
 
 		batches[comp->getShader()].push_back(object);
 		if (batches[comp->getShader()].size() > BATCH_SIZE)
@@ -299,8 +299,8 @@ void Renderer::drawObject(Entity* object, const float* view, const float* projec
 	ShaderIdentifier shaderBBType = INSTANCE_DRAWABLE_BB;
 	DrawableComponent* drawableComp = object->getComponent<DrawableComponent>();
 	SkeletonComponent* skeletonComp = object->getComponent<SkeletonComponent>();
-	if(!drawableComp) return;
-	if(skeletonComp)
+	if(!drawableComp || !drawableComp->isValid()) return;
+	if(skeletonComp && skeletonComp->isValid())
 	{
 		shaderType = INSTANCE_ANIMATABLE;
 		shaderBBType = INSTANCE_ANIMATABLE_BB;
@@ -314,7 +314,7 @@ void Renderer::drawObject(Entity* object, const float* view, const float* projec
 	loadMVPMatrix(shaderToUse, &object->getMatrix()[0][0], view, projection);
 	if(!shaderToUse) return;
 
-	if(skeletonComp)
+	if(skeletonComp && skeletonComp->isValid())
 	{
 		//	Load skeleton pose matrix list for vertex skinning calculation
 		std::vector<glm::mat4> pose = skeletonComp->getPose();
@@ -323,8 +323,7 @@ void Renderer::drawObject(Entity* object, const float* view, const float* projec
 
 		//	Load inverse bind pose matrix list for vertex skinning calculation
 		std::vector<glm::mat4> bind;
-		Skeleton* skeleton = skeletonComp->getSkeleton();
-		if(skeleton) bind = skeleton->getInverseBindPose();
+		bind = skeletonComp->getInverseBindPose();
 		loc = shaderToUse->getUniformLocation("inverseBindPose");
 		if(loc >= 0) glUniformMatrix4fv(loc, bind.size(), FALSE, (float*) bind.data());
 	}

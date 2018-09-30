@@ -9,10 +9,10 @@ void Animator::animate(Entity* object, float step)
 {
 	AnimationComponent* animationComp = object->getComponent<AnimationComponent>();
 	SkeletonComponent* skeletonComp = object->getComponent<SkeletonComponent>();
-	if(!animationComp || !skeletonComp)
+	if(!skeletonComp || !skeletonComp->isValid())
 		return;
 
-	if(!animationComp->getAnimation())
+	if(!animationComp || !animationComp->isValid())
 	{
 		skeletonComp->initToBindPose();
 		return;
@@ -34,21 +34,21 @@ void Animator::launchAnimation(Entity* object, const std::string& labelName, boo
 {
 	AnimationComponent* animationComp = object->getComponent<AnimationComponent>();
 	SkeletonComponent* skeletonComp = object->getComponent<SkeletonComponent>();
-	if(animationComp && skeletonComp)
+	if(animationComp && animationComp->isValid() && skeletonComp && skeletonComp->isValid())
 		animationComp->launchAnimation(labelName, skeletonComp->getNbJoints(), flaged);
 }
 
 void Animator::stopAnimation(Entity* object, const std::string& labelName)
 {
 	AnimationComponent* animationComp = object->getComponent<AnimationComponent>();
-	if(animationComp)
+	if(animationComp && animationComp->isValid())
 		animationComp->stopAnimation(labelName);
 }
 
 bool Animator::isAnimationRunning(Entity* object, const std::string& animationName)
 {
 	AnimationComponent* animationComp = object->getComponent<AnimationComponent>();
-	if(animationComp)
+	if(animationComp && animationComp->isValid())
 		return animationComp->isAnimationRunning(animationName);
 	return false;
 }

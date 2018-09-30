@@ -53,12 +53,25 @@ Mesh* DrawableComponent::getMesh() const
 	return m_mesh;
 }
 
+bool DrawableComponent::isValid() const
+{
+    return m_mesh && m_mesh->isValid() && m_shader && m_shader->isValid();
+}
+
+bool DrawableComponent::hasSkeleton() const
+{
+    GF_ASSERT(isValid());
+    return m_mesh->hasSkeleton();
+}
+
 glm::vec3 DrawableComponent::getMeshBBMax() const
 {
+    GF_ASSERT(isValid());
 	return m_mesh->getBoundingBox().max;
 }
 
 glm::vec3 DrawableComponent::getMeshBBMin() const
 {
+    GF_ASSERT(isValid());
 	return m_mesh->getBoundingBox().min;
 }

@@ -26,9 +26,9 @@ class Skeleton : public ResourceVirtual
 
         void initialize(const std::vector<unsigned int>& rootsList, const std::vector<Joint>& jointsList);
         void initialize(std::vector<unsigned int>&& rootsList, std::vector<Joint>&& jointsList);
-		std::vector<glm::mat4x4> getInverseBindPose() const;
-		std::vector<glm::mat4x4> getBindPose() const;
-		std::vector<Joint> getJoints() const;
+		const std::vector<glm::mat4x4>& getInverseBindPose() const;
+		const std::vector<glm::mat4x4>& getBindPose() const;
+		const std::vector<Joint>& getJoints() const;
         std::string getIdentifier() const override;
         std::string getLoaderId(const std::string& resourceName) const;
 		//

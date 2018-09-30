@@ -39,10 +39,14 @@ Animation* AnimationComponent::getAnimation() const
 	return m_animation;
 }
 
+bool AnimationComponent::isValid() const
+{
+    return m_animation && m_animation->isValid();
+}
+
 void AnimationComponent::launchAnimation(const std::string& labelName, unsigned int nbJoints, const bool& flaged)
 {
-	if(!m_animation)
-		return;
+	GF_ASSERT(isValid());
 
 	//	create and add a new track to current animation
 	std::map<std::string, KeyLabel>::iterator it = m_animation->labels.find(labelName);
@@ -82,6 +86,7 @@ bool AnimationComponent::isAnimationRunning(const std::string& animationName)
 
 void AnimationComponent::updateAnimations(float step)
 {
+    GF_ASSERT(isValid());
 	for(std::list<AnimationTrack>::iterator it = currentAnimations.begin(); it != currentAnimations.end();)
 	{
 		it->jointCounter = 0;

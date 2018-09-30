@@ -29,6 +29,8 @@ class AnimationComponent : public Component
 		void setAnimation(Animation* animation);
 		Animation* getAnimation() const;
 
+        bool isValid() const;
+
 		void launchAnimation(const std::string& labelName, unsigned int nbPoses, const bool& flaged = false);
 		void stopAnimation(const std::string& labelName);
 		bool isAnimationRunning();

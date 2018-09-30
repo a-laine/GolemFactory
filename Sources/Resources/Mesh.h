@@ -21,14 +21,6 @@ class Mesh : public ResourceVirtual
         static const std::string& getDefaultName();
         static void setDefaultName(const std::string& name);
 
-		//  Miscellaneous
-		enum ConfigurationFlags
-		{
-			WELL_LOADED = 1 << 0,
-			HAS_SKELETON = 1 << 1,
-			IS_ANIMABLE = 1 << 2
-		};
-		//
 
         //  Default
 		Mesh(const std::string& meshName);
@@ -53,7 +45,6 @@ class Mesh : public ResourceVirtual
 
         //  Set/get functions
 		bool hasSkeleton() const;
-		bool isAnimable() const;
 
         std::string getIdentifier() const override;
         std::string getLoaderId(const std::string& resourceName) const;
@@ -65,8 +56,8 @@ class Mesh : public ResourceVirtual
 		const std::vector<unsigned short>* getBBoxFaces() const;
 		const std::vector<glm::vec3>* getVertices() const;
 		const std::vector<unsigned short>* getFaces() const;
-		virtual const std::vector<glm::ivec3>* getBones() const;
-		virtual const std::vector<glm::vec3>* getWeights() const;
+		const std::vector<glm::ivec3>* getBones() const;
+		const std::vector<glm::vec3>* getWeights() const;
 		const AxisAlignedBox& getBoundingBox() const;
         //
 
@@ -82,7 +73,6 @@ class Mesh : public ResourceVirtual
 		//
 
         //  Attributes
-        uint8_t configuration;
 		AxisAlignedBox boundingBox;
 
 		GLuint  vao,

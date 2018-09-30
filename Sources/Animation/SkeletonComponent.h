@@ -26,8 +26,11 @@ class SkeletonComponent : public Component
 		Skeleton* getSkeleton() const;
 		unsigned int getNbJoints() const;
 		const std::vector<glm::mat4>& getPose() const;
+        std::vector<glm::mat4x4> getInverseBindPose() const;
 		glm::vec3 getJointPosition(const std::string& jointName);
 		const std::vector<float>& getCapsules() const;
+
+        bool isValid() const;
 		
 		void initToBindPose();
 		void computePose(const std::vector<JointPose>& input);

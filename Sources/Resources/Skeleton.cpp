@@ -72,9 +72,9 @@ std::string Skeleton::getLoaderId(const std::string& resourceName) const
 const std::string& Skeleton::getDefaultName() { return defaultName; }
 void Skeleton::setDefaultName(const std::string& name) { defaultName = name; }
 
-std::vector<glm::mat4> Skeleton::getInverseBindPose() const { return inverseBindPose; }
-std::vector<glm::mat4> Skeleton::getBindPose() const { return bindPose; }
-std::vector<Joint> Skeleton::getJoints() const { return joints; }
+const std::vector<glm::mat4>& Skeleton::getInverseBindPose() const { return inverseBindPose; }
+const std::vector<glm::mat4>& Skeleton::getBindPose() const { return bindPose; }
+const std::vector<Joint>& Skeleton::getJoints() const { return joints; }
 //
 
 //	Private functions

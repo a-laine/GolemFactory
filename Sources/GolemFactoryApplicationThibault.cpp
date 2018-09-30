@@ -95,11 +95,11 @@ int main()
 
 		avatar = world.getEntityFactory().createObject("peasant", [](Entity* object)
 		{
-			Mesh* mesh = object->getComponent<DrawableComponent>()->getMesh();
+            DrawableComponent* drawable = object->getComponent<DrawableComponent>();
 			OrientedBox box = object->getBoundingVolume();
 			float scale = 1.7f / (box.max - box.min).z;
 			object->setScale(glm::vec3(scale));
-			glm::vec3 pos = glm::vec3(20.f, 20.f, -scale * mesh->getBoundingBox().min.z);
+			glm::vec3 pos = glm::vec3(20.f, 20.f, -scale * drawable->getMeshBBMin().z);
 			object->setPosition(pos);
 			//camera.setMode(Camera::TRACKBALL);
 			camera.setRadius(4);
@@ -385,9 +385,7 @@ void picking(int width, int height)
 			Renderer::RenderOption option = Renderer::getInstance()->getRenderOption();
 			Renderer::getInstance()->setRenderOption(option == Renderer::DEFAULT ? Renderer::BOUNDING_BOX : Renderer::DEFAULT);
 			glm::mat4 projection = glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f);
-			if (compAnim)
-				Renderer::getInstance()->drawObject(collector.getNearestObject(), &camera.getViewMatrix()[0][0], &projection[0][0]);
-			else Renderer::getInstance()->drawObject(collector.getNearestObject(), &camera.getViewMatrix()[0][0], &projection[0][0]);
+			Renderer::getInstance()->drawObject(collector.getNearestObject(), &camera.getViewMatrix()[0][0], &projection[0][0]);
 			Renderer::getInstance()->setRenderOption(option);
 		}
 	}
@@ -498,8 +496,12 @@ void updates(float elapseTime, int width, int height)
 	//Animate camera
 	if (camera.getMode() == Camera::TRACKBALL)
 	{
-		glm::vec4 headPosition = avatar->getMatrix() * glm::vec4(avatar->getComponent<SkeletonComponent>()->getJointPosition("Head"), 1);
-		camera.setTarget(headPosition);
+        SkeletonComponent* skeletonComp = avatar->getComponent<SkeletonComponent>();
+        if(skeletonComp && skeletonComp->isValid())
+        {
+            glm::vec4 headPosition = avatar->getMatrix() * glm::vec4(skeletonComp->getJointPosition("Head"), 1);
+            camera.setTarget(headPosition);
+        }
 	}
 	camera.animate((float)elapseTime,
 		EventHandler::getInstance()->isActivated(FORWARD), EventHandler::getInstance()->isActivated(BACKWARD),
