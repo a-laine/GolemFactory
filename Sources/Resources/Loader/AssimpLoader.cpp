@@ -88,7 +88,7 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
         facesOffset += mesh->mNumVertices;
 
         //	import vertex attributes
-        meshVertexOffset.push_back(vertices.size());
+        meshVertexOffset.push_back((int)vertices.size());
         for(unsigned int j = 0; j < mesh->mNumVertices; j++)
         {
             aiVector3D pos = mesh->mVertices[j];
@@ -114,7 +114,7 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
                 std::string boneName(scene->mMeshes[i]->mBones[j]->mName.C_Str());
                 if(boneMap.find(boneName) == boneMap.end())
                 {
-                    boneMap[boneName] = boneMap.size();
+                    boneMap[boneName] = (int)boneMap.size();
                     joints.push_back(Joint(boneName));
                 }
             }

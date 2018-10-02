@@ -11,7 +11,7 @@ std::string Font::defaultName;
 //
 
 //  Default
-Font::Font(const std::string& fontName) : ResourceVirtual(fontName), texture(0) {}
+Font::Font(const std::string& fontName) : ResourceVirtual(fontName), texture(0), begin(0), end(0), defaultChar(0) {}
 Font::~Font()
 {
     if(glIsTexture(texture)) glDeleteTextures(1,&texture);
@@ -73,7 +73,7 @@ Font::Patch Font::getPatch(char c) const
 char Font::getDefaultChar() const { return (char)defaultChar; }
 char Font::getBeginChar() const { return (char)begin; }
 char Font::getEndChar() const { return (char)end; }
-int Font::getArraySize() const { return charTable.size(); }
+int Font::getArraySize() const { return (int)charTable.size(); }
 
 std::string Font::getIdentifier(const std::string& resourceName)
 {
@@ -104,7 +104,7 @@ bool Font::initOpenGL(uint8_t* image, int sizeX, int sizeY)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glBindTexture(GL_TEXTURE_2D, 0);
-    return glIsTexture(texture);
+    return glIsTexture(texture) != 0;
 }
 
 void Font::clear()

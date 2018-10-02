@@ -201,7 +201,7 @@ void initializeForestScene(bool emptyPlace)
 
 	// village
 	int vilageHouseCount = 0;
-	float villageRadius[] = {20.f, 30.f, 40.f};
+	float villageRadius[] = {20.f, 35.f, 50.f};
 	std::vector<glm::vec3> houseCircle;
 	for (int i = 0; i < 3; i++)
 	{
@@ -236,7 +236,7 @@ void initializeForestScene(bool emptyPlace)
 
 				houseCircle.push_back(p);
 				house->setPosition(glm::vec3(p.x, p.y, 0.f));
-				house->setOrientation(glm::rotate(glm::mat4(1.0), 1.57f + angle, glm::vec3(0, 0, 1)));
+				house->setOrientation(glm::toQuat(glm::rotate(glm::mat4(1.0), 1.57f + angle, glm::vec3(0, 0, 1))));
 			});
 		}
 	}
@@ -371,9 +371,9 @@ void picking(int width, int height)
 		DrawableComponent* compDraw = collector.getNearestObject()->getComponent<DrawableComponent>();
 		if(compAnim)       type = "animatable";
 		else if(compDraw)  type = "drawable";
-		else            type = "empty entity";
+		else               type = "empty entity";
 		glm::vec3 p = camera.getPosition() + collector.getNearestDistance() * camera.getForward();
-
+		
 		WidgetManager::getInstance()->setString("interaction", "Distance : " + ToolBox::to_string_with_precision(collector.getNearestDistance(), 5) +
 			" m\nPosition : (" + ToolBox::to_string_with_precision(p.x, 5) + " , " + ToolBox::to_string_with_precision(p.y, 5) + " , " + ToolBox::to_string_with_precision(p.z, 5) +
 			")\nInstance on ray : " + std::to_string(collector.getObjects().size()) +
@@ -489,7 +489,7 @@ void updates(float elapseTime, int width, int height)
 		if (Animator::getInstance()->isAnimationRunning(avatar, "walk")) speed = 0.025f;
 		if (Animator::getInstance()->isAnimationRunning(avatar, "run")) speed = 0.1f;
 		avatar->setPosition(avatar->getPosition() + speed * glm::normalize(glm::vec3(forward.x, forward.y, 0.f)));
-		if (speed != 0.f) avatar->setOrientation(glm::rotate(glm::pi<float>() / 2.f + atan2(forward.y, forward.x), glm::vec3(0.f, 0.f, 1.f)));
+		if (speed != 0.f) avatar->setOrientation(glm::toQuat(glm::rotate(glm::pi<float>() / 2.f + atan2(forward.y, forward.x), glm::vec3(0.f, 0.f, 1.f))));
 		world.updateObject(avatar);
 	}
 
@@ -499,7 +499,7 @@ void updates(float elapseTime, int width, int height)
         SkeletonComponent* skeletonComp = avatar->getComponent<SkeletonComponent>();
         if(skeletonComp && skeletonComp->isValid())
         {
-            glm::vec4 headPosition = avatar->getMatrix() * glm::vec4(skeletonComp->getJointPosition("Head"), 1);
+            glm::vec3 headPosition = glm::vec3(avatar->getMatrix() * glm::vec4(skeletonComp->getJointPosition("Head"), 1));
             camera.setTarget(headPosition);
         }
 	}

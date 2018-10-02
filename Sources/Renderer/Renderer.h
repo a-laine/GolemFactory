@@ -2,13 +2,16 @@
 
 #include <GL/glew.h>
 
-#include <GLFW/glfw3.h>
+
 #include <glm/glm.hpp>
 
-#include <Utiles/Mutex.h>
-#include <Utiles/Camera.h>
-#include <Utiles/Singleton.h>
-#include <World/World.h>
+#include "Utiles/Mutex.h"
+
+#include <GLFW/glfw3.h>
+
+#include "Utiles/Camera.h"
+#include "Utiles/Singleton.h"
+#include "World/World.h"
 
 
 class Shader;

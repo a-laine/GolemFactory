@@ -215,7 +215,7 @@ void SkeletonComponent::drawBB()
 {
     GF_ASSERT(isValid());
 	glBindVertexArray(vao);
-	glDrawArrays(GL_POINTS, 0, segmentIndex.size());
+	glDrawArrays(GL_POINTS, 0, (int)segmentIndex.size());
 }
 
 void SkeletonComponent::computePose(std::vector<glm::mat4>& result, const std::vector<JointPose>& input, const glm::mat4& parentPose, unsigned int joint)

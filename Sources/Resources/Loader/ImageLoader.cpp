@@ -39,6 +39,7 @@ bool ImageLoader::load(const std::string& resourceDirectory, const std::string& 
     }
 
     size = glm::vec3((float) x, (float) y, 0.f);
+	return true;
 }
 
 void ImageLoader::initialize(ResourceVirtual* resource)

@@ -91,17 +91,6 @@ void Mesh::computeBoundingBox()
 
 	for (unsigned int i = 0; i < vertices.size(); i++)
 	{
-		/*
-		boundingBox.min.x = std::min(boundingBox.min.x, vertices[i].x);
-		boundingBox.max.x = std::max(boundingBox.max.x, vertices[i].x);
-
-		boundingBox.min.y = std::min(boundingBox.min.y, vertices[i].y);
-		boundingBox.max.y = std::max(boundingBox.max.y, vertices[i].y);
-
-		boundingBox.min.z = std::min(boundingBox.min.z, vertices[i].z);
-		boundingBox.max.z = std::max(boundingBox.max.z, vertices[i].z);
-		*/
-
 		boundingBox.min = glm::min(boundingBox.min, vertices[i]);
 		boundingBox.max = glm::max(boundingBox.max, vertices[i]);
 	}

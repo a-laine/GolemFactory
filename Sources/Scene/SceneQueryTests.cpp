@@ -92,7 +92,8 @@ void DefaultRayPickingCollector::operator() (NodeVirtual* node, Entity* object)
 	}
 	else
 	{
-		OrientedBox box = object->getBoundingVolume();
+		AxisAlignedBox aabb = mesh->getBoundingBox();
+		OrientedBox box(glm::translate(object->getPosition()) * glm::toMat4(object->getOrientation()), aabb.min, aabb.max);
 		if (!Collision::collide_SegmentvsOrientedBox( position, position + distance*direction, box.transform, box.min, box.max))
 			return;
 	}

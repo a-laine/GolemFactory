@@ -8,10 +8,12 @@
 
 bool ShaderLoader::load(const std::string& resourceDirectory, const std::string& fileName)
 {
-    //  Initialization
+	//  Initialization
     vertexShader = 0;       fragmentShader = 0;
     geometricShader = 0;    tessControlShader = 0;      tessEvalShader = 0;
     program = 0;
+	attributesType.clear();
+	textures.clear();
 
     Variant v; Variant* tmp = nullptr;
     try
@@ -118,7 +120,7 @@ bool ShaderLoader::load(const std::string& resourceDirectory, const std::string&
     }
 
     //	get default matrix attribute location
-    GLint uniformLocation;
+    //GLint uniformLocation;
     if(shaderMap["uniform"].getType() == Variant::MAP)
     {
         for(auto it = shaderMap["uniform"].getMap().begin(); it != shaderMap["uniform"].getMap().end(); it++)

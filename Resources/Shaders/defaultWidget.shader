@@ -1,4 +1,5 @@
-Default{
+DefaultWidget
+{
 	vertex :   "defaultWidget.vs";
 	fragment : "defaultWidget.fs";
 	

@@ -94,7 +94,7 @@ std::string ResourceManager::getRepository() const
 }
 unsigned int ResourceManager::getNumberOfRessources() const
 {
-    return resources.size();
+    return (int)resources.size();
 }
 //
 

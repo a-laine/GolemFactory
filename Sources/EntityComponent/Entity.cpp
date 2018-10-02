@@ -1,7 +1,7 @@
 #include "Entity.hpp"
 
 //	Default
-Entity::Entity() : m_refCount(0), m_scale(1.f), m_rotation() //, m_boundingVolume()
+Entity::Entity() : m_refCount(0), m_parentWorld(nullptr), m_scale(1.f), m_rotation() //, m_boundingVolume()
 {}
 //
 
