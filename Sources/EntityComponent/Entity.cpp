@@ -1,12 +1,21 @@
 #include "Entity.hpp"
 
+#include <Renderer/DrawableComponent.h>
+
+
+
 //	Default
 Entity::Entity() : m_refCount(0), m_parentWorld(nullptr), m_scale(1.f), m_rotation() //, m_boundingVolume()
 {}
 //
 
+
 //	Set/Get functions
-void Entity::setPosition(const glm::vec3& position) { m_transform[3] = glm::vec4(position, 1); }
+void Entity::setPosition(const glm::vec3& position)
+{
+	setTransformation(position, m_scale, m_rotation);
+	//m_transform[3] = glm::vec4(position, 1);
+}
 void Entity::setScale(const glm::vec3& scale)
 {
 	setTransformation(getPosition(), scale, m_rotation);
@@ -22,6 +31,14 @@ void Entity::setTransformation(const glm::vec3& position, const glm::vec3& scale
 
 	m_transform = glm::translate(glm::mat4(1.0), position);
 	m_transform = m_transform * glm::toMat4(orientation);
+
+	if (getComponent<DrawableComponent>())
+	{
+		glm::vec3 min = getComponent<DrawableComponent>()->getMeshBBMin();
+		glm::vec3 max = getComponent<DrawableComponent>()->getMeshBBMax();
+		m_boundingVolume = OrientedBox(m_transform, min, max);
+	}
+
 	m_transform = glm::scale(m_transform, scale);
 }
 void Entity::setParentWorld(World* parentWorld)

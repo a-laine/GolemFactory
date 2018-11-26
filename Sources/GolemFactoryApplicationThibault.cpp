@@ -186,7 +186,6 @@ void initializeForestScene(bool emptyPlace)
 	Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("greenGrass"));
 
 	// init instance placement
-	int fail = 0;
 	std::string objectType;
 	float sDispersion;
 	float sOffset;
@@ -263,8 +262,8 @@ void initializeForestScene(bool emptyPlace)
 			else if (r < 80)
 			{
 				objectType = "tree";
-				sDispersion = 0.f;// 2f;
-				sOffset = 1.7f;
+				sDispersion = 0.0f;
+				sOffset = 2.0f;
 			}
 			else continue;
 
@@ -279,7 +278,6 @@ void initializeForestScene(bool emptyPlace)
 	{
 		std::cout << "Instance count : " << world.getObjectCount() << std::endl;
 		std::cout << "House count : " << vilageHouseCount  << std::endl;
-		std::cout << "Insert fail : " << fail << std::endl;
 	}
 }
 std::string checkResourcesDirectory()

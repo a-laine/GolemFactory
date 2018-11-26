@@ -1,3 +1,4 @@
+#include <iostream>
 #include <algorithm>
 #include <glm/gtc/matrix_access.hpp>
 
@@ -67,6 +68,10 @@ bool SceneManager::addObject(Entity* object)
 
 	node->addObject(object);
 	instanceTracking[object] = {object->getPosition(), node};
+
+	if (node == world[0])
+		std::cout << object->getId() << " inside root of world 0 !! (so fat!)" << std::endl;
+
 	return true;
 }
 

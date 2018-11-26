@@ -1,6 +1,7 @@
 #include "Renderer.h"
 
 #include <iostream>
+#include <sstream>
 
 #include <EntityComponent/Entity.hpp>
 #include <HUD/WidgetManager.h>
@@ -45,6 +46,7 @@ Renderer::~Renderer()
 }
 //
 
+
 //  Public functions
 void Renderer::initGLEW(int verbose)
 {
@@ -60,6 +62,12 @@ void Renderer::initGLEW(int verbose)
 	if (verbose < 1) return;
 
 	std::cout << "Status: GLEW version : " << glewGetString(GLEW_VERSION) << std::endl;
+
+	std::string s((const char*)glGetString(GL_VERSION));
+	std::replace(s.begin(), s.end(), '.', ' ');
+	std::stringstream ss(s);
+	ss >> openglVersionA >> openglVersionB >> openglVersionC;
+
 	std::cout << "        OpenGL version : " << glGetString(GL_VERSION) << std::endl;
 	std::cout << "        OpenGL implementation vendor : " << glGetString(GL_VENDOR) << std::endl;
 	std::cout << "        Renderer name : " << glGetString(GL_RENDERER) << std::endl;
@@ -153,20 +161,21 @@ void Renderer::render(Camera* renderCam)
 	trianglesDrawn = 0;
 	instanceDrawn = 0;
 	lastShader = nullptr;
+	lastVAO = 0;
 	if (!window || !camera || !world || !renderCam) return;
 	
-	// dummy animation timeline
+	//	dummy animation timeline
 	dummy += 0.16 / 3.f;
 	if (dummy >= 6.28) dummy = 0.0;
 
-	// bind matrix
+	//	bind matrix
 	glm::mat4 view(renderCam->getViewMatrix());
 
 	int width, height;
 	glfwGetWindowSize(window, &width, &height);
 	glm::mat4 projection(glm::perspective(glm::radians(renderCam->getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f));
 	
-	// opengl state
+	//	opengl state
 	glEnable(GL_DEPTH_TEST);
 
 	//	draw grid
@@ -186,30 +195,65 @@ void Renderer::render(Camera* renderCam)
 		camera->getFrustrumAngleVertical() / 1.6f, camera->getFrustrumAngleVertical() / 1.6f);
 	world->getSceneManager().getObjects(instanceList, sceneTest);
 
+	EntityCompareDistance compare(camera->getPosition());
+	std::sort(instanceList.begin(), instanceList.end(), compare);
+
 	//	draw instance list
-	std::map<Shader*, std::vector<Entity*> > batches;
 	for (Entity* object : instanceList)
 	{
 		DrawableComponent* comp = object->getComponent<DrawableComponent>();
 		if(!comp || !comp->isValid()) continue;
 
-		batches[comp->getShader()].push_back(object);
-		if (batches[comp->getShader()].size() > BATCH_SIZE)
+		//	try to do dynamic batching
+		if (openglVersionA >= 3 && openglVersionB >= 1 && comp->getShader()->getInstanciable())
 		{
-			std::vector<Entity*>& batch = batches[comp->getShader()];
-			for (unsigned int i = 0; i < BATCH_SIZE + 1; i++)
+			Shader* s = comp->getShader()->getInstanciable();
+			Mesh* m = comp->getMesh();
+			groupBatches[s][m].push_back(object);
+
+			if (groupBatches[s][m].size() > BATCH_SIZE)
 			{
-				drawObject(batch[i], &view[0][0], &projection[0][0]);
+				std::vector<glm::mat4> models;
+				for (unsigned int i = 0; i < groupBatches[s][m].size(); i++)
+					models.push_back(groupBatches[s][m][i]->getMatrix());
+				drawInstancedObject(s, m, models, &view[0][0], &projection[0][0]);
+				groupBatches[s][m].clear();
 			}
-			batch.clear();
+		}
+		else // simple draw
+		{
+			simpleBatches[comp->getShader()].push_back(object);
+			if (simpleBatches[comp->getShader()].size() > BATCH_SIZE)
+			{
+				std::vector<Entity*>& batch = simpleBatches[comp->getShader()];
+				for (unsigned int i = 0; i < BATCH_SIZE + 1; i++)
+				{
+					drawObject(batch[i], &view[0][0], &projection[0][0]);
+				}
+				batch.clear();
+			}
 		}
 	}
-	for (auto it = batches.begin(); it != batches.end(); ++it)
+
+	//	draw residual objects in batches
+	for (auto it = simpleBatches.begin(); it != simpleBatches.end(); ++it)
 	{
 		std::vector<Entity*>& batch = it->second;
 		for (unsigned int i = 0; i < batch.size(); i++)
 		{
 			drawObject(batch[i], &view[0][0], &projection[0][0]);
+		}
+	}
+	for (auto it = groupBatches.begin(); it != groupBatches.end(); ++it)
+	{
+		Shader* s = it->first;
+		for (auto it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+		{
+			Mesh* m = it2->first;
+			std::vector<glm::mat4> models;
+			for (unsigned int i = 0; i < it2->second.size(); i++)
+				models.push_back(it2->second[i]->getMatrix());
+			drawInstancedObject(s, m, models, &view[0][0], &projection[0][0]);
 		}
 	}
 }
@@ -269,18 +313,18 @@ void Renderer::renderHUD(Camera* renderCam)
 
 
 //	Protected functions
-void Renderer::loadMVPMatrix(Shader* shader, const float* model, const float* view, const float* projection)
+void Renderer::loadMVPMatrix(Shader* shader, const float* model, const float* view, const float* projection, const int& modelSize)
 {
 	if (shader == lastShader && shader)
 	{
 		int loc = shader->getUniformLocation("model");
-		if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, model);
+		if (loc >= 0) glUniformMatrix4fv(loc, modelSize, GL_FALSE, model);
 	}
 	else if (shader)
 	{
 		shader->enable();
 		int loc = shader->getUniformLocation("model");
-		if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, model);
+		if (loc >= 0) glUniformMatrix4fv(loc, modelSize, GL_FALSE, model);
 		loc = shader->getUniformLocation("view");
 		if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, view);
 		loc = shader->getUniformLocation("projection");
@@ -288,6 +332,14 @@ void Renderer::loadMVPMatrix(Shader* shader, const float* model, const float* vi
 		lastShader = shader;
 	}
 	else  lastShader = nullptr;
+}
+void Renderer::loadVAO(const GLuint& vao)
+{
+	if (vao != lastVAO)
+	{
+		glBindVertexArray(vao);
+		lastVAO = vao;
+	}
 }
 //
 
@@ -329,10 +381,44 @@ void Renderer::drawObject(Entity* object, const float* view, const float* projec
 	}
 
 	//	Draw mesh
-	if(renderOption == BOUNDING_BOX) drawableComp->getMesh()->drawBB();
-	else drawableComp->getMesh()->draw();
+	if (renderOption == BOUNDING_BOX)
+	{
+		loadVAO(drawableComp->getMesh()->getBBoxVAO());
+		glDrawElements(GL_TRIANGLES, (int)drawableComp->getMesh()->getBBoxFaces()->size(), GL_UNSIGNED_SHORT, NULL);
+	}	
+	else
+	{
+		loadVAO(drawableComp->getMesh()->getVAO());
+		glDrawElements(GL_TRIANGLES, (int)drawableComp->getMesh()->getFaces()->size(), GL_UNSIGNED_SHORT, NULL);
+	}
 	instanceDrawn++;
 	trianglesDrawn += drawableComp->getMesh()->getNumberFaces();
+}
+void Renderer::drawInstancedObject(Shader* s, Mesh* m, std::vector<glm::mat4>& models, const float* view, const float* projection)
+{
+	//	Get shader and prepare matrix
+	Shader* shaderToUse;
+	if (renderOption == BOUNDING_BOX) shaderToUse = defaultShader[INSTANCE_DRAWABLE_BB];
+	else shaderToUse = defaultShader[INSTANCE_DRAWABLE];
+	if (!shaderToUse || !shaderToUse->getInstanciable()) shaderToUse = s;
+	else shaderToUse = shaderToUse->getInstanciable();
+
+	//	Load MVP matrix
+	loadMVPMatrix(shaderToUse, (const float*)models.data(), view, projection, (int)models.size());
+
+	//	Draw instanced
+	if (renderOption == BOUNDING_BOX)
+	{
+		loadVAO(m->getBBoxVAO());
+		glDrawElementsInstanced(GL_TRIANGLES, (int)m->getBBoxFaces()->size(), GL_UNSIGNED_SHORT, NULL, (unsigned short)models.size());
+	}
+	else
+	{
+		loadVAO(m->getVAO());
+		glDrawElementsInstanced(GL_TRIANGLES, (int)m->getFaces()->size(), GL_UNSIGNED_SHORT, NULL, (unsigned short)models.size());
+	}
+	instanceDrawn += (unsigned int)models.size();
+	trianglesDrawn += (unsigned int)models.size() * m->getNumberFaces();
 }
 //
 

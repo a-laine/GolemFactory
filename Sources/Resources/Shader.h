@@ -43,13 +43,16 @@ class Shader : public ResourceVirtual
             const std::map<std::string, std::string>& attType, const std::vector<std::string>& textures);
         void enable();
 
-        GLuint getProgram() const;
+		void setInstanciable(Shader* instaciedVersion);
+		
+		GLuint getProgram() const;
         int getTextureCount() const;
         GLuint getShaderID(ShaderType shaderType) const;
 		bool useShaderType(ShaderType shaderType) const;
 
 		int getUniformLocation(const std::string& uniform);
 		std::string getUniformType(const std::string& uniform);
+		Shader* getInstanciable() const;
 
         std::string getIdentifier() const override;
         std::string getLoaderId(const std::string& resourceName) const;
@@ -68,5 +71,6 @@ class Shader : public ResourceVirtual
         uint8_t textureCount;								//!< The number of texture use by the program
         std::map<std::string,GLint> attributesLocation;	//!< The shader attribute map with their opengl location
 		std::map<std::string, std::string> attributesType;
+		Shader* instanciable;
         //
 };

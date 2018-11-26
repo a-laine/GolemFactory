@@ -96,6 +96,9 @@ void DefaultRayPickingCollector::operator() (NodeVirtual* node, Entity* object)
 		OrientedBox box(glm::translate(object->getPosition()) * glm::toMat4(object->getOrientation()), aabb.min, aabb.max);
 		if (!Collision::collide_SegmentvsOrientedBox( position, position + distance*direction, box.transform, box.min, box.max))
 			return;
+		/*OrientedBox box = object->getBoundingVolume();
+		if (!Collision::collide_SegmentvsOrientedBox(position, position + distance*direction, box.transform, box.min, box.max))
+			return;*/
 	}
 
 	//	second test -> test ray vs all object triangles

@@ -15,7 +15,7 @@ Shader::Shader(const std::string& shaderName)
     : ResourceVirtual(shaderName)
     , vertexShader(0), fragmentShader(0), geometricShader(0)
     , tessControlShader(0), tessEvalShader(0), program(0)
-    , textureCount(0)
+    , textureCount(0), instanciable(nullptr)
 {}
 Shader::~Shader()
 {
@@ -82,6 +82,7 @@ void Shader::initialize(GLuint  vertexSh, GLuint fragSh, GLuint geomShr, GLuint 
 }
 
 void Shader::enable() { glUseProgram(program); }
+void Shader::setInstanciable(Shader* instaciedVersion) { instanciable = instaciedVersion; }
 GLuint Shader::getProgram() const { return program; }
 int Shader::getTextureCount() const { return textureCount; }
 GLuint Shader::getShaderID(ShaderType shaderType) const
@@ -137,6 +138,7 @@ std::string Shader::getLoaderId(const std::string& resourceName) const
 {
     return extension;
 }
+Shader* Shader::getInstanciable() const { return instanciable; }
 
 const std::string& Shader::getDefaultName() { return defaultName; }
 void Shader::setDefaultName(const std::string& name) { defaultName = name; }

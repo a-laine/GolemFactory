@@ -42,7 +42,7 @@ void ResourceVirtual::assign(const ResourceVirtual* other)
 void ResourceVirtual::printErrorLog(const std::string& resourceName, const int& errorLine, bool& printHeader)
 {
 	if (printHeader && logVerboseLevel >= ResourceVirtual::WARNINGS)
-		std::cerr << "WARNING : loading mesh : " << resourceName << " : wrong number of argument successfully parsed :" << std::endl;
+		std::cerr << "WARNING : loading resource : " << resourceName << " : wrong number of argument successfully parsed :" << std::endl;
 	if (logVerboseLevel >= ResourceVirtual::WARNINGS)
 		std::cerr << "   check line : " << errorLine << std::endl;
 	printHeader = true;

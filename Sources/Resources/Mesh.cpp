@@ -232,16 +232,8 @@ void Mesh::initializeVAO()
 	glBindVertexArray(0);
 }
 
-void Mesh::draw()
-{
-	glBindVertexArray(vao);
-	glDrawElements(GL_TRIANGLES, (int)faces.size(), GL_UNSIGNED_SHORT, NULL);
-}
-void Mesh::drawBB()
-{
-	glBindVertexArray(BBoxVao);
-	glDrawElements(GL_TRIANGLES, (int)fBBox.size(), GL_UNSIGNED_SHORT, NULL);
-}
+const GLuint Mesh::getVAO() const { return vao;}
+const GLuint Mesh::getBBoxVAO() const { return BBoxVao; }
 //
 
 

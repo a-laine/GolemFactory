@@ -16,7 +16,7 @@ class ShaderLoader : public IResourceLoader
         void getResourcesToRegister(std::vector<ResourceVirtual*>& resourceList) override;
 
     //private:
-        std::string getFileName(const std::string& resourceDirectory, const std::string& fileName) const;
+        static std::string getFileName(const std::string& resourceDirectory, const std::string& fileName);
         bool loadShader(Shader::ShaderType shaderType, std::string filename, GLuint& shader);
 
 

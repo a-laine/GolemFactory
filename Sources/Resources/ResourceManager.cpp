@@ -2,6 +2,8 @@
 
 #include <Utiles/ToolBox.h>
 
+#include "Resources/Shader.h"
+#include "Resources/Loader/ShaderLoader.h"
 
 //  Default
 ResourceManager::ResourceManager(const std::string& path)
@@ -117,6 +119,22 @@ void ResourceManager::loadResource_internal(ResourceVirtual* resource, const std
         if(!addResource_internal(res))
             delete res;
     }
+	
+	// HACK !!!!  dsl aurel :)
+	if (loaderId == Shader::extension)
+	{
+		std::ifstream strm(ShaderLoader::getFileName(getRepository(), fileName + "Instanced"));
+		if (!strm.is_open()) return;
+
+		IResourceLoader* loader2 = findLoader_internal(loaderId);
+		if (loader2 && loader2->load(getRepository(), fileName + "Instanced"))
+		{
+			Shader* instanced = new Shader(fileName + "Instanced");
+			loader2->initialize(instanced);
+			Shader* s = static_cast<Shader*>(resource);
+			s->setInstanciable(instanced);
+		}
+	}
 }
 bool ResourceManager::addResource_internal(ResourceVirtual* resource)
 {

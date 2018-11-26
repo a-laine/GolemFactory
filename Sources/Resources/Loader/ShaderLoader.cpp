@@ -160,7 +160,7 @@ void ShaderLoader::initialize(ResourceVirtual* resource)
 void ShaderLoader::getResourcesToRegister(std::vector<ResourceVirtual*>& resourceList)
 {}
 
-std::string ShaderLoader::getFileName(const std::string& resourceDirectory, const std::string& fileName) const
+std::string ShaderLoader::getFileName(const std::string& resourceDirectory, const std::string& fileName)
 {
     std::string str = resourceDirectory;
     str += Shader::directory;

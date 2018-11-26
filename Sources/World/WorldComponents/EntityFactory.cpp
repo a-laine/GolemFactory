@@ -7,6 +7,7 @@
 #include <Animation/SkeletonComponent.h>
 #include <Animation/AnimationComponent.h>
 
+
 EntityFactory::EntityFactory(World* parentWorld)
 	: world(parentWorld)
 {}

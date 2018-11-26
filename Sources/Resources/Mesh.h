@@ -39,8 +39,9 @@ class Mesh : public ResourceVirtual
 		virtual void initializeVBO();
 		virtual void initializeVAO();
 
-		virtual void draw();
-		virtual void drawBB();
+		/*virtual void draw();
+		virtual void drawGroup(unsigned short groupCount);
+		virtual void drawBB();*/
         //
 
         //  Set/get functions
@@ -59,6 +60,9 @@ class Mesh : public ResourceVirtual
 		const std::vector<glm::ivec3>* getBones() const;
 		const std::vector<glm::vec3>* getWeights() const;
 		const AxisAlignedBox& getBoundingBox() const;
+
+		const GLuint getVAO() const;
+		const GLuint getBBoxVAO() const;
         //
 
 	private:
