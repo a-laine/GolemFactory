@@ -31,13 +31,8 @@ void Entity::setTransformation(const glm::vec3& position, const glm::vec3& scale
 
 	m_transform = glm::translate(glm::mat4(1.0), position);
 	m_transform = m_transform * glm::toMat4(orientation);
-
-	if (getComponent<DrawableComponent>())
-	{
-		glm::vec3 min = getComponent<DrawableComponent>()->getMeshBBMin();
-		glm::vec3 max = getComponent<DrawableComponent>()->getMeshBBMax();
-		m_boundingVolume = OrientedBox(m_transform, min, max);
-	}
+	
+	m_boundingVolume.transform = m_transform;
 
 	m_transform = glm::scale(m_transform, scale);
 }

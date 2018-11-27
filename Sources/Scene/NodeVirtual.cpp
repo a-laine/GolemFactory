@@ -5,8 +5,11 @@
 #include "Utiles/Assert.hpp"
 
 
+World* NodeVirtual::debugWorld = nullptr;
+
+
 //	Default
-NodeVirtual::NodeVirtual() : position(0.f) , halfSize(0.f) , division(0) , allowanceSize(1.f){}
+NodeVirtual::NodeVirtual() : position(0.f) , halfSize(0.f) , division(0) , allowanceSize(1.f), debugCube(nullptr){}
 NodeVirtual::~NodeVirtual()
 {
 	//	free instance
@@ -15,12 +18,13 @@ NodeVirtual::~NodeVirtual()
 		World* world = objectList[i]->getParentWorld();
 		world->releaseOwnership(objectList[i]);
 	}
+	/*if(debugWorld && debugCube)
+		debugWorld->releaseOwnership(debugCube);*/
 
 	//	delete all children
 	for (unsigned int i = 0; i < adoptedChildren.size(); i++)
 		delete adoptedChildren[i];
 }
-
 
 void NodeVirtual::init(const glm::vec3 bbMin, const glm::vec3 bbMax, const glm::ivec3& nodeDivision, unsigned int depth)
 {
@@ -28,6 +32,9 @@ void NodeVirtual::init(const glm::vec3 bbMin, const glm::vec3 bbMax, const glm::
 	position = (bbMax + bbMin) * 0.5f;
 	halfSize = (bbMax - bbMin) * 0.5f;
 	allowanceSize = glm::compMin(halfSize) * 2;
+
+	if(debugWorld)
+		debugCube = debugWorld->getEntityFactory().createObject("cube", position, halfSize, glm::quat(1, 0, 0, 0));
 
 	if(depth > 0)
 	{
@@ -219,4 +226,4 @@ void NodeVirtual::getChildrenInBox(std::vector<NodeRange>& result, const glm::ve
 	}
 }
 
-
+Entity* NodeVirtual::getDebugCube() { return debugCube; }

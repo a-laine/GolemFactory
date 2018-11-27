@@ -36,8 +36,10 @@ DefaultSceneManagerRayTest::DefaultSceneManagerRayTest(const glm::vec3& pos, con
 {}
 SceneManager::CollisionType DefaultSceneManagerRayTest::operator() (const NodeVirtual* node) const
 {
+	return SceneManager::OVERLAP;;
 	//	Segment/AABB collision test
-	if (Collision::collide_SegmentvsAxisAlignedBox(position, position + distance*direction, node->getBBMin(), node->getBBMax()))
+	glm::vec3 s = glm::vec3(0.0f);
+	if (Collision::collide_SegmentvsAxisAlignedBox(position, position + distance*direction, node->getBBMin() - s, node->getBBMax() + s))
 		return SceneManager::OVERLAP;
 	else return SceneManager::NONE;
 }
@@ -73,12 +75,15 @@ SceneManager::CollisionType DefaultSceneManagerFrustrumTest::operator() (const N
 
 DefaultRayPickingCollector::DefaultRayPickingCollector(const glm::vec3& pos, const glm::vec3& dir, float maxDist) : position(pos), direction(dir), distance(maxDist)
 {}
-
-
 void DefaultRayPickingCollector::operator() (NodeVirtual* node, Entity* object)
 {
+	objectOnRay[glm::dot(node->getPosition() - position, node->getPosition() - position)] = node->getDebugCube();
+
     DrawableComponent* drawableComp = object->getComponent<DrawableComponent>();
 	if (!drawableComp || !drawableComp->isValid()) return;
+
+	//objectOnRay[glm::dot(object->getPosition() - position, object->getPosition() - position)] = object;
+	return;
 
     const SkeletonComponent* skeletonComp = object->getComponent<SkeletonComponent>();
 	bool animatable = drawableComp->hasSkeleton() && skeletonComp && skeletonComp->isValid();
@@ -92,14 +97,12 @@ void DefaultRayPickingCollector::operator() (NodeVirtual* node, Entity* object)
 	}
 	else
 	{
-		AxisAlignedBox aabb = mesh->getBoundingBox();
-		OrientedBox box(glm::translate(object->getPosition()) * glm::toMat4(object->getOrientation()), aabb.min, aabb.max);
-		if (!Collision::collide_SegmentvsOrientedBox( position, position + distance*direction, box.transform, box.min, box.max))
-			return;
-		/*OrientedBox box = object->getBoundingVolume();
+		OrientedBox box = object->getBoundingVolume();
 		if (!Collision::collide_SegmentvsOrientedBox(position, position + distance*direction, box.transform, box.min, box.max))
-			return;*/
+			return;
 	}
+	objectOnRay[glm::dot(object->getPosition() - position, object->getPosition() - position)] = object;
+	return;
 
 	//	second test -> test ray vs all object triangles
 	const std::vector<glm::vec3>& vertices = *mesh->getVertices();

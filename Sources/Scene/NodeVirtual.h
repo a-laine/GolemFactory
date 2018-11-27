@@ -3,7 +3,9 @@
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 
-#include <EntityComponent/Entity.hpp>
+#include "EntityComponent/Entity.hpp"
+
+class World;
 
 /*! \class NodeVirtual
  *  \brief Base class for node implementation.
@@ -66,9 +68,11 @@ class NodeVirtual
 		void getObjectList(ObjectCollector& collector);
 		template<>
 		void getObjectList(std::vector<Entity*>& collector);
+		Entity* getDebugCube();
 
 	public:
 		float allowanceSize;
+		static World* debugWorld;
 
 	private:
 		glm::vec3 position;							//!< Node position in scene coordinate
@@ -78,6 +82,8 @@ class NodeVirtual
 		std::vector<NodeVirtual> children;			//!< Subdivision children container (empty if leaf)
 		std::vector<NodeVirtual*> adoptedChildren;	//!< Children added to, for special tree
 		std::vector<Entity*> objectList;	//!< Instance container (list of instance attached to node)
+
+		Entity* debugCube;
 };
 
 

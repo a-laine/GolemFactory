@@ -89,6 +89,9 @@ int main()
 		WidgetManager::getInstance()->setActiveHUD("debug");
 		Collision::debugUnitaryTest(2);
 
+		//WidgetManager::getInstance()->setBoolean("BBrendering", true);
+
+
 	//	Test scene
 		Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("wired"));
 		initializeForestScene(false);
@@ -195,7 +198,8 @@ void initializeForestScene(bool emptyPlace)
 	//	center tree in place
 	if (!emptyPlace)
 	{
-		world.getEntityFactory().createObject("tree", glm::vec3(0), glm::vec3(5.f, 5.f, 5.f));
+		//world.getEntityFactory().createObject("tree", glm::vec3(0), glm::vec3(5.f, 5.f, 5.f));
+		world.getEntityFactory().createObject("rock", glm::vec3(0), glm::vec3(50.f, 50.f, 50.f));
 	}
 
 	// village
@@ -262,7 +266,7 @@ void initializeForestScene(bool emptyPlace)
 			else if (r < 80)
 			{
 				objectType = "tree";
-				sDispersion = 0.0f;
+				sDispersion = 0.3f;
 				sOffset = 2.0f;
 			}
 			else continue;
@@ -329,6 +333,7 @@ void initManagers()
 	// Init world
 	const glm::vec3 worldHalfSize = glm::vec3(GRID_SIZE*GRID_ELEMENT_SIZE, GRID_SIZE*GRID_ELEMENT_SIZE, 50) * 0.5f;
 	const glm::vec3 worldPos = glm::vec3(0, 0, worldHalfSize.z - 5);
+	NodeVirtual::debugWorld = &world;
 	world.getSceneManager().init(worldPos - worldHalfSize, worldPos + worldHalfSize, glm::ivec3(4, 4, 1), 2);
 	world.setMaxObjectCount(4000000);
 
@@ -358,9 +363,10 @@ void initManagers()
 }
 void picking(int width, int height)
 {
-	DefaultSceneManagerRayTest sceneNodeTest(camera.getPosition(), camera.getForward(), 100);
-	DefaultRayPickingCollector collector(camera.getPosition(), camera.getForward(), 100);
+	DefaultSceneManagerRayTest sceneNodeTest(camera.getPosition(), camera.getForward(), 10000);
+	DefaultRayPickingCollector collector(camera.getPosition(), camera.getForward(), 10000);
 	world.getSceneManager().getObjects(collector, sceneNodeTest);
+	std::cout << "--" << std::endl;
 
 	if (!collector.getObjects().empty())
 	{
@@ -383,7 +389,9 @@ void picking(int width, int height)
 			Renderer::RenderOption option = Renderer::getInstance()->getRenderOption();
 			Renderer::getInstance()->setRenderOption(option == Renderer::DEFAULT ? Renderer::BOUNDING_BOX : Renderer::DEFAULT);
 			glm::mat4 projection = glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f);
-			Renderer::getInstance()->drawObject(collector.getNearestObject(), &camera.getViewMatrix()[0][0], &projection[0][0]);
+
+			for (auto it = collector.getObjects().begin(); it != collector.getObjects().end(); ++it)
+				Renderer::getInstance()->drawObject(it->second, &camera.getViewMatrix()[0][0], &projection[0][0]);
 			Renderer::getInstance()->setRenderOption(option);
 		}
 	}

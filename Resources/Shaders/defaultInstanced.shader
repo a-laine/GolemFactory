@@ -1,7 +1,7 @@
 Default
 {
 	vertex :   "defaultInstanced.vs";
-	fragment : "defaultInstanced.fs";
+	fragment : "default.fs";
 	
 	uniform :
 	{
