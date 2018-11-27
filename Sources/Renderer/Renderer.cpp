@@ -12,7 +12,7 @@
 #include <Animation/SkeletonComponent.h>
 
 
-#define BATCH_SIZE 30
+#define BATCH_SIZE 32
 
 
 //  Default
@@ -158,6 +158,7 @@ void Renderer::initializeGrid(const unsigned int& gridSize,const float& elementS
 }
 void Renderer::render(Camera* renderCam)
 {
+	//	clear previous states
 	trianglesDrawn = 0;
 	instanceDrawn = 0;
 	lastShader = nullptr;
@@ -170,7 +171,6 @@ void Renderer::render(Camera* renderCam)
 
 	//	bind matrix
 	glm::mat4 view(renderCam->getViewMatrix());
-
 	int width, height;
 	glfwGetWindowSize(window, &width, &height);
 	glm::mat4 projection(glm::perspective(glm::radians(renderCam->getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f));
@@ -184,7 +184,6 @@ void Renderer::render(Camera* renderCam)
 	{
 		s->enable();
 		loadMVPMatrix(s, &glm::mat4(1.0)[0][0], &view[0][0], &projection[0][0]);
-
 		glBindVertexArray(gridVAO);
 		glDrawElements(GL_TRIANGLES, vboGridSize, GL_UNSIGNED_INT, NULL);
 	}
@@ -209,27 +208,22 @@ void Renderer::render(Camera* renderCam)
 		{
 			Shader* s = comp->getShader()->getInstanciable();
 			Mesh* m = comp->getMesh();
-			groupBatches[s][m].push_back(object);
-
-			if (groupBatches[s][m].size() > BATCH_SIZE)
+			std::vector<glm::mat4>& batch = groupBatches[s][m];
+			batch.push_back(object->getMatrix());
+			if (batch.size() >= BATCH_SIZE)
 			{
-				std::vector<glm::mat4> models;
-				for (unsigned int i = 0; i < groupBatches[s][m].size(); i++)
-					models.push_back(groupBatches[s][m][i]->getMatrix());
-				drawInstancedObject(s, m, models, &view[0][0], &projection[0][0]);
-				groupBatches[s][m].clear();
+				drawInstancedObject(s, m, batch, &view[0][0], &projection[0][0]);
+				batch.clear();
 			}
 		}
 		else // simple draw
 		{
-			simpleBatches[comp->getShader()].push_back(object);
-			if (simpleBatches[comp->getShader()].size() > BATCH_SIZE)
+			std::vector<Entity*>& batch = simpleBatches[comp->getShader()];
+			batch.push_back(object);
+			if (batch.size() >= BATCH_SIZE)
 			{
-				std::vector<Entity*>& batch = simpleBatches[comp->getShader()];
-				for (unsigned int i = 0; i < BATCH_SIZE + 1; i++)
-				{
+				for (unsigned int i = 0; i < BATCH_SIZE; i++)
 					drawObject(batch[i], &view[0][0], &projection[0][0]);
-				}
 				batch.clear();
 			}
 		}
@@ -240,9 +234,8 @@ void Renderer::render(Camera* renderCam)
 	{
 		std::vector<Entity*>& batch = it->second;
 		for (unsigned int i = 0; i < batch.size(); i++)
-		{
 			drawObject(batch[i], &view[0][0], &projection[0][0]);
-		}
+		batch.clear();
 	}
 	for (auto it = groupBatches.begin(); it != groupBatches.end(); ++it)
 	{
@@ -250,10 +243,9 @@ void Renderer::render(Camera* renderCam)
 		for (auto it2 = it->second.begin(); it2 != it->second.end(); ++it2)
 		{
 			Mesh* m = it2->first;
-			std::vector<glm::mat4> models;
-			for (unsigned int i = 0; i < it2->second.size(); i++)
-				models.push_back(it2->second[i]->getMatrix());
-			drawInstancedObject(s, m, models, &view[0][0], &projection[0][0]);
+			if(!groupBatches[s][m].empty())
+				drawInstancedObject(s, m, groupBatches[s][m], &view[0][0], &projection[0][0]);
+			groupBatches[s][m].clear();
 		}
 	}
 }
@@ -417,8 +409,8 @@ void Renderer::drawInstancedObject(Shader* s, Mesh* m, std::vector<glm::mat4>& m
 		loadVAO(m->getVAO());
 		glDrawElementsInstanced(GL_TRIANGLES, (int)m->getFaces()->size(), GL_UNSIGNED_SHORT, NULL, (unsigned short)models.size());
 	}
-	instanceDrawn += (unsigned int)models.size();
-	trianglesDrawn += (unsigned int)models.size() * m->getNumberFaces();
+	instanceDrawn += (int)(models.size());
+	trianglesDrawn += (int)(models.size() * m->getNumberFaces());
 }
 //
 

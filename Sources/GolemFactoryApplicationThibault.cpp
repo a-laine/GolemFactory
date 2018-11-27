@@ -82,7 +82,7 @@ int main()
 {
 	// init window and opengl
 	window = initGLFW();
-	Renderer::getInstance()->initGLEW(0);
+	Renderer::getInstance()->initGLEW(1);
 	initManagers();
 
 	//	Collision test

@@ -113,7 +113,7 @@ class Renderer : public Singleton<Renderer>
 		GLuint lastVAO;
 
 		std::map<Shader*, std::vector<Entity*> > simpleBatches;
-		std::map<Shader*, std::map<Mesh*, std::vector<Entity*> > > groupBatches;
+		std::map<Shader*, std::map<Mesh*, std::vector<glm::mat4> > > groupBatches;
 		//
 };
 
