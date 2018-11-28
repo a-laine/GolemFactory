@@ -4,6 +4,7 @@
 #include "World/World.h"
 #include "Utiles/Assert.hpp"
 
+#define ALLOWANCE_SIZE_FACTOR 0.33f
 
 World* NodeVirtual::debugWorld = nullptr;
 
@@ -31,7 +32,7 @@ void NodeVirtual::init(const glm::vec3 bbMin, const glm::vec3 bbMax, const glm::
 	GF_ASSERT(children.empty());
 	position = (bbMax + bbMin) * 0.5f;
 	halfSize = (bbMax - bbMin) * 0.5f;
-	allowanceSize = glm::compMin(halfSize) * 2;
+	allowanceSize = glm::compMin(bbMax - bbMin) * ALLOWANCE_SIZE_FACTOR;
 
 	if(debugWorld)
 		debugCube = debugWorld->getEntityFactory().createObject("cube", position, halfSize, glm::quat(1, 0, 0, 0));
@@ -116,7 +117,7 @@ bool NodeVirtual::isTooSmall(const glm::vec3& size) const
 
 bool NodeVirtual::isTooBig(const glm::vec3& size) const
 {
-	return glm::dot(size, size) > 4 * 4 * allowanceSize * allowanceSize;
+	return glm::dot(size, size) > 1.0f / ALLOWANCE_SIZE_FACTOR * allowanceSize * allowanceSize;
 }
 glm::vec3 NodeVirtual::getPosition() const
 {

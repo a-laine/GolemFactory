@@ -36,9 +36,8 @@ DefaultSceneManagerRayTest::DefaultSceneManagerRayTest(const glm::vec3& pos, con
 {}
 SceneManager::CollisionType DefaultSceneManagerRayTest::operator() (const NodeVirtual* node) const
 {
-	return SceneManager::OVERLAP;;
 	//	Segment/AABB collision test
-	glm::vec3 s = glm::vec3(0.0f);
+	glm::vec3 s = 1.01f * glm::vec3(node->allowanceSize);
 	if (Collision::collide_SegmentvsAxisAlignedBox(position, position + distance*direction, node->getBBMin() - s, node->getBBMax() + s))
 		return SceneManager::OVERLAP;
 	else return SceneManager::NONE;
@@ -77,17 +76,14 @@ DefaultRayPickingCollector::DefaultRayPickingCollector(const glm::vec3& pos, con
 {}
 void DefaultRayPickingCollector::operator() (NodeVirtual* node, Entity* object)
 {
-	objectOnRay[glm::dot(node->getPosition() - position, node->getPosition() - position)] = node->getDebugCube();
-
     DrawableComponent* drawableComp = object->getComponent<DrawableComponent>();
 	if (!drawableComp || !drawableComp->isValid()) return;
 
 	//objectOnRay[glm::dot(object->getPosition() - position, object->getPosition() - position)] = object;
-	return;
+	//return;
 
     const SkeletonComponent* skeletonComp = object->getComponent<SkeletonComponent>();
 	bool animatable = drawableComp->hasSkeleton() && skeletonComp && skeletonComp->isValid();
-
     Mesh* mesh = drawableComp->getMesh();
 
 	//	first pass test -> test ray vs object OBB or capsules
@@ -98,11 +94,11 @@ void DefaultRayPickingCollector::operator() (NodeVirtual* node, Entity* object)
 	else
 	{
 		OrientedBox box = object->getBoundingVolume();
-		if (!Collision::collide_SegmentvsOrientedBox(position, position + distance*direction, box.transform, box.min, box.max))
+		if (!Collision::collide_SegmentvsOrientedBox(position, position + distance * direction, box.transform, box.min * object->getScale(), box.max * object->getScale()))
 			return;
 	}
-	objectOnRay[glm::dot(object->getPosition() - position, object->getPosition() - position)] = object;
-	return;
+	//objectOnRay[glm::dot(object->getPosition() - position, object->getPosition() - position)] = object;
+	//return;
 
 	//	second test -> test ray vs all object triangles
 	const std::vector<glm::vec3>& vertices = *mesh->getVertices();

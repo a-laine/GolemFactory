@@ -89,9 +89,6 @@ int main()
 		WidgetManager::getInstance()->setActiveHUD("debug");
 		Collision::debugUnitaryTest(2);
 
-		//WidgetManager::getInstance()->setBoolean("BBrendering", true);
-
-
 	//	Test scene
 		Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("wired"));
 		initializeForestScene(false);
@@ -198,8 +195,8 @@ void initializeForestScene(bool emptyPlace)
 	//	center tree in place
 	if (!emptyPlace)
 	{
-		//world.getEntityFactory().createObject("tree", glm::vec3(0), glm::vec3(5.f, 5.f, 5.f));
-		world.getEntityFactory().createObject("rock", glm::vec3(0), glm::vec3(50.f, 50.f, 50.f));
+		world.getEntityFactory().createObject("tree", glm::vec3(0), glm::vec3(5.f, 5.f, 5.f));
+		//world.getEntityFactory().createObject("rock", glm::vec3(0), glm::vec3(50.f, 50.f, 50.f));
 	}
 
 	// village
@@ -276,7 +273,7 @@ void initializeForestScene(bool emptyPlace)
 
 			world.getEntityFactory().createObject(objectType, p, glm::vec3(s, s, s), a);
 		}
-
+	
 	//	debug
 	if (DEBUG)
 	{
@@ -331,10 +328,10 @@ void initManagers()
     ResourceManager::getInstance()->addNewResourceLoader(".texture", new TextureLoader());
 
 	// Init world
-	const glm::vec3 worldHalfSize = glm::vec3(GRID_SIZE*GRID_ELEMENT_SIZE, GRID_SIZE*GRID_ELEMENT_SIZE, 50) * 0.5f;
+	const glm::vec3 worldHalfSize = glm::vec3(GRID_SIZE*GRID_ELEMENT_SIZE, GRID_SIZE*GRID_ELEMENT_SIZE, 64) * 0.5f;
 	const glm::vec3 worldPos = glm::vec3(0, 0, worldHalfSize.z - 5);
 	NodeVirtual::debugWorld = &world;
-	world.getSceneManager().init(worldPos - worldHalfSize, worldPos + worldHalfSize, glm::ivec3(4, 4, 1), 2);
+	world.getSceneManager().init(worldPos - worldHalfSize, worldPos + worldHalfSize, glm::ivec3(4, 4, 1), 3);
 	world.setMaxObjectCount(4000000);
 
 	//	Renderer
@@ -366,7 +363,7 @@ void picking(int width, int height)
 	DefaultSceneManagerRayTest sceneNodeTest(camera.getPosition(), camera.getForward(), 10000);
 	DefaultRayPickingCollector collector(camera.getPosition(), camera.getForward(), 10000);
 	world.getSceneManager().getObjects(collector, sceneNodeTest);
-	std::cout << "--" << std::endl;
+	//std::cout << "--" << std::endl;
 
 	if (!collector.getObjects().empty())
 	{

@@ -92,6 +92,7 @@ class NodeVirtual
 template<typename ObjectCollector>
 void NodeVirtual::getObjectList(ObjectCollector& collector)
 {
+	//if(debugCube) collector(this, debugCube);
 	for(Entity* object : objectList)
 		collector(this, object);
 }

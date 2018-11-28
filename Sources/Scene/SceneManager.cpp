@@ -63,7 +63,8 @@ bool SceneManager::addObject(Entity* object)
 		return false;
 
 	const OrientedBox box = object->getBoundingVolume();
-	while(!node->isLeaf() && node->isTooSmall(box.max - box.min))
+	glm::vec3 s = (box.max - box.min)*object->getScale();
+	while (!node->isLeaf() && node->isTooSmall(s))
 		node = node->getChildAt(object->getPosition());
 
 	node->addObject(object);

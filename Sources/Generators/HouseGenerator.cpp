@@ -119,7 +119,11 @@ void HouseGenerator::getHouse(Entity* house, unsigned int seed, int d, int p)
     std::vector<glm::vec3> weightsArray;
     mesh->initialize(verticesArray, normalesArray, colorArray, facesArray, bonesArray, weightsArray);
 	ResourceManager::getInstance()->addResource(mesh);				//	add mesh to resources manager for instance creation
-	house->addComponent(new DrawableComponent(houseName));
+
+	DrawableComponent* drawable = new DrawableComponent(houseName);
+	house->addComponent(drawable);
+	house->setBoundingVolume(OrientedBox(glm::mat4(1.f), drawable->getMeshBBMin(), drawable->getMeshBBMax()));
+
 	ResourceManager::getInstance()->release(mesh);				//	House generator release mesh pointer
 }
 //
