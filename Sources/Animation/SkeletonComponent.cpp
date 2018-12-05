@@ -95,9 +95,19 @@ glm::vec3 SkeletonComponent::getJointPosition(const std::string& jointName)
 	return p;
 }
 
-const std::vector<float>& SkeletonComponent::getCapsules() const
+/*const std::vector<float>& SkeletonComponent::getCapsules() const
 {
 	return capsules;
+}*/
+
+const std::vector<glm::ivec2>& SkeletonComponent::getSegmentsIndex() const
+{
+	return segmentIndex;
+}
+
+const std::vector<float>& SkeletonComponent::getSegmentsRadius() const
+{
+	return segmentRadius;
 }
 
 bool SkeletonComponent::isValid() const
@@ -186,6 +196,7 @@ void SkeletonComponent::computeCapsules(Mesh* mesh)
 void SkeletonComponent::initializeVBOVAO()
 {
     GF_ASSERT(isValid());
+
 	//	generate vbo
 	glGenBuffers(1, &segIndexBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, segIndexBuffer);
@@ -207,7 +218,6 @@ void SkeletonComponent::initializeVBOVAO()
 	glBindBuffer(GL_ARRAY_BUFFER, segRadiusBuffer);
 	glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 0, NULL);
 
-	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, blBuffer);
 	glBindVertexArray(0);
 }
 
@@ -217,6 +227,8 @@ void SkeletonComponent::drawBB()
 	glBindVertexArray(vao);
 	glDrawArrays(GL_POINTS, 0, (int)segmentIndex.size());
 }
+
+const GLuint SkeletonComponent::getCapsuleVAO() const { return vao; }
 
 void SkeletonComponent::computePose(std::vector<glm::mat4>& result, const std::vector<JointPose>& input, const glm::mat4& parentPose, unsigned int joint)
 {

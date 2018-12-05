@@ -28,7 +28,9 @@ class SkeletonComponent : public Component
 		const std::vector<glm::mat4>& getPose() const;
         std::vector<glm::mat4x4> getInverseBindPose() const;
 		glm::vec3 getJointPosition(const std::string& jointName);
-		const std::vector<float>& getCapsules() const;
+		//const std::vector<float>& getCapsules() const;
+		const std::vector<glm::ivec2>& getSegmentsIndex() const;
+		const std::vector<float>& getSegmentsRadius() const;
 
         bool isValid() const;
 		
@@ -38,6 +40,7 @@ class SkeletonComponent : public Component
 		void initializeVBOVAO();
 
 		void drawBB();
+		const GLuint getCapsuleVAO() const;
 
 	private:
 		void computePose(std::vector<glm::mat4>& result, const std::vector<JointPose>& input, const glm::mat4& parentPose, unsigned int joint);

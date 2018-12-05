@@ -97,11 +97,10 @@ int main()
 		{
             DrawableComponent* drawable = object->getComponent<DrawableComponent>();
 			OrientedBox box = object->getBoundingVolume();
-			float scale = 1.7f / (box.max - box.min).z;
+			float scale = 1.f; // 1.7f / (box.max - box.min).z;
 			object->setScale(glm::vec3(scale));
 			glm::vec3 pos = glm::vec3(20.f, 20.f, -scale * drawable->getMeshBBMin().z);
 			object->setPosition(pos);
-			//camera.setMode(Camera::TRACKBALL);
 			camera.setRadius(4);
 		});
 

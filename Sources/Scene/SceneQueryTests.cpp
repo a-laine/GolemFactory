@@ -89,7 +89,24 @@ void DefaultRayPickingCollector::operator() (NodeVirtual* node, Entity* object)
 	//	first pass test -> test ray vs object OBB or capsules
 	if (animatable)
 	{
-		//	TODO collision on capsules
+		glm::mat4 model = object->getMatrix();
+		float scale = glm::compMax(object->getScale());
+		const std::vector<glm::mat4> pose = object->getComponent<SkeletonComponent>()->getPose();
+		const std::vector<glm::ivec2>& segments = object->getComponent<SkeletonComponent>()->getSegmentsIndex();
+		const std::vector<float>& radius = object->getComponent<SkeletonComponent>()->getSegmentsRadius();
+
+		bool collision = false;
+		for (unsigned int i = 0; i < segments.size(); i++)
+		{
+			glm::vec3 a(model * pose[(const int)segments[i].x][3]);
+			glm::vec3 b(model * pose[(const int)segments[i].y][3]);
+			if (Collision::collide_SegmentvsCapsule(position, position + distance * direction, a, b, scale*radius[i]))
+			{
+				collision = true;
+				break;
+			}
+		}
+		if (!collision) return;
 	}
 	else
 	{
@@ -97,8 +114,8 @@ void DefaultRayPickingCollector::operator() (NodeVirtual* node, Entity* object)
 		if (!Collision::collide_SegmentvsOrientedBox(position, position + distance * direction, box.transform, box.min * object->getScale(), box.max * object->getScale()))
 			return;
 	}
-	//objectOnRay[glm::dot(object->getPosition() - position, object->getPosition() - position)] = object;
-	//return;
+	objectOnRay[glm::dot(object->getPosition() - position, object->getPosition() - position)] = object;
+	return;
 
 	//	second test -> test ray vs all object triangles
 	const std::vector<glm::vec3>& vertices = *mesh->getVertices();

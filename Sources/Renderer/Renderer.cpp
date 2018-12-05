@@ -358,7 +358,7 @@ void Renderer::drawObject(Entity* object, const float* view, const float* projec
 	loadMVPMatrix(shaderToUse, &object->getMatrix()[0][0], view, projection);
 	if(!shaderToUse) return;
 
-	if(skeletonComp && skeletonComp->isValid())
+	if(shaderType == INSTANCE_ANIMATABLE)
 	{
 		//	Load skeleton pose matrix list for vertex skinning calculation
 		std::vector<glm::mat4> pose = skeletonComp->getPose();
@@ -373,7 +373,12 @@ void Renderer::drawObject(Entity* object, const float* view, const float* projec
 	}
 
 	//	Draw mesh
-	if (renderOption == BOUNDING_BOX)
+	if (renderOption == BOUNDING_BOX && shaderType == INSTANCE_ANIMATABLE)
+	{
+		loadVAO(skeletonComp->getCapsuleVAO());
+		glDrawArrays(GL_POINTS, 0, (int)skeletonComp->getSegmentsIndex().size());
+	}
+	else if (renderOption == BOUNDING_BOX)
 	{
 		loadVAO(drawableComp->getMesh()->getBBoxVAO());
 		glDrawElements(GL_TRIANGLES, (int)drawableComp->getMesh()->getBBoxFaces()->size(), GL_UNSIGNED_SHORT, NULL);
