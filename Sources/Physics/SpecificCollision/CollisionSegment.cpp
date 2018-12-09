@@ -2,6 +2,8 @@
 #include "CollisionPoint.h"
 #include "CollisionUtils.h"
 
+#include <iostream>
+
 
 //	Specialized functions : segment
 bool Collision::collide_SegmentvsSegment(const glm::vec3& segment1a, const glm::vec3& segment1b, const glm::vec3& segment2a, const glm::vec3& segment2b)
@@ -192,7 +194,10 @@ bool Collision::collide_SegmentvsCapsule(const glm::vec3& segment1, const glm::v
 		float t1 = -glm::determinant(glm::mat3(segment1 - capsule1, u2, n)) / glm::dot(n, n);
 		float t2 = -glm::determinant(glm::mat3(segment1 - capsule1, u1, n)) / glm::dot(n, n);
 
+		t1 = glm::clamp(t1, 0.f, glm::length(s1));
+		t2 = glm::clamp(t2, 0.f, glm::length(s2));
 		glm::vec3 d = capsule1 + u2*t2 - (segment1 + u1*t1);
+
 		return glm::length(d) <= std::max(capsuleRadius, COLLISION_EPSILON);
 	}
 }
