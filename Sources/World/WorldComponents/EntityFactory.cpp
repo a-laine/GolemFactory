@@ -36,7 +36,7 @@ Entity* EntityFactory::createEntity()
 {
 	return world->getNewEntity();
 }
-
+#include <iostream>
 Entity* EntityFactory::createByType(const std::string& type)
 {
 	Entity* object = createEntity();

@@ -86,8 +86,8 @@ void Mesh::initialize(std::vector<glm::vec3>&& verticesArray, std::vector<glm::v
 
 void Mesh::computeBoundingBox()
 {
-	boundingBox.min = glm::vec3(std::numeric_limits<float>::max(), std::numeric_limits<float>::max(), std::numeric_limits<float>::max());
-	boundingBox.max = glm::vec3(std::numeric_limits<float>::min(), std::numeric_limits<float>::min(), std::numeric_limits<float>::min());
+	boundingBox.min = glm::vec3(std::numeric_limits<float>::max());
+	boundingBox.max = glm::vec3(std::numeric_limits<float>::min());
 
 	for (unsigned int i = 0; i < vertices.size(); i++)
 	{

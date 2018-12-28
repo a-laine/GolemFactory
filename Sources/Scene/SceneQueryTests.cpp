@@ -17,31 +17,40 @@ DefaultSceneManagerBoxTest::DefaultSceneManagerBoxTest(const glm::vec3& cornerMi
 SceneManager::CollisionType DefaultSceneManagerBoxTest::operator() (const NodeVirtual* node) const
 {
 	//	AABB/AABB collision test with special case if node is completely inside query box
-	const glm::vec3 nodeHalfSize = node->getSize() * 0.5f;
+	/*const glm::vec3 nodeHalfSize = node->getSize() * 0.5f;
 	const glm::vec3 halfSize = 0.5f * (bbMax - bbMin);
-	const glm::vec3 allowance(node->allowanceSize);
-	const glm::vec3 p = glm::max(glm::abs(node->getCenter() - 0.5f * (bbMax + bbMin)) - allowance, 0.f);
+	const glm::vec3 allow = 1.01f * glm::vec3(node->allowanceSize);
+	const glm::vec3 p = glm::max(glm::abs(node->getCenter() - 0.5f * (bbMax + bbMin)) - allow, 0.f);
 
 	if (p.x > halfSize.x + nodeHalfSize.x || p.y > halfSize.y + nodeHalfSize.y || p.z > halfSize.z + nodeHalfSize.z) return SceneManager::NONE;
 	if (p.x <= halfSize.x - nodeHalfSize.x && p.y <= halfSize.y - nodeHalfSize.y && p.z <= halfSize.z - nodeHalfSize.z) return SceneManager::INSIDE;
-	else return SceneManager::OVERLAP;
+	else return SceneManager::OVERLAP;*/
+
+	glm::vec3 s = 1.01f * glm::vec3(node->allowanceSize);
+	if (Collision::collide_AxisAlignedBoxvsAxisAlignedBox(bbMin, bbMax, node->getBBMin() - s, node->getBBMax() + s))
+		return SceneManager::OVERLAP;
+	return SceneManager::NONE;
 }
 void DefaultSceneManagerBoxTest::getChildren(NodeVirtual* node, std::vector<NodeVirtual::NodeRange>& path) const
 {
 	node->getChildrenInBox(path, bbMin, bbMax);
 }
 
-
-DefaultSceneManagerRayTest::DefaultSceneManagerRayTest(const glm::vec3& pos, const glm::vec3& dir, float maxDist) : position(pos), direction(dir), distance(maxDist)
-{}
-SceneManager::CollisionType DefaultSceneManagerRayTest::operator() (const NodeVirtual* node) const
+DefaultBoxCollector::DefaultBoxCollector() {}
+void DefaultBoxCollector::operator() (NodeVirtual* node, Entity* object)
 {
-	//	Segment/AABB collision test
-	glm::vec3 s = 1.01f * glm::vec3(node->allowanceSize);
-	if (Collision::collide_SegmentvsAxisAlignedBox(position, position + distance*direction, node->getBBMin() - s, node->getBBMax() + s))
-		return SceneManager::OVERLAP;
-	else return SceneManager::NONE;
+	objectInBox.push_back(object);
 }
+std::vector<Entity*>& DefaultBoxCollector::getObjectInBox() { return objectInBox; }
+
+
+
+
+
+
+
+
+
 
 
 DefaultSceneManagerFrustrumTest::DefaultSceneManagerFrustrumTest(const glm::vec3& position, const glm::vec3& direction, const glm::vec3& verticalDir, const glm::vec3& leftDir, float verticalAngle, float horizontalAngle)
@@ -71,6 +80,25 @@ SceneManager::CollisionType DefaultSceneManagerFrustrumTest::operator() (const N
 	return SceneManager::OVERLAP;
 }
 
+
+
+
+
+
+
+
+
+
+DefaultSceneManagerRayTest::DefaultSceneManagerRayTest(const glm::vec3& pos, const glm::vec3& dir, float maxDist) : position(pos), direction(dir), distance(maxDist)
+{}
+SceneManager::CollisionType DefaultSceneManagerRayTest::operator() (const NodeVirtual* node) const
+{
+	//	Segment/AABB collision test
+	glm::vec3 s = 1.01f * glm::vec3(node->allowanceSize);
+	if (Collision::collide_SegmentvsAxisAlignedBox(position, position + distance*direction, node->getBBMin() - s, node->getBBMax() + s))
+		return SceneManager::OVERLAP;
+	else return SceneManager::NONE;
+}
 
 DefaultRayPickingCollector::DefaultRayPickingCollector(const glm::vec3& pos, const glm::vec3& dir, float maxDist) : position(pos), direction(dir), distance(maxDist)
 {}

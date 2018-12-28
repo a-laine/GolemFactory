@@ -12,12 +12,12 @@ DefaultRPGKeyMapping
 	};
 	left : {
 		eventPublished : "LEFT";
-		configuration : "button";
+		configuration : ["button","down","up"];
 		listeningKey : [65];
 	};
 	right : {
 		eventPublished : "RIGHT";
-		configuration : "button";
+		configuration : ["button","down","up"];
 		listeningKey : [68];
 	};
 	
