@@ -62,8 +62,7 @@ bool SceneManager::addObject(Entity* object)
 	if(!node->isInside(object->getPosition()))
 		return false;
 
-	const OrientedBox box = object->getBoundingVolume();
-	glm::vec3 s = (box.max - box.min)*object->getScale();
+	const glm::vec3 s = getObjectSize(object);
 	while (!node->isLeaf() && node->isTooSmall(s))
 		node = node->getChildAt(object->getPosition());
 
@@ -95,7 +94,7 @@ bool SceneManager::updateObject(Entity* object)
 	auto track = instanceTracking.find(object);
 	NodeVirtual* node = track->second.owner;
 
-	const glm::vec3 objectSize = object->getBoundingVolume().max - object->getBoundingVolume().min;
+	const glm::vec3 objectSize = getObjectSize(object);
 	if (!node->isInside(object->getPosition()) || node->isTooSmall(objectSize) || node->isTooBig(objectSize))
 	{
 		node->removeObject(object);
@@ -145,3 +144,18 @@ void SceneManager::getObjectsInBox(std::vector<Entity*>& result, const glm::vec3
 	getObjectsInBox(world[0], result, test);
 }
 
+glm::vec3 SceneManager::getObjectSize(const Entity* entity) const
+{
+	const Shape& shape = entity->getBoundingVolume();
+	if (shape.type == Shape::ORIENTED_BOX)
+	{
+		const OrientedBox& box = *static_cast<const OrientedBox*>(&shape);
+		return box.max - box.min;
+	}
+	else if (shape.type == Shape::AXIS_ALIGNED_BOX)
+	{
+		const AxisAlignedBox& box = *static_cast<const AxisAlignedBox*>(&shape);
+		return box.max - box.min;
+	}
+	else return glm::vec3(2.f * shape.toSphere().radius);
+}
