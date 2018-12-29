@@ -86,7 +86,22 @@
                 "cornerConfig" : 10,
                 "positionAll" : [0.00000, 0.01000, 0.00000 ],
                 "sizeAll" : [2.10000, 1.80000 ],
-                "type" : "BOARD" } },
+                "type" : "BOARD" },
+            "wireframe" : {
+                "colorActive" : [0.80000, 0.30000, 0.30000, 1.00000 ],
+                "colorCurrent" : [1.00000, 1.00000, 1.00000, 1.00000 ],
+                "colorDefault" : [1.00000, 1.00000, 1.00000, 1.00000 ],
+                "colorHover" : [0.80000, 0.30000, 0.30000, 1.00000 ],
+                "config" : 112,
+                "font" : "Data Control",
+                "offTexture" : "checkbox_unchecked.png",
+                "onTexture" : "checkbox_checked.png",
+                "positionAll" : [0.00000, 0.00000, 0.46000 ],
+                "sizeAll" : [2.00000, 0.07000 ],
+                "sizeChar" : 0.07000,
+                "text" : "render in wire frame mode",
+                "textConfiguration" : 36,
+                "type" : "RADIO_BUTTON" } },
         "config" : 3,
         "eulerAngle" : [0.00000, 0.00000, 0.00000 ],
         "screenPosition" : [-0.05500, 0.00000, -0.01000 ],
@@ -94,7 +109,7 @@
         "targetPosition" : [-0.05500, 0.00000, -0.01000 ] },
     "layer_3" : {
         "children" : {
-            "unknown_7" : {
+            "unknown_8" : {
                 "borderThickness" : 0.02000,
                 "borderWidth" : 0.15000,
                 "colorActive" : [0.20000, 0.20000, 0.20000, 1.00000 ],

@@ -6,6 +6,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/component_wise.hpp>
 
+#include <iostream>
 
 #define COLLISION_EPSILON 0.0001f
 
@@ -41,7 +42,6 @@ namespace
 		glm::vec3 s1 = segment1b - segment1a;
 		glm::vec3 s2 = segment2b - segment2a;
 		glm::vec3 n = glm::cross(s1, s2);
-		glm::vec3 n2 = glm::cross(segment1b - segment1a, segment2a - segment1a);
 
 		if (n == glm::vec3(0.f))	// parallel or one segment is a point
 		{
@@ -69,14 +69,16 @@ namespace
 				else return d4;
 			}
 		}
-		else if (glm::dot(n2, segment2b) == 0.f) // coplanar segments
+		else if (glm::dot(glm::cross(segment1b - segment1a, segment2a - segment1a), segment2b) == 0.f) // coplanar segments
 		{
 			// https://www.lucidarme.me/intersection-of-segments/ 
 
 			glm::vec3 ss = segment2a - segment1a;
 			float t1 = glm::dot(glm::cross(ss, s2), n) / glm::dot(n, n);
 			float t2 = glm::dot(glm::cross(ss, s1), n) / glm::dot(n, n);
-
+			/*
+				SOLVE PB
+			*/
 			return std::pair<glm::vec3, glm::vec3>(segment1a + s1*glm::clamp(t1, 0.f, 1.f), segment2a + s2*glm::clamp(t2, 0.f, 1.f));
 		}
 		else //	skew segment
@@ -84,8 +86,8 @@ namespace
 			glm::vec3 u1 = glm::normalize(s1);
 			glm::vec3 u2 = glm::normalize(s2);
 			n = glm::normalize(n);
-			float t1 = -glm::determinant(glm::mat3(segment1a - segment2a, u2, n))/* / glm::dot(n, n)*/;
-			float t2 = -glm::determinant(glm::mat3(segment1a - segment2a, u1, n))/* / glm::dot(n, n)*/;
+			float t1 = -glm::determinant(glm::mat3(segment1a - segment2a, u2, n));
+			float t2 = -glm::determinant(glm::mat3(segment1a - segment2a, u1, n));
 			return std::pair<glm::vec3, glm::vec3>(segment2a + u2*t2, segment1a + u1*t1);
 		}
 	}

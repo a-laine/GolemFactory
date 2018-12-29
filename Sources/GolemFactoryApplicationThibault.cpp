@@ -58,7 +58,9 @@ GLFWwindow* window = nullptr;
 World world;
 Camera camera, camera2;
 Entity* avatar = nullptr;
+
 Entity* debugShape = nullptr;
+Entity* debugShape2 = nullptr;
 
 double completeTime = 16.;
 double averageCompleteTime = 16.;
@@ -99,6 +101,11 @@ int main()
 			DrawableComponent* drawable = object->getComponent<DrawableComponent>();
 			drawable->setShader("wired");
 		});
+		debugShape2 = world.getEntityFactory().createObject("sphere", [](Entity* object)
+		{
+			DrawableComponent* drawable = object->getComponent<DrawableComponent>();
+			drawable->setShader("wired");
+		});
 		avatar = world.getEntityFactory().createObject("peasant", [](Entity* object)
 		{
             DrawableComponent* drawable = object->getComponent<DrawableComponent>();
@@ -132,6 +139,8 @@ int main()
 		// Render scene & picking
 		if (WidgetManager::getInstance()->getBoolean("BBrendering"))
 			Renderer::getInstance()->setRenderOption(Renderer::BOUNDING_BOX);
+		else if (WidgetManager::getInstance()->getBoolean("wireframe"))
+			Renderer::getInstance()->setRenderOption(Renderer::WIREFRAME);
 		else Renderer::getInstance()->setRenderOption(Renderer::DEFAULT);
 		Renderer::getInstance()->render(&camera);
 		picking(width, height);
@@ -356,6 +365,8 @@ void initManagers()
 	Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("greenGrass"));
 	Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE_BB, ResourceManager::getInstance()->getResource<Shader>("wired"));
 	Renderer::getInstance()->setShader(Renderer::INSTANCE_ANIMATABLE_BB, ResourceManager::getInstance()->getResource<Shader>("skeletonBB"));
+	Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE_WIRED, ResourceManager::getInstance()->getResource<Shader>("wired"));
+	Renderer::getInstance()->setShader(Renderer::INSTANCE_ANIMATABLE_WIRED, ResourceManager::getInstance()->getResource<Shader>("wiredSkinning"));
 
 	// Animator
 	Animator::getInstance();
@@ -513,33 +524,34 @@ void updates(float elapseTime, int width, int height)
 			v = glm::normalize(glm::vec3(v.x, v.y, 0.f));
 
 		//	physics
-		glm::vec3 s = glm::vec3(avatar->getBoundingVolume().toSphere().radius);
-		debugShape->setPosition(avatar->getPosition() + speed * v);
-		debugShape->setScale(s);
+		Capsule avatarCollider(*static_cast<const Capsule*>(&avatar->getBoundingVolume()));
+		avatarCollider.transform(speed * v, glm::vec3(1.f), glm::fquat());
+
+		debugShape->setPosition(speed * v + avatarCollider.p1);
+		debugShape->setScale(glm::vec3(avatarCollider.radius));
 		world.updateObject(debugShape);
+		debugShape2->setPosition(speed * v + avatarCollider.p2);
+		debugShape2->setScale(glm::vec3(avatarCollider.radius));
+		world.updateObject(debugShape2);
 		
+		glm::vec3 s = glm::vec3(avatar->getBoundingVolume().toSphere().radius);
 		DefaultSceneManagerBoxTest sceneNodeTest(avatar->getPosition() + speed * v - s, avatar->getPosition() + speed * v + s);
 		DefaultBoxCollector collector;
 		world.getSceneManager().getObjects(collector, sceneNodeTest);
 		std::vector<Entity*>& entities = collector.getObjectInBox();
 		std::vector<unsigned int> collisionIndex;
-		glm::mat4 model = avatar->getMatrix();
-		model[3] = glm::vec4(avatar->getPosition() + speed * v, 1.f);
-		float scale = glm::compMax(avatar->getScale());
-		const std::vector<glm::mat4> pose = avatar->getComponent<SkeletonComponent>()->getPose();
-		const std::vector<glm::ivec2>& segments = avatar->getComponent<SkeletonComponent>()->getSegmentsIndex();
-		const std::vector<float>& radius = avatar->getComponent<SkeletonComponent>()->getSegmentsRadius();
 		bool collision = false;
 
 		for (unsigned int k = 0; k < entities.size(); k++)
 		{
 			if (entities[k] == avatar) continue;
 			if (entities[k] == debugShape) continue;
+			if (entities[k] == debugShape2) continue;
 			Entity* e = entities[k];
 			glm::mat4 model2 = e->getMatrix();
 
 			// pass 1 : box vs avatar sphere
-			if(!Collision::collide(e->getBoundingVolume(), Sphere(avatar->getPosition() + speed * v, s.x)))
+			if(!Collision::collide(e->getBoundingVolume(), avatarCollider))
 				continue;
 			
 			// pass 2 : avatar capsule vs mesh
@@ -553,9 +565,7 @@ void updates(float elapseTime, int width, int height)
 					glm::vec3 p1 = glm::vec3(model2 * glm::vec4(vertices[faces[j]], 1.f));
 					glm::vec3 p2 = glm::vec3(model2 * glm::vec4(vertices[faces[j + 1]], 1.f));
 					glm::vec3 p3 = glm::vec3(model2 * glm::vec4(vertices[faces[j + 2]], 1.f));
-					Triangle triangle(p1, p2, p3);
-
-					if (Collision::collide(triangle, Sphere(avatar->getPosition() + speed * v, s.x)))
+					if (Collision::collide(Triangle(p1, p2, p3), avatarCollider))
 					{
 						collisionIndex.push_back(k);
 						collision = true;
@@ -566,7 +576,7 @@ void updates(float elapseTime, int width, int height)
 		}
 
 		//	debug
-		if (collision)
+		/*if (collision)
 		{
 			Renderer::RenderOption option = Renderer::getInstance()->getRenderOption();
 			Renderer::getInstance()->setRenderOption(option == Renderer::DEFAULT ? Renderer::BOUNDING_BOX : Renderer::DEFAULT);
@@ -575,7 +585,7 @@ void updates(float elapseTime, int width, int height)
 			for (unsigned int i = 0; i < collisionIndex.size(); i++)
 				Renderer::getInstance()->drawObject(entities[collisionIndex[i]], &camera.getViewMatrix()[0][0], &projection[0][0]);
 			Renderer::getInstance()->setRenderOption(option);
-		}
+		}*/
 
 		//	update
 		if (!collision)

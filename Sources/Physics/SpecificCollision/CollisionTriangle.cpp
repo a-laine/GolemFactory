@@ -3,6 +3,8 @@
 #include "CollisionSegment.h"
 #include "CollisionUtils.h"
 
+#include <iostream>
+
 
 //	Specialized functions : triangle
 bool Collision::collide_TrianglevsTriangle(const glm::vec3& triangle1a, const glm::vec3&triangle1b, const glm::vec3& triangle1c, const glm::vec3& triangle2a, const glm::vec3& triangle2b, const glm::vec3& triangle2c)
@@ -121,9 +123,9 @@ bool Collision::collide_TrianglevsCapsule(const glm::vec3& triangle1, const glm:
 
 		// test if one of extremity of projection segment is inside triangle
 		glm::vec2 bary = getBarycentricCoordinates(v1, v2, a);
-		if (bary.x <= 1.f && bary.y <= 1.f && bary.x + bary.y <= 1.f) return true;
+		if (bary.x >= 0.f && bary.y >= 0.f && bary.x <= 1.f && bary.y <= 1.f && bary.x + bary.y <= 1.f) return true;
 		bary = getBarycentricCoordinates(v1, v2, b);
-		if (bary.x <= 1.f && bary.y <= 1.f && bary.x + bary.y <= 1.f) return true;
+		if (bary.x >= 0.f && bary.y >= 0.f && bary.x <= 1.f && bary.y <= 1.f && bary.x + bary.y <= 1.f) return true;
 
 		// test projection segment against triangle
 		std::pair<glm::vec3, glm::vec3> s1 = getSegmentsClosestSegment(a, b, triangle1, triangle2);

@@ -41,7 +41,10 @@ Entity* EntityFactory::createByType(const std::string& type)
 {
 	Entity* object = createEntity();
 	if(type == "peasant")
+	{
 		createAnimatable(object, "peasant", "human", "simple_peasant", "skinning");
+		object->setBoundingVolume(new Capsule(glm::vec3(0.f, 0.f, -2.5f), glm::vec3(0.f, 0.f, 2.3f), 1.8f));
+	}
 	else if(type == "sphere")
 	{
 		createDrawable(object, "icosphere.obj", "default");

@@ -31,12 +31,15 @@ class Renderer : public Singleton<Renderer>
 			GRID,
 
 			INSTANCE_DRAWABLE_BB,
-			INSTANCE_ANIMATABLE_BB
+			INSTANCE_ANIMATABLE_BB,
+			INSTANCE_DRAWABLE_WIRED,
+			INSTANCE_ANIMATABLE_WIRED
 		};
 		enum RenderOption
 		{
 			DEFAULT,
-			BOUNDING_BOX
+			BOUNDING_BOX,
+			WIREFRAME
 		};
 		//
 
@@ -67,6 +70,7 @@ class Renderer : public Singleton<Renderer>
 
 		//	Render function
 		void drawObject(Entity* object, const float* view, const float* projection);
+		void drawShape(const Shape* shape, const float* view, const float* projection);
 		//
 
 	private:
@@ -92,7 +96,15 @@ class Renderer : public Singleton<Renderer>
 		//	Protected functions
 		void loadMVPMatrix(Shader* shader, const float* model, const float* view, const float* projection, const int& modelSize = 1);
 		void loadVAO(const GLuint& vao);
+
 		void drawInstancedObject(Shader* s, Mesh* m, std::vector<glm::mat4>& models, const float* view, const float* projection);
+		void drawPoint(const Point* point, const float* view, const float* projection);
+		void drawSegment(const Segment* segment, const float* view, const float* projection);
+		void drawTriangle(const Triangle* triangle, const float* view, const float* projection);
+		void drawOrientedBox(const OrientedBox* box, const float* view, const float* projection);
+		void drawAxisAlignedBox(const AxisAlignedBox* box, const float* view, const float* projection);
+		void drawSphere(const Sphere* sphere, const float* view, const float* projection);
+		void drawCapsule(const Capsule* capsule, const float* view, const float* projection);
 		//
 
 		//  Attributes

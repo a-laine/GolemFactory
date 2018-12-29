@@ -341,6 +341,7 @@ void Renderer::drawObject(Entity* object, const float* view, const float* projec
 {
 	ShaderIdentifier shaderType = INSTANCE_DRAWABLE;
 	ShaderIdentifier shaderBBType = INSTANCE_DRAWABLE_BB;
+	ShaderIdentifier shaderWire = INSTANCE_DRAWABLE_WIRED;
 	DrawableComponent* drawableComp = object->getComponent<DrawableComponent>();
 	SkeletonComponent* skeletonComp = object->getComponent<SkeletonComponent>();
 	if(!drawableComp || !drawableComp->isValid()) return;
@@ -348,11 +349,13 @@ void Renderer::drawObject(Entity* object, const float* view, const float* projec
 	{
 		shaderType = INSTANCE_ANIMATABLE;
 		shaderBBType = INSTANCE_ANIMATABLE_BB;
+		shaderWire = INSTANCE_ANIMATABLE_WIRED;
 	}
 
 	//	Get shader and prepare matrix
 	Shader* shaderToUse;
 	if(renderOption == BOUNDING_BOX) shaderToUse = defaultShader[shaderBBType];
+	else if (renderOption == WIREFRAME) shaderToUse = defaultShader[shaderWire];
 	else shaderToUse = defaultShader[shaderType];
 	if(!shaderToUse) shaderToUse = drawableComp->getShader();
 	loadMVPMatrix(shaderToUse, &object->getMatrix()[0][0], view, projection);
@@ -391,11 +394,42 @@ void Renderer::drawObject(Entity* object, const float* view, const float* projec
 	instanceDrawn++;
 	trianglesDrawn += drawableComp->getMesh()->getNumberFaces();
 }
+void Renderer::drawShape(const Shape* shape, const float* view, const float* projection)
+{
+	switch (shape->type)
+	{
+		case Shape::POINT:
+			drawPoint(static_cast<const Point*>(shape), view, projection);
+			break;
+		case Shape::SEGMENT:
+			drawSegment(static_cast<const Segment*>(shape), view, projection);
+			break;
+		case Shape::TRIANGLE:
+			drawTriangle(static_cast<const Triangle*>(shape), view, projection);
+			break;
+		case Shape::ORIENTED_BOX:
+			drawOrientedBox(static_cast<const OrientedBox*>(shape), view, projection);
+			break;
+		case Shape::AXIS_ALIGNED_BOX:
+			drawAxisAlignedBox(static_cast<const AxisAlignedBox*>(shape), view, projection);
+			break;
+		case Shape::SPHERE:
+			drawSphere(static_cast<const Sphere*>(shape), view, projection);
+			break;
+		case Shape::CAPSULE:
+			drawCapsule(static_cast<const Capsule*>(shape), view, projection);
+			break;
+		default: break;
+	}
+}
+
+
 void Renderer::drawInstancedObject(Shader* s, Mesh* m, std::vector<glm::mat4>& models, const float* view, const float* projection)
 {
 	//	Get shader and prepare matrix
 	Shader* shaderToUse;
 	if (renderOption == BOUNDING_BOX) shaderToUse = defaultShader[INSTANCE_DRAWABLE_BB];
+	else if (renderOption == WIREFRAME) shaderToUse = defaultShader[INSTANCE_DRAWABLE_WIRED];
 	else shaderToUse = defaultShader[INSTANCE_DRAWABLE];
 	if (!shaderToUse || !shaderToUse->getInstanciable()) shaderToUse = s;
 	else shaderToUse = shaderToUse->getInstanciable();
@@ -416,6 +450,34 @@ void Renderer::drawInstancedObject(Shader* s, Mesh* m, std::vector<glm::mat4>& m
 	}
 	instanceDrawn += (int)(models.size());
 	trianglesDrawn += (int)(models.size() * m->getNumberFaces());
+}
+void Renderer::drawPoint(const Point* point, const float* view, const float* projection)
+{
+	std::cout << "drawPoint not yet implemented" << std::endl;
+}
+void Renderer::drawSegment(const Segment* segment, const float* view, const float* projection)
+{
+	std::cout << "drawSegment not yet implemented" << std::endl;
+}
+void Renderer::drawTriangle(const Triangle* triangle, const float* view, const float* projection)
+{
+	std::cout << "drawTriangle not yet implemented" << std::endl;
+}
+void Renderer::drawOrientedBox(const OrientedBox* box, const float* view, const float* projection)
+{
+	std::cout << "drawOrientedBox not yet implemented" << std::endl;
+}
+void Renderer::drawAxisAlignedBox(const AxisAlignedBox* box, const float* view, const float* projection)
+{
+	std::cout << "drawAxisAlignedBox not yet implemented" << std::endl;
+}
+void Renderer::drawSphere(const Sphere* sphere, const float* view, const float* projection)
+{
+	std::cout << "drawSphere not yet implemented" << std::endl;
+}
+void Renderer::drawCapsule(const Capsule* capsule, const float* view, const float* projection)
+{
+	
 }
 //
 

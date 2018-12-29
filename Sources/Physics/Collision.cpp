@@ -30,35 +30,35 @@ namespace
 {
 	inline bool collide_PointvsShape(const Shape& point, const Shape& b)
 	{
-		const Point* a = reinterpret_cast<const Point*>(&point);
+		const Point* a = static_cast<const Point*>(&point);
 		switch (b.type)
 		{
 			case Shape::POINT: {
-				const Point* c = reinterpret_cast<const Point*>(&b);
+				const Point* c = static_cast<const Point*>(&b);
 				return Collision::collide_PointvsPoint(a->p, c->p);
 			}
 			case Shape::SEGMENT: {
-				const Segment* c = reinterpret_cast<const Segment*>(&b);
+				const Segment* c = static_cast<const Segment*>(&b);
 				return Collision::collide_PointvsSegment(a->p, c->p1, c->p2);
 			}
 			case Shape::TRIANGLE: {
-				const Triangle* c = reinterpret_cast<const Triangle*>(&b);
+				const Triangle* c = static_cast<const Triangle*>(&b);
 				return Collision::collide_PointvsTriangle(a->p, c->p1, c->p2, c->p3);
 			}
 			case Shape::ORIENTED_BOX: {
-				const OrientedBox* c = reinterpret_cast<const OrientedBox*>(&b);
+				const OrientedBox* c = static_cast<const OrientedBox*>(&b);
 				return Collision::collide_PointvsOrientedBox(a->p, c->base, c->min, c->max);
 			}
 			case Shape::AXIS_ALIGNED_BOX: {
-				const AxisAlignedBox* c = reinterpret_cast<const AxisAlignedBox*>(&b);
+				const AxisAlignedBox* c = static_cast<const AxisAlignedBox*>(&b);
 				return Collision::collide_PointvsAxisAlignedBox(a->p, c->min, c->max);
 			}
 			case Shape::SPHERE: {
-				const Sphere* c = reinterpret_cast<const Sphere*>(&b);
+				const Sphere* c = static_cast<const Sphere*>(&b);
 				return Collision::collide_PointvsSphere(a->p, c->center, c->radius);
 			}
 			case Shape::CAPSULE: {
-				const Capsule* c = reinterpret_cast<const Capsule*>(&b);
+				const Capsule* c = static_cast<const Capsule*>(&b);
 				return Collision::collide_PointvsCapsule(a->p, c->p1, c->p2, c->radius);
 			}
 			default: return false;
@@ -66,31 +66,31 @@ namespace
 	};
 	inline bool collide_SegmentvsShape(const Shape& segment, const Shape& b)
 	{
-		const Segment* a = reinterpret_cast<const Segment*>(&segment);
+		const Segment* a = static_cast<const Segment*>(&segment);
 		switch (b.type)
 		{
 			case Shape::SEGMENT: {
-				const Segment* c = reinterpret_cast<const Segment*>(&b);
+				const Segment* c = static_cast<const Segment*>(&b);
 				return Collision::collide_SegmentvsSegment(a->p1, a->p2, c->p1, c->p2);
 			}
 			case Shape::TRIANGLE: {
-				const Triangle* c = reinterpret_cast<const Triangle*>(&b);
+				const Triangle* c = static_cast<const Triangle*>(&b);
 				return Collision::collide_SegmentvsTriangle(a->p1, a->p2, c->p1, c->p2, c->p3);
 			}
 			case Shape::ORIENTED_BOX: {
-				const OrientedBox* c = reinterpret_cast<const OrientedBox*>(&b);
+				const OrientedBox* c = static_cast<const OrientedBox*>(&b);
 				return Collision::collide_SegmentvsOrientedBox(a->p1, a->p2, c->base, c->min, c->max);
 			}
 			case Shape::AXIS_ALIGNED_BOX: {
-				const AxisAlignedBox* c = reinterpret_cast<const AxisAlignedBox*>(&b);
+				const AxisAlignedBox* c = static_cast<const AxisAlignedBox*>(&b);
 				return Collision::collide_SegmentvsAxisAlignedBox(a->p1, a->p2, c->min, c->max);
 			}
 			case Shape::SPHERE: {
-				const Sphere* c = reinterpret_cast<const Sphere*>(&b);
+				const Sphere* c = static_cast<const Sphere*>(&b);
 				return Collision::collide_SegmentvsSphere(a->p1, a->p2, c->center, c->radius);
 			}
 			case Shape::CAPSULE: {
-				const Capsule* c = reinterpret_cast<const Capsule*>(&b);
+				const Capsule* c = static_cast<const Capsule*>(&b);
 				return Collision::collide_SegmentvsCapsule(a->p1, a->p2, c->p1, c->p2, c->radius);
 			}
 			default: return false;
@@ -98,27 +98,27 @@ namespace
 	};
 	inline bool collide_TrianglevsShape(const Shape& triangle, const Shape& b)
 	{
-		const Triangle* a = reinterpret_cast<const Triangle*>(&triangle);
+		const Triangle* a = static_cast<const Triangle*>(&triangle);
 		switch (b.type)
 		{
 			case Shape::TRIANGLE: {
-				const Triangle* c = reinterpret_cast<const Triangle*>(&b);
+				const Triangle* c = static_cast<const Triangle*>(&b);
 				return Collision::collide_TrianglevsTriangle(a->p1, a->p2, a->p3, c->p1, c->p2, c->p3);
 			}
 			case Shape::ORIENTED_BOX: {
-				const OrientedBox* c = reinterpret_cast<const OrientedBox*>(&b);
+				const OrientedBox* c = static_cast<const OrientedBox*>(&b);
 				return Collision::collide_TrianglevsOrientedBox(a->p1, a->p2, a->p3, c->base, c->min, c->max);
 			}
 			case Shape::AXIS_ALIGNED_BOX: {
-				const AxisAlignedBox* c = reinterpret_cast<const AxisAlignedBox*>(&b);
+				const AxisAlignedBox* c = static_cast<const AxisAlignedBox*>(&b);
 				return Collision::collide_TrianglevsAxisAlignedBox(a->p1, a->p2, a->p3, c->min, c->max);
 			}
 			case Shape::SPHERE: {
-				const Sphere* c = reinterpret_cast<const Sphere*>(&b);
+				const Sphere* c = static_cast<const Sphere*>(&b);
 				return Collision::collide_TrianglevsSphere(a->p1, a->p2, a->p3, c->center, c->radius);
 			}
 			case Shape::CAPSULE: {
-				const Capsule* c = reinterpret_cast<const Capsule*>(&b);
+				const Capsule* c = static_cast<const Capsule*>(&b);
 				return Collision::collide_TrianglevsCapsule(a->p1, a->p2, a->p3, c->p1, c->p2, c->radius);
 			}
 			default: return false;
@@ -126,23 +126,23 @@ namespace
 	};
 	inline bool collide_OrientedBoxvsShape(const Shape& obox, const Shape& b)
 	{
-		const OrientedBox* a = reinterpret_cast<const OrientedBox*>(&obox);
+		const OrientedBox* a = static_cast<const OrientedBox*>(&obox);
 		switch (b.type)
 		{
 			case Shape::ORIENTED_BOX: {
-				const OrientedBox* c = reinterpret_cast<const OrientedBox*>(&b);
+				const OrientedBox* c = static_cast<const OrientedBox*>(&b);
 				return Collision::collide_OrientedBoxvsOrientedBox(a->base, a->min, a->max, c->base, c->min, c->max);
 			}
 			case Shape::AXIS_ALIGNED_BOX: {
-				const AxisAlignedBox* c = reinterpret_cast<const AxisAlignedBox*>(&b);
+				const AxisAlignedBox* c = static_cast<const AxisAlignedBox*>(&b);
 				return Collision::collide_OrientedBoxvsAxisAlignedBox(a->base, a->min, a->max, c->min, c->max);
 			}
 			case Shape::SPHERE: {
-				const Sphere* c = reinterpret_cast<const Sphere*>(&b);
+				const Sphere* c = static_cast<const Sphere*>(&b);
 				return Collision::collide_OrientedBoxvsSphere(a->base, a->min, a->max, c->center, c->radius);
 			}
 			case Shape::CAPSULE: {
-				const Capsule* c = reinterpret_cast<const Capsule*>(&b);
+				const Capsule* c = static_cast<const Capsule*>(&b);
 				return Collision::collide_OrientedBoxvsCapsule(a->base, a->min, a->max, c->p1, c->p2, c->radius);
 			}
 			default: return false;
@@ -150,19 +150,19 @@ namespace
 	};
 	inline bool collide_AxisAlignedBoxvsShape(const Shape& aabox, const Shape& b)
 	{
-		const AxisAlignedBox* a = reinterpret_cast<const AxisAlignedBox*>(&aabox);
+		const AxisAlignedBox* a = static_cast<const AxisAlignedBox*>(&aabox);
 		switch (b.type)
 		{
 			case Shape::AXIS_ALIGNED_BOX: {
-				const AxisAlignedBox* c = reinterpret_cast<const AxisAlignedBox*>(&b);
+				const AxisAlignedBox* c = static_cast<const AxisAlignedBox*>(&b);
 				return Collision::collide_AxisAlignedBoxvsAxisAlignedBox(a->min, a->max, c->min, c->max);
 			}
 			case Shape::SPHERE: {
-				const Sphere* c = reinterpret_cast<const Sphere*>(&b);
+				const Sphere* c = static_cast<const Sphere*>(&b);
 				return Collision::collide_AxisAlignedBoxvsSphere(a->min, a->max, c->center, c->radius);
 			}
 			case Shape::CAPSULE: {
-				const Capsule* c = reinterpret_cast<const Capsule*>(&b);
+				const Capsule* c = static_cast<const Capsule*>(&b);
 				return Collision::collide_AxisAlignedBoxvsCapsule(a->min, a->max, c->p1, c->p2, c->radius);
 			}
 			default: return false;
@@ -170,15 +170,15 @@ namespace
 	};
 	inline bool collide_SpherevsShape(const Shape& sphere, const Shape& b)
 	{
-		const Sphere* a = reinterpret_cast<const Sphere*>(&sphere);
+		const Sphere* a = static_cast<const Sphere*>(&sphere);
 		switch (b.type)
 		{
 			case Shape::SPHERE: {
-				const Sphere* c = reinterpret_cast<const Sphere*>(&b);
+				const Sphere* c = static_cast<const Sphere*>(&b);
 				return Collision::collide_SpherevsSphere(a->center, a->radius, c->center, c->radius);
 			}
 			case Shape::CAPSULE: {
-				const Capsule* c = reinterpret_cast<const Capsule*>(&b);
+				const Capsule* c = static_cast<const Capsule*>(&b);
 				return Collision::collide_SpherevsCapsule(a->center, a->radius, c->p1, c->p2, c->radius);
 			}
 			default: return false;
@@ -186,10 +186,10 @@ namespace
 	};
 	inline bool collide_CapsulevsShape(const Shape& capsule, const Shape& b)
 	{
-		const Capsule* a = reinterpret_cast<const Capsule*>(&capsule);
+		const Capsule* a = static_cast<const Capsule*>(&capsule);
 		if(b.type == Shape::CAPSULE)
 		{
-			const Capsule* c = reinterpret_cast<const Capsule*>(&b);
+			const Capsule* c = static_cast<const Capsule*>(&b);
 			return Collision::collide_CapsulevsCapsule(a->p1, a->p2, a->radius, c->p1, c->p2, c->radius);
 		}
 		else return false;

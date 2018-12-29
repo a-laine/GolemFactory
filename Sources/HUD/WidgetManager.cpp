@@ -637,6 +637,20 @@ void WidgetManager::loadRenderingHud()
 			addAssociation(button3, "syncCamera");
 			widgetList.insert(button3);
 
+		WidgetRadioButton* button4 = new WidgetRadioButton(WidgetVirtual::VISIBLE | WidgetVirtual::RESPONSIVE);
+			button4->setPosition(glm::vec3(0.f, 0.f, 0.46f), WidgetVirtual::ALL);
+			button4->setSizeChar(0.07f);
+			button4->setSize(glm::vec2(2.f, 0.07f), WidgetVirtual::ALL);
+			button4->setFont("Data Control");
+			button4->setTextureOn("checkbox_checked.png");
+			button4->setTextureOff("checkbox_unchecked.png");
+			button4->setColor(glm::vec4(0.8f, 0.3f, 0.3f, 1.f), WidgetVirtual::HOVER);
+			button4->setColor(glm::vec4(0.8f, 0.3f, 0.3f, 1.f), WidgetVirtual::ACTIVE);
+			button4->setBoolean(false);
+			button4->initialize("render in wire frame mode", WidgetLabel::CLIPPING | WidgetLabel::LEFT);
+			addAssociation(button4, "wireframe");
+			widgetList.insert(button2);
+
 		layer2 = new Layer();
 			layer2->setSize(0.05f);
 			layer2->setScreenPosition(glm::vec3(-0.055f, 0.f, -0.01f));
@@ -646,6 +660,7 @@ void WidgetManager::loadRenderingHud()
 			layer2->addChild(button1);
 			layer2->addChild(button2);
 			layer2->addChild(button3);
+			layer2->addChild(button4);
 			layerList.insert(layer2);
 	}
 
