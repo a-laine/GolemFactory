@@ -102,8 +102,7 @@ int main()
 		avatar = world.getEntityFactory().createObject("peasant", [](Entity* object)
 		{
             DrawableComponent* drawable = object->getComponent<DrawableComponent>();
-			OrientedBox box = object->getBoundingVolume();
-			float scale = 1.7f / (box.max - box.min).z;
+			float scale = 1.7f / (drawable->getMeshBBMax() - drawable->getMeshBBMin()).z;
 			object->setScale(glm::vec3(scale));
 			glm::vec3 pos = glm::vec3(20.f, 20.f, -scale * drawable->getMeshBBMin().z);
 			object->setPosition(pos);
@@ -251,7 +250,6 @@ void initializeForestScene(bool emptyPlace)
 		}
 	}
 	
-	
 	// forest
 	for (int i = 0; i < GRID_SIZE; i++)
 		for (int j = 0; j < GRID_SIZE; j++)
@@ -373,7 +371,6 @@ void picking(int width, int height)
 	DefaultSceneManagerRayTest sceneNodeTest(camera.getPosition(), camera.getForward(), 10000);
 	DefaultRayPickingCollector collector(camera.getPosition(), camera.getForward(), 10000);
 	world.getSceneManager().getObjects(collector, sceneNodeTest);
-	//std::cout << "--" << std::endl;
 
 	if (!collector.getObjects().empty())
 	{
@@ -516,12 +513,12 @@ void updates(float elapseTime, int width, int height)
 			v = glm::normalize(glm::vec3(v.x, v.y, 0.f));
 
 		//	physics
-		glm::vec3 s = glm::vec3(avatar->getBoundingVolume().toSphere().radius * glm::compMax(avatar->getScale()));
-		/*debugShape->setPosition(avatar->getPosition() + speed * v);
+		glm::vec3 s = glm::vec3(avatar->getBoundingVolume().toSphere().radius);
+		debugShape->setPosition(avatar->getPosition() + speed * v);
 		debugShape->setScale(s);
-		world.updateObject(debugShape);*/
+		world.updateObject(debugShape);
 		
-		DefaultSceneManagerBoxTest sceneNodeTest(avatar->getPosition() + speed * v - 1.74f*s, avatar->getPosition() + speed * v + 1.74f*s); // 1.74f ~ sqrt 3 (cube diagonal)
+		DefaultSceneManagerBoxTest sceneNodeTest(avatar->getPosition() + speed * v - s, avatar->getPosition() + speed * v + s);
 		DefaultBoxCollector collector;
 		world.getSceneManager().getObjects(collector, sceneNodeTest);
 		std::vector<Entity*>& entities = collector.getObjectInBox();
@@ -542,42 +539,34 @@ void updates(float elapseTime, int width, int height)
 			glm::mat4 model2 = e->getMatrix();
 
 			// pass 1 : box vs avatar sphere
-			OrientedBox box1 = e->getBoundingVolume();
-			if (!Collision::collide_OrientedBoxvsSphere(box1.transform, box1.min*e->getScale(), box1.max*e->getScale(), avatar->getPosition() + speed * v, s.x))
+			if(!Collision::collide(e->getBoundingVolume(), Sphere(avatar->getPosition() + speed * v, s.x)))
 				continue;
 			
 			// pass 2 : avatar capsule vs mesh
 			DrawableComponent* drawableComp = e->getComponent<DrawableComponent>();
 			if (drawableComp && drawableComp->isValid())
 			{
-				for (unsigned int i = 0; i < segments.size(); i++)
+				const std::vector<glm::vec3>& vertices = *drawableComp->getMesh()->getVertices();
+				const std::vector<unsigned short>& faces = *drawableComp->getMesh()->getFaces();
+				for (unsigned int j = 0; j < faces.size(); j += 3)
 				{
-					glm::vec3 a(model * pose[(const int)segments[i].x][3]);
-					glm::vec3 b(model * pose[(const int)segments[i].y][3]);
-					const std::vector<glm::vec3>& vertices = *drawableComp->getMesh()->getVertices();
-					const std::vector<unsigned short>& faces = *drawableComp->getMesh()->getFaces();
+					glm::vec3 p1 = glm::vec3(model2 * glm::vec4(vertices[faces[j]], 1.f));
+					glm::vec3 p2 = glm::vec3(model2 * glm::vec4(vertices[faces[j + 1]], 1.f));
+					glm::vec3 p3 = glm::vec3(model2 * glm::vec4(vertices[faces[j + 2]], 1.f));
+					Triangle triangle(p1, p2, p3);
 
-					for (unsigned int j = 0; j < faces.size(); j += 3)
+					if (Collision::collide(triangle, Sphere(avatar->getPosition() + speed * v, s.x)))
 					{
-						glm::vec3 p1 = glm::vec3(model2 * glm::vec4(vertices[faces[j]], 1.f));
-						glm::vec3 p2 = glm::vec3(model2 * glm::vec4(vertices[faces[j + 1]], 1.f));
-						glm::vec3 p3 = glm::vec3(model2 * glm::vec4(vertices[faces[j + 2]], 1.f));
-
-						if (Collision::collide_TrianglevsCapsule(p1, p2, p3, a, b, scale*radius[i]))
-						{
-							collisionIndex.push_back(k);
-							collision = true;
-							break;
-						}
+						collisionIndex.push_back(k);
+						collision = true;
+						break;
 					}
-					if (collision) break;
 				}
 			}
 		}
-		//std::cout << collisionIndex.size() << std::endl;
 
 		//	debug
-		/*if (collision)
+		if (collision)
 		{
 			Renderer::RenderOption option = Renderer::getInstance()->getRenderOption();
 			Renderer::getInstance()->setRenderOption(option == Renderer::DEFAULT ? Renderer::BOUNDING_BOX : Renderer::DEFAULT);
@@ -586,7 +575,7 @@ void updates(float elapseTime, int width, int height)
 			for (unsigned int i = 0; i < collisionIndex.size(); i++)
 				Renderer::getInstance()->drawObject(entities[collisionIndex[i]], &camera.getViewMatrix()[0][0], &projection[0][0]);
 			Renderer::getInstance()->setRenderOption(option);
-		}*/
+		}
 
 		//	update
 		if (!collision)

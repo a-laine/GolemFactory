@@ -2,6 +2,8 @@
 
 #include <glm/glm.hpp>
 
+#include "Utiles/Assert.hpp"
+
 class Sphere;
 class Shape
 {
@@ -26,6 +28,9 @@ class Shape
 
 		//	Public functions
 		virtual Sphere toSphere() const;
+		virtual void operator=(const Shape& s);
+		virtual void transform(const glm::vec3& position, const glm::vec3& scale, const glm::fquat& orientation);
+		virtual Shape* duplicate() const;
 		//
 
 		//	Attributes
@@ -42,7 +47,10 @@ class Point : public Shape
 		//
 
 		//	Public functions
-		Sphere toSphere() const;
+		virtual Sphere toSphere() const override;
+		virtual void operator=(const Shape& s) override;
+		virtual void transform(const glm::vec3& position, const glm::vec3& scale, const glm::fquat& orientation) override;
+		virtual Shape* duplicate() const override;
 		//
 
 		//	Attributes
@@ -57,7 +65,10 @@ class Segment : public Shape
 		//
 
 		//	Public functions
-		Sphere toSphere() const;
+		virtual Sphere toSphere() const override;
+		virtual void operator=(const Shape& s) override;
+		virtual void transform(const glm::vec3& position, const glm::vec3& scale, const glm::fquat& orientation) override;
+		virtual Shape* duplicate() const override;
 		//
 
 		//	Attributes
@@ -72,7 +83,10 @@ class Triangle : public Shape
 		//
 
 		//	Public functions
-		Sphere toSphere() const;
+		virtual Sphere toSphere() const override;
+		virtual void operator=(const Shape& s) override;
+		virtual void transform(const glm::vec3& position, const glm::vec3& scale, const glm::fquat& orientation) override;
+		virtual Shape* duplicate() const override;
 		//
 
 		//	Attributes
@@ -87,11 +101,14 @@ class OrientedBox : public Shape
 		//
 
 		//	Public functions
-		Sphere toSphere() const;
+		virtual Sphere toSphere() const override;
+		virtual void operator=(const Shape& s) override;
+		virtual void transform(const glm::vec3& position, const glm::vec3& scale, const glm::fquat& orientation) override;
+		virtual Shape* duplicate() const override;
 		//
 
 		//	Attributes
-		glm::mat4 transform;
+		glm::mat4 base;
 		glm::vec3 min, max;
 		//
 };
@@ -103,7 +120,10 @@ class AxisAlignedBox : public Shape
 		//
 
 		//	Public functions
-		Sphere toSphere() const;
+		virtual Sphere toSphere() const override;
+		virtual void operator=(const Shape& s) override;
+		virtual void transform(const glm::vec3& position, const glm::vec3& scale, const glm::fquat& orientation) override;
+		virtual Shape* duplicate() const override;
 		//
 
 		//	Attributes
@@ -118,7 +138,10 @@ class Sphere : public Shape
 		//
 
 		//	Public functions
-		Sphere toSphere() const;
+		virtual Sphere toSphere() const override;
+		virtual void operator=(const Shape& s) override;
+		virtual void transform(const glm::vec3& position, const glm::vec3& scale, const glm::fquat& orientation) override;
+		virtual Shape* duplicate() const override;
 		//
 
 		//	Attributes
@@ -134,7 +157,10 @@ class Capsule : public Shape
 		//
 
 		//	Public functions
-		Sphere toSphere() const;
+		virtual Sphere toSphere() const override;
+		virtual void operator=(const Shape& s) override;
+		virtual void transform(const glm::vec3& position, const glm::vec3& scale, const glm::fquat& orientation) override;
+		virtual Shape* duplicate() const override;
 		//
 
 		//	Attributes

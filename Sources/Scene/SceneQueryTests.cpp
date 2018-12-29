@@ -107,6 +107,7 @@ void DefaultRayPickingCollector::operator() (NodeVirtual* node, Entity* object)
     DrawableComponent* drawableComp = object->getComponent<DrawableComponent>();
 	if (!drawableComp || !drawableComp->isValid()) return;
 
+	//objectOnRay[glm::dot(node->getPosition() - position, node->getPosition() - position)] = node->getDebugCube();
 	//objectOnRay[glm::dot(object->getPosition() - position, object->getPosition() - position)] = object;
 	//return;
 
@@ -138,12 +139,11 @@ void DefaultRayPickingCollector::operator() (NodeVirtual* node, Entity* object)
 	}
 	else
 	{
-		OrientedBox box = object->getBoundingVolume();
-		if (!Collision::collide_SegmentvsOrientedBox(position, position + distance * direction, box.transform, box.min * object->getScale(), box.max * object->getScale()))
+		if (!Collision::collide(Segment(position, position + distance * direction), object->getBoundingVolume()))
 			return;
 	}
-	objectOnRay[glm::dot(object->getPosition() - position, object->getPosition() - position)] = object;
-	return;
+	//objectOnRay[glm::dot(object->getPosition() - position, object->getPosition() - position)] = object;
+	//return;
 
 	//	second test -> test ray vs all object triangles
 	const std::vector<glm::vec3>& vertices = *mesh->getVertices();

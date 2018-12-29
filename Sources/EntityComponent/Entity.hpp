@@ -30,7 +30,7 @@ class Entity : public EntityBase
 		void setOrientation(const glm::quat& orientation);
 		void setTransformation(const glm::vec3& position, const glm::vec3& scale, const glm::fquat& orientation);
 		void setParentWorld(World* parentWorld);
-        void setBoundingVolume(const OrientedBox& bbox);
+        void setBoundingVolume(Shape* shape);
 
 
         uint64_t getId() const;
@@ -39,21 +39,18 @@ class Entity : public EntityBase
 		glm::vec3 getScale() const;
 		glm::fquat getOrientation() const;
 		World* getParentWorld() const;
-		const OrientedBox& getBoundingVolume() const;
+		const Shape& getBoundingVolume() const;
 		//
-
-		//const BoundingVolume& getBoundingVolume() const;
-		//BoundingVolume& getBoundingVolume();
 
 	private:
 		//	Attributes
-		// uint32_t flags;
 		World* m_parentWorld;
 		std::atomic<uint32_t> m_refCount;
 		glm::vec3 m_scale;
 		glm::fquat m_rotation;
 		glm::mat4 m_transform;
-        OrientedBox m_boundingVolume;
+        Shape* m_boundingShapeVanilla;
+		Shape* m_boundingShapeResult;
 		//
 };
 

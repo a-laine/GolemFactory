@@ -5,7 +5,7 @@
 
 
 //	Default
-Entity::Entity() : m_refCount(0), m_parentWorld(nullptr), m_scale(1.f), m_rotation() //, m_boundingVolume()
+Entity::Entity() : m_refCount(0), m_parentWorld(nullptr), m_scale(1.f), m_rotation(), m_boundingShapeVanilla(nullptr), m_boundingShapeResult(nullptr)
 {}
 //
 
@@ -14,7 +14,6 @@ Entity::Entity() : m_refCount(0), m_parentWorld(nullptr), m_scale(1.f), m_rotati
 void Entity::setPosition(const glm::vec3& position)
 {
 	setTransformation(position, m_scale, m_rotation);
-	//m_transform[3] = glm::vec4(position, 1);
 }
 void Entity::setScale(const glm::vec3& scale)
 {
@@ -31,19 +30,29 @@ void Entity::setTransformation(const glm::vec3& position, const glm::vec3& scale
 
 	m_transform = glm::translate(glm::mat4(1.0), position);
 	m_transform = m_transform * glm::toMat4(orientation);
-	
-	m_boundingVolume.transform = m_transform;
-
 	m_transform = glm::scale(m_transform, scale);
+
+	if (m_boundingShapeResult)
+	{
+		*m_boundingShapeResult = *m_boundingShapeVanilla;
+		m_boundingShapeResult->transform(position, scale, orientation);
+	}
 }
 void Entity::setParentWorld(World* parentWorld)
 {
 	m_parentWorld = parentWorld;
 }
-void Entity::setBoundingVolume(const OrientedBox& bbox)
+void Entity::setBoundingVolume(Shape* shape)
 {
-	m_boundingVolume = bbox;
+	if (m_boundingShapeVanilla)
+		delete m_boundingShapeVanilla;
+	m_boundingShapeVanilla = shape;
+	if (m_boundingShapeResult)
+		delete m_boundingShapeResult;
+	m_boundingShapeResult = m_boundingShapeVanilla->duplicate();
+	m_boundingShapeResult->transform(glm::vec3(m_transform[3]), m_scale, m_rotation);
 }
+
 
 uint64_t Entity::getId() const { return reinterpret_cast<uintptr_t>(this); }
 const glm::mat4& Entity::getMatrix() const { return m_transform; }
@@ -51,5 +60,5 @@ glm::vec3 Entity::getPosition() const { return glm::vec3(m_transform[3]); }
 glm::vec3 Entity::getScale() const { return m_scale; }
 glm::fquat Entity::getOrientation() const { return m_rotation; }
 World* Entity::getParentWorld() const { return m_parentWorld; }
-const OrientedBox& Entity::getBoundingVolume() const { return m_boundingVolume; }
+const Shape& Entity::getBoundingVolume() const { return *m_boundingShapeResult; }
 //

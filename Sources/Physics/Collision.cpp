@@ -47,7 +47,7 @@ namespace
 			}
 			case Shape::ORIENTED_BOX: {
 				const OrientedBox* c = reinterpret_cast<const OrientedBox*>(&b);
-				return Collision::collide_PointvsOrientedBox(a->p, c->transform, c->min, c->max);
+				return Collision::collide_PointvsOrientedBox(a->p, c->base, c->min, c->max);
 			}
 			case Shape::AXIS_ALIGNED_BOX: {
 				const AxisAlignedBox* c = reinterpret_cast<const AxisAlignedBox*>(&b);
@@ -79,7 +79,7 @@ namespace
 			}
 			case Shape::ORIENTED_BOX: {
 				const OrientedBox* c = reinterpret_cast<const OrientedBox*>(&b);
-				return Collision::collide_SegmentvsOrientedBox(a->p1, a->p2, c->transform, c->min, c->max);
+				return Collision::collide_SegmentvsOrientedBox(a->p1, a->p2, c->base, c->min, c->max);
 			}
 			case Shape::AXIS_ALIGNED_BOX: {
 				const AxisAlignedBox* c = reinterpret_cast<const AxisAlignedBox*>(&b);
@@ -107,7 +107,7 @@ namespace
 			}
 			case Shape::ORIENTED_BOX: {
 				const OrientedBox* c = reinterpret_cast<const OrientedBox*>(&b);
-				return Collision::collide_TrianglevsOrientedBox(a->p1, a->p2, a->p3, c->transform, c->min, c->max);
+				return Collision::collide_TrianglevsOrientedBox(a->p1, a->p2, a->p3, c->base, c->min, c->max);
 			}
 			case Shape::AXIS_ALIGNED_BOX: {
 				const AxisAlignedBox* c = reinterpret_cast<const AxisAlignedBox*>(&b);
@@ -131,19 +131,19 @@ namespace
 		{
 			case Shape::ORIENTED_BOX: {
 				const OrientedBox* c = reinterpret_cast<const OrientedBox*>(&b);
-				return Collision::collide_OrientedBoxvsOrientedBox(a->transform, a->min, a->max, c->transform, c->min, c->max);
+				return Collision::collide_OrientedBoxvsOrientedBox(a->base, a->min, a->max, c->base, c->min, c->max);
 			}
 			case Shape::AXIS_ALIGNED_BOX: {
 				const AxisAlignedBox* c = reinterpret_cast<const AxisAlignedBox*>(&b);
-				return Collision::collide_OrientedBoxvsAxisAlignedBox(a->transform, a->min, a->max, c->min, c->max);
+				return Collision::collide_OrientedBoxvsAxisAlignedBox(a->base, a->min, a->max, c->min, c->max);
 			}
 			case Shape::SPHERE: {
 				const Sphere* c = reinterpret_cast<const Sphere*>(&b);
-				return Collision::collide_OrientedBoxvsSphere(a->transform, a->min, a->max, c->center, c->radius);
+				return Collision::collide_OrientedBoxvsSphere(a->base, a->min, a->max, c->center, c->radius);
 			}
 			case Shape::CAPSULE: {
 				const Capsule* c = reinterpret_cast<const Capsule*>(&b);
-				return Collision::collide_OrientedBoxvsCapsule(a->transform, a->min, a->max, c->p1, c->p2, c->radius);
+				return Collision::collide_OrientedBoxvsCapsule(a->base, a->min, a->max, c->p1, c->p2, c->radius);
 			}
 			default: return false;
 		}

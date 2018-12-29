@@ -56,6 +56,8 @@ class SceneManager
 			NodeVirtual* owner;
 		};
 
+		glm::vec3 getObjectSize(const Entity* entity) const;
+
 		template<typename EntityCollector, typename CollisionTest>
 		void getObjects(NodeVirtual* node, EntityCollector& result, CollisionTest collisionTest);
 		template<typename EntityCollector, typename CollisionTest>
