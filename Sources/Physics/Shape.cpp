@@ -9,6 +9,9 @@
 
 
 //	Default
+Intersection::Result::Result() : type1(Shape::NONE), type2(Shape::NONE), contact1(0.f), contact2(0.f), normal1(0.f), normal2(0.f)
+{};
+
 Shape::Shape(const ShapeType& shapeType) : type(shapeType) {}
 Sphere Shape::toSphere() const { return Sphere(glm::vec3(0.f), 0.f); }
 void Shape::operator=(const Shape& s) { GF_ASSERT(false); }
@@ -166,7 +169,10 @@ void Sphere::operator=(const Shape& s)
 }
 void Sphere::transform(const glm::vec3& position, const glm::vec3& scale, const glm::fquat& orientation)
 {
-	center += position;
+	glm::mat4 m = glm::translate(glm::mat4(1.0), position);
+	m = m * glm::toMat4(orientation);
+	m = glm::scale(m, scale);
+	center = glm::vec3(m * glm::vec4(center, 1.f));
 	radius = radius * glm::compMax(scale);
 }
 Shape* Sphere::duplicate() const { return new Sphere(*this); }

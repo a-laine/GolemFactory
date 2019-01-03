@@ -93,67 +93,14 @@ bool Collision::collide_TrianglevsSphere(const glm::vec3& triangle1, const glm::
 }
 bool Collision::collide_TrianglevsCapsule(const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
 {
-	//	begin and eliminate special cases
 	if (capsule1 == capsule2) return collide_TrianglevsSphere(triangle1, triangle2, triangle3, capsule1, capsuleRadius);
+	if (collide_TrianglevsSphere(triangle1, triangle2, triangle3, capsule1, capsuleRadius)) return true;
+	if (collide_TrianglevsSphere(triangle1, triangle2, triangle3, capsule2, capsuleRadius)) return true;
 
-	glm::vec3 v1 = triangle2 - triangle1;
-	glm::vec3 v2 = triangle3 - triangle1;
-	glm::vec3 n = glm::cross(v1, v2);
-	if (n == glm::vec3(0.f)) // flat triangle
-	{
-		glm::vec3 v3 = triangle3 - triangle2;
-		float d1 = glm::dot(v1, v1);
-		float d2 = glm::dot(v2, v2);
-		float d3 = glm::dot(v3, v3);
+	if (collide_SegmentvsCapsule(triangle1, triangle2, capsule1, capsule2, capsuleRadius)) return true;
+	if (collide_SegmentvsCapsule(triangle2, triangle3, capsule1, capsule2, capsuleRadius)) return true;
+	if (collide_SegmentvsCapsule(triangle3, triangle1, capsule1, capsule2, capsuleRadius)) return true;
 
-		if (d1 >= d2 && d1 >= d3) return collide_SegmentvsCapsule(triangle1, triangle2, capsule1, capsule2, capsuleRadius);
-		else if (d2 >= d1 && d2 >= d3) return collide_SegmentvsCapsule(triangle1, triangle3, capsule1, capsule2, capsuleRadius);
-		else return collide_SegmentvsCapsule(triangle3, triangle2, capsule1, capsule2, capsuleRadius);
-	}
-
-	//	compute intersection point between ray and plane
-	n = glm::normalize(n);
-	glm::vec3 s = capsule2 - capsule1;
-	if (glm::dot(n, s) == 0.f) // segment parallel to triangle plane
-	{
-		float S = glm::dot(n, capsule1 - triangle1);						// distance [capsule seg, triangle plane]
-		if (std::abs(S) > capsuleRadius) return false;						// segment too far on direction n
-		glm::vec3 a = capsule1 - glm::dot(n, capsule1 - triangle1) * n;		// capsule seg projection on plane
-		glm::vec3 b = capsule2 - glm::dot(n, capsule2 - triangle1) * n;
-
-		// test if one of extremity of projection segment is inside triangle
-		glm::vec2 bary = getBarycentricCoordinates(v1, v2, a);
-		if (bary.x >= 0.f && bary.y >= 0.f && bary.x <= 1.f && bary.y <= 1.f && bary.x + bary.y <= 1.f) return true;
-		bary = getBarycentricCoordinates(v1, v2, b);
-		if (bary.x >= 0.f && bary.y >= 0.f && bary.x <= 1.f && bary.y <= 1.f && bary.x + bary.y <= 1.f) return true;
-
-		// test projection segment against triangle
-		std::pair<glm::vec3, glm::vec3> s1 = getSegmentsClosestSegment(a, b, triangle1, triangle2);
-		std::pair<glm::vec3, glm::vec3> s2 = getSegmentsClosestSegment(a, b, triangle1, triangle3);
-		std::pair<glm::vec3, glm::vec3> s3 = getSegmentsClosestSegment(a, b, triangle3, triangle2);
-
-		float d1 = glm::length(s1.first - s1.second);						// distance seg[a,b] / seg[1,2]
-		float d2 = glm::length(s2.first - s2.second);						// distance seg[a,b] / seg[1,3]
-		float d3 = glm::length(s3.first - s3.second);						// distance seg[a,b] / seg[3,2]
-		
-		float size = sqrt(capsuleRadius * capsuleRadius - S * S) + COLLISION_EPSILON;	//	r²sin² = r² - r²cos² = r² - S²
-		return d1<size || d2<size || d3<size;								//	seg[a,b] is far enough to triangle
-	}
-	else // standard case
-	{
-		glm::vec3 u = glm::normalize(s);
-		glm::vec3 intersection = capsule1 + glm::dot(n, triangle1 - capsule1) / glm::dot(n, u)*u -triangle1;
-
-		//	checking barycentric coordinates
-		glm::vec2 bary = getBarycentricCoordinates(v1, v2, intersection);
-		if (bary.x < 0.f) bary.x = 0.f;
-		if (bary.y < 0.f) bary.y = 0.f;
-		if (bary.x + bary.y > 1.f) bary /= (bary.x + bary.y);
-
-		// compute and compare minimal distance to capsule radius
-		glm::vec3 closestTrianglePoint = triangle1 + bary.x*v1 + bary.y*v2;
-		glm::vec3 closestSegmentPoint = getSegmentClosestPoint(capsule1, capsule2, closestTrianglePoint);
-		return glm::length(closestSegmentPoint - closestTrianglePoint) <= capsuleRadius;
-	}
+	return false;
 }
 //

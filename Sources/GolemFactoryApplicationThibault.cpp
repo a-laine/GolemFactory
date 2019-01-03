@@ -46,6 +46,7 @@
 #include <Resources/Loader/TextureLoader.h>
 
 #include "Physics/Collision.h"
+#include "Physics/Intersection.h"
 
 #define GRID_SIZE 100
 #define GRID_ELEMENT_SIZE 5.f
@@ -513,15 +514,15 @@ void updates(float elapseTime, int width, int height)
 
 		glm::vec3 v = glm::vec3(0);;
 		if (EventHandler::getInstance()->isActivated(FORWARD))
-			v += camera.getForward();
+			v += glm::normalize(glm::vec3(camera.getForward().x, camera.getForward().y, 0.f));
 		else if (EventHandler::getInstance()->isActivated(BACKWARD))
-			v -= camera.getForward();
+			v -= glm::normalize(glm::vec3(camera.getForward().x, camera.getForward().y, 0.f));
 		if (EventHandler::getInstance()->isActivated(LEFT))
-			v += camera.getLeft();
+			v += glm::normalize(glm::vec3(camera.getLeft().x, camera.getLeft().y, 0.f));
 		else if (EventHandler::getInstance()->isActivated(RIGHT))
-			v -= camera.getLeft();
+			v -= glm::normalize(glm::vec3(camera.getLeft().x, camera.getLeft().y, 0.f));
 		if(v.x != 0.f && v.y != 0.f)
-			v = glm::normalize(glm::vec3(v.x, v.y, 0.f));
+			v = glm::normalize(v);
 
 		//	physics
 		Capsule avatarCollider(*static_cast<const Capsule*>(&avatar->getBoundingVolume()));
@@ -539,8 +540,9 @@ void updates(float elapseTime, int width, int height)
 		DefaultBoxCollector collector;
 		world.getSceneManager().getObjects(collector, sceneNodeTest);
 		std::vector<Entity*>& entities = collector.getObjectInBox();
-		std::vector<unsigned int> collisionIndex;
+		std::set<unsigned int> collisionIndex;
 		bool collision = false;
+		std::vector<glm::vec3> collisionNormal;
 
 		for (unsigned int k = 0; k < entities.size(); k++)
 		{
@@ -565,33 +567,45 @@ void updates(float elapseTime, int width, int height)
 					glm::vec3 p1 = glm::vec3(model2 * glm::vec4(vertices[faces[j]], 1.f));
 					glm::vec3 p2 = glm::vec3(model2 * glm::vec4(vertices[faces[j + 1]], 1.f));
 					glm::vec3 p3 = glm::vec3(model2 * glm::vec4(vertices[faces[j + 2]], 1.f));
+
 					if (Collision::collide(Triangle(p1, p2, p3), avatarCollider))
 					{
-						collisionIndex.push_back(k);
+						glm::vec3 n = glm::normalize(glm::cross(p2 - p1, p3 - p1));
+						if (glm::dot(n, avatar->getPosition()) < 0)
+							n *= -1.f;
+						collisionNormal.push_back(n);
+						collisionIndex.insert(k);
 						collision = true;
-						break;
+						//break;
 					}
 				}
 			}
 		}
 
 		//	debug
-		/*if (collision)
+		if (collision)
 		{
 			Renderer::RenderOption option = Renderer::getInstance()->getRenderOption();
 			Renderer::getInstance()->setRenderOption(option == Renderer::DEFAULT ? Renderer::BOUNDING_BOX : Renderer::DEFAULT);
 			glm::mat4 projection = glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f);
 			Renderer::getInstance()->drawObject(avatar, &camera.getViewMatrix()[0][0], &projection[0][0]);
-			for (unsigned int i = 0; i < collisionIndex.size(); i++)
-				Renderer::getInstance()->drawObject(entities[collisionIndex[i]], &camera.getViewMatrix()[0][0], &projection[0][0]);
+			for (std::set<unsigned int>::iterator it = collisionIndex.begin(); it != collisionIndex.end(); ++it)
+				Renderer::getInstance()->drawObject(entities[*it], &camera.getViewMatrix()[0][0], &projection[0][0]);
 			Renderer::getInstance()->setRenderOption(option);
-		}*/
+		}
 
 		//	update
-		if (!collision)
-			avatar->setPosition(avatar->getPosition() + speed * v);
 		if (speed != 0.f && v != glm::vec3(0))
 			avatar->setOrientation(glm::toQuat(glm::rotate(glm::pi<float>() / 2.f + atan2(v.y, v.x), glm::vec3(0.f, 0.f, 1.f))));
+		if (collision)
+		{
+			for (unsigned int i = 0; i < collisionNormal.size(); i++)
+			{
+				v -= glm::dot(v, collisionNormal[i])*collisionNormal[i];
+			}
+			v.z = 0.f;
+		}
+		avatar->setPosition(avatar->getPosition() + speed * v);
 		world.updateObject(avatar);
 	}
 
