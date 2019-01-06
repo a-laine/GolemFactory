@@ -176,7 +176,6 @@ namespace Intersection
 	struct Result
 	{
 		Result();
-		Shape::ShapeType type1, type2;
 		glm::vec3 contact1, contact2;
 		glm::vec3 normal1, normal2;
 	};

@@ -43,20 +43,20 @@ namespace
 		glm::vec3 s2 = segment2b - segment2a;
 		glm::vec3 n = glm::cross(s1, s2);
 
-		if (n == glm::vec3(0.f))	// parallel or one segment is a point
+		if (glm::dot(n, n) < COLLISION_EPSILON)	// parallel or one segment is a point
 		{
 			if (s1 == glm::vec3(0.f) && s2 == glm::vec3(0.f))
 				return std::pair<glm::vec3, glm::vec3>(segment1a, segment2a);
 			else if (s1 == glm::vec3(0.f))
 				return std::pair<glm::vec3, glm::vec3>(segment1a, getSegmentClosestPoint(segment2a, segment2b, segment1a));
 			else if (s2 == glm::vec3(0.f))
-				return std::pair<glm::vec3, glm::vec3>(segment2a, getSegmentClosestPoint(segment1a, segment1b, segment2a));
+				return std::pair<glm::vec3, glm::vec3>(getSegmentClosestPoint(segment1a, segment1b, segment2a), segment2a);
 			else // segment are parallel
 			{
 				auto d1 = std::pair<glm::vec3, glm::vec3>(segment1a, getSegmentClosestPoint(segment2a, segment2b, segment1a));
 				auto d2 = std::pair<glm::vec3, glm::vec3>(segment1b, getSegmentClosestPoint(segment2a, segment2b, segment1b));
-				auto d3 = std::pair<glm::vec3, glm::vec3>(segment2a, getSegmentClosestPoint(segment1a, segment1b, segment2a));
-				auto d4 = std::pair<glm::vec3, glm::vec3>(segment2b, getSegmentClosestPoint(segment1a, segment1b, segment2b));
+				auto d3 = std::pair<glm::vec3, glm::vec3>(getSegmentClosestPoint(segment1a, segment1b, segment2a), segment2a);
+				auto d4 = std::pair<glm::vec3, glm::vec3>(getSegmentClosestPoint(segment1a, segment1b, segment2b), segment2b);
 				
 				float f1 = glm::dot(d1.first - d1.second, d1.first - d1.second);
 				float f2 = glm::dot(d2.first - d2.second, d2.first - d2.second);
@@ -69,16 +69,13 @@ namespace
 				else return d4;
 			}
 		}
-		else if (glm::dot(glm::cross(segment1b - segment1a, segment2a - segment1a), segment2b) == 0.f) // coplanar segments
+		else if (glm::dot(glm::cross(segment1b - segment1a, segment2a - segment1a), segment2b) < COLLISION_EPSILON) // coplanar segments
 		{
 			// https://www.lucidarme.me/intersection-of-segments/ 
 
 			glm::vec3 ss = segment2a - segment1a;
 			float t1 = glm::dot(glm::cross(ss, s2), n) / glm::dot(n, n);
 			float t2 = glm::dot(glm::cross(ss, s1), n) / glm::dot(n, n);
-			/*
-				SOLVE PB
-			*/
 			return std::pair<glm::vec3, glm::vec3>(segment1a + s1*glm::clamp(t1, 0.f, 1.f), segment2a + s2*glm::clamp(t2, 0.f, 1.f));
 		}
 		else //	skew segment
@@ -88,7 +85,9 @@ namespace
 			n = glm::normalize(n);
 			float t1 = -glm::determinant(glm::mat3(segment1a - segment2a, u2, n));
 			float t2 = -glm::determinant(glm::mat3(segment1a - segment2a, u1, n));
-			return std::pair<glm::vec3, glm::vec3>(segment2a + u2*t2, segment1a + u1*t1);
+			t1 = glm::clamp(t1, 0.f, glm::length(s1));
+			t2 = glm::clamp(t2, 0.f, glm::length(s2));
+			return std::pair<glm::vec3, glm::vec3>(segment1a + u1*t1, segment2a + u2*t2);
 		}
 	}
 	inline glm::vec2 getBarycentricCoordinates(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& point)

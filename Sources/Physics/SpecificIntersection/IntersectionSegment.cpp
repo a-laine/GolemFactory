@@ -1,6 +1,7 @@
 #include "IntersectionSegment.h"
 
 #include "IntersectionPoint.h"
+#include "../SpecificCollision/CollisionUtils.h"
 
 #include <iostream>
 
@@ -42,47 +43,17 @@ Intersection::Result Intersection::intersect_SegmentvsCapsule(const glm::vec3& s
 {
 	glm::vec3 s1 = segment2 - segment1;
 	glm::vec3 s2 = capsule2 - capsule1;
-	glm::vec3 n = glm::cross(s1, s2);
+	if (s1 == glm::vec3(0.f))
+		return intersect_PointvsCapsule(segment1, capsule1, capsule2, capsuleRadius);
+	else if (s2 == glm::vec3(0.f))
+		return intersect_SegmentvsSphere(segment1, segment2, capsule1, capsuleRadius);
 
-	if (n == glm::vec3(0.f))	// parallel or one segment is a point
-	{
-		if (s1 == glm::vec3(0.f))
-			return intersect_PointvsCapsule(segment1, capsule1, capsule2, capsuleRadius);
-		else if (s2 == glm::vec3(0.f))
-			return intersect_SegmentvsSphere(segment1, segment2, capsule1, capsuleRadius);
-		else // segment are parallel
-		{
-			Result result;
-			result.contact1 = segment1;
+	Result result;
+	std::pair<glm::vec3, glm::vec3> closest = getSegmentsClosestSegment(segment1, segment2, capsule1, capsule2);
+	result.contact1 = closest.first;
+	result.normal2 = glm::normalize(closest.first - closest.second);
+	result.normal1 = -result.normal2;
+	result.contact2 = closest.second + capsuleRadius * result.normal2;
 
-			glm::vec3 u1 = glm::normalize(s1);
-			glm::vec3 u3 = segment1 - capsule1;
-			glm::vec3 d = u3 - u1 * std::abs(glm::dot(u3, u1));
-			std::cout << "toto" << std::endl;
-
-			result.normal2 = glm::normalize(d);
-			result.normal1 = -result.normal1;
-			result.contact2 = capsule1 + capsuleRadius * result.normal2;
-			return result;
-		}
-	}
-	else
-	{
-		Result result;
-		glm::vec3 u1 = glm::normalize(s1);
-		glm::vec3 u2 = glm::normalize(s2);
-		n = glm::normalize(n);
-		float t1 = -glm::determinant(glm::mat3(segment1 - capsule1, u2, n)) / glm::dot(n, n);
-		float t2 = -glm::determinant(glm::mat3(segment1 - capsule1, u1, n)) / glm::dot(n, n);
-
-		t1 = glm::clamp(t1, 0.f, glm::length(s1));
-		t2 = glm::clamp(t2, 0.f, glm::length(s2));
-
-		result.contact2 = capsule1 + u2*t2;
-		result.contact1 = segment1 + u1*t1;
-		result.normal2 = glm::normalize(result.contact2 - result.contact1);
-		result.normal1 = -result.normal1;
-		result.contact2 += capsuleRadius * result.normal2;
-		return result;
-	}
+	return result;
 }

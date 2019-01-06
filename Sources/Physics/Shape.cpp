@@ -9,7 +9,7 @@
 
 
 //	Default
-Intersection::Result::Result() : type1(Shape::NONE), type2(Shape::NONE), contact1(0.f), contact2(0.f), normal1(0.f), normal2(0.f)
+Intersection::Result::Result() : contact1(0.f), contact2(0.f), normal1(0.f), normal2(0.f)
 {};
 
 Shape::Shape(const ShapeType& shapeType) : type(shapeType) {}

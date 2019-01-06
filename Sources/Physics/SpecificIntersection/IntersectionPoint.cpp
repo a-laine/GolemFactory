@@ -28,6 +28,7 @@ Intersection::Result Intersection::intersect_PointvsSphere(const glm::vec3& poin
 	result.contact1 = point;
 	result.contact2 = sphereCenter + sphereRadius * (sphereCenter - point);
 	result.normal2 = glm::normalize(sphereCenter - point);
+	result.normal1 = -result.normal2;
 	return result;
 }
 Intersection::Result Intersection::intersect_PointvsCapsule(const glm::vec3& point, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
@@ -42,6 +43,7 @@ Intersection::Result Intersection::intersect_PointvsCapsule(const glm::vec3& poi
 		result.contact1 = point;
 		result.contact2 = capsule1 + t * u;
 		result.normal2 = glm::normalize(result.contact1 - result.contact2);
+		result.normal1 = -result.normal2;
 		result.contact2 += capsuleRadius * result.normal2;
 		return result;
 	}

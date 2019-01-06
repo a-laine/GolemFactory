@@ -541,7 +541,6 @@ void updates(float elapseTime, int width, int height)
 		world.getSceneManager().getObjects(collector, sceneNodeTest);
 		std::vector<Entity*>& entities = collector.getObjectInBox();
 		std::set<unsigned int> collisionIndex;
-		bool collision = false;
 		std::vector<glm::vec3> collisionNormal;
 
 		for (unsigned int k = 0; k < entities.size(); k++)
@@ -570,20 +569,22 @@ void updates(float elapseTime, int width, int height)
 
 					if (Collision::collide(Triangle(p1, p2, p3), avatarCollider))
 					{
-						glm::vec3 n = glm::normalize(glm::cross(p2 - p1, p3 - p1));
-						if (glm::dot(n, avatar->getPosition()) < 0)
+						Intersection::Result result = Intersection::intersect(Triangle(p1, p2, p3), avatarCollider);
+						glm::vec3 n = glm::vec3(-result.normal2.x, -result.normal2.y, 0.f);
+						if(n != glm::vec3(0.f))
+							n = glm::normalize(n);
+						if (glm::dot(n, avatar->getPosition() - result.contact2) < 0.f)
 							n *= -1.f;
+
 						collisionNormal.push_back(n);
 						collisionIndex.insert(k);
-						collision = true;
-						//break;
 					}
 				}
 			}
 		}
 
 		//	debug
-		if (collision)
+		if (!collisionNormal.empty())
 		{
 			Renderer::RenderOption option = Renderer::getInstance()->getRenderOption();
 			Renderer::getInstance()->setRenderOption(option == Renderer::DEFAULT ? Renderer::BOUNDING_BOX : Renderer::DEFAULT);
@@ -592,18 +593,21 @@ void updates(float elapseTime, int width, int height)
 			for (std::set<unsigned int>::iterator it = collisionIndex.begin(); it != collisionIndex.end(); ++it)
 				Renderer::getInstance()->drawObject(entities[*it], &camera.getViewMatrix()[0][0], &projection[0][0]);
 			Renderer::getInstance()->setRenderOption(option);
+
+			std::cout << std::endl;
 		}
 
 		//	update
 		if (speed != 0.f && v != glm::vec3(0))
 			avatar->setOrientation(glm::toQuat(glm::rotate(glm::pi<float>() / 2.f + atan2(v.y, v.x), glm::vec3(0.f, 0.f, 1.f))));
-		if (collision)
+		if (!collisionNormal.empty())
 		{
 			for (unsigned int i = 0; i < collisionNormal.size(); i++)
 			{
-				v -= glm::dot(v, collisionNormal[i])*collisionNormal[i];
+				if (glm::dot(v, collisionNormal[i]) < 0)
+					v = v - glm::dot(v, collisionNormal[i]) * collisionNormal[i];
+				v.z = 0.f;
 			}
-			v.z = 0.f;
 		}
 		avatar->setPosition(avatar->getPosition() + speed * v);
 		world.updateObject(avatar);

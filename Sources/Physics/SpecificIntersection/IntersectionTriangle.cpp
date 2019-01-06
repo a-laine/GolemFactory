@@ -25,32 +25,90 @@ Intersection::Result Intersection::intersect_TrianglevsSphere(const glm::vec3& t
 	glm::vec3 u1 = triangle2 - triangle1;
 	glm::vec3 u2 = triangle3 - triangle1;
 	result.normal1 = glm::normalize(glm::cross(u1, u2));
+	bool edgeContact = false;
 
 	//	getting closest point in triangle from barycentric coordinates
 	glm::vec2 bary = getBarycentricCoordinates(u1, u2, (sphereCenter - triangle1) - glm::dot(sphereCenter - triangle1, result.normal1) * result.normal1);
-	if (bary.x < 0.f) bary.x = 0.f;
-	if (bary.y < 0.f) bary.y = 0.f;
-	if (bary.x + bary.y > 1.f) bary /= (bary.x + bary.y);
+	if (bary.x < 0.f)
+	{
+		bary.x = 0.f;
+		edgeContact = true;
+	}
+	if (bary.y < 0.f)
+	{
+		bary.y = 0.f;
+		edgeContact = true;
+	}
+	if (bary.x + bary.y > 1.f)
+	{
+		bary /= (bary.x + bary.y);
+		edgeContact = true;
+	}
 
 	result.contact1 = triangle1 + bary.x*u1 + bary.y*u2;
 	result.normal2 = glm::normalize(result.contact1 - sphereCenter);
 	result.contact2 = sphereCenter + sphereRadius * result.normal2;
+	if (edgeContact)
+		result.normal1 = -result.normal2;
 	return result;
 }
 Intersection::Result Intersection::intersect_TrianglevsCapsule(const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
 {
-	if (capsule1 == capsule2) return intersect_TrianglevsSphere(triangle1, triangle2, triangle3, capsule1, capsuleRadius);
-	if (Collision::collide_TrianglevsSphere(triangle1, triangle2, triangle3, capsule1, capsuleRadius))
-		return intersect_TrianglevsSphere(triangle1, triangle2, triangle3, capsule1, capsuleRadius);
-	if (Collision::collide_TrianglevsSphere(triangle1, triangle2, triangle3, capsule2, capsuleRadius))
-		return intersect_TrianglevsSphere(triangle1, triangle2, triangle3, capsule2, capsuleRadius);
+	Result result;
+	if (capsule1 == capsule2) 
+	{
+		result = intersect_TrianglevsSphere(triangle1, triangle2, triangle3, capsule1, capsuleRadius);
+		result.normal1 = glm::normalize(glm::cross(triangle2 - triangle1, triangle3 - triangle1));
+		result.normal2 = -result.normal1;
+	}
+	else
+	{
+		if (Collision::collide_TrianglevsSphere(triangle1, triangle2, triangle3, capsule1, capsuleRadius))
+		{
+			result = intersect_TrianglevsSphere(triangle1, triangle2, triangle3, capsule1, capsuleRadius);
+			result.normal1 = glm::normalize(glm::cross(triangle2 - triangle1, triangle3 - triangle1));
 
-	if (Collision::collide_SegmentvsCapsule(triangle1, triangle2, capsule1, capsule2, capsuleRadius))
-		return intersect_SegmentvsCapsule(triangle1, triangle2, capsule1, capsule2, capsuleRadius);
-	if (Collision::collide_SegmentvsCapsule(triangle2, triangle3, capsule1, capsule2, capsuleRadius))
-		return intersect_SegmentvsCapsule(triangle2, triangle3, capsule1, capsule2, capsuleRadius);
-	if (Collision::collide_SegmentvsCapsule(triangle3, triangle1, capsule1, capsule2, capsuleRadius))
-		return intersect_SegmentvsCapsule(triangle3, triangle1, capsule1, capsule2, capsuleRadius);
-
-	return Intersection::Result();
+			glm::vec3 s = capsule2 - capsule1;
+			float f = glm::dot(s, result.contact2 - capsule1) / glm::dot(s, s);
+			if (f >= 0.f && f <= 1.f)
+			{
+				glm::vec3 c = getSegmentClosestPoint(capsule1, capsule2, result.contact2);
+				result.normal2 = glm::normalize(result.contact2 - c);
+				result.contact2 = c + capsuleRadius * result.normal2;
+			}
+		}
+		else if (Collision::collide_TrianglevsSphere(triangle1, triangle2, triangle3, capsule2, capsuleRadius))
+		{
+			result = intersect_TrianglevsSphere(triangle1, triangle2, triangle3, capsule2, capsuleRadius);
+			result.normal1 = glm::normalize(glm::cross(triangle2 - triangle1, triangle3 - triangle1));
+			
+			glm::vec3 s = capsule2 - capsule1;
+			float f = glm::dot(s, result.contact2 - capsule1) / glm::dot(s, s);
+			if (f >= 0.f && f <= 1.f)
+			{
+				glm::vec3 c = getSegmentClosestPoint(capsule1, capsule2, result.contact2);
+				result.normal2 = glm::normalize(result.contact2 - c);
+				result.contact2 = c + capsuleRadius * result.normal2;
+			}
+		}
+		else if (Collision::collide_SegmentvsCapsule(triangle1, triangle2, capsule1, capsule2, capsuleRadius))
+		{
+			result = intersect_SegmentvsCapsule(triangle1, triangle2, capsule1, capsule2, capsuleRadius);
+			result.normal1 = glm::normalize(glm::cross(triangle2 - triangle1, triangle3 - triangle1));
+			std::cout << '1' << std::endl;
+		}
+		else if (Collision::collide_SegmentvsCapsule(triangle2, triangle3, capsule1, capsule2, capsuleRadius))
+		{
+			result = intersect_SegmentvsCapsule(triangle2, triangle3, capsule1, capsule2, capsuleRadius);
+			result.normal1 = glm::normalize(glm::cross(triangle2 - triangle1, triangle3 - triangle1));
+			std::cout << '2' << std::endl;
+		}
+		else if (Collision::collide_SegmentvsCapsule(triangle3, triangle1, capsule1, capsule2, capsuleRadius))
+		{
+			result = intersect_SegmentvsCapsule(triangle3, triangle1, capsule1, capsule2, capsuleRadius);
+			result.normal1 = glm::normalize(glm::cross(triangle2 - triangle1, triangle3 - triangle1));
+			std::cout << '3' << std::endl;
+		}
+	}
+	return result;
 }
