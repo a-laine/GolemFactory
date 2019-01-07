@@ -20,7 +20,7 @@ bool Collision::collide_OrientedBoxvsOrientedBox(const glm::mat4& box1Tranform, 
 	glm::vec3 sb2 = 0.5f * glm::abs(box2Max - box2Min);
 
 	//	first test pass
-	if (std::abs(glm::dot(xb1, distance)) > projectHalfBox(xb1, sb1) + projectHalfBox(xb1, sb2)) return false;
+	if      (std::abs(glm::dot(xb1, distance)) > projectHalfBox(xb1, sb1) + projectHalfBox(xb1, sb2)) return false;
 	else if (std::abs(glm::dot(yb1, distance)) > projectHalfBox(yb1, sb1) + projectHalfBox(yb1, sb2)) return false;
 	else if (std::abs(glm::dot(zb1, distance)) > projectHalfBox(zb1, sb1) + projectHalfBox(zb1, sb2)) return false;
 	else if (std::abs(glm::dot(xb2, distance)) > projectHalfBox(xb2, sb1) + projectHalfBox(xb2, sb2)) return false;
@@ -28,18 +28,18 @@ bool Collision::collide_OrientedBoxvsOrientedBox(const glm::mat4& box1Tranform, 
 	else if (std::abs(glm::dot(zb2, distance)) > projectHalfBox(zb2, sb1) + projectHalfBox(zb2, sb2)) return false;
 
 	//	secondary axis checking
-	/*glm::vec3 xb1xb2 = glm::normalize(glm::cross(xb1, xb2));
-	glm::vec3 xb1yb2 = glm::normalize(glm::cross(xb1, yb2));
-	glm::vec3 xb1zb2 = glm::normalize(glm::cross(xb1, zb2));
-	glm::vec3 yb1xb2 = glm::normalize(glm::cross(yb1, xb2));
-	glm::vec3 yb1yb2 = glm::normalize(glm::cross(yb1, yb2));
-	glm::vec3 yb1zb2 = glm::normalize(glm::cross(yb1, zb2));
-	glm::vec3 zb1xb2 = glm::normalize(glm::cross(zb1, xb2));
-	glm::vec3 zb1yb2 = glm::normalize(glm::cross(zb1, yb2));
-	glm::vec3 zb1zb2 = glm::normalize(glm::cross(zb1, zb2));
+	glm::vec3 xb1xb2 = glm::cross(xb1, xb2); if (glm::dot(xb1xb2, xb1xb2) > COLLISION_EPSILON) xb1xb2 = glm::normalize(xb1xb2); else xb1xb2 = glm::vec3(1, 0, 0);
+	glm::vec3 xb1yb2 = glm::cross(xb1, yb2); if (glm::dot(xb1yb2, xb1yb2) > COLLISION_EPSILON) xb1yb2 = glm::normalize(xb1yb2); else xb1yb2 = glm::vec3(1, 0, 0);
+	glm::vec3 xb1zb2 = glm::cross(xb1, zb2); if (glm::dot(xb1zb2, xb1zb2) > COLLISION_EPSILON) xb1zb2 = glm::normalize(xb1zb2); else xb1xb2 = glm::vec3(1, 0, 0);
+	glm::vec3 yb1xb2 = glm::cross(yb1, xb2); if (glm::dot(yb1xb2, yb1xb2) > COLLISION_EPSILON) yb1xb2 = glm::normalize(yb1xb2); else yb1xb2 = glm::vec3(1, 0, 0);
+	glm::vec3 yb1yb2 = glm::cross(yb1, yb2); if (glm::dot(yb1yb2, yb1yb2) > COLLISION_EPSILON) yb1yb2 = glm::normalize(yb1yb2); else yb1yb2 = glm::vec3(1, 0, 0);
+	glm::vec3 yb1zb2 = glm::cross(yb1, zb2); if (glm::dot(yb1zb2, yb1zb2) > COLLISION_EPSILON) yb1zb2 = glm::normalize(yb1zb2); else yb1zb2 = glm::vec3(1, 0, 0);
+	glm::vec3 zb1xb2 = glm::cross(zb1, xb2); if (glm::dot(zb1xb2, zb1xb2) > COLLISION_EPSILON) zb1xb2 = glm::normalize(zb1xb2); else zb1xb2 = glm::vec3(1, 0, 0);
+	glm::vec3 zb1yb2 = glm::cross(zb1, yb2); if (glm::dot(zb1yb2, zb1yb2) > COLLISION_EPSILON) zb1yb2 = glm::normalize(zb1yb2); else zb1yb2 = glm::vec3(1, 0, 0);
+	glm::vec3 zb1zb2 = glm::cross(zb1, zb2); if (glm::dot(zb1zb2, zb1zb2) > COLLISION_EPSILON) zb1zb2 = glm::normalize(zb1zb2); else zb1zb2 = glm::vec3(1, 0, 0);
 
 	//	second test pass
-	if (std::abs(glm::dot(xb1xb2, distance)) > projectHalfBox(xb1xb2, sb1) + projectHalfBox(xb1xb2, sb2)) return false;
+	if      (std::abs(glm::dot(xb1xb2, distance)) > projectHalfBox(xb1xb2, sb1) + projectHalfBox(xb1xb2, sb2)) return false;
 	else if (std::abs(glm::dot(xb1yb2, distance)) > projectHalfBox(xb1yb2, sb1) + projectHalfBox(xb1yb2, sb2)) return false;
 	else if (std::abs(glm::dot(xb1zb2, distance)) > projectHalfBox(xb1zb2, sb1) + projectHalfBox(xb1zb2, sb2)) return false;
 	else if (std::abs(glm::dot(yb1xb2, distance)) > projectHalfBox(yb1xb2, sb1) + projectHalfBox(yb1xb2, sb2)) return false;
@@ -47,7 +47,7 @@ bool Collision::collide_OrientedBoxvsOrientedBox(const glm::mat4& box1Tranform, 
 	else if (std::abs(glm::dot(yb1zb2, distance)) > projectHalfBox(yb1zb2, sb1) + projectHalfBox(yb1zb2, sb2)) return false;
 	else if (std::abs(glm::dot(zb1xb2, distance)) > projectHalfBox(zb1xb2, sb1) + projectHalfBox(zb1xb2, sb2)) return false;
 	else if (std::abs(glm::dot(zb1yb2, distance)) > projectHalfBox(zb1yb2, sb1) + projectHalfBox(zb1yb2, sb2)) return false;
-	else if (std::abs(glm::dot(zb1zb2, distance)) > projectHalfBox(zb1zb2, sb1) + projectHalfBox(zb1zb2, sb2)) return false;*/
+	else if (std::abs(glm::dot(zb1zb2, distance)) > projectHalfBox(zb1zb2, sb1) + projectHalfBox(zb1zb2, sb2)) return false;
 	else return true;
 }
 bool Collision::collide_OrientedBoxvsAxisAlignedBox(const glm::mat4& box1Tranform, const glm::vec3& box1Min, const glm::vec3& box1Max, const glm::vec3& box2Min, const glm::vec3& box2Max)

@@ -41,19 +41,17 @@ bool Collision::collide_TrianglevsOrientedBox(const glm::vec3& triangle1, const 
 	else if (glm::dot(y, distance) > projectHalfBox(y, sb) + projectTriangle(y, edge1, edge2)) return false;
 	else if (glm::dot(z, distance) > projectHalfBox(z, sb) + projectTriangle(z, edge1, edge2)) return false;
 	else if (glm::dot(n, distance) > projectHalfBox(n, sb)) return false;
-	else if (glm::dot(e1, distance) > projectHalfBox(e1, sb) + projectTriangle(e1, edge1, edge2)) return false;
-	else if (glm::dot(e2, distance) > projectHalfBox(e2, sb) + projectTriangle(e2, edge1, edge2)) return false;
 
 	glm::vec3 e3 = glm::normalize(triangle3 - triangle2);
-	glm::vec3 xe1 = glm::normalize(glm::cross(x, e1));
-	glm::vec3 ye1 = glm::normalize(glm::cross(y, e1));
-	glm::vec3 ze1 = glm::normalize(glm::cross(z, e1));
-	glm::vec3 xe2 = glm::normalize(glm::cross(x, e2));
-	glm::vec3 ye2 = glm::normalize(glm::cross(y, e2));
-	glm::vec3 ze2 = glm::normalize(glm::cross(z, e2));
-	glm::vec3 xe3 = glm::normalize(glm::cross(x, e3));
-	glm::vec3 ye3 = glm::normalize(glm::cross(y, e3));
-	glm::vec3 ze3 = glm::normalize(glm::cross(z, e3));
+	glm::vec3 xe1 = glm::cross(x, e1); if (glm::dot(xe1, xe1) > COLLISION_EPSILON) xe1 = glm::normalize(xe1); else xe1 = glm::vec3(1, 0, 0);
+	glm::vec3 ye1 = glm::cross(y, e1); if (glm::dot(ye1, ye1) > COLLISION_EPSILON) ye1 = glm::normalize(ye1); else ye1 = glm::vec3(1, 0, 0);
+	glm::vec3 ze1 = glm::cross(z, e1); if (glm::dot(ze1, ze1) > COLLISION_EPSILON) ze1 = glm::normalize(ze1); else ze1 = glm::vec3(1, 0, 0);
+	glm::vec3 xe2 = glm::cross(x, e2); if (glm::dot(xe2, xe2) > COLLISION_EPSILON) xe2 = glm::normalize(xe2); else xe2 = glm::vec3(1, 0, 0);
+	glm::vec3 ye2 = glm::cross(y, e2); if (glm::dot(ye2, ye2) > COLLISION_EPSILON) ye2 = glm::normalize(ye2); else ye2 = glm::vec3(1, 0, 0);
+	glm::vec3 ze2 = glm::cross(z, e2); if (glm::dot(ze2, ze2) > COLLISION_EPSILON) ze2 = glm::normalize(ze2); else ze2 = glm::vec3(1, 0, 0);
+	glm::vec3 xe3 = glm::cross(x, e3); if (glm::dot(xe3, xe3) > COLLISION_EPSILON) xe3 = glm::normalize(xe3); else xe3 = glm::vec3(1, 0, 0);
+	glm::vec3 ye3 = glm::cross(y, e3); if (glm::dot(ye3, ye3) > COLLISION_EPSILON) ye3 = glm::normalize(ye3); else ye3 = glm::vec3(1, 0, 0);
+	glm::vec3 ze3 = glm::cross(z, e3); if (glm::dot(ze3, ze3) > COLLISION_EPSILON) ze3 = glm::normalize(ze3); else ze3 = glm::vec3(1, 0, 0);
 
 	//	second pass
 	if      (glm::dot(xe1, distance) > projectHalfBox(xe1, sb) + projectTriangle(xe1, edge1, edge2)) return false;
