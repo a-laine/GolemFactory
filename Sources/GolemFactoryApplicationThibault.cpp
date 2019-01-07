@@ -528,12 +528,15 @@ void updates(float elapseTime, int width, int height)
 		Capsule avatarCollider(*static_cast<const Capsule*>(&avatar->getBoundingVolume()));
 		avatarCollider.transform(speed * v, glm::vec3(1.f), glm::fquat());
 
-		debugShape->setPosition(speed * v + avatarCollider.p1);
-		debugShape->setScale(glm::vec3(avatarCollider.radius));
-		world.updateObject(debugShape);
-		debugShape2->setPosition(speed * v + avatarCollider.p2);
-		debugShape2->setScale(glm::vec3(avatarCollider.radius));
-		world.updateObject(debugShape2);
+		if (DEBUG)
+		{
+			debugShape->setPosition(speed * v + avatarCollider.p1);
+			debugShape->setScale(glm::vec3(avatarCollider.radius));
+			world.updateObject(debugShape);
+			debugShape2->setPosition(speed * v + avatarCollider.p2);
+			debugShape2->setScale(glm::vec3(avatarCollider.radius));
+			world.updateObject(debugShape2);
+		}
 		
 		glm::vec3 s = glm::vec3(avatar->getBoundingVolume().toSphere().radius);
 		DefaultSceneManagerBoxTest sceneNodeTest(avatar->getPosition() + speed * v - s, avatar->getPosition() + speed * v + s);
@@ -584,7 +587,7 @@ void updates(float elapseTime, int width, int height)
 		}
 
 		//	debug
-		if (!collisionNormal.empty())
+		if (DEBUG && !collisionNormal.empty())
 		{
 			Renderer::RenderOption option = Renderer::getInstance()->getRenderOption();
 			Renderer::getInstance()->setRenderOption(option == Renderer::DEFAULT ? Renderer::BOUNDING_BOX : Renderer::DEFAULT);
@@ -593,8 +596,6 @@ void updates(float elapseTime, int width, int height)
 			for (std::set<unsigned int>::iterator it = collisionIndex.begin(); it != collisionIndex.end(); ++it)
 				Renderer::getInstance()->drawObject(entities[*it], &camera.getViewMatrix()[0][0], &projection[0][0]);
 			Renderer::getInstance()->setRenderOption(option);
-
-			std::cout << std::endl;
 		}
 
 		//	update

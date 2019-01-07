@@ -95,19 +95,16 @@ Intersection::Result Intersection::intersect_TrianglevsCapsule(const glm::vec3& 
 		{
 			result = intersect_SegmentvsCapsule(triangle1, triangle2, capsule1, capsule2, capsuleRadius);
 			result.normal1 = glm::normalize(glm::cross(triangle2 - triangle1, triangle3 - triangle1));
-			std::cout << '1' << std::endl;
 		}
 		else if (Collision::collide_SegmentvsCapsule(triangle2, triangle3, capsule1, capsule2, capsuleRadius))
 		{
 			result = intersect_SegmentvsCapsule(triangle2, triangle3, capsule1, capsule2, capsuleRadius);
 			result.normal1 = glm::normalize(glm::cross(triangle2 - triangle1, triangle3 - triangle1));
-			std::cout << '2' << std::endl;
 		}
 		else if (Collision::collide_SegmentvsCapsule(triangle3, triangle1, capsule1, capsule2, capsuleRadius))
 		{
 			result = intersect_SegmentvsCapsule(triangle3, triangle1, capsule1, capsule2, capsuleRadius);
 			result.normal1 = glm::normalize(glm::cross(triangle2 - triangle1, triangle3 - triangle1));
-			std::cout << '3' << std::endl;
 		}
 	}
 	return result;
