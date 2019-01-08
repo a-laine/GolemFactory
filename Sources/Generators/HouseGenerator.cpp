@@ -474,22 +474,22 @@ void HouseGenerator::constructRoofMesh()
 			{
 				if (houseField[k][i][j].roof < 0)
 				{
-					if (!freePlace(i - 1, j, k))
+					if (!freePlace(i - 1, j, k) && freePlace(i - 1, j, k + 1))
 						pushMesh(assetLibrary["roofEnd"], glm::vec3(i - houseOrigin.x, j + 0.5f - houseOrigin.y, houseOrigin.z + 2.5f * k), glm::vec3(0.f, -1.f, 0.f));
-					if (!freePlace(i + 1, j, k))
+					if (!freePlace(i + 1, j, k) && freePlace(i + 1, j, k + 1))
 						pushMesh(assetLibrary["roofEnd"], glm::vec3(i + 1 - houseOrigin.x, j + 0.5f - houseOrigin.y, houseOrigin.z + 2.5f * k), glm::vec3(0.f, 1.f, 0.f));
-					if (!freePlace(i, j - 1, k))
+					if (!freePlace(i, j - 1, k) && freePlace(i, j - 1, k + 1))
 						pushMesh(assetLibrary["roofEnd"], glm::vec3(i + 0.5f - houseOrigin.x, j - houseOrigin.y, houseOrigin.z + 2.5f * k), glm::vec3(1.f, 0.f, 0.f));
-					if (!freePlace(i, j + 1, k))
+					if (!freePlace(i, j + 1, k) && freePlace(i, j + 1, k + 1))
 						pushMesh(assetLibrary["roofEnd"], glm::vec3(i + 0.5f - houseOrigin.x, j + 1 - houseOrigin.y, houseOrigin.z + 2.5f * k), glm::vec3(-1.f, 0.f, 0.f));
 				
-					if (!freePlace(i - 1, j - 1, k) && freePlace(i - 1, j, k) && freePlace(i, j - 1, k))
+					if (!freePlace(i - 1, j - 1, k) && freePlace(i - 1, j - 1, k + 1) && freePlace(i - 1, j, k) && freePlace(i, j - 1, k))
 						pushMesh(assetLibrary["roofEndCorner"], glm::vec3(i - houseOrigin.x, j - houseOrigin.y, houseOrigin.z + 2.5f * k), glm::vec3(0.f, 1.f, 0.f));
-					if (!freePlace(i + 1, j + 1, k) && freePlace(i + 1, j, k) && freePlace(i, j + 1, k))
+					if (!freePlace(i + 1, j + 1, k) && freePlace(i + 1, j + 1, k + 1) && freePlace(i + 1, j, k) && freePlace(i, j + 1, k))
 						pushMesh(assetLibrary["roofEndCorner"], glm::vec3(i + 1 - houseOrigin.x, j + 1 - houseOrigin.y, houseOrigin.z + 2.5f * k), glm::vec3(0.f, -1.f, 0.f));
-					if (!freePlace(i - 1, j + 1, k) && freePlace(i - 1, j, k) && freePlace(i, j + 1, k))
+					if (!freePlace(i - 1, j + 1, k) && freePlace(i - 1, j + 1, k + 1) && freePlace(i - 1, j, k) && freePlace(i, j + 1, k))
 						pushMesh(assetLibrary["roofEndCorner"], glm::vec3(i - houseOrigin.x, j + 1 - houseOrigin.y, houseOrigin.z + 2.5f * k), glm::vec3(1.f, 0.f, 0.f));
-					if (!freePlace(i + 1, j - 1, k) && freePlace(i + 1, j, k) && freePlace(i, j - 1, k))
+					if (!freePlace(i + 1, j - 1, k) && freePlace(i + 1, j - 1, k + 1) && freePlace(i + 1, j, k) && freePlace(i, j - 1, k))
 						pushMesh(assetLibrary["roofEndCorner"], glm::vec3(i + 1 - houseOrigin.x, j - houseOrigin.y, houseOrigin.z + 2.5f * k), glm::vec3(-1.f, 0.f, 0.f));
 				}
 				else if (k + 1 < houseFieldFloor && houseField[k + 1][i][j].house == HouseTypeBlock::None)

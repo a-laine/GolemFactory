@@ -65,6 +65,8 @@ Entity* debugShape2 = nullptr;
 
 double completeTime = 16.;
 double averageCompleteTime = 16.;
+
+float avatarZeroHeight;
 //
 
 
@@ -116,6 +118,8 @@ int main()
 			object->setPosition(pos);
 			camera.setRadius(4);
 			object->setOrientation(glm::toQuat(glm::rotate(glm::pi<float>() / 2.f + atan2(1.f, 0.f), glm::vec3(0.f, 0.f, 1.f))));
+
+			avatarZeroHeight = object->getPosition().z;
 		});
 		camera.setMode(Camera::TRACKBALL);
 		WidgetManager::getInstance()->setBoolean("BBpicking", false);
@@ -214,8 +218,18 @@ void initializeForestScene(bool emptyPlace)
 	//	center tree in place
 	if (!emptyPlace)
 	{
-		world.getEntityFactory().createObject("tree", glm::vec3(0), glm::vec3(5.f, 5.f, 5.f));
+		//world.getEntityFactory().createObject("tree", glm::vec3(0), glm::vec3(5.f, 5.f, 5.f));
 		//world.getEntityFactory().createObject("rock", glm::vec3(0), glm::vec3(50.f, 50.f, 50.f));
+		//world.getEntityFactory().createObject([&hg](Entity* house) { hg.getHouse(house, 0, 100, 100); });
+
+		world.getEntityFactory().createObject([](Entity* object)
+		{
+			DrawableComponent* drawable = new DrawableComponent("teststairtower.obj", "default");
+			object->addComponent(drawable);
+			object->setBoundingVolume(new OrientedBox(glm::mat4(1.f), drawable->getMeshBBMin(), drawable->getMeshBBMax()));
+			float scale = 5.f / (drawable->getMeshBBMax().x - drawable->getMeshBBMin().x);
+			object->setScale(glm::vec3(scale));
+		});
 	}
 
 	// village
@@ -512,34 +526,34 @@ void updates(float elapseTime, int width, int height)
 		if (Animator::getInstance()->isAnimationRunning(avatar, "walk")) speed = 0.025f;
 		if (Animator::getInstance()->isAnimationRunning(avatar, "run")) speed = 0.1f;
 
-		glm::vec3 v = glm::vec3(0);;
+		glm::vec3 speedDirection = glm::vec3(0);;
 		if (EventHandler::getInstance()->isActivated(FORWARD))
-			v += glm::normalize(glm::vec3(camera.getForward().x, camera.getForward().y, 0.f));
+			speedDirection += glm::normalize(glm::vec3(camera.getForward().x, camera.getForward().y, 0.f));
 		else if (EventHandler::getInstance()->isActivated(BACKWARD))
-			v -= glm::normalize(glm::vec3(camera.getForward().x, camera.getForward().y, 0.f));
+			speedDirection -= glm::normalize(glm::vec3(camera.getForward().x, camera.getForward().y, 0.f));
 		if (EventHandler::getInstance()->isActivated(LEFT))
-			v += glm::normalize(glm::vec3(camera.getLeft().x, camera.getLeft().y, 0.f));
+			speedDirection += glm::normalize(glm::vec3(camera.getLeft().x, camera.getLeft().y, 0.f));
 		else if (EventHandler::getInstance()->isActivated(RIGHT))
-			v -= glm::normalize(glm::vec3(camera.getLeft().x, camera.getLeft().y, 0.f));
-		if(v.x != 0.f && v.y != 0.f)
-			v = glm::normalize(v);
+			speedDirection -= glm::normalize(glm::vec3(camera.getLeft().x, camera.getLeft().y, 0.f));
+		if(speedDirection.x != 0.f && speedDirection.y != 0.f)
+			speedDirection = glm::normalize(speedDirection);
 
 		//	physics
 		Capsule avatarCollider(*static_cast<const Capsule*>(&avatar->getBoundingVolume()));
-		avatarCollider.transform(speed * v, glm::vec3(1.f), glm::fquat());
+		avatarCollider.transform(speed * speedDirection, glm::vec3(1.f), glm::fquat());
 
 		if (DEBUG)
 		{
-			debugShape->setPosition(speed * v + avatarCollider.p1);
+			debugShape->setPosition(speed * speedDirection + avatarCollider.p1);
 			debugShape->setScale(glm::vec3(avatarCollider.radius));
 			world.updateObject(debugShape);
-			debugShape2->setPosition(speed * v + avatarCollider.p2);
+			debugShape2->setPosition(speed * speedDirection + avatarCollider.p2);
 			debugShape2->setScale(glm::vec3(avatarCollider.radius));
 			world.updateObject(debugShape2);
 		}
 		
 		glm::vec3 s = glm::vec3(avatar->getBoundingVolume().toSphere().radius);
-		DefaultSceneManagerBoxTest sceneNodeTest(avatar->getPosition() + speed * v - s, avatar->getPosition() + speed * v + s);
+		DefaultSceneManagerBoxTest sceneNodeTest(avatar->getPosition() + speed * speedDirection - s, avatar->getPosition() + speed * speedDirection + s);
 		DefaultBoxCollector collector;
 		world.getSceneManager().getObjects(collector, sceneNodeTest);
 		std::vector<Entity*>& entities = collector.getObjectInBox();
@@ -573,7 +587,7 @@ void updates(float elapseTime, int width, int height)
 					if (Collision::collide(Triangle(p1, p2, p3), avatarCollider))
 					{
 						Intersection::Result result = Intersection::intersect(Triangle(p1, p2, p3), avatarCollider);
-						glm::vec3 n = glm::vec3(-result.normal2.x, -result.normal2.y, 0.f);
+						glm::vec3 n = -result.normal2;// glm::vec3(-result.normal2.x, -result.normal2.y, -result.normal2.z);
 						if(n != glm::vec3(0.f))
 							n = glm::normalize(n);
 						if (glm::dot(n, avatar->getPosition() - result.contact2) < 0.f)
@@ -599,18 +613,20 @@ void updates(float elapseTime, int width, int height)
 		}
 
 		//	update
-		if (speed != 0.f && v != glm::vec3(0))
-			avatar->setOrientation(glm::toQuat(glm::rotate(glm::pi<float>() / 2.f + atan2(v.y, v.x), glm::vec3(0.f, 0.f, 1.f))));
+		if (speed != 0.f && speedDirection != glm::vec3(0))
+			avatar->setOrientation(glm::toQuat(glm::rotate(glm::pi<float>() / 2.f + atan2(speedDirection.y, speedDirection.x), glm::vec3(0.f, 0.f, 1.f))));
 		if (!collisionNormal.empty())
 		{
 			for (unsigned int i = 0; i < collisionNormal.size(); i++)
 			{
-				if (glm::dot(v, collisionNormal[i]) < 0)
-					v = v - glm::dot(v, collisionNormal[i]) * collisionNormal[i];
-				v.z = 0.f;
+				if (glm::dot(speedDirection, collisionNormal[i]) < -0.01f)
+					speedDirection = speedDirection - glm::dot(speedDirection, collisionNormal[i]) * collisionNormal[i];
 			}
 		}
-		avatar->setPosition(avatar->getPosition() + speed * v);
+		glm::vec3 p = avatar->getPosition() + speed * speedDirection;
+		if (p.z < avatarZeroHeight)
+			p.z = avatarZeroHeight;
+		avatar->setPosition(p);
 		world.updateObject(avatar);
 	}
 

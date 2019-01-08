@@ -43,7 +43,7 @@ Entity* EntityFactory::createByType(const std::string& type)
 	if(type == "peasant")
 	{
 		createAnimatable(object, "peasant", "human", "simple_peasant", "skinning");
-		object->setBoundingVolume(new Capsule(glm::vec3(0.f, 0.f, -2.2f), glm::vec3(0.f, 0.f, 2.4f), 1.7f));
+		object->setBoundingVolume(new Capsule(glm::vec3(0.f, 0.f, -3.f), glm::vec3(0.f, 0.f, 2.4f), 1.7f));
 	}
 	else if(type == "sphere")
 	{
