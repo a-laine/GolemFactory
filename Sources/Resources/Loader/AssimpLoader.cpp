@@ -32,7 +32,7 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
     if(!scene)
     {
         if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::ERRORS)
-            std::cerr << "ERROR : loading mesh : " << fileName << " : could not open file" << std::endl;
+            std::cerr << "ERROR : AssimpLoader : " << fileName << " : could not open file" << std::endl;
         return false;
     }
 
@@ -48,7 +48,7 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
         totalVertices += scene->mMeshes[i]->mNumVertices;
     if(totalVertices > std::numeric_limits<unsigned short>::max())
     {
-        std::cerr << "ERROR : loading mesh : " << fileName << " : too much vertex in file (not supported by engine)" << std::endl;
+        std::cerr << "ERROR : AssimpLoader : " << fileName << " : too much vertex in file (not supported by engine)" << std::endl;
         return false;
     }
 
@@ -150,7 +150,7 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
                     }
                     else if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::ERRORS)
                     {
-                        std::cerr << "ERROR : loading mesh : vertex at position " << vertices[vertexIndex].x << ' ' << vertices[vertexIndex].y << ' ' << vertices[vertexIndex].z;
+                        std::cerr << "ERROR : AssimpLoader : vertex at position " << vertices[vertexIndex].x << ' ' << vertices[vertexIndex].y << ' ' << vertices[vertexIndex].z;
                         std::cerr << ": more than 3 bones weights defined" << std::endl;
                     }
                 }

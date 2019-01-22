@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Shape.h"
+#include "BoundingVolume.h"
 
 #include "SpecificCollision/CollisionPoint.h"
 #include "SpecificCollision/CollisionSegment.h"

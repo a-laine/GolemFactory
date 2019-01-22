@@ -2,7 +2,7 @@
 
 #include <algorithm>
 
-#include "../Shape.h"
+#include "Physics/BoundingVolume.h"
 
 namespace Collision
 {

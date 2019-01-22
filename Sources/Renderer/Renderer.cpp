@@ -173,7 +173,7 @@ void Renderer::render(Camera* renderCam)
 	glm::mat4 view(renderCam->getViewMatrix());
 	int width, height;
 	glfwGetWindowSize(window, &width, &height);
-	glm::mat4 projection(glm::perspective(glm::radians(renderCam->getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f));
+	glm::mat4 projection = glm::perspective(glm::radians(renderCam->getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f);
 	
 	//	opengl state
 	glEnable(GL_DEPTH_TEST);
@@ -335,153 +335,6 @@ void Renderer::loadVAO(const GLuint& vao)
 }
 //
 
-
-//	Render function
-void Renderer::drawObject(Entity* object, const float* view, const float* projection)
-{
-	ShaderIdentifier shaderType = INSTANCE_DRAWABLE;
-	ShaderIdentifier shaderBBType = INSTANCE_DRAWABLE_BB;
-	ShaderIdentifier shaderWire = INSTANCE_DRAWABLE_WIRED;
-	DrawableComponent* drawableComp = object->getComponent<DrawableComponent>();
-	SkeletonComponent* skeletonComp = object->getComponent<SkeletonComponent>();
-	if(!drawableComp || !drawableComp->isValid()) return;
-	if(skeletonComp && skeletonComp->isValid())
-	{
-		shaderType = INSTANCE_ANIMATABLE;
-		shaderBBType = INSTANCE_ANIMATABLE_BB;
-		shaderWire = INSTANCE_ANIMATABLE_WIRED;
-	}
-
-	//	Get shader and prepare matrix
-	Shader* shaderToUse;
-	if(renderOption == BOUNDING_BOX) shaderToUse = defaultShader[shaderBBType];
-	else if (renderOption == WIREFRAME) shaderToUse = defaultShader[shaderWire];
-	else shaderToUse = defaultShader[shaderType];
-	if(!shaderToUse) shaderToUse = drawableComp->getShader();
-	loadMVPMatrix(shaderToUse, &object->getMatrix()[0][0], view, projection);
-	if(!shaderToUse) return;
-
-	if(shaderType == INSTANCE_ANIMATABLE)
-	{
-		//	Load skeleton pose matrix list for vertex skinning calculation
-		std::vector<glm::mat4> pose = skeletonComp->getPose();
-		int loc = shaderToUse->getUniformLocation("skeletonPose");
-		if(loc >= 0) glUniformMatrix4fv(loc, (int)pose.size(), FALSE, (float*) pose.data());
-
-		//	Load inverse bind pose matrix list for vertex skinning calculation
-		std::vector<glm::mat4> bind;
-		bind = skeletonComp->getInverseBindPose();
-		loc = shaderToUse->getUniformLocation("inverseBindPose");
-		if(loc >= 0) glUniformMatrix4fv(loc, (int)bind.size(), FALSE, (float*) bind.data());
-	}
-
-	//	Draw mesh
-	if (renderOption == BOUNDING_BOX && shaderType == INSTANCE_ANIMATABLE)
-	{
-		loadVAO(skeletonComp->getCapsuleVAO());
-		glDrawArrays(GL_POINTS, 0, (int)skeletonComp->getSegmentsIndex().size());
-	}
-	else if (renderOption == BOUNDING_BOX)
-	{
-		loadVAO(drawableComp->getMesh()->getBBoxVAO());
-		glDrawElements(GL_TRIANGLES, (int)drawableComp->getMesh()->getBBoxFaces()->size(), GL_UNSIGNED_SHORT, NULL);
-	}	
-	else
-	{
-		loadVAO(drawableComp->getMesh()->getVAO());
-		glDrawElements(GL_TRIANGLES, (int)drawableComp->getMesh()->getFaces()->size(), GL_UNSIGNED_SHORT, NULL);
-	}
-	instanceDrawn++;
-	trianglesDrawn += drawableComp->getMesh()->getNumberFaces();
-}
-void Renderer::drawShape(const Shape* shape, const float* view, const float* projection)
-{
-	switch (shape->type)
-	{
-		case Shape::POINT:
-			drawPoint(static_cast<const Point*>(shape), view, projection);
-			break;
-		case Shape::SEGMENT:
-			drawSegment(static_cast<const Segment*>(shape), view, projection);
-			break;
-		case Shape::TRIANGLE:
-			drawTriangle(static_cast<const Triangle*>(shape), view, projection);
-			break;
-		case Shape::ORIENTED_BOX:
-			drawOrientedBox(static_cast<const OrientedBox*>(shape), view, projection);
-			break;
-		case Shape::AXIS_ALIGNED_BOX:
-			drawAxisAlignedBox(static_cast<const AxisAlignedBox*>(shape), view, projection);
-			break;
-		case Shape::SPHERE:
-			drawSphere(static_cast<const Sphere*>(shape), view, projection);
-			break;
-		case Shape::CAPSULE:
-			drawCapsule(static_cast<const Capsule*>(shape), view, projection);
-			break;
-		default: break;
-	}
-}
-
-
-void Renderer::drawInstancedObject(Shader* s, Mesh* m, std::vector<glm::mat4>& models, const float* view, const float* projection)
-{
-	//	Get shader and prepare matrix
-	Shader* shaderToUse;
-	if (renderOption == BOUNDING_BOX) shaderToUse = defaultShader[INSTANCE_DRAWABLE_BB];
-	else if (renderOption == WIREFRAME) shaderToUse = defaultShader[INSTANCE_DRAWABLE_WIRED];
-	else shaderToUse = defaultShader[INSTANCE_DRAWABLE];
-	if (!shaderToUse || !shaderToUse->getInstanciable()) shaderToUse = s;
-	else shaderToUse = shaderToUse->getInstanciable();
-
-	//	Load MVP matrix
-	loadMVPMatrix(shaderToUse, (const float*)models.data(), view, projection, (int)models.size());
-
-	//	Draw instanced
-	if (renderOption == BOUNDING_BOX)
-	{
-		loadVAO(m->getBBoxVAO());
-		glDrawElementsInstanced(GL_TRIANGLES, (int)m->getBBoxFaces()->size(), GL_UNSIGNED_SHORT, NULL, (unsigned short)models.size());
-	}
-	else
-	{
-		loadVAO(m->getVAO());
-		glDrawElementsInstanced(GL_TRIANGLES, (int)m->getFaces()->size(), GL_UNSIGNED_SHORT, NULL, (unsigned short)models.size());
-	}
-	instanceDrawn += (int)(models.size());
-	trianglesDrawn += (int)(models.size() * m->getNumberFaces());
-}
-void Renderer::drawPoint(const Point* point, const float* view, const float* projection)
-{
-	std::cout << "drawPoint not yet implemented" << std::endl;
-}
-void Renderer::drawSegment(const Segment* segment, const float* view, const float* projection)
-{
-	std::cout << "drawSegment not yet implemented" << std::endl;
-}
-void Renderer::drawTriangle(const Triangle* triangle, const float* view, const float* projection)
-{
-	std::cout << "drawTriangle not yet implemented" << std::endl;
-}
-void Renderer::drawOrientedBox(const OrientedBox* box, const float* view, const float* projection)
-{
-	std::cout << "drawOrientedBox not yet implemented" << std::endl;
-}
-void Renderer::drawAxisAlignedBox(const AxisAlignedBox* box, const float* view, const float* projection)
-{
-	std::cout << "drawAxisAlignedBox not yet implemented" << std::endl;
-}
-void Renderer::drawSphere(const Sphere* sphere, const float* view, const float* projection)
-{
-	std::cout << "drawSphere not yet implemented" << std::endl;
-}
-void Renderer::drawCapsule(const Capsule* capsule, const float* view, const float* projection)
-{
-	
-}
-//
-
-
 //  Set/get functions
 void Renderer::setCamera(Camera* cam) { camera = cam; }
 void Renderer::setWorld(World* currentWorld) { world = currentWorld; }
@@ -511,4 +364,10 @@ bool Renderer::isGridVisible() { return drawGrid; }
 unsigned int Renderer::getNbDrawnInstances() const { return instanceDrawn; }
 unsigned int Renderer::getNbDrawnTriangles() const { return trianglesDrawn; }
 Renderer::RenderOption Renderer::getRenderOption() const { return renderOption; }
+
+
+void Renderer::addDrawShapeDefinition(Shape::ShapeType type, Mesh* mesh, Shader* shader)
+{
+	drawShapeDefinition[type] = std::pair<Mesh*, Shader*>(mesh, shader);
+}
 //

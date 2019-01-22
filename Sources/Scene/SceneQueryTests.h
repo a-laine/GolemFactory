@@ -26,6 +26,7 @@ class DefaultBoxCollector
 
 		void operator() (NodeVirtual* node, Entity* object);
 		std::vector<Entity*>& getObjectInBox();
+		void clear();
 
 	private:
 		std::vector<Entity*> objectInBox;

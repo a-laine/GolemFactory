@@ -43,12 +43,12 @@ Entity* EntityFactory::createByType(const std::string& type)
 	if(type == "peasant")
 	{
 		createAnimatable(object, "peasant", "human", "simple_peasant", "skinning");
-		object->setBoundingVolume(new Capsule(glm::vec3(0.f, 0.f, -3.f), glm::vec3(0.f, 0.f, 2.4f), 1.7f));
+		object->setShape(new Capsule(glm::vec3(0.f, 0.f, -3.f), glm::vec3(0.f, 0.f, 2.4f), 1.7f));
 	}
 	else if(type == "sphere")
 	{
 		createDrawable(object, "icosphere.obj", "default");
-		object->setBoundingVolume(new Sphere(glm::vec3(0.f), 1.f));
+		object->setShape(new Sphere(glm::vec3(0.f), 1.f));
 	}
 	else if(type == "cube")
 		createDrawable(object, "default", "wired");
@@ -69,7 +69,7 @@ void EntityFactory::createDrawable(Entity* object, const std::string& meshName, 
 {
 	DrawableComponent* drawable = new DrawableComponent(meshName, shaderName);
 	object->addComponent(drawable);
-    object->setBoundingVolume(new OrientedBox(glm::mat4(1.f), drawable->getMeshBBMin(), drawable->getMeshBBMax()));
+    object->setShape(new OrientedBox(glm::mat4(1.f), drawable->getMeshBBMin(), drawable->getMeshBBMax()));
 }
 
 void EntityFactory::createAnimatable(Entity* object, const std::string& meshName, const std::string& skeletonName, const std::string& animationName, const std::string& shaderName)
@@ -82,7 +82,7 @@ void EntityFactory::createAnimatable(Entity* object, const std::string& meshName
 	object->addComponent(drawable);
 	object->addComponent(skeleton);
 	object->addComponent(animation);
-	object->setBoundingVolume(new Sphere(glm::vec3(0.f), 0.5f * glm::length(drawable->getMeshBBMax() - drawable->getMeshBBMin())));
+	object->setShape(new Sphere(glm::vec3(0.f), 0.5f * glm::length(drawable->getMeshBBMax() - drawable->getMeshBBMin())));
 }
 
 void EntityFactory::addComponents(Entity* object, const std::vector<Component*>& components)

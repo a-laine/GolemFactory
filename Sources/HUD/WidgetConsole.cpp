@@ -188,7 +188,7 @@ bool WidgetConsole::mouseEvent(const glm::mat4& base, const glm::vec3& ray, cons
 	if (clicked)
 	{
 		//	compute plane attribute
-		glm::vec3 p1 = glm::vec3(base * glm::vec4(batchList[BATCH_INDEX_CENTER].vertices[batchList[BATCH_INDEX_CENTER].faces[0]], 1.f));	 //	p1 is actualy the origin of board shape (see center construction, vertex 0)
+		glm::vec3 p1 = glm::vec3(base * glm::vec4(batchList[BATCH_INDEX_CENTER].vertices[batchList[BATCH_INDEX_CENTER].faces[0]], 1.f));	 //	p1 is actualy the origin of board Shape (see center construction, vertex 0)
 		glm::vec3 p2 = glm::vec3(base * glm::vec4(batchList[BATCH_INDEX_CENTER].vertices[batchList[BATCH_INDEX_CENTER].faces[0 + 1]], 1.f));
 		glm::vec3 p3 = glm::vec3(base * glm::vec4(batchList[BATCH_INDEX_CENTER].vertices[batchList[BATCH_INDEX_CENTER].faces[0 + 2]], 1.f));
 		glm::vec3 normal = glm::cross(p2 - p1, p3 - p1);
@@ -268,7 +268,7 @@ void WidgetConsole::updateBuffers(const bool& firstInit)
 	//	background like standard board
 	WidgetBoard::updateBuffers(firstInit);
 
-	//	text clipping shape (like center but a little smaller)
+	//	text clipping Shape (like center but a little smaller)
 	DrawBatch clippingShape;
 	glm::vec3 dimension = glm::vec3(0.5f * sizes[CURRENT].x - borderThickness, 0.f, 0.5f * sizes[CURRENT].y - borderThickness);
 	glm::vec3 elevatorMax, elevatorMin;
@@ -352,7 +352,7 @@ void WidgetConsole::updateBuffers(const bool& firstInit)
 		clippingShape.faces.push_back(0); clippingShape.faces.push_back(index); clippingShape.faces.push_back(index + 1);
 	}
 
-	//	end clipping shape
+	//	end clipping Shape
 	if (firstInit)
 	{
 		for (unsigned int i = 0; i < clippingShape.vertices.size(); i++)

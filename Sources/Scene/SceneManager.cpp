@@ -146,16 +146,16 @@ void SceneManager::getObjectsInBox(std::vector<Entity*>& result, const glm::vec3
 
 glm::vec3 SceneManager::getObjectSize(const Entity* entity) const
 {
-	const Shape& shape = entity->getBoundingVolume();
-	if (shape.type == Shape::ORIENTED_BOX)
+	const Shape& Shape = entity->getShape();
+	if (Shape.type == Shape::ORIENTED_BOX)
 	{
-		const OrientedBox& box = *static_cast<const OrientedBox*>(&shape);
+		const OrientedBox& box = *static_cast<const OrientedBox*>(&Shape);
 		return box.max - box.min;
 	}
-	else if (shape.type == Shape::AXIS_ALIGNED_BOX)
+	else if (Shape.type == Shape::AXIS_ALIGNED_BOX)
 	{
-		const AxisAlignedBox& box = *static_cast<const AxisAlignedBox*>(&shape);
+		const AxisAlignedBox& box = *static_cast<const AxisAlignedBox*>(&Shape);
 		return box.max - box.min;
 	}
-	else return glm::vec3(2.f * shape.toSphere().radius);
+	else return glm::vec3(2.f * Shape.toSphere().radius);
 }

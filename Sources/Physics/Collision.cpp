@@ -196,9 +196,9 @@ namespace
 	};
 
 	//	Debug
-	std::string printShapeName(const Shape& shape)
+	std::string printShapeName(const Shape& Shape)
 	{
-		switch (shape.type)
+		switch (Shape.type)
 		{
 			case Shape::POINT:				return "point";
 			case Shape::SEGMENT:			return "segment";
@@ -210,9 +210,9 @@ namespace
 			default:						return "unknown";
 		}
 	}
-	void printError(const std::string& shape1, const std::string& shape2, const int& testNumber)
+	void printError(const std::string& Shape1, const std::string& Shape2, const int& testNumber)
 	{
-		std::cout << "Error collision test line " << testNumber << " : (" << shape1 << " vs " << shape2 << ") : return unexpected result." << std::endl;
+		std::cout << "Error collision test line " << testNumber << " : (" << Shape1 << " vs " << Shape2 << ") : return unexpected result." << std::endl;
 	}
 }
 //
@@ -221,19 +221,19 @@ namespace
 bool Collision::collide(const Shape& a, const Shape& b)
 {
 	//	order objects
-	Shape& shape1 = (Shape&) a;
-	Shape& shape2 = (Shape&) b;
-	if (a.type > b.type) std::swap(shape1, shape2);
+	Shape& Shape1 = (Shape&) a;
+	Shape& Shape2 = (Shape&) b;
+	if (a.type > b.type) std::swap(Shape1, Shape2);
 
-	switch (shape1.type)
+	switch (Shape1.type)
 	{
-		case Shape::POINT:				return collide_PointvsShape(shape1, shape2);
-		case Shape::SEGMENT:			return collide_SegmentvsShape(shape1, shape2);
-		case Shape::TRIANGLE:			return collide_TrianglevsShape(shape1, shape2);
-		case Shape::ORIENTED_BOX:		return collide_OrientedBoxvsShape(shape1, shape2);
-		case Shape::AXIS_ALIGNED_BOX:	return collide_AxisAlignedBoxvsShape(shape1, shape2);
-		case Shape::SPHERE:				return collide_SpherevsShape(shape1, shape2);
-		case Shape::CAPSULE:			return collide_CapsulevsShape(shape1, shape2);
+		case Shape::POINT:				return collide_PointvsShape(Shape1, Shape2);
+		case Shape::SEGMENT:			return collide_SegmentvsShape(Shape1, Shape2);
+		case Shape::TRIANGLE:			return collide_TrianglevsShape(Shape1, Shape2);
+		case Shape::ORIENTED_BOX:		return collide_OrientedBoxvsShape(Shape1, Shape2);
+		case Shape::AXIS_ALIGNED_BOX:	return collide_AxisAlignedBoxvsShape(Shape1, Shape2);
+		case Shape::SPHERE:				return collide_SpherevsShape(Shape1, Shape2);
+		case Shape::CAPSULE:			return collide_CapsulevsShape(Shape1, Shape2);
 		default:						return false;
 	}
 }

@@ -18,7 +18,7 @@ bool MeshLoader::load(const std::string& resourceDirectory, const std::string& f
         if(!file.good())
         {
             if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::ERRORS)
-                std::cerr << "ERROR : loading mesh : " << fileName << " : fail to open file" << std::endl;
+                std::cerr << "ERROR : MeshLoader : " << fileName << " : fail to open file" << std::endl;
             return false;
         }
         std::string line;
@@ -78,7 +78,7 @@ bool MeshLoader::loadFromFile_static(const std::string& resourceDirectory, const
     if(!file.good())
     {
         if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::ERRORS)
-            std::cerr << "ERROR : loading mesh : " << fileName << " : fail to open file" << std::endl;
+            std::cerr << "ERROR : MeshLoader : " << fileName << " : fail to open file" << std::endl;
         return false;
     }
 
@@ -176,7 +176,7 @@ bool MeshLoader::loadFromFile_animated(const std::string& resourceDirectory, con
     if(!file.good())
     {
         if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::ERRORS)
-            std::cerr << "ERROR : loading mesh : " << fileName << " : fail to open file" << std::endl;
+            std::cerr << "ERROR : MeshLoader : " << fileName << " : fail to open file" << std::endl;
         return false;
     }
 

@@ -42,6 +42,7 @@ void DefaultBoxCollector::operator() (NodeVirtual* node, Entity* object)
 	objectInBox.push_back(object);
 }
 std::vector<Entity*>& DefaultBoxCollector::getObjectInBox() { return objectInBox; }
+void DefaultBoxCollector::clear() { objectInBox.clear(); }
 
 
 
@@ -139,7 +140,7 @@ void DefaultRayPickingCollector::operator() (NodeVirtual* node, Entity* object)
 	}
 	else
 	{
-		if (!Collision::collide(Segment(position, position + distance * direction), object->getBoundingVolume()))
+		if (!Collision::collide(Segment(position, position + distance * direction), object->getShape()))
 			return;
 	}
 	//objectOnRay[glm::dot(object->getPosition() - position, object->getPosition() - position)] = object;

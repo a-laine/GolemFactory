@@ -5,7 +5,7 @@
 //	Private field
 namespace
 {
-	inline Intersection::Result intersect_PointvsShape(const Shape& point, const Shape& b)
+	inline Intersection::Contact intersect_PointvsShape(const Shape& point, const Shape& b)
 	{
 		const Point* a = static_cast<const Point*>(&point);
 		switch (b.type)
@@ -38,10 +38,10 @@ namespace
 				const Capsule* c = static_cast<const Capsule*>(&b);
 				return Intersection::intersect_PointvsCapsule(a->p, c->p1, c->p2, c->radius);
 			}
-			default: return Intersection::Result();
+			default: return Intersection::Contact();
 		}
 	};
-	inline Intersection::Result intersect_SegmentvsShape(const Shape& segment, const Shape& b)
+	inline Intersection::Contact intersect_SegmentvsShape(const Shape& segment, const Shape& b)
 	{
 		const Segment* a = static_cast<const Segment*>(&segment);
 		switch (b.type)
@@ -70,10 +70,10 @@ namespace
 				const Capsule* c = static_cast<const Capsule*>(&b);
 				return Intersection::intersect_SegmentvsCapsule(a->p1, a->p2, c->p1, c->p2, c->radius);
 			}
-			default: return Intersection::Result();
+			default: return Intersection::Contact();
 		}
 	};
-	inline Intersection::Result intersect_TrianglevsShape(const Shape& triangle, const Shape& b)
+	inline Intersection::Contact intersect_TrianglevsShape(const Shape& triangle, const Shape& b)
 	{
 		const Triangle* a = static_cast<const Triangle*>(&triangle);
 		switch (b.type)
@@ -98,10 +98,10 @@ namespace
 				const Capsule* c = static_cast<const Capsule*>(&b);
 				return Intersection::intersect_TrianglevsCapsule(a->p1, a->p2, a->p3, c->p1, c->p2, c->radius);
 			}
-			default: return Intersection::Result();
+			default: return Intersection::Contact();
 		}
 	};
-	inline Intersection::Result intersect_OrientedBoxvsShape(const Shape& box, const Shape& b)
+	inline Intersection::Contact intersect_OrientedBoxvsShape(const Shape& box, const Shape& b)
 	{
 		const OrientedBox* a = static_cast<const OrientedBox*>(&box);
 		switch (b.type)
@@ -122,10 +122,10 @@ namespace
 				const Capsule* c = static_cast<const Capsule*>(&b);
 				return Intersection::intersect_OrientedBoxvsCapsule(a->base, a->min, a->max, c->p1, c->p2, c->radius);
 			}
-			default: return Intersection::Result();
+			default: return Intersection::Contact();
 		}
 	};
-	inline Intersection::Result intersect_AxisAlignedBoxvsShape(const Shape& box, const Shape& b)
+	inline Intersection::Contact intersect_AxisAlignedBoxvsShape(const Shape& box, const Shape& b)
 	{
 		const AxisAlignedBox* a = static_cast<const AxisAlignedBox*>(&box);
 		switch (b.type)
@@ -142,10 +142,10 @@ namespace
 				const Capsule* c = static_cast<const Capsule*>(&b);
 				return Intersection::intersect_AxisAlignedBoxvsCapsule(a->min, a->max, c->p1, c->p2, c->radius);
 			}
-			default: return Intersection::Result();
+			default: return Intersection::Contact();
 		}
 	};
-	inline Intersection::Result intersect_SpherevsShape(const Shape& sphere, const Shape& b)
+	inline Intersection::Contact intersect_SpherevsShape(const Shape& sphere, const Shape& b)
 	{
 		const Sphere* a = static_cast<const Sphere*>(&sphere);
 		switch (b.type)
@@ -158,10 +158,10 @@ namespace
 				const Capsule* c = static_cast<const Capsule*>(&b);
 				return Intersection::intersect_SpherevsCapsule(a->center, a->radius, c->p1, c->p2, c->radius);
 			}
-			default: return Intersection::Result();
+			default: return Intersection::Contact();
 		}
 	};
-	inline Intersection::Result intersect_CapsulevsShape(const Shape& capsule, const Shape& b)
+	inline Intersection::Contact intersect_CapsulevsShape(const Shape& capsule, const Shape& b)
 	{
 		const Capsule* a = static_cast<const Capsule*>(&capsule);
 		if (b.type == Shape::CAPSULE)
@@ -169,30 +169,30 @@ namespace
 			const Capsule* c = static_cast<const Capsule*>(&b);
 			return Intersection::intersect_CapsulevsCapsule(a->p1, a->p2, a->radius, c->p1, c->p2, c->radius);
 		}
-		else return Intersection::Result();
+		else return Intersection::Contact();
 	};
 }
 //
 
 
 //	Public field
-Intersection::Result Intersection::intersect(const Shape& a, const Shape& b)
+Intersection::Contact Intersection::intersect(const Shape& a, const Shape& b)
 {
 	//	order objects
-	Shape& shape1 = (Shape&)a;
-	Shape& shape2 = (Shape&)b;
-	if (a.type > b.type) std::swap(shape1, shape2);
+	Shape& Shape1 = (Shape&)a;
+	Shape& Shape2 = (Shape&)b;
+	if (a.type > b.type) std::swap(Shape1, Shape2);
 
-	switch (shape1.type)
+	switch (Shape1.type)
 	{
-		case Shape::POINT:				return intersect_PointvsShape(shape1, shape2);
-		case Shape::SEGMENT:			return intersect_SegmentvsShape(shape1, shape2);
-		case Shape::TRIANGLE:			return intersect_TrianglevsShape(shape1, shape2);
-		case Shape::ORIENTED_BOX:		return intersect_OrientedBoxvsShape(shape1, shape2);
-		case Shape::AXIS_ALIGNED_BOX:	return intersect_AxisAlignedBoxvsShape(shape1, shape2);
-		case Shape::SPHERE:				return intersect_SpherevsShape(shape1, shape2);
-		case Shape::CAPSULE:			return intersect_CapsulevsShape(shape1, shape2);
-		default:						return Intersection::Result();
+		case Shape::POINT:				return intersect_PointvsShape(Shape1, Shape2);
+		case Shape::SEGMENT:			return intersect_SegmentvsShape(Shape1, Shape2);
+		case Shape::TRIANGLE:			return intersect_TrianglevsShape(Shape1, Shape2);
+		case Shape::ORIENTED_BOX:		return intersect_OrientedBoxvsShape(Shape1, Shape2);
+		case Shape::AXIS_ALIGNED_BOX:	return intersect_AxisAlignedBoxvsShape(Shape1, Shape2);
+		case Shape::SPHERE:				return intersect_SpherevsShape(Shape1, Shape2);
+		case Shape::CAPSULE:			return intersect_CapsulevsShape(Shape1, Shape2);
+		default:						return Intersection::Contact();
 	}
 }
 //

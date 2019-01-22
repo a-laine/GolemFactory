@@ -24,15 +24,16 @@ class Renderer : public Singleton<Renderer>
 	public:
 		//	Miscellaneous
 		enum ShaderIdentifier
-		{
-			INSTANCE_DRAWABLE = 1,
-			INSTANCE_ANIMATABLE,
-			HUD,
+		{	
+			HUD = 1,
 			GRID,
 
+			INSTANCE_DRAWABLE,
 			INSTANCE_DRAWABLE_BB,
-			INSTANCE_ANIMATABLE_BB,
 			INSTANCE_DRAWABLE_WIRED,
+
+			INSTANCE_ANIMATABLE,
+			INSTANCE_ANIMATABLE_BB,
 			INSTANCE_ANIMATABLE_WIRED
 		};
 		enum RenderOption
@@ -46,6 +47,7 @@ class Renderer : public Singleton<Renderer>
 		//  Public functions
 		void initGLEW(int verbose = 1);
 		void initializeGrid(const unsigned int& gridSize, const float& elementSize = 1.f, const glm::vec3& color = glm::vec3(0.4f, 0.2f, 0.1f));
+		//void initi
 		void render(Camera* renderCam);
 		void renderHUD(Camera* renderCam);
 		//
@@ -66,11 +68,14 @@ class Renderer : public Singleton<Renderer>
 		unsigned int getNbDrawnInstances() const;
 		unsigned int getNbDrawnTriangles() const;
 		RenderOption getRenderOption() const;
+
+
+		void addDrawShapeDefinition(Shape::ShapeType type, Mesh* mesh, Shader* shader);
 		//
 
 		//	Render function
 		void drawObject(Entity* object, const float* view, const float* projection);
-		void drawShape(const Shape* shape, const float* view, const float* projection);
+		void drawShape(const Shape* Shape, const float* view, const float* projection);
 		//
 
 	private:
@@ -118,6 +123,8 @@ class Renderer : public Singleton<Renderer>
 		bool drawGrid;
 		unsigned int vboGridSize;
 		GLuint gridVAO, vertexbuffer, arraybuffer, colorbuffer, normalbuffer;
+
+		std::map<Shape::ShapeType, std::pair<Mesh*, Shader*> > drawShapeDefinition;
 
 		unsigned int instanceDrawn, trianglesDrawn;
 		double dummy;

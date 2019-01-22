@@ -42,11 +42,11 @@ void Entity::setParentWorld(World* parentWorld)
 {
 	m_parentWorld = parentWorld;
 }
-void Entity::setBoundingVolume(Shape* shape)
+void Entity::setShape(Shape* Shape)
 {
 	if (m_boundingShapeVanilla)
 		delete m_boundingShapeVanilla;
-	m_boundingShapeVanilla = shape;
+	m_boundingShapeVanilla = Shape;
 	if (m_boundingShapeResult)
 		delete m_boundingShapeResult;
 	m_boundingShapeResult = m_boundingShapeVanilla->duplicate();
@@ -60,5 +60,5 @@ glm::vec3 Entity::getPosition() const { return glm::vec3(m_transform[3]); }
 glm::vec3 Entity::getScale() const { return m_scale; }
 glm::fquat Entity::getOrientation() const { return m_rotation; }
 World* Entity::getParentWorld() const { return m_parentWorld; }
-const Shape& Entity::getBoundingVolume() const { return *m_boundingShapeResult; }
+const Shape& Entity::getShape() const { return *m_boundingShapeResult; }
 //

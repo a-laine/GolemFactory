@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Shape.h"
+#include "BoundingVolume.h"
 
 #include "SpecificIntersection/IntersectionPoint.h"
 #include "SpecificIntersection/IntersectionSegment.h"
@@ -12,5 +12,5 @@
 
 namespace Intersection
 {
-	Result intersect(const Shape& a, const Shape& b);
+	Contact intersect(const Shape& a, const Shape& b);
 }

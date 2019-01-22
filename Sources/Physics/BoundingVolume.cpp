@@ -12,7 +12,7 @@
 Intersection::Result::Result() : contact1(0.f), contact2(0.f), normal1(0.f), normal2(0.f)
 {};
 
-Shape::Shape(const ShapeType& shapeType) : type(shapeType) {}
+Shape::Shape(const ShapeType& ShapeType) : type(ShapeType) {}
 Sphere Shape::toSphere() const { return Sphere(glm::vec3(0.f), 0.f); }
 void Shape::operator=(const Shape& s) { GF_ASSERT(false); }
 void Shape::transform(const glm::vec3& position, const glm::vec3& scale, const glm::fquat& orientation) {}
@@ -20,7 +20,7 @@ Shape* Shape::duplicate() const { return new Shape(type); }
 //
 
 
-//	Others shapes
+//	Others Shapes
 Point::Point(const glm::vec3& position) : Shape(POINT), p(position){}
 Sphere Point::toSphere() const { return Sphere(p, 0.f); }
 void Point::operator=(const Shape& s)

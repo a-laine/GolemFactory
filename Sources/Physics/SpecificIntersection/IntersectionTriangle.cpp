@@ -1,27 +1,29 @@
 #include "IntersectionTriangle.h"
 
-#include "../SpecificCollision/CollisionUtils.h"
-#include "../SpecificCollision/CollisionSegment.h"
-#include "../SpecificCollision/CollisionTriangle.h"
+#include "Physics/SpecificCollision/CollisionUtils.h"
+#include "Physics/SpecificCollision/CollisionSegment.h"
+#include "Physics/SpecificCollision/CollisionTriangle.h"
 
 #include "IntersectionSegment.h"
 
-Intersection::Result Intersection::intersect_TrianglevsTriangle(const glm::vec3& triangle1a, const glm::vec3&triangle1b, const glm::vec3& triangle1c, const glm::vec3& triangle2a, const glm::vec3& triangle2b, const glm::vec3& triangle2c)
+Intersection::Contact Intersection::intersect_TrianglevsTriangle(const glm::vec3& triangle1a, const glm::vec3&triangle1b, const glm::vec3& triangle1c, const glm::vec3& triangle2a, const glm::vec3& triangle2b, const glm::vec3& triangle2c)
 {
-	return Intersection::Result();
+	return Intersection::Contact();
 }
-Intersection::Result Intersection::intersect_TrianglevsOrientedBox(const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax)
+Intersection::Contact Intersection::intersect_TrianglevsOrientedBox(const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax)
 {
-	return Intersection::Result();
+	return Intersection::Contact();
 }
-Intersection::Result Intersection::intersect_TrianglevsAxisAlignedBox(const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, const glm::vec3& boxMin, const glm::vec3& boxMax)
+Intersection::Contact Intersection::intersect_TrianglevsAxisAlignedBox(const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, const glm::vec3& boxMin, const glm::vec3& boxMax)
 {
-	return Intersection::Result();
+	return Intersection::Contact();
 }
-Intersection::Result Intersection::intersect_TrianglevsSphere(const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, const glm::vec3& sphereCenter, const float& sphereRadius)
+Intersection::Contact Intersection::intersect_TrianglevsSphere(const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, const glm::vec3& sphereCenter, const float& sphereRadius)
 {
+	return Intersection::Contact();
+	/*
 	//	initialize
-	Result result;
+	Contact result;
 	glm::vec3 u1 = triangle2 - triangle1;
 	glm::vec3 u2 = triangle3 - triangle1;
 	result.normal1 = glm::normalize(glm::cross(u1, u2));
@@ -51,10 +53,13 @@ Intersection::Result Intersection::intersect_TrianglevsSphere(const glm::vec3& t
 	if (edgeContact)
 		result.normal1 = -result.normal2;
 	return result;
+	*/
 }
-Intersection::Result Intersection::intersect_TrianglevsCapsule(const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
+Intersection::Contact Intersection::intersect_TrianglevsCapsule(const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
 {
-	Result result;
+	return Intersection::Contact();
+	/*
+	Contact result;
 	if (capsule1 == capsule2) 
 	{
 		result = intersect_TrianglevsSphere(triangle1, triangle2, triangle3, capsule1, capsuleRadius);
@@ -108,4 +113,5 @@ Intersection::Result Intersection::intersect_TrianglevsCapsule(const glm::vec3& 
 		}
 	}
 	return result;
+	*/
 }

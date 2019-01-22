@@ -122,7 +122,7 @@ void HouseGenerator::getHouse(Entity* house, unsigned int seed, int d, int p)
 
 	DrawableComponent* drawable = new DrawableComponent(houseName);
 	house->addComponent(drawable);
-	house->setBoundingVolume(new OrientedBox(glm::mat4(1.f), drawable->getMeshBBMin(), drawable->getMeshBBMax()));
+	house->setShape(new OrientedBox(glm::mat4(1.f), drawable->getMeshBBMin(), drawable->getMeshBBMax()));
 
 	ResourceManager::getInstance()->release(mesh);				//	House generator release mesh pointer
 }

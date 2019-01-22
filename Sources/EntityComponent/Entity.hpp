@@ -6,15 +6,12 @@
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include <Physics/Shape.h>
+#include <Physics/BoundingVolume.h>
 #include <EntityComponent/Component.hpp>
 #include <EntityComponent/EntityBase.hpp>
 
-//#include "Utiles/BoundingVolume.h"
-
 
 class World;
-
 class Entity : public EntityBase
 {
 	friend class EntityManager;
@@ -30,7 +27,7 @@ class Entity : public EntityBase
 		void setOrientation(const glm::quat& orientation);
 		void setTransformation(const glm::vec3& position, const glm::vec3& scale, const glm::fquat& orientation);
 		void setParentWorld(World* parentWorld);
-        void setBoundingVolume(Shape* shape);
+        void setShape(Shape* Shape);
 
 
         uint64_t getId() const;
@@ -39,7 +36,7 @@ class Entity : public EntityBase
 		glm::vec3 getScale() const;
 		glm::fquat getOrientation() const;
 		World* getParentWorld() const;
-		const Shape& getBoundingVolume() const;
+		const Shape& getShape() const;
 		//
 
 	private:

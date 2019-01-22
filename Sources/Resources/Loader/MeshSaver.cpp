@@ -13,7 +13,7 @@ void MeshSaver::save(Mesh* mesh, const std::string& resourcesPath, std::string f
 		fileName = fileName.substr(0, fileName.find_first_of('.'));
 
 	//	create and initialize file
-	std::ofstream file(resourcesPath + "Meshes/" + fileName + ".gfmesh", std::ofstream::out);
+	std::ofstream file(resourcesPath + "Meshes/" + fileName + Mesh::extension, std::ofstream::out);
 	file << "# File : " << fileName << std::endl;
 	file << "# Format : gfmesh, for Golem Factory engines" << std::endl;
 	file << "# Vertex count : " << mesh->vertices.size() << std::endl;

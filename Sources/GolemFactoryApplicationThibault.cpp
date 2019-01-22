@@ -20,15 +20,12 @@
 #include "HUD/WidgetManager.h"
 #include "Events/EventHandler.h"
 #include "Renderer/Renderer.h"
+#include "Renderer/DrawableComponent.h"
 #include "Animation/Animator.h"
 #include "Generators/HouseGenerator.h"
-#include "World/World.h"
-#include "Scene/SceneQueryTests.h"
 #include "Resources/Loader/SkeletonSaver.h"
-#include "EntityComponent/Entity.hpp"
-#include "Renderer/DrawableComponent.h"
-#include "Animation/SkeletonComponent.h"
 #include "Animation/AnimationComponent.h"
+#include "Animation/SkeletonComponent.h"
 
 #include <Resources/Texture.h>
 #include <Resources/Font.h>
@@ -45,8 +42,10 @@
 #include <Resources/Loader/ImageLoader.h>
 #include <Resources/Loader/TextureLoader.h>
 
-#include "Physics/Collision.h"
-#include "Physics/Intersection.h"
+#include "Physics/Physics.h"
+#include "Physics/RigidBody.h"
+
+#include "Resources/Loader/MeshSaver.h"
 
 #define GRID_SIZE 100
 #define GRID_ELEMENT_SIZE 5.f
@@ -60,13 +59,14 @@ World world;
 Camera camera, camera2;
 Entity* avatar = nullptr;
 
-Entity* debugShape = nullptr;
-Entity* debugShape2 = nullptr;
+/*Entity* debugShape = nullptr;
+Entity* debugShape2 = nullptr;*/
 
 double completeTime = 16.;
 double averageCompleteTime = 16.;
 
 float avatarZeroHeight;
+glm::vec3 avatarspeed(0.f);
 //
 
 
@@ -93,36 +93,53 @@ int main()
 
 	//	Collision test
 		WidgetManager::getInstance()->setActiveHUD("debug");
-		Collision::debugUnitaryTest(2);
+		//Collision::debugUnitaryTest(2);
 
 	//	Test scene
 		Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("wired"));
-		initializeForestScene(false);
+		//initializeForestScene(false);
 
-		debugShape = world.getEntityFactory().createObject("sphere", [](Entity* object)
+		Entity* testShape = world.getEntityFactory().createObject([](Entity* object)
 		{
-			DrawableComponent* drawable = object->getComponent<DrawableComponent>();
-			drawable->setShader("wired");
+			DrawableComponent* drawable = new DrawableComponent("Shapes/sphere", "default");
+			object->addComponent(drawable);
+
+
+			//object->setShape(new Point(glm::vec3(0.f, 0.f, 1.f)));
+			//object->setShape(new Segment(glm::vec3(0.f, 0.f, -1.f), glm::vec3(0.f, 0.f, 1.f)));
+			//object->setShape(new Triangle(glm::vec3(-1.f, 0.f, -1.f), glm::vec3(1.f, 0.f, -1.f), glm::vec3(0.f, 0.f, 1.5f)));
+			//object->setShape(new OrientedBox(glm::toMat4(glm::normalize(glm::fquat(1.f, 0.05f, 0.1f, 0.2f))), glm::vec3(-1.f), glm::vec3(1.f)));
+			//object->setShape(new AxisAlignedBox(glm::vec3(-1.f), glm::vec3(1.f)));
+			//object->setShape(new Sphere(glm::vec3(0.f), 0.5f));
+			object->setShape(new Capsule(glm::vec3(0.f, 0.f, -1.f), glm::vec3(0.f, 0.f, 1.f), 0.5f));
+			
+			object->setTransformation(glm::vec3(0.f, 0.f, 3.f), glm::vec3(1.f, 1.f, 1.f), glm::fquat());
+			//object->setTransformation(glm::vec3(0.f, 0.f, 2.f), glm::vec3(1.f, 1.f, 2.f), glm::normalize(glm::fquat(1.f, 0.05f, 0.1f, 0.2f)));
+			RigidBody* rb = new RigidBody(RigidBody::DYNAMIC);
+			rb->setMass(1.f);
+			object->addComponent(rb);
+
+			//MeshSaver::save(drawable->getMesh(), checkResourcesDirectory(), "sphere");
 		});
-		debugShape2 = world.getEntityFactory().createObject("sphere", [](Entity* object)
-		{
-			DrawableComponent* drawable = object->getComponent<DrawableComponent>();
-			drawable->setShader("wired");
-		});
+
+		//glfwSetWindowShouldClose(window, 1);
+
 		avatar = world.getEntityFactory().createObject("peasant", [](Entity* object)
 		{
             DrawableComponent* drawable = object->getComponent<DrawableComponent>();
 			float scale = 1.7f / (drawable->getMeshBBMax() - drawable->getMeshBBMin()).z;
 			object->setScale(glm::vec3(scale));
-			glm::vec3 pos = glm::vec3(20.f, 20.f, -scale * drawable->getMeshBBMin().z);
+			//glm::vec3 pos = glm::vec3(-10.f, 0.f, -scale * drawable->getMeshBBMin().z);
+			glm::vec3 pos = glm::vec3(0.f, -5.f, -scale * drawable->getMeshBBMin().z);
 			object->setPosition(pos);
-			camera.setRadius(4);
+			camera.setRadius(5);
 			object->setOrientation(glm::toQuat(glm::rotate(glm::pi<float>() / 2.f + atan2(1.f, 0.f), glm::vec3(0.f, 0.f, 1.f))));
 
 			avatarZeroHeight = object->getPosition().z;
 		});
 		camera.setMode(Camera::TRACKBALL);
 		WidgetManager::getInstance()->setBoolean("BBpicking", false);
+		WidgetManager::getInstance()->setBoolean("wireframe", true);
 
 
 
@@ -141,6 +158,13 @@ int main()
 		double startTime = glfwGetTime();
 		glfwGetWindowSize(window, &width, &height);
 
+		//  handle events
+		events();
+		updates((float)elapseTime, width, height);
+
+		//	physics
+		world.getPhysics().stepSimulation((float)elapseTime * 0.001f, &world.getSceneManager());
+
 		// Render scene & picking
 		if (WidgetManager::getInstance()->getBoolean("BBrendering"))
 			Renderer::getInstance()->setRenderOption(Renderer::BOUNDING_BOX);
@@ -148,12 +172,11 @@ int main()
 			Renderer::getInstance()->setRenderOption(Renderer::WIREFRAME);
 		else Renderer::getInstance()->setRenderOption(Renderer::DEFAULT);
 		Renderer::getInstance()->render(&camera);
+		Renderer::getInstance()->drawShape(&testShape->getShape(), &camera.getViewMatrix()[0][0], &glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f)[0][0]);
 		picking(width, height);
 		Renderer::getInstance()->renderHUD(&camera2);
 
-		//  handle events
-		events();
-		updates((float)elapseTime, width, height);
+		
 
 		//	clear garbages
 		world.clearGarbage();
@@ -222,19 +245,42 @@ void initializeForestScene(bool emptyPlace)
 		//world.getEntityFactory().createObject("rock", glm::vec3(0), glm::vec3(50.f, 50.f, 50.f));
 		//world.getEntityFactory().createObject([&hg](Entity* house) { hg.getHouse(house, 0, 100, 100); });
 
-		world.getEntityFactory().createObject([](Entity* object)
+		unsigned int N = 7;
+		for (unsigned int i = 0; i < N; i++)
+		{
+			glm::vec3 p = glm::vec3(5.f * cos((float)i / N * 2.f * glm::pi<float>()), 5.f * sin((float)i / N * 2.f * glm::pi<float>()), 20.f);
+			world.getEntityFactory().createObject("sphere", [&p](Entity* object)
+			{
+				object->setTransformation(p, glm::vec3(1.f), glm::fquat());
+				RigidBody* rb = new RigidBody(RigidBody::DYNAMIC);
+				rb->setMass(1.f);
+				object->addComponent(rb);
+			});
+		}
+
+		world.getEntityFactory().createObject("cube", [](Entity* object)
+		{
+			object->getComponent<DrawableComponent>()->setShader(ResourceManager::getInstance()->getResource<Shader>("default"));
+			object->setTransformation(glm::vec3(0.f, 0.f, 20.f), glm::vec3(1.f), glm::normalize(glm::fquat(1.f, 0.1f, 0.3f, 1.f)));
+			RigidBody* rb = new RigidBody(RigidBody::DYNAMIC);
+			rb->setMass(1.f);
+			object->addComponent(rb);
+		});
+
+		/*world.getEntityFactory().createObject([](Entity* object)
 		{
 			DrawableComponent* drawable = new DrawableComponent("teststairtower.obj", "default");
 			object->addComponent(drawable);
-			object->setBoundingVolume(new OrientedBox(glm::mat4(1.f), drawable->getMeshBBMin(), drawable->getMeshBBMax()));
+			object->setShape(new OrientedBox(glm::mat4(1.f), drawable->getMeshBBMin(), drawable->getMeshBBMax()));
 			float scale = 5.f / (drawable->getMeshBBMax().x - drawable->getMeshBBMin().x);
 			object->setScale(glm::vec3(scale));
-		});
+		});*/
 	}
 
 	// village
+	
 	int vilageHouseCount = 0;
-	float villageRadius[] = {20.f, 35.f, 50.f};
+	/*float villageRadius[] = {20.f, 35.f, 50.f};
 	std::vector<glm::vec3> houseCircle;
 	for (int i = 0; i < 3; i++)
 	{
@@ -256,7 +302,7 @@ void initializeForestScene(bool emptyPlace)
 			world.getEntityFactory().createObject([radius, angle, &houseCircle, &hg](Entity* house)
 			{
                 hg.getHouse(house, rand(), 20, 30);
-				glm::vec3 p = glm::vec3(radius * cos(angle), radius * sin(angle), house->getBoundingVolume().toSphere().radius);
+				glm::vec3 p = glm::vec3(radius * cos(angle), radius * sin(angle), house->getShape().toSphere().radius);
 				for (unsigned int k = 0; k < houseCircle.size(); k++)
 				{
 					float delta = glm::length(glm::vec3(houseCircle[k].x - p.x, houseCircle[k].y - p.y, 0.f));
@@ -273,7 +319,7 @@ void initializeForestScene(bool emptyPlace)
 			});
 		}
 	}
-	
+	*/
 	// forest
 	for (int i = 0; i < GRID_SIZE; i++)
 		for (int j = 0; j < GRID_SIZE; j++)
@@ -282,8 +328,8 @@ void initializeForestScene(bool emptyPlace)
 				GRID_ELEMENT_SIZE*j - (GRID_SIZE * GRID_ELEMENT_SIZE) / 2 + GRID_ELEMENT_SIZE * ((rand() % 10) / 20.f - 0.25f),
 				0);
 
-			if(glm::length(p) < villageRadius[2] + 5.f * GRID_ELEMENT_SIZE)
-				continue;
+			/*if(glm::length(p) < villageRadius[2] + 5.f * GRID_ELEMENT_SIZE)
+				continue;*/
 
 			int r = rand() % 100;
 			if (r < 20)
@@ -365,11 +411,17 @@ void initManagers()
 	NodeVirtual::debugWorld = &world;
 	world.getSceneManager().init(worldPos - worldHalfSize, worldPos + worldHalfSize, glm::ivec3(4, 4, 1), 3);
 	world.setMaxObjectCount(4000000);
+	world.getEntityFactory().createObject([](Entity* object)
+	{
+		glm::vec3 s = glm::vec3(0.5f*GRID_SIZE*GRID_ELEMENT_SIZE, 0.5f*GRID_SIZE*GRID_ELEMENT_SIZE, 1.f);
+		object->setShape(new AxisAlignedBox(-s, s));
+		object->setPosition(glm::vec3(0.f, 0.f, -1.f));
+	});
 
 	//	Renderer
 	camera.setMode(Camera::FREEFLY);
 	camera.setAllRadius(2.f, 0.5f, 10.f);
-	camera.setPosition(glm::vec3(0, 20, 20));
+	camera.setPosition(glm::vec3(0, 5, 5));
 	camera2.setMode(Camera::FREEFLY);
 	camera2.setAllRadius(2.f, 0.5f, 10.f);
 	camera2.setPosition(glm::vec3(0, 20, 20));
@@ -382,6 +434,15 @@ void initManagers()
 	Renderer::getInstance()->setShader(Renderer::INSTANCE_ANIMATABLE_BB, ResourceManager::getInstance()->getResource<Shader>("skeletonBB"));
 	Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE_WIRED, ResourceManager::getInstance()->getResource<Shader>("wired"));
 	Renderer::getInstance()->setShader(Renderer::INSTANCE_ANIMATABLE_WIRED, ResourceManager::getInstance()->getResource<Shader>("wiredSkinning"));
+
+
+	Renderer::getInstance()->addDrawShapeDefinition(Shape::POINT, ResourceManager::getInstance()->getResource<Mesh>("Shapes/point"), ResourceManager::getInstance()->getResource<Shader>("Shapes/point"));
+	Renderer::getInstance()->addDrawShapeDefinition(Shape::SEGMENT, ResourceManager::getInstance()->getResource<Mesh>("Shapes/point"), ResourceManager::getInstance()->getResource<Shader>("Shapes/segment"));
+	Renderer::getInstance()->addDrawShapeDefinition(Shape::TRIANGLE, ResourceManager::getInstance()->getResource<Mesh>("Shapes/point"), ResourceManager::getInstance()->getResource<Shader>("Shapes/triangle"));
+	Renderer::getInstance()->addDrawShapeDefinition(Shape::ORIENTED_BOX, ResourceManager::getInstance()->getResource<Mesh>("Shapes/box"), ResourceManager::getInstance()->getResource<Shader>("default"));
+	Renderer::getInstance()->addDrawShapeDefinition(Shape::AXIS_ALIGNED_BOX, ResourceManager::getInstance()->getResource<Mesh>("Shapes/box"), ResourceManager::getInstance()->getResource<Shader>("default"));
+	Renderer::getInstance()->addDrawShapeDefinition(Shape::SPHERE, ResourceManager::getInstance()->getResource<Mesh>("Shapes/sphere"), ResourceManager::getInstance()->getResource<Shader>("default"));
+	Renderer::getInstance()->addDrawShapeDefinition(Shape::CAPSULE, ResourceManager::getInstance()->getResource<Mesh>("Shapes/capsule"), ResourceManager::getInstance()->getResource<Shader>("default"));
 
 	// Animator
 	Animator::getInstance();
@@ -522,38 +583,43 @@ void updates(float elapseTime, int width, int height)
 	if (camera.getMode() == Camera::TRACKBALL)
 	{
 		//	compute direction and speed
-		float speed = 0.f;
-		if (Animator::getInstance()->isAnimationRunning(avatar, "walk")) speed = 0.025f;
-		if (Animator::getInstance()->isAnimationRunning(avatar, "run")) speed = 0.1f;
-
-		glm::vec3 speedDirection = glm::vec3(0);;
+		glm::vec3 direction = glm::vec3(0.f);
 		if (EventHandler::getInstance()->isActivated(FORWARD))
-			speedDirection += glm::normalize(glm::vec3(camera.getForward().x, camera.getForward().y, 0.f));
+			direction += glm::normalize(glm::vec3(camera.getForward().x, camera.getForward().y, 0.f));
 		else if (EventHandler::getInstance()->isActivated(BACKWARD))
-			speedDirection -= glm::normalize(glm::vec3(camera.getForward().x, camera.getForward().y, 0.f));
+			direction -= glm::normalize(glm::vec3(camera.getForward().x, camera.getForward().y, 0.f));
 		if (EventHandler::getInstance()->isActivated(LEFT))
-			speedDirection += glm::normalize(glm::vec3(camera.getLeft().x, camera.getLeft().y, 0.f));
+			direction += glm::normalize(glm::vec3(camera.getLeft().x, camera.getLeft().y, 0.f));
 		else if (EventHandler::getInstance()->isActivated(RIGHT))
-			speedDirection -= glm::normalize(glm::vec3(camera.getLeft().x, camera.getLeft().y, 0.f));
-		if(speedDirection.x != 0.f && speedDirection.y != 0.f)
-			speedDirection = glm::normalize(speedDirection);
+			direction -= glm::normalize(glm::vec3(camera.getLeft().x, camera.getLeft().y, 0.f));
+		if(direction.x != 0.f && direction.y != 0.f)
+			direction = glm::normalize(direction);
+
+		float speed = 0.f;
+		if (Animator::getInstance()->isAnimationRunning(avatar, "run"))
+			speed = 0.1f;
+		else if (Animator::getInstance()->isAnimationRunning(avatar, "walk"))
+			speed = 0.025f;
 
 		//	physics
-		Capsule avatarCollider(*static_cast<const Capsule*>(&avatar->getBoundingVolume()));
-		avatarCollider.transform(speed * speedDirection, glm::vec3(1.f), glm::fquat());
+		Capsule avatarCollider(*static_cast<const Capsule*>(&avatar->getShape()));
+		avatarCollider.transform(speed * direction, glm::vec3(1.f), glm::fquat());
 
-		if (DEBUG)
+		/*if (DEBUG)
 		{
-			debugShape->setPosition(speed * speedDirection + avatarCollider.p1);
+			debugShape->setPosition(speed * direction + avatarCollider.p1);
 			debugShape->setScale(glm::vec3(avatarCollider.radius));
 			world.updateObject(debugShape);
-			debugShape2->setPosition(speed * speedDirection + avatarCollider.p2);
+			debugShape2->setPosition(speed * direction + avatarCollider.p2);
 			debugShape2->setScale(glm::vec3(avatarCollider.radius));
 			world.updateObject(debugShape2);
-		}
+		}*/
+
+		//Physics::getInstance()->moveEntity(avatar, elapseTime / 1000.f, speed * direction);
 		
-		glm::vec3 s = glm::vec3(avatar->getBoundingVolume().toSphere().radius);
-		DefaultSceneManagerBoxTest sceneNodeTest(avatar->getPosition() + speed * speedDirection - s, avatar->getPosition() + speed * speedDirection + s);
+		/*
+		glm::vec3 s = glm::vec3(avatar->getShape().toSphere().radius);
+		DefaultSceneManagerBoxTest sceneNodeTest(avatar->getPosition() + deltaPosition - s, avatar->getPosition() + deltaPosition + s);
 		DefaultBoxCollector collector;
 		world.getSceneManager().getObjects(collector, sceneNodeTest);
 		std::vector<Entity*>& entities = collector.getObjectInBox();
@@ -569,7 +635,7 @@ void updates(float elapseTime, int width, int height)
 			glm::mat4 model2 = e->getMatrix();
 
 			// pass 1 : box vs avatar sphere
-			if(!Collision::collide(e->getBoundingVolume(), avatarCollider))
+			if(!Collision::collide(e->getShape(), avatarCollider))
 				continue;
 			
 			// pass 2 : avatar capsule vs mesh
@@ -599,9 +665,10 @@ void updates(float elapseTime, int width, int height)
 				}
 			}
 		}
+		
 
 		//	debug
-		if (DEBUG && !collisionNormal.empty())
+		if (false && DEBUG && !collisionNormal.empty())
 		{
 			Renderer::RenderOption option = Renderer::getInstance()->getRenderOption();
 			Renderer::getInstance()->setRenderOption(option == Renderer::DEFAULT ? Renderer::BOUNDING_BOX : Renderer::DEFAULT);
@@ -613,20 +680,49 @@ void updates(float elapseTime, int width, int height)
 		}
 
 		//	update
-		if (speed != 0.f && speedDirection != glm::vec3(0))
-			avatar->setOrientation(glm::toQuat(glm::rotate(glm::pi<float>() / 2.f + atan2(speedDirection.y, speedDirection.x), glm::vec3(0.f, 0.f, 1.f))));
+		if (deltaPosition.x != 0.f && deltaPosition.y != 0.f)
+			avatar->setOrientation(glm::toQuat(glm::rotate(glm::pi<float>() / 2.f + atan2(deltaPosition.y, deltaPosition.x), glm::vec3(0.f, 0.f, 1.f))));
+		bool grounded = false;
 		if (!collisionNormal.empty())
 		{
 			for (unsigned int i = 0; i < collisionNormal.size(); i++)
 			{
-				if (glm::dot(speedDirection, collisionNormal[i]) < -0.01f)
-					speedDirection = speedDirection - glm::dot(speedDirection, collisionNormal[i]) * collisionNormal[i];
+				if (collisionNormal[i].z > 0.5f)
+					grounded = true;
+				if (glm::dot(deltaPosition, collisionNormal[i]) < -0.01f)
+					deltaPosition -= glm::dot(deltaPosition, collisionNormal[i]) * collisionNormal[i];
+
+				//std::cout << collisionNormal[i].z << std::endl;
 			}
 		}
-		glm::vec3 p = avatar->getPosition() + speed * speedDirection;
-		if (p.z < avatarZeroHeight)
+
+
+		glm::vec3 p = avatar->getPosition() + deltaPosition;
+		if (p.z <= avatarZeroHeight)
+		{
+			grounded = true;
 			p.z = avatarZeroHeight;
-		avatar->setPosition(p);
+		}
+		avatarspeed.x = deltaPosition.x;
+		avatarspeed.y = deltaPosition.y;
+		if (grounded)
+		{
+			deltaPosition.z = 0.f;
+			avatarspeed.z = 0.f;
+		}
+		else 
+		{
+			avatarspeed.z -= elapseTime * 0.0005f;
+			deltaPosition.z = avatarspeed.z;
+			p.z += avatarspeed.z;
+		}
+		avatarspeed.z = glm::clamp(avatarspeed.z, -0.7f, 0.7f);
+		std::cout << (grounded ? "grounded " : ". ") << avatarspeed.z << std::endl;// << std::endl;
+*/
+
+		avatar->setPosition(avatar->getPosition() + speed * direction);
+		if (direction.x != 0.f && direction.y != 0.f)
+			avatar->setOrientation(glm::toQuat(glm::rotate(glm::pi<float>() / 2.f + atan2(direction.y, direction.x), glm::vec3(0.f, 0.f, 1.f))));
 		world.updateObject(avatar);
 	}
 

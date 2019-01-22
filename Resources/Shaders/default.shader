@@ -8,5 +8,7 @@ Default
 		model : "mat4";
 		view : "mat4";
 		projection : "mat4";
+		
+		overrideColor : "vec3";
 	};
 }

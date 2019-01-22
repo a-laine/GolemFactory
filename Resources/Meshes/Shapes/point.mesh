@@ -1,0 +1,17 @@
+# File : box
+# Format : gfmesh, for Golem Factory engines
+# Vertex count : 24
+# Faces count : 36
+# Static mesh
+
+#  positions
+v 0 0 0
+
+#  normales
+vn 0 0 0
+
+#  colors
+c 0 0 0
+
+#  triangles
+f 0//0/0 0//0/0 0//0/0
