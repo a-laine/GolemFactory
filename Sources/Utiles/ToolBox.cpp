@@ -176,4 +176,76 @@ Variant ToolBox::getFromMat4(const glm::mat4& mat)
 			v.getArray().push_back(Variant(mat[i][j]));
 	return v;
 }
+
+
+void ToolBox::optimizeStaticMesh(std::vector<glm::vec3>& verticesArray,
+	std::vector<glm::vec3>& normalesArray,
+	std::vector<glm::vec3>& colorArray,
+	std::vector<unsigned short>&facesArray)
+{
+	std::vector<glm::vec3> verticesBuffer;
+	std::vector<glm::vec3> normalesBuffer;
+	std::vector<glm::vec3> colorBuffer;
+	std::vector<unsigned short> facesBuffer;
+
+	//	an ordered vertex data (position, normal and color)
+	struct OrderedVertex
+	{
+		glm::vec3 position;
+		glm::vec3 normal;
+		glm::vec3 color;
+
+		int inf(const glm::vec3& l, const glm::vec3& r) const
+		{
+			//	return 1 if equals, 2 if l < r and 3 if l > r
+			if (l.x != r.x) return (l.x < r.x ? 2 : 3);
+			if (l.y != r.y) return (l.y < r.y ? 2 : 3);
+			if (l.z != r.z) return (l.z < r.z ? 2 : 3);
+			return 1;
+		}
+		bool operator< (const OrderedVertex& r) const
+		{
+			int res = inf(position, r.position);
+			if (res == 2) return true;
+			if (res == 3) return false;
+
+			res = inf(normal, r.normal);
+			if (res == 2) return true;
+			if (res == 3) return false;
+
+			res = inf(color, r.color);
+			if (res == 2) return true;
+			return false;
+		};
+	};
+
+	std::map<OrderedVertex, unsigned short> vertexAlias;
+	std::map<OrderedVertex, unsigned short>::iterator alias;
+	OrderedVertex current;
+
+	for (unsigned int i = 0; i < facesArray.size(); i++)
+	{
+		current.position = verticesArray[facesArray[i]];
+		current.normal = normalesArray[facesArray[i]];
+		current.color = colorArray[facesArray[i]];
+
+		alias = vertexAlias.find(current);
+		if (alias == vertexAlias.end())
+		{
+			verticesBuffer.push_back(verticesArray[facesArray[i]]);
+			normalesBuffer.push_back(normalesArray[facesArray[i]]);
+			colorBuffer.push_back(colorArray[facesArray[i]]);
+			facesBuffer.push_back((unsigned short)vertexAlias.size());
+
+			vertexAlias[current] = (unsigned short)vertexAlias.size();
+		}
+		else facesBuffer.push_back(alias->second);
+	}
+
+	verticesArray.swap(verticesBuffer);
+	normalesArray.swap(normalesBuffer);
+	colorArray.swap(colorBuffer);
+	facesArray.swap(facesBuffer);
+}
+
 //

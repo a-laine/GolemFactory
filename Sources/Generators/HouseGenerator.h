@@ -64,7 +64,7 @@ class HouseGenerator
 			bool operator<(const MarkedPosition& mp) { return mark < mp.mark; }
 			MarkedPosition(float m, glm::ivec3 p, glm::ivec3 s) : mark(m), position(p), size(s) {}
 		};
-		struct OrderedVertex
+		/*struct OrderedVertex
 		{
 			glm::vec3 position;
 			glm::vec3 normal;
@@ -92,7 +92,7 @@ class HouseGenerator
 				if (res == 2) return true;
 				return false;
 			};
-		};
+		};*/
 		//
 
 		//  Protected functions
@@ -103,7 +103,7 @@ class HouseGenerator
 		void createAndPlaceRoofBlock();
 		void constructHouseMesh();
 		void constructRoofMesh();
-		void optimizeMesh();
+		//void optimizeMesh();
 
 
 		bool searchBlockPartition(const int& superficy, const int& testIndex);

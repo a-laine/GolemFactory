@@ -209,7 +209,7 @@ void Renderer::drawTriangle(const Triangle* triangle, const float* view, const f
 
 		//	override mesh color
 		loc = shaderToUse->getUniformLocation("overrideColor");
-		if (loc >= 0) glUniform3fv(loc, 1, (float*)&COLOR_SEGMENT);
+		if (loc >= 0) glUniform3fv(loc, 1, (float*)&COLOR_TRIANGLE);
 
 		//	Draw mesh
 		loadVAO(it->second.first->getVAO());
@@ -256,7 +256,6 @@ void Renderer::drawAxisAlignedBox(const AxisAlignedBox* box, const float* view, 
 		if (renderOption == WIREFRAME) shaderToUse = defaultShader[INSTANCE_DRAWABLE_WIRED];
 		else shaderToUse = it->second.second;
 
-		//model = glm::scale(glm::mat4(1.f), 0.5f * (box->max - box->min));
 		glm::mat4 model = glm::translate(glm::mat4(1.f), 0.5f * (box->max + box->min));
 		model = glm::scale(model, 0.5f * (box->max - box->min));
 		loadMVPMatrix(shaderToUse, &model[0][0], view, projection);
@@ -304,7 +303,38 @@ void Renderer::drawCapsule(const Capsule* capsule, const float* view, const floa
 	std::map<Shape::ShapeType, std::pair<Mesh*, Shader*> >::iterator it = drawShapeDefinition.find(Shape::CAPSULE);
 	if (it != drawShapeDefinition.end())
 	{
+		//	Get shader and prepare matrix
+		Shader* shaderToUse = nullptr;
+		if (renderOption == WIREFRAME) shaderToUse = defaultShader[INSTANCE_DRAWABLE_WIRED];
+		else shaderToUse = it->second.second;
 
+		glm::vec3 center = 0.5f * (capsule->p1 + capsule->p2);
+		glm::mat4 base = glm::translate(glm::mat4(1.f), center);
+		loadMVPMatrix(shaderToUse, &base[0][0], view, projection);
+		if (!shaderToUse) return;
+
+		//	override mesh color
+		int loc = shaderToUse->getUniformLocation("overrideColor");
+		if (loc >= 0) glUniform3fv(loc, 1, (float*)&COLOR_CAPSULE);
+
+		//	Draw mesh
+		loadVAO(it->second.first->getVAO());
+
+		glm::mat4 model = glm::scale(base, glm::vec3(capsule->radius, capsule->radius, 0.5f * glm::length(capsule->p1 - capsule->p2)));
+		loadMVPMatrix(shaderToUse, &model[0][0], view, projection);
+		glDrawElements(GL_TRIANGLES, 192, GL_UNSIGNED_SHORT, NULL);
+		
+		model = glm::translate(base, capsule->p2 - center);
+		model = glm::scale(model, glm::vec3(capsule->radius, capsule->radius, capsule->radius));
+		loadMVPMatrix(shaderToUse, &model[0][0], view, projection);
+		glDrawElements(GL_TRIANGLES, 3072, GL_UNSIGNED_SHORT, (void*)(192 * sizeof(unsigned short)));
+
+		model = glm::translate(base, capsule->p1 - center);
+		model = glm::scale(model, glm::vec3(capsule->radius, capsule->radius, capsule->radius));
+		loadMVPMatrix(shaderToUse, &model[0][0], view, projection);
+		glDrawElements(GL_TRIANGLES, (int)it->second.first->getFaces()->size(), GL_UNSIGNED_SHORT, (void*)(3264 * sizeof(unsigned short)));
+
+		if (loc >= 0) glUniform3fv(loc, 1, (float*)&glm::vec3(-1.f, 0.f, 0.f)[0]);
 	}
 	else std::cerr << "WARNING : drawCapsule not yet implemented" << std::endl;
 }

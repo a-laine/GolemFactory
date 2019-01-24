@@ -8,9 +8,10 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 
-#include <EntityComponent/Entity.hpp>
-#include <Renderer/DrawableComponent.h>
-#include <Resources/Mesh.h>
+#include "EntityComponent/Entity.hpp"
+#include "Renderer/DrawableComponent.h"
+#include "Resources/Mesh.h"
+#include "Utiles/ToolBox.h"
 
 
 //  Attributes
@@ -110,7 +111,8 @@ void HouseGenerator::getHouse(Entity* house, unsigned int seed, int d, int p)
 	//	generate mesh
 	constructHouseMesh();
 	constructRoofMesh();
-	optimizeMesh();
+	ToolBox::optimizeStaticMesh(verticesArray,normalesArray, colorArray,facesArray);
+	//optimizeMesh();
 
 
 	//	end
@@ -621,7 +623,7 @@ void HouseGenerator::constructRoofMesh()
 				}
 			}
 }
-void HouseGenerator::optimizeMesh()
+/*void HouseGenerator::optimizeMesh()
 {
 	std::vector<glm::vec3> verticesBuffer;
 	std::vector<glm::vec3> normalesBuffer;
@@ -655,7 +657,7 @@ void HouseGenerator::optimizeMesh()
 	normalesArray.swap(normalesBuffer);
 	colorArray.swap(colorBuffer);
 	facesArray.swap(facesBuffer);
-}
+}*/
 
 
 bool HouseGenerator::searchBlockPartition(const int& superficy, const int& testIndex)

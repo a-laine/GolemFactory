@@ -28,6 +28,7 @@ class MeshSaver
 				else if (x == r.x && y == r.y && z == r.z) return false;
 				else return true;
 			};
+			glm::vec3 toGlm() const { return glm::vec3(x, y, z); }
 			float x, y, z;
 		};
 		struct ivec3
@@ -41,6 +42,7 @@ class MeshSaver
 				else if (x == r.x && y == r.y && z == r.z) return false;
 				else return true;
 			};
+			glm::ivec3 toGlm() { return glm::ivec3(x, y, z); }
 			int x, y, z;
 		};
 
@@ -54,5 +56,7 @@ class MeshSaver
 		//	Protected functions
 		static void saveStatic(Mesh* mesh, std::ofstream& file, glm::vec3 scaleModifier);
 		static void saveAnimated(Mesh* mesh, std::ofstream& file, glm::vec3 scaleModifier);
+
+		static glm::vec3 getTruncatedAlias(glm::vec3 original, const float& truncature);
 		//
 };
