@@ -7,8 +7,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-#include <Resources/ResourceManager.h>
-
+#include "Resources/ResourceManager.h"
+#include "Resources/Mesh.h"
 
 /*
 	TODO :
@@ -18,7 +18,6 @@
 
 
 class Entity;
-class Mesh;
 
 class HouseGenerator
 {
@@ -64,35 +63,6 @@ class HouseGenerator
 			bool operator<(const MarkedPosition& mp) { return mark < mp.mark; }
 			MarkedPosition(float m, glm::ivec3 p, glm::ivec3 s) : mark(m), position(p), size(s) {}
 		};
-		/*struct OrderedVertex
-		{
-			glm::vec3 position;
-			glm::vec3 normal;
-			glm::vec3 color;
-
-			int inf(const glm::vec3& l, const glm::vec3& r) const
-			{
-				//	return 1 if equals, 2 if l < r and 3 if l > r
-				if (l.x != r.x) return (l.x < r.x ? 2 : 3);
-				if (l.y != r.y) return (l.y < r.y ? 2 : 3);
-				if (l.z != r.z) return (l.z < r.z ? 2 : 3);
-				return 1;
-			}
-			bool operator< (const OrderedVertex& r) const
-			{
-				int res = inf(position, r.position);
-				if (res == 2) return true;
-				if (res == 3) return false;
-				
-				res = inf(normal, r.normal);
-				if (res == 2) return true;
-				if (res == 3) return false;
-
-				res = inf(color, r.color);
-				if (res == 2) return true;
-				return false;
-			};
-		};*/
 		//
 
 		//  Protected functions
@@ -103,7 +73,6 @@ class HouseGenerator
 		void createAndPlaceRoofBlock();
 		void constructHouseMesh();
 		void constructRoofMesh();
-		//void optimizeMesh();
 
 
 		bool searchBlockPartition(const int& superficy, const int& testIndex);

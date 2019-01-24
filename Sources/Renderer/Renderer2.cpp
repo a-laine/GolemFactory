@@ -3,6 +3,8 @@
 #include <iostream>
 #include <sstream>
 
+#include <glm/gtx/vector_angle.hpp>
+
 #include <EntityComponent/Entity.hpp>
 #include <HUD/WidgetManager.h>
 #include <Scene/SceneQueryTests.h>
@@ -300,6 +302,10 @@ void Renderer::drawSphere(const Sphere* sphere, const float* view, const float* 
 }
 void Renderer::drawCapsule(const Capsule* capsule, const float* view, const float* projection)
 {
+	constexpr unsigned int quadrature = 32;										// capsule mesh was generated using this value
+	constexpr unsigned int cylinderFaces = 6 * quadrature;						// number of faces on cylinder part
+	constexpr unsigned int hemisphereFaces = 6 * quadrature * quadrature / 4;	// idem
+	
 	std::map<Shape::ShapeType, std::pair<Mesh*, Shader*> >::iterator it = drawShapeDefinition.find(Shape::CAPSULE);
 	if (it != drawShapeDefinition.end())
 	{
@@ -310,33 +316,41 @@ void Renderer::drawCapsule(const Capsule* capsule, const float* view, const floa
 
 		glm::vec3 center = 0.5f * (capsule->p1 + capsule->p2);
 		glm::mat4 base = glm::translate(glm::mat4(1.f), center);
+		glm::vec3 v = glm::cross(glm::vec3(0, 0, 1), capsule->p1 - capsule->p2);
+		if (v != glm::vec3(0.f))
+			base = base * glm::rotate(glm::angle(glm::vec3(0, 0, 1), glm::normalize(capsule->p1 - capsule->p2)), glm::normalize(v));
+		else
+			base = base * glm::rotate(glm::angle(glm::vec3(0, 0, 1), glm::normalize(capsule->p1 - capsule->p2)), glm::vec3(1, 0, 0));
+
 		loadMVPMatrix(shaderToUse, &base[0][0], view, projection);
 		if (!shaderToUse) return;
-
+		
 		//	override mesh color
 		int loc = shaderToUse->getUniformLocation("overrideColor");
 		if (loc >= 0) glUniform3fv(loc, 1, (float*)&COLOR_CAPSULE);
-
-		//	Draw mesh
+		
+		//	draw mesh
+		float l = 0.5f * glm::length(capsule->p1 - capsule->p2);
 		loadVAO(it->second.first->getVAO());
 
-		glm::mat4 model = glm::scale(base, glm::vec3(capsule->radius, capsule->radius, 0.5f * glm::length(capsule->p1 - capsule->p2)));
+		glm::mat4 model = glm::scale(base, glm::vec3(capsule->radius, capsule->radius, l));
 		loadMVPMatrix(shaderToUse, &model[0][0], view, projection);
-		glDrawElements(GL_TRIANGLES, 192, GL_UNSIGNED_SHORT, NULL);
+		glDrawElements(GL_TRIANGLES, cylinderFaces, GL_UNSIGNED_SHORT, NULL);
 		
-		model = glm::translate(base, capsule->p2 - center);
+		model = glm::translate(base, glm::vec3(0, 0, l));
 		model = glm::scale(model, glm::vec3(capsule->radius, capsule->radius, capsule->radius));
 		loadMVPMatrix(shaderToUse, &model[0][0], view, projection);
-		glDrawElements(GL_TRIANGLES, 3072, GL_UNSIGNED_SHORT, (void*)(192 * sizeof(unsigned short)));
+		glDrawElements(GL_TRIANGLES, hemisphereFaces, GL_UNSIGNED_SHORT, (void*)(cylinderFaces * sizeof(unsigned short)));
 
-		model = glm::translate(base, capsule->p1 - center);
+		model = glm::translate(base, glm::vec3(0, 0, -l));
 		model = glm::scale(model, glm::vec3(capsule->radius, capsule->radius, capsule->radius));
 		loadMVPMatrix(shaderToUse, &model[0][0], view, projection);
-		glDrawElements(GL_TRIANGLES, (int)it->second.first->getFaces()->size(), GL_UNSIGNED_SHORT, (void*)(3264 * sizeof(unsigned short)));
-
+		glDrawElements(GL_TRIANGLES, (int)it->second.first->getFaces()->size(), GL_UNSIGNED_SHORT, (void*)((hemisphereFaces + cylinderFaces) * sizeof(unsigned short)));
+		
+		//	end
 		if (loc >= 0) glUniform3fv(loc, 1, (float*)&glm::vec3(-1.f, 0.f, 0.f)[0]);
 	}
-	else std::cerr << "WARNING : drawCapsule not yet implemented" << std::endl;
+	else std::cerr << "WARNING : drawCapsule not associated or not yet implemented" << std::endl;
 }
 //
 

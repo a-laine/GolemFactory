@@ -59,9 +59,6 @@ World world;
 Camera camera, camera2;
 Entity* avatar = nullptr;
 
-/*Entity* debugShape = nullptr;
-Entity* debugShape2 = nullptr;*/
-
 double completeTime = 16.;
 double averageCompleteTime = 16.;
 
@@ -75,16 +72,10 @@ GLFWwindow* initGLFW();
 void initializeForestScene(bool emptyPlace = false);
 std::string checkResourcesDirectory();
 
-
 void initManagers();
 void picking(int width, int height);
 void events();
 void updates(float elapseTime, int width, int height);
-
-
-void capsuleMeshConstruct(const Capsule* c);
-void capsuleMeshDraw();
-
 //
 
 
@@ -102,51 +93,22 @@ int main()
 
 	//	Test scene
 		Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("wired"));
-		//initializeForestScene(false);
-
-		Entity* testShape = world.getEntityFactory().createObject([](Entity* object)
-		{
-			DrawableComponent* drawable = new DrawableComponent("Shapes/sphere", "default");
-			object->addComponent(drawable);
-
-			//object->setShape(new Point(glm::vec3(0.f, 0.f, 1.f)));
-			//object->setShape(new Segment(glm::vec3(0.f, 0.f, -1.f), glm::vec3(0.f, 0.f, 1.f)));
-			//object->setShape(new Triangle(glm::vec3(-1.f, 0.f, -1.f), glm::vec3(1.f, 0.f, -1.f), glm::vec3(0.f, 0.f, 1.5f)));
-			//object->setShape(new OrientedBox(glm::toMat4(glm::normalize(glm::fquat(1.f, 0.05f, 0.1f, 0.2f))), glm::vec3(-1.f), glm::vec3(1.f)));
-			//object->setShape(new AxisAlignedBox(glm::vec3(-1.f), glm::vec3(1.f)));
-			//object->setShape(new Sphere(glm::vec3(0.f), 0.5f));
-			object->setShape(new Capsule(glm::vec3(0.f, 0.f, -1.f), glm::vec3(0.f, 0.f, 1.f), 0.5f));
-			
-			//object->setTransformation(glm::vec3(0.f, 0.f, 3.f), glm::vec3(1.f, 1.f, 1.f), glm::fquat());
-			object->setTransformation(glm::vec3(0.f, 0.f, 2.f), glm::vec3(1.f, 1.f, 2.f), glm::normalize(glm::fquat(1.f, 0.05f, 0.1f, 0.2f)));
-			RigidBody* rb = new RigidBody(RigidBody::DYNAMIC);
-			rb->setMass(1.f);
-			object->addComponent(rb);
-
-			//MeshSaver::save(drawable->getMesh(), checkResourcesDirectory(), "sphere");
-		});
-
-		//glfwSetWindowShouldClose(window, 1);
+		initializeForestScene(false);
 
 		avatar = world.getEntityFactory().createObject("peasant", [](Entity* object)
 		{
             DrawableComponent* drawable = object->getComponent<DrawableComponent>();
 			float scale = 1.7f / (drawable->getMeshBBMax() - drawable->getMeshBBMin()).z;
-			object->setScale(glm::vec3(scale));
-			//glm::vec3 pos = glm::vec3(-10.f, 0.f, -scale * drawable->getMeshBBMin().z);
-			glm::vec3 pos = glm::vec3(0.f, -5.f, -scale * drawable->getMeshBBMin().z);
-			object->setPosition(pos);
-			camera.setRadius(5);
-			object->setOrientation(glm::toQuat(glm::rotate(glm::pi<float>() / 2.f + atan2(1.f, 0.f), glm::vec3(0.f, 0.f, 1.f))));
+			glm::vec3 pos = glm::vec3(-10.f, 0.f, -scale * drawable->getMeshBBMin().z);
+			object->setTransformation(pos, glm::vec3(scale), glm::toQuat(glm::rotate(glm::pi<float>() / 2.f + atan2(1.f, 0.f), glm::vec3(0.f, 0.f, 1.f))));
 
+			camera.setRadius(5);
 			avatarZeroHeight = object->getPosition().z;
 		});
 		camera.setMode(Camera::TRACKBALL);
 		WidgetManager::getInstance()->setBoolean("BBpicking", false);
-		WidgetManager::getInstance()->setBoolean("wireframe", true);
-		//capsuleMeshConstruct(static_cast<const Capsule*>(&testShape->getShape()));
-
-
+		WidgetManager::getInstance()->setBoolean("wireframe", false);
+		//glfwSetWindowShouldClose(window, 1);
 
 	// init loop time tracking
 	double averageTime = 0;
@@ -177,14 +139,10 @@ int main()
 			Renderer::getInstance()->setRenderOption(Renderer::WIREFRAME);
 		else Renderer::getInstance()->setRenderOption(Renderer::DEFAULT);
 		Renderer::getInstance()->render(&camera);
-		Renderer::getInstance()->drawShape(&testShape->getShape(), &camera.getViewMatrix()[0][0], &glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f)[0][0]);
-		
-		//capsuleMeshDraw();
-		
+		Renderer::getInstance()->drawShape(&avatar->getShape(), &camera.getViewMatrix()[0][0], &glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f)[0][0]);
+
 		picking(width, height);
 		Renderer::getInstance()->renderHUD(&camera2);
-
-		
 
 		//	clear garbages
 		world.clearGarbage();
@@ -288,7 +246,7 @@ void initializeForestScene(bool emptyPlace)
 	// village
 	
 	int vilageHouseCount = 0;
-	/*float villageRadius[] = {20.f, 35.f, 50.f};
+	float villageRadius[] = {20.f, 35.f, 50.f};
 	std::vector<glm::vec3> houseCircle;
 	for (int i = 0; i < 3; i++)
 	{
@@ -327,7 +285,8 @@ void initializeForestScene(bool emptyPlace)
 			});
 		}
 	}
-	*/
+
+
 	// forest
 	for (int i = 0; i < GRID_SIZE; i++)
 		for (int j = 0; j < GRID_SIZE; j++)
@@ -336,8 +295,8 @@ void initializeForestScene(bool emptyPlace)
 				GRID_ELEMENT_SIZE*j - (GRID_SIZE * GRID_ELEMENT_SIZE) / 2 + GRID_ELEMENT_SIZE * ((rand() % 10) / 20.f - 0.25f),
 				0);
 
-			/*if(glm::length(p) < villageRadius[2] + 5.f * GRID_ELEMENT_SIZE)
-				continue;*/
+			if(glm::length(p) < villageRadius[2] + 5.f * GRID_ELEMENT_SIZE)
+				continue;
 
 			int r = rand() % 100;
 			if (r < 20)
@@ -380,176 +339,6 @@ std::string checkResourcesDirectory()
 	//	return the default resource path for portable applications
 	std::cout << "FATAL WARRNING : Fail to find ressource repo" << std::endl;
 	return "Resources/";
-}
-
-unsigned int quadrature = 32;
-std::vector<Triangle> aaaa;
-std::vector<glm::vec3> vertices;
-std::vector<glm::vec3> normals;
-std::vector<glm::vec3> colors;
-std::vector<unsigned short int> faces;
-void capsuleMeshConstruct(const Capsule* c)
-{
-	//	cylinder part
-	glm::vec3 previous = glm::vec3(1, 0, 0);
-	for (unsigned int i = 1; i < quadrature+1; i++)
-	{
-		float angle = 2 * glm::pi<float>() * i / quadrature;
-		glm::vec3 tmp = cos(angle) * glm::vec3(1, 0, 0) + sin(angle) * glm::vec3(0, 1, 0);
-
-		glm::vec3 o = 0.5f * (tmp + previous);
-		glm::vec3 s2 = 0.5f * glm::length(tmp - previous) * glm::normalize(tmp - previous);
-		glm::vec3 s1 = glm::vec3(0, 0, 1);
-		
-		aaaa.push_back(Triangle(o - s1 - s2, o + s1 - s2, o - s1 + s2));
-		aaaa.push_back(Triangle(o + s1 - s2, o - s1 + s2, o + s1 + s2));
-
-		vertices.push_back(o - s1 - s2);  normals.push_back(glm::normalize(glm::vec3(vertices.back().x, vertices.back().y, 0))); colors.push_back(glm::vec3(1.f, 1.f, 1.f));
-		vertices.push_back(o + s1 - s2);  normals.push_back(glm::normalize(glm::vec3(vertices.back().x, vertices.back().y, 0))); colors.push_back(glm::vec3(1.f, 1.f, 1.f));
-		vertices.push_back(o - s1 + s2);  normals.push_back(glm::normalize(glm::vec3(vertices.back().x, vertices.back().y, 0))); colors.push_back(glm::vec3(1.f, 1.f, 1.f));
-		vertices.push_back(o + s1 + s2);  normals.push_back(glm::normalize(glm::vec3(vertices.back().x, vertices.back().y, 0))); colors.push_back(glm::vec3(1.f, 1.f, 1.f));
-
-		faces.push_back((unsigned short int)vertices.size() - 4);
-		faces.push_back((unsigned short int)vertices.size() - 3);
-		faces.push_back((unsigned short int)vertices.size() - 2);
-
-		faces.push_back((unsigned short int)vertices.size() - 3);
-		faces.push_back((unsigned short int)vertices.size() - 2);
-		faces.push_back((unsigned short int)vertices.size() - 1);
-
-		previous = tmp;
-	}
-
-	//	hemisphere 1 
-	glm::vec3 v1, v2, v3, v4;
-	unsigned int quadrature_s = quadrature / 2;
-	for (unsigned int j = 0; j < quadrature/2; j++)
-	{
-		v4 = glm::vec3(0, 0, 0) + cos(glm::pi<float>() / 2 * j / quadrature_s) * glm::vec3(1, 0, 0) + sin(glm::pi<float>() / 2 * j / quadrature_s) * glm::vec3(0, 0, 1);
-		v3 = glm::vec3(0, 0, 0) + cos(glm::pi<float>() / 2 * (j + 1) / quadrature_s) * glm::vec3(1, 0, 0) + sin(glm::pi<float>() / 2 * (j + 1) / quadrature_s) * glm::vec3(0, 0, 1);
-
-		for (unsigned int i = 1; i < quadrature + 1; i++)
-		{
-			// compute new vectors
-			v1 = glm::vec3(0, 0, 0) +
-				cos(2 * glm::pi<float>() * i / quadrature) * cos(glm::pi<float>() / 2 * j / quadrature_s) * glm::vec3(1, 0, 0) +
-				sin(2 * glm::pi<float>() * i / quadrature) * cos(glm::pi<float>() / 2 * j / quadrature_s) * glm::vec3(0, 1, 0) +
-				sin(glm::pi<float>() / 2 * j / quadrature_s) * glm::vec3(0, 0, 1);
-
-			v2 = glm::vec3(0, 0, 0) +
-				cos(2 * glm::pi<float>() * i / quadrature) * cos(glm::pi<float>() / 2 * (j + 1) / quadrature_s) * glm::vec3(1, 0, 0) +
-				sin(2 * glm::pi<float>() * i / quadrature) * cos(glm::pi<float>() / 2 * (j + 1) / quadrature_s) * glm::vec3(0, 1, 0) +
-				sin(glm::pi<float>() / 2 * (j + 1) / quadrature_s) * glm::vec3(0, 0, 1);
-
-			//drawQuad(v2, v1, v3, v4);
-			aaaa.push_back(Triangle(v2, v1, v3));
-			aaaa.push_back(Triangle(v1, v3, v4));
-
-			vertices.push_back(v2);  normals.push_back(glm::normalize(vertices.back())); colors.push_back(glm::vec3(1.f, 1.f, 1.f));
-			vertices.push_back(v1);  normals.push_back(glm::normalize(vertices.back())); colors.push_back(glm::vec3(1.f, 1.f, 1.f));
-			vertices.push_back(v3);  normals.push_back(glm::normalize(vertices.back())); colors.push_back(glm::vec3(1.f, 1.f, 1.f));
-			vertices.push_back(v4);  normals.push_back(glm::normalize(vertices.back())); colors.push_back(glm::vec3(1.f, 1.f, 1.f));
-
-			faces.push_back((unsigned short int)vertices.size() - 4);
-			faces.push_back((unsigned short int)vertices.size() - 3);
-			faces.push_back((unsigned short int)vertices.size() - 2);
-
-			faces.push_back((unsigned short int)vertices.size() - 3);
-			faces.push_back((unsigned short int)vertices.size() - 2);
-			faces.push_back((unsigned short int)vertices.size() - 1);
-
-			//	vector shift
-			v4 = v1;
-			v3 = v2;
-		}
-	}
-
-	//	hemisphere 2 
-	for (unsigned int j = 0; j < quadrature_s; j++)
-	{
-		v4 = glm::vec3(0, 0, 0) + cos(glm::pi<float>() / 2 * j / quadrature_s) * glm::vec3(1, 0, 0) + sin(glm::pi<float>() / 2 * j / quadrature_s) * glm::vec3(0, 0, -1);
-		v3 = glm::vec3(0, 0, 0) + cos(glm::pi<float>() / 2 * (j + 1) / quadrature_s) * glm::vec3(1, 0, 0) + sin(glm::pi<float>() / 2 * (j + 1) / quadrature_s) * glm::vec3(0, 0, -1);
-
-		for (unsigned int i = 1; i < quadrature + 1; i++)
-		{
-			// compute new vectors
-			v1 = glm::vec3(0, 0, 0) +
-				cos(2 * glm::pi<float>() * i / quadrature) * cos(glm::pi<float>() / 2 * j / quadrature_s) * glm::vec3(1, 0, 0) +
-				sin(2 * glm::pi<float>() * i / quadrature) * cos(glm::pi<float>() / 2 * j / quadrature_s) * glm::vec3(0, 1, 0) +
-				sin(glm::pi<float>() / 2 * j / quadrature_s) * glm::vec3(0, 0, -1);
-
-			v2 = glm::vec3(0, 0, 0) +
-				cos(2 * glm::pi<float>() * i / quadrature) * cos(glm::pi<float>() / 2 * (j + 1) / quadrature_s) * glm::vec3(1, 0, 0) +
-				sin(2 * glm::pi<float>() * i / quadrature) * cos(glm::pi<float>() / 2 * (j + 1) / quadrature_s) * glm::vec3(0, 1, 0) +
-				sin(glm::pi<float>() / 2 * (j + 1) / quadrature_s) * glm::vec3(0, 0, -1);
-
-			//drawQuad(v2, v1, v3, v4);
-			aaaa.push_back(Triangle(v2, v1, v3));
-			aaaa.push_back(Triangle(v1, v3, v4));
-
-			vertices.push_back(v1);  normals.push_back(glm::normalize(vertices.back())); colors.push_back(glm::vec3(1.f, 1.f, 1.f));
-			vertices.push_back(v2);  normals.push_back(glm::normalize(vertices.back())); colors.push_back(glm::vec3(1.f, 1.f, 1.f));
-			vertices.push_back(v3);  normals.push_back(glm::normalize(vertices.back())); colors.push_back(glm::vec3(1.f, 1.f, 1.f));
-			vertices.push_back(v4);  normals.push_back(glm::normalize(vertices.back())); colors.push_back(glm::vec3(1.f, 1.f, 1.f));
-
-			faces.push_back((unsigned short int)vertices.size() - 4);
-			faces.push_back((unsigned short int)vertices.size() - 3);
-			faces.push_back((unsigned short int)vertices.size() - 2);
-
-			faces.push_back((unsigned short int)vertices.size() - 3);
-			faces.push_back((unsigned short int)vertices.size() - 2);
-			faces.push_back((unsigned short int)vertices.size() - 1);
-
-			//	vector shift
-			v4 = v1;
-			v3 = v2;
-		}
-	}
-
-	std::cout << "v : " << vertices.size() << std::endl;
-	std::cout << "f : " << faces.size() << std::endl << std::endl;
-
-	//	end
-	ToolBox::optimizeStaticMesh(vertices, normals, colors, faces);
-	Mesh* mesh = new Mesh("capsule");
-	std::vector<glm::ivec3> bonesArray;
-	std::vector<glm::vec3> weightsArray;
-	mesh->initialize(vertices, normals, colors, faces, bonesArray, weightsArray);
-
-	ResourceManager::getInstance()->addResource(mesh);
-
-	MeshSaver::save(mesh, checkResourcesDirectory(), "capsule");
-
-	std::cout << "v : " << mesh->getNumberVertices() << std::endl;
-	std::cout << "f : " << mesh->getNumberFaces() << std::endl;
-}
-void capsuleMeshDraw()
-{
-	float normalSize = 0.3f;
-	int width, height;
-	glfwGetWindowSize(window, &width, &height);
-	for (unsigned int i = 0; i < aaaa.size() && i < 2*quadrature; i++)
-	{
-		Renderer::getInstance()->drawShape(&aaaa[i], &camera.getViewMatrix()[0][0], &glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f)[0][0]);
-		
-		Renderer::getInstance()->drawShape(&Segment(aaaa[i].p1, aaaa[i].p1 + normalSize * glm::normalize(glm::vec3(aaaa[i].p1.x, aaaa[i].p1.y, 0))), &camera.getViewMatrix()[0][0], &glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f)[0][0]);
-		Renderer::getInstance()->drawShape(&Segment(aaaa[i].p2, aaaa[i].p2 + normalSize * glm::normalize(glm::vec3(aaaa[i].p2.x, aaaa[i].p2.y, 0))), &camera.getViewMatrix()[0][0], &glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f)[0][0]);
-		Renderer::getInstance()->drawShape(&Segment(aaaa[i].p3, aaaa[i].p3 + normalSize * glm::normalize(glm::vec3(aaaa[i].p3.x, aaaa[i].p3.y, 0))), &camera.getViewMatrix()[0][0], &glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f)[0][0]);
-	}
-
-	for (unsigned int i = 2 * quadrature; i < aaaa.size()/* && i < 2 * quadrature + 2*quadrature*quadrature*/; i++)
-	{
-		Renderer::getInstance()->drawShape(&aaaa[i], &camera.getViewMatrix()[0][0], &glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f)[0][0]);
-
-		glm::vec3 n = glm::vec3(aaaa[i].p1.x, aaaa[i].p1.y, aaaa[i].p1.z - 0);
-		Renderer::getInstance()->drawShape(&Segment(aaaa[i].p1, aaaa[i].p1 + normalSize * n), &camera.getViewMatrix()[0][0], &glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f)[0][0]);
-		
-		n = glm::vec3(aaaa[i].p2.x, aaaa[i].p2.y, aaaa[i].p2.z - 0);
-		Renderer::getInstance()->drawShape(&Segment(aaaa[i].p2, aaaa[i].p2 + normalSize * n), &camera.getViewMatrix()[0][0], &glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f)[0][0]);
-		
-		n = glm::vec3(aaaa[i].p3.x, aaaa[i].p3.y, aaaa[i].p3.z - 0);
-		Renderer::getInstance()->drawShape(&Segment(aaaa[i].p3, aaaa[i].p3 + normalSize * n), &camera.getViewMatrix()[0][0], &glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f)[0][0]);
-	}
 }
 
 
