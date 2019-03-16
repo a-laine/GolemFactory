@@ -3,16 +3,19 @@
 #include <iostream>
 
 //	Default
-RigidBody::RigidBody(const RigidBodyType& type) : type(type), mass(0.f), gravityFactor(1.f), inertia(1.f), 
+RigidBody::RigidBody(const RigidBodyType& type) : type(type), mass(1.f), gravityFactor(1.f), inertia(1.f), 
 	velocity(0.f), acceleration(0.f), angularVelocity(0.f), angularAcceleration(0.f)
-{}
+{
+	inverseMass = 1.f / mass;
+	inverseInertia = glm::inverse(inertia);
+}
 RigidBody::~RigidBody()
 {}
 //
 
 //	Set / get / test
 void RigidBody::setType(const RigidBodyType& t) { type = t; }
-void RigidBody::setMass(const float& m) { mass = m; }
+void RigidBody::setMass(const float& m) { mass = m; inverseMass = 1.f / mass; }
 void RigidBody::setGravityFactor(const float& f) { gravityFactor = f; }
 void RigidBody::setAcceleration(const glm::vec3& a) { acceleration = a; }
 void RigidBody::setVelocity(const glm::vec3& v) { velocity = v; }

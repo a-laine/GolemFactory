@@ -33,7 +33,6 @@ class Physics
 
 	private:
 		//	Pipeline steps
-		void applyForces(const float& elapsedTime);
 		void predictTransform(const float& elapsedTime);
 		void computeBoundingShapes(const float& elapsedTime);
 		void detectPairs(const float& elapsedTime);

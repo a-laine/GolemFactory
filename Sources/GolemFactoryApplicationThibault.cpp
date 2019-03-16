@@ -130,7 +130,7 @@ int main()
 		updates((float)elapseTime, width, height);
 
 		//	physics
-		world.getPhysics().stepSimulation((float)elapseTime * 0.001f, &world.getSceneManager());
+		world.getPhysics().stepSimulation((float)elapseTime * 0.001f * 0.01f, &world.getSceneManager());
 
 		// Render scene & picking
 		if (WidgetManager::getInstance()->getBoolean("BBrendering"))

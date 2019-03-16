@@ -40,7 +40,6 @@ void Physics::stepSimulation(const float& elapsedTime, SceneManager* s)
 
 	//std::cout << "moving object count : " << movingEntity.size() << std::endl;
 
-	applyForces(elapsedTime);
 	predictTransform(elapsedTime);
 	computeBoundingShapes(elapsedTime);
 	detectPairs(elapsedTime);
@@ -162,7 +161,7 @@ void Physics::narrowPhase(Entity* entity1, Entity* entity2, Shape prediction1)
 
 
 //	Pipeline
-void Physics::applyForces(const float& elapsedTime)
+void Physics::predictTransform(const float& elapsedTime)
 {
 	for (std::set<Entity*>::iterator it = movingEntity.begin(); it != movingEntity.end(); it++)
 	{
@@ -171,36 +170,57 @@ void Physics::applyForces(const float& elapsedTime)
 		else if (rigidbody->getMass() == 0.f) continue;
 		else
 		{
-			//	compute accelerations
-			rigidbody->acceleration = rigidbody->getMass() * gravity * rigidbody->getGravityFactor();
+			//	linear acceleration
+			rigidbody->acceleration = rigidbody->mass * gravity * rigidbody->gravityFactor;
 			for (unsigned int i = 0; i < rigidbody->forces.size(); i++)
 				rigidbody->acceleration += rigidbody->forces[i];
-			rigidbody->acceleration /= rigidbody->getMass();
+			rigidbody->acceleration *= rigidbody->inverseMass;
 
+			//	linear velocity
+			rigidbody->velocity += elapsedTime * rigidbody->acceleration;
+
+			//	angular acceleration
 			rigidbody->angularAcceleration = glm::vec3(0.f);
 			for (unsigned int i = 0; i < rigidbody->torques.size(); i++)
 				rigidbody->angularAcceleration += rigidbody->torques[i];
-			rigidbody->angularAcceleration = glm::inverse(rigidbody->inertia) * rigidbody->angularAcceleration;
+			rigidbody->angularAcceleration = rigidbody->inverseInertia * rigidbody->angularAcceleration;
 
-			//	integrate
-			rigidbody->velocity += elapsedTime * rigidbody->acceleration;
+			//	angular velocity
 			rigidbody->angularVelocity += elapsedTime * rigidbody->angularAcceleration;
+
+			//	predict position
+			rigidbody->predictPosition = (*it)->getPosition() + rigidbody->velocity * elapsedTime;// +0.5f * elapsedTime * elapsedTime * rigidbody->acceleration;
+
+			//	predict orientation
+			rigidbody->deltaRotation = 0.5f * elapsedTime * glm::fquat(0.f, rigidbody->angularVelocity.x, rigidbody->angularVelocity.y, rigidbody->angularVelocity.z) * (*it)->getOrientation();
+			rigidbody->predictRotation = (*it)->getOrientation() + rigidbody->deltaRotation;
 
 			//	clear
 			rigidbody->forces.clear();
 			rigidbody->torques.clear();
+
+			//	check new static
+			if(rigidbody->isResting())
+				it = std::prev(movingEntity.erase(it));
 		}
 	}
 }
-void Physics::predictTransform(const float& elapsedTime)
-{
-	// save
-	// rigidbody->rotation from axis&angle (vector & magnitude) to quaternion
-	// set entity position & rotation
-}
 void Physics::computeBoundingShapes(const float& elapsedTime)
 {
+	for (std::set<Entity*>::iterator it = movingEntity.begin(); it != movingEntity.end(); it++)
+	{
+		RigidBody* rigidbody = (*it)->getComponent<RigidBody>();
 
+		glm::vec3 delta = rigidbody->predictPosition - (*it)->getPosition();
+
+		AxisAlignedBox firstBox = (*it)->getShape().toAxisAlignedBox();
+		AxisAlignedBox finalBox = AxisAlignedBox(firstBox);
+		finalBox.transform(delta, glm::vec3(1.f), rigidbody->deltaRotation);
+
+		glm::vec3 queryMin = glm::min(firstBox.min, finalBox.min);
+		glm::vec3 queryMax = glm::min(firstBox.max, finalBox.max);
+		AxisAlignedBox queryBox(queryMin, queryMax);
+	}
 }
 void Physics::detectPairs(const float& elapsedTime)
 {
