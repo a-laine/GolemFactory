@@ -9,8 +9,6 @@
 
 #include "Utiles/Mutex.h"
 
-#include <GLFW/glfw3.h>
-
 #include "Utiles/Singleton.h"
 #include "Events/EventHandler.h"
 #include "HUD/Layer.h"
@@ -53,7 +51,7 @@ class WidgetManager : public Singleton<WidgetManager>
 		//
 
 		//	Set / get functions
-		void setInitialWindowSize(const int& width, const int& height);
+		void setInitialViewportRatio(float viewportRatio);
 		void setActiveHUD(const std::string& s);
 		void setPickingParameters(const glm::mat4& base, const glm::vec3& ray, const glm::vec3& origin);
 
@@ -90,6 +88,6 @@ class WidgetManager : public Singleton<WidgetManager>
 		std::list<WidgetVirtual*> activeWidgetList;
 		std::map<WidgetVirtual*, Layer*> activeWidgetParentList;
 
-		int lastWidth, lastHeight;
+		float lastViewportRatio;
 		//
 };

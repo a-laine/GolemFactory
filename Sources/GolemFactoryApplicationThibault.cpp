@@ -26,6 +26,7 @@
 #include "Resources/Loader/SkeletonSaver.h"
 #include "Animation/AnimationComponent.h"
 #include "Animation/SkeletonComponent.h"
+#include "Core/Application.h"
 
 #include <Resources/Texture.h>
 #include <Resources/Font.h>
@@ -54,7 +55,7 @@
 
 
 //	global attributes
-GLFWwindow* window = nullptr;
+RenderContext* context = nullptr;
 World world;
 Camera camera, camera2;
 Entity* avatar = nullptr;
@@ -68,23 +69,24 @@ glm::vec3 avatarspeed(0.f);
 
 
 // prototypes
-GLFWwindow* initGLFW();
 void initializeForestScene(bool emptyPlace = false);
 std::string checkResourcesDirectory();
 
 void initManagers();
-void picking(int width, int height);
+void picking();
 void events();
-void updates(float elapseTime, int width, int height);
+void updates(float elapseTime);
 //
 
 
 // program
 int main()
 {
-	// init window and opengl
-	window = initGLFW();
-	Renderer::getInstance()->initGLEW(1);
+	Application application;
+	context = application.createWindow("Golem Factory v1.0", 1600, 900);
+	context->makeCurrent();
+	context->setVSync(true);
+	application.initGLEW(1);
 	initManagers();
 
 	//	Collision test
@@ -115,19 +117,17 @@ int main()
 	long samples = 0;
 	double elapseTime = 16.;
 	double dummy = 0;
-	int width, height;
 
 	//	game loop
 	std::cout << "game loop initiated" << std::endl;
-	while (!glfwWindowShouldClose(window))
+	while (!application.shouldExit())
 	{
 		// begin loop
 		double startTime = glfwGetTime();
-		glfwGetWindowSize(window, &width, &height);
 
 		//  handle events
 		events();
-		updates((float)elapseTime, width, height);
+		updates((float)elapseTime);
 
 		//	physics
 		world.getPhysics().stepSimulation((float)elapseTime * 0.001f * 0.01f, &world.getSceneManager());
@@ -139,9 +139,9 @@ int main()
 			Renderer::getInstance()->setRenderOption(Renderer::WIREFRAME);
 		else Renderer::getInstance()->setRenderOption(Renderer::DEFAULT);
 		Renderer::getInstance()->render(&camera);
-		Renderer::getInstance()->drawShape(&avatar->getShape(), &camera.getViewMatrix()[0][0], &glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f)[0][0]);
+		Renderer::getInstance()->drawShape(&avatar->getShape(), &camera.getViewMatrix()[0][0], &glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), context->getViewportRatio(), 0.1f, 1500.f)[0][0]);
 
-		picking(width, height);
+		picking();
 		Renderer::getInstance()->renderHUD(&camera2);
 
 		//	clear garbages
@@ -150,7 +150,7 @@ int main()
 
 		// End loop
 		completeTime = 1000.0*(glfwGetTime() - startTime);
-		glfwSwapBuffers(window);
+		context->swapBuffers();
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 		elapseTime = 1000.0*(glfwGetTime() - startTime);
 	}
@@ -159,38 +159,12 @@ int main()
 	std::cout << "ending game" << std::endl;
 	world.clearGarbage();
 	ResourceManager::getInstance()->clearGarbage();
-	glfwDestroyWindow(window);
-	glfwTerminate();
 	return 0;
 }
 //
 
 
 //	functions implementation
-static void errorCallback(int error, const char* description) { std::cerr << "GLFW ERROR : " << description << std::endl; }
-GLFWwindow* initGLFW()
-{
-	if (!glfwInit()) exit(EXIT_FAILURE);
-
-	glfwSetErrorCallback(errorCallback);
-	glfwWindowHint(GLFW_SAMPLES, 4);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-	GLFWwindow*window = glfwCreateWindow(1600, 900, "Golem Factory v1.0", NULL, NULL);
-	if (!window)
-	{
-		glfwTerminate();
-		exit(EXIT_FAILURE);
-	}
-	glfwMakeContextCurrent(window);
-	glfwSwapInterval(1);
-	return window;
-}
-
-
 void initializeForestScene(bool emptyPlace)
 {
 	// blue sky & green grass!!
@@ -348,7 +322,7 @@ void initManagers()
 	if (DEBUG) std::cout << "Found resources folder at : " << resourceRepository << std::endl;
 
 	// Init Event handler
-	EventHandler::getInstance()->addWindow(window);
+	EventHandler::getInstance()->addWindow(context->getParentWindow());
 	EventHandler::getInstance()->setRepository(resourceRepository);
 	EventHandler::getInstance()->loadKeyMapping("RPG Key mapping");
 	EventHandler::getInstance()->setCursorMode(false);
@@ -392,7 +366,7 @@ void initManagers()
 	camera2.setMode(Camera::FREEFLY);
 	camera2.setAllRadius(2.f, 0.5f, 10.f);
 	camera2.setPosition(glm::vec3(0, 20, 20));
-	Renderer::getInstance()->setWindow(window);
+	Renderer::getInstance()->setContext(context);
 	Renderer::getInstance()->setWorld(&world);
 	Renderer::getInstance()->initializeGrid(GRID_SIZE, GRID_ELEMENT_SIZE, glm::vec3(24 / 255.f, 202 / 255.f, 230 / 255.f));	// blue tron
 	Renderer::getInstance()->setCamera(&camera2);
@@ -415,12 +389,10 @@ void initManagers()
 	Animator::getInstance();
 
 	//	HUD
-	int width, height;
-	glfwGetWindowSize(window, &width, &height);
-	WidgetManager::getInstance()->setInitialWindowSize(width, height);
+	WidgetManager::getInstance()->setInitialViewportRatio(context->getViewportRatio());
 	WidgetManager::getInstance()->loadHud("default");
 }
-void picking(int width, int height)
+void picking()
 {
 	DefaultSceneManagerRayTest sceneNodeTest(camera.getPosition(), camera.getForward(), 10000);
 	DefaultRayPickingCollector collector(camera.getPosition(), camera.getForward(), 10000);
@@ -446,7 +418,7 @@ void picking(int width, int height)
 		{
 			Renderer::RenderOption option = Renderer::getInstance()->getRenderOption();
 			Renderer::getInstance()->setRenderOption(option == Renderer::DEFAULT ? Renderer::BOUNDING_BOX : Renderer::DEFAULT);
-			glm::mat4 projection = glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f);
+			glm::mat4 projection = glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), context->getViewportRatio(), 0.1f, 1500.f);
 
 			for (auto it = collector.getObjects().begin(); it != collector.getObjects().end(); ++it)
 				Renderer::getInstance()->drawObject(it->second, &camera.getViewMatrix()[0][0], &projection[0][0]);
@@ -467,7 +439,7 @@ void events()
 	for (unsigned int i = 0; i < v.size(); i++)
 	{
 		//	micselenious
-		if (v[i] == QUIT) glfwSetWindowShouldClose(window, GL_TRUE);
+		if (v[i] == QUIT) glfwSetWindowShouldClose(context->getParentWindow(), GL_TRUE);
 		else if (v[i] == CHANGE_CURSOR_MODE) EventHandler::getInstance()->setCursorMode(!EventHandler::getInstance()->getCursorMode());
 		else if (v[i] == ACTION)
 		{
@@ -516,7 +488,7 @@ void events()
 		else if (v[i] == F10)  WidgetManager::getInstance()->setActiveHUD((WidgetManager::getInstance()->getActiveHUD() == "rendering" ? "" : "rendering"));
 	}
 }
-void updates(float elapseTime, int width, int height)
+void updates(float elapseTime)
 {
 	//	animate avatar
 	Animator::getInstance()->animate(avatar, elapseTime);
@@ -525,7 +497,7 @@ void updates(float elapseTime, int width, int height)
 	if (EventHandler::getInstance()->getCursorMode())
 	{
 		glm::vec2 cursor = EventHandler::getInstance()->getCursorNormalizedPosition();
-		glm::vec4 ray_eye = glm::inverse(glm::perspective(glm::radians(ANGLE_VERTICAL_HUD_PROJECTION), (float)width / height, 0.01f, 150.f)) * glm::vec4(cursor.x, cursor.y, -1.f, 1.f);
+		glm::vec4 ray_eye = glm::inverse(glm::perspective(glm::radians(ANGLE_VERTICAL_HUD_PROJECTION), context->getViewportRatio(), 0.01f, 150.f)) * glm::vec4(cursor.x, cursor.y, -1.f, 1.f);
 		WidgetManager::getInstance()->setPickingParameters(
 			camera.getViewMatrix() * glm::translate(glm::mat4(1.f), DISTANCE_HUD_CAMERA * camera.getForward()) * camera.getModelMatrix(),
 			glm::normalize(glm::vec3(ray_eye.x, ray_eye.y, ray_eye.z)),
@@ -715,7 +687,7 @@ void updates(float elapseTime, int width, int height)
 		if (angle > 70.f) angle = 70.f;
 		else if (angle < 3) angle = 3.f;
 		camera.setFrustrumAngleVertical(angle);
-		camera.setFrustrumAngleHorizontalFromScreenRatio((float)width / height);
+		camera.setFrustrumAngleHorizontalFromScreenRatio(context->getViewportRatio());
 	}
 	if (WidgetManager::getInstance()->getBoolean("syncCamera"))
 		camera2 = camera;

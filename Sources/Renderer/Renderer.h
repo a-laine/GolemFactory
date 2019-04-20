@@ -7,7 +7,7 @@
 
 #include "Utiles/Mutex.h"
 
-#include <GLFW/glfw3.h>
+#include <Core/RenderContext.h>
 
 #include "Utiles/Camera.h"
 #include "Utiles/Singleton.h"
@@ -45,7 +45,7 @@ class Renderer : public Singleton<Renderer>
 		//
 
 		//  Public functions
-		void initGLEW(int verbose = 1);
+		bool initGLEW(int verbose = 1);
 		void initializeGrid(const unsigned int& gridSize, const float& elementSize = 1.f, const glm::vec3& color = glm::vec3(0.4f, 0.2f, 0.1f));
 		//void initi
 		void render(Camera* renderCam);
@@ -55,14 +55,14 @@ class Renderer : public Singleton<Renderer>
 		//  Set/get functions
 		void setCamera(Camera* cam);
 		void setWorld(World* currentWorld);
-		void setWindow(GLFWwindow* win);
+		void setContext(RenderContext* ctx);
 		void setShader(ShaderIdentifier id, Shader* s);
 		void setGridVisible(bool enable);
 		void setRenderOption(const RenderOption& option);
 		
 		Camera* getCamera();
 		World* getWorld();
-		GLFWwindow* getWindow();
+		RenderContext* getContext();
 		Shader* getShader(ShaderIdentifier id);
 		bool isGridVisible();
 		unsigned int getNbDrawnInstances() const;
@@ -113,12 +113,11 @@ class Renderer : public Singleton<Renderer>
 		//
 
 		//  Attributes
-		GLFWwindow* window;
 		Camera* camera;
 		World* world;
+		RenderContext* context;
 		std::map<ShaderIdentifier, Shader*> defaultShader;
 		RenderOption renderOption;
-		int openglVersionA, openglVersionB, openglVersionC;
 
 		bool drawGrid;
 		unsigned int vboGridSize;

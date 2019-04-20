@@ -18,7 +18,7 @@
 //  Default
 Renderer::Renderer() : renderOption(DEFAULT)
 {
-	window = nullptr;
+	context = nullptr;
 	camera = nullptr;
 	world = nullptr;
 
@@ -48,31 +48,6 @@ Renderer::~Renderer()
 
 
 //  Public functions
-void Renderer::initGLEW(int verbose)
-{
-	glewExperimental = GL_TRUE;
-	GLenum err = glewInit();
-	if (GLEW_OK != err)
-	{
-		std::cerr << "ERROR : " << glewGetErrorString(err) << std::endl;
-		glfwTerminate();
-		exit(-1);
-	}
-	if (verbose) std::cout << "GLEW init success" << std::endl;
-	if (verbose < 1) return;
-
-	std::cout << "Status: GLEW version : " << glewGetString(GLEW_VERSION) << std::endl;
-
-	std::string s((const char*)glGetString(GL_VERSION));
-	std::replace(s.begin(), s.end(), '.', ' ');
-	std::stringstream ss(s);
-	ss >> openglVersionA >> openglVersionB >> openglVersionC;
-
-	std::cout << "        OpenGL version : " << glGetString(GL_VERSION) << std::endl;
-	std::cout << "        OpenGL implementation vendor : " << glGetString(GL_VENDOR) << std::endl;
-	std::cout << "        Renderer name : " << glGetString(GL_RENDERER) << std::endl;
-	std::cout << "        GLSL version : " << glGetString(GL_SHADING_LANGUAGE_VERSION) << std::endl;
-}
 void Renderer::initializeGrid(const unsigned int& gridSize,const float& elementSize, const glm::vec3& color)
 {
 	if (glIsVertexArray(gridVAO)) return;
@@ -163,7 +138,7 @@ void Renderer::render(Camera* renderCam)
 	instanceDrawn = 0;
 	lastShader = nullptr;
 	lastVAO = 0;
-	if (!window || !camera || !world || !renderCam) return;
+	if (!context || !camera || !world || !renderCam) return;
 	
 	//	dummy animation timeline
 	dummy += 0.16 / 3.f;
@@ -171,9 +146,7 @@ void Renderer::render(Camera* renderCam)
 
 	//	bind matrix
 	glm::mat4 view(renderCam->getViewMatrix());
-	int width, height;
-	glfwGetWindowSize(window, &width, &height);
-	glm::mat4 projection = glm::perspective(glm::radians(renderCam->getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f);
+	glm::mat4 projection = glm::perspective(glm::radians(renderCam->getFrustrumAngleVertical()), context->getViewportRatio(), 0.1f, 1500.f);
 	
 	//	opengl state
 	glEnable(GL_DEPTH_TEST);
@@ -204,7 +177,7 @@ void Renderer::render(Camera* renderCam)
 		if(!comp || !comp->isValid()) continue;
 
 		//	try to do dynamic batching
-		if (openglVersionA >= 3 && openglVersionB >= 1 && comp->getShader()->getInstanciable())
+		if (GLEW_VERSION_1_3 && comp->getShader()->getInstanciable())
 		{
 			Shader* s = comp->getShader()->getInstanciable();
 			Mesh* m = comp->getMesh();
@@ -251,14 +224,12 @@ void Renderer::render(Camera* renderCam)
 }
 void Renderer::renderHUD(Camera* renderCam)
 {
-	if (!window || !camera || !renderCam) return;
+	if (!context || !camera || !renderCam) return;
 
 	// bind matrix
 	glm::mat4 view = renderCam->getViewMatrix();
 
-	int width, height;
-	glfwGetWindowSize(window, &width, &height);
-	glm::mat4 projection = glm::perspective(glm::radians(ANGLE_VERTICAL_HUD_PROJECTION), (float)width / height, 0.1f, 1500.f);
+	glm::mat4 projection = glm::perspective(glm::radians(ANGLE_VERTICAL_HUD_PROJECTION), context->getViewportRatio(), 0.1f, 1500.f);
 	glm::mat4 base = glm::translate(glm::mat4(1.f), DISTANCE_HUD_CAMERA*camera->getForward()) * camera->getModelMatrix();
 
 	//	change opengl states
@@ -338,7 +309,7 @@ void Renderer::loadVAO(const GLuint& vao)
 //  Set/get functions
 void Renderer::setCamera(Camera* cam) { camera = cam; }
 void Renderer::setWorld(World* currentWorld) { world = currentWorld; }
-void Renderer::setWindow(GLFWwindow* win) { window = win; }
+void Renderer::setContext(RenderContext* ctx) { context = ctx; }
 void Renderer::setShader(ShaderIdentifier id, Shader* s)
 {
 	std::map<ShaderIdentifier, Shader*>::iterator it = defaultShader.find(id);
@@ -353,7 +324,7 @@ void Renderer::setRenderOption(const RenderOption& option) { renderOption = opti
 
 Camera* Renderer::getCamera() { return camera; }
 World* Renderer::getWorld() { return world; }
-GLFWwindow* Renderer::getWindow() { return window; }
+RenderContext* Renderer::getContext() { return context; }
 Shader* Renderer::getShader(ShaderIdentifier id)
 {
 	std::map<ShaderIdentifier, Shader*>::iterator it = defaultShader.find(id);

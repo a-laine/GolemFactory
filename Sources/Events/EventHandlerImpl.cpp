@@ -1,5 +1,8 @@
 #include "EventHandlerImpl.h"
 
+#include <Core/RenderContext.h>
+
+
 //  Static attributes
 EventHandlerImpl* EventHandlerImpl::This = nullptr;
 //
@@ -572,7 +575,8 @@ void EventHandlerImpl::windowFocusCallback(GLFWwindow* window, int focused)
 }
 void EventHandlerImpl::framebufferResizeCallback(GLFWwindow* window, int width, int height)
 {
-    glViewport(0,0,width,height);
+	RenderContext* context = RenderContext::getContextFromWindow(window);
+	context->updateViewportSize(glm::ivec2(width, height));
     if(This->resizeCallback) (*This->resizeCallback)(width,height);
 }
 //

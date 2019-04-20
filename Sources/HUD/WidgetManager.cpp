@@ -187,11 +187,11 @@ void WidgetManager::removeLayer(Layer* l) { layerList.erase(l); }
 
 
 //	Set / get functions
-void WidgetManager::setInitialWindowSize(const int& width, const int& height)
+void WidgetManager::setInitialViewportRatio(float viewportRatio)
 {
-	lastWidth = width;
-	lastHeight = height;
+	lastViewportRatio = viewportRatio;
 }
+
 void WidgetManager::setActiveHUD(const std::string& s)
 {
 	//	activate new HUD layer
@@ -237,6 +237,7 @@ unsigned int WidgetManager::getNbDrawnTriangles() const { return trianglesDrawn;
 //	Callbacks functions
 void WidgetManager::resizeCallback(int w, int h)
 {
+	float viewportRatio = (float) w / h;
 	std::map<std::string, std::vector<Layer*> >& hudList = WidgetManager::getInstance()->hudList;
 	for (std::map<std::string, std::vector<Layer*> >::iterator it = hudList.begin(); it != hudList.end(); ++it)
 	{
@@ -246,7 +247,7 @@ void WidgetManager::resizeCallback(int w, int h)
 			if (l->isResponsive())		// layer responsive
 			{
 				//	change position but keep ratio screen position (just on x)
-				float ratio = (float) WidgetManager::getInstance()->lastHeight * w / h / WidgetManager::getInstance()->lastWidth;
+				float ratio = (float) viewportRatio / WidgetManager::getInstance()->lastViewportRatio;
 				l->setPosition(glm::vec3(l->getPosition().x * ratio, l->getPosition().y, l->getPosition().z));
 				l->setTargetPosition(glm::vec3(l->getTargetPosition().x * ratio, l->getTargetPosition().y, l->getTargetPosition().z));
 				l->setScreenPosition(glm::vec3(l->getScreenPosition().x * ratio, l->getScreenPosition().y, l->getScreenPosition().z));
@@ -256,22 +257,22 @@ void WidgetManager::resizeCallback(int w, int h)
 				//	change Layer position to be kept at this position relative to the border of screen
 
 				float zscale = tan(glm::radians(ANGLE_VERTICAL_HUD_PROJECTION / 2.f)) * (l->getPosition().y + DISTANCE_HUD_CAMERA);													//	compute relative scale on vertical axis (base because always 45 degres of view angle)
-				float xscale = zscale * w / h;																									//	compute relative scale of x axis
-				float lxscale = zscale * WidgetManager::getInstance()->lastWidth / WidgetManager::getInstance()->lastHeight;					//	compute previous relative scale of x axis
+				float xscale = zscale * viewportRatio;																									//	compute relative scale of x axis
+				float lxscale = zscale * WidgetManager::getInstance()->lastViewportRatio;					//	compute previous relative scale of x axis
 				if (l->getPosition().x > 0)																										//	discriminate left or right border relative
 					l->setPosition(glm::vec3(xscale - std::abs(l->getPosition().x - lxscale), l->getPosition().y, l->getPosition().z));			//	change position = border position -+ delta from border (delta = actual position - former scale)
 				else l->setPosition(glm::vec3(-xscale + std::abs(-l->getPosition().x - lxscale), l->getPosition().y, l->getPosition().z));		//	change position 
 
 				zscale = tan(glm::radians(ANGLE_VERTICAL_HUD_PROJECTION / 2.f)) * (l->getTargetPosition().y + DISTANCE_HUD_CAMERA);
-				xscale = zscale * w / h;
-				lxscale = zscale * WidgetManager::getInstance()->lastWidth / WidgetManager::getInstance()->lastHeight;
+				xscale = zscale * viewportRatio;
+				lxscale = zscale * WidgetManager::getInstance()->lastViewportRatio;
 				if (l->getTargetPosition().x > 0)
 					l->setTargetPosition(glm::vec3(xscale - std::abs(l->getTargetPosition().x - lxscale), l->getTargetPosition().y, l->getTargetPosition().z));
 				else l->setTargetPosition(glm::vec3(-xscale + std::abs(-l->getTargetPosition().x - lxscale), l->getTargetPosition().y, l->getTargetPosition().z));
 
 				zscale = tan(glm::radians(ANGLE_VERTICAL_HUD_PROJECTION / 2.f)) * (l->getScreenPosition().y + DISTANCE_HUD_CAMERA);
-				xscale = zscale * w / h;
-				lxscale = zscale * WidgetManager::getInstance()->lastWidth / WidgetManager::getInstance()->lastHeight;
+				xscale = zscale * viewportRatio;
+				lxscale = zscale * WidgetManager::getInstance()->lastViewportRatio;
 				if (l->getScreenPosition().x > 0)
 					l->setScreenPosition(glm::vec3(xscale - std::abs(l->getScreenPosition().x - lxscale), l->getScreenPosition().y, l->getScreenPosition().z));
 				else l->setScreenPosition(glm::vec3(-xscale + std::abs(-l->getScreenPosition().x - lxscale), l->getScreenPosition().y, l->getScreenPosition().z));
@@ -283,7 +284,7 @@ void WidgetManager::resizeCallback(int w, int h)
 			{
 				if ((*it2)->isResponsive())		// widget responsive
 				{
-					float ratio = (float)WidgetManager::getInstance()->lastHeight * w / h / WidgetManager::getInstance()->lastWidth;
+					float ratio = (float)viewportRatio / WidgetManager::getInstance()->lastViewportRatio;
 					(*it2)->setSize(glm::vec2((*it2)->getSize(WidgetVirtual::DEFAULT).x * ratio, (*it2)->getSize(WidgetVirtual::DEFAULT).y), WidgetVirtual::DEFAULT);
 					(*it2)->setSize(glm::vec2((*it2)->getSize(WidgetVirtual::ACTIVE).x * ratio,  (*it2)->getSize(WidgetVirtual::ACTIVE).y),  WidgetVirtual::ACTIVE);
 					(*it2)->setSize(glm::vec2((*it2)->getSize(WidgetVirtual::HOVER).x * ratio,   (*it2)->getSize(WidgetVirtual::HOVER).y),   WidgetVirtual::HOVER);
@@ -292,8 +293,7 @@ void WidgetManager::resizeCallback(int w, int h)
 			}
 		}
 	}
-	WidgetManager::getInstance()->lastWidth = w;
-	WidgetManager::getInstance()->lastHeight = h;
+	WidgetManager::getInstance()->lastViewportRatio = viewportRatio;
 }
 //
 
