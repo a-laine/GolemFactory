@@ -11,9 +11,9 @@
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 #include "Mutex.h"
-#include "../Events/EventHandler.h"
 
 /** \class Camera
  *	\brief Camera object.
@@ -46,16 +46,15 @@ class Camera
         //  Default
 		/*!
 		 *  \brief Constructor
-		 *  \param screenRatio : the screen ratio
 		 */
-        Camera(const float& screenRatio = 1.0f);
-
-		Camera& operator=(Camera& c);
+        Camera();
 
 		/*!
 		 *  \brief Destructor
 		 */
-        ~Camera();
+		~Camera();
+
+		Camera& operator=(Camera& c);
         //
 
         //  Public functions
@@ -97,7 +96,7 @@ class Camera
 		 *
 		 *	\param v : the translation vector
 		 */
-        void translate(glm::vec3 v);
+        void translate(const glm::vec3& v);
         //
 
         //  Set/get functions
@@ -146,16 +145,16 @@ class Camera
 		 *
 		 *	\param pos : the new position
 		 */
-        void setPosition(glm::vec3 pos);
+        void setPosition(const glm::vec3& pos);
 
 		/*!
 		 *	\brief Set the camera orientation
 		 *
 		 *	If in trackball mode change the camera position to respect orientation
 		 *
-		 *	\param orientation : the new orientation
+		 *	\param dirVector : the direction to look at.
 		 */
-        void setOrientation(glm::vec3 orientation);
+        void setOrientation(const glm::vec3& dirVector);
 
 		/*!
 		 *	\brief Set the camera target
@@ -164,25 +163,13 @@ class Camera
 		 *
 		 *	\param target : the new target point
 		 */
-        void setTarget(glm::vec3 target);
+        void setTarget(const glm::vec3& target);
 
 		/*!
-		 *	\brief Set the vertical frustrum angle
+		 *	\brief Set the field of view, the horizontal angle of the camera frustrum
 		 *	\param angle : the new angle in degree
 		 */
-        void setFrustrumAngleVertical(float angle);
-
-		/*!
-		 *	\brief Set the horizontal frustrum angle
-		 *	\param angle : the new angle in degree
-		 */
-        void setFrustrumAngleHorizontal(float angle);
-
-		/*!
-		 *	\brief Change the horizontal frustrum angle from screen ratio
-		 *	\param screenratio : the screen ratio (width/height)
-		 */
-		void setFrustrumAngleHorizontalFromScreenRatio(float screenratio);
+        void setFieldOfView(float angle);
 
 		/*!
 		 *	\brief Set the camera sensibility
@@ -209,20 +196,20 @@ class Camera
 		 *	\brief Get the camera left vector
 		 *	\return the camera left vector
 		 */
-		glm::vec3 getLeft();
+		glm::vec3 getRight();
 
 		/*!
 		 *	\brief Get the camera forward vector
 		 *	\return the camera forward vector
 		 */
 		glm::vec3 getForward();
-		
+
 		/*!
 		 *	\brief Get the camera vertical vector
 		 *	\return the camera vertical vector
 		 */
 		glm::vec3 getVertical();
-		
+
 		/*!
 		 *	\brief Get the camera position
 		 *	\return the camera position
@@ -230,17 +217,26 @@ class Camera
 		glm::vec3 getPosition();
 
 		/*!
+		 *	\brief Get the vectors difining the camera frustrum
+		 *	\param pos : output the camera position
+		 *	\param forward : output the camera forward vector
+		 *	\param up : output the camera vertical up vector
+		 *	\param right : output the camera right vector
+		 */
+		void getFrustrum(glm::vec3& pos, glm::vec3& forward, glm::vec3& up, glm::vec3& right);
+
+		/*!
 		 *	\brief Get the camera speed
 		 *	\return the camera speed
 		 */
         float getSpeed();
-		
+
 		/*!
 		 *	\brief Get the camera minimum radius (used in trackball mode)
 		 *	\return the camera minimum radius
 		 */
 		float getRadiusMin();
-		
+
 		/*!
 		 *	\brief Get the camera maximum radius (used in trackball mode)
 		 *	\return the camera maximum radius
@@ -254,17 +250,17 @@ class Camera
 		float getRadius();
 
 		/*!
-		 *	\brief Get the vertical frustrum angle
-		 *	\return the vertical frustrum angle
+		 *	\brief Get the vertical field of view, the vertical angle of the camera frustrum
+		 *	\return the vertical field of view
 		 */
-        float getFrustrumAngleVertical();
-        
+        float getVerticalFieldOfView(float aspectRatio);
+
 		/*!
-		 *	\brief Get the horizontal frustrum angle
-		 *	\return the horizontal frustrum angle
+		 *	\brief Get the field of view, the vertical angle of the camera frustrum
+		 *	\return the horizontal field of view
 		 */
-		float getFrustrumAngleHorizontal();
-        
+		float getFieldOfView();
+
 		/*!
 		 *	\brief Get the camera sensibility
 		 *	\return the camera sensibility
@@ -274,20 +270,12 @@ class Camera
 
     private:
         //  Private functions
-		/*!
-		 *	\brief Compute camera vector attributes from phi and teta angles
-		 *	\param target : used in trackball mode
-		 */
-        void vectorsFromAngles(glm::vec3 target = glm::vec3(0,0,0));
-
-		/*!
-		 *	\brief Compute camera phi and teta angles from vector attributes
-		 */
-        void anglesFromVectors();
-
-		/*!
-		 *	\brief Clamp the actual radius in min max radius
-		 */
+		void rotate_internal(float p, float y);
+		void rotateAround_internal(const glm::vec3& target, float p, float y);
+		void setDirection_internal(const glm::vec3& direction);
+		glm::vec3 getForward_internal() const;
+		glm::vec3 getRight_internal() const;
+		glm::vec3 getVertical_internal() const;
         void boundingRadius();
         //
 
@@ -296,19 +284,14 @@ class Camera
         Mutex mutex;							//!< A mutex for thread safe usage.
 
 		glm::vec3 position;						//!< The camera position.
-		glm::vec3 forward;						//!< The forward vector. Forward, left and vertical form a orthogonal base of space.
-		glm::vec3 left;							//!< The left vector.
-        glm::vec3 vertical;						//!< The vertical vector.
+		glm::quat orientation;                  //!< The camera orientation.
 
 		float radius;							//!< Actual rarius for trackball mode.
 		float radiusMin;						//!< Minimum radius for trackball mode.
         float radiusMax;						//!< Maximum radius for trackball mode.
 
-		float sensivity;						//!< Camera sensibility.
+		float sensitivity;						//!< Camera sensitivity.
 		float speedMag;							//!< Camera speed.
-		float frustrumAngleHorizontal;			//!< Horizontal frustrum angle.
-		float frustrumAngleVertical;			//!< Vertical frustrum angle.
-		float phi;								//!< Horizontal orientaion angle.
-		float teta;								//!< Vertical orientation angle.
+		float fov;								//!< Horizontal field of view
         //
 };

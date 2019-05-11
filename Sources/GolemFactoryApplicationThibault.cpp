@@ -1,4 +1,4 @@
-// Golem Factory 1.0.cpp�: define console application entry point
+// Golem Factory 1.0.cpp: define console application entry point
 //
 
 
@@ -139,7 +139,7 @@ int main()
 			Renderer::getInstance()->setRenderOption(Renderer::WIREFRAME);
 		else Renderer::getInstance()->setRenderOption(Renderer::DEFAULT);
 		Renderer::getInstance()->render(&camera);
-		Renderer::getInstance()->drawShape(&avatar->getShape(), &camera.getViewMatrix()[0][0], &glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), context->getViewportRatio(), 0.1f, 1500.f)[0][0]);
+		Renderer::getInstance()->drawShape(&avatar->getShape(), &camera.getViewMatrix()[0][0], &glm::perspective(glm::radians(camera.getVerticalFieldOfView(context->getViewportRatio())), context->getViewportRatio(), 0.1f, 1500.f)[0][0]);
 
 		picking();
 		Renderer::getInstance()->renderHUD(&camera2);
@@ -418,7 +418,7 @@ void picking()
 		{
 			Renderer::RenderOption option = Renderer::getInstance()->getRenderOption();
 			Renderer::getInstance()->setRenderOption(option == Renderer::DEFAULT ? Renderer::BOUNDING_BOX : Renderer::DEFAULT);
-			glm::mat4 projection = glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), context->getViewportRatio(), 0.1f, 1500.f);
+			glm::mat4 projection = glm::perspective(glm::radians(camera.getVerticalFieldOfView(context->getViewportRatio())), context->getViewportRatio(), 0.1f, 1500.f);
 
 			for (auto it = collector.getObjects().begin(); it != collector.getObjects().end(); ++it)
 				Renderer::getInstance()->drawObject(it->second, &camera.getViewMatrix()[0][0], &projection[0][0]);
@@ -528,9 +528,9 @@ void updates(float elapseTime)
 		else if (EventHandler::getInstance()->isActivated(BACKWARD))
 			direction -= glm::normalize(glm::vec3(camera.getForward().x, camera.getForward().y, 0.f));
 		if (EventHandler::getInstance()->isActivated(LEFT))
-			direction += glm::normalize(glm::vec3(camera.getLeft().x, camera.getLeft().y, 0.f));
+			direction -= glm::normalize(glm::vec3(camera.getRight().x, camera.getRight().y, 0.f));
 		else if (EventHandler::getInstance()->isActivated(RIGHT))
-			direction -= glm::normalize(glm::vec3(camera.getLeft().x, camera.getLeft().y, 0.f));
+			direction += glm::normalize(glm::vec3(camera.getRight().x, camera.getRight().y, 0.f));
 		if(direction.x != 0.f && direction.y != 0.f)
 			direction = glm::normalize(direction);
 
@@ -683,11 +683,10 @@ void updates(float elapseTime)
 		camera.setRadius(camera.getRadius() + camera.getSensitivity() * EventHandler::getInstance()->getScrollingRelative().y);
 	else
 	{
-		float angle = camera.getFrustrumAngleVertical() + EventHandler::getInstance()->getScrollingRelative().y;
-		if (angle > 70.f) angle = 70.f;
-		else if (angle < 3) angle = 3.f;
-		camera.setFrustrumAngleVertical(angle);
-		camera.setFrustrumAngleHorizontalFromScreenRatio(context->getViewportRatio());
+		float angle = camera.getFieldOfView() + EventHandler::getInstance()->getScrollingRelative().y;
+		if (angle > 160.f) angle = 160.f;
+		else if (angle < 3.f) angle = 3.f;
+		camera.setFieldOfView(angle);
 	}
 	if (WidgetManager::getInstance()->getBoolean("syncCamera"))
 		camera2 = camera;

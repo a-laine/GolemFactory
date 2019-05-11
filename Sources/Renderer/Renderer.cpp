@@ -146,7 +146,7 @@ void Renderer::render(Camera* renderCam)
 
 	//	bind matrix
 	glm::mat4 view(renderCam->getViewMatrix());
-	glm::mat4 projection = glm::perspective(glm::radians(renderCam->getFrustrumAngleVertical()), context->getViewportRatio(), 0.1f, 1500.f);
+	glm::mat4 projection = glm::perspective(glm::radians(renderCam->getVerticalFieldOfView(context->getViewportRatio())), context->getViewportRatio(), 0.1f, 1500.f);
 	
 	//	opengl state
 	glEnable(GL_DEPTH_TEST);
@@ -162,12 +162,14 @@ void Renderer::render(Camera* renderCam)
 	}
 
 	//	get instance list
+	float camFovVert = camera->getVerticalFieldOfView(context->getViewportRatio());
+	glm::vec3 camPos, camFwd, camUp, camRight;
+	camera->getFrustrum(camPos, camFwd, camUp, camRight);
 	std::vector<Entity*> instanceList;
-	DefaultSceneManagerFrustrumTest sceneTest(camera->getPosition(), camera->getForward(), camera->getVertical(), camera->getLeft(),
-		camera->getFrustrumAngleVertical() / 1.6f, camera->getFrustrumAngleVertical() / 1.6f);
+	DefaultSceneManagerFrustrumTest sceneTest(camPos, camFwd, camUp, -camRight, camFovVert / 1.6f, camFovVert / 1.6f);
 	world->getSceneManager().getObjects(instanceList, sceneTest);
 
-	EntityCompareDistance compare(camera->getPosition());
+	EntityCompareDistance compare(camPos);
 	std::sort(instanceList.begin(), instanceList.end(), compare);
 
 	//	draw instance list
