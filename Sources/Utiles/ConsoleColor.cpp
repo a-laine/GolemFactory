@@ -3,7 +3,7 @@
 //	Aroud message
 std::string ConsoleColor::print(std::string& msg, const Color& color)
 {
-
+	return std::string();
 }
 //
 
