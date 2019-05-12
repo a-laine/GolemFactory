@@ -120,9 +120,8 @@ glm::mat4 Camera::getViewMatrix()
 glm::mat4 Camera::getModelMatrix()
 {
 	glm::mat4 m;
-	float _Pi = glm::pi<float>();
 	mutex.lock();
-	m = glm::toMat4(orientation * glm::quat(glm::vec3(_Pi*0.5f, 0, _Pi)));
+	m = glm::toMat4(orientation);
 	m[3] = glm::vec4(position, 1.f);
 	mutex.unlock();
 	return m;
@@ -132,8 +131,7 @@ glm::mat4 Camera::getOrientationMatrix()
 	mutex.lock();
 	glm::quat q = orientation;
 	mutex.unlock();
-	float _Pi = glm::pi<float>();
-	return glm::toMat4(q * glm::quat(glm::vec3(_Pi*0.5f, 0, _Pi)));
+	return glm::toMat4(q);
 }
 void Camera::translate(const glm::vec3& v)
 {

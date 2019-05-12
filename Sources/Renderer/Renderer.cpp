@@ -229,10 +229,9 @@ void Renderer::renderHUD(Camera* renderCam)
 	if (!context || !camera || !renderCam) return;
 
 	// bind matrix
-	glm::mat4 view = renderCam->getViewMatrix();
-
+	glm::mat4 view = glm::eulerAngleZX(glm::pi<float>(), glm::pi<float>()*0.5f);
+	view[3] = glm::vec4(0.f, 0.f, -DISTANCE_HUD_CAMERA, 1.f);
 	glm::mat4 projection = glm::perspective(glm::radians(ANGLE_VERTICAL_HUD_PROJECTION), context->getViewportRatio(), 0.1f, 1500.f);
-	glm::mat4 base = glm::translate(glm::mat4(1.f), DISTANCE_HUD_CAMERA*camera->getForward()) * camera->getModelMatrix();
 
 	//	change opengl states
 	glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -251,7 +250,7 @@ void Renderer::renderHUD(Camera* renderCam)
 		{
 			if (it->second[i]->isVisible())		// layer visible
 			{
-				glm::mat4 model = base * it->second[i]->getModelMatrix();
+				glm::mat4 model = it->second[i]->getModelMatrix();
 				std::vector<WidgetVirtual*>& list = it->second[i]->getChildrenList();
 				for (std::vector<WidgetVirtual*>::iterator it2 = list.begin(); it2 != list.end(); ++it2)
 				{
