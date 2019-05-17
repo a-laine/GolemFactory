@@ -12,6 +12,7 @@ RenderContext* RenderContext::getContextFromWindow(GLFWwindow* window)
 RenderContext::RenderContext(GLFWwindow* window, bool offScreen)
 	: m_window(window)
 	, m_isOffScreen(offScreen)
+	, m_viewportSize(glm::ivec2(0,0))
 {
 	glfwSetWindowUserPointer(window, this);
 	int width, height;
