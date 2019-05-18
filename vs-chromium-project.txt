@@ -1,0 +1,13 @@
+[SearchableFiles.include]
+Sources/
+
+[SourceExplorer.ignore]
+.git/
+.vs/
+bin/
+tmp/
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.vspx
