@@ -21,6 +21,10 @@ class Entity : public EntityBase
 		Entity();
 		//
 
+		void addComponent(Component* component, ClassID type);
+		template<typename T> void addComponent(T* component) { addComponent(component, T::getStaticClassID()); }
+		void removeComponent(Component* component);
+
 		//	Set/Get functions
 		void setPosition(const glm::vec3& position);
 		void setScale(const glm::vec3& scale);

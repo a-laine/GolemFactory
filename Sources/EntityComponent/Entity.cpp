@@ -1,6 +1,7 @@
 #include "Entity.hpp"
 
 #include <Renderer/DrawableComponent.h>
+#include <Utiles/Assert.hpp>
 
 
 
@@ -8,6 +9,23 @@
 Entity::Entity() : m_refCount(0), m_parentWorld(nullptr), m_scale(1.f), m_rotation(), m_boundingShapeVanilla(nullptr), m_boundingShapeResult(nullptr)
 {}
 //
+
+
+void Entity::addComponent(Component* component, ClassID type)
+{
+	GF_ASSERT(component->getParentEntity() == nullptr, "Bad parent entity. A component can't have multiple parent entities.");
+	EntityBase::addComponent(component, type);
+	component->onAddToEntity(this);
+	GF_ASSERT(component->getParentEntity() == this, "Bad parent entity. You should call Component::onAddToEntity when reimplementing the method.");
+}
+
+void Entity::removeComponent(Component* component)
+{
+	GF_ASSERT(component->getParentEntity() == this, "Bad parent entity. The component has a different parent entity than the one he's beeing removed.");
+	EntityBase::removeComponent(component);
+	component->onRemoveFromEntity(this);
+	GF_ASSERT(component->getParentEntity() == nullptr, "Bad parent entity. You should call Component::onRemoveFromEntity when reimplementing the method.");
+}
 
 
 //	Set/Get functions

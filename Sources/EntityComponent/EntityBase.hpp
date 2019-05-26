@@ -14,13 +14,6 @@ class EntityBase
 		~EntityBase();
 		//
 
-		//	Public functions
-		void addComponent(Component* component, ClassID type);
-		template<typename T> void addComponent(T* component) { addComponent(component, T::getStaticClassID()); }
-		void removeComponent(Component* component);
-		//
-
-		//	Set/Get functions
 		unsigned short getNbComponents() const;
 		ClassID getTypeID(unsigned short index) const;
 		Component* getComponent(unsigned short index);
@@ -33,7 +26,11 @@ class EntityBase
 		template<typename T> T* getComponent() { return static_cast<T*>(getComponent(T::getStaticClassID())); }
 		template<typename T> const T* getComponent() const { return static_cast<const T*>(getComponent(T::getStaticClassID())); }
 		template<typename T> void getAllComponents(std::vector<Component*>& components) { return getAllComponents(T::getStaticClassID(), components); }
-		//
+
+	protected:
+		void addComponent(Component* component, ClassID type);
+		template<typename T> void addComponent(T* component) { addComponent(component, T::getStaticClassID()); }
+		void removeComponent(Component* component);
 
 	private:
 		//	Miscellaneous

@@ -22,6 +22,9 @@ typedef intptr_t ClassID;
     private:
 
 
+class Entity;
+
+
 /* Exemple :
  * class MyComponent : public Component
  * {
@@ -54,10 +57,17 @@ class Component
 			return T::getStaticClassID() == getClassID();
 		}
 
+		Entity* getParentEntity() { return m_parent; }
+		virtual void onAddToEntity(Entity* entity) { m_parent = entity; }
+		virtual void onRemoveFromEntity(Entity* entity) { m_parent = nullptr; }
+
 	protected:
-		Component() = default;
+		Component() : m_parent(nullptr) {};
 		Component(const Component& other) = delete;
 		Component(Component&& other) = delete;
 		Component& operator=(const Component& other) = delete;
 		Component& operator=(Component&& other) = delete;
+
+	private:
+		Entity* m_parent;
 };
