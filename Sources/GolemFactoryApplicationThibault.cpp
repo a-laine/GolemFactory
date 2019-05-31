@@ -139,7 +139,7 @@ int main()
 			Renderer::getInstance()->setRenderOption(Renderer::WIREFRAME);
 		else Renderer::getInstance()->setRenderOption(Renderer::DEFAULT);
 		Renderer::getInstance()->render(&camera);
-		Renderer::getInstance()->drawShape(&avatar->getShape(), &camera.getViewMatrix()[0][0], &glm::perspective(glm::radians(camera.getVerticalFieldOfView(context->getViewportRatio())), context->getViewportRatio(), 0.1f, 1500.f)[0][0]);
+		Renderer::getInstance()->drawShape(avatar->getGlobalBoundingShape(), &camera.getViewMatrix()[0][0], &glm::perspective(glm::radians(camera.getVerticalFieldOfView(context->getViewportRatio())), context->getViewportRatio(), 0.1f, 1500.f)[0][0]);
 
 		picking();
 		Renderer::getInstance()->renderHUD(&camera2);
@@ -242,7 +242,7 @@ void initializeForestScene(bool emptyPlace)
 			world.getEntityFactory().createObject([radius, angle, &houseCircle, &hg](Entity* house)
 			{
                 hg.getHouse(house, rand(), 20, 30);
-				glm::vec3 p = glm::vec3(radius * cos(angle), radius * sin(angle), house->getShape().toSphere().radius);
+				glm::vec3 p = glm::vec3(radius * cos(angle), radius * sin(angle), house->getGlobalBoundingShape()->toSphere().radius);
 				for (unsigned int k = 0; k < houseCircle.size(); k++)
 				{
 					float delta = glm::length(glm::vec3(houseCircle[k].x - p.x, houseCircle[k].y - p.y, 0.f));
@@ -541,7 +541,7 @@ void updates(float elapseTime)
 			speed = 0.025f;
 
 		//	physics
-		Capsule avatarCollider(*static_cast<const Capsule*>(&avatar->getShape()));
+		Capsule avatarCollider(*static_cast<const Capsule*>(avatar->getGlobalBoundingShape()));
 		avatarCollider.transform(speed * direction, glm::vec3(1.f), glm::fquat());
 
 		/*if (DEBUG)
@@ -557,7 +557,7 @@ void updates(float elapseTime)
 		//Physics::getInstance()->moveEntity(avatar, elapseTime / 1000.f, speed * direction);
 		
 		/*
-		glm::vec3 s = glm::vec3(avatar->getShape().toSphere().radius);
+		glm::vec3 s = glm::vec3(avatar->getGlobalBoundingShape()->toSphere().radius);
 		DefaultSceneManagerBoxTest sceneNodeTest(avatar->getPosition() + deltaPosition - s, avatar->getPosition() + deltaPosition + s);
 		DefaultBoxCollector collector;
 		world.getSceneManager().getObjects(collector, sceneNodeTest);
@@ -574,7 +574,7 @@ void updates(float elapseTime)
 			glm::mat4 model2 = e->getMatrix();
 
 			// pass 1 : box vs avatar sphere
-			if(!Collision::collide(e->getShape(), avatarCollider))
+			if(!Collision::collide(*e->getGlobalBoundingShape(), avatarCollider))
 				continue;
 			
 			// pass 2 : avatar capsule vs mesh

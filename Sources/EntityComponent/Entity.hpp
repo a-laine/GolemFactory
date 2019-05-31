@@ -40,7 +40,8 @@ class Entity : public EntityBase
 		glm::vec3 getScale() const;
 		glm::fquat getOrientation() const;
 		World* getParentWorld() const;
-		const Shape& getShape() const;
+		const Shape* getLocalBoundingShape() const;
+		const Shape* getGlobalBoundingShape() const;
 		//
 
 	private:
@@ -50,8 +51,8 @@ class Entity : public EntityBase
 		glm::vec3 m_scale;
 		glm::fquat m_rotation;
 		glm::mat4 m_transform;
-        Shape* m_boundingShapeVanilla;
-		Shape* m_boundingShapeResult;
+        Shape* m_localBoundingShape;
+		Shape* m_globalBoundingShape;
 		//
 };
 

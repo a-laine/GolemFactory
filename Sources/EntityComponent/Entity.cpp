@@ -6,7 +6,7 @@
 
 
 //	Default
-Entity::Entity() : m_refCount(0), m_parentWorld(nullptr), m_scale(1.f), m_rotation(), m_boundingShapeVanilla(nullptr), m_boundingShapeResult(nullptr)
+Entity::Entity() : m_refCount(0), m_parentWorld(nullptr), m_scale(1.f), m_rotation(), m_localBoundingShape(nullptr), m_globalBoundingShape(nullptr)
 {}
 //
 
@@ -50,10 +50,10 @@ void Entity::setTransformation(const glm::vec3& position, const glm::vec3& scale
 	m_transform = m_transform * glm::toMat4(orientation);
 	m_transform = glm::scale(m_transform, scale);
 
-	if (m_boundingShapeResult)
+	if (m_globalBoundingShape)
 	{
-		*m_boundingShapeResult = *m_boundingShapeVanilla;
-		m_boundingShapeResult->transform(position, scale, orientation);
+		*m_globalBoundingShape = *m_localBoundingShape;
+		m_globalBoundingShape->transform(position, scale, orientation);
 	}
 }
 void Entity::setParentWorld(World* parentWorld)
@@ -62,13 +62,13 @@ void Entity::setParentWorld(World* parentWorld)
 }
 void Entity::setShape(Shape* Shape)
 {
-	if (m_boundingShapeVanilla)
-		delete m_boundingShapeVanilla;
-	m_boundingShapeVanilla = Shape;
-	if (m_boundingShapeResult)
-		delete m_boundingShapeResult;
-	m_boundingShapeResult = m_boundingShapeVanilla->duplicate();
-	m_boundingShapeResult->transform(glm::vec3(m_transform[3]), m_scale, m_rotation);
+	if (m_localBoundingShape)
+		delete m_localBoundingShape;
+	m_localBoundingShape = Shape;
+	if (m_globalBoundingShape)
+		delete m_globalBoundingShape;
+	m_globalBoundingShape = m_localBoundingShape->duplicate();
+	m_globalBoundingShape->transform(glm::vec3(m_transform[3]), m_scale, m_rotation);
 }
 
 
@@ -78,5 +78,14 @@ glm::vec3 Entity::getPosition() const { return glm::vec3(m_transform[3]); }
 glm::vec3 Entity::getScale() const { return m_scale; }
 glm::fquat Entity::getOrientation() const { return m_rotation; }
 World* Entity::getParentWorld() const { return m_parentWorld; }
-const Shape& Entity::getShape() const { return *m_boundingShapeResult; }
+
+const Shape* Entity::getLocalBoundingShape() const
+{
+	return m_localBoundingShape;
+}
+
+const Shape* Entity::getGlobalBoundingShape() const
+{
+	return m_globalBoundingShape;
+}
 //

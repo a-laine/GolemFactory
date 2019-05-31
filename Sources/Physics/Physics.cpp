@@ -58,7 +58,7 @@ void Physics::moveEntity(Entity* entity, const float& elapsedTime, const glm::ve
 
 	//	broad phase
 	detectCollision(entity, elapsedTime, delta);
-	Shape prediction = entity->getShape();
+	Shape prediction = *entity->getGlobalBoundingShape();
 	prediction.transform(delta, glm::vec3(1.f), glm::fquat());
 
 	for (unsigned int i = 0; i < proximityList.getObjectInBox().size(); i++)
@@ -67,19 +67,19 @@ void Physics::moveEntity(Entity* entity, const float& elapsedTime, const glm::ve
 		if (candidate == entity) continue;
 		
 		//	middle phase
-		if (!Collision::collide(candidate->getShape(), prediction))
+		if (!Collision::collide(*candidate->getGlobalBoundingShape(), prediction))
 			continue;
 
 		if (extractIsAnimatable(entity) && extractIsAnimatable(candidate))
 		{
-			collisionList.push_back(Intersection::intersect(candidate->getShape(), prediction));
+			collisionList.push_back(Intersection::intersect(*candidate->getGlobalBoundingShape(), prediction));
 			continue;
 		}
 		if (!extractMesh(candidate)) continue;
 
 		//	narrow phase
 		if(extractIsAnimatable(candidate))
-			narrowPhase(candidate, entity, candidate->getShape());
+			narrowPhase(candidate, entity, *candidate->getGlobalBoundingShape());
 		else narrowPhase(entity, candidate, prediction);
 	}
 
@@ -99,7 +99,7 @@ void Physics::moveEntity(Entity* entity, const float& elapsedTime, const glm::ve
 //	Protected functions
 void Physics::detectCollision(Entity* entity, const float& elapsedTime, const glm::vec3& delta)
 {
-	glm::vec3 querySize = glm::vec3(entity->getShape().toSphere().radius) + 0.5f * glm::abs(delta);
+	glm::vec3 querySize = glm::vec3(entity->getGlobalBoundingShape()->toSphere().radius) + 0.5f * glm::abs(delta);
 	glm::vec3 queryCenter = entity->getPosition() + 0.5f * delta;
 	DefaultSceneManagerBoxTest queryBox(queryCenter - querySize, queryCenter + querySize);
 	world->getSceneManager().getObjects(proximityList, queryBox);
@@ -130,7 +130,7 @@ void Physics::narrowPhase(Entity* entity1, Entity* entity2, Shape prediction1)
 			glm::vec3 p32 = glm::vec3(model2 * glm::vec4(vertices2[faces2[j + 2]], 1.f));
 			Triangle triangle2 = Triangle(p12, p22, p32);
 
-			if (Collision::collide(triangle2, entity1->getShape()))
+			if (Collision::collide(triangle2, *entity1->getGlobalBoundingShape()))
 				collisionList.push_back(Intersection::intersect(triangle2, prediction1));
 		}
 	}
@@ -213,7 +213,7 @@ void Physics::computeBoundingShapes(const float& elapsedTime)
 
 		glm::vec3 delta = rigidbody->predictPosition - (*it)->getPosition();
 
-		AxisAlignedBox firstBox = (*it)->getShape().toAxisAlignedBox();
+		AxisAlignedBox firstBox = (*it)->getGlobalBoundingShape()->toAxisAlignedBox();
 		AxisAlignedBox finalBox = AxisAlignedBox(firstBox);
 		finalBox.transform(delta, glm::vec3(1.f), rigidbody->deltaRotation);
 
