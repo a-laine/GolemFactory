@@ -140,7 +140,7 @@ void DefaultRayPickingCollector::operator() (NodeVirtual* node, Entity* object)
 	}
 	else
 	{
-		if (!Collision::collide(Segment(position, position + distance * direction), object->getShape()))
+		if (!Collision::collide(Segment(position, position + distance * direction), *object->getGlobalBoundingShape()))
 			return;
 	}
 	//objectOnRay[glm::dot(object->getPosition() - position, object->getPosition() - position)] = object;
