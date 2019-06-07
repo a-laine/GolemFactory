@@ -53,3 +53,13 @@ void Triangle::transform(const glm::vec3& position, const glm::vec3& scale, cons
 	p3 = glm::vec3(m * glm::vec4(p3, 1.f));
 }
 Shape* Triangle::duplicate() const { return new Triangle(*this); }
+glm::vec3 Triangle::GJKsupport(const glm::vec3& direction) const
+{
+	float a = glm::dot(p1, direction);
+	float b = glm::dot(p2, direction);
+	float c = glm::dot(p3, direction);
+
+	if (a > b && a > c) return p1;
+	else if (b > a && b > c) return p2;
+	else return p3;
+}

@@ -2,11 +2,13 @@
 
 #include "Shape.h"
 
-class Sphere : public Shape
+#include <vector>
+
+class Hull : public Shape
 {
 	public:
 		//	Default
-		Sphere(const glm::vec3& position = glm::vec3(0.f), const float& r = 0.f);
+		Hull(const std::vector<glm::vec3>& v, const std::vector<unsigned short>& f);
 		//
 
 		//	Public functions
@@ -19,7 +21,7 @@ class Sphere : public Shape
 		//
 
 		//	Attributes
-		glm::vec3 center;
-		float radius;
+		std::vector<glm::vec3> vertices;
+		std::vector<unsigned short> faces;
 		//
 };

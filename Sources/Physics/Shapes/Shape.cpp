@@ -10,3 +10,4 @@ AxisAlignedBox Shape::toAxisAlignedBox() const { return AxisAlignedBox(glm::vec3
 void Shape::operator=(const Shape& s) {}
 void Shape::transform(const glm::vec3& position, const glm::vec3& scale, const glm::fquat& orientation) {}
 Shape* Shape::duplicate() const { return new Shape(type); }
+glm::vec3 Shape::GJKsupport(const glm::vec3& direction) const { return glm::vec3(0.f); }

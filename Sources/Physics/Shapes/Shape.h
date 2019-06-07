@@ -18,7 +18,8 @@ class Shape
 			ORIENTED_BOX,
 			AXIS_ALIGNED_BOX,
 			SPHERE,
-			CAPSULE
+			CAPSULE,
+			HULL
 		};
 		//
 
@@ -32,6 +33,7 @@ class Shape
 		virtual void operator=(const Shape& s);
 		virtual void transform(const glm::vec3& position, const glm::vec3& scale, const glm::fquat& orientation);
 		virtual Shape* duplicate() const;
+		virtual glm::vec3 GJKsupport(const glm::vec3& direction) const;
 		//
 
 		//	Attributes

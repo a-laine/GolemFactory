@@ -9,3 +9,4 @@
 #include "Shapes/AxisAlignedBox.h"
 #include "Shapes/Sphere.h"
 #include "Shapes/Capsule.h"
+#include "Shapes/Hull.h"

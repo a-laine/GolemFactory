@@ -41,3 +41,17 @@ void OrientedBox::transform(const glm::vec3& position, const glm::vec3& scale, c
 	max = max * scale;
 }
 Shape* OrientedBox::duplicate() const { return new OrientedBox(*this); }
+glm::vec3 OrientedBox::GJKsupport(const glm::vec3& direction) const
+{
+	glm::vec3 d = glm::vec3(glm::inverse(base) * glm::vec4(direction, 1.f));
+	glm::vec3 support(0.f);
+
+	if (d.x > 0) support.x = max.x;
+	else support.x = min.x;
+	if (d.y > 0) support.y = max.y;
+	else support.y = min.y;
+	if (d.z > 0) support.z = max.z;
+	else support.z = min.z;
+
+	return support;
+}

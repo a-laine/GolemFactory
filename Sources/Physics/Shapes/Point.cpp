@@ -24,3 +24,4 @@ void Point::transform(const glm::vec3& position, const glm::vec3& scale, const g
 	p = glm::vec3(m * glm::vec4(p, 1.f));
 }
 Shape* Point::duplicate() const { return new Point(*this); }
+glm::vec3 Point::GJKsupport(const glm::vec3& direction) const { return p; }

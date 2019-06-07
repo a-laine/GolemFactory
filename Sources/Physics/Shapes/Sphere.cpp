@@ -30,3 +30,4 @@ void Sphere::transform(const glm::vec3& position, const glm::vec3& scale, const 
 	radius = radius * glm::compMax(scale);
 }
 Shape* Sphere::duplicate() const { return new Sphere(*this); }
+glm::vec3 Sphere::GJKsupport(const glm::vec3& direction) const { return center + glm::normalize(direction) * radius; }

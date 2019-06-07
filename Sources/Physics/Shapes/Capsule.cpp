@@ -33,3 +33,9 @@ void Capsule::transform(const glm::vec3& position, const glm::vec3& scale, const
 	radius = radius * glm::compMax(scale);
 }
 Shape* Capsule::duplicate() const { return new Capsule(*this); }
+glm::vec3 Capsule::GJKsupport(const glm::vec3& direction) const
+{
+	if (glm::dot(p1, direction) > glm::dot(p2, direction))
+		return p1 + glm::normalize(direction) * radius;
+	else return p2 + glm::normalize(direction) * radius;
+}

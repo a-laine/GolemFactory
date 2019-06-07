@@ -30,3 +30,9 @@ void Segment::transform(const glm::vec3& position, const glm::vec3& scale, const
 	p2 = glm::vec3(m * glm::vec4(p2, 1.f));
 }
 Shape* Segment::duplicate() const { return new Segment(*this); }
+glm::vec3 Segment::GJKsupport(const glm::vec3& direction) const
+{
+	if (glm::dot(p1, direction) > glm::dot(p2, direction))
+		return p1;
+	else return p2;
+}

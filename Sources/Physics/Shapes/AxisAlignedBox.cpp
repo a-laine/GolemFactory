@@ -29,3 +29,16 @@ void AxisAlignedBox::transform(const glm::vec3& position, const glm::vec3& scale
 	max = result.max;
 }
 Shape* AxisAlignedBox::duplicate() const { return new AxisAlignedBox(*this); }
+glm::vec3 AxisAlignedBox::GJKsupport(const glm::vec3& direction) const
+{
+	glm::vec3 support(0.f);
+
+	if (direction.x > 0) support.x = max.x;
+	else support.x = min.x;
+	if (direction.y > 0) support.y = max.y;
+	else support.y = min.y;
+	if (direction.z > 0) support.z = max.z;
+	else support.z = min.z;
+
+	return support;
+}
