@@ -53,7 +53,7 @@ class WidgetManager : public Singleton<WidgetManager>
 		//	Set / get functions
 		void setInitialViewportRatio(float viewportRatio);
 		void setActiveHUD(const std::string& s);
-		void setPickingParameters(const glm::mat4& base, const glm::vec3& ray, const glm::vec3& origin);
+		void setPickingParameters(const glm::mat4& base, const glm::vec3& ray);// , const glm::vec3& origin);
 
 		std::string getActiveHUD() const;
 		unsigned int getNbDrawnWidgets() const;
@@ -82,7 +82,7 @@ class WidgetManager : public Singleton<WidgetManager>
 		unsigned int widgetDrawn, trianglesDrawn;
 
 		glm::vec3 pickingRay;
-		glm::vec3 pickingOrigin;
+		//glm::vec3 pickingOrigin;
 		glm::mat4 pickingBase;
 		std::set<WidgetVirtual*> hoverWidgetList;
 		std::list<WidgetVirtual*> activeWidgetList;

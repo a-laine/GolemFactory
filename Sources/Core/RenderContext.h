@@ -2,7 +2,6 @@
 
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
-#include <atomic>
 
 
 
@@ -32,5 +31,5 @@ class RenderContext
 	private:
 		GLFWwindow* m_window;
 		bool m_isOffScreen;
-		std::atomic<glm::ivec2> m_viewportSize;
+		glm::ivec2 m_viewportSize;
 };

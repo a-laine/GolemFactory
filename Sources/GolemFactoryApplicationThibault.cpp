@@ -130,7 +130,7 @@ int main()
 		updates((float)elapseTime);
 
 		//	physics
-		world.getPhysics().stepSimulation((float)elapseTime * 0.001f * 0.01f, &world.getSceneManager());
+		//world.getPhysics().stepSimulation((float)elapseTime * 0.001f * 0.01f, &world.getSceneManager());
 
 		// Render scene & picking
 		if (WidgetManager::getInstance()->getBoolean("BBrendering"))
@@ -139,9 +139,9 @@ int main()
 			Renderer::getInstance()->setRenderOption(Renderer::WIREFRAME);
 		else Renderer::getInstance()->setRenderOption(Renderer::DEFAULT);
 		Renderer::getInstance()->render(&camera);
-		Renderer::getInstance()->drawShape(avatar->getGlobalBoundingShape(), &camera.getViewMatrix()[0][0], &glm::perspective(glm::radians(camera.getVerticalFieldOfView(context->getViewportRatio())), context->getViewportRatio(), 0.1f, 1500.f)[0][0]);
+		//Renderer::getInstance()->drawShape(avatar->getGlobalBoundingShape(), &camera.getViewMatrix()[0][0], &glm::perspective(glm::radians(camera.getVerticalFieldOfView(context->getViewportRatio())), context->getViewportRatio(), 0.1f, 1500.f)[0][0]);
 
-		picking();
+		//picking();
 		Renderer::getInstance()->renderHUD(&camera2);
 
 		//	clear garbages
@@ -497,15 +497,17 @@ void updates(float elapseTime)
 	if (EventHandler::getInstance()->getCursorMode())
 	{
 		glm::vec2 cursor = EventHandler::getInstance()->getCursorNormalizedPosition();
-		glm::vec4 ray_eye = glm::inverse(glm::perspective(glm::radians(ANGLE_VERTICAL_HUD_PROJECTION), context->getViewportRatio(), 0.01f, 150.f)) * glm::vec4(cursor.x, cursor.y, -1.f, 1.f);
+		glm::mat4 projection = glm::perspective(glm::radians(ANGLE_VERTICAL_HUD_PROJECTION), context->getViewportRatio(), 0.1f, 1500.f);
+		glm::vec4 ray_eye = glm::inverse(projection) * glm::vec4(cursor.x, cursor.y, -1.f, 1.f);
 		WidgetManager::getInstance()->setPickingParameters(
-			camera.getViewMatrix() * glm::translate(glm::mat4(1.f), DISTANCE_HUD_CAMERA * camera.getForward()) * camera.getModelMatrix(),
-			glm::normalize(glm::vec3(ray_eye.x, ray_eye.y, ray_eye.z)),
-			camera.getPosition());
+			camera.getViewMatrix()  glm::translate(glm::mat4(1.f), DISTANCE_HUD_CAMERA * camera.getForward()) * camera.getModelMatrix(),
+			glm::normalize(glm::vec3(ray_eye.x, ray_eye.y, ray_eye.z)));// ,
+			//glm::vec3(0,0,0));
+		std::cout << ray_eye.x << ' ' << ray_eye.y << ' ' << ray_eye.z << std::endl;
 	}
 	else
 	{
-		WidgetManager::getInstance()->setPickingParameters(glm::mat4(1.f), glm::vec3(0.f), camera.getPosition());
+		WidgetManager::getInstance()->setPickingParameters(glm::mat4(1.f), glm::vec3(0.f));// , camera.getPosition());
 	}
 
 	//	Update widgets

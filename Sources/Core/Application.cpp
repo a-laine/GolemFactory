@@ -7,7 +7,7 @@
 
 
 
-Application::Application() : m_mainWindow(nullptr)
+Application::Application() : m_mainWindow(nullptr), m_shouldExit(false)
 {
 	if (!glfwInit())
 		exit(EXIT_FAILURE);

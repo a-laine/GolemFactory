@@ -220,11 +220,11 @@ void WidgetManager::setActiveHUD(const std::string& s)
 	//	swap
 	activeHud = s;
 }
-void WidgetManager::setPickingParameters(const glm::mat4& base, const glm::vec3& ray, const glm::vec3& origin)
+void WidgetManager::setPickingParameters(const glm::mat4& base, const glm::vec3& ray)//, const glm::vec3& origin)
 {
 	pickingRay = ray;
 	pickingBase = base;
-	pickingOrigin = origin;
+	//pickingOrigin = origin;
 }
 
 
