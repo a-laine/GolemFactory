@@ -107,9 +107,9 @@ int main()
 			camera.setRadius(5);
 			avatarZeroHeight = object->getPosition().z;
 		});
-		camera.setMode(Camera::TRACKBALL);
-		WidgetManager::getInstance()->setBoolean("BBpicking", false);
-		WidgetManager::getInstance()->setBoolean("wireframe", false);
+		camera.setMode(Camera::FREEFLY);
+		WidgetManager::getInstance()->setBoolean("BBpicking", true);
+		WidgetManager::getInstance()->setBoolean("wireframe", true);
 		//glfwSetWindowShouldClose(window, 1);
 
 	// init loop time tracking
@@ -124,7 +124,7 @@ int main()
 	{
 		// begin loop
 		double startTime = glfwGetTime();
-
+		
 		//  handle events
 		events();
 		updates((float)elapseTime);

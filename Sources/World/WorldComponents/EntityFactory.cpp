@@ -1,4 +1,5 @@
 #include "EntityFactory.h"
+#include "Resources/ResourceManager.h"
 
 #include <Utiles/Assert.hpp>
 #include <World/World.h>
@@ -51,7 +52,7 @@ Entity* EntityFactory::createByType(const std::string& type)
 		object->setShape(new Sphere(glm::vec3(0.f), 1.f));
 	}
 	else if(type == "cube")
-		createDrawable(object, "default", "wired");
+		createDrawable(object, "cube2.obj", "wired");
 	else if(type == "tree")
 		createDrawable(object, "firTree1.obj", "default");
 	else if(type == "rock")
@@ -69,7 +70,21 @@ void EntityFactory::createDrawable(Entity* object, const std::string& meshName, 
 {
 	DrawableComponent* drawable = new DrawableComponent(meshName, shaderName);
 	object->addComponent(drawable);
-    object->setShape(new OrientedBox(glm::mat4(1.f), drawable->getMeshBBMin(), drawable->getMeshBBMax()));
+	Mesh* m = ResourceManager::getInstance()->findResource<Mesh>("hull_" + meshName);
+	if (m)
+		object->setShape(new Hull(m));
+	else
+	{
+		std::cout << "fail found hull of name : " << "hull_" + meshName << std::endl;
+		m = Hull::fromMesh(drawable->getMesh());
+		ResourceManager::getInstance()->addResource(m);
+		std::cout << "  added with name" << m->name << std::endl;
+		object->setShape(new Hull(m));
+	}
+
+	//drawable->setMesh(m);
+
+    //object->setShape(new OrientedBox(glm::mat4(1.f), drawable->getMeshBBMin(), drawable->getMeshBBMax()));
 }
 
 void EntityFactory::createAnimatable(Entity* object, const std::string& meshName, const std::string& skeletonName, const std::string& animationName, const std::string& shaderName)

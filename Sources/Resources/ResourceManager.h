@@ -23,6 +23,8 @@ class ResourceManager : public Singleton<ResourceManager>
 
         template<typename T, typename... Args>
         T* getResource(const std::string& name, Args&&... args);
+		template<typename T>
+		T* findResource(const std::string& name);
         template<typename T>
         T* getResource(T* resource);
 
@@ -91,6 +93,21 @@ T* ResourceManager::getResource(const std::string& name, Args&&... args)
 
     resource->count++;
     return resource;
+}
+
+template<typename T>
+T* ResourceManager::findResource(const std::string& name)
+{
+	const std::string& realName = (name == "default") ? T::getDefaultName() : name;
+	T* resource = static_cast<T*>(findResource_internal(T::getIdentifier(realName)));
+
+	if (!resource)
+		return nullptr;
+	else
+	{
+		resource->count++;
+		return resource;
+	}
 }
 
 template<typename T>
