@@ -517,7 +517,7 @@ void updates(float elapseTime)
 		glm::mat4 projection = glm::perspective(glm::radians(ANGLE_VERTICAL_HUD_PROJECTION), context->getViewportRatio(), 0.1f, 1500.f);
 		glm::vec4 ray_eye = glm::inverse(projection) * glm::vec4(cursor.x, cursor.y, -1.f, 1.f);
 		WidgetManager::getInstance()->setPickingParameters(
-			camera.getViewMatrix() * glm::translate(glm::mat4(1.f), DISTANCE_HUD_CAMERA * camera.getForward()) * camera.getModelMatrix(),
+			glm::translate(glm::mat4(1.f), glm::vec3(0.f, 0.f, -DISTANCE_HUD_CAMERA)) * glm::eulerAngleZX(glm::pi<float>(), glm::pi<float>()*0.5f),
 			glm::normalize(glm::vec3(ray_eye.x, ray_eye.y, ray_eye.z)));// ,
 			//glm::vec3(0,0,0));
 		std::cout << ray_eye.x << ' ' << ray_eye.y << ' ' << ray_eye.z << std::endl;
