@@ -107,6 +107,9 @@ void Renderer::drawShape(const Shape* Shape, const float* view, const float* pro
 		case Shape::CAPSULE:
 			drawCapsule(static_cast<const Capsule*>(Shape), view, projection);
 			break;
+		case Shape::HULL:
+			drawHull(static_cast<const Hull*>(Shape), defaultShader[INSTANCE_DRAWABLE_WIRED], view, projection);
+			break;
 		default:
 			std::cerr << "WARNING : Shape type not yet supported" << std::endl;
 			break;
@@ -351,6 +354,13 @@ void Renderer::drawCapsule(const Capsule* capsule, const float* view, const floa
 		if (loc >= 0) glUniform3fv(loc, 1, (float*)&glm::vec3(-1.f, 0.f, 0.f)[0]);
 	}
 	else std::cerr << "WARNING : drawCapsule not associated or not yet implemented" << std::endl;
+}
+void Renderer::drawHull(const Hull* hull, Shader* shader, const float* view, const float* projection)
+{
+	loadMVPMatrix(shader, &hull->base[0][0], view, projection);
+	if (!shader) return;
+	loadVAO(hull->mesh->getVAO());
+	glDrawElements(GL_TRIANGLES, (int)hull->mesh->getFaces()->size(), GL_UNSIGNED_SHORT, NULL);
 }
 //
 

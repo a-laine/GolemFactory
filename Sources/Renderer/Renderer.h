@@ -110,6 +110,7 @@ class Renderer : public Singleton<Renderer>
 		void drawAxisAlignedBox(const AxisAlignedBox* box, const float* view, const float* projection);
 		void drawSphere(const Sphere* sphere, const float* view, const float* projection);
 		void drawCapsule(const Capsule* capsule, const float* view, const float* projection);
+		void drawHull(const Hull* hull, Shader* shader, const float* view, const float* projection);
 		//
 
 		//  Attributes

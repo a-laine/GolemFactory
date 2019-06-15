@@ -78,7 +78,7 @@ void events();
 void updates(float elapseTime);
 //
 
-
+bool wiredhull = true;
 // program
 int main()
 {
@@ -95,7 +95,7 @@ int main()
 
 	//	Test scene
 		Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("wired"));
-		initializeForestScene(false);
+		//initializeForestScene(false);
 
 		avatar = world.getEntityFactory().createObject("peasant", [](Entity* object)
 		{
@@ -109,8 +109,11 @@ int main()
 		});
 		camera.setMode(Camera::FREEFLY);
 		WidgetManager::getInstance()->setBoolean("BBpicking", true);
-		WidgetManager::getInstance()->setBoolean("wireframe", true);
+		WidgetManager::getInstance()->setBoolean("wireframe", false);
 		//glfwSetWindowShouldClose(window, 1);
+
+		//Entity* testTree = world.getEntityFactory().createObject("tree", glm::vec3(5, 0, 0), glm::vec3(1), glm::rotate(glm::quat(), glm::radians((rand() % 3600) / 10.f), glm::vec3(0, 0, 1)));
+		Entity* testTree = world.getEntityFactory().createObject("cube", glm::vec3(5,0,0), glm::vec3(1), glm::rotate(glm::quat(), glm::radians((rand() % 3600) / 10.f), glm::vec3(0, 0, 1)));
 
 	// init loop time tracking
 	double averageTime = 0;
@@ -141,7 +144,11 @@ int main()
 		Renderer::getInstance()->render(&camera);
 		//Renderer::getInstance()->drawShape(avatar->getGlobalBoundingShape(), &camera.getViewMatrix()[0][0], &glm::perspective(glm::radians(camera.getVerticalFieldOfView(context->getViewportRatio())), context->getViewportRatio(), 0.1f, 1500.f)[0][0]);
 
-		//picking();
+		Renderer::getInstance()->drawShape(testTree->getLocalBoundingShape(), &camera.getViewMatrix()[0][0], &glm::perspective(glm::radians(camera.getVerticalFieldOfView(context->getViewportRatio())), context->getViewportRatio(), 0.1f, 1500.f)[0][0]);
+		Renderer::getInstance()->drawShape(testTree->getGlobalBoundingShape(), &camera.getViewMatrix()[0][0], &glm::perspective(glm::radians(camera.getVerticalFieldOfView(context->getViewportRatio())), context->getViewportRatio(), 0.1f, 1500.f)[0][0]);
+
+
+		picking();
 		Renderer::getInstance()->renderHUD(&camera2);
 
 		//	clear garbages
@@ -486,6 +493,14 @@ void events()
 		else if (v[i] == HELP) WidgetManager::getInstance()->setActiveHUD((WidgetManager::getInstance()->getActiveHUD() == "help" ? "" : "help"));
 		else if (v[i] == F9)   WidgetManager::getInstance()->setActiveHUD((WidgetManager::getInstance()->getActiveHUD() == "debug" ? "" : "debug"));
 		else if (v[i] == F10)  WidgetManager::getInstance()->setActiveHUD((WidgetManager::getInstance()->getActiveHUD() == "rendering" ? "" : "rendering"));
+
+
+		else if (v[i] == F4)   WidgetManager::getInstance()->setBoolean("wireframe", !WidgetManager::getInstance()->getBoolean("wireframe"));
+		else if (v[i] == F5)
+		{
+			wiredhull = !wiredhull;
+			Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE_WIRED, ResourceManager::getInstance()->getResource<Shader>(wiredhull ? "wired" : "default"));
+		}
 	}
 }
 void updates(float elapseTime)
@@ -500,7 +515,7 @@ void updates(float elapseTime)
 		glm::mat4 projection = glm::perspective(glm::radians(ANGLE_VERTICAL_HUD_PROJECTION), context->getViewportRatio(), 0.1f, 1500.f);
 		glm::vec4 ray_eye = glm::inverse(projection) * glm::vec4(cursor.x, cursor.y, -1.f, 1.f);
 		WidgetManager::getInstance()->setPickingParameters(
-			camera.getViewMatrix()  glm::translate(glm::mat4(1.f), DISTANCE_HUD_CAMERA * camera.getForward()) * camera.getModelMatrix(),
+			camera.getViewMatrix() * glm::translate(glm::mat4(1.f), DISTANCE_HUD_CAMERA * camera.getForward()) * camera.getModelMatrix(),
 			glm::normalize(glm::vec3(ray_eye.x, ray_eye.y, ray_eye.z)));// ,
 			//glm::vec3(0,0,0));
 		std::cout << ray_eye.x << ' ' << ray_eye.y << ' ' << ray_eye.z << std::endl;

@@ -1,5 +1,6 @@
 #include "EntityFactory.h"
 #include "Resources/ResourceManager.h"
+#include "Utiles/GiftWrapping.h"
 
 #include <Utiles/Assert.hpp>
 #include <World/World.h>
@@ -7,6 +8,7 @@
 #include <Renderer/DrawableComponent.h>
 #include <Animation/SkeletonComponent.h>
 #include <Animation/AnimationComponent.h>
+
 
 
 EntityFactory::EntityFactory(World* parentWorld)
@@ -76,9 +78,10 @@ void EntityFactory::createDrawable(Entity* object, const std::string& meshName, 
 	else
 	{
 		std::cout << "fail found hull of name : " << "hull_" + meshName << std::endl;
-		m = Hull::fromMesh(drawable->getMesh());
+		GiftWrapping hullgenerator;
+		m = hullgenerator.getConvexHull(drawable->getMesh());
 		ResourceManager::getInstance()->addResource(m);
-		std::cout << "  added with name" << m->name << std::endl;
+		std::cout << "  added with name : " << m->name << std::endl;
 		object->setShape(new Hull(m));
 	}
 
