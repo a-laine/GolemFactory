@@ -1,59 +1,58 @@
 #include "IncrementalHull.h"
 #include "Utiles/ToolBox.h"
 
+#define EPSILON 0.00001f
 
 IncrementalHull::IncrementalHull() {};
 Mesh* IncrementalHull::getConvexHull(Mesh* m)
 {
 	//	initialization
 	std::cout << "Hull creation from mesh : " << m->name << std::endl;
-	std::vector<glm::vec3> pointCloud = *m->getVertices();
+	const std::vector<glm::vec3>& pointCloud = *m->getVertices();
 	initializeHull(pointCloud);
+	unsigned int maxIteration = 10000;
+	bool stop = false;
 
 	//	iterate
-	for(unsigned int i=0; i< pointCloud.size(); i++)
+	for(unsigned int i=0; i < pointCloud.size() && maxIteration && !stop; i++)
 	{
 		//	test if point inside current hull
-		Face* f;
-		bool inside = false;
+		Face* f = nullptr;
+		bool inside = true;
 		for (auto it = hullFaces.begin(); it != hullFaces.end(); it++)
 		{
-			if (glm::dot(it->n, pointCloud[i] - it->p1) > 0)
+			if (glm::dot(it->n, pointCloud[i] - it->p1) > EPSILON)
 			{
-				inside = true;
+				inside = false;
 				f = &(*it);
 				break;
 			}
 		}
-		if (inside)
+		if (inside || !f)
 			continue;
 
 		//	compute horizon
 		for (auto it = hullEdges.begin(); it != hullEdges.end(); it++)
-			it->onHull = true;
+			it->horizonCheck = 2;
 		for (auto it = hullFaces.begin(); it != hullFaces.end(); it++)
 			it->onHull = true;
-		std::list<Edge*> horizon;
-		computeHorizon(pointCloud[i], nullptr, f, horizon);
-
-		if (horizon.empty())
-		{
-			std::cout << "horizon empty, eye : [" << pointCloud[i].x << ' ' << pointCloud[i].y << ' ' << pointCloud[i].z << ']' << std::endl;
-			continue;
-		}
-		else std::cout << "horizon : " << horizon.size() << " ; eye : [" << pointCloud[i].x << ' ' << pointCloud[i].y << ' ' << pointCloud[i].z << ']' << std::endl;
+		std::list<Edge*> horizon = computeHorizon(pointCloud[i]);
 
 		//	compute cone faces
 		for (auto it = horizon.begin(); it != horizon.end(); it++)
 		{
 			//  create tmp face
-			Face tmp((*it)->p1, (*it)->p2, pointCloud[i], glm::cross((*it)->p2 - (*it)->p1, pointCloud[i] - (*it)->p1));
-			if (glm::dot(tmp.n, f->n) < 0) tmp.n *= -1.f;
+			Face tmp((*it)->p1, (*it)->p2, pointCloud[i], glm::normalize(glm::cross((*it)->p2 - (*it)->p1, pointCloud[i] - (*it)->p1)));
+			if (checkFaceNormal(tmp)) tmp.n *= -1.f;
 
 			Face* otherFace = nullptr;
-			if ((*it)->f1->onHull) otherFace = (*it)->f1;
-			else if ((*it)->f2->onHull) otherFace = (*it)->f2;
-			else std::cout << "Quickhull : Fatal error in horizon cone : both faces of an horizon edge are not on hull" << std::endl;
+			if ((*it)->f1) otherFace = (*it)->f1;
+			else if ((*it)->f2) otherFace = (*it)->f2;
+			else 
+			{
+				stop = true;
+				std::cout << "IncrementalHull : Fatal error in horizon cone : both faces of an horizon edge are not on hull" << std::endl;
+			}
 			if (!otherFace) continue;
 
 			//	create cone face and add it to hull
@@ -61,13 +60,14 @@ Mesh* IncrementalHull::getConvexHull(Mesh* m)
 			Face* face = &hullFaces.back();
 
 			//  create new horizon edge
-			hullEdges.insert(hullEdges.end(), Edge((*it)->p1, (*it)->p2));
-			Edge* e1 = &hullEdges.back();
-			if ((*it)->f1->onHull) e1->f1 = (*it)->f1;
-			else if ((*it)->f2->onHull) e1->f1 = (*it)->f2;
-			else std::cout << "Quickhull : Fatal error in horizon cone : both faces of an horizon edge are not on hull" << std::endl;
-			e1->f2 = face;
-			face->e1 = e1;
+			if (!(*it)->f1) (*it)->f1 = face;
+			else if(!(*it)->f2) (*it)->f2 = face;
+			else 
+			{
+				stop = true;
+				std::cout << "IncrementalHull : Fatal error in horizon cone : both faces of an horizon edge are already set" << std::endl;
+			}
+			face->e1 = (*it);
 
 			// create others edges
 			Edge* e2 = existingEdge((*it)->p1, pointCloud[i]);
@@ -78,7 +78,11 @@ Mesh* IncrementalHull::getConvexHull(Mesh* m)
 			}
 			if (!e2->f1) e2->f1 = face;
 			else if (!e2->f2) e2->f2 = face;
-			else std::cout << "Quickhull : Fatal error in horizon cone : a new edge already have 2 faces" << std::endl;
+			else 
+			{
+				stop = true;
+				std::cout << "IncrementalHull : Fatal error in horizon cone : a new edge already have 2 faces" << std::endl;
+			}
 			face->e2 = e2;
 
 			Edge* e3 = existingEdge((*it)->p2, pointCloud[i]);
@@ -89,7 +93,11 @@ Mesh* IncrementalHull::getConvexHull(Mesh* m)
 			}
 			if (!e3->f1) e3->f1 = face;
 			else if (!e3->f2) e3->f2 = face;
-			else std::cout << "Quickhull : Fatal error in horizon cone : a new edge already have 2 faces" << std::endl;
+			else
+			{
+				stop = true;
+				std::cout << "IncrementalHull : Fatal error in horizon cone : a new edge already have 2 faces" << std::endl;
+			}
 			face->e3 = e3;
 		}
 
@@ -98,14 +106,15 @@ Mesh* IncrementalHull::getConvexHull(Mesh* m)
 		//	clear hull from dead entities
 		for (auto it = hullEdges.begin(); it != hullEdges.end();)
 		{
-			if (it->onHull) it++;
-			else it = hullEdges.erase(it);
+			if (it->horizonCheck == 0) it = hullEdges.erase(it);
+			else it++;
 		}
 		for (auto it = hullFaces.begin(); it != hullFaces.end();)
 		{
 			if (it->onHull) it++;
 			else it = hullFaces.erase(it);
 		}
+		maxIteration--;
 	}
 
 
@@ -145,6 +154,196 @@ Mesh* IncrementalHull::getConvexHull(Mesh* m)
 	return mesh;
 }
 
+
+void IncrementalHull::initializeHull(const std::vector<glm::vec3>& pointCloud)
+{
+	//	compute initial segment
+	degenerated = false;
+
+	glm::vec3 p1, p2;
+	float minx = std::numeric_limits<float>::max();     glm::vec3 x;
+	float maxx = std::numeric_limits<float>::min();     glm::vec3 X;
+	float miny = std::numeric_limits<float>::max();		glm::vec3 y;
+	float maxy = std::numeric_limits<float>::min();		glm::vec3 Y;
+	float minz = std::numeric_limits<float>::max();		glm::vec3 z;
+	float maxz = std::numeric_limits<float>::min();		glm::vec3 Z;
+
+	for (unsigned int j = 0; j < pointCloud.size(); j++)
+	{
+		if (pointCloud[j].x < minx && x != pointCloud[j])
+		{
+			minx = pointCloud[j].x;
+			x = pointCloud[j];
+		}
+		if (pointCloud[j].x > maxx && X != pointCloud[j])
+		{
+			maxx = pointCloud[j].x;
+			X = pointCloud[j];
+		}
+
+		if (pointCloud[j].y < miny && y != pointCloud[j])
+		{
+			miny = pointCloud[j].y;
+			y = pointCloud[j];
+		}
+		if (pointCloud[j].y > maxy && Y != pointCloud[j])
+		{
+			maxy = pointCloud[j].y;
+			Y = pointCloud[j];
+		}
+
+		if (pointCloud[j].z < minz && z != pointCloud[j])
+		{
+			minz = pointCloud[j].z;
+			z = pointCloud[j];
+		}
+		if (pointCloud[j].z > maxz && Z != pointCloud[j])
+		{
+			maxz = pointCloud[j].z;
+			Z = pointCloud[j];
+		}
+	}
+
+	if (x == X) degenerated = true;
+	else if (y == Y) degenerated = true;
+	else if (z == Z) degenerated = true;
+	if (degenerated) return;
+
+	float d1 = maxx - minx;
+	float d2 = maxy - miny;
+	float d3 = maxz - minz;
+	if (d1 > d2 && d1 > d3) { p1 = x, p2 = X; }
+	else if (d2 > d1 && d2 > d3) { p1 = y, p2 = Y; }
+	else { p1 = z, p2 = Z; };
+
+	// search maximum distant point from initial segment
+	float maxd = std::numeric_limits<float>::min();
+	glm::vec3 T;
+	glm::vec3 u = p2 - p1;
+	for (unsigned int j = 0; j < pointCloud.size(); j++)
+	{
+		float d = glm::length(glm::cross(pointCloud[j] - p1, u));
+		if (d > maxd)
+		{
+			maxd = d;
+			T = pointCloud[j];
+		}
+	}
+	if (maxd == 0.f) // mesh is 1D
+	{
+		degenerated = true;
+		return;
+	}
+
+	// search maximum distant point from triangle
+	maxd = std::numeric_limits<float>::min();
+	glm::vec3 P;
+	glm::vec3 n = glm::cross(T - p1, u);
+	for (unsigned int j = 0; j < pointCloud.size(); j++)
+	{
+		float d = std::abs(glm::dot(pointCloud[j], n));
+		if (d > maxd)
+		{
+			maxd = d;
+			P = pointCloud[j];
+		}
+	}
+	if (maxd == 0.f) // mesh is 2D
+	{
+		degenerated = true;
+		return;
+	}
+
+
+	// construct tetrahedron
+	hullEdges.push_back(Edge(p1, p2));
+	hullEdges.push_back(Edge(p1, T));
+	hullEdges.push_back(Edge(p1, P));
+	hullEdges.push_back(Edge(p2, T));
+	hullEdges.push_back(Edge(p2, P));
+	hullEdges.push_back(Edge(T, P));
+
+	Face f1(p1, p2, T, glm::normalize(glm::cross(u, T - p1)));
+	if (glm::dot(f1.n, P) > 0) f1.n *= -1.f;
+	hullFaces.push_back(f1);
+
+	Face f2(p1, p2, P, glm::normalize(glm::cross(u, P - p1)));
+	if (glm::dot(f2.n, T) > 0) f2.n *= -1.f;
+	hullFaces.push_back(f2);
+
+	Face f3(p1, T, P, glm::normalize(glm::cross(T - p1, P - p1)));
+	if (glm::dot(f3.n, p2) > 0) f3.n *= -1.f;
+	hullFaces.push_back(f3);
+
+	Face f4(p2, T, P, glm::normalize(glm::cross(T - p2, P - p2)));
+	if (glm::dot(f4.n, p1) > 0) f4.n *= -1.f;
+	hullFaces.push_back(f4);
+
+	// assign pointers
+	for (auto it = hullFaces.begin(); it != hullFaces.end(); it++)
+	{
+		for (auto it2 = hullEdges.begin(); it2 != hullEdges.end(); it2++)
+		{
+			if (isFaceEdge(*it, *it2))
+			{
+				if (it->e1 == nullptr) it->e1 = &(*it2);
+				else if (it->e2 == nullptr) it->e2 = &(*it2);
+				else if (it->e3 == nullptr) it->e3 = &(*it2);
+				else std::cout << "IncrementalHull : Fatal error ! : a face (triangle) has more than 3 edges" << std::endl;
+
+				if (it2->f1 == nullptr) it2->f1 = &(*it);
+				else if (it2->f2 == nullptr) it2->f2 = &(*it);
+				else std::cout << "IncrementalHull : Fatal error ! : an edge has more than 2 faces" << std::endl;
+			}
+			if (it->e3 != nullptr)
+				break;
+		}
+	}
+
+}
+std::list<IncrementalHull::Edge*> IncrementalHull::computeHorizon(const glm::vec3& eye)
+{
+	std::list<Edge*> horizon;
+	for (auto it = hullFaces.begin(); it != hullFaces.end(); it++)
+	{
+		if (glm::dot(it->n, eye - it->p1) > 0)
+		{
+			it->onHull = false;
+
+			it->e1->horizonCheck--;
+			it->e2->horizonCheck--;
+			it->e3->horizonCheck--;
+
+			horizon.insert(horizon.end(), it->e1);
+			horizon.insert(horizon.end(), it->e2);
+			horizon.insert(horizon.end(), it->e3);
+
+			if (it->e1->f1 == &(*it)) it->e1->f1 = nullptr;
+			else if (it->e1->f2 == &(*it)) it->e1->f2 = nullptr;
+			if (it->e2->f1 == &(*it)) it->e2->f1 = nullptr;
+			else if (it->e2->f2 == &(*it)) it->e2->f2 = nullptr;
+			if (it->e3->f1 == &(*it)) it->e3->f1 = nullptr;
+			else if (it->e3->f2 == &(*it)) it->e3->f2 = nullptr;
+		}
+	}
+
+	for (auto it = horizon.begin(); it != horizon.end(); )
+	{
+		if ((*it)->horizonCheck == 0) it = horizon.erase(it);
+		else it++;
+	}
+	return horizon;
+}
+bool IncrementalHull::isFaceEdge(const Face& f, const Edge& e)
+{
+	if (f.p1 == e.p1 && f.p2 == e.p2) return true;			// just f.p3 is not in edge
+	else if (f.p2 == e.p1 && f.p3 == e.p2) return true;		// just f.p1 is not in edge
+	else if (f.p1 == e.p1 && f.p3 == e.p2) return true;		// just f.p2 is not in edge
+	else if (f.p1 == e.p2 && f.p2 == e.p1) return true;			// just f.p3 is not in edge
+	else if (f.p2 == e.p2 && f.p3 == e.p1) return true;		// just f.p1 is not in edge
+	else if (f.p1 == e.p2 && f.p3 == e.p1) return true;		// just f.p2 is not in edge
+	else return false;
+}
 IncrementalHull::Edge* IncrementalHull::existingEdge(const glm::vec3& p1, const glm::vec3& p2)
 {
 	for (auto it = hullEdges.begin(); it != hullEdges.end(); it++)
@@ -156,6 +355,14 @@ IncrementalHull::Edge* IncrementalHull::existingEdge(const glm::vec3& p1, const 
 	}
 	return nullptr;
 }
-
-
+bool IncrementalHull::checkFaceNormal(const Face& f)
+{
+	for (auto it = hullFaces.begin(); it != hullFaces.end(); it++)
+	{
+		if (glm::dot(f.n, it->p1 - f.p1) > EPSILON) return true;
+		else if (glm::dot(f.n, it->p2 - f.p1) > EPSILON) return true;
+		else if (glm::dot(f.n, it->p3 - f.p1) > EPSILON) return true;
+	}
+	return false;
+}
 

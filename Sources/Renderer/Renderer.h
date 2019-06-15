@@ -45,7 +45,7 @@ class Renderer : public Singleton<Renderer>
 		//
 
 		//  Public functions
-		bool initGLEW(int verbose = 1);
+		//bool initGLEW(int verbose = 1);
 		void initializeGrid(const unsigned int& gridSize, const float& elementSize = 1.f, const glm::vec3& color = glm::vec3(0.4f, 0.2f, 0.1f));
 		//void initi
 		void render(Camera* renderCam);
@@ -77,6 +77,8 @@ class Renderer : public Singleton<Renderer>
 		void drawObject(Entity* object, const float* view, const float* projection);
 		void drawShape(const Shape* Shape, const float* view, const float* projection);
 		//
+
+		Shader* normalViewer;
 
 	private:
 		//  Default
@@ -134,5 +136,7 @@ class Renderer : public Singleton<Renderer>
 		std::map<Shader*, std::vector<Entity*> > simpleBatches;
 		std::map<Shader*, std::map<Mesh*, std::vector<glm::mat4> > > groupBatches;
 		//
+
+
 };
 

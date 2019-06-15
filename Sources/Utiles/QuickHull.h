@@ -11,18 +11,7 @@ class QuickHull
 		QuickHull();
 		Mesh* getConvexHull(Mesh* m);
 
-		/*struct vec3
-		{
-			vec3(glm::vec3 v) :x(v.x), y(v.y), z(v.z) {}
-			friend bool operator<(const vec3& l, const vec3& r)
-			{
-				if (l.x != r.x) return l.x < r.x;
-				else if (l.y != r.y) return l.y < r.y;
-				else return l.z < r.z;
-			}
-			glm::vec3 vec() const { return glm::vec3(x, y, z); }
-			float x, y, z;
-		};*/
+		
 		struct Edge;
 		struct Face
 		{

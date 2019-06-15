@@ -112,8 +112,10 @@ int main()
 		WidgetManager::getInstance()->setBoolean("wireframe", false);
 		//glfwSetWindowShouldClose(window, 1);
 
-		//Entity* testTree = world.getEntityFactory().createObject("tree", glm::vec3(5, 0, 0), glm::vec3(1), glm::rotate(glm::quat(), glm::radians((rand() % 3600) / 10.f), glm::vec3(0, 0, 1)));
-		Entity* testTree = world.getEntityFactory().createObject("cube", glm::vec3(5,0,0), glm::vec3(1), glm::rotate(glm::quat(), glm::radians((rand() % 3600) / 10.f), glm::vec3(0, 0, 1)));
+		Renderer::getInstance()->normalViewer = ResourceManager::getInstance()->getResource<Shader>("normalViewer");
+
+		Entity* testTree = world.getEntityFactory().createObject("tree", glm::vec3(5, 0, 0), glm::vec3(1), glm::rotate(glm::quat(), glm::radians((rand() % 3600) / 10.f), glm::vec3(0, 0, 1)));
+		//Entity* testTree = world.getEntityFactory().createObject("cube", glm::vec3(5,0,0), glm::vec3(1), glm::rotate(glm::quat(), glm::radians((rand() % 3600) / 10.f), glm::vec3(0, 0, 1)));
 
 	// init loop time tracking
 	double averageTime = 0;

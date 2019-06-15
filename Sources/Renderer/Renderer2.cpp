@@ -23,6 +23,8 @@
 #define COLOR_SPHERE   glm::vec3(0.103f, 0.103f, 0.403f)		// dark blue
 #define COLOR_CAPSULE  glm::vec3(0.f, 0.25f, 0.f)				// dark green
 
+#define COLOR_NORMAL  glm::vec3(0.f, 1.f, 0.f)					// white
+
 
 //	Drawing functions
 void Renderer::drawObject(Entity* object, const float* view, const float* projection)
@@ -108,6 +110,7 @@ void Renderer::drawShape(const Shape* Shape, const float* view, const float* pro
 			drawCapsule(static_cast<const Capsule*>(Shape), view, projection);
 			break;
 		case Shape::HULL:
+			drawHull(static_cast<const Hull*>(Shape), normalViewer, view, projection);
 			drawHull(static_cast<const Hull*>(Shape), defaultShader[INSTANCE_DRAWABLE_WIRED], view, projection);
 			break;
 		default:
@@ -359,8 +362,15 @@ void Renderer::drawHull(const Hull* hull, Shader* shader, const float* view, con
 {
 	loadMVPMatrix(shader, &hull->base[0][0], view, projection);
 	if (!shader) return;
+
+	//	override mesh color
+	int loc = shader->getUniformLocation("overrideColor");
+	if (loc >= 0 && shader == normalViewer) glUniform3fv(loc, 1, (float*)&COLOR_NORMAL);
+
 	loadVAO(hull->mesh->getVAO());
 	glDrawElements(GL_TRIANGLES, (int)hull->mesh->getFaces()->size(), GL_UNSIGNED_SHORT, NULL);
+
+	if (loc >= 0) glUniform3fv(loc, 1, (float*)&glm::vec3(-1.f, 0.f, 0.f)[0]);
 }
 //
 

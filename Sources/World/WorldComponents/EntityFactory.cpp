@@ -1,6 +1,6 @@
 #include "EntityFactory.h"
 #include "Resources/ResourceManager.h"
-#include "Utiles/GiftWrapping.h"
+#include "Utiles/IncrementalHull.h"
 
 #include <Utiles/Assert.hpp>
 #include <World/World.h>
@@ -78,7 +78,7 @@ void EntityFactory::createDrawable(Entity* object, const std::string& meshName, 
 	else
 	{
 		std::cout << "fail found hull of name : " << "hull_" + meshName << std::endl;
-		GiftWrapping hullgenerator;
+		IncrementalHull hullgenerator;
 		m = hullgenerator.getConvexHull(drawable->getMesh());
 		ResourceManager::getInstance()->addResource(m);
 		std::cout << "  added with name : " << m->name << std::endl;

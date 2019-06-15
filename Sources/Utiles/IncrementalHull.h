@@ -11,23 +11,11 @@ class IncrementalHull
 		IncrementalHull();
 		Mesh* getConvexHull(Mesh* m);
 
-		/*struct vec3
-		{
-			vec3(glm::vec3 v) :x(v.x), y(v.y), z(v.z) {}
-			friend bool operator<(const vec3& l, const vec3& r)
-			{
-				if (l.x != r.x) return l.x < r.x;
-				else if (l.y != r.y) return l.y < r.y;
-				else return l.z < r.z;
-			}
-			glm::vec3 vec() const { return glm::vec3(x, y, z); }
-			float x, y, z;
-		};*/
 		struct Edge;
 		struct Face
 		{
-			Face() : p1(0.f), p2(0.f), p3(0.f), n(0.f), onHull(true) {};
-			Face(const glm::vec3& point1, const glm::vec3& point2, const glm::vec3& point3, const glm::vec3& normal) : p1(point1), p2(point2), p3(point3), n(normal), onHull(true) {};
+			Face(const glm::vec3& point1 = glm::vec3(0.f), const glm::vec3& point2 = glm::vec3(0.f), const glm::vec3& point3 = glm::vec3(0.f), const glm::vec3& normal = glm::vec3(0.f)) :
+				p1(point1), p2(point2), p3(point3), n(normal), onHull(true), e1(nullptr), e2(nullptr), e3(nullptr) {};
 
 			glm::vec3 n;
 			glm::vec3 p1, p2, p3;
@@ -36,18 +24,19 @@ class IncrementalHull
 		};
 		struct Edge
 		{
-			Edge() : p1(0.f), p2(0.f), onHull(true) {};
-			Edge(const glm::vec3& point1, const glm::vec3& point2) : p1(point1), p2(point2), onHull(true) {};
+			Edge(const glm::vec3& point1 = glm::vec3(0.f), const glm::vec3& point2 = glm::vec3(0.f)) : p1(point1), p2(point2), horizonCheck(2), f1(nullptr), f2(nullptr) {};
 
 			glm::vec3 p1, p2;
-			bool onHull;
+			int horizonCheck;
 			Face *f1, *f2;
 		};
 
 	protected:
 		void initializeHull(const std::vector<glm::vec3>& pointCloud);
-		void computeHorizon(const glm::vec3& eye, Edge* crossedEdge, Face* face, std::list<Edge*>& horizon);
+		std::list<Edge*> computeHorizon(const glm::vec3& eye);
+		bool isFaceEdge(const Face& f, const Edge& e);
 		Edge* existingEdge(const glm::vec3& p1, const glm::vec3& p2);
+		bool checkFaceNormal(const Face& f);
 
 		bool degenerated;
 		std::list<Edge> hullEdges;
