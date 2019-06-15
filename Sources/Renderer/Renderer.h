@@ -7,8 +7,8 @@
 
 #include "Utiles/Mutex.h"
 
-#include <Core/RenderContext.h>
-
+#include "Core/RenderContext.h""
+#include "Renderer/CameraComponent.h"
 #include "Utiles/Camera.h"
 #include "Utiles/Singleton.h"
 #include "World/World.h"
@@ -45,11 +45,10 @@ class Renderer : public Singleton<Renderer>
 		//
 
 		//  Public functions
-		bool initGLEW(int verbose = 1);
 		void initializeGrid(const unsigned int& gridSize, const float& elementSize = 1.f, const glm::vec3& color = glm::vec3(0.4f, 0.2f, 0.1f));
 		//void initi
-		void render(Camera* renderCam);
-		void renderHUD(Camera* renderCam);
+		void render(CameraComponent* renderCam);
+		void renderHUD();
 		//
 
 		//  Set/get functions

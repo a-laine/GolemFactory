@@ -27,6 +27,7 @@
 #include "Animation/AnimationComponent.h"
 #include "Animation/SkeletonComponent.h"
 #include "Core/Application.h"
+#include "Renderer/CameraComponent.h"
 
 #include <Resources/Texture.h>
 #include <Resources/Font.h>
@@ -58,7 +59,10 @@
 RenderContext* context = nullptr;
 World world;
 Camera camera, camera2;
+CameraComponent* currentCamera = nullptr;
 Entity* avatar = nullptr;
+Entity* freeflyCamera = nullptr;
+Entity* frustrumCamera = nullptr;
 
 double completeTime = 16.;
 double averageCompleteTime = 16.;
@@ -82,6 +86,7 @@ void updates(float elapseTime);
 // program
 int main()
 {
+	std::cout << "Application start" << std::endl;
 	Application application;
 	context = application.createWindow("Golem Factory v1.0", 1600, 900);
 	context->makeCurrent();
@@ -104,9 +109,34 @@ int main()
 			glm::vec3 pos = glm::vec3(-10.f, 0.f, -scale * drawable->getMeshBBMin().z);
 			object->setTransformation(pos, glm::vec3(scale), glm::toQuat(glm::rotate(glm::pi<float>() / 2.f + atan2(1.f, 0.f), glm::vec3(0.f, 0.f, 1.f))));
 
+			SkeletonComponent* skeletonComp = object->getComponent<SkeletonComponent>();
+			glm::vec3 headLocalPos = skeletonComp->getJointPosition("Head");
+			CameraComponent* tbCam = new CameraComponent(true);
+			tbCam->setPosition(headLocalPos - glm::vec3(0, 1, 0));
+			tbCam->lookAt(headLocalPos, camera.getRadius());
+			object->addComponent(tbCam);
+
+			currentCamera = tbCam;
 			camera.setRadius(5);
 			avatarZeroHeight = object->getPosition().z;
 		});
+
+		freeflyCamera = world.getEntityFactory().createObject([](Entity* object)
+		{
+			object->setPosition(glm::vec3(0, 5, 5));
+			object->setShape(new Sphere());
+			CameraComponent* ffCam = new CameraComponent(true);
+			ffCam->lookAt(glm::vec3(0, 1, 0));
+			object->addComponent(ffCam);
+		});
+
+		frustrumCamera = world.getEntityFactory().createObject([](Entity* object)
+		{
+			object->setShape(new Sphere());
+			CameraComponent* cam = new CameraComponent(true);
+			object->addComponent(cam);
+		});
+
 		camera.setMode(Camera::TRACKBALL);
 		WidgetManager::getInstance()->setBoolean("BBpicking", false);
 		WidgetManager::getInstance()->setBoolean("wireframe", false);
@@ -138,11 +168,15 @@ int main()
 		else if (WidgetManager::getInstance()->getBoolean("wireframe"))
 			Renderer::getInstance()->setRenderOption(Renderer::WIREFRAME);
 		else Renderer::getInstance()->setRenderOption(Renderer::DEFAULT);
-		Renderer::getInstance()->render(&camera);
-		Renderer::getInstance()->drawShape(avatar->getGlobalBoundingShape(), &camera.getViewMatrix()[0][0], &glm::perspective(glm::radians(camera.getVerticalFieldOfView(context->getViewportRatio())), context->getViewportRatio(), 0.1f, 1500.f)[0][0]);
+		Renderer::getInstance()->render(currentCamera);
+		{
+			glm::mat4 view = currentCamera->getGlobalViewMatrix();
+			glm::mat4 projection = glm::perspective(glm::radians(currentCamera->getVerticalFieldOfView(context->getViewportRatio())), context->getViewportRatio(), 0.1f, 1500.f);
+			Renderer::getInstance()->drawShape(avatar->getGlobalBoundingShape(), &view[0][0], &projection[0][0]);
+		}
 
 		picking();
-		Renderer::getInstance()->renderHUD(&camera2);
+		Renderer::getInstance()->renderHUD();
 
 		//	clear garbages
 		world.clearGarbage();
@@ -436,6 +470,9 @@ void events()
 	std::vector<UserEventType> v;
 	EventHandler::getInstance()->getFrameEvent(v);
 
+	bool controlChar; // true: control character, false: control camera
+	controlChar = camera.getMode() == Camera::TRACKBALL;
+
 	for (unsigned int i = 0; i < v.size(); i++)
 	{
 		//	micselenious
@@ -443,8 +480,24 @@ void events()
 		else if (v[i] == CHANGE_CURSOR_MODE) EventHandler::getInstance()->setCursorMode(!EventHandler::getInstance()->getCursorMode());
 		else if (v[i] == ACTION)
 		{
-			if (camera.getMode() == Camera::TRACKBALL) camera.setMode(Camera::FREEFLY);
-			else if (camera.getMode() == Camera::FREEFLY) camera.setMode(Camera::TRACKBALL);
+			if (camera.getMode() == Camera::TRACKBALL)
+			{
+				camera.setMode(Camera::FREEFLY);
+
+				CameraComponent* tbCam = avatar->getComponent<CameraComponent>();
+				CameraComponent* ffCam = freeflyCamera->getComponent<CameraComponent>();
+				freeflyCamera->setPosition(avatar->getPosition() + tbCam->getPosition());
+				ffCam->setOrientation(tbCam->getOrientation()); // free rotations
+				currentCamera = ffCam;
+			}
+			else if (camera.getMode() == Camera::FREEFLY)
+			{
+				camera.setMode(Camera::TRACKBALL);
+				CameraComponent* tbCam = avatar->getComponent<CameraComponent>();
+				currentCamera = tbCam;
+			}
+
+			controlChar = camera.getMode() == Camera::TRACKBALL;
 		}
 
 		//	avatar related
@@ -453,7 +506,7 @@ void events()
 		else if (v[i] == SLOT3) Animator::getInstance()->launchAnimation(avatar, "no");
 		else if (v[i] == FORWARD || v[i] == BACKWARD || v[i] == LEFT || v[i] == RIGHT)
 		{
-			if (EventHandler::getInstance()->isActivated(v[i]) && camera.getMode() == Camera::TRACKBALL)
+			if (EventHandler::getInstance()->isActivated(v[i]) && controlChar)
 			{
 				if (EventHandler::getInstance()->isActivated(RUN)) Animator::getInstance()->launchAnimation(avatar, "run");
 				else Animator::getInstance()->launchAnimation(avatar, "walk");
@@ -469,7 +522,7 @@ void events()
 		{
 			if (EventHandler::getInstance()->isActivated(RUN))
 			{
-				if (EventHandler::getInstance()->isActivated(FORWARD) && camera.getMode() == Camera::TRACKBALL)
+				if (EventHandler::getInstance()->isActivated(FORWARD) && controlChar)
 					Animator::getInstance()->launchAnimation(avatar, "run");
 				else
 					Animator::getInstance()->stopAnimation(avatar, "run");
@@ -477,7 +530,7 @@ void events()
 			else
 			{
 				Animator::getInstance()->stopAnimation(avatar, "run");
-				if (EventHandler::getInstance()->isActivated(FORWARD) && camera.getMode() == Camera::TRACKBALL)
+				if (EventHandler::getInstance()->isActivated(FORWARD) && controlChar)
 					Animator::getInstance()->launchAnimation(avatar, "walk");
 			}
 		}
@@ -499,7 +552,7 @@ void updates(float elapseTime)
 		glm::vec2 cursor = EventHandler::getInstance()->getCursorNormalizedPosition();
 		glm::vec4 ray_eye = glm::inverse(glm::perspective(glm::radians(ANGLE_VERTICAL_HUD_PROJECTION), context->getViewportRatio(), 0.01f, 150.f)) * glm::vec4(cursor.x, cursor.y, -1.f, 1.f);
 		WidgetManager::getInstance()->setPickingParameters(
-			camera.getViewMatrix() * glm::translate(glm::mat4(1.f), DISTANCE_HUD_CAMERA * camera.getForward()) * camera.getModelMatrix(),
+			glm::translate(glm::mat4(1.f), glm::vec3(0.f, 0.f, -DISTANCE_HUD_CAMERA)) * glm::eulerAngleZX(glm::pi<float>(), glm::pi<float>()*0.5f),
 			glm::normalize(glm::vec3(ray_eye.x, ray_eye.y, ray_eye.z)),
 			camera.getPosition());
 	}
@@ -665,6 +718,68 @@ void updates(float elapseTime)
 		world.updateObject(avatar);
 	}
 
+	// animate camera
+	if (camera.getMode() == Camera::TRACKBALL)
+	{
+		SkeletonComponent* skeletonComp = avatar->getComponent<SkeletonComponent>();
+		if (skeletonComp && skeletonComp->isValid())
+		{
+			glm::vec3 headLocalPos = skeletonComp->getJointPosition("Head");
+
+			float sensitivity = camera.getSensitivity();
+			float yaw = glm::radians(-sensitivity * EventHandler::getInstance()->getCursorPositionRelative().x);
+			float pitch = glm::radians(-sensitivity * EventHandler::getInstance()->getCursorPositionRelative().y);
+			float radius = camera.getRadius() + sensitivity * EventHandler::getInstance()->getScrollingRelative().y;
+
+			CameraComponent* tbCam = avatar->getComponent<CameraComponent>();
+			tbCam->rotateAround(headLocalPos, pitch, yaw, radius);
+		}
+	}
+	else
+	{
+		CameraComponent* ffCam = freeflyCamera->getComponent<CameraComponent>();
+
+		float speed = camera.getSpeed();
+		float sensitivity = camera.getSensitivity();
+		if (!EventHandler::getInstance()->getCursorMode())
+		{
+			float yaw = glm::radians(-sensitivity * EventHandler::getInstance()->getCursorPositionRelative().x);
+			float pitch = glm::radians(-sensitivity * EventHandler::getInstance()->getCursorPositionRelative().y);
+			ffCam->rotate(pitch, yaw);
+		}
+
+		glm::vec3 direction(0., 0., 0.);
+		glm::vec3 forward = ffCam->getForward(); // global because free rotations
+		glm::vec3 right = ffCam->getRight(); // global because free rotations
+
+		if (EventHandler::getInstance()->isActivated(FORWARD)) direction += forward;
+		if (EventHandler::getInstance()->isActivated(BACKWARD)) direction -= forward;
+		if (EventHandler::getInstance()->isActivated(LEFT)) direction -= right;
+		if (EventHandler::getInstance()->isActivated(RIGHT)) direction += right;
+
+		if (EventHandler::getInstance()->isActivated(SNEAKY)) speed /= 10.f;
+		if (EventHandler::getInstance()->isActivated(RUN)) speed *= 10.f;
+
+		if (direction.x || direction.y || direction.z)
+		{
+			freeflyCamera->setPosition(freeflyCamera->getPosition() + glm::normalize(direction)*elapseTime*speed);
+			world.updateObject(freeflyCamera);
+		}
+	}
+
+	if (camera.getMode() == Camera::FREEFLY)
+	{
+		CameraComponent* ffCam = freeflyCamera->getComponent<CameraComponent>();
+		CameraComponent* tbCam = avatar->getComponent<CameraComponent>();
+
+		float angle = ffCam->getFieldOfView() + EventHandler::getInstance()->getScrollingRelative().y;
+		if (angle > 160.f) angle = 160.f;
+		else if (angle < 3.f) angle = 3.f;
+
+		tbCam->setFieldOfView(angle);
+		ffCam->setFieldOfView(angle);
+	}
+
 	//Animate camera
 	if (camera.getMode() == Camera::TRACKBALL)
 	{
@@ -689,6 +804,21 @@ void updates(float elapseTime)
 		camera.setFieldOfView(angle);
 	}
 	if (WidgetManager::getInstance()->getBoolean("syncCamera"))
+	{
 		camera2 = camera;
+
+		CameraComponent* cam = frustrumCamera->getComponent<CameraComponent>();
+		cam->setOrientation(currentCamera->getOrientation());
+		if (camera.getMode() == Camera::TRACKBALL)
+		{
+			CameraComponent* tbCam = avatar->getComponent<CameraComponent>();
+			frustrumCamera->setPosition(avatar->getPosition() + tbCam->getPosition());
+		}
+		else
+		{
+			CameraComponent* ffCam = freeflyCamera->getComponent<CameraComponent>();
+			frustrumCamera->setPosition(freeflyCamera->getPosition() + ffCam->getPosition());
+		}
+	}
 }
 //

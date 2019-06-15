@@ -6,9 +6,6 @@
  *	\author Thibault LAINE
  */
 
-#include <atomic>
-#include <cmath>
-#include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>

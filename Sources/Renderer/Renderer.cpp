@@ -131,7 +131,7 @@ void Renderer::initializeGrid(const unsigned int& gridSize,const float& elementS
 	delete[] normalBufferGrid;
 	delete[] indexBufferGrid;
 }
-void Renderer::render(Camera* renderCam)
+void Renderer::render(CameraComponent* renderCam)
 {
 	//	clear previous states
 	trianglesDrawn = 0;
@@ -145,7 +145,7 @@ void Renderer::render(Camera* renderCam)
 	if (dummy >= 6.28) dummy = 0.0;
 
 	//	bind matrix
-	glm::mat4 view(renderCam->getViewMatrix());
+	glm::mat4 view = renderCam->getGlobalViewMatrix();
 	glm::mat4 projection = glm::perspective(glm::radians(renderCam->getVerticalFieldOfView(context->getViewportRatio())), context->getViewportRatio(), 0.1f, 1500.f);
 	
 	//	opengl state
@@ -224,9 +224,9 @@ void Renderer::render(Camera* renderCam)
 		}
 	}
 }
-void Renderer::renderHUD(Camera* renderCam)
+void Renderer::renderHUD()
 {
-	if (!context || !camera || !renderCam) return;
+	if (!context) return;
 
 	// bind matrix
 	glm::mat4 view = glm::eulerAngleZX(glm::pi<float>(), glm::pi<float>()*0.5f);
