@@ -131,7 +131,7 @@ void Renderer::initializeGrid(const unsigned int& gridSize,const float& elementS
 	delete[] normalBufferGrid;
 	delete[] indexBufferGrid;
 }
-void Renderer::render(Camera* renderCam)
+void Renderer::render(CameraComponent* renderCam)
 {
 	//	clear previous states
 	trianglesDrawn = 0;
@@ -145,7 +145,7 @@ void Renderer::render(Camera* renderCam)
 	if (dummy >= 6.28) dummy = 0.0;
 
 	//	bind matrix
-	glm::mat4 view(renderCam->getViewMatrix());
+	glm::mat4 view = renderCam->getGlobalViewMatrix();
 	glm::mat4 projection = glm::perspective(glm::radians(renderCam->getVerticalFieldOfView(context->getViewportRatio())), context->getViewportRatio(), 0.1f, 1500.f);
 	
 	//	opengl state
@@ -224,9 +224,9 @@ void Renderer::render(Camera* renderCam)
 		}
 	}
 }
-void Renderer::renderHUD(Camera* renderCam)
+void Renderer::renderHUD()
 {
-	if (!context || !camera || !renderCam) return;
+	if (!context) return;
 
 	// bind matrix
 	glm::mat4 view = glm::eulerAngleZX(glm::pi<float>(), glm::pi<float>()*0.5f);
@@ -308,7 +308,7 @@ void Renderer::loadVAO(const GLuint& vao)
 //
 
 //  Set/get functions
-void Renderer::setCamera(Camera* cam) { camera = cam; }
+void Renderer::setCamera(CameraComponent* cam) { camera = cam; }
 void Renderer::setWorld(World* currentWorld) { world = currentWorld; }
 void Renderer::setContext(RenderContext* ctx) { context = ctx; }
 void Renderer::setShader(ShaderIdentifier id, Shader* s)
@@ -323,7 +323,7 @@ void Renderer::setGridVisible(bool enable) { drawGrid = enable; }
 void Renderer::setRenderOption(const RenderOption& option) { renderOption = option; }
 
 
-Camera* Renderer::getCamera() { return camera; }
+CameraComponent* Renderer::getCamera() { return camera; }
 World* Renderer::getWorld() { return world; }
 RenderContext* Renderer::getContext() { return context; }
 Shader* Renderer::getShader(ShaderIdentifier id)

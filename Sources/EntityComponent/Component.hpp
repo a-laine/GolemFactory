@@ -57,7 +57,7 @@ class Component
 			return T::getStaticClassID() == getClassID();
 		}
 
-		Entity* getParentEntity() { return m_parent; }
+		Entity* getParentEntity() const { return m_parent; }
 		virtual void onAddToEntity(Entity* entity) { m_parent = entity; }
 		virtual void onRemoveFromEntity(Entity* entity) { m_parent = nullptr; }
 
