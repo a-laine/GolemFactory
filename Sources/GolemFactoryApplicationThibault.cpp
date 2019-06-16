@@ -113,11 +113,10 @@ int main()
 			glm::vec3 headLocalPos = skeletonComp->getJointPosition("Head");
 			CameraComponent* tbCam = new CameraComponent(true);
 			tbCam->setPosition(headLocalPos - glm::vec3(0, 1, 0));
-			tbCam->lookAt(headLocalPos, camera.getRadius());
+			tbCam->lookAt(headLocalPos, camera.getRadius() / scale);
 			object->addComponent(tbCam);
 
 			currentCamera = tbCam;
-			camera.setRadius(5);
 			avatarZeroHeight = object->getPosition().z;
 		});
 
@@ -729,10 +728,10 @@ void updates(float elapseTime)
 			float sensitivity = camera.getSensitivity();
 			float yaw = glm::radians(-sensitivity * EventHandler::getInstance()->getCursorPositionRelative().x);
 			float pitch = glm::radians(-sensitivity * EventHandler::getInstance()->getCursorPositionRelative().y);
-			float radius = camera.getRadius() + sensitivity * EventHandler::getInstance()->getScrollingRelative().y;
+			float radius = camera.getRadius() - sensitivity * EventHandler::getInstance()->getScrollingRelative().y;
 
 			CameraComponent* tbCam = avatar->getComponent<CameraComponent>();
-			tbCam->rotateAround(headLocalPos, pitch, yaw, radius);
+			tbCam->rotateAround(headLocalPos, pitch, yaw, radius / avatar->getScale()[0]);
 		}
 	}
 	else
@@ -795,7 +794,7 @@ void updates(float elapseTime)
 		EventHandler::getInstance()->isActivated(LEFT), EventHandler::getInstance()->isActivated(RIGHT),
 		EventHandler::getInstance()->isActivated(RUN), EventHandler::getInstance()->isActivated(SNEAKY));
 	if (camera.getMode() == Camera::TRACKBALL)
-		camera.setRadius(camera.getRadius() + camera.getSensitivity() * EventHandler::getInstance()->getScrollingRelative().y);
+		camera.setRadius(camera.getRadius() - camera.getSensitivity() * EventHandler::getInstance()->getScrollingRelative().y);
 	else
 	{
 		float angle = camera.getFieldOfView() + EventHandler::getInstance()->getScrollingRelative().y;

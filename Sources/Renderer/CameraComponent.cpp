@@ -29,8 +29,8 @@ glm::mat4 CameraComponent::getGlobalViewMatrix() const
 	m[3] = glm::vec4(m_position, 1.f);
 	if (m_freeRotations)
 	{
+		m[3] *= glm::vec4(getParentEntity()->getScale(), 1.f);
 		m[3] += glm::vec4(getParentEntity()->getPosition(), 0.f);
-		glm::scale(m, getParentEntity()->getScale());
 	}
 	else
 	{
