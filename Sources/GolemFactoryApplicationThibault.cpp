@@ -487,6 +487,7 @@ void events()
 				freeflyCamera->setPosition(tbCam->getGlobalPosition());
 				ffCam->setOrientation(tbCam->getOrientation()); // free rotations
 				currentCamera = ffCam;
+				world.updateObject(freeflyCamera);
 			}
 			else
 			{
@@ -728,7 +729,6 @@ void updates(float elapseTime)
 				float sensitivity = 0.2f;
 				float yaw = glm::radians(-sensitivity * EventHandler::getInstance()->getCursorPositionRelative().x);
 				float pitch = glm::radians(-sensitivity * EventHandler::getInstance()->getCursorPositionRelative().y);
-				cameraInfos.radius = cameraInfos.radius - sensitivity * EventHandler::getInstance()->getScrollingRelative().y;
 				cameraInfos.radius = glm::clamp(cameraInfos.radius, 0.5f, 10.f);
 
 				CameraComponent* tbCam = avatar->getComponent<CameraComponent>();
@@ -739,9 +739,11 @@ void updates(float elapseTime)
 	else
 	{
 		CameraComponent* ffCam = freeflyCamera->getComponent<CameraComponent>();
-
+		CameraComponent* tbCam = avatar->getComponent<CameraComponent>();
 		float speed = 0.003f;
 		float sensitivity = 0.2f;
+
+		// Rotation
 		if (!EventHandler::getInstance()->getCursorMode())
 		{
 			float yaw = glm::radians(-sensitivity * EventHandler::getInstance()->getCursorPositionRelative().x);
@@ -749,6 +751,7 @@ void updates(float elapseTime)
 			ffCam->rotate(pitch, yaw);
 		}
 
+		// Translation
 		glm::vec3 direction(0., 0., 0.);
 		glm::vec3 forward = ffCam->getForward(); // global because free rotations
 		glm::vec3 right = ffCam->getRight(); // global because free rotations
@@ -757,7 +760,6 @@ void updates(float elapseTime)
 		if (EventHandler::getInstance()->isActivated(BACKWARD)) direction -= forward;
 		if (EventHandler::getInstance()->isActivated(LEFT)) direction -= right;
 		if (EventHandler::getInstance()->isActivated(RIGHT)) direction += right;
-
 		if (EventHandler::getInstance()->isActivated(SNEAKY)) speed /= 10.f;
 		if (EventHandler::getInstance()->isActivated(RUN)) speed *= 10.f;
 
@@ -766,13 +768,8 @@ void updates(float elapseTime)
 			freeflyCamera->setPosition(freeflyCamera->getPosition() + glm::normalize(direction)*elapseTime*speed);
 			world.updateObject(freeflyCamera);
 		}
-	}
 
-	if (currentCamera->getParentEntity() == freeflyCamera)
-	{
-		CameraComponent* ffCam = freeflyCamera->getComponent<CameraComponent>();
-		CameraComponent* tbCam = avatar->getComponent<CameraComponent>();
-
+		// FOV
 		float angle = ffCam->getFieldOfView() + EventHandler::getInstance()->getScrollingRelative().y;
 		if (angle > 160.f) angle = 160.f;
 		else if (angle < 3.f) angle = 3.f;
@@ -785,16 +782,8 @@ void updates(float elapseTime)
 	{
 		CameraComponent* cam = frustrumCamera->getComponent<CameraComponent>();
 		cam->setOrientation(currentCamera->getOrientation());
-		if (currentCamera->getParentEntity() == avatar)
-		{
-			CameraComponent* tbCam = avatar->getComponent<CameraComponent>();
-			frustrumCamera->setPosition(tbCam->getGlobalPosition());
-		}
-		else
-		{
-			CameraComponent* ffCam = freeflyCamera->getComponent<CameraComponent>();
-			frustrumCamera->setPosition(ffCam->getGlobalPosition());
-		}
+		frustrumCamera->setPosition(currentCamera->getGlobalPosition());
+		world.updateObject(frustrumCamera);
 	}
 }
 //
