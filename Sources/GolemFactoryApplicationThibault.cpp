@@ -729,6 +729,7 @@ void updates(float elapseTime)
 				float sensitivity = 0.2f;
 				float yaw = glm::radians(-sensitivity * EventHandler::getInstance()->getCursorPositionRelative().x);
 				float pitch = glm::radians(-sensitivity * EventHandler::getInstance()->getCursorPositionRelative().y);
+				cameraInfos.radius = cameraInfos.radius - sensitivity * EventHandler::getInstance()->getScrollingRelative().y;
 				cameraInfos.radius = glm::clamp(cameraInfos.radius, 0.5f, 10.f);
 
 				CameraComponent* tbCam = avatar->getComponent<CameraComponent>();
