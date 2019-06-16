@@ -520,7 +520,7 @@ void updates(float elapseTime)
 			glm::translate(glm::mat4(1.f), glm::vec3(0.f, 0.f, -DISTANCE_HUD_CAMERA)) * glm::eulerAngleZX(glm::pi<float>(), glm::pi<float>()*0.5f),
 			glm::normalize(glm::vec3(ray_eye.x, ray_eye.y, ray_eye.z)));// ,
 			//glm::vec3(0,0,0));
-		std::cout << ray_eye.x << ' ' << ray_eye.y << ' ' << ray_eye.z << std::endl;
+		//std::cout << ray_eye.x << ' ' << ray_eye.y << ' ' << ray_eye.z << std::endl;
 	}
 	else
 	{
