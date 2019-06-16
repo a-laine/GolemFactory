@@ -66,12 +66,27 @@ glm::vec3 CameraComponent::getPosition() const
 	return m_position;
 }
 
+glm::vec3 CameraComponent::getGlobalPosition() const
+{
+	return m_position * getParentEntity()->getScale() + getParentEntity()->getPosition();
+}
+
 void CameraComponent::getFrustrum(glm::vec3& position, glm::vec3& forward, glm::vec3& right, glm::vec3& up) const
 {
-	position = m_position;
-	forward = glm::rotate(m_orientation, glm::vec3(0, 0, -1));
-	right = glm::rotate(m_orientation, glm::vec3(1, 0, 0));
-	up = glm::rotate(m_orientation, glm::vec3(0, 1, 0));
+	if (m_freeRotations)
+	{
+		position = m_position * getParentEntity()->getScale() + getParentEntity()->getPosition();
+		forward = glm::rotate(m_orientation, glm::vec3(0, 0, -1));
+		right = glm::rotate(m_orientation, glm::vec3(1, 0, 0));
+		up = glm::rotate(m_orientation, glm::vec3(0, 1, 0));
+	}
+	else
+	{
+		position = glm::vec3(getParentEntity()->getMatrix() * glm::vec4(m_position, 1.f));
+		forward = glm::vec3(getParentEntity()->getMatrix() * glm::rotate(m_orientation, glm::vec4(0, 0, -1, 0)));
+		right = glm::vec3(getParentEntity()->getMatrix() * glm::rotate(m_orientation, glm::vec4(1, 0, 0, 0)));
+		up = glm::vec3(getParentEntity()->getMatrix() * glm::rotate(m_orientation, glm::vec4(0, 1, 0, 0)));
+	}
 }
 
 glm::quat CameraComponent::getOrientation() const

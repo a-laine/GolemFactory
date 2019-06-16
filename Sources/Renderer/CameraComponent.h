@@ -15,13 +15,14 @@ public:
 	CameraComponent(bool freeRotations);
 
 	glm::mat4 getViewMatrix() const;
-	glm::mat4 getGlobalViewMatrix() const;
 	glm::mat4 getModelMatrix() const;
 	glm::vec3 getForward() const;
 	glm::vec3 getRight() const;
 	glm::vec3 getUp() const;
 	glm::vec3 getPosition() const;
 	glm::quat getOrientation() const;
+	glm::mat4 getGlobalViewMatrix() const;
+	glm::vec3 getGlobalPosition() const;
 	float getFieldOfView() const;
 	float getVerticalFieldOfView(float aspectRatio) const;
 	bool getFreeRotations() const;

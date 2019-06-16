@@ -9,7 +9,6 @@
 
 #include "Core/RenderContext.h""
 #include "Renderer/CameraComponent.h"
-#include "Utiles/Camera.h"
 #include "Utiles/Singleton.h"
 #include "World/World.h"
 
@@ -52,14 +51,14 @@ class Renderer : public Singleton<Renderer>
 		//
 
 		//  Set/get functions
-		void setCamera(Camera* cam);
+		void setCamera(CameraComponent* cam);
 		void setWorld(World* currentWorld);
 		void setContext(RenderContext* ctx);
 		void setShader(ShaderIdentifier id, Shader* s);
 		void setGridVisible(bool enable);
 		void setRenderOption(const RenderOption& option);
 		
-		Camera* getCamera();
+		CameraComponent* getCamera();
 		World* getWorld();
 		RenderContext* getContext();
 		Shader* getShader(ShaderIdentifier id);
@@ -112,7 +111,7 @@ class Renderer : public Singleton<Renderer>
 		//
 
 		//  Attributes
-		Camera* camera;
+		CameraComponent* camera;
 		World* world;
 		RenderContext* context;
 		std::map<ShaderIdentifier, Shader*> defaultShader;

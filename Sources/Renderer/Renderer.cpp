@@ -308,7 +308,7 @@ void Renderer::loadVAO(const GLuint& vao)
 //
 
 //  Set/get functions
-void Renderer::setCamera(Camera* cam) { camera = cam; }
+void Renderer::setCamera(CameraComponent* cam) { camera = cam; }
 void Renderer::setWorld(World* currentWorld) { world = currentWorld; }
 void Renderer::setContext(RenderContext* ctx) { context = ctx; }
 void Renderer::setShader(ShaderIdentifier id, Shader* s)
@@ -323,7 +323,7 @@ void Renderer::setGridVisible(bool enable) { drawGrid = enable; }
 void Renderer::setRenderOption(const RenderOption& option) { renderOption = option; }
 
 
-Camera* Renderer::getCamera() { return camera; }
+CameraComponent* Renderer::getCamera() { return camera; }
 World* Renderer::getWorld() { return world; }
 RenderContext* Renderer::getContext() { return context; }
 Shader* Renderer::getShader(ShaderIdentifier id)

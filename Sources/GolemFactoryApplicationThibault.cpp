@@ -58,8 +58,6 @@
 //	global attributes
 RenderContext* context = nullptr;
 World world;
-Camera camera, camera2;
-CameraComponent* currentCamera = nullptr;
 Entity* avatar = nullptr;
 Entity* freeflyCamera = nullptr;
 Entity* frustrumCamera = nullptr;
@@ -69,6 +67,12 @@ double averageCompleteTime = 16.;
 
 float avatarZeroHeight;
 glm::vec3 avatarspeed(0.f);
+
+CameraComponent* currentCamera = nullptr;
+struct {
+	float radius = 2.f;
+	glm::vec3 target;
+} cameraInfos;
 //
 
 
@@ -110,10 +114,11 @@ int main()
 			object->setTransformation(pos, glm::vec3(scale), glm::toQuat(glm::rotate(glm::pi<float>() / 2.f + atan2(1.f, 0.f), glm::vec3(0.f, 0.f, 1.f))));
 
 			SkeletonComponent* skeletonComp = object->getComponent<SkeletonComponent>();
-			glm::vec3 headLocalPos = skeletonComp->getJointPosition("Head");
+			cameraInfos.target = skeletonComp->getJointPosition("Head");
+
 			CameraComponent* tbCam = new CameraComponent(true);
-			tbCam->setPosition(headLocalPos - glm::vec3(0, 1, 0));
-			tbCam->lookAt(headLocalPos, camera.getRadius() / scale);
+			tbCam->setPosition(cameraInfos.target - glm::vec3(0, 1, 0));
+			tbCam->lookAt(cameraInfos.target, cameraInfos.radius / scale);
 			object->addComponent(tbCam);
 
 			currentCamera = tbCam;
@@ -134,9 +139,9 @@ int main()
 			object->setShape(new Sphere());
 			CameraComponent* cam = new CameraComponent(true);
 			object->addComponent(cam);
+			Renderer::getInstance()->setCamera(cam);
 		});
 
-		camera.setMode(Camera::TRACKBALL);
 		WidgetManager::getInstance()->setBoolean("BBpicking", false);
 		WidgetManager::getInstance()->setBoolean("wireframe", false);
 		//glfwSetWindowShouldClose(window, 1);
@@ -393,16 +398,9 @@ void initManagers()
 	});
 
 	//	Renderer
-	camera.setMode(Camera::FREEFLY);
-	camera.setAllRadius(2.f, 0.5f, 10.f);
-	camera.setPosition(glm::vec3(0, 5, 5));
-	camera2.setMode(Camera::FREEFLY);
-	camera2.setAllRadius(2.f, 0.5f, 10.f);
-	camera2.setPosition(glm::vec3(0, 20, 20));
 	Renderer::getInstance()->setContext(context);
 	Renderer::getInstance()->setWorld(&world);
 	Renderer::getInstance()->initializeGrid(GRID_SIZE, GRID_ELEMENT_SIZE, glm::vec3(24 / 255.f, 202 / 255.f, 230 / 255.f));	// blue tron
-	Renderer::getInstance()->setCamera(&camera2);
 	Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("greenGrass"));
 	Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE_BB, ResourceManager::getInstance()->getResource<Shader>("wired"));
 	Renderer::getInstance()->setShader(Renderer::INSTANCE_ANIMATABLE_BB, ResourceManager::getInstance()->getResource<Shader>("skeletonBB"));
@@ -427,8 +425,11 @@ void initManagers()
 }
 void picking()
 {
-	DefaultSceneManagerRayTest sceneNodeTest(camera.getPosition(), camera.getForward(), 10000);
-	DefaultRayPickingCollector collector(camera.getPosition(), camera.getForward(), 10000);
+	glm::vec3 cameraPos = currentCamera->getGlobalPosition();
+	glm::vec3 cameraForward = currentCamera->getForward(); // no rotations
+
+	DefaultSceneManagerRayTest sceneNodeTest(cameraPos, cameraForward, 10000);
+	DefaultRayPickingCollector collector(cameraPos, cameraForward, 10000);
 	world.getSceneManager().getObjects(collector, sceneNodeTest);
 
 	if (!collector.getObjects().empty())
@@ -439,7 +440,7 @@ void picking()
 		if(compAnim)       type = "animatable";
 		else if(compDraw)  type = "drawable";
 		else               type = "empty entity";
-		glm::vec3 p = camera.getPosition() + collector.getNearestDistance() * camera.getForward();
+		glm::vec3 p = cameraPos + collector.getNearestDistance() * cameraForward;
 		
 		WidgetManager::getInstance()->setString("interaction", "Distance : " + ToolBox::to_string_with_precision(collector.getNearestDistance(), 5) +
 			" m\nPosition : (" + ToolBox::to_string_with_precision(p.x, 5) + " , " + ToolBox::to_string_with_precision(p.y, 5) + " , " + ToolBox::to_string_with_precision(p.z, 5) +
@@ -451,10 +452,11 @@ void picking()
 		{
 			Renderer::RenderOption option = Renderer::getInstance()->getRenderOption();
 			Renderer::getInstance()->setRenderOption(option == Renderer::DEFAULT ? Renderer::BOUNDING_BOX : Renderer::DEFAULT);
-			glm::mat4 projection = glm::perspective(glm::radians(camera.getVerticalFieldOfView(context->getViewportRatio())), context->getViewportRatio(), 0.1f, 1500.f);
+			glm::mat4 view = currentCamera->getGlobalViewMatrix();
+			glm::mat4 projection = glm::perspective(glm::radians(currentCamera->getVerticalFieldOfView(context->getViewportRatio())), context->getViewportRatio(), 0.1f, 1500.f);
 
 			for (auto it = collector.getObjects().begin(); it != collector.getObjects().end(); ++it)
-				Renderer::getInstance()->drawObject(it->second, &camera.getViewMatrix()[0][0], &projection[0][0]);
+				Renderer::getInstance()->drawObject(it->second, &view[0][0], &projection[0][0]);
 			Renderer::getInstance()->setRenderOption(option);
 		}
 	}
@@ -469,8 +471,7 @@ void events()
 	std::vector<UserEventType> v;
 	EventHandler::getInstance()->getFrameEvent(v);
 
-	bool controlChar; // true: control character, false: control camera
-	controlChar = camera.getMode() == Camera::TRACKBALL;
+	bool isTrackBall = currentCamera->getParentEntity() == avatar;
 
 	for (unsigned int i = 0; i < v.size(); i++)
 	{
@@ -479,24 +480,21 @@ void events()
 		else if (v[i] == CHANGE_CURSOR_MODE) EventHandler::getInstance()->setCursorMode(!EventHandler::getInstance()->getCursorMode());
 		else if (v[i] == ACTION)
 		{
-			if (camera.getMode() == Camera::TRACKBALL)
+			if (isTrackBall)
 			{
-				camera.setMode(Camera::FREEFLY);
-
 				CameraComponent* tbCam = avatar->getComponent<CameraComponent>();
 				CameraComponent* ffCam = freeflyCamera->getComponent<CameraComponent>();
-				freeflyCamera->setPosition(avatar->getPosition() + tbCam->getPosition());
+				freeflyCamera->setPosition(tbCam->getGlobalPosition());
 				ffCam->setOrientation(tbCam->getOrientation()); // free rotations
 				currentCamera = ffCam;
 			}
-			else if (camera.getMode() == Camera::FREEFLY)
+			else
 			{
-				camera.setMode(Camera::TRACKBALL);
 				CameraComponent* tbCam = avatar->getComponent<CameraComponent>();
 				currentCamera = tbCam;
 			}
 
-			controlChar = camera.getMode() == Camera::TRACKBALL;
+			isTrackBall = currentCamera->getParentEntity() == avatar;
 		}
 
 		//	avatar related
@@ -505,7 +503,7 @@ void events()
 		else if (v[i] == SLOT3) Animator::getInstance()->launchAnimation(avatar, "no");
 		else if (v[i] == FORWARD || v[i] == BACKWARD || v[i] == LEFT || v[i] == RIGHT)
 		{
-			if (EventHandler::getInstance()->isActivated(v[i]) && controlChar)
+			if (EventHandler::getInstance()->isActivated(v[i]) && isTrackBall)
 			{
 				if (EventHandler::getInstance()->isActivated(RUN)) Animator::getInstance()->launchAnimation(avatar, "run");
 				else Animator::getInstance()->launchAnimation(avatar, "walk");
@@ -521,7 +519,7 @@ void events()
 		{
 			if (EventHandler::getInstance()->isActivated(RUN))
 			{
-				if (EventHandler::getInstance()->isActivated(FORWARD) && controlChar)
+				if (EventHandler::getInstance()->isActivated(FORWARD) && isTrackBall)
 					Animator::getInstance()->launchAnimation(avatar, "run");
 				else
 					Animator::getInstance()->stopAnimation(avatar, "run");
@@ -529,7 +527,7 @@ void events()
 			else
 			{
 				Animator::getInstance()->stopAnimation(avatar, "run");
-				if (EventHandler::getInstance()->isActivated(FORWARD) && controlChar)
+				if (EventHandler::getInstance()->isActivated(FORWARD) && isTrackBall)
 					Animator::getInstance()->launchAnimation(avatar, "walk");
 			}
 		}
@@ -553,11 +551,11 @@ void updates(float elapseTime)
 		WidgetManager::getInstance()->setPickingParameters(
 			glm::translate(glm::mat4(1.f), glm::vec3(0.f, 0.f, -DISTANCE_HUD_CAMERA)) * glm::eulerAngleZX(glm::pi<float>(), glm::pi<float>()*0.5f),
 			glm::normalize(glm::vec3(ray_eye.x, ray_eye.y, ray_eye.z)),
-			camera.getPosition());
+			currentCamera->getGlobalPosition());
 	}
 	else
 	{
-		WidgetManager::getInstance()->setPickingParameters(glm::mat4(1.f), glm::vec3(0.f), camera.getPosition());
+		WidgetManager::getInstance()->setPickingParameters(glm::mat4(1.f), glm::vec3(0.f), currentCamera->getGlobalPosition());
 	}
 
 	//	Update widgets
@@ -571,18 +569,18 @@ void updates(float elapseTime)
 	WidgetManager::getInstance()->update((float)elapseTime, EventHandler::getInstance()->isActivated(USE1));
 
 	//	Move avatar if needed
-	if (camera.getMode() == Camera::TRACKBALL)
+	if (currentCamera->getParentEntity() == avatar)
 	{
 		//	compute direction and speed
 		glm::vec3 direction = glm::vec3(0.f);
 		if (EventHandler::getInstance()->isActivated(FORWARD))
-			direction += glm::normalize(glm::vec3(camera.getForward().x, camera.getForward().y, 0.f));
+			direction += glm::normalize(glm::vec3(currentCamera->getForward().x, currentCamera->getForward().y, 0.f));
 		else if (EventHandler::getInstance()->isActivated(BACKWARD))
-			direction -= glm::normalize(glm::vec3(camera.getForward().x, camera.getForward().y, 0.f));
+			direction -= glm::normalize(glm::vec3(currentCamera->getForward().x, currentCamera->getForward().y, 0.f));
 		if (EventHandler::getInstance()->isActivated(LEFT))
-			direction -= glm::normalize(glm::vec3(camera.getRight().x, camera.getRight().y, 0.f));
+			direction -= glm::normalize(glm::vec3(currentCamera->getRight().x, currentCamera->getRight().y, 0.f));
 		else if (EventHandler::getInstance()->isActivated(RIGHT))
-			direction += glm::normalize(glm::vec3(camera.getRight().x, camera.getRight().y, 0.f));
+			direction += glm::normalize(glm::vec3(currentCamera->getRight().x, currentCamera->getRight().y, 0.f));
 		if(direction.x != 0.f && direction.y != 0.f)
 			direction = glm::normalize(direction);
 
@@ -663,10 +661,11 @@ void updates(float elapseTime)
 		{
 			Renderer::RenderOption option = Renderer::getInstance()->getRenderOption();
 			Renderer::getInstance()->setRenderOption(option == Renderer::DEFAULT ? Renderer::BOUNDING_BOX : Renderer::DEFAULT);
-			glm::mat4 projection = glm::perspective(glm::radians(camera.getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f);
-			Renderer::getInstance()->drawObject(avatar, &camera.getViewMatrix()[0][0], &projection[0][0]);
+			glm::mat4 view = currentCamera->getGlobalViewMatrix();
+			glm::mat4 projection = glm::perspective(glm::radians(currentCamera->getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f);
+			Renderer::getInstance()->drawObject(avatar, &view[0][0], &projection[0][0]);
 			for (std::set<unsigned int>::iterator it = collisionIndex.begin(); it != collisionIndex.end(); ++it)
-				Renderer::getInstance()->drawObject(entities[*it], &camera.getViewMatrix()[0][0], &projection[0][0]);
+				Renderer::getInstance()->drawObject(entities[*it], &view[0][0], &projection[0][0]);
 			Renderer::getInstance()->setRenderOption(option);
 		}
 
@@ -718,28 +717,31 @@ void updates(float elapseTime)
 	}
 
 	// animate camera
-	if (camera.getMode() == Camera::TRACKBALL)
+	if (currentCamera->getParentEntity() == avatar)
 	{
-		SkeletonComponent* skeletonComp = avatar->getComponent<SkeletonComponent>();
-		if (skeletonComp && skeletonComp->isValid())
+		if (!EventHandler::getInstance()->getCursorMode())
 		{
-			float sensitivity = camera.getSensitivity();
-			float yaw = glm::radians(-sensitivity * EventHandler::getInstance()->getCursorPositionRelative().x);
-			float pitch = glm::radians(-sensitivity * EventHandler::getInstance()->getCursorPositionRelative().y);
-			float radius = camera.getRadius() - sensitivity * EventHandler::getInstance()->getScrollingRelative().y;
+			SkeletonComponent* skeletonComp = avatar->getComponent<SkeletonComponent>();
+			if (skeletonComp && skeletonComp->isValid())
+			{
 
-			CameraComponent* tbCam = avatar->getComponent<CameraComponent>();
+				float sensitivity = 0.2f;
+				float yaw = glm::radians(-sensitivity * EventHandler::getInstance()->getCursorPositionRelative().x);
+				float pitch = glm::radians(-sensitivity * EventHandler::getInstance()->getCursorPositionRelative().y);
+				cameraInfos.radius = cameraInfos.radius - sensitivity * EventHandler::getInstance()->getScrollingRelative().y;
+				cameraInfos.radius = glm::clamp(cameraInfos.radius, 0.5f, 10.f);
 
-			glm::vec3 target = tbCam->getPosition() + tbCam->getForward() * camera.getRadius() / avatar->getScale()[0];
-			tbCam->rotateAround(target, pitch, yaw, radius / avatar->getScale()[0]);
+				CameraComponent* tbCam = avatar->getComponent<CameraComponent>();
+				tbCam->rotateAround(cameraInfos.target, pitch, yaw, cameraInfos.radius / avatar->getScale()[0]);
+			}
 		}
 	}
 	else
 	{
 		CameraComponent* ffCam = freeflyCamera->getComponent<CameraComponent>();
 
-		float speed = camera.getSpeed();
-		float sensitivity = camera.getSensitivity();
+		float speed = 0.003f;
+		float sensitivity = 0.2f;
 		if (!EventHandler::getInstance()->getCursorMode())
 		{
 			float yaw = glm::radians(-sensitivity * EventHandler::getInstance()->getCursorPositionRelative().x);
@@ -766,7 +768,7 @@ void updates(float elapseTime)
 		}
 	}
 
-	if (camera.getMode() == Camera::FREEFLY)
+	if (currentCamera->getParentEntity() == freeflyCamera)
 	{
 		CameraComponent* ffCam = freeflyCamera->getComponent<CameraComponent>();
 		CameraComponent* tbCam = avatar->getComponent<CameraComponent>();
@@ -779,44 +781,19 @@ void updates(float elapseTime)
 		ffCam->setFieldOfView(angle);
 	}
 
-	//Animate camera
-	if (camera.getMode() == Camera::TRACKBALL)
-	{
-        SkeletonComponent* skeletonComp = avatar->getComponent<SkeletonComponent>();
-        if(skeletonComp && skeletonComp->isValid())
-        {
-            glm::vec3 headPosition = glm::vec3(avatar->getMatrix() * glm::vec4(skeletonComp->getJointPosition("Head"), 1));
-            camera.setTarget(headPosition);
-        }
-	}
-	camera.animate((float)elapseTime,
-		EventHandler::getInstance()->isActivated(FORWARD), EventHandler::getInstance()->isActivated(BACKWARD),
-		EventHandler::getInstance()->isActivated(LEFT), EventHandler::getInstance()->isActivated(RIGHT),
-		EventHandler::getInstance()->isActivated(RUN), EventHandler::getInstance()->isActivated(SNEAKY));
-	if (camera.getMode() == Camera::TRACKBALL)
-		camera.setRadius(camera.getRadius() - camera.getSensitivity() * EventHandler::getInstance()->getScrollingRelative().y);
-	else
-	{
-		float angle = camera.getFieldOfView() + EventHandler::getInstance()->getScrollingRelative().y;
-		if (angle > 160.f) angle = 160.f;
-		else if (angle < 3.f) angle = 3.f;
-		camera.setFieldOfView(angle);
-	}
 	if (WidgetManager::getInstance()->getBoolean("syncCamera"))
 	{
-		camera2 = camera;
-
 		CameraComponent* cam = frustrumCamera->getComponent<CameraComponent>();
 		cam->setOrientation(currentCamera->getOrientation());
-		if (camera.getMode() == Camera::TRACKBALL)
+		if (currentCamera->getParentEntity() == avatar)
 		{
 			CameraComponent* tbCam = avatar->getComponent<CameraComponent>();
-			frustrumCamera->setPosition(avatar->getPosition() + tbCam->getPosition());
+			frustrumCamera->setPosition(tbCam->getGlobalPosition());
 		}
 		else
 		{
 			CameraComponent* ffCam = freeflyCamera->getComponent<CameraComponent>();
-			frustrumCamera->setPosition(freeflyCamera->getPosition() + ffCam->getPosition());
+			frustrumCamera->setPosition(ffCam->getGlobalPosition());
 		}
 	}
 }
