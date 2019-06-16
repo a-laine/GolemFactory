@@ -36,6 +36,7 @@
 #include <Resources/Mesh.h>
 #include <Resources/Skeleton.h>
 #include <Resources/Animation.h>
+#include <Resources/KeyMapping.h>
 #include <Resources/Loader/AnimationLoader.h>
 #include <Resources/Loader/FontLoader.h>
 #include <Resources/Loader/AssimpLoader.h>
@@ -44,6 +45,7 @@
 #include <Resources/Loader/SkeletonLoader.h>
 #include <Resources/Loader/ImageLoader.h>
 #include <Resources/Loader/TextureLoader.h>
+#include <Resources/Loader/KeyMappingLoader.h>
 
 #include "Physics/Collision.h"
 
@@ -319,6 +321,7 @@ void initManagers()
     Mesh::setDefaultName("cube2.obj");
     Skeleton::setDefaultName("human");
     Animation::setDefaultName("human");
+    KeyMapping::setDefaultName("RPG key mapping");
     ResourceManager::getInstance()->addNewResourceLoader(".animation", new AnimationLoader());
     ResourceManager::getInstance()->addNewResourceLoader(".font", new FontLoader());
     ResourceManager::getInstance()->addNewResourceLoader("assimp", new AssimpLoader(AssimpLoader::MESH));
@@ -327,6 +330,7 @@ void initManagers()
     ResourceManager::getInstance()->addNewResourceLoader(".skeleton", new SkeletonLoader());
     ResourceManager::getInstance()->addNewResourceLoader("image", new ImageLoader());
     ResourceManager::getInstance()->addNewResourceLoader(".texture", new TextureLoader());
+    ResourceManager::getInstance()->addNewResourceLoader("keyMapping", new KeyMappingLoader());
 
 	// Init world
 	const glm::vec3 worldHalfSize = glm::vec3(GRID_SIZE*GRID_ELEMENT_SIZE, GRID_SIZE*GRID_ELEMENT_SIZE, 50) * 0.5f;

@@ -1,0 +1,218 @@
+#pragma once
+
+#include <cinttypes>
+
+#include <GLFW/glfw3.h>
+
+
+typedef uint32_t GameInput;
+constexpr GameInput INVALID_GAME_INPUT = -1;
+
+enum InputDeviceType : uint16_t
+{
+    INPUT_DEVICE_KEYBOARD,
+    INPUT_DEVICE_MOUSE,
+    INPUT_DEVICE_CONTROLLER,
+    INPUT_DEVICE_INVALID = -1
+};
+
+
+constexpr GameInput createGameInput(InputDeviceType device, uint16_t input)
+{
+    return (static_cast<GameInput>(device) << 16) | static_cast<GameInput>(input);
+}
+
+
+
+typedef uint16_t InputDeviceId;
+
+enum InputDeviceEnum : InputDeviceId
+{
+    DEVICE_ID_KEYBOARD,
+    DEVICE_ID_MOUSE,
+    DEVICE_ID_CONTROLLER_FIRST,
+    DEVICE_ID_CONTROLLER_LAST = DEVICE_ID_CONTROLLER_FIRST + GLFW_JOYSTICK_LAST,
+    DEVICE_ID_ANY_CONTROLLER,
+    DEVICE_ID_INVALID = -1
+};
+
+
+
+enum MouseInput : GameInput
+{
+    MOUSE_BTN_LEFT = createGameInput(INPUT_DEVICE_MOUSE, GLFW_MOUSE_BUTTON_LEFT),
+    MOUSE_BTN_RIGHT = createGameInput(INPUT_DEVICE_MOUSE, GLFW_MOUSE_BUTTON_RIGHT),
+    MOUSE_BTN_MIDDLE = createGameInput(INPUT_DEVICE_MOUSE, GLFW_MOUSE_BUTTON_MIDDLE),
+    MOUSE_BTN_EXTRA_1 = createGameInput(INPUT_DEVICE_MOUSE, GLFW_MOUSE_BUTTON_4),
+    MOUSE_BTN_EXTRA_2 = createGameInput(INPUT_DEVICE_MOUSE, GLFW_MOUSE_BUTTON_5),
+    MOUSE_BTN_EXTRA_3 = createGameInput(INPUT_DEVICE_MOUSE, GLFW_MOUSE_BUTTON_6),
+    MOUSE_BTN_EXTRA_4 = createGameInput(INPUT_DEVICE_MOUSE, GLFW_MOUSE_BUTTON_7),
+    MOUSE_BTN_EXTRA_5 = createGameInput(INPUT_DEVICE_MOUSE, GLFW_MOUSE_BUTTON_8),
+    MOUSE_AXIS_X = createGameInput(INPUT_DEVICE_MOUSE, 128),
+    MOUSE_AXIS_Y = createGameInput(INPUT_DEVICE_MOUSE, 129),
+    MOUSE_SCROLL_X = createGameInput(INPUT_DEVICE_MOUSE, 130),
+    MOUSE_SCROLL_Y = createGameInput(INPUT_DEVICE_MOUSE, 131)
+};
+
+enum KeyboardInput : GameInput
+{
+    KEYBOARD_KEY_SPACE           = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_SPACE),
+    KEYBOARD_KEY_APOSTROPHE      = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_APOSTROPHE),
+    KEYBOARD_KEY_COMMA           = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_COMMA),
+    KEYBOARD_KEY_MINUS           = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_MINUS),
+    KEYBOARD_KEY_PERIOD          = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_PERIOD),
+    KEYBOARD_KEY_SLASH           = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_SLASH),
+    KEYBOARD_KEY_0               = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_0),
+    KEYBOARD_KEY_1               = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_1),
+    KEYBOARD_KEY_2               = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_2),
+    KEYBOARD_KEY_3               = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_3),
+    KEYBOARD_KEY_4               = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_4),
+    KEYBOARD_KEY_5               = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_5),
+    KEYBOARD_KEY_6               = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_6),
+    KEYBOARD_KEY_7               = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_7),
+    KEYBOARD_KEY_8               = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_8),
+    KEYBOARD_KEY_9               = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_9),
+    KEYBOARD_KEY_SEMICOLON       = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_SEMICOLON),
+    KEYBOARD_KEY_EQUAL           = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_EQUAL),
+    KEYBOARD_KEY_A               = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_A),
+    KEYBOARD_KEY_B               = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_B),
+    KEYBOARD_KEY_C               = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_C),
+    KEYBOARD_KEY_D               = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_D),
+    KEYBOARD_KEY_E               = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_E),
+    KEYBOARD_KEY_F               = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_F),
+    KEYBOARD_KEY_G               = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_G),
+    KEYBOARD_KEY_H               = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_H),
+    KEYBOARD_KEY_I               = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_I),
+    KEYBOARD_KEY_J               = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_J),
+    KEYBOARD_KEY_K               = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_K),
+    KEYBOARD_KEY_L               = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_L),
+    KEYBOARD_KEY_M               = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_M),
+    KEYBOARD_KEY_N               = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_N),
+    KEYBOARD_KEY_O               = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_O),
+    KEYBOARD_KEY_P               = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_P),
+    KEYBOARD_KEY_Q               = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_Q),
+    KEYBOARD_KEY_R               = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_R),
+    KEYBOARD_KEY_S               = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_S),
+    KEYBOARD_KEY_T               = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_T),
+    KEYBOARD_KEY_U               = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_U),
+    KEYBOARD_KEY_V               = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_V),
+    KEYBOARD_KEY_W               = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_W),
+    KEYBOARD_KEY_X               = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_X),
+    KEYBOARD_KEY_Y               = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_Y),
+    KEYBOARD_KEY_Z               = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_Z),
+    KEYBOARD_KEY_LEFT_BRACKET    = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_LEFT_BRACKET),
+    KEYBOARD_KEY_BACKSLASH       = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_BACKSLASH),
+    KEYBOARD_KEY_RIGHT_BRACKET   = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_RIGHT_BRACKET),
+    KEYBOARD_KEY_GRAVE_ACCENT    = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_GRAVE_ACCENT),
+    KEYBOARD_KEY_WORLD_1         = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_WORLD_1),
+    KEYBOARD_KEY_WORLD_2         = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_WORLD_2),
+    KEYBOARD_KEY_ESCAPE          = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_ESCAPE),
+    KEYBOARD_KEY_ENTER           = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_ENTER),
+    KEYBOARD_KEY_TAB             = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_TAB),
+    KEYBOARD_KEY_BACKSPACE       = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_BACKSPACE),
+    KEYBOARD_KEY_INSERT          = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_INSERT),
+    KEYBOARD_KEY_DELETE          = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_DELETE),
+    KEYBOARD_KEY_RIGHT           = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_RIGHT),
+    KEYBOARD_KEY_LEFT            = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_LEFT),
+    KEYBOARD_KEY_DOWN            = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_DOWN),
+    KEYBOARD_KEY_UP              = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_UP),
+    KEYBOARD_KEY_PAGE_UP         = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_PAGE_UP),
+    KEYBOARD_KEY_PAGE_DOWN       = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_PAGE_DOWN),
+    KEYBOARD_KEY_HOME            = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_HOME),
+    KEYBOARD_KEY_END             = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_END),
+    KEYBOARD_KEY_CAPS_LOCK       = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_CAPS_LOCK),
+    KEYBOARD_KEY_SCROLL_LOCK     = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_SCROLL_LOCK),
+    KEYBOARD_KEY_NUM_LOCK        = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_NUM_LOCK),
+    KEYBOARD_KEY_PRINT_SCREEN    = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_PRINT_SCREEN),
+    KEYBOARD_KEY_PAUSE           = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_PAUSE),
+    KEYBOARD_KEY_F1              = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_F1),
+    KEYBOARD_KEY_F2              = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_F2),
+    KEYBOARD_KEY_F3              = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_F3),
+    KEYBOARD_KEY_F4              = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_F4),
+    KEYBOARD_KEY_F5              = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_F5),
+    KEYBOARD_KEY_F6              = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_F6),
+    KEYBOARD_KEY_F7              = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_F7),
+    KEYBOARD_KEY_F8              = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_F8),
+    KEYBOARD_KEY_F9              = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_F9),
+    KEYBOARD_KEY_F10             = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_F10),
+    KEYBOARD_KEY_F11             = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_F11),
+    KEYBOARD_KEY_F12             = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_F12),
+    KEYBOARD_KEY_F13             = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_F13),
+    KEYBOARD_KEY_F14             = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_F14),
+    KEYBOARD_KEY_F15             = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_F15),
+    KEYBOARD_KEY_F16             = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_F16),
+    KEYBOARD_KEY_F17             = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_F17),
+    KEYBOARD_KEY_F18             = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_F18),
+    KEYBOARD_KEY_F19             = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_F19),
+    KEYBOARD_KEY_F20             = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_F20),
+    KEYBOARD_KEY_F21             = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_F21),
+    KEYBOARD_KEY_F22             = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_F22),
+    KEYBOARD_KEY_F23             = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_F23),
+    KEYBOARD_KEY_F24             = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_F24),
+    KEYBOARD_KEY_F25             = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_F25),
+    KEYBOARD_KEY_KP_0            = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_KP_0),
+    KEYBOARD_KEY_KP_1            = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_KP_1),
+    KEYBOARD_KEY_KP_2            = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_KP_2),
+    KEYBOARD_KEY_KP_3            = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_KP_3),
+    KEYBOARD_KEY_KP_4            = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_KP_4),
+    KEYBOARD_KEY_KP_5            = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_KP_5),
+    KEYBOARD_KEY_KP_6            = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_KP_6),
+    KEYBOARD_KEY_KP_7            = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_KP_7),
+    KEYBOARD_KEY_KP_8            = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_KP_8),
+    KEYBOARD_KEY_KP_9            = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_KP_9),
+    KEYBOARD_KEY_KP_DECIMAL      = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_KP_DECIMAL),
+    KEYBOARD_KEY_KP_DIVIDE       = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_KP_DIVIDE),
+    KEYBOARD_KEY_KP_MULTIPLY     = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_KP_MULTIPLY),
+    KEYBOARD_KEY_KP_SUBTRACT     = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_KP_SUBTRACT),
+    KEYBOARD_KEY_KP_ADD          = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_KP_ADD),
+    KEYBOARD_KEY_KP_ENTER        = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_KP_ENTER),
+    KEYBOARD_KEY_KP_EQUAL        = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_KP_EQUAL),
+    KEYBOARD_KEY_LEFT_SHIFT      = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_LEFT_SHIFT),
+    KEYBOARD_KEY_LEFT_CONTROL    = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_LEFT_CONTROL),
+    KEYBOARD_KEY_LEFT_ALT        = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_LEFT_ALT),
+    KEYBOARD_KEY_LEFT_SUPER      = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_LEFT_SUPER),
+    KEYBOARD_KEY_RIGHT_SHIFT     = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_RIGHT_SHIFT),
+    KEYBOARD_KEY_RIGHT_CONTROL   = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_RIGHT_CONTROL),
+    KEYBOARD_KEY_RIGHT_ALT       = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_RIGHT_ALT),
+    KEYBOARD_KEY_RIGHT_SUPER     = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_RIGHT_SUPER),
+    KEYBOARD_KEY_MENU            = createGameInput(INPUT_DEVICE_KEYBOARD, GLFW_KEY_MENU)
+};
+
+enum ControllerInput : GameInput
+{
+    CONTROLLER_BUTTON_FIRST = createGameInput(INPUT_DEVICE_CONTROLLER, 0),
+    CONTROLLER_BUTTON_LAST = createGameInput(INPUT_DEVICE_CONTROLLER, 255),
+    CONTROLLER_AXIS_FIRST = createGameInput(INPUT_DEVICE_CONTROLLER, 256),
+    CONTROLLER_AXIS_LAST = createGameInput(INPUT_DEVICE_CONTROLLER, 511)
+};
+
+
+
+enum InputAction
+{
+    KEY_RELEASED,
+    KEY_PRESSED,
+    KEY_REPEAT
+};
+
+
+
+inline GameInput glfwKeyToGfInput(int key)
+{
+    return createGameInput(INPUT_DEVICE_KEYBOARD, key);
+}
+
+inline GameInput glfwMouseBtnToGfButton(int button)
+{
+    return createGameInput(INPUT_DEVICE_MOUSE, button);
+}
+
+inline InputAction glfwActionToGfAction(int action)
+{
+    return InputAction(action);
+}
+
+inline InputDeviceType getDeviceTypeFromGameInput(GameInput input)
+{
+    return static_cast<InputDeviceType>(input >> 16);
+}
