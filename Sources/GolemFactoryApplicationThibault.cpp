@@ -723,15 +723,15 @@ void updates(float elapseTime)
 		SkeletonComponent* skeletonComp = avatar->getComponent<SkeletonComponent>();
 		if (skeletonComp && skeletonComp->isValid())
 		{
-			glm::vec3 headLocalPos = skeletonComp->getJointPosition("Head");
-
 			float sensitivity = camera.getSensitivity();
 			float yaw = glm::radians(-sensitivity * EventHandler::getInstance()->getCursorPositionRelative().x);
 			float pitch = glm::radians(-sensitivity * EventHandler::getInstance()->getCursorPositionRelative().y);
 			float radius = camera.getRadius() - sensitivity * EventHandler::getInstance()->getScrollingRelative().y;
 
 			CameraComponent* tbCam = avatar->getComponent<CameraComponent>();
-			tbCam->rotateAround(headLocalPos, pitch, yaw, radius / avatar->getScale()[0]);
+
+			glm::vec3 target = tbCam->getPosition() + tbCam->getForward() * camera.getRadius() / avatar->getScale()[0];
+			tbCam->rotateAround(target, pitch, yaw, radius / avatar->getScale()[0]);
 		}
 	}
 	else
