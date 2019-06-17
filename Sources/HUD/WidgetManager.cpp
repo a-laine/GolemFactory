@@ -442,6 +442,8 @@ void WidgetManager::loadDebugHud()
 	hudList["debug"].push_back(layer5);
 	hudList["debug"].push_back(layer6);
 
+	return;
+
 	//	save into file
 	std::ofstream file(ResourceManager::getInstance()->getRepository() + "GUI/debug.gui", std::ofstream::out);
 	Writer writer(&file);
@@ -541,6 +543,8 @@ void WidgetManager::loadHelpHud()
 	console->append(" ");
 	console->append(" ");
 	console->append(" ");
+
+	return;
 
 	//	save into file
 	std::ofstream file(ResourceManager::getInstance()->getRepository() + "GUI/help.gui", std::ofstream::out);
@@ -689,6 +693,8 @@ void WidgetManager::loadRenderingHud()
 	hudList["rendering"].push_back(layer2);
 	hudList["rendering"].push_back(layer3);
 	
+	return;
+
 	//	save into file
 	std::ofstream file(ResourceManager::getInstance()->getRepository() + "GUI/rendering.gui", std::ofstream::out);
 	Writer writer(&file);
