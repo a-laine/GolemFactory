@@ -101,7 +101,7 @@ int main()
 		WidgetManager::getInstance()->setActiveHUD("debug");
 		//auto eeeeeeee = glfwGetTime();
 		//for(int i=0; i<100000; i++)
-		//	Collision::debugUnitaryTest(2);
+			Collision::debugUnitaryTest(2);
 		//std::cout << "unitary test completion time : " << 10.0*(glfwGetTime() - eeeeeeee) << " us" << std::endl;
 		//return 0;
 
@@ -764,12 +764,11 @@ void updates(float elapseTime)
 	{
 		CameraComponent* ffCam = freeflyCamera->getComponent<CameraComponent>();
 		CameraComponent* tbCam = avatar->getComponent<CameraComponent>();
-		float speed = 0.003f;
-		float sensitivity = 0.2f;
-
+		
 		// Rotation
 		if (!EventHandler::getInstance()->getCursorMode())
 		{
+			float sensitivity = 0.2f;
 			float yaw = glm::radians(-sensitivity * EventHandler::getInstance()->getCursorPositionRelative().x);
 			float pitch = glm::radians(-sensitivity * EventHandler::getInstance()->getCursorPositionRelative().y);
 			ffCam->rotate(pitch, yaw);
@@ -780,6 +779,7 @@ void updates(float elapseTime)
 		glm::vec3 forward = ffCam->getForward(); // global because free rotations
 		glm::vec3 right = ffCam->getRight(); // global because free rotations
 
+		float speed = 0.003f;
 		if (EventHandler::getInstance()->isActivated(FORWARD)) direction += forward;
 		if (EventHandler::getInstance()->isActivated(BACKWARD)) direction -= forward;
 		if (EventHandler::getInstance()->isActivated(LEFT)) direction -= right;

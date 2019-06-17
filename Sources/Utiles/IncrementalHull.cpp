@@ -4,7 +4,7 @@
 #define EPSILON 0.00001f
 
 //  Default
-IncrementalHull::IncrementalHull() {};
+IncrementalHull::IncrementalHull() : degenerated(true) {};
 //
 
 //	Public functions

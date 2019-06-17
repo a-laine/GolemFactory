@@ -30,7 +30,7 @@ class Shape
 		//	Public functions
 		virtual Sphere toSphere() const;
 		virtual AxisAlignedBox toAxisAlignedBox() const;
-		virtual void operator=(const Shape& s);
+		virtual Shape& operator=(const Shape& s);
 		virtual void transform(const glm::vec3& position, const glm::vec3& scale, const glm::fquat& orientation);
 		virtual Shape* duplicate() const;
 		virtual glm::vec3 GJKsupport(const glm::vec3& direction) const;

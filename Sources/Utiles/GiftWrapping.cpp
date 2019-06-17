@@ -4,7 +4,7 @@
 #include <glm/gtx/vector_angle.hpp>
 
 
-GiftWrapping::GiftWrapping(){}
+GiftWrapping::GiftWrapping() : degenerated(true) {}
 Mesh* GiftWrapping::getConvexHull(Mesh* m)
 {
 	//	initialize

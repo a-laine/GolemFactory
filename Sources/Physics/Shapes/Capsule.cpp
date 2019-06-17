@@ -13,7 +13,7 @@ AxisAlignedBox Capsule::toAxisAlignedBox() const
 {
 	return AxisAlignedBox(glm::min(p1, p2) - glm::vec3(radius), glm::max(p1, p2) + glm::vec3(radius));
 }
-void Capsule::operator=(const Shape& s)
+Shape& Capsule::operator=(const Shape& s)
 {
 	if (s.type == Shape::CAPSULE)
 	{
@@ -22,6 +22,7 @@ void Capsule::operator=(const Shape& s)
 		p2 = capsule.p2;
 		radius = capsule.radius;
 	}
+	return *this;
 }
 void Capsule::transform(const glm::vec3& position, const glm::vec3& scale, const glm::fquat& orientation)
 {

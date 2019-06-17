@@ -12,7 +12,7 @@ AxisAlignedBox Sphere::toAxisAlignedBox() const
 {
 	return AxisAlignedBox(center - glm::vec3(radius), center + glm::vec3(radius));
 }
-void Sphere::operator=(const Shape& s)
+Shape& Sphere::operator=(const Shape& s)
 {
 	if (s.type == Shape::SPHERE)
 	{
@@ -20,6 +20,7 @@ void Sphere::operator=(const Shape& s)
 		center = sphere.center;
 		radius = sphere.radius;
 	}
+	return *this;
 }
 void Sphere::transform(const glm::vec3& position, const glm::vec3& scale, const glm::fquat& orientation)
 {

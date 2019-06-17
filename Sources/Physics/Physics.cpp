@@ -163,7 +163,7 @@ void Physics::narrowPhase(Entity* entity1, Entity* entity2, Shape prediction1)
 //	Pipeline
 void Physics::predictTransform(const float& elapsedTime)
 {
-	for (std::set<Entity*>::iterator it = movingEntity.begin(); it != movingEntity.end(); it++)
+	for (std::set<Entity*>::iterator it = movingEntity.begin(); it != movingEntity.end(); ++it)
 	{
 		RigidBody* rigidbody = (*it)->getComponent<RigidBody>();
 		if (!rigidbody) it = std::prev(movingEntity.erase(it));
@@ -207,7 +207,7 @@ void Physics::predictTransform(const float& elapsedTime)
 }
 void Physics::computeBoundingShapes(const float& elapsedTime)
 {
-	for (std::set<Entity*>::iterator it = movingEntity.begin(); it != movingEntity.end(); it++)
+	for (std::set<Entity*>::iterator it = movingEntity.begin(); it != movingEntity.end(); ++it)
 	{
 		RigidBody* rigidbody = (*it)->getComponent<RigidBody>();
 

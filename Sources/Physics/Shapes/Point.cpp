@@ -8,13 +8,14 @@
 Point::Point(const glm::vec3& position) : Shape(POINT), p(position) {}
 Sphere Point::toSphere() const { return Sphere(p, 0.f); }
 AxisAlignedBox Point::toAxisAlignedBox() const { return AxisAlignedBox(p, p); }
-void Point::operator=(const Shape& s)
+Shape& Point::operator=(const Shape& s)
 {
 	if (s.type == Shape::POINT)
 	{
 		const Point& point = *static_cast<const Point*>(&s);
 		p = point.p;
 	}
+	return *this;
 };
 void Point::transform(const glm::vec3& position, const glm::vec3& scale, const glm::fquat& orientation)
 {

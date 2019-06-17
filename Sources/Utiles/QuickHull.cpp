@@ -2,7 +2,7 @@
 #include "Utiles/ToolBox.h"
 
 
-QuickHull::QuickHull() {};
+QuickHull::QuickHull() : degenerated(true) {};
 Mesh* QuickHull::getConvexHull(Mesh* m)
 {
 	// initialization

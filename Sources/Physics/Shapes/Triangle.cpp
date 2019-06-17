@@ -33,7 +33,7 @@ AxisAlignedBox Triangle::toAxisAlignedBox() const
 {
 	return AxisAlignedBox(glm::min(p1, glm::min(p2, p3)), glm::max(p1, glm::max(p2, p3)));
 }
-void Triangle::operator=(const Shape& s)
+Shape& Triangle::operator=(const Shape& s)
 {
 	if (s.type == Shape::TRIANGLE)
 	{
@@ -42,6 +42,7 @@ void Triangle::operator=(const Shape& s)
 		p2 = triangle.p2;
 		p3 = triangle.p3;
 	}
+	return *this;
 }
 void Triangle::transform(const glm::vec3& position, const glm::vec3& scale, const glm::fquat& orientation)
 {

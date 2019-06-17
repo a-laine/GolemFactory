@@ -20,7 +20,7 @@ AxisAlignedBox OrientedBox::toAxisAlignedBox() const
 	glm::vec3 p2 = glm::vec3(base*glm::vec4(max, 1.f));
 	return AxisAlignedBox(glm::min(p1, p2), glm::max(p1, p2));
 }
-void OrientedBox::operator=(const Shape& s)
+Shape& OrientedBox::operator=(const Shape& s)
 {
 	if (s.type == Shape::ORIENTED_BOX)
 	{
@@ -29,6 +29,7 @@ void OrientedBox::operator=(const Shape& s)
 		min = box.min;
 		max = box.max;
 	}
+	return *this;
 }
 void OrientedBox::transform(const glm::vec3& position, const glm::vec3& scale, const glm::fquat& orientation)
 {

@@ -15,8 +15,9 @@ class QuickHull
 		struct Edge;
 		struct Face
 		{
-			Face() : p1(0.f), p2(0.f), p3(0.f), n(0.f), onHull(true) {};
-			Face(const glm::vec3& point1, const glm::vec3& point2, const glm::vec3& point3, const glm::vec3& normal) : p1(point1), p2(point2), p3(point3), n(normal), onHull(true) {};
+			Face() : p1(0.f), p2(0.f), p3(0.f), n(0.f), onHull(true), e1(nullptr), e2(nullptr), e3(nullptr) {};
+			Face(const glm::vec3& point1, const glm::vec3& point2, const glm::vec3& point3, const glm::vec3& normal) : 
+				p1(point1), p2(point2), p3(point3), n(normal), onHull(true), e1(nullptr), e2(nullptr), e3(nullptr) {};
 
 			glm::vec3 n;
 			glm::vec3 p1, p2, p3;
@@ -26,8 +27,8 @@ class QuickHull
 		};
 		struct Edge
 		{
-			Edge() : p1(0.f), p2(0.f), onHull(true) {};
-			Edge(const glm::vec3& point1, const glm::vec3& point2) : p1(point1), p2(point2), onHull(true) {};
+			Edge() : p1(0.f), p2(0.f), onHull(true), f1(nullptr), f2(nullptr) {};
+			Edge(const glm::vec3& point1, const glm::vec3& point2) : p1(point1), p2(point2), onHull(true), f1(nullptr), f2(nullptr) {};
 
 			glm::vec3 p1, p2;
 			bool onHull;

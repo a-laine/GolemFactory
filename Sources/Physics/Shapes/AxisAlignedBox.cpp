@@ -10,7 +10,7 @@
 AxisAlignedBox::AxisAlignedBox(const glm::vec3& cornerMin, const glm::vec3& cornerMax)
 	: Shape(AXIS_ALIGNED_BOX), min(cornerMin), max(cornerMax) {}
 Sphere AxisAlignedBox::toSphere() const { return Sphere(0.5f*(min + max), 0.5f*glm::length(min - max)); }
-void AxisAlignedBox::operator=(const Shape& s)
+Shape& AxisAlignedBox::operator=(const Shape& s)
 {
 	if (s.type == Shape::AXIS_ALIGNED_BOX)
 	{
@@ -18,6 +18,7 @@ void AxisAlignedBox::operator=(const Shape& s)
 		min = box.min;
 		max = box.max;
 	}
+	return *this;
 }
 AxisAlignedBox AxisAlignedBox::toAxisAlignedBox() const { return *this; }
 void AxisAlignedBox::transform(const glm::vec3& position, const glm::vec3& scale, const glm::fquat& orientation)

@@ -12,7 +12,7 @@ AxisAlignedBox Segment::toAxisAlignedBox() const
 {
 	return AxisAlignedBox(glm::min(p1, p2), glm::max(p1, p2));
 }
-void Segment::operator=(const Shape& s)
+Shape& Segment::operator=(const Shape& s)
 {
 	if (s.type == Shape::SEGMENT)
 	{
@@ -20,6 +20,7 @@ void Segment::operator=(const Shape& s)
 		p1 = segment.p1;
 		p2 = segment.p2;
 	}
+	return *this;
 }
 void Segment::transform(const glm::vec3& position, const glm::vec3& scale, const glm::fquat& orientation)
 {
