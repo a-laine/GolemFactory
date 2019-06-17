@@ -33,9 +33,30 @@ void drawNormal(int p1, int p2)
 	EndPrimitive();
 }
 
+void drawFaceNormal()
+{
+	gl_Position = 0.3 * (gl_in[0].gl_Position + gl_in[1].gl_Position + gl_in[2].gl_Position);
+	fragmentColor_fs = normalColor;
+	barycentricCoord = vec3(1.0 , 0.0 , 0.0);
+	EmitVertex();
+	
+	gl_Position = 0.3 * (delta_gs[0] + delta_gs[1] + delta_gs[2]);
+	fragmentColor_fs = normalColor;
+	barycentricCoord = vec3(1.0 , 0.0 , 0.0);
+	EmitVertex();
+	
+	gl_Position = gl_in[0].gl_Position;
+	fragmentColor_fs = normalColor;
+	barycentricCoord = vec3(0.0 , 1.0 , 0.0);
+	EmitVertex();
+	
+	EndPrimitive();
+}
+
 void main()
 {
 	drawNormal(0 , 1);
 	drawNormal(1 , 2);
 	drawNormal(2 , 0);
+	drawFaceNormal();
 }

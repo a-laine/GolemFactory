@@ -1,12 +1,11 @@
 #include "Entity.hpp"
-
-#include <Renderer/DrawableComponent.h>
-#include <Utiles/Assert.hpp>
+#include "Renderer/DrawableComponent.h"
+#include "Utiles/Assert.hpp"
 
 
 
 //	Default
-Entity::Entity() : m_refCount(0), m_parentWorld(nullptr), m_scale(1.f), m_rotation(), m_localBoundingShape(nullptr), m_globalBoundingShape(nullptr)
+Entity::Entity() : m_refCount(0), m_parentWorld(nullptr), m_localBoundingShape(nullptr), m_globalBoundingShape(nullptr)
 {}
 //
 
@@ -31,21 +30,18 @@ void Entity::removeComponent(Component* component)
 //	Set/Get functions
 void Entity::setPosition(const glm::vec3& position)
 {
-	setTransformation(position, m_scale, m_rotation);
+	setTransformation(position, getScale(), getOrientation());
 }
 void Entity::setScale(const glm::vec3& scale)
 {
-	setTransformation(getPosition(), scale, m_rotation);
+	setTransformation(getPosition(), scale, getOrientation());
 }
 void Entity::setOrientation(const glm::quat& orientation)
 {
-	setTransformation(getPosition(), m_scale, orientation);
+	setTransformation(getPosition(), getScale(), orientation);
 }
 void Entity::setTransformation(const glm::vec3& position, const glm::vec3& scale, const glm::fquat& orientation)
 {
-	m_scale = scale;
-	m_rotation = orientation;
-
 	m_transform = glm::translate(glm::mat4(1.0), position);
 	m_transform = m_transform * glm::toMat4(orientation);
 	m_transform = glm::scale(m_transform, scale);
@@ -68,15 +64,45 @@ void Entity::setShape(Shape* Shape)
 	if (m_globalBoundingShape)
 		delete m_globalBoundingShape;
 	m_globalBoundingShape = m_localBoundingShape->duplicate();
-	m_globalBoundingShape->transform(glm::vec3(m_transform[3]), m_scale, m_rotation);
+	m_globalBoundingShape->transform(glm::vec3(m_transform[3]), getScale(), getOrientation());
 }
 
 
 uint64_t Entity::getId() const { return reinterpret_cast<uintptr_t>(this); }
 const glm::mat4& Entity::getMatrix() const { return m_transform; }
-glm::vec3 Entity::getPosition() const { return glm::vec3(m_transform[3]); }
-glm::vec3 Entity::getScale() const { return m_scale; }
-glm::fquat Entity::getOrientation() const { return m_rotation; }
+glm::vec3 Entity::getPosition() const
+{
+	return glm::vec3(m_transform[3]);
+}
+glm::vec3 Entity::getScale() const
+{
+	return glm::vec3(glm::length(m_transform[0]), glm::length(m_transform[1]), glm::length(m_transform[2]));
+}
+glm::fquat Entity::getOrientation() const
+{
+	glm::vec3 s = getScale();
+	float m00 = m_transform[0][0] / s.x;
+	float m01 = m_transform[0][1] / s.y;
+	float m02 = m_transform[0][2] / s.z;
+	float m10 = m_transform[1][0] / s.x;
+	float m11 = m_transform[1][1] / s.y;
+	float m12 = m_transform[1][2] / s.z;
+	float m20 = m_transform[2][0] / s.x;
+	float m21 = m_transform[2][1] / s.y;
+	float m22 = m_transform[2][2] / s.z;
+
+	glm::fquat q;
+	q.w = glm::sqrt(glm::max(0.f, 1 + m00 + m11 + m22)) / 2;
+	q.x = glm::sqrt(glm::max(0.f, 1 + m00 - m11 - m22)) / 2;
+	q.y = glm::sqrt(glm::max(0.f, 1 - m00 + m11 - m22)) / 2;
+	q.z = glm::sqrt(glm::max(0.f, 1 - m00 - m11 + m22)) / 2;
+	q.x *= glm::sign(q.x * (m21 - m12));
+	q.y *= glm::sign(q.y * (m02 - m20));
+	q.z *= glm::sign(q.z * (m10 - m01));
+
+	glm::normalize(q);
+	return q;
+}
 World* Entity::getParentWorld() const { return m_parentWorld; }
 
 const Shape* Entity::getLocalBoundingShape() const

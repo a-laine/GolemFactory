@@ -48,8 +48,8 @@ class Entity : public EntityBase
 		//	Attributes
 		World* m_parentWorld;
 		std::atomic<uint32_t> m_refCount;
-		glm::vec3 m_scale;
-		glm::fquat m_rotation;
+		//glm::vec3 m_scale;
+		//glm::fquat m_rotation;
 		glm::mat4 m_transform;
         Shape* m_localBoundingShape;
 		Shape* m_globalBoundingShape;
