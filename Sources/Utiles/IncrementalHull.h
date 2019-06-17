@@ -8,9 +8,7 @@
 class IncrementalHull
 {
 	public:
-		IncrementalHull();
-		Mesh* getConvexHull(Mesh* m);
-
+		//	Miscellaneous
 		struct Edge;
 		struct Face
 		{
@@ -30,17 +28,30 @@ class IncrementalHull
 			int horizonCheck;
 			Face *f1, *f2;
 		};
+		//
+		
+		//  Default
+		IncrementalHull();
+		//
+
+		//	Public functions
+		Mesh* getConvexHull(Mesh* m);
+		//
 
 	protected:
+		//	Protected functions
 		void initializeHull(const std::vector<glm::vec3>& pointCloud);
 		std::list<Edge*> computeHorizon(const glm::vec3& eye);
 		bool isFaceEdge(const Face& f, const Edge& e);
 		Edge* existingEdge(const glm::vec3& p1, const glm::vec3& p2);
 		bool checkFaceNormal(const Face& f);
+		//
 
+		//	Attributes
 		bool degenerated;
 		std::list<Edge> hullEdges;
 		std::list<Face> hullFaces;
+		//
 };
 
 

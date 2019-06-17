@@ -3,7 +3,11 @@
 
 #define EPSILON 0.00001f
 
+//  Default
 IncrementalHull::IncrementalHull() {};
+//
+
+//	Public functions
 Mesh* IncrementalHull::getConvexHull(Mesh* m)
 {
 	//	initialization
@@ -153,8 +157,9 @@ Mesh* IncrementalHull::getConvexHull(Mesh* m)
 	}
 	return mesh;
 }
+//
 
-
+//	Protected functions
 void IncrementalHull::initializeHull(const std::vector<glm::vec3>& pointCloud)
 {
 	//	compute initial segment
@@ -365,4 +370,4 @@ bool IncrementalHull::checkFaceNormal(const Face& f)
 	}
 	return false;
 }
-
+//
