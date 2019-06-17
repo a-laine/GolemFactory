@@ -1,4 +1,5 @@
 #include "Collision.h"
+#include "GJK.h"
 
 #include <iostream>
 #include <string>
@@ -101,10 +102,6 @@ namespace
 		const Triangle* a = static_cast<const Triangle*>(&triangle);
 		switch (b.type)
 		{
-			case Shape::TRIANGLE: {
-				const Triangle* c = static_cast<const Triangle*>(&b);
-				return Collision::collide_TrianglevsTriangle(a->p1, a->p2, a->p3, c->p1, c->p2, c->p3);
-			}
 			case Shape::ORIENTED_BOX: {
 				const OrientedBox* c = static_cast<const OrientedBox*>(&b);
 				return Collision::collide_TrianglevsOrientedBox(a->p1, a->p2, a->p3, c->base, c->min, c->max);
@@ -117,11 +114,7 @@ namespace
 				const Sphere* c = static_cast<const Sphere*>(&b);
 				return Collision::collide_TrianglevsSphere(a->p1, a->p2, a->p3, c->center, c->radius);
 			}
-			case Shape::CAPSULE: {
-				const Capsule* c = static_cast<const Capsule*>(&b);
-				return Collision::collide_TrianglevsCapsule(a->p1, a->p2, a->p3, c->p1, c->p2, c->radius);
-			}
-			default: return false;
+			default: return GJK::collide(triangle, b);
 		}
 	};
 	inline bool collide_OrientedBoxvsShape(const Shape& obox, const Shape& b)
@@ -129,23 +122,11 @@ namespace
 		const OrientedBox* a = static_cast<const OrientedBox*>(&obox);
 		switch (b.type)
 		{
-			case Shape::ORIENTED_BOX: {
-				const OrientedBox* c = static_cast<const OrientedBox*>(&b);
-				return Collision::collide_OrientedBoxvsOrientedBox(a->base, a->min, a->max, c->base, c->min, c->max);
-			}
-			case Shape::AXIS_ALIGNED_BOX: {
-				const AxisAlignedBox* c = static_cast<const AxisAlignedBox*>(&b);
-				return Collision::collide_OrientedBoxvsAxisAlignedBox(a->base, a->min, a->max, c->min, c->max);
-			}
 			case Shape::SPHERE: {
 				const Sphere* c = static_cast<const Sphere*>(&b);
 				return Collision::collide_OrientedBoxvsSphere(a->base, a->min, a->max, c->center, c->radius);
 			}
-			case Shape::CAPSULE: {
-				const Capsule* c = static_cast<const Capsule*>(&b);
-				return Collision::collide_OrientedBoxvsCapsule(a->base, a->min, a->max, c->p1, c->p2, c->radius);
-			}
-			default: return false;
+			default: return GJK::collide(obox, b);
 		}
 	};
 	inline bool collide_AxisAlignedBoxvsShape(const Shape& aabox, const Shape& b)
@@ -161,11 +142,7 @@ namespace
 				const Sphere* c = static_cast<const Sphere*>(&b);
 				return Collision::collide_AxisAlignedBoxvsSphere(a->min, a->max, c->center, c->radius);
 			}
-			case Shape::CAPSULE: {
-				const Capsule* c = static_cast<const Capsule*>(&b);
-				return Collision::collide_AxisAlignedBoxvsCapsule(a->min, a->max, c->p1, c->p2, c->radius);
-			}
-			default: return false;
+			default: return GJK::collide(aabox, b);
 		}
 	};
 	inline bool collide_SpherevsShape(const Shape& sphere, const Shape& b)

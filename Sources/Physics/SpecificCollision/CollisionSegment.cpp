@@ -181,10 +181,6 @@ bool Collision::collide_SegmentvsCapsule(const glm::vec3& segment1, const glm::v
 		else // segment are parallel
 		{
 			std::pair<glm::vec3, glm::vec3> s = getSegmentsClosestSegment(segment1, segment2, capsule1, capsule2);
-
-			/*glm::vec3 u1 = glm::normalize(s1);
-			glm::vec3 u3 = segment1 - capsule1;
-			glm::vec3 d = u3 - u1 * std::abs(glm::dot(u3, u1));*/
 			return glm::length(s.second - s.first) <= std::max(capsuleRadius, COLLISION_EPSILON);
 		}
 	}

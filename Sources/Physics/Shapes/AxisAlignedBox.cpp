@@ -34,11 +34,11 @@ glm::vec3 AxisAlignedBox::GJKsupport(const glm::vec3& direction) const
 	glm::vec3 support(0.f);
 
 	if (direction.x > 0) support.x = max.x;
-	else support.x = min.x;
+	else if (direction.x < 0) support.x = min.x;
 	if (direction.y > 0) support.y = max.y;
-	else support.y = min.y;
+	else if (direction.y < 0) support.y = min.y;
 	if (direction.z > 0) support.z = max.z;
-	else support.z = min.z;
+	else if(direction.z < 0) support.z = min.z;
 
 	return support;
 }
