@@ -243,6 +243,7 @@ unsigned int Mesh::getNumberFaces() const { return (unsigned int)faces.size(); }
 const std::vector<glm::vec3>* Mesh::getBBoxVertices() const { return &vBBox; }
 const std::vector<unsigned short>* Mesh::getBBoxFaces() const { return &fBBox; }
 const std::vector<glm::vec3>* Mesh::getVertices() const { return &vertices; }
+const std::vector<glm::vec3>* Mesh::getNormals() const { return &normals; }
 const std::vector<unsigned short>* Mesh::getFaces() const { return &faces; }
 const std::vector<glm::ivec3>* Mesh::getBones() const { return &bones; }
 const std::vector<glm::vec3>* Mesh::getWeights() const { return &weights; }

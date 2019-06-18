@@ -1,5 +1,6 @@
 #include "Collision.h"
 #include "GJK.h"
+#include "Resources/Mesh.h"
 
 #include <iostream>
 #include <string>
@@ -7,7 +8,7 @@
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/component_wise.hpp>
-
+#include <glm/gtx/quaternion.hpp>
 
 // https://github.com/gszauer/GamePhysicsCookbook/blob/master/Code/Geometry3D.cpp
 // http://www.realtimerendering.com/Collisions.html 
@@ -61,6 +62,10 @@ namespace
 			case Shape::CAPSULE: {
 				const Capsule* c = static_cast<const Capsule*>(&b);
 				return Collision::collide_PointvsCapsule(a->p, c->p1, c->p2, c->radius);
+			}
+			case Shape::HULL: {
+				const Hull* c = static_cast<const Hull*>(&b);
+				return Collision::collide_PointvsHull(a->p, *c->mesh->getVertices(), *c->mesh->getNormals(), *c->mesh->getFaces(), c->base);
 			}
 			default: return false;
 		}
@@ -214,7 +219,7 @@ bool Collision::collide(const Shape& a, const Shape& b)
 		default:						return false;
 	}
 }
-void Collision::debugUnitaryTest(const int& verboseLevel)
+void Collision::debugUnitaryTest(const int& verboseLevel, const Hull* testHull)
 {
 	// point vs ...
 	{
@@ -285,6 +290,24 @@ void Collision::debugUnitaryTest(const int& verboseLevel)
 			printError("point", "capsule", __LINE__ - 1);
 		if (Collision::collide(testPoint, Capsule(glm::vec3(2, 0, -1), glm::vec3(-1, 0, 3), 2.f)) == false && verboseLevel)
 			printError("point", "capsule", __LINE__ - 1);
+
+		// ... vs Hull
+		if (testHull)
+		{
+			glm::fquat dummyRotate = glm::rotate(glm::fquat(), 0.1f, glm::normalize(glm::vec3(0.5, 1, 3)));
+			Hull hull = *static_cast<Hull*>(testHull->duplicate());
+			hull.transform(glm::vec3(0, 0, -1), glm::vec3(1, 1, 1), glm::fquat());
+
+			if(Collision::collide(testPoint, hull) == false && verboseLevel)
+				printError("point", "hull", __LINE__ - 1);
+			hull.transform(glm::vec3(0, 0, 0), glm::vec3(1, 1, 1), dummyRotate);
+			if (Collision::collide(testPoint, hull) == false && verboseLevel)
+				printError("point", "hull", __LINE__ - 1);
+			hull.transform(glm::vec3(20, 0, 0), glm::vec3(1, 1, 1), glm::fquat());
+			if (Collision::collide(testPoint, hull) == true && verboseLevel)
+				printError("point", "hull", __LINE__ - 1);
+			
+		}
 	}
 
 	// segment vs ...
@@ -564,6 +587,45 @@ void Collision::debugUnitaryTest(const int& verboseLevel)
 			printError("capsule", "capsule", __LINE__ - 1);
 		if (Collision::collide(testCapsule, Capsule(glm::vec3(0, -1, -1), glm::vec3(0, 1, 1), 0.f)) == false && verboseLevel)
 			printError("capsule", "capsule", __LINE__ - 1);
+
+		// ... vs Hull
+		if (testHull)
+		{
+			glm::fquat dummyRotate = glm::rotate(glm::fquat(), 0.1f, glm::normalize(glm::vec3(0.5, 1, 3)));
+			Hull hull = *static_cast<Hull*>(testHull->duplicate());
+			hull.transform(glm::vec3(0, 0, -1), glm::vec3(1, 1, 1), glm::fquat());
+
+			if (Collision::collide(testCapsule, hull) == false && verboseLevel)
+				printError("capsule", "hull", __LINE__ - 1);
+			hull.transform(glm::vec3(0, 0, 0), glm::vec3(1, 1, 1), dummyRotate);
+			if (Collision::collide(testCapsule, hull) == false && verboseLevel)
+				printError("capsule", "hull", __LINE__ - 1);
+			hull.transform(glm::vec3(20, 0, 0), glm::vec3(1, 1, 1), glm::fquat());
+			if (Collision::collide(testCapsule, hull) == true && verboseLevel)
+				printError("capsule", "hull", __LINE__ - 1);
+
+		}
+	}
+
+	// hull vs ...
+	{
+		if (testHull)
+		{
+			glm::fquat dummyRotate = glm::rotate(glm::fquat(), 0.1f, glm::normalize(glm::vec3(0.5, 1, 3)));
+			Hull hull1 = *static_cast<Hull*>(testHull->duplicate());
+			Hull hull2 = *static_cast<Hull*>(testHull->duplicate());
+			hull2.transform(glm::vec3(0, 0, -1), glm::vec3(1, 1, 1), glm::fquat());
+
+			if (Collision::collide(hull1, hull2) == false && verboseLevel)
+				printError("hull", "hull", __LINE__ - 1);
+			hull2.transform(glm::vec3(0, 0, 0), glm::vec3(1, 1, 1), dummyRotate);
+			if (Collision::collide(hull1, hull2) == false && verboseLevel)
+				printError("hull", "hull", __LINE__ - 1);
+			hull2.transform(glm::vec3(20, 0, 0), glm::vec3(1, 1, 1), glm::fquat());
+			if (Collision::collide(hull1, hull2) == true && verboseLevel)
+				printError("hull", "hull", __LINE__ - 1);
+
+		}
 	}
 }
 //

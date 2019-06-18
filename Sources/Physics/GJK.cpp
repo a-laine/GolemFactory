@@ -4,7 +4,7 @@
 
 #include <iostream>
 
-#define MAX_ITERATION 20
+#define MAX_ITERATION 50
 
 //	Public functions
 bool GJK::collide(const Shape& a, const Shape& b)

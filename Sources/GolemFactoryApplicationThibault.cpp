@@ -99,11 +99,6 @@ int main()
 
 	//	Collision test
 		WidgetManager::getInstance()->setActiveHUD("debug");
-		/*auto eeeeeeee = glfwGetTime();
-		for(int i=0; i<100000; i++)
-			Collision::debugUnitaryTest(2);
-		std::cout << "unitary test completion time : " << 10.0*(glfwGetTime() - eeeeeeee) << " us" << std::endl;
-		return 0;*/
 
 	//	Test scene
 		Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("wired"));
@@ -154,7 +149,12 @@ int main()
 		Renderer::getInstance()->normalViewer = ResourceManager::getInstance()->getResource<Shader>("normalViewer");
 
 		Entity* testTree = world.getEntityFactory().createObject("tree", glm::vec3(5, 0, 0), glm::vec3(1), glm::rotate(glm::quat(), glm::radians((rand() % 3600) / 10.f), glm::vec3(0, 0, 1)));
-		//Entity* testTree = world.getEntityFactory().createObject("cube", glm::vec3(5,0,0), glm::vec3(1), glm::rotate(glm::quat(), glm::radians((rand() % 3600) / 10.f), glm::vec3(0, 0, 1)));
+
+		auto eeeeeeee = glfwGetTime();
+		for (int i = 0; i<1; i++)
+			Collision::debugUnitaryTest(2, static_cast<const Hull*>(testTree->getLocalBoundingShape()));
+		std::cout << "unitary test completion time : " << 1000000.0*(glfwGetTime() - eeeeeeee) << " us" << std::endl;
+		return 0;
 
 	// init loop time tracking
 	double averageTime = 0;

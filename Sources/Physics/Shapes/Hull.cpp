@@ -13,6 +13,10 @@
 //	Default
 Hull::Hull(Mesh* m, glm::mat4 transform) : Shape(HULL), base(transform), mesh(m)
 {}
+Hull::~Hull()
+{
+	ResourceManager::getInstance()->release(mesh);
+}
 //
 
 //	Public functions
@@ -52,9 +56,6 @@ void Hull::transform(const glm::vec3& position, const glm::vec3& scale, const gl
 	m = m * glm::toMat4(orientation);
 	m = glm::scale(m, scale);
 	base = m * base;
-	//auto vertices = *mesh->getVertices();
-	//for (unsigned int i = 0; i < vertices.size(); i++)
-	//	vertices[i] = glm::vec3(m * glm::vec4(vertices[i], 1.f));
 }
 Shape* Hull::duplicate() const
 {
@@ -63,7 +64,7 @@ Shape* Hull::duplicate() const
 }
 glm::vec3 Hull::GJKsupport(const glm::vec3& direction) const
 {
-	glm::vec3 u = glm::vec3(glm::inverse(base) * glm::vec4(direction, 1.f));
+	glm::vec3 u = glm::vec3(glm::inverse(base) * glm::vec4(direction, 0.f));
 	float d = std::numeric_limits<float>::min();
 	glm::vec3 v = glm::vec3(0.f);
 	auto vertices = *mesh->getVertices();
@@ -76,6 +77,6 @@ glm::vec3 Hull::GJKsupport(const glm::vec3& direction) const
 			v = vertices[i];
 		}
 	}
-	return v;
+	return glm::vec3(base * glm::vec4(v, 1.f));
 }
 //

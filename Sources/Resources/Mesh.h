@@ -57,6 +57,7 @@ class Mesh : public ResourceVirtual
 		const std::vector<glm::vec3>* getBBoxVertices() const;
 		const std::vector<unsigned short>* getBBoxFaces() const;
 		const std::vector<glm::vec3>* getVertices() const;
+		const std::vector<glm::vec3>* getNormals() const;
 		const std::vector<unsigned short>* getFaces() const;
 		const std::vector<glm::ivec3>* getBones() const;
 		const std::vector<glm::vec3>* getWeights() const;
