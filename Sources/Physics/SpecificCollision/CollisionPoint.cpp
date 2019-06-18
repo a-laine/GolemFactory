@@ -91,4 +91,13 @@ bool Collision::collide_PointvsCapsule(const glm::vec3& point, const glm::vec3& 
 		return glm::dot(u3, u3) <= std::max(capsuleRadius, COLLISION_EPSILON) && glm::dot(u, u2) <= glm::length(s) + capsuleRadius && glm::dot(u, u2) >= -capsuleRadius;
 	}
 }
+bool Collision::collide_PointvsHull(const glm::vec3& point, const std::vector<glm::vec3>& hullPoints, const std::vector<glm::vec3>& hullNormals, const std::vector<unsigned short>& hullFaces)
+{
+	for (unsigned int i = 0; i < hullNormals.size(); i++)
+	{
+		if (glm::dot(hullNormals[i], point - hullPoints[hullFaces[3 * i]]) >= 0)
+			return false;
+	}
+	return true;
+}
 //

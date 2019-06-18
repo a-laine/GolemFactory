@@ -37,4 +37,6 @@ class ToolBox
 									    std::vector<glm::vec3>& normalesArray,
 										std::vector<glm::vec3>& colorArray,
 										std::vector<unsigned short>&facesArray );
+
+		static void optimizeHullMesh(std::vector<glm::vec3>& verticesArray, std::vector<unsigned short>&facesArray);
 };

@@ -99,11 +99,11 @@ int main()
 
 	//	Collision test
 		WidgetManager::getInstance()->setActiveHUD("debug");
-		//auto eeeeeeee = glfwGetTime();
-		//for(int i=0; i<100000; i++)
+		/*auto eeeeeeee = glfwGetTime();
+		for(int i=0; i<100000; i++)
 			Collision::debugUnitaryTest(2);
-		//std::cout << "unitary test completion time : " << 10.0*(glfwGetTime() - eeeeeeee) << " us" << std::endl;
-		//return 0;
+		std::cout << "unitary test completion time : " << 10.0*(glfwGetTime() - eeeeeeee) << " us" << std::endl;
+		return 0;*/
 
 	//	Test scene
 		Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("wired"));

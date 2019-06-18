@@ -131,7 +131,7 @@ Mesh* IncrementalHull::getConvexHull(Mesh* m)
 	}
 	else
 	{
-		std::cout << "  good mesh" << std::endl;
+		//	create a drawable mesh
 		glm::vec3 hullColor = glm::vec3(0.5f, 0.f, 1.f);
 		std::vector<glm::vec3> vertices;
 		std::vector<glm::vec3> normales;
@@ -154,6 +154,30 @@ Mesh* IncrementalHull::getConvexHull(Mesh* m)
 		}
 		ToolBox::optimizeStaticMesh(vertices, normales, colors, faces);
 		mesh->initialize(vertices, normales, colors, faces, std::vector<glm::ivec3>(), std::vector<glm::vec3>());
+	}
+	
+
+	//
+	if (!degenerated)
+	{
+		std::vector<glm::vec3> vertices;
+		std::vector<glm::vec3> normales;
+		std::vector<unsigned short> faces;
+
+		for (auto it = hullFaces.begin(); it != hullFaces.end(); it++)
+		{
+			faces.push_back((unsigned short)vertices.size());  vertices.push_back(it->p1);
+			faces.push_back((unsigned short)vertices.size());  vertices.push_back(it->p2);
+			faces.push_back((unsigned short)vertices.size());  vertices.push_back(it->p3);
+
+			normales.push_back(glm::normalize(it->n));
+		}
+
+		ToolBox::optimizeHullMesh(vertices, faces);
+		mesh->vertices = vertices;
+		mesh->faces = faces;
+		mesh->normals = normales;
+		mesh->colors.clear();
 	}
 	return mesh;
 }

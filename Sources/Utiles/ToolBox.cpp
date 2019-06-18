@@ -247,5 +247,45 @@ void ToolBox::optimizeStaticMesh(std::vector<glm::vec3>& verticesArray,
 	colorArray.swap(colorBuffer);
 	facesArray.swap(facesBuffer);
 }
+void ToolBox::optimizeHullMesh(std::vector<glm::vec3>& verticesArray, std::vector<unsigned short>&facesArray)
+{
+	/*std::vector<glm::vec3> verticesBuffer;
+	std::vector<glm::vec3> normalesBuffer;
+	std::vector<unsigned short> facesBuffer;
 
+	struct vec3
+	{
+		vec3() :x(0), y(0), z(0) {}
+		vec3(glm::vec3 v) :x(v.x), y(v.y), z(v.z) {}
+		bool operator<(const vec3& r)
+		{
+			if (x != r.x) return x < r.x;
+			else if (y != r.y) return y < r.y;
+			else return z < r.z;
+		}
+		glm::vec3 vec() const { return glm::vec3(x, y, z); }
+		float x, y, z;
+	};
+
+	std::map<vec3, unsigned short> vertexAlias;
+	std::map<vec3, unsigned short>::iterator alias;
+	vec3 current;
+
+	for (unsigned int i = 0; i < facesArray.size(); i++)
+	{
+		current = vec3(verticesArray[facesArray[i]]);
+
+		alias = vertexAlias.find(current);
+		if (alias == vertexAlias.end())
+		{
+			verticesBuffer.push_back(verticesArray[facesArray[i]]);
+			facesBuffer.push_back((unsigned short)vertexAlias.size());
+			vertexAlias[current] = (unsigned short)vertexAlias.size();
+		}
+		else facesBuffer.push_back(alias->second);
+	}
+
+	verticesArray.swap(verticesBuffer);
+	facesArray.swap(facesBuffer);*/
+}
 //

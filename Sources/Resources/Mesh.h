@@ -12,6 +12,7 @@ class Mesh : public ResourceVirtual
 {
 	friend class HouseGenerator;
 	friend class MeshSaver;
+	friend class IncrementalHull;
 
     public:
         static char const * const directory;
