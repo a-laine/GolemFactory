@@ -250,14 +250,17 @@ void ToolBox::optimizeStaticMesh(std::vector<glm::vec3>& verticesArray,
 }
 void ToolBox::optimizeHullMesh(Mesh* mesh)
 {
+	//	copy current array of mesh
 	std::vector<glm::vec3> verticesArray = *mesh->getVertices();
 	std::vector<glm::vec3> normalesArray = *mesh->getNormals();
 	std::vector<unsigned short> facesArray = *mesh->getFaces();
 
+	// create result output
 	std::vector<glm::vec3> verticesBuffer;
 	std::vector<glm::vec3> normalBuffer;
 	std::vector<unsigned short> facesBuffer;
 
+	//	struct to be able to sort vertices
 	struct OrderedVertex
 	{
 		glm::vec3 position;
@@ -278,6 +281,7 @@ void ToolBox::optimizeHullMesh(Mesh* mesh)
 		};
 	};
 
+	//	association table "vertex <-> index"
 	std::map<OrderedVertex, unsigned short> aliases;
 	std::map<OrderedVertex, unsigned short>::iterator alias;
 	OrderedVertex current;
@@ -289,15 +293,16 @@ void ToolBox::optimizeHullMesh(Mesh* mesh)
 			normalBuffer.push_back(normalesArray[facesArray[i]]);
 
 		alias = aliases.find(current);
-		if (alias == aliases.end())
+		if (alias == aliases.end())	// no alias found for current vertex (so create one)
 		{
 			aliases[current] = (unsigned short)verticesBuffer.size();
 			facesBuffer.push_back((unsigned short)verticesBuffer.size());
 			verticesBuffer.push_back(verticesArray[facesArray[i]]);
 		}
-		else facesBuffer.push_back(alias->second);
+		else facesBuffer.push_back(alias->second); // use the alias found instead
 	}
 
+	//	replace mesh arrays
 	mesh->colors.clear();
 	mesh->vertices = verticesBuffer;
 	mesh->normals = normalBuffer;

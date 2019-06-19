@@ -10,6 +10,34 @@ IncrementalHull::IncrementalHull() : degenerated(true) {};
 //	Public functions
 Mesh* IncrementalHull::getConvexHull(Mesh* m)
 {
+	/*	the goal is to begin with a good convex hull and expand it, just by adding one point at a time
+		to recompute the new hull we need to introduce the notion of horizon
+		this algorithm is the naive and non optimize way for quickhull
+
+		to optimize it and get the quickhull algorithm :
+		1. we need to speedup the first loop (for all point in cloud)
+		2. we need to compute the horizon thingy just for the most revelant point
+		   > to do so we sort all point outside the current hull in different lists (associated to a face)
+		   > and for the eye computation we choose the farrest point in the "ouside" list of a face
+		3. to compute the horizon we need to loop (for all faces)
+		   > to do so each faces is associated to neighbours faces
+		   > and we navigate on the "faces graph" starting from a visible face
+		   > by doing this we can compute horizon just by iterating on visible faces (more or less)
+
+		first initialize the hull with 4 point -> tetrahedron
+		for all point in cloud
+			if point is inside hull (of far enough [EPSILON])
+				point became an eye and we compute the horizon
+				for each edge in horizon
+					we add a new triangle constituted by edge and eye
+					we add the two new edges if needed
+			before iterating we remove all unecessary edges and faces from hull
+
+		final complexity is 0(N²)
+		because computing the horizon is dependant on N in worse case
+		in actual implementation we implement some helper function that have an unnecessary linear complexity (aka checkFaceNormal and existingEdge)
+	*/
+
 	//	initialization
 	std::cout << "Hull creation from mesh : " << m->name << std::endl;
 	const std::vector<glm::vec3>& pointCloud = *m->getVertices();
@@ -122,7 +150,7 @@ Mesh* IncrementalHull::getConvexHull(Mesh* m)
 	}
 
 
-	//	prepare mesh from hull data
+	//	generate a drawable mesh from hull
 	Mesh* mesh = new Mesh("");
 	if (degenerated)
 	{
@@ -131,7 +159,6 @@ Mesh* IncrementalHull::getConvexHull(Mesh* m)
 	}
 	else
 	{
-		//	create a drawable mesh
 		glm::vec3 hullColor = glm::vec3(0.5f, 0.f, 1.f);
 		std::vector<glm::vec3> vertices;
 		std::vector<glm::vec3> normales;
@@ -157,37 +184,31 @@ Mesh* IncrementalHull::getConvexHull(Mesh* m)
 	}
 	return mesh;
 }
-/*Mesh* IncrementalHull::optimizeHullMesh(Mesh* mesh)
-{
-	if (!degenerated)
-	{
-		std::vector<glm::vec3> vertices;
-		std::vector<glm::vec3> normales;
-		std::vector<unsigned short> faces;
-
-		for (auto it = hullFaces.begin(); it != hullFaces.end(); it++)
-		{
-			faces.push_back((unsigned short)vertices.size());  vertices.push_back(it->p1);
-			faces.push_back((unsigned short)vertices.size());  vertices.push_back(it->p2);
-			faces.push_back((unsigned short)vertices.size());  vertices.push_back(it->p3);
-
-			normales.push_back(glm::normalize(it->n));
-		}
-
-		ToolBox::optimizeHullMesh(vertices, faces);
-		mesh->vertices = vertices;
-		mesh->faces = faces;
-		mesh->normals = normales;
-		mesh->colors.clear();
-	}
-	return mesh;
-}*/
 //
 
 //	Protected functions
 void IncrementalHull::initializeHull(const std::vector<glm::vec3>& pointCloud)
 {
-	//	compute initial segment
+	/*	the goal of the initialisation is to get the biggest non degenerated tetrahedron composed by 4 point of the mesh vertices cloud (more or less)
+		to do so
+		1. we search for the giggest segment on one axis
+		   (actually it should be better if we have the longest segment, regardless of any axis, but complexity is n² to do that)
+		2. we search for the farrest point from this segment to get a triangle
+		3. we search for the farrest point from this triangle to get tetrahedron
+	
+		initial segment pseudo-code
+		for each point 
+			for each searching axis
+				if point is better for one point slot (point min on x axis, point max on x axis, point min on y axis, etc ...)
+					replace current slot
+		test computed slot against each other and choose the best axis
+		the initial wanted segment is now contructed by the two winning slot points
+
+		final complexity is linear of number of vertices in point cloud
+		O(3N) = O(N)
+	*/
+
+	//	compute initial segment :
 	degenerated = false;
 
 	glm::vec3 p1, p2;
@@ -333,6 +354,22 @@ void IncrementalHull::initializeHull(const std::vector<glm::vec3>& pointCloud)
 }
 std::list<IncrementalHull::Edge*> IncrementalHull::computeHorizon(const glm::vec3& eye)
 {
+	/*	the goal of this function is to get all the edges constituting the horizon from an eye point
+		
+		for all faces of current hull
+			if face is visible from eye
+				push all edges of face into an horizon list
+				mark these edges as seen once (decrement a int starting from 2)
+				unassign the edge face reference corresponding to current face (prepare for face deletion)
+		for all edges in horizon list
+			if edge is seen twice (both face of the edge are seen from eye)
+				so remove current edge from horizon list
+		return horizon
+
+		final complexity is linear in current hull faces
+	*/
+
+
 	std::list<Edge*> horizon;
 	for (auto it = hullFaces.begin(); it != hullFaces.end(); it++)
 	{
@@ -369,7 +406,7 @@ bool IncrementalHull::isFaceEdge(const Face& f, const Edge& e)
 	if (f.p1 == e.p1 && f.p2 == e.p2) return true;			// just f.p3 is not in edge
 	else if (f.p2 == e.p1 && f.p3 == e.p2) return true;		// just f.p1 is not in edge
 	else if (f.p1 == e.p1 && f.p3 == e.p2) return true;		// just f.p2 is not in edge
-	else if (f.p1 == e.p2 && f.p2 == e.p1) return true;			// just f.p3 is not in edge
+	else if (f.p1 == e.p2 && f.p2 == e.p1) return true;		// just f.p3 is not in edge
 	else if (f.p2 == e.p2 && f.p3 == e.p1) return true;		// just f.p1 is not in edge
 	else if (f.p1 == e.p2 && f.p3 == e.p1) return true;		// just f.p2 is not in edge
 	else return false;

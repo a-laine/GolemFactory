@@ -40,5 +40,6 @@ class ToolBox
 										std::vector<glm::vec3>& colorArray,
 										std::vector<unsigned short>&facesArray );
 
+		//	hull mesh optimazer
 		static void optimizeHullMesh(Mesh* mesh);
 };
