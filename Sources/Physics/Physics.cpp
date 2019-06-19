@@ -41,11 +41,12 @@ void Physics::stepSimulation(const float& elapsedTime, SceneManager* s)
 	//std::cout << "moving object count : " << movingEntity.size() << std::endl;
 
 	predictTransform(elapsedTime);
-	computeBoundingShapes(elapsedTime);
+	computeBoundingShapes(elapsedTime, s);
 	detectPairs(elapsedTime);
 	computeContacts(elapsedTime);
 	solveConstraints(elapsedTime);
 	integratePositions(elapsedTime);
+	clearTepoaryStruct();
 
 	//std::cout << std::endl;
 }
@@ -206,11 +207,15 @@ void Physics::predictTransform(const float& elapsedTime)
 		}
 	}
 }
-void Physics::computeBoundingShapes(const float& elapsedTime)
+void Physics::computeBoundingShapes(const float& elapsedTime, SceneManager* scene)
 {
 	for (std::set<Entity*>::iterator it = movingEntity.begin(); it != movingEntity.end(); ++it)
 	{
-		RigidBody* rigidbody = (*it)->getComponent<RigidBody>();
+		Swept* swept = new Swept(*it);
+		sweptList.push_back(swept);
+		updatedNodes.push_back(scene->addSwept(swept));
+
+		/*RigidBody* rigidbody = (*it)->getComponent<RigidBody>();
 
 		glm::vec3 delta = rigidbody->predictPosition - (*it)->getPosition();
 
@@ -220,7 +225,7 @@ void Physics::computeBoundingShapes(const float& elapsedTime)
 
 		glm::vec3 queryMin = glm::min(firstBox.min, finalBox.min);
 		glm::vec3 queryMax = glm::min(firstBox.max, finalBox.max);
-		AxisAlignedBox queryBox(queryMin, queryMax);
+		AxisAlignedBox queryBox(queryMin, queryMax);*/
 	}
 }
 void Physics::detectPairs(const float& elapsedTime)
@@ -238,6 +243,16 @@ void Physics::solveConstraints(const float& elapsedTime)
 void Physics::integratePositions(const float& elapsedTime)
 {
 
+}
+void Physics::clearTepoaryStruct()
+{
+	for (unsigned int i = 0; i < updatedNodes.size(); i++)
+		updatedNodes[i]->clearSwept();
+	for (unsigned int i = 0; i < sweptList.size(); i++)
+		delete sweptList[i];
+
+	updatedNodes.clear();
+	sweptList.clear();
 }
 //
 

@@ -49,10 +49,6 @@ class SceneManager
 		void getObjects(EntityCollector& result, CollisionTest collisionTest) {
 			if(!world.empty())  getObjects(world[0], result, collisionTest);
 		}
-		template<typename EntityCollector, typename CollisionTest>
-		void getObjectsInBox(EntityCollector& result, CollisionTest collisionTest) {
-			if(!world.empty())  getObjectsInBox(world[0], result, collisionTest, testOnlyNodes);
-		}
 		//
 
 		//	Physics engine related
@@ -96,7 +92,7 @@ class SceneManager
 
 
 
-
+//	template fuctions
 template<typename EntityCollector, typename CollisionTest>
 void SceneManager::getObjects(NodeVirtual* node, EntityCollector& result, CollisionTest collisionTest)
 {
@@ -164,9 +160,6 @@ void SceneManager::getPhysicsArtefacts(NodeVirtual* node, EntityCollector& resul
 			node->getChildren(path);
 	}
 }
-
-
-
 
 template<typename EntityCollector, typename CollisionTest>
 void SceneManager::getObjectsInBox(NodeVirtual* node, EntityCollector& result, CollisionTest collisionTest)
@@ -257,5 +250,5 @@ void SceneManager::getPhysicsArtefactsInBox(NodeVirtual* node, EntityCollector& 
 	for (NodeVirtual* node : fullyInsideNodes)
 		getPhysicsArtefacts(node, result, [](NodeVirtual*) -> CollisionType { return OVERLAP; });
 }
-
+//
 

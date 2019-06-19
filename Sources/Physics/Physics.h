@@ -34,11 +34,12 @@ class Physics
 	private:
 		//	Pipeline steps
 		void predictTransform(const float& elapsedTime);
-		void computeBoundingShapes(const float& elapsedTime);
+		void computeBoundingShapes(const float& elapsedTime, SceneManager* scene);
 		void detectPairs(const float& elapsedTime);
 		void computeContacts(const float& elapsedTime);
 		void solveConstraints(const float& elapsedTime);
 		void integratePositions(const float& elapsedTime);
+		void clearTepoaryStruct();
 		//
 
 		//	Usefull functions
@@ -50,6 +51,8 @@ class Physics
 		glm::vec3 gravity;
 		std::set<Entity*> movingEntity;
 		DefaultBoxCollector proximityList;
+		std::vector<Swept*> sweptList;
+		std::vector<NodeVirtual*> updatedNodes;
 		std::set<std::pair<Entity*, Entity*> > collidingPairs;
 		std::vector<Intersection::Contact> collisionList;
 		//
