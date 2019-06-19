@@ -10,6 +10,7 @@
 
 class Mesh : public ResourceVirtual
 {
+	friend class ToolBox;
 	friend class HouseGenerator;
 	friend class MeshSaver;
 	friend class IncrementalHull;

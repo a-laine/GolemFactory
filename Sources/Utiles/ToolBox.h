@@ -10,6 +10,8 @@
 
 #include "Utiles/Parser/Variant.h"
 
+class Mesh;
+
 class ToolBox
 {
 	public:
@@ -38,5 +40,5 @@ class ToolBox
 										std::vector<glm::vec3>& colorArray,
 										std::vector<unsigned short>&facesArray );
 
-		static void optimizeHullMesh(std::vector<glm::vec3>& verticesArray, std::vector<unsigned short>&facesArray);
+		static void optimizeHullMesh(Mesh* mesh);
 };

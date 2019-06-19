@@ -36,6 +36,7 @@ class IncrementalHull
 
 		//	Public functions
 		Mesh* getConvexHull(Mesh* m);
+		//Mesh* optimizeHullMesh(Mesh* mesh);
 		//
 
 	protected:

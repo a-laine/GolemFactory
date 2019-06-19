@@ -1,6 +1,7 @@
 #include "EntityFactory.h"
 #include "Resources/ResourceManager.h"
 #include "Utiles/IncrementalHull.h"
+#include "Resources/Loader/MeshSaver.h"
 
 #include <Utiles/Assert.hpp>
 #include <World/World.h>
@@ -72,20 +73,36 @@ void EntityFactory::createDrawable(Entity* object, const std::string& meshName, 
 {
 	DrawableComponent* drawable = new DrawableComponent(meshName, shaderName);
 	object->addComponent(drawable);
-	Mesh* m = ResourceManager::getInstance()->findResource<Mesh>("hull_" + meshName);
+
+	//	link, load or generate a convex hull for every entities
+	std::string hullname = meshName;
+	if (hullname.find_last_of('/') != std::string::npos)
+		hullname = hullname.substr(hullname.find_last_of('/') + 1);
+	if (hullname.find_first_of('.') != std::string::npos)
+		hullname = hullname.substr(0, hullname.find_first_of('.'));
+	hullname = "Hull/hull_" + hullname + Mesh::extension;
+
+	Mesh* m = ResourceManager::getInstance()->findResource<Mesh>(hullname);
 	if (m)
 		object->setShape(new Hull(m));
-	else
+	else if (ResourceManager::getInstance()->loadableResource<Mesh>(hullname))
 	{
-		std::cout << "fail found hull of name : " << "hull_" + meshName << std::endl;
-		IncrementalHull hullgenerator;
-		m = hullgenerator.getConvexHull(drawable->getMesh());
-		ResourceManager::getInstance()->addResource(m);
-		std::cout << "  added with name : " << m->name << std::endl;
+		m = ResourceManager::getInstance()->getResource<Mesh>(hullname);
+		ToolBox::optimizeHullMesh(m);
 		object->setShape(new Hull(m));
 	}
+	else
+	{
+		std::cout << "EntityFactory : Fail found hull of name : " << hullname << ". It will be automatically generated."<< std::endl;
+		IncrementalHull hullgenerator;
+		m = hullgenerator.getConvexHull(drawable->getMesh());
+		m->name = hullname;
+		MeshSaver::save(m, ResourceManager::getInstance()->getRepository());
 
-	//drawable->setMesh(m);
+		ToolBox::optimizeHullMesh(m);
+		ResourceManager::getInstance()->addResource(m);
+		object->setShape(new Hull(m));
+	}
 
     //object->setShape(new OrientedBox(glm::mat4(1.f), drawable->getMeshBBMin(), drawable->getMeshBBMax()));
 }

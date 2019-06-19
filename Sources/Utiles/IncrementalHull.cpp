@@ -123,7 +123,7 @@ Mesh* IncrementalHull::getConvexHull(Mesh* m)
 
 
 	//	prepare mesh from hull data
-	Mesh* mesh = new Mesh("hull_" + m->name);
+	Mesh* mesh = new Mesh("");
 	if (degenerated)
 	{
 		std::cout << "  degenerated mesh !" << std::endl;
@@ -155,9 +155,10 @@ Mesh* IncrementalHull::getConvexHull(Mesh* m)
 		ToolBox::optimizeStaticMesh(vertices, normales, colors, faces);
 		mesh->initialize(vertices, normales, colors, faces, std::vector<glm::ivec3>(), std::vector<glm::vec3>());
 	}
-	
-
-	//
+	return mesh;
+}
+/*Mesh* IncrementalHull::optimizeHullMesh(Mesh* mesh)
+{
 	if (!degenerated)
 	{
 		std::vector<glm::vec3> vertices;
@@ -180,7 +181,7 @@ Mesh* IncrementalHull::getConvexHull(Mesh* m)
 		mesh->colors.clear();
 	}
 	return mesh;
-}
+}*/
 //
 
 //	Protected functions

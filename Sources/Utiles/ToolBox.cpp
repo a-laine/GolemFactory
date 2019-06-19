@@ -1,4 +1,5 @@
 #include "ToolBox.h"
+#include "Resources/Mesh.h"
 
 #include <fstream>
 #include <cctype>
@@ -247,45 +248,59 @@ void ToolBox::optimizeStaticMesh(std::vector<glm::vec3>& verticesArray,
 	colorArray.swap(colorBuffer);
 	facesArray.swap(facesBuffer);
 }
-void ToolBox::optimizeHullMesh(std::vector<glm::vec3>& verticesArray, std::vector<unsigned short>&facesArray)
+void ToolBox::optimizeHullMesh(Mesh* mesh)
 {
-	/*std::vector<glm::vec3> verticesBuffer;
-	std::vector<glm::vec3> normalesBuffer;
+	std::vector<glm::vec3> verticesArray = *mesh->getVertices();
+	std::vector<glm::vec3> normalesArray = *mesh->getNormals();
+	std::vector<unsigned short> facesArray = *mesh->getFaces();
+
+	std::vector<glm::vec3> verticesBuffer;
+	std::vector<glm::vec3> normalBuffer;
 	std::vector<unsigned short> facesBuffer;
 
-	struct vec3
+	struct OrderedVertex
 	{
-		vec3() :x(0), y(0), z(0) {}
-		vec3(glm::vec3 v) :x(v.x), y(v.y), z(v.z) {}
-		bool operator<(const vec3& r)
+		glm::vec3 position;
+		int inf(const glm::vec3& l, const glm::vec3& r) const
 		{
-			if (x != r.x) return x < r.x;
-			else if (y != r.y) return y < r.y;
-			else return z < r.z;
+			//	return 1 if equals, 2 if l < r and 3 if l > r
+			if (l.x != r.x) return (l.x < r.x ? 2 : 3);
+			if (l.y != r.y) return (l.y < r.y ? 2 : 3);
+			if (l.z != r.z) return (l.z < r.z ? 2 : 3);
+			return 1;
 		}
-		glm::vec3 vec() const { return glm::vec3(x, y, z); }
-		float x, y, z;
+		bool operator< (const OrderedVertex& r) const
+		{
+			int res = inf(position, r.position);
+			if (res == 2) return true;
+			if (res == 3) return false;
+			return false;
+		};
 	};
 
-	std::map<vec3, unsigned short> vertexAlias;
-	std::map<vec3, unsigned short>::iterator alias;
-	vec3 current;
+	std::map<OrderedVertex, unsigned short> aliases;
+	std::map<OrderedVertex, unsigned short>::iterator alias;
+	OrderedVertex current;
 
 	for (unsigned int i = 0; i < facesArray.size(); i++)
 	{
-		current = vec3(verticesArray[facesArray[i]]);
+		current.position = verticesArray[facesArray[i]];
+		if ((i % 3) == 0)
+			normalBuffer.push_back(normalesArray[facesArray[i]]);
 
-		alias = vertexAlias.find(current);
-		if (alias == vertexAlias.end())
+		alias = aliases.find(current);
+		if (alias == aliases.end())
 		{
+			aliases[current] = (unsigned short)verticesBuffer.size();
+			facesBuffer.push_back((unsigned short)verticesBuffer.size());
 			verticesBuffer.push_back(verticesArray[facesArray[i]]);
-			facesBuffer.push_back((unsigned short)vertexAlias.size());
-			vertexAlias[current] = (unsigned short)vertexAlias.size();
 		}
 		else facesBuffer.push_back(alias->second);
 	}
 
-	verticesArray.swap(verticesBuffer);
-	facesArray.swap(facesBuffer);*/
+	mesh->colors.clear();
+	mesh->vertices = verticesBuffer;
+	mesh->normals = normalBuffer;
+	mesh->faces = facesBuffer;
 }
 //

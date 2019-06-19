@@ -149,12 +149,8 @@ int main()
 		Renderer::getInstance()->normalViewer = ResourceManager::getInstance()->getResource<Shader>("normalViewer");
 
 		Entity* testTree = world.getEntityFactory().createObject("tree", glm::vec3(5, 0, 0), glm::vec3(1), glm::rotate(glm::quat(), glm::radians((rand() % 3600) / 10.f), glm::vec3(0, 0, 1)));
-
-		auto eeeeeeee = glfwGetTime();
-		for (int i = 0; i<1; i++)
-			Collision::debugUnitaryTest(2, static_cast<const Hull*>(testTree->getLocalBoundingShape()));
-		std::cout << "unitary test completion time : " << 1000000.0*(glfwGetTime() - eeeeeeee) << " us" << std::endl;
-		return 0;
+		Collision::debugUnitaryTest(2, static_cast<const Hull*>(testTree->getLocalBoundingShape()));
+		
 
 	// init loop time tracking
 	double averageTime = 0;

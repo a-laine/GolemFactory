@@ -1,14 +1,16 @@
 #pragma once
+#include "Utiles/Singleton.h"
+#include "Utiles/Mutex.h"
+#include "Utiles/Assert.hpp"
+#include "Resources/ResourceVirtual.h"
+#include "Resources/IResourceLoader.h"
+#include "Utiles/ToolBox.h"
 
 #include <vector>
 #include <map>
 #include <string>
 
-#include <Utiles/Singleton.h>
-#include <Utiles/Mutex.h>
-#include <Utiles/Assert.hpp>
-#include <Resources/ResourceVirtual.h>
-#include <Resources/IResourceLoader.h>
+
 
 
 
@@ -25,6 +27,8 @@ class ResourceManager : public Singleton<ResourceManager>
         T* getResource(const std::string& name, Args&&... args);
 		template<typename T>
 		T* findResource(const std::string& name);
+		template<typename T>
+		bool loadableResource(const std::string& name);
         template<typename T>
         T* getResource(T* resource);
 
@@ -108,6 +112,13 @@ T* ResourceManager::findResource(const std::string& name)
 		resource->count++;
 		return resource;
 	}
+}
+
+template<typename T>
+bool ResourceManager::loadableResource(const std::string& name)
+{
+	const std::string& realName = (name == "default") ? T::getDefaultName() : name;
+	return ToolBox::isPathExist(repository + T::getIdentifier(realName));
 }
 
 template<typename T>
