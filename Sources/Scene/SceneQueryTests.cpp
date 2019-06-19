@@ -26,7 +26,7 @@ SceneManager::CollisionType DefaultSceneManagerBoxTest::operator() (const NodeVi
 	if (p.x <= halfSize.x - nodeHalfSize.x && p.y <= halfSize.y - nodeHalfSize.y && p.z <= halfSize.z - nodeHalfSize.z) return SceneManager::INSIDE;
 	else return SceneManager::OVERLAP;*/
 
-	glm::vec3 s = 1.01f * glm::vec3(node->allowanceSize);
+	glm::vec3 s = 1.01f * glm::vec3(node->getAllowanceSize());
 	if (Collision::collide_AxisAlignedBoxvsAxisAlignedBox(bbMin, bbMax, node->getBBMin() - s, node->getBBMax() + s))
 		return SceneManager::OVERLAP;
 	return SceneManager::NONE;
@@ -95,7 +95,7 @@ DefaultSceneManagerRayTest::DefaultSceneManagerRayTest(const glm::vec3& pos, con
 SceneManager::CollisionType DefaultSceneManagerRayTest::operator() (const NodeVirtual* node) const
 {
 	//	Segment/AABB collision test
-	glm::vec3 s = 1.01f * glm::vec3(node->allowanceSize);
+	glm::vec3 s = 1.01f * glm::vec3(node->getAllowanceSize());
 	if (Collision::collide_SegmentvsAxisAlignedBox(position, position + distance*direction, node->getBBMin() - s, node->getBBMax() + s))
 		return SceneManager::OVERLAP;
 	else return SceneManager::NONE;

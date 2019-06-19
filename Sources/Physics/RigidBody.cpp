@@ -26,6 +26,8 @@ float RigidBody::getMass() const { return mass; }
 float RigidBody::getGravityFactor() const { return gravityFactor; }
 glm::vec3 RigidBody::getAcceleration() const { return acceleration; }
 glm::vec3 RigidBody::getVelocity() const { return velocity; }
+glm::vec3 RigidBody::getDeltaPosition() const { return deltaPosition; }
+glm::fquat RigidBody::getDeltaRotation() const { return deltaRotation; }
 
 
 void RigidBody::addForce(const glm::vec3& force) { forces.push_back(force); }

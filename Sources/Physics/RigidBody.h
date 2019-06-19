@@ -40,6 +40,8 @@ class RigidBody : public Component
 		float getGravityFactor() const;
 		glm::vec3 getAcceleration() const;
 		glm::vec3 getVelocity() const;
+		glm::vec3 getDeltaPosition() const;
+		glm::fquat getDeltaRotation() const;
 
 		void addForce(const glm::vec3& force);
 		void addForce(const glm::vec3& force, const glm::vec3& contactPoint);
@@ -72,6 +74,7 @@ class RigidBody : public Component
 	private:
 		//	Internal (used by Physics engine)
 		glm::vec3 predictPosition;
+		glm::vec3 deltaPosition;
 		glm::fquat predictRotation;
 		glm::fquat deltaRotation;
 		//

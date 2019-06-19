@@ -123,6 +123,7 @@ glm::vec3 NodeVirtual::getPosition() const
 {
 	return position;
 }
+const float& NodeVirtual::getAllowanceSize() const { return allowanceSize; }
 
 
 void NodeVirtual::addObject(Entity* object)
@@ -226,5 +227,27 @@ void NodeVirtual::getChildrenInBox(std::vector<NodeRange>& result, const glm::ve
 		}
 	}
 }
+
+
+void NodeVirtual::addSwept(Entity* object)
+{
+
+}
+bool NodeVirtual::removeSwept(Entity* object)
+{
+
+}
+void NodeVirtual::clearSwept()
+{
+
+}
+void NodeVirtual::getPhysicsArtefactsList(std::vector<PhysicsArtefacts>& collector)
+{
+	for (auto it = objectList.begin(); it != objectList.end(); ++it)
+		collector.insert(collector.end(), PhysicsArtefacts(*it));
+	for (auto it = sweptObject.begin(); it != sweptObject.end(); ++it)
+		collector.insert(collector.end(), PhysicsArtefacts(&(*it)));
+}
+
 
 Entity* NodeVirtual::getDebugCube() { return debugCube; }

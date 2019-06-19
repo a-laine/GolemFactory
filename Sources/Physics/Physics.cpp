@@ -189,7 +189,8 @@ void Physics::predictTransform(const float& elapsedTime)
 			rigidbody->angularVelocity += elapsedTime * rigidbody->angularAcceleration;
 
 			//	predict position
-			rigidbody->predictPosition = (*it)->getPosition() + rigidbody->velocity * elapsedTime;// +0.5f * elapsedTime * elapsedTime * rigidbody->acceleration;
+			rigidbody->deltaPosition = rigidbody->velocity * elapsedTime;
+			rigidbody->predictPosition = (*it)->getPosition() + rigidbody->deltaPosition;
 
 			//	predict orientation
 			rigidbody->deltaRotation = 0.5f * elapsedTime * glm::fquat(0.f, rigidbody->angularVelocity.x, rigidbody->angularVelocity.y, rigidbody->angularVelocity.z) * (*it)->getOrientation();

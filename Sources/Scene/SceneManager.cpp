@@ -159,3 +159,16 @@ glm::vec3 SceneManager::getObjectSize(const Entity* entity) const
 	}
 	else return glm::vec3(2.f * Shape->toSphere().radius);
 }
+
+
+
+//	Physics engine related
+NodeVirtual* SceneManager::addSwept(Swept* object)
+{
+
+}
+bool SceneManager::removeSwept(Swept* object)
+{
+
+}
+//
