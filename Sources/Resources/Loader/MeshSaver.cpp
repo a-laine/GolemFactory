@@ -7,13 +7,11 @@ void MeshSaver::save(Mesh* mesh, const std::string& resourcesPath, std::string f
 	//	initialize fileName
 	if (fileName.empty())
 		fileName = mesh->name;
-	if (fileName.find_last_of('/') != std::string::npos)
-		fileName = fileName.substr(fileName.find_last_of('/') + 1);
 	if (fileName.find_first_of('.') != std::string::npos)
 		fileName = fileName.substr(0, fileName.find_first_of('.'));
 
 	//	create and initialize file
-	std::ofstream file(resourcesPath + "Meshes/" + fileName + Mesh::extension, std::ofstream::out);
+	std::ofstream file(resourcesPath + fileName + Mesh::extension, std::ofstream::out);
 	file << "# File : " << fileName << std::endl;
 	file << "# Format : gfmesh, for Golem Factory engines" << std::endl;
 

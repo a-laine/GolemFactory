@@ -97,7 +97,7 @@ void EntityFactory::createDrawable(Entity* object, const std::string& meshName, 
 		IncrementalHull hullgenerator;
 		m = hullgenerator.getConvexHull(drawable->getMesh());
 		m->name = hullname;
-		MeshSaver::save(m, ResourceManager::getInstance()->getRepository());
+		MeshSaver::save(m, ResourceManager::getInstance()->getRepository() + "Meshes/", hullname);
 
 		ToolBox::optimizeHullMesh(m);
 		ResourceManager::getInstance()->addResource(m);
