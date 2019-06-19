@@ -93,19 +93,12 @@ bool Collision::collide_PointvsCapsule(const glm::vec3& point, const glm::vec3& 
 }
 bool Collision::collide_PointvsHull(const glm::vec3& point, const std::vector<glm::vec3>& hullPoints, const std::vector<glm::vec3>& hullNormals, const std::vector<unsigned short>& hullFaces, const glm::mat4& hullBase)
 {
-	//std::cout << ".............TOTO................" << std::endl;
 	glm::vec3 p = glm::vec3(glm::inverse(hullBase) * glm::vec4(point, 1.f));
 	for (unsigned int i = 0; i < hullNormals.size(); i++)
 	{
-		/*std::cout << glm::dot(hullNormals[i], p - hullPoints[hullFaces[3 * i]]) << "\t[" << hullNormals[i].x << "," << hullNormals[i].y << "," << hullNormals[i].z << "] , [" <<
-			hullPoints[hullFaces[3 * i]].x << "," << hullPoints[hullFaces[3 * i]].y << "," << hullPoints[hullFaces[3 * i]].z << "]" << std::endl;*/
 		if (glm::dot(hullNormals[i], p - hullPoints[hullFaces[3 * i]]) >= 0)
-		{
-			//std::cout << "outside" << std::endl;
 			return false;
-		}
 	}
-	//std::cout << "point inside" << std::endl;
 	return true;
 }
 //

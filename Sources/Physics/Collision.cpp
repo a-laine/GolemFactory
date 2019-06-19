@@ -99,7 +99,7 @@ namespace
 				const Capsule* c = static_cast<const Capsule*>(&b);
 				return Collision::collide_SegmentvsCapsule(a->p1, a->p2, c->p1, c->p2, c->radius);
 			}
-			default: return false;
+			default: return GJK::collide(segment, b);
 		}
 	};
 	inline bool collide_TrianglevsShape(const Shape& triangle, const Shape& b)
@@ -163,7 +163,7 @@ namespace
 				const Capsule* c = static_cast<const Capsule*>(&b);
 				return Collision::collide_SpherevsCapsule(a->center, a->radius, c->p1, c->p2, c->radius);
 			}
-			default: return false;
+			default: return GJK::collide(sphere, b);
 		}
 	};
 	inline bool collide_CapsulevsShape(const Shape& capsule, const Shape& b)
@@ -174,13 +174,18 @@ namespace
 			const Capsule* c = static_cast<const Capsule*>(&b);
 			return Collision::collide_CapsulevsCapsule(a->p1, a->p2, a->radius, c->p1, c->p2, c->radius);
 		}
-		else return false;
+		else return GJK::collide(capsule, b);
 	};
+	inline bool collide_HullvsShape(const Shape& hull, const Shape& b)
+	{
+		return GJK::collide(hull, b);
+	}
 
 	//	Debug
-	std::string printShapeName(const Shape& Shape)
+	std::string shapeTypeToString(const Shape& Shape) { return shapeTypeToString(Shape.type); }
+	std::string shapeTypeToString(const Shape::ShapeType& type)
 	{
-		switch (Shape.type)
+		switch (type)
 		{
 			case Shape::POINT:				return "point";
 			case Shape::SEGMENT:			return "segment";
@@ -189,6 +194,7 @@ namespace
 			case Shape::AXIS_ALIGNED_BOX:	return "axis aligned box";
 			case Shape::SPHERE:				return "sphere";
 			case Shape::CAPSULE:			return "capsule";
+			case Shape::HULL:				return "hull";
 			default:						return "unknown";
 		}
 	}
@@ -216,6 +222,7 @@ bool Collision::collide(const Shape& a, const Shape& b)
 		case Shape::AXIS_ALIGNED_BOX:	return collide_AxisAlignedBoxvsShape(Shape1, Shape2);
 		case Shape::SPHERE:				return collide_SpherevsShape(Shape1, Shape2);
 		case Shape::CAPSULE:			return collide_CapsulevsShape(Shape1, Shape2);
+		case Shape::HULL:				return collide_HullvsShape(Shape1, Shape2);
 		default:						return false;
 	}
 }
@@ -381,6 +388,23 @@ void Collision::debugUnitaryTest(const int& verboseLevel, const Hull* testHull)
 			printError("segment", "capsule", __LINE__ - 1);
 		if (Collision::collide(testSegment, Capsule(glm::vec3(0, 2, -1), glm::vec3(0, -1, 3), 2.f)) == false && verboseLevel)
 			printError("segment", "capsule", __LINE__ - 1);
+
+		// ... vs Hull
+		if (testHull)
+		{
+			glm::fquat dummyRotate = glm::rotate(glm::fquat(), 0.1f, glm::normalize(glm::vec3(0.5, 1, 3)));
+			Hull hull = *static_cast<Hull*>(testHull->duplicate());
+			hull.transform(glm::vec3(0, 0, -1), glm::vec3(1, 1, 1), glm::fquat());
+
+			if (Collision::collide(testSegment, hull) == false && verboseLevel)
+				printError("segment", "hull", __LINE__ - 1);
+			hull.transform(glm::vec3(0, 0, 0), glm::vec3(1, 1, 1), dummyRotate);
+			if (Collision::collide(testSegment, hull) == false && verboseLevel)
+				printError("segment", "hull", __LINE__ - 1);
+			hull.transform(glm::vec3(20, 0, 0), glm::vec3(1, 1, 1), glm::fquat());
+			if (Collision::collide(testSegment, hull) == true && verboseLevel)
+				printError("segment", "hull", __LINE__ - 1);
+		}
 	}
 
 	// triangle vs ...
@@ -447,6 +471,24 @@ void Collision::debugUnitaryTest(const int& verboseLevel, const Hull* testHull)
 		
 		if (Collision::collide(Triangle(glm::vec3(-10.f, 0, -10.f), glm::vec3(10.f, 0, -10.f), glm::vec3(0, 0, 10.f)), Capsule(glm::vec3(0, 0, -1), glm::vec3(0, 0, 3), 0.1f)) == false && verboseLevel)
 			printError("triangle", "capsule", __LINE__ - 1);
+
+		// ... vs Hull
+		if (testHull)
+		{
+			glm::fquat dummyRotate = glm::rotate(glm::fquat(), 0.1f, glm::normalize(glm::vec3(0.5, 1, 3)));
+			Hull hull = *static_cast<Hull*>(testHull->duplicate());
+			hull.transform(glm::vec3(0, 0, -1), glm::vec3(1, 1, 1), glm::fquat());
+
+			if (Collision::collide(testTriangle, hull) == false && verboseLevel)
+				printError("triangle", "hull", __LINE__ - 1);
+			hull.transform(glm::vec3(0, 0, 0), glm::vec3(1, 1, 1), dummyRotate);
+			if (Collision::collide(testTriangle, hull) == false && verboseLevel)
+				printError("triangle", "hull", __LINE__ - 1);
+			hull.transform(glm::vec3(20, 0, 0), glm::vec3(1, 1, 1), glm::fquat());
+			if (Collision::collide(testTriangle, hull) == true && verboseLevel)
+				printError("triangle", "hull", __LINE__ - 1);
+
+		}
 	}
 
 	// oriented box vs ...
@@ -498,6 +540,23 @@ void Collision::debugUnitaryTest(const int& verboseLevel, const Hull* testHull)
 			printError("oriented box", "capsule", __LINE__ - 1);
 		if (Collision::collide(testOrientedBox, Capsule(glm::vec3(0, -1, -1), glm::vec3(0, 1, 1), 0.f)) == false && verboseLevel)
 			printError("oriented box", "capsule", __LINE__ - 1);
+
+		// ... vs Hull
+		if (testHull)
+		{
+			glm::fquat dummyRotate = glm::rotate(glm::fquat(), 0.1f, glm::normalize(glm::vec3(0.5, 1, 3)));
+			Hull hull = *static_cast<Hull*>(testHull->duplicate());
+			hull.transform(glm::vec3(0, 0, -1), glm::vec3(1, 1, 1), glm::fquat());
+
+			if (Collision::collide(testOrientedBox, hull) == false && verboseLevel)
+				printError("oriented box", "hull", __LINE__ - 1);
+			hull.transform(glm::vec3(0, 0, 0), glm::vec3(1, 1, 1), dummyRotate);
+			if (Collision::collide(testOrientedBox, hull) == false && verboseLevel)
+				printError("oriented box", "hull", __LINE__ - 1);
+			hull.transform(glm::vec3(20, 0, 0), glm::vec3(1, 1, 1), glm::fquat());
+			if (Collision::collide(testOrientedBox, hull) == true && verboseLevel)
+				printError("oriented box", "hull", __LINE__ - 1);
+		}
 	}
 
 	// axis aligned box vs ...
@@ -541,6 +600,23 @@ void Collision::debugUnitaryTest(const int& verboseLevel, const Hull* testHull)
 			printError("axis aligned box", "capsule", __LINE__ - 1);
 		if (Collision::collide(testAAB, Capsule(glm::vec3(0, -1, -1), glm::vec3(0, 1, 1), 0.f)) == false && verboseLevel)
 			printError("axis aligned box", "capsule", __LINE__ - 1);
+
+		// ... vs Hull
+		if (testHull)
+		{
+			glm::fquat dummyRotate = glm::rotate(glm::fquat(), 0.1f, glm::normalize(glm::vec3(0.5, 1, 3)));
+			Hull hull = *static_cast<Hull*>(testHull->duplicate());
+			hull.transform(glm::vec3(0, 0, -1), glm::vec3(1, 1, 1), glm::fquat());
+
+			if (Collision::collide(testAAB, hull) == false && verboseLevel)
+				printError("axis aligned box", "hull", __LINE__ - 1);
+			hull.transform(glm::vec3(0, 0, 0), glm::vec3(1, 1, 1), dummyRotate);
+			if (Collision::collide(testAAB, hull) == false && verboseLevel)
+				printError("axis aligned box", "hull", __LINE__ - 1);
+			hull.transform(glm::vec3(20, 0, 0), glm::vec3(1, 1, 1), glm::fquat());
+			if (Collision::collide(testAAB, hull) == true && verboseLevel)
+				printError("axis aligned box", "hull", __LINE__ - 1);
+		}
 	}
 
 	// shere vs ...
@@ -568,6 +644,23 @@ void Collision::debugUnitaryTest(const int& verboseLevel, const Hull* testHull)
 			printError("sphere", "capsule", __LINE__ - 1);
 		if (Collision::collide(testSphere, Capsule(glm::vec3(0, -1, -1), glm::vec3(0, 1, 1), 0.f)) == false && verboseLevel)
 			printError("sphere", "capsule", __LINE__ - 1);
+
+		// ... vs Hull
+		if (testHull)
+		{
+			glm::fquat dummyRotate = glm::rotate(glm::fquat(), 0.1f, glm::normalize(glm::vec3(0.5, 1, 3)));
+			Hull hull = *static_cast<Hull*>(testHull->duplicate());
+			hull.transform(glm::vec3(0, 0, -1), glm::vec3(1, 1, 1), glm::fquat());
+
+			if (Collision::collide(testSphere, hull) == false && verboseLevel)
+				printError("sphere", "hull", __LINE__ - 1);
+			hull.transform(glm::vec3(0, 0, 0), glm::vec3(1, 1, 1), dummyRotate);
+			if (Collision::collide(testSphere, hull) == false && verboseLevel)
+				printError("sphere", "hull", __LINE__ - 1);
+			hull.transform(glm::vec3(20, 0, 0), glm::vec3(1, 1, 1), glm::fquat());
+			if (Collision::collide(testSphere, hull) == true && verboseLevel)
+				printError("sphere", "hull", __LINE__ - 1);
+		}
 	}
 
 	// capsule vs ...
@@ -603,12 +696,12 @@ void Collision::debugUnitaryTest(const int& verboseLevel, const Hull* testHull)
 			hull.transform(glm::vec3(20, 0, 0), glm::vec3(1, 1, 1), glm::fquat());
 			if (Collision::collide(testCapsule, hull) == true && verboseLevel)
 				printError("capsule", "hull", __LINE__ - 1);
-
 		}
 	}
 
 	// hull vs ...
 	{
+		// ... vs Hull
 		if (testHull)
 		{
 			glm::fquat dummyRotate = glm::rotate(glm::fquat(), 0.1f, glm::normalize(glm::vec3(0.5, 1, 3)));
@@ -624,7 +717,6 @@ void Collision::debugUnitaryTest(const int& verboseLevel, const Hull* testHull)
 			hull2.transform(glm::vec3(20, 0, 0), glm::vec3(1, 1, 1), glm::fquat());
 			if (Collision::collide(hull1, hull2) == true && verboseLevel)
 				printError("hull", "hull", __LINE__ - 1);
-
 		}
 	}
 }
