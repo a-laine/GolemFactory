@@ -12,6 +12,8 @@ class Swept
 
 		//	Set / get functions
 		const AxisAlignedBox& getBox() const;
+		glm::vec3 getPosition() const;
+		glm::vec3 getSize() const;
 		//
 
 	protected:
@@ -37,6 +39,10 @@ class PhysicsArtefacts
 		//	Default
 		PhysicsArtefacts(Entity* e);
 		PhysicsArtefacts(Swept* s);
+		//
+
+		//	Overload
+		bool operator==(const PhysicsArtefacts& r) const;
 		//
 
 		//	Attributes

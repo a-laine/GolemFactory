@@ -41,8 +41,7 @@ void Physics::stepSimulation(const float& elapsedTime, SceneManager* s)
 	//std::cout << "moving object count : " << movingEntity.size() << std::endl;
 
 	predictTransform(elapsedTime);
-	computeBoundingShapes(elapsedTime, s);
-	detectPairs(elapsedTime);
+	computeBoundingShapesAndDetectPairs(elapsedTime, s);
 	computeContacts(elapsedTime);
 	solveConstraints(elapsedTime);
 	integratePositions(elapsedTime);
@@ -164,11 +163,11 @@ void Physics::narrowPhase(Entity* entity1, Entity* entity2, Shape prediction1)
 //	Pipeline
 void Physics::predictTransform(const float& elapsedTime)
 {
-	for (std::set<Entity*>::iterator it = movingEntity.begin(); it != movingEntity.end(); ++it)
+	for (std::set<Entity*>::iterator it = movingEntity.begin(); it != movingEntity.end();)
 	{
 		RigidBody* rigidbody = (*it)->getComponent<RigidBody>();
-		if (!rigidbody) it = std::prev(movingEntity.erase(it));
-		else if (rigidbody->getMass() == 0.f) continue;
+		if (!rigidbody) it = movingEntity.erase(it);
+		else if (rigidbody->getMass() == 0.f)  it = movingEntity.erase(it);
 		else
 		{
 			//	linear acceleration
@@ -203,34 +202,34 @@ void Physics::predictTransform(const float& elapsedTime)
 
 			//	check new static
 			if(rigidbody->isResting())
-				it = std::prev(movingEntity.erase(it));
+				it = movingEntity.erase(it);
+			else ++it;
 		}
 	}
 }
-void Physics::computeBoundingShapes(const float& elapsedTime, SceneManager* scene)
+void Physics::computeBoundingShapesAndDetectPairs(const float& elapsedTime, SceneManager* scene)
 {
 	for (std::set<Entity*>::iterator it = movingEntity.begin(); it != movingEntity.end(); ++it)
 	{
 		Swept* swept = new Swept(*it);
 		sweptList.push_back(swept);
-		updatedNodes.push_back(scene->addSwept(swept));
-
-		/*RigidBody* rigidbody = (*it)->getComponent<RigidBody>();
-
-		glm::vec3 delta = rigidbody->predictPosition - (*it)->getPosition();
-
-		AxisAlignedBox firstBox = (*it)->getGlobalBoundingShape()->toAxisAlignedBox();
-		AxisAlignedBox finalBox = AxisAlignedBox(firstBox);
-		finalBox.transform(delta, glm::vec3(1.f), rigidbody->deltaRotation);
-
-		glm::vec3 queryMin = glm::min(firstBox.min, finalBox.min);
-		glm::vec3 queryMax = glm::min(firstBox.max, finalBox.max);
-		AxisAlignedBox queryBox(queryMin, queryMax);*/
-	}
-}
-void Physics::detectPairs(const float& elapsedTime)
-{
+		NodeVirtual* n = scene->addSwept(swept);
+		if (n) updatedNodes.push_back(n);
 	
+		std::vector<PhysicsArtefacts> broadPhaseResult;
+		auto box = swept->getBox();
+		scene->getPhysicsArtefactsList(broadPhaseResult, DefaultSceneManagerBoxTest(box.min, box.max));
+		
+		bool collided = false;
+		for (unsigned int i = 0; i < broadPhaseResult.size(); i++)
+		{
+			if (broadPhaseResult[i].type == PhysicsArtefacts::SWEPT)
+			{
+				if (broadPhaseResult[i].data.swept == swept)
+					continue;
+			}
+		}
+	}
 }
 void Physics::computeContacts(const float& elapsedTime)
 {
@@ -277,5 +276,52 @@ bool Physics::extractIsAnimatable(Entity* entity) const
 		return false;
 
 	return true;
+}
+//
+
+
+
+//	Private internal class
+void Physics::ArtefactsGraph::clear()
+{
+	nodes.clear();
+	graph.clear();
+}
+void Physics::ArtefactsGraph::initialize(const std::set<PhysicsArtefacts>& n)
+{
+	nodes = n;
+	for (auto it = nodes.begin(); it != nodes.end(); ++it)
+		graph[(PhysicsArtefacts*)&(*it)] = std::pair<std::set<PhysicsArtefacts*>, bool>(std::set<PhysicsArtefacts*>(), false);
+}
+void Physics::ArtefactsGraph::addLink(const PhysicsArtefacts& n1, const PhysicsArtefacts& n2)
+{
+	if (!n1.operator==(n2))
+		graph[(PhysicsArtefacts*)&n1].first.insert((PhysicsArtefacts*)&n2);
+}
+std::vector<std::vector<PhysicsArtefacts*> > Physics::ArtefactsGraph::getCluster()
+{
+	std::vector<std::vector<PhysicsArtefacts*> > result;
+
+	for (auto it = graph.begin(); it != graph.end(); ++it)
+	{
+		if (!it->second.second)
+		{
+			std::vector<PhysicsArtefacts*> cluster;
+			getNeighbours(it->first, cluster);
+			result.push_back(cluster);
+		}
+	}
+	return result;
+}
+
+void Physics::ArtefactsGraph::getNeighbours(PhysicsArtefacts* node, std::vector<PhysicsArtefacts*>& result)
+{
+	if (!graph[node].second)
+	{
+		graph[node].second = true;
+		result.push_back(node);
+		for (auto it = graph[node].first.begin(); it != graph[node].first.end(); ++it)
+			getNeighbours(*it, result);
+	}
 }
 //

@@ -22,6 +22,8 @@ Swept::Swept(Entity* e) : entity(e), dp(0.f), dq()
 
 //	Set / get functions
 const AxisAlignedBox& Swept::getBox() const { return box; }
+glm::vec3 Swept::getPosition() const { return entity->getPosition(); };
+glm::vec3 Swept::getSize() const { return box.max - box.min; };
 //
 
 //	Default
@@ -32,5 +34,22 @@ PhysicsArtefacts::PhysicsArtefacts(Entity* e) : type(PhysicsArtefacts::ENTITY)
 PhysicsArtefacts::PhysicsArtefacts(Swept* s) : type(PhysicsArtefacts::SWEPT)
 {
 	data.swept = s;
+}
+//
+
+//
+bool PhysicsArtefacts::operator==(const PhysicsArtefacts& r) const
+{
+	void* a;
+	if (type == PhysicsArtefacts::SWEPT)
+		a = data.swept;
+	else a = data.entity;
+
+	void* b;
+	if (r.type == PhysicsArtefacts::SWEPT)
+		b = r.data.swept;
+	else b = r.data.entity;
+
+	return a == b;
 }
 //

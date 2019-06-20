@@ -165,10 +165,15 @@ glm::vec3 SceneManager::getObjectSize(const Entity* entity) const
 //	Physics engine related
 NodeVirtual* SceneManager::addSwept(Swept* object)
 {
+	if (world.empty())
+		return nullptr;
+	NodeVirtual* node = world[0];
+	if (!node->isInside(object->getPosition()))
+		return false;
+	const glm::vec3 s = object->getSize();
+	while (!node->isLeaf() && node->isTooSmall(s))
+		node = node->getChildAt(object->getPosition());
 
-}
-bool SceneManager::removeSwept(Swept* object)
-{
-
+	node->addSwept(object);
 }
 //

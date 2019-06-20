@@ -32,10 +32,26 @@ class Physics
 		//
 
 	private:
+		//	Miscellaneous
+		class ArtefactsGraph
+		{
+			public:
+				void clear();
+				void initialize(const std::set<PhysicsArtefacts>& n);
+				void addLink(const PhysicsArtefacts& n1, const PhysicsArtefacts& n2);
+				std::vector<std::vector<PhysicsArtefacts*> > getCluster();
+
+			private:
+				void getNeighbours(PhysicsArtefacts* node, std::vector<PhysicsArtefacts*>& result);
+
+				std::set<PhysicsArtefacts> nodes;
+				std::map<PhysicsArtefacts*, std::pair<std::set<PhysicsArtefacts*>, bool> > graph;
+		};
+		//
+
 		//	Pipeline steps
 		void predictTransform(const float& elapsedTime);
-		void computeBoundingShapes(const float& elapsedTime, SceneManager* scene);
-		void detectPairs(const float& elapsedTime);
+		void computeBoundingShapesAndDetectPairs(const float& elapsedTime, SceneManager* scene);
 		void computeContacts(const float& elapsedTime);
 		void solveConstraints(const float& elapsedTime);
 		void integratePositions(const float& elapsedTime);
@@ -53,7 +69,8 @@ class Physics
 		DefaultBoxCollector proximityList;
 		std::vector<Swept*> sweptList;
 		std::vector<NodeVirtual*> updatedNodes;
-		std::set<std::pair<Entity*, Entity*> > collidingPairs;
+		std::set<std::pair<PhysicsArtefacts, PhysicsArtefacts> > collidingPairs;
 		std::vector<Intersection::Contact> collisionList;
+		ArtefactsGraph clusterFinder;
 		//
 };

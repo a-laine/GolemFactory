@@ -53,7 +53,6 @@ class SceneManager
 
 		//	Physics engine related
 		NodeVirtual* addSwept(Swept* object);
-		bool removeSwept(Swept* object);
 		template<typename CollisionTest>
 		void getPhysicsArtefactsList(std::vector<PhysicsArtefacts>& result, CollisionTest collisionTest) {
 			if (!world.empty())  getPhysicsArtefactsInBox(world[0], result, collisionTest);
