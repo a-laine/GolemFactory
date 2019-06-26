@@ -7,6 +7,15 @@
 #include <Scene/SceneManager.h>
 
 
+
+class VirtualSceneQuerry
+{
+	virtual SceneManager::CollisionType operator() (const NodeVirtual* node) const = delete;
+	virtual void addNode(const NodeVirtual* node) = delete;
+};
+
+
+
 class DefaultSceneManagerBoxTest
 {
 	public:

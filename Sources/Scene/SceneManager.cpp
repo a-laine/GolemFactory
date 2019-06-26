@@ -4,7 +4,8 @@
 
 #include "SceneManager.h"
 #include "Utiles/Assert.hpp"
-#include "SceneQueryTests.h"
+#include "BoxSceneQuerry.h"
+#include "RaySceneQuerry.h"
 
 
 SceneManager::SceneManager(){}
@@ -131,7 +132,7 @@ void SceneManager::getObjectsOnRay(std::vector<Entity*>& result, const glm::vec3
 	if(world.empty())
 		return;
 
-	DefaultSceneManagerRayTest test(position, direction, maxDistance);
+	RaySceneQuerry test(position, direction, maxDistance);
 	getObjects(world[0], result, test);
 }
 
@@ -140,9 +141,20 @@ void SceneManager::getObjectsInBox(std::vector<Entity*>& result, const glm::vec3
 	if(world.empty())
 		return;
 
-	DefaultSceneManagerBoxTest test(bbMin, bbMax);
+	BoxSceneQuerry test(bbMin, bbMax);
 	getObjectsInBox(world[0], result, test);
 }
+
+
+void SceneManager::getNodes(VirtualSceneQuerry& collisionTest)
+{
+
+}
+void SceneManager::getObjects(VirtualSceneQuerry& collisionTest, VirtualEntityCollector& entityCollector)
+{
+
+}
+
 
 glm::vec3 SceneManager::getObjectSize(const Entity* entity) const
 {

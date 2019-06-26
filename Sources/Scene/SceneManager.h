@@ -5,7 +5,7 @@
 #include <glm/glm.hpp>
 
 #include "NodeVirtual.h"
-
+#include "VirtualSceneQuerry.h"
 
 class SceneManager
 {
@@ -45,18 +45,20 @@ class SceneManager
 		void getObjectsOnRay(std::vector<Entity*>& result, const glm::vec3& position, const glm::vec3& direction, float maxDistance);
 		void getObjectsInBox(std::vector<Entity*>& result, const glm::vec3& bbMin, const glm::vec3& bbMax);
 
-		template<typename EntityCollector, typename CollisionTest>
+		void getNodes(VirtualSceneQuerry& collisionTest);
+		void getObjects(VirtualSceneQuerry& collisionTest = VirtualSceneQuerry(), VirtualEntityCollector& entityCollector = VirtualEntityCollector());
+		/*template<typename EntityCollector, typename CollisionTest>
 		void getObjects(EntityCollector& result, CollisionTest collisionTest) {
 			if(!world.empty())  getObjects(world[0], result, collisionTest);
-		}
+		}*/
 		//
 
 		//	Physics engine related
 		NodeVirtual* addSwept(Swept* object);
-		template<typename CollisionTest>
+		/*template<typename CollisionTest>
 		void getPhysicsArtefactsList(std::vector<PhysicsArtefacts>& result, CollisionTest collisionTest) {
 			if (!world.empty())  getPhysicsArtefactsInBox(world[0], result, collisionTest);
-		}
+		}*/
 		//
 
 	private:
@@ -70,14 +72,14 @@ class SceneManager
 		//	Protected functions
 		glm::vec3 getObjectSize(const Entity* entity) const;
 
-		template<typename EntityCollector, typename CollisionTest>
+		/*template<typename EntityCollector, typename CollisionTest>
 		void getObjects(NodeVirtual* node, EntityCollector& result, CollisionTest collisionTest);
 		template<typename EntityCollector, typename CollisionTest>
 		void getPhysicsArtefacts(NodeVirtual* node, EntityCollector& result, CollisionTest collisionTest);
 		template<typename EntityCollector, typename CollisionTest>
 		void getObjectsInBox(NodeVirtual* node, EntityCollector& result, CollisionTest collisionTest);
 		template<typename EntityCollector, typename CollisionTest>
-		void getPhysicsArtefactsInBox(NodeVirtual* node, EntityCollector& result, CollisionTest collisionTest);
+		void getPhysicsArtefactsInBox(NodeVirtual* node, EntityCollector& result, CollisionTest collisionTest);*/
 		//
 
 		//  Attributes
@@ -89,7 +91,7 @@ class SceneManager
 
 
 
-
+/*
 
 //	template fuctions
 template<typename EntityCollector, typename CollisionTest>
@@ -251,3 +253,4 @@ void SceneManager::getPhysicsArtefactsInBox(NodeVirtual* node, EntityCollector& 
 }
 //
 
+*/
