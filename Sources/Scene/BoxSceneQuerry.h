@@ -11,7 +11,7 @@ class BoxSceneQuerry : public VirtualSceneQuerry
 	public:
 		BoxSceneQuerry(const glm::vec3& cornerMin, const glm::vec3& cornerMax);
 
-		VirtualSceneQuerry::CollisionType operator() (const NodeVirtual* node);
+		VirtualSceneQuerry::CollisionType operator() (const NodeVirtual* node) override;
 
 	private:
 		glm::vec3 bbMin;

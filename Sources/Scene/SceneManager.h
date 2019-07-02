@@ -45,20 +45,12 @@ class SceneManager
 		std::vector<Entity*> getObjectsOnRay(const glm::vec3& position, const glm::vec3& direction, float maxDistance);
 		std::vector<Entity*> getObjectsInBox(const glm::vec3& bbMin, const glm::vec3& bbMax);
 
-		void getSceneNodes(VirtualSceneQuerry& collisionTest);
-		void getEntities(VirtualSceneQuerry& collisionTest = VirtualSceneQuerry(), VirtualEntityCollector& entityCollector = VirtualEntityCollector());
-		/*template<typename EntityCollector, typename CollisionTest>
-		void getObjects(EntityCollector& result, CollisionTest collisionTest) {
-			if(!world.empty())  getObjects(world[0], result, collisionTest);
-		}*/
+		void getSceneNodes(VirtualSceneQuerry* collisionTest);
+		void getEntities(VirtualSceneQuerry* collisionTest, VirtualEntityCollector* entityCollector);
 		//
 
 		//	Physics engine related
 		NodeVirtual* addSwept(Swept* object);
-		/*template<typename CollisionTest>
-		void getPhysicsArtefactsList(std::vector<PhysicsArtefacts>& result, CollisionTest collisionTest) {
-			if (!world.empty())  getPhysicsArtefactsInBox(world[0], result, collisionTest);
-		}*/
 		//
 
 	private:
@@ -71,15 +63,6 @@ class SceneManager
 
 		//	Protected functions
 		glm::vec3 getObjectSize(const Entity* entity) const;
-
-		/*template<typename EntityCollector, typename CollisionTest>
-		void getObjects(NodeVirtual* node, EntityCollector& result, CollisionTest collisionTest);
-		template<typename EntityCollector, typename CollisionTest>
-		void getPhysicsArtefacts(NodeVirtual* node, EntityCollector& result, CollisionTest collisionTest);
-		template<typename EntityCollector, typename CollisionTest>
-		void getObjectsInBox(NodeVirtual* node, EntityCollector& result, CollisionTest collisionTest);
-		template<typename EntityCollector, typename CollisionTest>
-		void getPhysicsArtefactsInBox(NodeVirtual* node, EntityCollector& result, CollisionTest collisionTest);*/
 		//
 
 		//  Attributes
@@ -87,170 +70,3 @@ class SceneManager
 		std::unordered_map<Entity*, InstanceTrack> instanceTracking;
 		//
 };
-
-
-
-
-/*
-
-//	template fuctions
-template<typename EntityCollector, typename CollisionTest>
-void SceneManager::getObjects(NodeVirtual* node, EntityCollector& result, CollisionTest collisionTest)
-{
-	//	initialize and test root
-	CollisionType collision = (CollisionType) collisionTest(node);
-	if(collision == NONE)
-		return;
-	node->getObjectList(result);
-
-	//	init path and iterate on tree
-	std::vector<NodeVirtual::NodeRange> path;
-	if(!node->isLeaf())
-		node->getChildren(path);
-	while(!path.empty())
-	{
-		if(path.back().empty())
-		{
-			path.pop_back();
-			continue;
-		}
-
-		// process node
-		node = path.back().get();
-		collision = (CollisionType) collisionTest(node);
-		if(collision != NONE)
-			node->getObjectList(result);
-
-		//	iterate
-		path.back().next(); // node processed
-		if(!node->isLeaf() && collision != NONE)
-			node->getChildren(path);
-	}
-}
-
-template<typename EntityCollector, typename CollisionTest>
-void SceneManager::getPhysicsArtefacts(NodeVirtual* node, EntityCollector& result, CollisionTest collisionTest)
-{
-	//	initialize and test root
-	CollisionType collision = (CollisionType)collisionTest(node);
-	if (collision == NONE)
-		return;
-	node->getPhysicsArtefactsList(result);
-
-	//	init path and iterate on tree
-	std::vector<NodeVirtual::NodeRange> path;
-	if (!node->isLeaf())
-		node->getChildren(path);
-	while (!path.empty())
-	{
-		if (path.back().empty())
-		{
-			path.pop_back();
-			continue;
-		}
-
-		// process node
-		node = path.back().get();
-		collision = (CollisionType)collisionTest(node);
-		if (collision != NONE)
-			node->getPhysicsArtefactsList(result);
-
-		//	iterate
-		path.back().next(); // node processed
-		if (!node->isLeaf() && collision != NONE)
-			node->getChildren(path);
-	}
-}
-
-template<typename EntityCollector, typename CollisionTest>
-void SceneManager::getObjectsInBox(NodeVirtual* node, EntityCollector& result, CollisionTest collisionTest)
-{
-	//	initialize and test root in box
-	std::vector<NodeVirtual*> fullyInsideNodes;
-	CollisionType collision = collisionTest(node);
-	switch(collision)
-	{
-		case INSIDE:  fullyInsideNodes.push_back(node); break;
-		case OVERLAP: node->getObjectList(result); break;
-		default:      return;
-	}
-
-	//	init path and iterate on tree
-	std::vector<NodeVirtual::NodeRange> path;
-	if(!node->isLeaf())
-		collisionTest.getChildren(node, path);
-	while(!path.empty())
-	{
-		if(path.back().empty())
-		{
-			path.pop_back();
-			continue;
-		}
-
-		// process node
-		node = path.back().get();
-		collision = collisionTest(node);
-		switch(collision)
-		{
-			case INSIDE:  fullyInsideNodes.push_back(node); break;
-			case OVERLAP: node->getObjectList(result); break;
-			default:      break;
-		}
-
-		// iterate
-		path.back().next(); // node processed
-		if(!node->isLeaf() && collision == OVERLAP)
-			collisionTest.getChildren(node, path);
-	}
-
-	for(NodeVirtual* node : fullyInsideNodes)
-		getObjects(node, result, [](NodeVirtual*) -> CollisionType { return OVERLAP; });
-}
-
-template<typename EntityCollector, typename CollisionTest>
-void SceneManager::getPhysicsArtefactsInBox(NodeVirtual* node, EntityCollector& result, CollisionTest collisionTest)
-{
-	//	initialize and test root in box
-	std::vector<NodeVirtual*> fullyInsideNodes;
-	CollisionType collision = collisionTest(node);
-	switch (collision)
-	{
-		case INSIDE:  fullyInsideNodes.push_back(node); break;
-		case OVERLAP: node->getPhysicsArtefactsList(result); break;
-		default:      return;
-	}
-
-	//	init path and iterate on tree
-	std::vector<NodeVirtual::NodeRange> path;
-	if (!node->isLeaf())
-		collisionTest.getChildren(node, path);
-	while (!path.empty())
-	{
-		if (path.back().empty())
-		{
-			path.pop_back();
-			continue;
-		}
-
-		// process node
-		node = path.back().get();
-		collision = collisionTest(node);
-		switch (collision)
-		{
-		case INSIDE:  fullyInsideNodes.push_back(node); break;
-		case OVERLAP: node->getPhysicsArtefactsList(result); break;
-		default:      break;
-		}
-
-		// iterate
-		path.back().next(); // node processed
-		if (!node->isLeaf() && collision == OVERLAP)
-			collisionTest.getChildren(node, path);
-	}
-
-	for (NodeVirtual* node : fullyInsideNodes)
-		getPhysicsArtefacts(node, result, [](NodeVirtual*) -> CollisionType { return OVERLAP; });
-}
-//
-
-*/

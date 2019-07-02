@@ -89,7 +89,6 @@ class NodeVirtual
 		//
 
 		//	Attributes
-		//float allowanceSize;
 		static World* debugWorld;
 		//
 

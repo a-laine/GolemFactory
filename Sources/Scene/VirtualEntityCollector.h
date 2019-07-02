@@ -6,8 +6,8 @@ class VirtualEntityCollector
 {
 	public:
 		virtual bool operator() (Entity* entity);
-		std::vector<Entity*>& getResult();
+		virtual std::vector<Entity*>& getResult();
 
-	private:
+	protected:
 		std::vector<Entity*> result;
 };

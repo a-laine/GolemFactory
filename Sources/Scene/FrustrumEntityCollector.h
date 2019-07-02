@@ -2,9 +2,10 @@
 
 #include "VirtualEntityCollector.h"
 
-class FrustrumEntityCollector : VirtualEntityCollector
+class FrustrumEntityCollector : public VirtualEntityCollector
 {
 	public:
 		FrustrumEntityCollector();
-		bool operator() (Entity* entity);
+		bool operator() (Entity* entity) override;
+		std::vector<Entity*>& getResult() override;
 };

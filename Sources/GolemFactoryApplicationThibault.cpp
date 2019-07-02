@@ -45,10 +45,12 @@
 
 #include "Physics/Physics.h"
 #include "Physics/RigidBody.h"
-#include "Scene/BoxSceneQuerry.h"
-#include "Scene/FrustrumSceneQuerry.h"
-#include "Scene/RaySceneQuerry.h"
+//#include "Scene/BoxSceneQuerry.h"
+//#include "Scene/FrustrumSceneQuerry.h"
+
 #include "Resources/Loader/MeshSaver.h"
+#include "Scene/RayEntityCollector.h"
+#include "Scene/RaySceneQuerry.h"
 
 #define GRID_SIZE 100
 #define GRID_ELEMENT_SIZE 5.f
@@ -104,7 +106,7 @@ int main()
 
 	//	Test scene
 		Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("wired"));
-		//initializeForestScene(false);
+		initializeForestScene(false);
 
 		avatar = world.getEntityFactory().createObject("peasant", [](Entity* object)
 		{
@@ -146,12 +148,10 @@ int main()
 
 		WidgetManager::getInstance()->setBoolean("BBpicking", false);
 		WidgetManager::getInstance()->setBoolean("wireframe", false);
-		//glfwSetWindowShouldClose(window, 1);
-
 		Renderer::getInstance()->normalViewer = ResourceManager::getInstance()->getResource<Shader>("normalViewer");
 
-		Entity* testTree = world.getEntityFactory().createObject("tree", glm::vec3(5, 0, 0), glm::vec3(1), glm::rotate(glm::quat(), glm::radians((rand() % 3600) / 10.f), glm::vec3(0, 0, 1)));
-		Collision::debugUnitaryTest(2, static_cast<const Hull*>(testTree->getLocalBoundingShape()));
+		//Entity* testTree = world.getEntityFactory().createObject("tree", glm::vec3(5, 0, 0), glm::vec3(1), glm::rotate(glm::quat(), glm::radians((rand() % 3600) / 10.f), glm::vec3(0, 0, 1)));
+		Collision::debugUnitaryTest(2, nullptr);
 		
 
 	// init loop time tracking
@@ -186,8 +186,8 @@ int main()
 			glm::mat4 projection = glm::perspective(glm::radians(currentCamera->getVerticalFieldOfView(context->getViewportRatio())), context->getViewportRatio(), 0.1f, 1500.f);
 			
 			//Renderer::getInstance()->drawShape(avatar->getGlobalBoundingShape(), &view[0][0], &projection[0][0]);
-			Renderer::getInstance()->drawShape(testTree->getLocalBoundingShape(), &view[0][0], &projection[0][0]);
-		    Renderer::getInstance()->drawShape(testTree->getGlobalBoundingShape(), &view[0][0], &projection[0][0]);
+			//Renderer::getInstance()->drawShape(testTree->getLocalBoundingShape(), &view[0][0], &projection[0][0]);
+		    //Renderer::getInstance()->drawShape(testTree->getGlobalBoundingShape(), &view[0][0], &projection[0][0]);
 		}
 
 
@@ -440,24 +440,30 @@ void picking()
 	glm::vec3 cameraPos = currentCamera->getGlobalPosition();
 	glm::vec3 cameraForward = currentCamera->getForward(); // no rotations
 
-	RaySceneQuerry sceneNodeTest(cameraPos, cameraForward, 10000);
-	//RayEntityCollector collector(cameraPos, cameraForward, 10000);
-	//world.getSceneManager().getObjects(collector, sceneNodeTest);
+	RaySceneQuerry test(cameraPos, cameraForward, 10000);
+	RayEntityCollector collector(cameraPos, cameraForward, 10000);
+	world.getSceneManager().getEntities(&test, &collector);
 
-	/*if (!collector.getObjects().empty())
+	//std::sort(collector.getSortedResult().begin(), collector.getSortedResult().end(), [](std::pair<float, unsigned int> a, std::pair<float, unsigned int> b) { return a.first > b.first; });
+
+	if (!collector.getSortedResult().empty())
 	{
+		std::sort(collector.getSortedResult().begin(), collector.getSortedResult().end(), [](std::pair<float, unsigned int> a, std::pair<float, unsigned int> b) { return a.first > b.first; });
+		float distance = collector.getSortedResult().front().first;
+		Entity* entity = collector.getResult()[collector.getSortedResult().front().second];
+
 		std::string type;
-		AnimationComponent* compAnim = collector.getNearestObject()->getComponent<AnimationComponent>();
-		DrawableComponent* compDraw = collector.getNearestObject()->getComponent<DrawableComponent>();
+		AnimationComponent* compAnim = entity->getComponent<AnimationComponent>();
+		DrawableComponent* compDraw = entity->getComponent<DrawableComponent>();
 		if(compAnim)       type = "animatable";
 		else if(compDraw)  type = "drawable";
 		else               type = "empty entity";
-		glm::vec3 p = cameraPos + collector.getNearestDistance() * cameraForward;
+		glm::vec3 p = cameraPos + distance * cameraForward;
 		
-		WidgetManager::getInstance()->setString("interaction", "Distance : " + ToolBox::to_string_with_precision(collector.getNearestDistance(), 5) +
+		WidgetManager::getInstance()->setString("interaction", "Distance : " + ToolBox::to_string_with_precision(distance, 5) +
 			" m\nPosition : (" + ToolBox::to_string_with_precision(p.x, 5) + " , " + ToolBox::to_string_with_precision(p.y, 5) + " , " + ToolBox::to_string_with_precision(p.z, 5) +
-			")\nInstance on ray : " + std::to_string(collector.getObjects().size()) +
-			"\nFirst instance pointed id : " + std::to_string(collector.getNearestObject()->getId()) +
+			")\nInstance on ray : " + std::to_string(collector.getResult().size()) +
+			"\nFirst instance pointed id : " + std::to_string(entity->getId()) +
 			"\n  type : " + type);
 
 		if (WidgetManager::getInstance()->getBoolean("BBpicking"))
@@ -467,15 +473,15 @@ void picking()
 			glm::mat4 view = currentCamera->getGlobalViewMatrix();
 			glm::mat4 projection = glm::perspective(glm::radians(currentCamera->getVerticalFieldOfView(context->getViewportRatio())), context->getViewportRatio(), 0.1f, 1500.f);
 
-			for (auto it = collector.getObjects().begin(); it != collector.getObjects().end(); ++it)
-				Renderer::getInstance()->drawObject(it->second, &view[0][0], &projection[0][0]);
+			for (auto it = collector.getResult().begin(); it != collector.getResult().end(); ++it)
+				Renderer::getInstance()->drawObject((*it), &view[0][0], &projection[0][0]);
 			Renderer::getInstance()->setRenderOption(option);
 		}
 	}
 	else
 	{
 		WidgetManager::getInstance()->setString("interaction", "Distance : (inf)\nPosition : ()\nInstance on ray : 0\nFirst instance pointed id : (null)\n ");
-	}*/
+	}
 }
 void events()
 {

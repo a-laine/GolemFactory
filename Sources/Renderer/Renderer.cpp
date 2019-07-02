@@ -166,16 +166,16 @@ void Renderer::render(CameraComponent* renderCam)
 	float camFovVert = camera->getVerticalFieldOfView(context->getViewportRatio());
 	glm::vec3 camPos, camFwd, camUp, camRight;
 	camera->getFrustrum(camPos, camFwd, camUp, camRight);
-	std::vector<Entity*> instanceList;
+	//std::vector<Entity*> instanceList;
 	FrustrumSceneQuerry sceneTest(camPos, camFwd, camUp, -camRight, camFovVert / 1.6f, camFovVert / 1.6f);
 	VirtualEntityCollector collector;
-	world->getSceneManager().getEntities(sceneTest, collector);
+	world->getSceneManager().getEntities(&sceneTest, &collector);
 
 	EntityCompareDistance compare(camPos);
-	std::sort(instanceList.begin(), instanceList.end(), compare);
+	std::sort(collector.getResult().begin(), collector.getResult().end(), compare);
 
 	//	draw instance list
-	for (Entity* object : instanceList)
+	for (Entity* object : collector.getResult())
 	{
 		DrawableComponent* comp = object->getComponent<DrawableComponent>();
 		if(!comp || !comp->isValid()) continue;

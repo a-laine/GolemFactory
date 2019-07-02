@@ -1,6 +1,8 @@
 #include "FrustrumSceneQuerry.h"
 #include "Physics/Collision.h"
 
+#include <iostream>
+
 #define FRUSTRUM_COEFF	2.f
 
 FrustrumSceneQuerry::FrustrumSceneQuerry(const glm::vec3& position, const glm::vec3& direction, const glm::vec3& verticalDir, const glm::vec3& leftDir, float verticalAngle, float horizontalAngle) :

@@ -16,7 +16,7 @@ class VirtualSceneQuerry
 		};
 		//
 
-		VirtualSceneQuerry::CollisionType operator() (const NodeVirtual* node);
+		virtual VirtualSceneQuerry::CollisionType operator() (const NodeVirtual* node);
 		std::vector<const NodeVirtual*>& getResult();
 
 	protected:

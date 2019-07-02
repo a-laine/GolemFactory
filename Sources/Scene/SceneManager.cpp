@@ -150,11 +150,11 @@ std::vector<Entity*> SceneManager::getObjectsInBox(const glm::vec3& bbMin, const
 }
 
 
-void SceneManager::getSceneNodes(VirtualSceneQuerry& collisionTest)
+void SceneManager::getSceneNodes(VirtualSceneQuerry* collisionTest)
 {
 	//	initialize and test root
 	NodeVirtual* node = world[0];
-	CollisionType collision = (CollisionType)collisionTest(node);
+	CollisionType collision = (CollisionType)(*collisionTest)(node);
 	if (collision == NONE)
 		return;
 	//node->getObjectList(result);
@@ -173,9 +173,7 @@ void SceneManager::getSceneNodes(VirtualSceneQuerry& collisionTest)
 
 		// process node
 		node = path.back().get();
-		collision = (CollisionType)collisionTest(node);
-		//if (collision != NONE)
-		//	node->getObjectList(result);
+		collision = (CollisionType)(*collisionTest)(node);
 
 		//	iterate
 		path.back().next(); // node processed
@@ -183,16 +181,17 @@ void SceneManager::getSceneNodes(VirtualSceneQuerry& collisionTest)
 			node->getChildren(path);
 	}
 }
-void SceneManager::getEntities(VirtualSceneQuerry& collisionTest, VirtualEntityCollector& entityCollector)
+void SceneManager::getEntities(VirtualSceneQuerry* collisionTest, VirtualEntityCollector* entityCollector)
 {
 	getSceneNodes(collisionTest);
-	auto nodeList = collisionTest.getResult();
+	std::vector<const NodeVirtual*>& nodeList = collisionTest->getResult();
+
 	for (unsigned int i = 0; i < nodeList.size(); i++)
 	{
-		auto entities = nodeList[i]->getEntitiesList();
+		const std::vector<Entity*>& entities = nodeList[i]->getEntitiesList();
 		for (unsigned int j = 0; j < entities.size(); j++)
 		{
-			entityCollector(entities[j]);
+			(*entityCollector)(entities[j]);
 		}
 	}
 }
@@ -211,7 +210,11 @@ glm::vec3 SceneManager::getObjectSize(const Entity* entity) const
 		const AxisAlignedBox& box = *static_cast<const AxisAlignedBox*>(Shape);
 		return box.max - box.min;
 	}
-	else return glm::vec3(2.f * Shape->toSphere().radius);
+	else
+	{
+		const AxisAlignedBox box = Shape->toAxisAlignedBox();
+		return box.max - box.min;
+	}
 }
 
 

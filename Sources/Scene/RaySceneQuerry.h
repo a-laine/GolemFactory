@@ -7,7 +7,7 @@ class RaySceneQuerry : public VirtualSceneQuerry
 	public:
 		RaySceneQuerry(const glm::vec3& pos, const glm::vec3& dir, float maxDist);
 
-		VirtualSceneQuerry::CollisionType operator() (const NodeVirtual* node);
+		VirtualSceneQuerry::CollisionType operator() (const NodeVirtual* node) override;
 
 	private:
 		glm::vec3 position;
