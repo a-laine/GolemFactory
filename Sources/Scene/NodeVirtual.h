@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 
 #include "EntityComponent/Entity.hpp"
+#include "VirtualEntityCollector.h"
 #include "Physics/Swept.h"
 
 class World;
@@ -73,10 +74,7 @@ class NodeVirtual
 		//	Entities / objects related
 		void addObject(Entity* object);
 		bool removeObject(Entity* object);
-		template<typename ObjectCollector>
-		void getObjectList(ObjectCollector& collector);
-		template<>
-		void getObjectList(std::vector<Entity*>& collector);
+		const std::vector<Entity*>& getEntitiesList() const;
 		//
 
 		//	Physics engine related
@@ -106,25 +104,10 @@ class NodeVirtual
 		std::vector<NodeVirtual*> adoptedChildren;	//!< Children added to, for special tree
 		std::vector<Entity*> objectList;			//!< Instance container (list of instance attached to node)
 
-		std::vector<Swept*> sweptObject;				//!< Physics entities (has to be only used by the physics engine)
+		std::vector<Swept*> sweptObject;			//!< Physics entities (has to be only used by the physics engine)
 
 		Entity* debugCube;							//!< A 3D cube to represent the node area
 		//
 };
 
 
-
-
-template<typename ObjectCollector>
-void NodeVirtual::getObjectList(ObjectCollector& collector)
-{
-	//if(debugCube) collector(this, debugCube);
-	for(Entity* object : objectList)
-		collector(this, object);
-}
-
-template<>
-void NodeVirtual::getObjectList<std::vector<Entity*>>(std::vector<Entity*>& collector)
-{
-	collector.insert(collector.end(), objectList.begin(), objectList.end());
-}

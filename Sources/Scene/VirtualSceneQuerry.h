@@ -2,16 +2,23 @@
 
 #include <glm/gtx/component_wise.hpp>
 
-#include "Scene/SceneManager.h"
-
-
+#include "NodeVirtual.h"
 
 class VirtualSceneQuerry
 {
 	public:
-		virtual SceneManager::CollisionType operator() (const NodeVirtual* node) { return SceneManager::NONE; };
-		std::vector<const NodeVirtual*>& getResult() { return result; }
+		//	Miscellaneous
+		enum CollisionType
+		{
+			NONE = 0, //!< No collision
+			INSIDE,   //!< Object fully inside
+			OVERLAP   //!< Shapes are overlapping
+		};
+		//
 
-	private:
+		VirtualSceneQuerry::CollisionType operator() (const NodeVirtual* node);
+		std::vector<const NodeVirtual*>& getResult();
+
+	protected:
 		std::vector<const NodeVirtual*> result;
 };

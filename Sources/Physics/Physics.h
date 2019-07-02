@@ -7,7 +7,7 @@
 #include "Utiles/Singleton.h"
 #include "Resources/Mesh.h"
 //#include "Scene/SceneManager.h"
-#include "Scene/SceneQueryTests.h"
+#include "Scene/BoxSceneQuerry.h"
 
 #include <set>
 
@@ -66,7 +66,7 @@ class Physics
 		//	Attributes
 		glm::vec3 gravity;
 		std::set<Entity*> movingEntity;
-		DefaultBoxCollector proximityList;
+		BoxSceneQuerry proximityList;
 		std::vector<Swept*> sweptList;
 		std::vector<NodeVirtual*> updatedNodes;
 		std::set<std::pair<PhysicsArtefacts, PhysicsArtefacts> > collidingPairs;

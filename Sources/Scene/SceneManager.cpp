@@ -4,8 +4,7 @@
 
 #include "SceneManager.h"
 #include "Utiles/Assert.hpp"
-#include "BoxSceneQuerry.h"
-#include "RaySceneQuerry.h"
+
 
 
 SceneManager::SceneManager(){}
@@ -119,40 +118,83 @@ bool SceneManager::updateObject(Entity* object)
 }
 
 
-void SceneManager::getAllObjects(std::vector<Entity*>& result)
+std::vector<Entity*> SceneManager::getAllObjects()
 {
-	if(!world.empty())
+	VirtualSceneQuerry getAllTest;
+	VirtualEntityCollector result;
+
+	return std::vector<Entity*>(result.getResult());
+
+	/*if(!world.empty())
 	{
 		getObjects(world[0], result, [](NodeVirtual*) -> CollisionType { return OVERLAP; });
-	}
+	}*/
 }
 
-void SceneManager::getObjectsOnRay(std::vector<Entity*>& result, const glm::vec3& position, const glm::vec3& direction, float maxDistance)
+std::vector<Entity*> SceneManager::getObjectsOnRay(const glm::vec3& position, const glm::vec3& direction, float maxDistance)
 {
-	if(world.empty())
+	/*if(world.empty())
 		return;
 
 	RaySceneQuerry test(position, direction, maxDistance);
-	getObjects(world[0], result, test);
+	getObjects(world[0], result, test);*/
 }
 
-void SceneManager::getObjectsInBox(std::vector<Entity*>& result, const glm::vec3& bbMin, const glm::vec3& bbMax)
+std::vector<Entity*> SceneManager::getObjectsInBox(const glm::vec3& bbMin, const glm::vec3& bbMax)
 {
-	if(world.empty())
+	/*if(world.empty())
 		return;
 
 	BoxSceneQuerry test(bbMin, bbMax);
-	getObjectsInBox(world[0], result, test);
+	getObjectsInBox(world[0], result, test);*/
 }
 
 
-void SceneManager::getNodes(VirtualSceneQuerry& collisionTest)
+void SceneManager::getSceneNodes(VirtualSceneQuerry& collisionTest)
 {
+	//	initialize and test root
+	NodeVirtual* node = world[0];
+	CollisionType collision = (CollisionType)collisionTest(node);
+	if (collision == NONE)
+		return;
+	//node->getObjectList(result);
 
+	//	init path and iterate on tree
+	std::vector<NodeVirtual::NodeRange> path;
+	if (!node->isLeaf())
+		node->getChildren(path);
+	while (!path.empty())
+	{
+		if (path.back().empty())
+		{
+			path.pop_back();
+			continue;
+		}
+
+		// process node
+		node = path.back().get();
+		collision = (CollisionType)collisionTest(node);
+		//if (collision != NONE)
+		//	node->getObjectList(result);
+
+		//	iterate
+		path.back().next(); // node processed
+		if (!node->isLeaf() && collision != NONE)
+			node->getChildren(path);
+	}
 }
-void SceneManager::getObjects(VirtualSceneQuerry& collisionTest, VirtualEntityCollector& entityCollector)
+void SceneManager::getEntities(VirtualSceneQuerry& collisionTest, VirtualEntityCollector& entityCollector)
 {
-
+	getSceneNodes(collisionTest);
+	auto nodeList = collisionTest.getResult();
+	for (unsigned int i = 0; i < nodeList.size(); i++)
+	{
+		auto entities = nodeList[i]->getEntitiesList();
+		for (unsigned int j = 0; j < entities.size(); j++)
+		{
+			entityCollector(entities[j]);
+		}
+	}
 }
 
 

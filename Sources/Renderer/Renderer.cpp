@@ -3,13 +3,14 @@
 #include <iostream>
 #include <sstream>
 
-#include <EntityComponent/Entity.hpp>
-#include <HUD/WidgetManager.h>
-#include <Scene/SceneQueryTests.h>
-#include <Resources/ResourceManager.h>
-#include <Resources/Skeleton.h>
-#include <Renderer/DrawableComponent.h>
-#include <Animation/SkeletonComponent.h>
+#include "EntityComponent/Entity.hpp"
+#include "HUD/WidgetManager.h"
+#include "Scene/FrustrumSceneQuerry.h"
+#include "Scene/FrustrumEntityCollector.h"
+#include "Resources/ResourceManager.h"
+#include "Resources/Skeleton.h"
+#include "Renderer/DrawableComponent.h"
+#include "Animation/SkeletonComponent.h"
 
 
 #define BATCH_SIZE 32
@@ -166,8 +167,9 @@ void Renderer::render(CameraComponent* renderCam)
 	glm::vec3 camPos, camFwd, camUp, camRight;
 	camera->getFrustrum(camPos, camFwd, camUp, camRight);
 	std::vector<Entity*> instanceList;
-	DefaultSceneManagerFrustrumTest sceneTest(camPos, camFwd, camUp, -camRight, camFovVert / 1.6f, camFovVert / 1.6f);
-	world->getSceneManager().getObjects(instanceList, sceneTest);
+	FrustrumSceneQuerry sceneTest(camPos, camFwd, camUp, -camRight, camFovVert / 1.6f, camFovVert / 1.6f);
+	VirtualEntityCollector collector;
+	world->getSceneManager().getEntities(sceneTest, collector);
 
 	EntityCompareDistance compare(camPos);
 	std::sort(instanceList.begin(), instanceList.end(), compare);

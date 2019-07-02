@@ -41,12 +41,12 @@ class SceneManager
 		bool removeObject(Entity* object);
 		bool updateObject(Entity* object);
 
-		void getAllObjects(std::vector<Entity*>& result);
-		void getObjectsOnRay(std::vector<Entity*>& result, const glm::vec3& position, const glm::vec3& direction, float maxDistance);
-		void getObjectsInBox(std::vector<Entity*>& result, const glm::vec3& bbMin, const glm::vec3& bbMax);
+		std::vector<Entity*> getAllObjects();
+		std::vector<Entity*> getObjectsOnRay(const glm::vec3& position, const glm::vec3& direction, float maxDistance);
+		std::vector<Entity*> getObjectsInBox(const glm::vec3& bbMin, const glm::vec3& bbMax);
 
-		void getNodes(VirtualSceneQuerry& collisionTest);
-		void getObjects(VirtualSceneQuerry& collisionTest = VirtualSceneQuerry(), VirtualEntityCollector& entityCollector = VirtualEntityCollector());
+		void getSceneNodes(VirtualSceneQuerry& collisionTest);
+		void getEntities(VirtualSceneQuerry& collisionTest = VirtualSceneQuerry(), VirtualEntityCollector& entityCollector = VirtualEntityCollector());
 		/*template<typename EntityCollector, typename CollisionTest>
 		void getObjects(EntityCollector& result, CollisionTest collisionTest) {
 			if(!world.empty())  getObjects(world[0], result, collisionTest);

@@ -250,5 +250,7 @@ void NodeVirtual::getPhysicsArtefactsList(std::vector<PhysicsArtefacts>& collect
 		collector.insert(collector.end(), PhysicsArtefacts(*it));
 }
 
+const std::vector<Entity*>& NodeVirtual::getEntitiesList() const { return objectList; }
+
 
 Entity* NodeVirtual::getDebugCube() { return debugCube; }

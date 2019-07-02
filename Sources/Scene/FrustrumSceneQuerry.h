@@ -2,12 +2,12 @@
 
 #include "VirtualSceneQuerry.h"
 
-class FrustrumSceneQuerry : VirtualSceneQuerry
+class FrustrumSceneQuerry : public VirtualSceneQuerry
 {
 	public:
 		FrustrumSceneQuerry(const glm::vec3& position, const glm::vec3& direction, const glm::vec3& verticalDir, const glm::vec3& leftDir, float verticalAngle, float horizontalAngle);
 
-		SceneManager::CollisionType operator() (const NodeVirtual* node) override;
+		VirtualSceneQuerry::CollisionType operator() (const NodeVirtual* node);
 		std::vector<const NodeVirtual*>& getResult();
 
 	private:

@@ -10,7 +10,7 @@
 
 
 //  Default
-Physics::Physics() : gravity(0.f, 0.f, -9.81f)
+Physics::Physics() : gravity(0.f, 0.f, -9.81f), proximityList(glm::vec3(0), glm::vec3(0))
 {}
 Physics::~Physics()
 {}
@@ -34,7 +34,6 @@ void Physics::addMovingEntity(Entity* e)
 //	Public functions
 void Physics::stepSimulation(const float& elapsedTime, SceneManager* s)
 {
-	proximityList.clear();
 	collisionList.clear();
 	collidingPairs.clear();
 
@@ -218,7 +217,9 @@ void Physics::computeBoundingShapesAndDetectPairs(const float& elapsedTime, Scen
 	
 		std::vector<PhysicsArtefacts> broadPhaseResult;
 		auto box = swept->getBox();
-		scene->getPhysicsArtefactsList(broadPhaseResult, DefaultSceneManagerBoxTest(box.min, box.max));
+		proximityList.result.clear();
+		proximityList.bbMin = box.min;
+		proximityList.bbMax = box.max;
 		
 		bool collided = false;
 		for (unsigned int i = 0; i < broadPhaseResult.size(); i++)

@@ -45,7 +45,9 @@
 
 #include "Physics/Physics.h"
 #include "Physics/RigidBody.h"
-
+#include "Scene/BoxSceneQuerry.h"
+#include "Scene/FrustrumSceneQuerry.h"
+#include "Scene/RaySceneQuerry.h"
 #include "Resources/Loader/MeshSaver.h"
 
 #define GRID_SIZE 100
@@ -438,11 +440,11 @@ void picking()
 	glm::vec3 cameraPos = currentCamera->getGlobalPosition();
 	glm::vec3 cameraForward = currentCamera->getForward(); // no rotations
 
-	DefaultSceneManagerRayTest sceneNodeTest(cameraPos, cameraForward, 10000);
-	DefaultRayPickingCollector collector(cameraPos, cameraForward, 10000);
-	world.getSceneManager().getObjects(collector, sceneNodeTest);
+	RaySceneQuerry sceneNodeTest(cameraPos, cameraForward, 10000);
+	//RayEntityCollector collector(cameraPos, cameraForward, 10000);
+	//world.getSceneManager().getObjects(collector, sceneNodeTest);
 
-	if (!collector.getObjects().empty())
+	/*if (!collector.getObjects().empty())
 	{
 		std::string type;
 		AnimationComponent* compAnim = collector.getNearestObject()->getComponent<AnimationComponent>();
@@ -473,7 +475,7 @@ void picking()
 	else
 	{
 		WidgetManager::getInstance()->setString("interaction", "Distance : (inf)\nPosition : ()\nInstance on ray : 0\nFirst instance pointed id : (null)\n ");
-	}
+	}*/
 }
 void events()
 {
