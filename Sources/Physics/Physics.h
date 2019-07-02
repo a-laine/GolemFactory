@@ -6,8 +6,8 @@
 #include "Intersection.h"
 #include "Utiles/Singleton.h"
 #include "Resources/Mesh.h"
-//#include "Scene/SceneManager.h"
 #include "Scene/BoxSceneQuerry.h"
+#include "Scene/SceneManager.h"
 
 #include <set>
 

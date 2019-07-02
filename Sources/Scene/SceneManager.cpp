@@ -229,5 +229,6 @@ NodeVirtual* SceneManager::addSwept(Swept* object)
 		node = node->getChildAt(object->getPosition());
 
 	node->addSwept(object);
+	return node;
 }
 //

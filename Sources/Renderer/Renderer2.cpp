@@ -7,7 +7,6 @@
 
 #include <EntityComponent/Entity.hpp>
 #include <HUD/WidgetManager.h>
-#include <Scene/SceneQueryTests.h>
 #include <Resources/ResourceManager.h>
 #include <Resources/Skeleton.h>
 #include <Renderer/DrawableComponent.h>
