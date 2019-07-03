@@ -5,7 +5,7 @@
 
 
 //	Default
-Entity::Entity() : m_refCount(0), m_parentWorld(nullptr), m_localBoundingShape(nullptr), m_globalBoundingShape(nullptr)
+Entity::Entity() : m_refCount(0), m_parentWorld(nullptr), m_localBoundingShape(nullptr), m_globalBoundingShape(nullptr), swept(nullptr)
 {}
 //
 
@@ -80,6 +80,8 @@ glm::vec3 Entity::getScale() const
 }
 glm::fquat Entity::getOrientation() const
 {
+	// https://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/index.htm 
+
 	glm::vec3 s = getScale();
 	float m00 = m_transform[0][0] / s.x;
 	float m01 = m_transform[0][1] / s.y;
@@ -91,16 +93,46 @@ glm::fquat Entity::getOrientation() const
 	float m21 = m_transform[2][1] / s.y;
 	float m22 = m_transform[2][2] / s.z;
 
+	float tr = m00 + m11 + m22;
 	glm::fquat q;
-	q.w = glm::sqrt(glm::max(0.f, 1 + m00 + m11 + m22)) / 2;
-	q.x = glm::sqrt(glm::max(0.f, 1 + m00 - m11 - m22)) / 2;
-	q.y = glm::sqrt(glm::max(0.f, 1 - m00 + m11 - m22)) / 2;
-	q.z = glm::sqrt(glm::max(0.f, 1 - m00 - m11 + m22)) / 2;
-	q.x *= glm::sign(q.x * (m21 - m12));
-	q.y *= glm::sign(q.y * (m02 - m20));
-	q.z *= glm::sign(q.z * (m10 - m01));
 
-	glm::normalize(q);
+	if (tr > 0)
+	{
+		float S = glm::sqrt(tr + 1.f) * 2; // S=4*qw 
+		q.w = 0.25f * S;
+		q.x = (m21 - m12) / S;
+		q.y = (m02 - m20) / S;
+		q.z = (m10 - m01) / S;
+	}
+	else if (m00 > m11 && m00 > m22)
+	{
+		float S = glm::sqrt(1.f + m00 - m11 - m22) * 2; // S=4*qx 
+		q.w = (m21 - m12) / S;
+		q.x = 0.25f * S;
+		q.y = (m01 + m10) / S;
+		q.z = (m02 + m20) / S;
+	}
+	else if (m11 > m22)
+	{
+		float S = glm::sqrt(1.f + m11 - m00 - m22) * 2; // S=4*qy
+		q.w = (m02 - m20) / S;
+		q.x = (m01 + m10) / S;
+		q.y = 0.25f * S;
+		q.z = (m12 + m21) / S;
+	}
+	else
+	{
+		float S = glm::sqrt(1.f + m22 - m00 - m11) * 2; // S=4*qz
+		q.w = (m10 - m01) / S;
+		q.x = (m02 + m20) / S;
+		q.y = (m12 + m21) / S;
+		q.z = 0.25f * S;
+	}
+
+	//q = glm::normalize(q);
+	//if (q.x >= 0) return q;
+	//else return glm::fquat(q.w, -q.x, -q.y, -q.z);
+
 	return q;
 }
 World* Entity::getParentWorld() const { return m_parentWorld; }

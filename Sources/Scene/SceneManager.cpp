@@ -4,6 +4,7 @@
 
 #include "SceneManager.h"
 #include "Utiles/Assert.hpp"
+#include "Physics/Swept.h"
 
 
 
@@ -199,28 +200,34 @@ void SceneManager::getEntities(VirtualSceneQuerry* collisionTest, VirtualEntityC
 
 glm::vec3 SceneManager::getObjectSize(const Entity* entity) const
 {
-	const Shape* Shape = entity->getGlobalBoundingShape();
-	if (Shape->type == Shape::ORIENTED_BOX)
-	{
-		const OrientedBox& box = *static_cast<const OrientedBox*>(Shape);
-		return box.max - box.min;
-	}
-	else if (Shape->type == Shape::AXIS_ALIGNED_BOX)
-	{
-		const AxisAlignedBox& box = *static_cast<const AxisAlignedBox*>(Shape);
-		return box.max - box.min;
-	}
+	if (entity->swept)
+		return entity->swept->getSize();
 	else
 	{
-		const AxisAlignedBox box = Shape->toAxisAlignedBox();
-		return box.max - box.min;
+		const Shape* Shape = entity->getGlobalBoundingShape();
+		if (Shape->type == Shape::ORIENTED_BOX)
+		{
+			const OrientedBox& box = *static_cast<const OrientedBox*>(Shape);
+			return box.max - box.min;
+		}
+		else if (Shape->type == Shape::AXIS_ALIGNED_BOX)
+		{
+			const AxisAlignedBox& box = *static_cast<const AxisAlignedBox*>(Shape);
+			return box.max - box.min;
+		}
+		else
+		{
+			const AxisAlignedBox box = Shape->toAxisAlignedBox();
+			return box.max - box.min;
+		}
 	}
+
 }
 
 
 
 //	Physics engine related
-NodeVirtual* SceneManager::addSwept(Swept* object)
+/*NodeVirtual* SceneManager::addSwept(Swept* object)
 {
 	if (world.empty())
 		return nullptr;
@@ -233,5 +240,5 @@ NodeVirtual* SceneManager::addSwept(Swept* object)
 
 	node->addSwept(object);
 	return node;
-}
+}*/
 //

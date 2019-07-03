@@ -27,7 +27,7 @@ glm::vec3 Swept::getSize() const { return box.max - box.min; };
 //
 
 //	Default
-PhysicsArtefacts::PhysicsArtefacts(Entity* e) : type(PhysicsArtefacts::ENTITY)
+/*PhysicsArtefacts::PhysicsArtefacts(Entity* e) : type(PhysicsArtefacts::ENTITY)
 {
 	data.entity = e;
 }
@@ -51,5 +51,5 @@ bool PhysicsArtefacts::operator==(const PhysicsArtefacts& r) const
 	else b = r.data.entity;
 
 	return a == b;
-}
+}*/
 //

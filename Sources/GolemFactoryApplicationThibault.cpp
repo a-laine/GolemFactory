@@ -89,7 +89,9 @@ void events();
 void updates(float elapseTime);
 //
 
+
 bool wiredhull = true;
+
 // program
 int main()
 {
@@ -129,7 +131,7 @@ int main()
 
 		freeflyCamera = world.getEntityFactory().createObject([](Entity* object)
 		{
-			object->setPosition(glm::vec3(0, 5, 5));
+			object->setPosition(glm::vec3(0, -20, 5));
 			object->setShape(new Sphere());
 			CameraComponent* ffCam = new CameraComponent(true);
 			ffCam->lookAt(glm::vec3(0, 1, 0));
@@ -172,7 +174,7 @@ int main()
 		updates((float)elapseTime);
 
 		//	physics
-		world.getPhysics().stepSimulation((float)elapseTime * 0.001f * 0.01f, &world.getSceneManager());
+		world.getPhysics().stepSimulation((float)elapseTime * 0.0001f, &world.getSceneManager());
 
 		// Render scene & picking
 		if (WidgetManager::getInstance()->getBoolean("BBrendering"))
@@ -251,9 +253,11 @@ void initializeForestScene(bool emptyPlace)
 		world.getEntityFactory().createObject("cube", [](Entity* object)
 		{
 			object->getComponent<DrawableComponent>()->setShader(ResourceManager::getInstance()->getResource<Shader>("default"));
-			object->setTransformation(glm::vec3(0.f, 0.f, 20.f), glm::vec3(1.f), glm::normalize(glm::fquat(1.f, 0.1f, 0.3f, 1.f)));
+			object->setTransformation(glm::vec3(0.f, 0.f, 20.f), glm::vec3(1.f), glm::normalize(glm::fquat(1.f, 0.1f, 0.3f, 1.f)));//
 			RigidBody* rb = new RigidBody(RigidBody::DYNAMIC);
 			rb->setMass(1.f);
+			rb->setGravityFactor(0.f);
+			rb->setAngularVelocity(glm::vec3(1.f, 0, 0));
 			object->addComponent(rb);
 		});
 

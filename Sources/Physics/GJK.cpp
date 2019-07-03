@@ -27,7 +27,7 @@ bool GJK::collide(const Shape& a, const Shape& b)
 		prepareSimplex(simplex, direction);
 	}
 
-	std::cout << "GJK : error : no solution found after maximum iteration (" << MAX_ITERATION << ")" << std::endl;
+	//std::cout << "GJK : error : no solution found after maximum iteration (" << MAX_ITERATION << ")" << std::endl;
 	return false;
 }
 //

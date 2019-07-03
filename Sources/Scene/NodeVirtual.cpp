@@ -229,7 +229,7 @@ void NodeVirtual::getChildrenInBox(std::vector<NodeRange>& result, const glm::ve
 }
 
 
-NodeVirtual* NodeVirtual::addSwept(Swept* object)
+/*NodeVirtual* NodeVirtual::addSwept(Swept* object)
 {
 	sweptObject.push_back(object);
 	return this;
@@ -248,7 +248,7 @@ void NodeVirtual::getPhysicsArtefactsList(std::vector<PhysicsArtefacts>& collect
 		collector.insert(collector.end(), PhysicsArtefacts(*it));
 	for (auto it = sweptObject.begin(); it != sweptObject.end(); ++it)
 		collector.insert(collector.end(), PhysicsArtefacts(*it));
-}
+}*/
 
 const std::vector<Entity*>& NodeVirtual::getEntitiesList() const { return objectList; }
 

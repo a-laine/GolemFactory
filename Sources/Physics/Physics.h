@@ -33,19 +33,19 @@ class Physics
 
 	private:
 		//	Miscellaneous
-		class ArtefactsGraph
+		class EntityGraph
 		{
 			public:
 				void clear();
-				void initialize(const std::set<PhysicsArtefacts>& n);
-				void addLink(const PhysicsArtefacts& n1, const PhysicsArtefacts& n2);
-				std::vector<std::vector<PhysicsArtefacts*> > getCluster();
+				void initialize(const std::set<Entity*>& n);
+				void addLink(const Entity* n1, const Entity* n2);
+				std::vector<std::vector<Entity*> > getCluster();
 
 			private:
-				void getNeighbours(PhysicsArtefacts* node, std::vector<PhysicsArtefacts*>& result);
+				void getNeighbours(Entity* node, std::vector<Entity*>& result);
 
-				std::set<PhysicsArtefacts> nodes;
-				std::map<PhysicsArtefacts*, std::pair<std::set<PhysicsArtefacts*>, bool> > graph;
+				std::set<Entity*> nodes;
+				std::map<Entity*, std::pair<std::set<Entity*>, bool> > graph;
 		};
 		//
 
@@ -54,8 +54,8 @@ class Physics
 		void computeBoundingShapesAndDetectPairs(const float& elapsedTime, SceneManager* scene);
 		void computeContacts(const float& elapsedTime);
 		void solveConstraints(const float& elapsedTime);
-		void integratePositions(const float& elapsedTime);
-		void clearTepoaryStruct();
+		void integratePosition(Entity* entity, const float& elapsedTime);
+		void clearTempoaryStruct(SceneManager* scene);
 		//
 
 		//	Usefull functions
@@ -66,11 +66,12 @@ class Physics
 		//	Attributes
 		glm::vec3 gravity;
 		std::set<Entity*> movingEntity;
-		BoxSceneQuerry proximityList;
+		BoxSceneQuerry proximityTest;
+		VirtualEntityCollector proximityList;
 		std::vector<Swept*> sweptList;
-		std::vector<NodeVirtual*> updatedNodes;
-		std::set<std::pair<PhysicsArtefacts, PhysicsArtefacts> > collidingPairs;
+		//std::vector<NodeVirtual*> updatedNodes;
+		std::set<std::pair<Entity*, Entity*> > collidingPairs;
 		std::vector<Intersection::Contact> collisionList;
-		ArtefactsGraph clusterFinder;
+		EntityGraph clusterFinder;
 		//
 };

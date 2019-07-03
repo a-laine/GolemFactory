@@ -8,9 +8,11 @@
 #include "Scene/SceneManager.h"
 #include "World/World.h"
 
+#define APPROXIMATION_FACTOR 10.f
+
 
 //  Default
-Physics::Physics() : gravity(0.f, 0.f, -9.81f), proximityList(glm::vec3(0), glm::vec3(0))
+Physics::Physics() : gravity(0.f, 0.f, -9.81f), proximityTest(glm::vec3(0), glm::vec3(0))
 {}
 Physics::~Physics()
 {}
@@ -43,8 +45,7 @@ void Physics::stepSimulation(const float& elapsedTime, SceneManager* s)
 	computeBoundingShapesAndDetectPairs(elapsedTime, s);
 	computeContacts(elapsedTime);
 	solveConstraints(elapsedTime);
-	integratePositions(elapsedTime);
-	clearTepoaryStruct();
+	clearTempoaryStruct(s);
 
 	//std::cout << std::endl;
 }
@@ -193,7 +194,10 @@ void Physics::predictTransform(const float& elapsedTime)
 
 			//	predict orientation
 			rigidbody->deltaRotation = 0.5f * elapsedTime * glm::fquat(0.f, rigidbody->angularVelocity.x, rigidbody->angularVelocity.y, rigidbody->angularVelocity.z) * (*it)->getOrientation();
-			rigidbody->predictRotation = (*it)->getOrientation() + rigidbody->deltaRotation;
+			rigidbody->predictRotation = (*it)->getOrientation() +rigidbody->deltaRotation;
+
+			glm::fquat q = rigidbody->predictRotation;
+			std::cout << q.x << ' ' << q.y << ' ' << q.z << ' ' << q.w << ' ' << std::endl;
 
 			//	clear
 			rigidbody->forces.clear();
@@ -212,22 +216,39 @@ void Physics::computeBoundingShapesAndDetectPairs(const float& elapsedTime, Scen
 	{
 		Swept* swept = new Swept(*it);
 		sweptList.push_back(swept);
-		NodeVirtual* n = scene->addSwept(swept);
-		if (n) updatedNodes.push_back(n);
+		(*it)->swept = swept;
+		scene->removeObject(*it);
+		scene->addObject(*it);
 	
-		std::vector<PhysicsArtefacts> broadPhaseResult;
 		auto box = swept->getBox();
+		proximityTest.result.clear();
+		proximityTest.bbMin = box.min;
+		proximityTest.bbMax = box.max;
 		proximityList.result.clear();
-		proximityList.bbMin = box.min;
-		proximityList.bbMax = box.max;
+		scene->getEntities(&proximityTest, &proximityList);
+
+		//std::cout << proximityList.result.size() << std::endl;
 		
-		bool collided = false;
-		for (unsigned int i = 0; i < broadPhaseResult.size(); i++)
+		for (unsigned int i = 0; i < proximityList.result.size(); i++)
 		{
-			if (broadPhaseResult[i].type == PhysicsArtefacts::SWEPT)
+			//	get shape of concurent entity
+			Shape* shape2 = nullptr;
+			if (proximityList.result[i]->swept)
 			{
-				if (broadPhaseResult[i].data.swept == swept)
+				if (proximityList.result[i]->swept == swept)
 					continue;
+				shape2 = (Shape*)&proximityList.result[i]->swept->getBox();
+			}
+			else shape2 = (Shape*)proximityList.result[i]->getGlobalBoundingShape();
+			
+			//	test collision
+			if (Collision::collide(swept->getBox(), *shape2))
+			{
+				collidingPairs.insert(std::pair<Entity*, Entity*>(*it, proximityList.result[i]));
+			}
+			else
+			{
+				integratePosition(*it, elapsedTime);
 			}
 		}
 	}
@@ -240,18 +261,25 @@ void Physics::solveConstraints(const float& elapsedTime)
 {
 
 }
-void Physics::integratePositions(const float& elapsedTime)
+void Physics::integratePosition(Entity* entity, const float& elapsedTime)
 {
-
+	RigidBody* rigidbody = entity->getComponent<RigidBody>();
+	glm::vec3 s = entity->getScale();
+	s.x = ((int)(APPROXIMATION_FACTOR * s.x)) / APPROXIMATION_FACTOR;
+	s.y = ((int)(APPROXIMATION_FACTOR * s.y)) / APPROXIMATION_FACTOR;
+	s.z = ((int)(APPROXIMATION_FACTOR * s.z)) / APPROXIMATION_FACTOR;
+	entity->setTransformation(rigidbody->predictPosition, entity->getScale(), rigidbody->predictRotation);
 }
-void Physics::clearTepoaryStruct()
+void Physics::clearTempoaryStruct(SceneManager* scene)
 {
-	for (unsigned int i = 0; i < updatedNodes.size(); i++)
-		updatedNodes[i]->clearSwept();
+	for (std::set<Entity*>::iterator it = movingEntity.begin(); it != movingEntity.end(); ++it)
+	{
+		scene->removeObject(*it);
+		(*it)->swept = nullptr;
+		scene->addObject(*it);
+	}
 	for (unsigned int i = 0; i < sweptList.size(); i++)
 		delete sweptList[i];
-
-	updatedNodes.clear();
 	sweptList.clear();
 }
 //
@@ -283,31 +311,31 @@ bool Physics::extractIsAnimatable(Entity* entity) const
 
 
 //	Private internal class
-void Physics::ArtefactsGraph::clear()
+void Physics::EntityGraph::clear()
 {
 	nodes.clear();
 	graph.clear();
 }
-void Physics::ArtefactsGraph::initialize(const std::set<PhysicsArtefacts>& n)
+void Physics::EntityGraph::initialize(const std::set<Entity*>& n)
 {
 	nodes = n;
 	for (auto it = nodes.begin(); it != nodes.end(); ++it)
-		graph[(PhysicsArtefacts*)&(*it)] = std::pair<std::set<PhysicsArtefacts*>, bool>(std::set<PhysicsArtefacts*>(), false);
+		graph[*it] = std::pair<std::set<Entity*>, bool>(std::set<Entity*>(), false);
 }
-void Physics::ArtefactsGraph::addLink(const PhysicsArtefacts& n1, const PhysicsArtefacts& n2)
+void Physics::EntityGraph::addLink(const Entity* n1, const Entity* n2)
 {
-	if (!n1.operator==(n2))
-		graph[(PhysicsArtefacts*)&n1].first.insert((PhysicsArtefacts*)&n2);
+	if (n1 != n2)
+		graph[(Entity*)n1].first.insert((Entity*)&n2);
 }
-std::vector<std::vector<PhysicsArtefacts*> > Physics::ArtefactsGraph::getCluster()
+std::vector<std::vector<Entity*> > Physics::EntityGraph::getCluster()
 {
-	std::vector<std::vector<PhysicsArtefacts*> > result;
+	std::vector<std::vector<Entity*> > result;
 
 	for (auto it = graph.begin(); it != graph.end(); ++it)
 	{
 		if (!it->second.second)
 		{
-			std::vector<PhysicsArtefacts*> cluster;
+			std::vector<Entity*> cluster;
 			getNeighbours(it->first, cluster);
 			result.push_back(cluster);
 		}
@@ -315,7 +343,7 @@ std::vector<std::vector<PhysicsArtefacts*> > Physics::ArtefactsGraph::getCluster
 	return result;
 }
 
-void Physics::ArtefactsGraph::getNeighbours(PhysicsArtefacts* node, std::vector<PhysicsArtefacts*>& result)
+void Physics::EntityGraph::getNeighbours(Entity* node, std::vector<Entity*>& result)
 {
 	if (!graph[node].second)
 	{

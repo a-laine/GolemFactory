@@ -49,10 +49,6 @@ class SceneManager
 		void getEntities(VirtualSceneQuerry* collisionTest, VirtualEntityCollector* entityCollector);
 		//
 
-		//	Physics engine related
-		NodeVirtual* addSwept(Swept* object);
-		//
-
 	private:
 		//	Miscellaneous
 		struct InstanceTrack

@@ -4,6 +4,8 @@
 
 class VirtualEntityCollector
 {
+	friend class Physics;
+
 	public:
 		virtual bool operator() (Entity* entity);
 		virtual std::vector<Entity*>& getResult();

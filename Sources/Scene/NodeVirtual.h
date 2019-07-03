@@ -78,10 +78,10 @@ class NodeVirtual
 		//
 
 		//	Physics engine related
-		NodeVirtual* addSwept(Swept* object);
+		/*NodeVirtual* addSwept(Swept* object);
 		bool removeSwept(Swept* object);
 		void clearSwept();
-		void getPhysicsArtefactsList(std::vector<PhysicsArtefacts>& collector);
+		void getPhysicsArtefactsList(std::vector<PhysicsArtefacts>& collector);*/
 		//
 
 		//	Debug
@@ -103,7 +103,7 @@ class NodeVirtual
 		std::vector<NodeVirtual*> adoptedChildren;	//!< Children added to, for special tree
 		std::vector<Entity*> objectList;			//!< Instance container (list of instance attached to node)
 
-		std::vector<Swept*> sweptObject;			//!< Physics entities (has to be only used by the physics engine)
+		//std::vector<Swept*> sweptObject;			//!< Physics entities (has to be only used by the physics engine)
 
 		Entity* debugCube;							//!< A 3D cube to represent the node area
 		//

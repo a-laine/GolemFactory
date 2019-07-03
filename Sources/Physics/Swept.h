@@ -25,7 +25,7 @@ class Swept
 		//
 };
 
-class PhysicsArtefacts
+/*class PhysicsArtefacts
 {
 	public:
 		//	Msc
@@ -52,4 +52,4 @@ class PhysicsArtefacts
 			Swept* swept;
 		} data;
 		//
-};
+};*/

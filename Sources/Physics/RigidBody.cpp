@@ -19,6 +19,8 @@ void RigidBody::setMass(const float& m) { mass = m; inverseMass = 1.f / mass; }
 void RigidBody::setGravityFactor(const float& f) { gravityFactor = f; }
 void RigidBody::setAcceleration(const glm::vec3& a) { acceleration = a; }
 void RigidBody::setVelocity(const glm::vec3& v) { velocity = v; }
+void RigidBody::setAngularAcceleration(const glm::vec3& a) { angularAcceleration = a; }
+void RigidBody::setAngularVelocity(const glm::vec3& v) { angularVelocity = v; }
 
 
 RigidBody::RigidBodyType RigidBody::getType() const { return type; }
