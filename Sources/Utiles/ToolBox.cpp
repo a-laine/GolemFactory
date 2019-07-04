@@ -127,11 +127,16 @@ std::string ToolBox::openAndCleanCStyleFile(std::string targetFile, std::string 
 }
 void ToolBox::clearWhitespace(std::string& input)
 {
-	for (std::string::iterator it = input.begin(); it != input.end(); ++it)
+	for (std::string::iterator it = input.begin(); it != input.end();)
 	{
 		if (std::isspace(*it) && *std::prev(it) == ' ' || std::isspace(*it) && it == input.begin())
-			it = std::prev(input.erase(it));
-		else if (std::isspace(*it) && *std::prev(it) != ' ') *it = ' ';
+			it = input.erase(it);
+		else if (std::isspace(*it) && *std::prev(it) != ' ')
+		{
+			*it = ' ';
+			++it;
+		}
+		else ++it;
 	}
 }
 bool ToolBox::isPathExist(const std::string& fileName)

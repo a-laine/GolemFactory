@@ -267,7 +267,7 @@ void Physics::computeBoundingShapesAndDetectPairs(const float& elapsedTime, Scen
 					continue;
 				shape2 = (Shape*)&proximityList.result[i]->swept->getBox();
 			}
-			else shape2 = (Shape*)proximityList.result[i]->getGlobalBoundingShape();
+			else shape2 = const_cast<Shape*>(proximityList.result[i]->getGlobalBoundingShape());
 			
 			//	test collision
 			if (Collision::collide(swept->getBox(), *shape2))
@@ -352,7 +352,7 @@ void Physics::EntityGraph::initialize(const std::set<Entity*>& n)
 void Physics::EntityGraph::addLink(const Entity* n1, const Entity* n2)
 {
 	if (n1 != n2)
-		graph[(Entity*)n1].first.insert((Entity*)&n2);
+		graph[const_cast<Entity*>(n1)].first.insert(const_cast<Entity*>(n2));
 }
 std::vector<std::vector<Entity*> > Physics::EntityGraph::getCluster()
 {

@@ -36,7 +36,6 @@ bool Collision::collide_SpherevsHull(const glm::vec3& sphereCenter, const float&
 		return true;
 
 	//	test if each front faces collide
-	float d = std::numeric_limits<float>::max();
 	for (unsigned int i = 0; i < frontFaces.size(); i++)
 	{
 		if (collide_TrianglevsSphere(frontFaces[i].p1, frontFaces[i].p2, frontFaces[i].p3, p, sphereRadius))
