@@ -16,6 +16,10 @@ class Swept
 		glm::vec3 getSize() const;
 		//
 
+		//	Public functions
+		void init(Entity* e);
+		//
+
 	protected:
 		//	Attributes
 		Entity* entity;

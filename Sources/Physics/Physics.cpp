@@ -166,8 +166,24 @@ void Physics::predictTransform(const float& elapsedTime)
 	for (std::set<Entity*>::iterator it = movingEntity.begin(); it != movingEntity.end();)
 	{
 		RigidBody* rigidbody = (*it)->getComponent<RigidBody>();
-		if (!rigidbody) it = movingEntity.erase(it);
-		else if (rigidbody->getMass() == 0.f)  it = movingEntity.erase(it);
+		if (!rigidbody)
+		{
+			if ((*it)->swept)
+			{
+				delete (*it)->swept;
+				(*it)->swept = nullptr;
+			}
+			it = movingEntity.erase(it);
+		}
+		else if (rigidbody->getMass() == 0.f)  
+		{
+			if ((*it)->swept)
+			{
+				delete (*it)->swept;
+				(*it)->swept = nullptr;
+			}
+			it = movingEntity.erase(it);
+		}
 		else
 		{
 			//	linear acceleration
@@ -196,8 +212,8 @@ void Physics::predictTransform(const float& elapsedTime)
 			rigidbody->deltaRotation = 0.5f * elapsedTime * glm::fquat(0.f, rigidbody->angularVelocity.x, rigidbody->angularVelocity.y, rigidbody->angularVelocity.z) * (*it)->getOrientation();
 			rigidbody->predictRotation = (*it)->getOrientation() +rigidbody->deltaRotation;
 
-			glm::fquat q = rigidbody->predictRotation;
-			std::cout << q.x << ' ' << q.y << ' ' << q.z << ' ' << q.w << ' ' << std::endl;
+			//glm::fquat q = rigidbody->predictRotation;
+			//std::cout << q.x << ' ' << q.y << ' ' << q.z << ' ' << q.w << ' ' << std::endl;
 
 			//	clear
 			rigidbody->forces.clear();
@@ -205,7 +221,14 @@ void Physics::predictTransform(const float& elapsedTime)
 
 			//	check new static
 			if(rigidbody->isResting())
+			{
+				if ((*it)->swept)
+				{
+					delete (*it)->swept;
+					(*it)->swept = nullptr;
+				}
 				it = movingEntity.erase(it);
+			}
 			else ++it;
 		}
 	}
@@ -214,9 +237,15 @@ void Physics::computeBoundingShapesAndDetectPairs(const float& elapsedTime, Scen
 {
 	for (std::set<Entity*>::iterator it = movingEntity.begin(); it != movingEntity.end(); ++it)
 	{
-		Swept* swept = new Swept(*it);
+		Swept* swept = (*it)->swept;
+		if (!swept)
+		{
+			swept = new Swept(*it);
+			(*it)->swept = swept;
+		}
+		else swept->init(*it);
 		sweptList.push_back(swept);
-		(*it)->swept = swept;
+		
 		scene->removeObject(*it);
 		scene->addObject(*it);
 	
@@ -227,8 +256,7 @@ void Physics::computeBoundingShapesAndDetectPairs(const float& elapsedTime, Scen
 		proximityList.result.clear();
 		scene->getEntities(&proximityTest, &proximityList);
 
-		//std::cout << proximityList.result.size() << std::endl;
-		
+		bool collision = false;
 		for (unsigned int i = 0; i < proximityList.result.size(); i++)
 		{
 			//	get shape of concurent entity
@@ -244,12 +272,14 @@ void Physics::computeBoundingShapesAndDetectPairs(const float& elapsedTime, Scen
 			//	test collision
 			if (Collision::collide(swept->getBox(), *shape2))
 			{
+				collision = true;
 				collidingPairs.insert(std::pair<Entity*, Entity*>(*it, proximityList.result[i]));
 			}
-			else
-			{
-				integratePosition(*it, elapsedTime);
-			}
+		}
+
+		if (!collision)
+		{
+			integratePosition(*it, elapsedTime);
 		}
 	}
 }
@@ -268,18 +298,15 @@ void Physics::integratePosition(Entity* entity, const float& elapsedTime)
 	s.x = ((int)(APPROXIMATION_FACTOR * s.x)) / APPROXIMATION_FACTOR;
 	s.y = ((int)(APPROXIMATION_FACTOR * s.y)) / APPROXIMATION_FACTOR;
 	s.z = ((int)(APPROXIMATION_FACTOR * s.z)) / APPROXIMATION_FACTOR;
-	entity->setTransformation(rigidbody->predictPosition, entity->getScale(), rigidbody->predictRotation);
+	entity->setTransformation(rigidbody->predictPosition, entity->getScale(), glm::normalize(rigidbody->predictRotation));
 }
 void Physics::clearTempoaryStruct(SceneManager* scene)
 {
 	for (std::set<Entity*>::iterator it = movingEntity.begin(); it != movingEntity.end(); ++it)
 	{
 		scene->removeObject(*it);
-		(*it)->swept = nullptr;
 		scene->addObject(*it);
 	}
-	for (unsigned int i = 0; i < sweptList.size(); i++)
-		delete sweptList[i];
 	sweptList.clear();
 }
 //

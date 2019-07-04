@@ -2,6 +2,7 @@
 #include "Renderer/DrawableComponent.h"
 #include "Utiles/Assert.hpp"
 
+//#include <glm/gtc/quaternion.hpp>
 
 
 //	Default
@@ -80,60 +81,17 @@ glm::vec3 Entity::getScale() const
 }
 glm::fquat Entity::getOrientation() const
 {
-	// https://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/index.htm 
-
 	glm::vec3 s = getScale();
-	float m00 = m_transform[0][0] / s.x;
-	float m01 = m_transform[0][1] / s.y;
-	float m02 = m_transform[0][2] / s.z;
-	float m10 = m_transform[1][0] / s.x;
-	float m11 = m_transform[1][1] / s.y;
-	float m12 = m_transform[1][2] / s.z;
-	float m20 = m_transform[2][0] / s.x;
-	float m21 = m_transform[2][1] / s.y;
-	float m22 = m_transform[2][2] / s.z;
-
-	float tr = m00 + m11 + m22;
-	glm::fquat q;
-
-	if (tr > 0)
-	{
-		float S = glm::sqrt(tr + 1.f) * 2; // S=4*qw 
-		q.w = 0.25f * S;
-		q.x = (m21 - m12) / S;
-		q.y = (m02 - m20) / S;
-		q.z = (m10 - m01) / S;
-	}
-	else if (m00 > m11 && m00 > m22)
-	{
-		float S = glm::sqrt(1.f + m00 - m11 - m22) * 2; // S=4*qx 
-		q.w = (m21 - m12) / S;
-		q.x = 0.25f * S;
-		q.y = (m01 + m10) / S;
-		q.z = (m02 + m20) / S;
-	}
-	else if (m11 > m22)
-	{
-		float S = glm::sqrt(1.f + m11 - m00 - m22) * 2; // S=4*qy
-		q.w = (m02 - m20) / S;
-		q.x = (m01 + m10) / S;
-		q.y = 0.25f * S;
-		q.z = (m12 + m21) / S;
-	}
-	else
-	{
-		float S = glm::sqrt(1.f + m22 - m00 - m11) * 2; // S=4*qz
-		q.w = (m10 - m01) / S;
-		q.x = (m02 + m20) / S;
-		q.y = (m12 + m21) / S;
-		q.z = 0.25f * S;
-	}
-
-	//q = glm::normalize(q);
-	//if (q.x >= 0) return q;
-	//else return glm::fquat(q.w, -q.x, -q.y, -q.z);
-
-	return q;
+	const float m00 = m_transform[0][0] / s.x;
+	const float m01 = m_transform[0][1] / s.y;
+	const float m02 = m_transform[0][2] / s.z;
+	const float m10 = m_transform[1][0] / s.x;
+	const float m11 = m_transform[1][1] / s.y;
+	const float m12 = m_transform[1][2] / s.z;
+	const float m20 = m_transform[2][0] / s.x;
+	const float m21 = m_transform[2][1] / s.y;
+	const float m22 = m_transform[2][2] / s.z;
+	return glm::quat_cast(glm::mat3(m00, m01, m02, m10, m11, m12, m20, m21, m22));
 }
 World* Entity::getParentWorld() const { return m_parentWorld; }
 
