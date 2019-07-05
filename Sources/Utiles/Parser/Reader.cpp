@@ -26,7 +26,7 @@ void Reader::parseString(Variant &result, std::string text)
 
 
 //******************************** Constructors *******************************//
-Reader::Reader(std::istream* input)
+Reader::Reader(std::istream* input) : nbErrors(0), charBuf(' ')
 {
     comment = '\0';
     ifs = 0;

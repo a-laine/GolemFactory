@@ -25,7 +25,7 @@ std::string Writer::writeInString(Variant &object)
 
 
 //******************************** Constructors *******************************//
-Writer::Writer(std::ostream* output)
+Writer::Writer(std::ostream* output) : json(false)
 {
     ostr = 0;
     if(!output->good())

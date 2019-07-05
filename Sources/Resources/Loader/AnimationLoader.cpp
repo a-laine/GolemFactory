@@ -22,7 +22,6 @@ bool AnimationLoader::load(const std::string& resourceDirectory, const std::stri
             std::cerr << "ERROR : loading animation : " << fileName << " : fail to open or parse file" << std::endl;
         return false;
     }
-    Variant& animationMap = *tmp;
 
     //	import data
     KeyFrame keyframe;
@@ -31,6 +30,7 @@ bool AnimationLoader::load(const std::string& resourceDirectory, const std::stri
     errors.push_back("");
     try
     {
+		Variant& animationMap = *tmp;
         //	load first key frame
         errors.back() = "loading first key frame";
         {

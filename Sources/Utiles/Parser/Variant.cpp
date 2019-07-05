@@ -105,28 +105,28 @@ std::string Variant::toString() const
 }
 
 
-Variant& Variant::operator[] (const size_t key)
+Variant& Variant::operator[] (const size_t& key)
 {
     if(type!=Variant::ARRAY)
         throw std::logic_error("Variant::operator[](size_t) : wrong type");
     return value.Array->at(key);
 }
 
-const Variant& Variant::operator[] (const size_t key) const
+const Variant& Variant::operator[] (const size_t& key) const
 {
     if(type!=Variant::ARRAY)
         throw std::logic_error("Variant::operator[](size_t) : wrong type");
     return value.Array->at(key);
 }
 
-Variant& Variant::operator[] (const std::string key)
+Variant& Variant::operator[] (const std::string& key)
 {
     if(type!=Variant::MAP)
         throw std::logic_error("Variant::operator[](string) : wrong type");
     return value.Map->at(key);
 }
 
-const Variant& Variant::operator[] (const std::string key) const
+const Variant& Variant::operator[] (const std::string& key) const
 {
     if(type!=Variant::MAP)
         throw std::logic_error("Variant::operator[](string) : wrong type");
@@ -297,7 +297,7 @@ Variant::MapType& Variant::createMap()
 }
 
 
-Variant& Variant::insert(const bool val)
+Variant& Variant::insert(const bool& val)
 {
     if(type!=Variant::ARRAY)
         throw std::logic_error("Variant::insert(bool) : wrong type");
@@ -305,7 +305,7 @@ Variant& Variant::insert(const bool val)
     return value.Array->back();
 }
 
-Variant& Variant::insert(const char val)
+Variant& Variant::insert(const char& val)
 {
     if(type!=Variant::ARRAY)
         throw std::logic_error("Variant::insert(char) : wrong type");
@@ -313,7 +313,7 @@ Variant& Variant::insert(const char val)
     return value.Array->back();
 }
 
-Variant& Variant::insert(const int val)
+Variant& Variant::insert(const int& val)
 {
     if(type!=Variant::ARRAY)
         throw std::logic_error("Variant::insert(int) : wrong type");
@@ -321,7 +321,7 @@ Variant& Variant::insert(const int val)
     return value.Array->back();
 }
 
-Variant& Variant::insert(const int64_t val)
+Variant& Variant::insert(const int64_t& val)
 {
     if(type!=Variant::ARRAY)
         throw std::logic_error("Variant::insert(long) : wrong type");
@@ -329,7 +329,7 @@ Variant& Variant::insert(const int64_t val)
     return value.Array->back();
 }
 
-Variant& Variant::insert(const float val)
+Variant& Variant::insert(const float& val)
 {
     if(type!=Variant::ARRAY)
         throw std::logic_error("Variant::insert(float) : wrong type");
@@ -337,7 +337,7 @@ Variant& Variant::insert(const float val)
     return value.Array->back();
 }
 
-Variant& Variant::insert(const double val)
+Variant& Variant::insert(const double& val)
 {
     if(type!=Variant::ARRAY)
         throw std::logic_error("Variant::insert(double) : wrong type");
@@ -345,7 +345,7 @@ Variant& Variant::insert(const double val)
     return value.Array->back();
 }
 
-Variant& Variant::insert(const std::string val)
+Variant& Variant::insert(const std::string& val)
 {
     if(type==Variant::ARRAY)
     {
@@ -381,7 +381,7 @@ Variant& Variant::insert(const Variant &val)
     return value.Array->back();
 }
 
-Variant& Variant::insert(const std::string key, const bool val)
+Variant& Variant::insert(const std::string& key, const bool& val)
 {
     if(type!=Variant::MAP)
         throw std::logic_error("Variant::insert(string,bool) : wrong type");
@@ -389,7 +389,7 @@ Variant& Variant::insert(const std::string key, const bool val)
     return (*value.Map)[key];
 }
 
-Variant& Variant::insert(const std::string key, const char val)
+Variant& Variant::insert(const std::string& key, const char& val)
 {
     if(type!=Variant::MAP)
         throw std::logic_error("Variant::insert(string,char) : wrong type");
@@ -397,7 +397,7 @@ Variant& Variant::insert(const std::string key, const char val)
     return (*value.Map)[key];
 }
 
-Variant& Variant::insert(const std::string key, const int val)
+Variant& Variant::insert(const std::string& key, const int& val)
 {
     if(type!=Variant::MAP)
         throw std::logic_error("Variant::insert(string,int) : wrong type");
@@ -405,7 +405,7 @@ Variant& Variant::insert(const std::string key, const int val)
     return (*value.Map)[key];
 }
 
-Variant& Variant::insert(const std::string key, const int64_t val)
+Variant& Variant::insert(const std::string& key, const int64_t& val)
 {
     if(type!=Variant::MAP)
         throw std::logic_error("Variant::insert(string,long) : wrong type");
@@ -413,7 +413,7 @@ Variant& Variant::insert(const std::string key, const int64_t val)
     return (*value.Map)[key];
 }
 
-Variant& Variant::insert(const std::string key, const float val)
+Variant& Variant::insert(const std::string& key, const float& val)
 {
     if(type!=Variant::MAP)
         throw std::logic_error("Variant::insert(string,float) : wrong type");
@@ -421,7 +421,7 @@ Variant& Variant::insert(const std::string key, const float val)
     return (*value.Map)[key];
 }
 
-Variant& Variant::insert(const std::string key, const double val)
+Variant& Variant::insert(const std::string& key, const double& val)
 {
     if(type!=Variant::MAP)
         throw std::logic_error("Variant::insert(string,double) : wrong type");
@@ -429,7 +429,7 @@ Variant& Variant::insert(const std::string key, const double val)
     return (*value.Map)[key];
 }
 
-Variant& Variant::insert(const std::string key, const std::string val)
+Variant& Variant::insert(const std::string& key, const std::string& val)
 {
     if(type!=Variant::MAP)
         throw std::logic_error("Variant::insert(string,string) : wrong type");
@@ -437,12 +437,12 @@ Variant& Variant::insert(const std::string key, const std::string val)
     return (*value.Map)[key];
 }
 
-Variant& Variant::insert(const std::string key, const char* val)
+Variant& Variant::insert(const std::string& key, const char* val)
 {
     return insert(key,std::string(val));
 }
 
-Variant& Variant::insert(const std::string key, const Variant &val)
+Variant& Variant::insert(const std::string& key, const Variant &val)
 {
     if(type!=Variant::MAP)
         throw std::logic_error("Variant::insert(string,Variant&) : wrong type");

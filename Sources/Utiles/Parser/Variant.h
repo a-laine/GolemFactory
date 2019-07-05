@@ -54,10 +54,10 @@ class Variant
         float toFloat() const;
         std::string toString() const;
 
-        Variant& operator[] (const size_t key);
-        const Variant& operator[] (const size_t key) const;
-        Variant& operator[] (const std::string key);
-        const Variant& operator[] (const std::string key) const;
+        Variant& operator[] (const size_t& key);
+        const Variant& operator[] (const size_t& key) const;
+        Variant& operator[] (const std::string& key);
+        const Variant& operator[] (const std::string& key) const;
 
         ArrayType& getArray() const;
         MapType& getMap() const;
@@ -84,24 +84,24 @@ class Variant
         MapType& createMap();
 
         Variant& insert(const Variant &val);
-        Variant& insert(const bool val);
-        Variant& insert(const char val);
-        Variant& insert(const int val);
-        Variant& insert(const int64_t val);
-        Variant& insert(const float val);
-        Variant& insert(const double val);
-        Variant& insert(const std::string val);
+        Variant& insert(const bool& val);
+        Variant& insert(const char& val);
+        Variant& insert(const int& val);
+        Variant& insert(const int64_t& val);
+        Variant& insert(const float& val);
+        Variant& insert(const double& val);
+        Variant& insert(const std::string& val);
         Variant& insert(const char* val);
 
-        Variant& insert(const std::string key, const Variant &val);
-        Variant& insert(const std::string key, const bool val);
-        Variant& insert(const std::string key, const char val);
-        Variant& insert(const std::string key, const int val);
-        Variant& insert(const std::string key, const int64_t val);
-        Variant& insert(const std::string key, const float val);
-        Variant& insert(const std::string key, const double val);
-        Variant& insert(const std::string key, const std::string val);
-        Variant& insert(const std::string key, const char* val);
+        Variant& insert(const std::string& key, const Variant &val);
+        Variant& insert(const std::string& key, const bool& val);
+        Variant& insert(const std::string& key, const char& val);
+        Variant& insert(const std::string& key, const int& val);
+        Variant& insert(const std::string& key, const int64_t& val);
+        Variant& insert(const std::string& key, const float& val);
+        Variant& insert(const std::string& key, const double& val);
+        Variant& insert(const std::string& key, const std::string& val);
+        Variant& insert(const std::string& key, const char* val);
 
 
     private:

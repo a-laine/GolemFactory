@@ -114,8 +114,8 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
                 std::string boneName(scene->mMeshes[i]->mBones[j]->mName.C_Str());
                 if(boneMap.find(boneName) == boneMap.end())
                 {
-                    boneMap[boneName] = (int)boneMap.size();
                     joints.push_back(Joint(boneName));
+					boneMap[boneName] = (int)boneMap.size();
                 }
             }
 

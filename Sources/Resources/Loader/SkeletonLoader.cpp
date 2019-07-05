@@ -22,12 +22,13 @@ bool SkeletonLoader::load(const std::string& resourceDirectory, const std::strin
             std::cerr << "ERROR : loading skeleton : " << fileName << " : fail to open file" << std::endl;
         return false;
     }
-    Variant& skeletonMap = *tmp;
 
     //	import data
     Joint joint;
     try
     {
+		Variant& skeletonMap = *tmp;
+
         //	Prevent parsing errors
         if(skeletonMap.getMap().find("order") == skeletonMap.getMap().end())
             throw std::runtime_error("no order array defined");

@@ -256,9 +256,9 @@ void ToolBox::optimizeStaticMesh(std::vector<glm::vec3>& verticesArray,
 void ToolBox::optimizeHullMesh(Mesh* mesh)
 {
 	//	copy current array of mesh
-	std::vector<glm::vec3> verticesArray = *mesh->getVertices();
-	std::vector<glm::vec3> normalesArray = *mesh->getNormals();
-	std::vector<unsigned short> facesArray = *mesh->getFaces();
+	const std::vector<glm::vec3>& verticesArray = *mesh->getVertices();
+	const std::vector<glm::vec3>& normalesArray = *mesh->getNormals();
+	const std::vector<unsigned short>& facesArray = *mesh->getFaces();
 
 	// create result output
 	std::vector<glm::vec3> verticesBuffer;

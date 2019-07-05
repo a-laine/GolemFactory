@@ -9,10 +9,8 @@
 
 
 SceneManager::SceneManager(){}
-SceneManager::SceneManager(SceneManager&& other)
+SceneManager::SceneManager(SceneManager&& other) : world(std::move(other.world)), instanceTracking(std::move(other.instanceTracking))
 {
-	world = std::move(other.world);
-	instanceTracking = std::move(other.instanceTracking);
 	other.world.clear();
 	other.instanceTracking.clear();
 }
