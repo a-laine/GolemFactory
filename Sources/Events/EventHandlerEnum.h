@@ -94,7 +94,7 @@ class EventHandlerEnum : public EventHandlerImpl, public Singleton<EventHandlerE
 		/*!
 		*	\brief Remove and delete all event handled
 		*/
-        void clear();
+        void clear() override;
         //
 
         //  Set/get functions
@@ -134,12 +134,12 @@ class EventHandlerEnum : public EventHandlerImpl, public Singleton<EventHandlerE
 		/*!
 		*	\brief Herited function from EventHandlerImpl class
 		*/
-        void emitUserEvent(Event* event);
+        void emitUserEvent(Event* event) override;
         
 		/*!
 		*	\brief Herited function from EventHandlerImpl class
 		*/
-		void swapFrameEventList();
+		void swapFrameEventList() override;
         //
 
         //  Attributes

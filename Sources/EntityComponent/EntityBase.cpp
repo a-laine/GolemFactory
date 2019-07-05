@@ -1,5 +1,7 @@
 #include "EntityBase.hpp"
 
+#include <algorithm>
+
 //	Default
 EntityBase::EntityBase() {}
 EntityBase::~EntityBase()
@@ -30,21 +32,17 @@ Component* EntityBase::getComponent(unsigned short index) { return (index < m_co
 const Component* EntityBase::getComponent(unsigned short index) const { return (index < m_components.size()) ? m_components[index].comp : nullptr; }
 Component* EntityBase::getComponent(ClassID type)
 {
-	for (Element& elem : m_components)
-	{
-		if (elem.type == type)
-			return elem.comp;
-	}
-	return nullptr;
+	auto it = std::find_if(m_components.begin(), m_components.end(), [type](const Element& e) {return e.type == type; });
+	if (it != m_components.end())
+		return it->comp;
+	else return nullptr;
 }
 const Component* EntityBase::getComponent(ClassID type) const
 {
-	for (const Element& elem : m_components)
-	{
-		if (elem.type == type)
-			return elem.comp;
-	}
-	return nullptr;
+	auto it = std::find_if(m_components.begin(), m_components.end(), [type](const Element& e) {return e.type == type; });
+	if (it != m_components.end())
+		return it->comp;
+	else return nullptr;
 }
 void EntityBase::getAllComponents(ClassID type, std::vector<Component*>& components)
 {

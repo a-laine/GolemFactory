@@ -36,15 +36,21 @@ void Physics::addMovingEntity(Entity* e)
 //	Public functions
 void Physics::stepSimulation(const float& elapsedTime, SceneManager* s)
 {
+	clusterFinder.clear();
 	collisionList.clear();
 	collidingPairs.clear();
-
-	//std::cout << "moving object count : " << movingEntity.size() << std::endl;
-
+	
 	predictTransform(elapsedTime);
 	computeBoundingShapesAndDetectPairs(elapsedTime, s);
-	computeContacts(elapsedTime);
-	solveConstraints(elapsedTime);
+	computeClusters();
+	for (unsigned int i = 0; i < clusters.size(); i++)
+	{
+		clusterSolver(clusters[i]);
+	}
+
+
+	/*computeContacts(elapsedTime);
+	solveConstraints(elapsedTime);*/
 	clearTempoaryStruct(s);
 
 	//std::cout << std::endl;
@@ -211,10 +217,7 @@ void Physics::predictTransform(const float& elapsedTime)
 			//	predict orientation
 			rigidbody->deltaRotation = 0.5f * elapsedTime * glm::fquat(0.f, rigidbody->angularVelocity.x, rigidbody->angularVelocity.y, rigidbody->angularVelocity.z) * (*it)->getOrientation();
 			rigidbody->predictRotation = (*it)->getOrientation() +rigidbody->deltaRotation;
-
-			//glm::fquat q = rigidbody->predictRotation;
-			//std::cout << q.x << ' ' << q.y << ' ' << q.z << ' ' << q.w << ' ' << std::endl;
-
+			
 			//	clear
 			rigidbody->forces.clear();
 			rigidbody->torques.clear();
@@ -283,21 +286,37 @@ void Physics::computeBoundingShapesAndDetectPairs(const float& elapsedTime, Scen
 		}
 	}
 }
-void Physics::computeContacts(const float& elapsedTime)
+void Physics::computeClusters()
+{
+	std::set<Entity*> nodes;
+	for (auto it = collidingPairs.begin(); it != collidingPairs.end(); ++it)
+	{
+		nodes.emplace(it->first);
+		nodes.emplace(it->second);
+	}
+	clusterFinder.initialize(nodes);
+	for (auto it = collidingPairs.begin(); it != collidingPairs.end(); ++it)
+	{
+		clusterFinder.addLink(it->first, it->second);
+		clusterFinder.addLink(it->second, it->first);
+	}
+	clusters = clusterFinder.getCluster();
+}
+void Physics::clusterSolver(const std::vector<Entity*>& cluster)
+{
+
+}
+/*void Physics::computeContacts(const float& elapsedTime)
 {
 
 }
 void Physics::solveConstraints(const float& elapsedTime)
 {
 
-}
+}*/
 void Physics::integratePosition(Entity* entity, const float& elapsedTime)
 {
 	RigidBody* rigidbody = entity->getComponent<RigidBody>();
-	glm::vec3 s = entity->getScale();
-	s.x = ((int)(APPROXIMATION_FACTOR * s.x)) / APPROXIMATION_FACTOR;
-	s.y = ((int)(APPROXIMATION_FACTOR * s.y)) / APPROXIMATION_FACTOR;
-	s.z = ((int)(APPROXIMATION_FACTOR * s.z)) / APPROXIMATION_FACTOR;
 	entity->setTransformation(rigidbody->predictPosition, entity->getScale(), glm::normalize(rigidbody->predictRotation));
 }
 void Physics::clearTempoaryStruct(SceneManager* scene)
@@ -314,7 +333,7 @@ void Physics::clearTempoaryStruct(SceneManager* scene)
 
 
 //	Usefull functions
-Mesh* Physics::extractMesh(Entity* entity) const
+/*Mesh* Physics::extractMesh(Entity* entity) const
 {
 	DrawableComponent* drawableComponent = entity->getComponent<DrawableComponent>();
 	if (!drawableComponent || !drawableComponent->isValid())
@@ -332,7 +351,7 @@ bool Physics::extractIsAnimatable(Entity* entity) const
 		return false;
 
 	return true;
-}
+}*/
 //
 
 

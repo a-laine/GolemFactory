@@ -35,7 +35,7 @@ class Texture : public ResourceVirtual
         //
 
         //  Default
-		Texture(const std::string& fontName, uint8_t conf = 0x0);
+		explicit Texture(const std::string& fontName, uint8_t conf = 0x0);
         ~Texture();
 
         void initialize(const glm::vec3& imageSize, const uint8_t* data, uint8_t config = 0);

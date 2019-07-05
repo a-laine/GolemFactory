@@ -31,34 +31,34 @@ Variant::Variant(const Variant &v)
     }
 }
 
-Variant::Variant(const bool var) : type(Variant::BOOL) {
+Variant::Variant(const bool& var) : type(Variant::BOOL) {
     value.Bool=var; }
 
-Variant::Variant(const char var) : type(Variant::CHAR) {
+Variant::Variant(const char& var) : type(Variant::CHAR) {
     value.Int=var; }
 
-Variant::Variant(const int var) : type(Variant::INT) {
+Variant::Variant(const int& var) : type(Variant::INT) {
     value.Int=var; }
 
-Variant::Variant(const int64_t var) : type(Variant::LONG) {
+Variant::Variant(const int64_t& var) : type(Variant::LONG) {
     value.Long=var; }
 
-Variant::Variant(const float var) : type(Variant::FLOAT) {
+Variant::Variant(const float& var) : type(Variant::FLOAT) {
     value.Float=var; }
 
-Variant::Variant(const double var) : type(Variant::DOUBLE) {
+Variant::Variant(const double& var) : type(Variant::DOUBLE) {
     value.Double=var; }
 
-Variant::Variant(const std::string var) : type(Variant::STRING) {
+Variant::Variant(const std::string& var) : type(Variant::STRING) {
     value.String = new std::string(var); }
 
 Variant::Variant(const char* var) : type(Variant::STRING) {
     value.String = new std::string(var); }
 
-Variant::Variant(const ArrayType var) : type(Variant::ARRAY) {
+Variant::Variant(const ArrayType& var) : type(Variant::ARRAY) {
     value.Array = new ArrayType(var); }
 
-Variant::Variant(const MapType var) : type(Variant::MAP) {
+Variant::Variant(const MapType& var) : type(Variant::MAP) {
     value.Map = new MapType(var); }
 
 
@@ -209,49 +209,49 @@ Variant& Variant::operator= (const Variant &v)
     return *this;
 }
 
-Variant& Variant::operator= (const bool var)
+Variant& Variant::operator= (const bool& var)
 {
     setToNull();
     type=Variant::BOOL; value.Bool=var;
     return *this;
 }
 
-Variant& Variant::operator= (const char var)
+Variant& Variant::operator= (const char& var)
 {
     setToNull();
     type=Variant::CHAR; value.Int=var;
     return *this;
 }
 
-Variant& Variant::operator= (const int var)
+Variant& Variant::operator= (const int& var)
 {
     setToNull();
     type=Variant::INT; value.Int=var;
     return *this;
 }
 
-Variant& Variant::operator= (const int64_t var)
+Variant& Variant::operator= (const int64_t& var)
 {
     setToNull();
     type=Variant::LONG; value.Long=var;
     return *this;
 }
 
-Variant& Variant::operator= (const float var)
+Variant& Variant::operator= (const float& var)
 {
     setToNull();
     type=Variant::FLOAT; value.Float=var;
     return *this;
 }
 
-Variant& Variant::operator= (const double var)
+Variant& Variant::operator= (const double& var)
 {
     setToNull();
     type=Variant::DOUBLE; value.Double=var;
     return *this;
 }
 
-Variant& Variant::operator= (const std::string var)
+Variant& Variant::operator= (const std::string& var)
 {
     setToNull();
     type=Variant::STRING; value.String = new std::string(var);
@@ -264,14 +264,14 @@ Variant& Variant::operator= (const char* var)
     return *this;
 }
 
-Variant& Variant::operator= (const ArrayType var)
+Variant& Variant::operator= (const ArrayType& var)
 {
     setToNull();
     type=Variant::ARRAY; value.Array = new ArrayType(var);
     return *this;
 }
 
-Variant& Variant::operator= (const MapType var)
+Variant& Variant::operator= (const MapType& var)
 {
     setToNull();
     type=Variant::MAP; value.Map = new MapType(var);

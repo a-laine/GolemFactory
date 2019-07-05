@@ -27,16 +27,16 @@ class Variant
         //===============================
         Variant();
         Variant(const Variant &v);
-        Variant(const bool var);
-        Variant(const char var);
-        Variant(const int var);
-        Variant(const int64_t var);
-        Variant(const float var);
-        Variant(const double var);
-        Variant(const std::string var);
+        Variant(const bool& var);
+        Variant(const char& var);
+        Variant(const int& var);
+        Variant(const int64_t& var);
+        Variant(const float& var);
+        Variant(const double& var);
+        Variant(const std::string& var);
         Variant(const char* var);
-        Variant(const ArrayType var);
-        Variant(const MapType var);
+        Variant(const ArrayType& var);
+        Variant(const MapType& var);
         virtual ~Variant();
 
         //++++ type accessors
@@ -69,16 +69,16 @@ class Variant
         void setToNull();
 
         Variant& operator= (const Variant &v);
-        Variant& operator= (const bool var);
-        Variant& operator= (const char var);
-        Variant& operator= (const int var);
-        Variant& operator= (const int64_t var);
-        Variant& operator= (const float var);
-        Variant& operator= (const double var);
-        Variant& operator= (const std::string var);
+        Variant& operator= (const bool& var);
+        Variant& operator= (const char& var);
+        Variant& operator= (const int& var);
+        Variant& operator= (const int64_t& var);
+        Variant& operator= (const float& var);
+        Variant& operator= (const double& var);
+        Variant& operator= (const std::string& var);
         Variant& operator= (const char* var);
-        Variant& operator= (const ArrayType var);
-        Variant& operator= (const MapType var);
+        Variant& operator= (const ArrayType& var);
+        Variant& operator= (const MapType& var);
 
         ArrayType& createArray();
         MapType& createMap();

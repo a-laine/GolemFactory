@@ -17,7 +17,7 @@ class SkeletonComponent : public Component
 {
 	GF_DECLARE_COMPONENT_CLASS(SkeletonComponent, Component)
 	public:
-		SkeletonComponent(const std::string& skeletonName);
+		explicit SkeletonComponent(const std::string& skeletonName);
 		virtual ~SkeletonComponent() override;
 
 		void setSkeleton(std::string skeletonName);

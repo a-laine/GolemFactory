@@ -65,8 +65,12 @@ void EventHandlerEnum::loadKeyMapping(const std::string& path,std::string filena
 			else
 			{
 				//	remove space from line
-				for (it = line.begin(); it != line.end(); it++)
-					if (std::isspace(*it)) it = std::prev(line.erase(it));
+				for (it = line.begin(); it != line.end();)
+				{
+					if (std::isspace(*it))
+						it = line.erase(it);
+					else ++it;
+				}
 				
 				//	extract name and value from line string
 				name.clear();

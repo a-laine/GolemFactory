@@ -12,7 +12,7 @@ class CameraComponent : public Component
 	GF_DECLARE_COMPONENT_CLASS(AnimationComponent, Component)
 
 public:
-	CameraComponent(bool freeRotations);
+	explicit CameraComponent(bool freeRotations);
 
 	glm::mat4 getViewMatrix() const;
 	glm::mat4 getModelMatrix() const;

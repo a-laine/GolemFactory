@@ -20,7 +20,7 @@ class Animation : public ResourceVirtual
         static void setDefaultName(const std::string& name);
 
         //  Default
-		Animation(const std::string& animationName);
+		Animation(const std::string& animationName = "unknown");
         ~Animation();
 		//
 

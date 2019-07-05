@@ -11,7 +11,7 @@ class Reader
         static void parseFile(Variant &result, std::string file);
         static void parseString(Variant &result, std::string text);
 
-        Reader(std::istream* input);
+		explicit Reader(std::istream* input);
         void setStream(std::istream* input);
 
         void parse(Variant &result);

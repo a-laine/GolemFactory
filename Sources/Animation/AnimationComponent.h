@@ -22,7 +22,7 @@ class AnimationComponent : public Component
 	friend struct AnimationTrack;
 
 	public:
-		AnimationComponent(const std::string& animationName);
+		explicit AnimationComponent(const std::string& animationName = "unknown");
 		virtual ~AnimationComponent() override;
 
 		void setAnimation(std::string animationName);
@@ -44,7 +44,7 @@ class AnimationComponent : public Component
 	private:
 		struct AnimationTrack
 		{
-			AnimationTrack(const unsigned int& poseSize, const std::string& animation = "");
+			explicit AnimationTrack(const unsigned int& poseSize, const std::string& animation = "");
 			bool animate(const float& step, const AnimationComponent* const parent);
 
 			std::string animationName;

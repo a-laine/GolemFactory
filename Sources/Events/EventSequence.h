@@ -47,7 +47,7 @@ class EventSequence : public Event
 		*
 		*	\return false.
 		*/
-        bool isActivated() const;
+        bool isActivated() const override;
 
 		/*!
 		*	\brief Update function called by the EventHandler.
@@ -61,7 +61,7 @@ class EventSequence : public Event
 		*	\param action : A second parameter of the input (ex : for a button it's for pressed/released)
 		*	\return true if a user event publish is needed (up/down flags in #configuration. byte), false otherwise
 		*/
-        bool check(InputType call,int key,int action);
+        bool check(InputType call,int key,int action) override;
         //
 
         //  Attributes

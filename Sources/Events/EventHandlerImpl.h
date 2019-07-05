@@ -190,7 +190,7 @@ class EventHandlerImpl
 		*	\brief Constructor
 		*	\param path : the directory to find event file configuration
 		*/
-        EventHandlerImpl(const std::string& path);
+        explicit EventHandlerImpl(const std::string& path);
 
 		/*!
 		*  \brief Destructor

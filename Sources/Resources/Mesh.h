@@ -25,7 +25,7 @@ class Mesh : public ResourceVirtual
 
 
         //  Default
-		Mesh(const std::string& meshName);
+		Mesh(const std::string& meshName = "unknown");
 		virtual ~Mesh();
 		//
 

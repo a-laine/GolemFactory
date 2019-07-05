@@ -7,7 +7,7 @@ class Swept
 {
 	public:
 		//	Default
-		Swept(Entity* e);
+		explicit Swept(Entity* e);
 		//
 
 		//	Set / get functions

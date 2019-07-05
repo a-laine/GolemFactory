@@ -181,10 +181,7 @@ bool AnimationComponent::AnimationTrack::animate(const float& step, const Animat
 		time -= dt;
 		if(loop && (bound.first >= stop || bound.first < 0))
 		{
-			if(loop)
-				bound = parent->m_animation->getBoundingKeyFrameIndex(animationSet[start].time + time);
-			else
-				return true;
+			bound = parent->m_animation->getBoundingKeyFrameIndex(animationSet[start].time + time);
 		}
 		else if(!loop && (bound.first >= exit || bound.first < 0))
 			return true;

@@ -34,7 +34,7 @@ class Shader : public ResourceVirtual
         //
 
         //  Default
-        Shader(const std::string& shaderName);
+		explicit Shader(const std::string& shaderName);
         ~Shader();
         //
 

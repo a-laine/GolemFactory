@@ -258,10 +258,10 @@ void initializeForestScene(bool emptyPlace)
 		world.getEntityFactory().createObject("cube", [](Entity* object)
 		{
 			object->getComponent<DrawableComponent>()->setShader(ResourceManager::getInstance()->getResource<Shader>("default"));
-			object->setTransformation(glm::vec3(0.f, 0.f, 20.f), glm::vec3(1.f), glm::normalize(glm::fquat()));//1.f, 0.1f, 0.3f, 1.f
+			object->setTransformation(glm::vec3(0.f, 0.f, 20.f), glm::vec3(1.f), glm::normalize(glm::fquat(1.f, 0.1f, 0.3f, 1.f)));
 			RigidBody* rb = new RigidBody(RigidBody::DYNAMIC);
 			rb->setMass(1.f);
-			rb->setGravityFactor(0.5f);
+			rb->setGravityFactor(1.f);
 			rb->setAngularVelocity(glm::vec3(1.f, 0, 0));
 			object->addComponent(rb);
 		});

@@ -47,7 +47,7 @@ class Font : public ResourceVirtual
 		 *  \brief Constructor
 		 *	\param fontName : the resource name
 		 */
-        Font(const std::string& fontName);
+		explicit Font(const std::string& fontName);
 
 		/*!
 		 *  \brief Destructor

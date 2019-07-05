@@ -52,15 +52,17 @@ class Physics
 		//	Pipeline steps
 		void predictTransform(const float& elapsedTime);
 		void computeBoundingShapesAndDetectPairs(const float& elapsedTime, SceneManager* scene);
-		void computeContacts(const float& elapsedTime);
-		void solveConstraints(const float& elapsedTime);
+		void computeClusters();
+		void clusterSolver(const std::vector<Entity*>& cluster);
+		/*void computeContacts(const float& elapsedTime);
+		void solveConstraints(const float& elapsedTime);*/
 		void integratePosition(Entity* entity, const float& elapsedTime);
 		void clearTempoaryStruct(SceneManager* scene);
 		//
 
 		//	Usefull functions
-		Mesh* extractMesh(Entity* entity) const;
-		bool extractIsAnimatable(Entity* entity) const;
+		/*Mesh* extractMesh(Entity* entity) const;
+		bool extractIsAnimatable(Entity* entity) const;*/
 		//
 
 		//	Attributes
@@ -69,8 +71,8 @@ class Physics
 		BoxSceneQuerry proximityTest;
 		VirtualEntityCollector proximityList;
 		std::vector<Swept*> sweptList;
-		//std::vector<NodeVirtual*> updatedNodes;
 		std::set<std::pair<Entity*, Entity*> > collidingPairs;
+		std::vector<std::vector<Entity*> > clusters;
 		std::vector<Intersection::Contact> collisionList;
 		EntityGraph clusterFinder;
 		//

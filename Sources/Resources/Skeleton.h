@@ -20,7 +20,7 @@ class Skeleton : public ResourceVirtual
         static void setDefaultName(const std::string& name);
 
         //	Default
-		Skeleton(const std::string& skeletonName);
+		explicit Skeleton(const std::string& skeletonName);
 		~Skeleton();
 		//
 

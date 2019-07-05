@@ -12,7 +12,7 @@ class Hull : public Shape
 {
 	public:
 		//	Default
-		Hull(Mesh* m, glm::mat4 transform = glm::mat4(1.f));
+		explicit Hull(Mesh* m, glm::mat4 transform = glm::mat4(1.f));
 		~Hull();
 		//
 
