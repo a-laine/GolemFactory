@@ -36,10 +36,10 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
         return false;
     }
 
-    auto m = scene->mRootNode->mTransformation.Inverse();
+    auto mat = scene->mRootNode->mTransformation.Inverse();
     for(int i = 0; i < 4; i++)
         for(int j = 0; j < 4; j++)
-            globalMatrix[i][j] = m[j][i];
+            globalMatrix[i][j] = mat[j][i];
     globalMatrix = glm::mat4(1.f);
 
     //

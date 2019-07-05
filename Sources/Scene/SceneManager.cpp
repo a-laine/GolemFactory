@@ -25,6 +25,7 @@ SceneManager::~SceneManager()
 
 SceneManager& SceneManager::operator=(SceneManager&& other)
 {
+	if (&other == this) return *this;
 	for(unsigned int i = 0; i < world.size(); i++)
 		delete world[i];
 	world = std::move(other.world);

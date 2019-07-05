@@ -13,24 +13,24 @@ class WidgetRadioButton : public WidgetLabel
 		//
 
 		//	Public functions
-		void update(const float& elapseTime);
-		void initialize(const std::string& txt, uint8_t textConfig = AlignmentMode::LEFT);
-		void draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model);
-		bool intersect(const glm::mat4& base, const glm::vec3& ray);
-		bool mouseEvent(const glm::mat4& base, const glm::vec3& ray, const float& parentscale, const bool& clicked);
+		void update(const float& elapseTime) override;
+		void initialize(const std::string& txt, uint8_t textConfig = AlignmentMode::LEFT) override;
+		void draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model) override;
+		bool intersect(const glm::mat4& base, const glm::vec3& ray) override;
+		bool mouseEvent(const glm::mat4& base, const glm::vec3& ray, const float& parentscale, const bool& clicked) override;
 		//
 
 		//	Set / get functions
 		void setTextureOn(const std::string& name);
 		void setTextureOff(const std::string& name);
 
-		void setBoolean(const bool& b);
-		bool getBoolean() const;
+		void setBoolean(const bool& b) override;
+		bool getBoolean() const override;
 		//
 
 	protected:
 		//	Protected functions
-		void updateBuffers();
+		void updateBuffers() override;
 		//
 
 		//  Attributes

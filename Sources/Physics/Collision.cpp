@@ -301,13 +301,13 @@ void Collision::debugUnitaryTest(const int& verboseLevel, const Hull* testHull)
 		// ... vs Hull
 		if (testHull)
 		{
-			glm::fquat dummyRotate = glm::rotate(glm::fquat(), 0.1f, glm::normalize(glm::vec3(0.5, 1, 3)));
+			glm::fquat dummyRotate2 = glm::rotate(glm::fquat(), 0.1f, glm::normalize(glm::vec3(0.5, 1, 3)));
 			Hull hull = *static_cast<Hull*>(testHull->duplicate());
 			hull.transform(glm::vec3(0, 0, -1), glm::vec3(1, 1, 1), glm::fquat());
 
 			if(Collision::collide(testPoint, hull) == false && verboseLevel)
 				printError("point", "hull", __LINE__ - 1);
-			hull.transform(glm::vec3(0, 0, 0), glm::vec3(1, 1, 1), dummyRotate);
+			hull.transform(glm::vec3(0, 0, 0), glm::vec3(1, 1, 1), dummyRotate2);
 			if (Collision::collide(testPoint, hull) == false && verboseLevel)
 				printError("point", "hull", __LINE__ - 1);
 			hull.transform(glm::vec3(20, 0, 0), glm::vec3(1, 1, 1), glm::fquat());
@@ -392,13 +392,13 @@ void Collision::debugUnitaryTest(const int& verboseLevel, const Hull* testHull)
 		// ... vs Hull
 		if (testHull)
 		{
-			glm::fquat dummyRotate = glm::rotate(glm::fquat(), 0.1f, glm::normalize(glm::vec3(0.5, 1, 3)));
+			glm::fquat dummyRotate2 = glm::rotate(glm::fquat(), 0.1f, glm::normalize(glm::vec3(0.5, 1, 3)));
 			Hull hull = *static_cast<Hull*>(testHull->duplicate());
 			hull.transform(glm::vec3(0, 0, -1), glm::vec3(1, 1, 1), glm::fquat());
 
 			if (Collision::collide(testSegment, hull) == false && verboseLevel)
 				printError("segment", "hull", __LINE__ - 1);
-			hull.transform(glm::vec3(0, 0, 0), glm::vec3(1, 1, 1), dummyRotate);
+			hull.transform(glm::vec3(0, 0, 0), glm::vec3(1, 1, 1), dummyRotate2);
 			if (Collision::collide(testSegment, hull) == false && verboseLevel)
 				printError("segment", "hull", __LINE__ - 1);
 			hull.transform(glm::vec3(20, 0, 0), glm::vec3(1, 1, 1), glm::fquat());
@@ -475,13 +475,13 @@ void Collision::debugUnitaryTest(const int& verboseLevel, const Hull* testHull)
 		// ... vs Hull
 		if (testHull)
 		{
-			glm::fquat dummyRotate = glm::rotate(glm::fquat(), 0.1f, glm::normalize(glm::vec3(0.5, 1, 3)));
+			glm::fquat dummyRotate2 = glm::rotate(glm::fquat(), 0.1f, glm::normalize(glm::vec3(0.5, 1, 3)));
 			Hull hull = *static_cast<Hull*>(testHull->duplicate());
 			hull.transform(glm::vec3(0, 0, -1), glm::vec3(1, 1, 1), glm::fquat());
 
 			if (Collision::collide(testTriangle, hull) == false && verboseLevel)
 				printError("triangle", "hull", __LINE__ - 1);
-			hull.transform(glm::vec3(0, 0, 0), glm::vec3(1, 1, 1), dummyRotate);
+			hull.transform(glm::vec3(0, 0, 0), glm::vec3(1, 1, 1), dummyRotate2);
 			if (Collision::collide(testTriangle, hull) == false && verboseLevel)
 				printError("triangle", "hull", __LINE__ - 1);
 			hull.transform(glm::vec3(20, 0, 0), glm::vec3(1, 1, 1), glm::fquat());
@@ -544,13 +544,13 @@ void Collision::debugUnitaryTest(const int& verboseLevel, const Hull* testHull)
 		// ... vs Hull
 		if (testHull)
 		{
-			glm::fquat dummyRotate = glm::rotate(glm::fquat(), 0.1f, glm::normalize(glm::vec3(0.5, 1, 3)));
+			glm::fquat dummyRotate2 = glm::rotate(glm::fquat(), 0.1f, glm::normalize(glm::vec3(0.5, 1, 3)));
 			Hull hull = *static_cast<Hull*>(testHull->duplicate());
 			hull.transform(glm::vec3(0, 0, -1), glm::vec3(1, 1, 1), glm::fquat());
 
 			if (Collision::collide(testOrientedBox, hull) == false && verboseLevel)
 				printError("oriented box", "hull", __LINE__ - 1);
-			hull.transform(glm::vec3(0, 0, 0), glm::vec3(1, 1, 1), dummyRotate);
+			hull.transform(glm::vec3(0, 0, 0), glm::vec3(1, 1, 1), dummyRotate2);
 			if (Collision::collide(testOrientedBox, hull) == false && verboseLevel)
 				printError("oriented box", "hull", __LINE__ - 1);
 			hull.transform(glm::vec3(20, 0, 0), glm::vec3(1, 1, 1), glm::fquat());

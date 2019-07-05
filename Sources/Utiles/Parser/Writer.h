@@ -8,7 +8,7 @@ class Writer
 {
     public:
 		//	Default
-		Writer(std::ostream* output);
+		explicit Writer(std::ostream* output);
 		//
 
 		//	Public functions

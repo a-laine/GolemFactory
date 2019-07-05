@@ -30,7 +30,6 @@ void MeshSaver::saveStatic(Mesh* mesh, std::ofstream& file, glm::vec3 scaleModif
 	std::set<vec3> vertices;
 	std::set<vec3> normales;
 	std::set<vec3> colors;
-	std::vector<unsigned int> faces;
 	float truncature = 0.001f;
 	glm::vec3 u;
 
@@ -110,7 +109,6 @@ void MeshSaver::saveAnimated(Mesh* mesh, std::ofstream& file, glm::vec3 scaleMod
 	std::set<vec3> colors;
 	std::set<vec3> weights;
 	std::set<ivec3> bones;
-	std::vector<unsigned int> faces;
 	float truncature = 0.001f;
 	glm::vec3 u;
 

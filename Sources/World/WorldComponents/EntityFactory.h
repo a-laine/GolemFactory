@@ -13,7 +13,7 @@ class Component;
 class EntityFactory
 {
 	public:
-		EntityFactory(World* parentWorld);
+		explicit EntityFactory(World* parentWorld);
 
 		template<typename Callback>
 		Entity* createObject(const std::string& type, Callback cb);

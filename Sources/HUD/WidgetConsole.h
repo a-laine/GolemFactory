@@ -14,18 +14,18 @@ class WidgetConsole : public WidgetBoard
 		//
 
 		//	Public functions
-		void update(const float& elapseTime);
-		void initialize(const float& borderThickness, const float& borderWidth, const uint8_t& corner = 0x00);
-		void draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model);
-		bool intersect(const glm::mat4& base, const glm::vec3& ray);
-		bool mouseEvent(const glm::mat4& base, const glm::vec3& ray, const float& parentscale, const bool& clicked);
+		void update(const float& elapseTime) override;
+		void initialize(const float& borderThickness, const float& borderWidth, const uint8_t& corner = 0x00) override;
+		void draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model) override;
+		bool intersect(const glm::mat4& base, const glm::vec3& ray) override;
+		bool mouseEvent(const glm::mat4& base, const glm::vec3& ray, const float& parentscale, const bool& clicked) override;
 		//
 
 		//	Set / get functions
 		void setFont(const std::string& fontName);
 		void setSizeChar(const float& f);
 		void setMargin(const float& f);
-		void append(const std::string& s);
+		void append(const std::string& s) override;
 
 		Font* getFont() const;
 		float getSizeChar() const;
@@ -35,7 +35,7 @@ class WidgetConsole : public WidgetBoard
 	protected:
 		//	Protected functions
 		void initVBOtext();
-		void updateBuffers(const bool& firstInit = false);
+		void updateBuffers(const bool& firstInit = false) override;
 		void updateTextBuffer();
 		void parseText();
 		//

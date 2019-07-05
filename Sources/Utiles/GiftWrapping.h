@@ -15,7 +15,7 @@ class GiftWrapping
 	
 		struct vec3
 		{
-			vec3(glm::vec3 v) :x(v.x), y(v.y), z(v.z) {}
+			explicit vec3(glm::vec3 v) :x(v.x), y(v.y), z(v.z) {}
 			friend bool operator<(const vec3& l, const vec3& r)
 			{
 				if (l.x != r.x) return l.x < r.x;

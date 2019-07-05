@@ -28,8 +28,8 @@ class WidgetBoard : public WidgetVirtual
 
 		//  Public functions
 		virtual void initialize(const float& bThickness, const float& bWidth, const uint8_t& corner = 0x00);
-		virtual void draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model);
-		virtual void update(const float& elapseTime);
+		virtual void draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model) override;
+		virtual void update(const float& elapseTime) override;
 		//
 
 	protected:

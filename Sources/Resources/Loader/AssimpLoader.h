@@ -26,7 +26,7 @@ class AssimpLoader : public IResourceLoader
         //
 
         //  Default
-        AssimpLoader(ResourceType resourceToLoad);
+		explicit AssimpLoader(ResourceType resourceToLoad);
         //
 
         //  Public functions

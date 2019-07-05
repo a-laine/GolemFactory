@@ -1,8 +1,9 @@
-#include <glm/gtx/component_wise.hpp>
-
 #include "NodeVirtual.h"
 #include "World/World.h"
 #include "Utiles/Assert.hpp"
+
+#include <glm/gtx/component_wise.hpp>
+#include <algorithm>
 
 #define ALLOWANCE_SIZE_FACTOR 0.33f
 
@@ -173,8 +174,7 @@ NodeVirtual* NodeVirtual::getChildAt(const glm::vec3& pos)
 
 void NodeVirtual::getChildren(std::vector<NodeVirtual*>& result)
 {
-	for(NodeVirtual& node : children)
-		result.push_back(&node);
+	std::transform(children.begin(), children.end(), result.end(), [](NodeVirtual& n) { return &n; });
 }
 
 void NodeVirtual::getChildren(std::vector<NodeRange>& result)

@@ -35,14 +35,14 @@ class WidgetLabel : public WidgetVirtual
 		//
 
 		//	Public functions
-		virtual void update(const float& elapseTime);
+		virtual void update(const float& elapseTime) override;
 		virtual void initialize(const std::string& txt, uint8_t textConfiguration = AlignmentMode::CENTER);
-		virtual void draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model);
-		virtual bool intersect(const glm::mat4& base, const glm::vec3& ray);
+		virtual void draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model) override;
+		virtual bool intersect(const glm::mat4& base, const glm::vec3& ray) override;
 		
-		void setString(const std::string& newText);
-		std::string getString() const;
-		void append(const std::string& s);
+		void setString(const std::string& newText) override;
+		std::string getString() const override;
+		void append(const std::string& s) override;
 		//
 
 		//	Set / get functions

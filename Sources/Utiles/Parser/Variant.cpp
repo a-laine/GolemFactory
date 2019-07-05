@@ -190,6 +190,7 @@ void Variant::setToNull()
 
 Variant& Variant::operator= (const Variant &v)
 {
+	if (&v == this) return *this;
     setToNull();
     type = v.getType();
     switch(type)

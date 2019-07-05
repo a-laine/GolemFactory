@@ -17,7 +17,10 @@
 
 
 //  Default
-Renderer::Renderer() : renderOption(DEFAULT)
+Renderer::Renderer() : 
+	normalViewer(nullptr), renderOption(DEFAULT), 
+	vboGridSize(0), gridVAO(0), vertexbuffer(0), arraybuffer(0), colorbuffer(0), normalbuffer(0),
+	instanceDrawn(0), trianglesDrawn(0), lastShader(nullptr)
 {
 	context = nullptr;
 	camera = nullptr;
@@ -30,11 +33,7 @@ Renderer::Renderer() : renderOption(DEFAULT)
 	defaultShader[INSTANCE_DRAWABLE_BB] = nullptr;
 	defaultShader[HUD] = nullptr;
 
-	gridVAO = 0;
-	vertexbuffer = 0;
-	arraybuffer = 0;
 	drawGrid = true;
-
 	dummy = 0.0;
 }
 Renderer::~Renderer()
@@ -153,11 +152,11 @@ void Renderer::render(CameraComponent* renderCam)
 	glEnable(GL_DEPTH_TEST);
 
 	//	draw grid
-	Shader* s = defaultShader[GRID];
-	if (drawGrid && s && glIsVertexArray(gridVAO))
+	Shader* shader = defaultShader[GRID];
+	if (drawGrid && shader && glIsVertexArray(gridVAO))
 	{
-		s->enable();
-		loadMVPMatrix(s, &glm::mat4(1.0)[0][0], &view[0][0], &projection[0][0]);
+		shader->enable();
+		loadMVPMatrix(shader, &glm::mat4(1.0)[0][0], &view[0][0], &projection[0][0]);
 		glBindVertexArray(gridVAO);
 		glDrawElements(GL_TRIANGLES, vboGridSize, GL_UNSIGNED_INT, NULL);
 	}
@@ -183,13 +182,13 @@ void Renderer::render(CameraComponent* renderCam)
 		//	try to do dynamic batching
 		if (GLEW_VERSION_1_3 && comp->getShader()->getInstanciable())
 		{
-			Shader* s = comp->getShader()->getInstanciable();
+			shader = comp->getShader()->getInstanciable();
 			Mesh* m = comp->getMesh();
-			std::vector<glm::mat4>& batch = groupBatches[s][m];
+			std::vector<glm::mat4>& batch = groupBatches[shader][m];
 			batch.push_back(object->getMatrix());
 			if (batch.size() >= BATCH_SIZE)
 			{
-				drawInstancedObject(s, m, batch, &view[0][0], &projection[0][0]);
+				drawInstancedObject(shader, m, batch, &view[0][0], &projection[0][0]);
 				batch.clear();
 			}
 		}
@@ -216,13 +215,13 @@ void Renderer::render(CameraComponent* renderCam)
 	}
 	for (auto it = groupBatches.begin(); it != groupBatches.end(); ++it)
 	{
-		Shader* s = it->first;
+		shader = it->first;
 		for (auto it2 = it->second.begin(); it2 != it->second.end(); ++it2)
 		{
 			Mesh* m = it2->first;
-			if(!groupBatches[s][m].empty())
-				drawInstancedObject(s, m, groupBatches[s][m], &view[0][0], &projection[0][0]);
-			groupBatches[s][m].clear();
+			if(!groupBatches[shader][m].empty())
+				drawInstancedObject(shader, m, groupBatches[shader][m], &view[0][0], &projection[0][0]);
+			groupBatches[shader][m].clear();
 		}
 	}
 }

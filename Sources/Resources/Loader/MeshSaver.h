@@ -19,7 +19,7 @@ class MeshSaver
 		//	Temp structures
 		struct vec3
 		{
-			vec3(glm::vec3 a) : x(a.x), y(a.y), z(a.z) {};
+			explicit vec3(glm::vec3 a) : x(a.x), y(a.y), z(a.z) {};
 			bool operator<(const vec3& r) const
 			{
 				if (x > r.x) return false;
@@ -33,7 +33,7 @@ class MeshSaver
 		};
 		struct ivec3
 		{
-			ivec3(glm::ivec3 a) : x(a.x), y(a.y), z(a.z) {};
+			explicit ivec3(glm::ivec3 a) : x(a.x), y(a.y), z(a.z) {};
 			bool operator<(const ivec3& r) const
 			{
 				if (x > r.x) return false;
@@ -46,11 +46,11 @@ class MeshSaver
 			int x, y, z;
 		};
 
-		struct vertex { int position, normal, color; };
-		struct face { vertex vertex1, vertex2, vertex3; };
+		//struct vertex { int position, normal, color; };
+		//struct face { vertex vertex1, vertex2, vertex3; };
 		
-		struct extendedVertex { int position, normal, color, weights, bones; };
-		struct extendedFace { extendedVertex vertex1, vertex2, vertex3; };
+		//struct extendedVertex { int position, normal, color, weights, bones; };
+		//struct extendedFace { extendedVertex vertex1, vertex2, vertex3; };
 		//
 
 		//	Protected functions

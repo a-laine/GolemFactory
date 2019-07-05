@@ -3,7 +3,7 @@
 #include "Loader/WidgetSaver.h"
 
 //  Default
-WidgetManager::WidgetManager() : widgetDrawn(0), trianglesDrawn(0), pickingRay(0.f) {}
+WidgetManager::WidgetManager() : widgetDrawn(0), trianglesDrawn(0), pickingRay(0.f), lastViewportRatio(1.f) {}
 WidgetManager::~WidgetManager()
 {
 	hudList.clear();

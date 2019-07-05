@@ -23,7 +23,7 @@ class NodeVirtual
 			friend class NodeVirtual;
 
 			public:
-				NodeRange(std::vector<NodeVirtual>& nodes) : begin(nodes.data()), end(nodes.data() + nodes.size()) {}
+				explicit NodeRange(std::vector<NodeVirtual>& nodes) : begin(nodes.data()), end(nodes.data() + nodes.size()) {}
 				NodeRange(NodeVirtual* first, NodeVirtual* last) : begin(first), end(last) {}
 				void next() { if(begin != end) ++begin; }
 				NodeVirtual* get() { return begin; }

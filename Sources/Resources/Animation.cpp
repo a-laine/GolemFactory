@@ -20,7 +20,7 @@ void Animation::initialize(const std::vector<KeyFrame>& animations)
     GF_ASSERT(state == INVALID);
     if(!animations.empty())
     {
-        state = LOADING;
+        //state = LOADING;
         timeLine = animations;
         state = VALID;
     }
@@ -31,7 +31,7 @@ void Animation::initialize(std::vector<KeyFrame>&& animations)
     GF_ASSERT(state == INVALID);
     if(!animations.empty())
     {
-        state = LOADING;
+        //state = LOADING;
         timeLine = std::move(animations);
         state = VALID;
     }
@@ -42,7 +42,7 @@ void Animation::initialize(const std::vector<KeyFrame>& animations, const std::m
     GF_ASSERT(state == INVALID);
     if(!animations.empty())
     {
-        state = LOADING;
+        //state = LOADING;
         timeLine = animations;
         labels = names;
         state = VALID;
@@ -54,7 +54,7 @@ void Animation::initialize(std::vector<KeyFrame>&& animations, std::map<std::str
     GF_ASSERT(state == INVALID);
     if(!animations.empty())
     {
-        state = LOADING;
+        //state = LOADING;
         timeLine = std::move(animations);
         labels = std::move(names);
         state = VALID;
@@ -65,7 +65,7 @@ void Animation::clear()
 {
     if(state == VALID)
     {
-        state = LOADING;
+        //state = LOADING;
         labels.clear();
         timeLine.clear();
         state = INVALID;

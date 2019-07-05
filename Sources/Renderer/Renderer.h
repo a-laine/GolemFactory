@@ -87,7 +87,7 @@ class Renderer : public Singleton<Renderer>
 		struct EntityCompareDistance
 		{
 			glm::vec3 p;
-			EntityCompareDistance(const glm::vec3& cameraPosition) : p(cameraPosition) {};
+			explicit EntityCompareDistance(const glm::vec3& cameraPosition) : p(cameraPosition) {};
 			bool operator()(Entity* a, Entity* b) const
 			{
 				const float d1 = glm::dot(a->getPosition() - p, a->getPosition() - p);
