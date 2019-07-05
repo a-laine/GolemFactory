@@ -21,10 +21,15 @@ class RigidBody : public Component
 			STATIC,
 			KINEMATICS
 		};
+		enum SolverType
+		{
+			STANDARD,
+			CONTINUOUS
+		};
 		//
 
 		//	Default
-		RigidBody(const RigidBodyType& type = DYNAMIC);
+		RigidBody(const RigidBodyType& type = DYNAMIC, const SolverType& solver = STANDARD);
 		virtual ~RigidBody() override;
 		//
 
@@ -55,6 +60,7 @@ class RigidBody : public Component
 	protected:
 		//	Attributes
 		RigidBodyType type;
+		SolverType solver;
 
 		float mass;
 		float inverseMass;

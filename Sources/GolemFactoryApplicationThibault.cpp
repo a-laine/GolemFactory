@@ -243,41 +243,35 @@ void initializeForestScene(bool emptyPlace)
 		//world.getEntityFactory().createObject([&hg](Entity* house) { hg.getHouse(house, 0, 100, 100); });
 
 		unsigned int N = 7;
-		for (unsigned int i = 0; i < N; i++)
+		unsigned int N2 = 3;
+		for (unsigned int j = 0; j < N2; j++)
 		{
-			glm::vec3 p = glm::vec3(5.f * cos((float)i / N * 2.f * glm::pi<float>()), 5.f * sin((float)i / N * 2.f * glm::pi<float>()), 20.f);
-			world.getEntityFactory().createObject("sphere", [&p](Entity* object)
+			for (unsigned int i = 0; i < N; i++)
 			{
-				object->setTransformation(p, glm::vec3(1.f), glm::fquat());
-				RigidBody* rb = new RigidBody(RigidBody::DYNAMIC);
-				rb->setMass(1.f);
-				object->addComponent(rb);
-			});
+				glm::vec3 p = glm::vec3(5.f * cos((float)i / N * 2.f * glm::pi<float>()), 5.f * sin((float)i / N * 2.f * glm::pi<float>()), 20.f*(j + 1));
+				world.getEntityFactory().createObject("sphere", [&p](Entity* object)
+				{
+					object->setTransformation(p, glm::vec3(1.f), glm::fquat());
+					RigidBody* rb = new RigidBody(RigidBody::DYNAMIC);
+					rb->setMass(1.f);
+					object->addComponent(rb);
+				});
+			}
 		}
 
 		world.getEntityFactory().createObject("cube", [](Entity* object)
 		{
 			object->getComponent<DrawableComponent>()->setShader(ResourceManager::getInstance()->getResource<Shader>("default"));
 			object->setTransformation(glm::vec3(0.f, 0.f, 20.f), glm::vec3(1.f), glm::normalize(glm::fquat(1.f, 0.1f, 0.3f, 1.f)));
-			RigidBody* rb = new RigidBody(RigidBody::DYNAMIC);
+			RigidBody* rb = new RigidBody(RigidBody::DYNAMIC, RigidBody::CONTINUOUS);
 			rb->setMass(1.f);
 			rb->setGravityFactor(1.f);
 			rb->setAngularVelocity(glm::vec3(1.f, 0, 0));
 			object->addComponent(rb);
 		});
-
-		/*world.getEntityFactory().createObject([](Entity* object)
-		{
-			DrawableComponent* drawable = new DrawableComponent("teststairtower.obj", "default");
-			object->addComponent(drawable);
-			object->setShape(new OrientedBox(glm::mat4(1.f), drawable->getMeshBBMin(), drawable->getMeshBBMax()));
-			float scale = 5.f / (drawable->getMeshBBMax().x - drawable->getMeshBBMin().x);
-			object->setScale(glm::vec3(scale));
-		});*/
 	}
 
 	// village
-	
 	int vilageHouseCount = 0;
 	float villageRadius[] = {20.f, 35.f, 50.f};
 	std::vector<glm::vec3> houseCircle;

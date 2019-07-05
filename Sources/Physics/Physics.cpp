@@ -11,6 +11,11 @@
 #define APPROXIMATION_FACTOR 10.f
 
 
+/*
+	https://www.sidefx.com/docs/houdini/nodes/dop/rigidbodysolver.html
+
+*/
+
 //  Default
 Physics::Physics() : gravity(0.f, 0.f, -9.81f), proximityTest(glm::vec3(0), glm::vec3(0))
 {}
@@ -39,13 +44,14 @@ void Physics::stepSimulation(const float& elapsedTime, SceneManager* s)
 	clusterFinder.clear();
 	collisionList.clear();
 	collidingPairs.clear();
+	clusters.clear();
 	
 	predictTransform(elapsedTime);
 	computeBoundingShapesAndDetectPairs(elapsedTime, s);
 	computeClusters();
 	for (unsigned int i = 0; i < clusters.size(); i++)
 	{
-		clusterSolver(clusters[i]);
+		getSolverType(clusters[i].first);
 	}
 
 
@@ -291,16 +297,32 @@ void Physics::computeClusters()
 	std::set<Entity*> nodes;
 	for (auto it = collidingPairs.begin(); it != collidingPairs.end(); ++it)
 	{
-		nodes.emplace(it->first);
-		nodes.emplace(it->second);
+		nodes.insert(it->first);
+		if (it->second->getComponent<RigidBody>())
+			nodes.insert(it->second);
 	}
 	clusterFinder.initialize(nodes);
 	for (auto it = collidingPairs.begin(); it != collidingPairs.end(); ++it)
 	{
 		clusterFinder.addLink(it->first, it->second);
-		clusterFinder.addLink(it->second, it->first);
+		if(it->second->getComponent<RigidBody>())
+			clusterFinder.addLink(it->second, it->first);
 	}
-	clusters = clusterFinder.getCluster();
+	auto c = clusterFinder.getCluster();
+	for (unsigned int i = 0; i < c.size(); i++)
+	{
+		std::vector<Entity*> dynamicEntities;
+		std::vector<Entity*> staticEntities;
+		for (unsigned int j = 0; j < c[i].size(); j++)
+		{
+			if (c[i][j]->swept) dynamicEntities.emplace_back(c[i][j]);
+			else staticEntities.emplace_back(c[i][j]);
+		}
+		if (dynamicEntities.empty() || dynamicEntities.size() + staticEntities.size() == 1)
+			continue;
+
+		clusters.emplace_back(std::make_pair(dynamicEntities, staticEntities));
+	}
 }
 void Physics::clusterSolver(const std::vector<Entity*>& cluster)
 {
@@ -333,6 +355,17 @@ void Physics::clearTempoaryStruct(SceneManager* scene)
 
 
 //	Usefull functions
+RigidBody::SolverType Physics::getSolverType(const std::vector<Entity*>& cluster)
+{
+	RigidBody::SolverType solver = RigidBody::STANDARD;
+	for (unsigned int i = 0; i < cluster.size(); i++)
+	{
+		RigidBody* rigidbody = cluster[i]->getComponent<RigidBody>();
+		if (solver < rigidbody->solver)
+			solver = rigidbody->solver;
+	}
+	return solver;
+}
 /*Mesh* Physics::extractMesh(Entity* entity) const
 {
 	DrawableComponent* drawableComponent = entity->getComponent<DrawableComponent>();
@@ -382,6 +415,8 @@ std::vector<std::vector<Entity*> > Physics::EntityGraph::getCluster()
 		if (!it->second.second)
 		{
 			std::vector<Entity*> cluster;
+			/*for (auto it2 = graph.begin(); it2 != graph.end(); ++it2)
+				it2->second.second = false;*/
 			getNeighbours(it->first, cluster);
 			result.push_back(cluster);
 		}
@@ -391,12 +426,15 @@ std::vector<std::vector<Entity*> > Physics::EntityGraph::getCluster()
 
 void Physics::EntityGraph::getNeighbours(Entity* node, std::vector<Entity*>& result)
 {
-	if (!graph[node].second)
+	auto itnode = graph.find(node);
+	if (itnode != graph.end() && !itnode->second.second)
 	{
 		graph[node].second = true;
 		result.push_back(node);
 		for (auto it = graph[node].first.begin(); it != graph[node].first.end(); ++it)
 			getNeighbours(*it, result);
 	}
+	else if(itnode == graph.end())
+		result.push_back(node);
 }
 //
