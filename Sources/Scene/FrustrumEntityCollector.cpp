@@ -2,5 +2,5 @@
 
 bool FrustrumEntityCollector::operator() (Entity* entity)
 {
-
+	return true;
 }

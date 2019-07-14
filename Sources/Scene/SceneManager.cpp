@@ -138,6 +138,7 @@ std::vector<Entity*> SceneManager::getObjectsOnRay(const glm::vec3& position, co
 
 	RaySceneQuerry test(position, direction, maxDistance);
 	getObjects(world[0], result, test);*/
+	return std::vector<Entity*>();
 }
 
 std::vector<Entity*> SceneManager::getObjectsInBox(const glm::vec3& bbMin, const glm::vec3& bbMax)
@@ -147,6 +148,7 @@ std::vector<Entity*> SceneManager::getObjectsInBox(const glm::vec3& bbMin, const
 
 	BoxSceneQuerry test(bbMin, bbMax);
 	getObjectsInBox(world[0], result, test);*/
+	return std::vector<Entity*>();
 }
 
 
