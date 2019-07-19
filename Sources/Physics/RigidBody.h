@@ -23,13 +23,14 @@ class RigidBody : public Component
 		};
 		enum SolverType
 		{
-			STANDARD,
-			CONTINUOUS
+			DISCRETE,
+			CONTINUOUS,
+			SUPERSAMPLING
 		};
 		//
 
 		//	Default
-		RigidBody(const RigidBodyType& type = DYNAMIC, const SolverType& solver = STANDARD);
+		RigidBody(const RigidBodyType& type = DYNAMIC, const SolverType& solver = DISCRETE);
 		virtual ~RigidBody() override;
 		//
 

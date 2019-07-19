@@ -45,8 +45,6 @@
 
 #include "Physics/Physics.h"
 #include "Physics/RigidBody.h"
-//#include "Scene/BoxSceneQuerry.h"
-//#include "Scene/FrustrumSceneQuerry.h"
 
 #include "Resources/Loader/MeshSaver.h"
 #include "Scene/RayEntityCollector.h"

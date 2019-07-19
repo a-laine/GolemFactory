@@ -54,9 +54,15 @@ class Physics
 		void predictTransform(const float& elapsedTime);
 		void computeBoundingShapesAndDetectPairs(const float& elapsedTime, SceneManager* scene);
 		void computeClusters();
-		void clusterSolver(const std::vector<Entity*>& cluster);
+		
 		void integratePosition(Entity* entity, const float& elapsedTime);
 		void clearTempoaryStruct(SceneManager* scene);
+		//
+
+		//  Solveurs
+		void discreteSolver(const std::pair<std::vector<Entity*>, std::vector<Entity*> >& cluster);
+		void continuousSolver(const std::pair<std::vector<Entity*>, std::vector<Entity*> >& cluster);
+		void supersamplingSolver(const std::pair<std::vector<Entity*>, std::vector<Entity*> >& cluster);
 		//
 
 		//	Usefull functions

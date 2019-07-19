@@ -51,15 +51,23 @@ void Physics::stepSimulation(const float& elapsedTime, SceneManager* s)
 	computeClusters();
 	for (unsigned int i = 0; i < clusters.size(); i++)
 	{
-		getSolverType(clusters[i].first);
+		switch (getSolverType(clusters[i].first))
+		{
+			case RigidBody::DISCRETE:
+				discreteSolver(clusters[i]);
+				break;
+			case RigidBody::CONTINUOUS:
+				continuousSolver(clusters[i]);
+				break;
+			case RigidBody::SUPERSAMPLING:
+				supersamplingSolver(clusters[i]);
+				break;
+			default:
+				break;
+		}
 	}
 
-
-	/*computeContacts(elapsedTime);
-	solveConstraints(elapsedTime);*/
 	clearTempoaryStruct(s);
-
-	//std::cout << std::endl;
 }
 /*
 void Physics::moveEntity(Entity* entity, const float& elapsedTime, const glm::vec3& delta)
@@ -324,18 +332,7 @@ void Physics::computeClusters()
 		clusters.emplace_back(std::make_pair(dynamicEntities, staticEntities));
 	}
 }
-void Physics::clusterSolver(const std::vector<Entity*>& cluster)
-{
 
-}
-/*void Physics::computeContacts(const float& elapsedTime)
-{
-
-}
-void Physics::solveConstraints(const float& elapsedTime)
-{
-
-}*/
 void Physics::integratePosition(Entity* entity, const float& elapsedTime)
 {
 	RigidBody* rigidbody = entity->getComponent<RigidBody>();
@@ -352,12 +349,43 @@ void Physics::clearTempoaryStruct(SceneManager* scene)
 }
 //
 
+//  Solveurs
+void Physics::discreteSolver(const std::pair<std::vector<Entity*>, std::vector<Entity*> >& cluster)
+{
+	for (unsigned int i = 0; i < cluster.first.size(); i++)
+	{
+		RigidBody* rigidbody = cluster.first[i]->getComponent<RigidBody>();
+		Shape* end = cluster.first[i]->getGlobalBoundingShape()->duplicate();
+		end->transform(rigidbody->getDeltaPosition(), glm::vec3(1.f), rigidbody->getDeltaRotation());
+
+		for (unsigned int j = i + 1; j < cluster.first.size(); j++)
+		{
+			if (Collision::collide(*end, *cluster.first[j]->getGlobalBoundingShape()))
+			{
+				Intersection::Contact contact = Intersection::intersect(*end, *cluster.first[j]->getGlobalBoundingShape());
+			}
+		}
+		for (unsigned int j = 0; j < cluster.second.size(); j++)
+		{
+
+		}
+	}
+}
+void Physics::continuousSolver(const std::pair<std::vector<Entity*>, std::vector<Entity*> >& cluster)
+{
+
+}
+void Physics::supersamplingSolver(const std::pair<std::vector<Entity*>, std::vector<Entity*> >& cluster)
+{
+
+}
+//
 
 
 //	Usefull functions
 RigidBody::SolverType Physics::getSolverType(const std::vector<Entity*>& cluster)
 {
-	RigidBody::SolverType solver = RigidBody::STANDARD;
+	RigidBody::SolverType solver = RigidBody::DISCRETE;
 	for (unsigned int i = 0; i < cluster.size(); i++)
 	{
 		RigidBody* rigidbody = cluster[i]->getComponent<RigidBody>();
@@ -415,8 +443,6 @@ std::vector<std::vector<Entity*> > Physics::EntityGraph::getCluster()
 		if (!it->second.second)
 		{
 			std::vector<Entity*> cluster;
-			/*for (auto it2 = graph.begin(); it2 != graph.end(); ++it2)
-				it2->second.second = false;*/
 			getNeighbours(it->first, cluster);
 			result.push_back(cluster);
 		}
