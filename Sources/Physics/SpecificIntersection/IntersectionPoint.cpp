@@ -1,14 +1,25 @@
 #include "IntersectionPoint.h"
-
+#include "Physics/SpecificCollision/CollisionUtils.h"
 
 
 Intersection::Contact Intersection::intersect_PointvsPoint(const glm::vec3& point1, const glm::vec3& point2)
 {
-	return Intersection::Contact();
+	glm::vec3 n = glm::normalize(point2 - point1);
+	return Intersection::Contact(point1, point2, n, -n);
 }
 Intersection::Contact Intersection::intersect_PointvsSegment(const glm::vec3& point, const glm::vec3& segment1, const glm::vec3& segment2)
 {
-	return Intersection::Contact();
+	Contact contact;
+	contact.contactPointA = point;
+	contact.contactPointB = getSegmentClosestPoint(segment1, segment2, point);
+	if (contact.contactPointB == segment1)
+		contact.normalB = glm::normalize(point - segment1);
+	else if (contact.contactPointB == segment2)
+		contact.normalB = glm::normalize(point - segment2);
+	else
+		contact.normalB = glm::normalize(point - contact.contactPointB);
+	contact.normalA = -contact.normalB;
+	return contact;
 }
 Intersection::Contact Intersection::intersect_PointvsTriangle(const glm::vec3& point, const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3)
 {
@@ -24,31 +35,59 @@ Intersection::Contact Intersection::intersect_PointvsAxisAlignedBox(const glm::v
 }
 Intersection::Contact Intersection::intersect_PointvsSphere(const glm::vec3& point, const glm::vec3& sphereCenter, const float& sphereRadius)
 {
-	return Intersection::Contact();
-	/*
-	Contact result;
-	result.contact1 = point;
-	result.contact2 = sphereCenter + sphereRadius * (sphereCenter - point);
-	result.normal2 = glm::normalize(sphereCenter - point);
-	result.normal1 = -result.normal2;
-	return result;
-	*/
+	Contact contact;
+	contact.normalB = glm::normalize(sphereCenter - point);
+	contact.normalA = -contact.normalB;
+	contact.contactPointA = point;
+	contact.contactPointB = sphereCenter + sphereRadius * contact.normalA;
+	return contact;
 }
 Intersection::Contact Intersection::intersect_PointvsCapsule(const glm::vec3& point, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
 {
-	return Intersection::Contact();
-	/*if (capsule2 == capsule1) return intersect_PointvsSphere(point, capsule1, capsuleRadius);
+	Contact contact;
+	contact.contactPointA = point;
+	contact.contactPointB = getSegmentClosestPoint(capsule1, capsule2, point);
+	if (contact.contactPointB == capsule1)
+	{
+		contact.normalB = glm::normalize(point - capsule1);
+		contact.contactPointB = capsule1 + capsuleRadius * contact.normalB;
+	}
+	else if (contact.contactPointB == capsule2)
+	{
+		contact.normalB = glm::normalize(point - capsule2);
+		contact.contactPointB = capsule2 + capsuleRadius * contact.normalB;
+	}
 	else
 	{
-		Contact result;
-		glm::vec3 u = glm::normalize(capsule2 - capsule1);
-		float t = glm::clamp(glm::dot(u, point - capsule1), 0.f, glm::length(capsule2 - capsule1));
+		contact.normalB = glm::normalize(point - contact.contactPointB);
+		contact.contactPointB = contact.contactPointB + capsuleRadius * contact.normalB;
+	}
+	contact.normalA = -contact.normalB;
+	return contact;
+}
+Intersection::Contact Intersection::intersect_PointvsHull(const glm::vec3& point, const std::vector<glm::vec3>& hullPoints, const std::vector<glm::vec3>& hullNormals, const std::vector<unsigned short>& hullFaces, const glm::mat4& hullBase)
+{
+	return Intersection::Contact();
+	/*Intersection::Contact contact;
+	bool outside = false;
+	glm::vec3 p = glm::vec3(glm::inverse(hullBase) * glm::vec4(point, 1.f));
+	for (unsigned int i = 0; i < hullNormals.size(); i++)
+	{
+		float d = 
+		if (glm::dot(hullNormals[i], p - hullPoints[hullFaces[3 * i]]) >= 0)
+		{
+			outside = true;
 
-		result.contact1 = point;
-		result.contact2 = capsule1 + t * u;
-		result.normal2 = glm::normalize(result.contact1 - result.contact2);
-		result.normal1 = -result.normal2;
-		result.contact2 += capsuleRadius * result.normal2;
-		return result;
-	}*/
+		}
+	}
+	if(outside)
+	{
+		contact
+	}
+	else
+	{
+		contact.contactPointA = point;
+		contact.contactPointB = point;
+	}
+	return contact;*/
 }

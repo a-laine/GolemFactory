@@ -1,7 +1,10 @@
 #include "Intersection.h"
+#include "GJK.h"
+#include "Resources/Mesh.h"
 
 #include <iostream>
 #include <string>
+
 
 
 //	Private field
@@ -39,6 +42,10 @@ namespace
 			case Shape::CAPSULE: {
 				const Capsule* c = static_cast<const Capsule*>(&b);
 				return Intersection::intersect_PointvsCapsule(a->p, c->p1, c->p2, c->radius);
+			}
+			case Shape::HULL: {
+				const Hull* c = static_cast<const Hull*>(&b);
+				return Intersection::intersect_PointvsHull(a->p, *c->mesh->getVertices(), *c->mesh->getNormals(), *c->mesh->getFaces(), c->base);
 			}
 			default: return Intersection::Contact();
 		}
@@ -190,18 +197,38 @@ Intersection::Contact Intersection::intersect(const Shape& a, const Shape& b)
 	//	order objects
 	Shape& Shape1 = (Shape&)a;
 	Shape& Shape2 = (Shape&)b;
-	if (a.type > b.type) std::swap(Shape1, Shape2);
+	bool swaped = false;
+	if (a.type > b.type) 
+	{
+		std::swap(Shape1, Shape2);
+		swaped = true;
+	}
 
 	switch (Shape1.type)
 	{
-		case Shape::POINT:				return intersect_PointvsShape(Shape1, Shape2);
-		case Shape::SEGMENT:			return intersect_SegmentvsShape(Shape1, Shape2);
-		case Shape::TRIANGLE:			return intersect_TrianglevsShape(Shape1, Shape2);
-		case Shape::ORIENTED_BOX:		return intersect_OrientedBoxvsShape(Shape1, Shape2);
-		case Shape::AXIS_ALIGNED_BOX:	return intersect_AxisAlignedBoxvsShape(Shape1, Shape2);
-		case Shape::SPHERE:				return intersect_SpherevsShape(Shape1, Shape2);
-		case Shape::CAPSULE:			return intersect_CapsulevsShape(Shape1, Shape2);
-		default:						return Intersection::Contact();
+		case Shape::POINT:
+			if(swaped) return intersect_PointvsShape(Shape1, Shape2).swap();
+			else return intersect_PointvsShape(Shape1, Shape2);
+		case Shape::SEGMENT:
+			if (swaped) return intersect_SegmentvsShape(Shape1, Shape2).swap();
+			else return intersect_SegmentvsShape(Shape1, Shape2);
+		case Shape::TRIANGLE:
+			if (swaped) return intersect_TrianglevsShape(Shape1, Shape2).swap();
+			else return intersect_TrianglevsShape(Shape1, Shape2);
+		case Shape::ORIENTED_BOX:		
+			if (swaped) return intersect_OrientedBoxvsShape(Shape1, Shape2).swap();
+			else return intersect_OrientedBoxvsShape(Shape1, Shape2);
+		case Shape::AXIS_ALIGNED_BOX:	
+			if (swaped) return intersect_AxisAlignedBoxvsShape(Shape1, Shape2).swap();
+			else return intersect_AxisAlignedBoxvsShape(Shape1, Shape2);
+		case Shape::SPHERE:	
+			if (swaped) return intersect_SpherevsShape(Shape1, Shape2).swap();
+			else return intersect_SpherevsShape(Shape1, Shape2);
+		case Shape::CAPSULE:			
+			if (swaped) return intersect_CapsulevsShape(Shape1, Shape2).swap();
+			else return intersect_CapsulevsShape(Shape1, Shape2);
+		default:						
+			return Intersection::Contact();
 	}
 }
 //
