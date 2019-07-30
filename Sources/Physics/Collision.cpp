@@ -182,7 +182,7 @@ namespace
 	}
 
 	//	Debug
-	std::string shapeTypeToString(const Shape& Shape) { return shapeTypeToString(Shape.type); }
+	//std::string shapeTypeToString(const Shape& Shape) { return shapeTypeToString(Shape.type); }
 	std::string shapeTypeToString(const Shape::ShapeType& type)
 	{
 		switch (type)
