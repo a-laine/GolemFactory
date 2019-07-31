@@ -1,5 +1,6 @@
 #include "IntersectionSphere.h"
 #include "Physics/SpecificCollision/CollisionUtils.h"
+#include "IntersectionPoint.h"
 
 Intersection::Contact Intersection::intersect_SpherevsSphere(const glm::vec3& sphere1Center, const float& sphere1Radius, const glm::vec3& sphere2Center, const float& sphere2Radius)
 {
@@ -27,5 +28,11 @@ Intersection::Contact Intersection::intersect_SpherevsCapsule(const glm::vec3& s
 	}
 	contact.normalA = -contact.normalB;
 	contact.contactPointA = sphereCenter + sphereRadius * contact.normalA;
+	return contact;
+}
+Intersection::Contact Intersection::intersect_SpherevsHull(const glm::vec3& sphereCenter, const float& sphereRadius, const std::vector<glm::vec3>& hullPoints, const std::vector<glm::vec3>& hullNormals, const std::vector<unsigned short>& hullFaces, const glm::mat4& hullBase)
+{
+	Contact contact = intersect_PointvsHull(sphereCenter, hullPoints, hullNormals, hullFaces, hullBase);
+	contact.contactPointA = contact.contactPointA + contact.normalA * sphereRadius;
 	return contact;
 }
