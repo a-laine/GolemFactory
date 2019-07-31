@@ -1,5 +1,7 @@
 #include "IntersectionPoint.h"
+
 #include "Physics/SpecificCollision/CollisionUtils.h"
+#include "Physics/SpecificCollision/CollisionPoint.h"
 
 #include <glm/gtx/norm.hpp>
 
@@ -70,28 +72,129 @@ Intersection::Contact Intersection::intersect_PointvsTriangle(const glm::vec3& p
 }
 Intersection::Contact Intersection::intersect_PointvsOrientedBox(const glm::vec3& point, const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax)
 {
-	return Intersection::Contact();
+	// init
+	glm::vec3 p = glm::vec3(glm::inverse(boxTranform) * glm::vec4(point, 1.f));
+	Contact contact = intersect_PointvsAxisAlignedBox(p, boxMin, boxMax);
+
+	// end
+	contact.contactPointA = glm::vec3(boxTranform * glm::vec4(contact.contactPointA, 1.f));
+	contact.contactPointB = glm::vec3(boxTranform * glm::vec4(contact.contactPointB, 1.f));
+	contact.normalA = glm::vec3(boxTranform * glm::vec4(contact.normalA, 0.f));
+	contact.normalB = glm::vec3(boxTranform * glm::vec4(contact.normalB, 0.f));
+	return contact;
 }
 Intersection::Contact Intersection::intersect_PointvsAxisAlignedBox(const glm::vec3& point, const glm::vec3& boxMin, const glm::vec3& boxMax)
 {
 	//	special case of obb/sphere
-	/*glm::vec3 bcenter = 0.5f * (boxMax + boxMin);
+	glm::vec3 bcenter = 0.5f * (boxMax + boxMin);
 	glm::vec3 bsize = 0.5f * glm::abs(boxMax - boxMin);
 	glm::vec3 p = point - bcenter;
 	glm::vec3 n = glm::vec3(0.f);
-	
-	if (p.x > bsize.x) p.x = bsize.x;
-	else if (p.x < -bsize.x) p.x = -bsize.x;
-	
-	if (p.y > bsize.y) p.y = bsize.y;
-	else if (p.y < -bsize.y) p.y = -bsize.y;
-	
-	if (p.z > bsize.z) p.z = bsize.z;
-	else if (p.z < -bsize.z) p.z = -bsize.z;*/
 
-	//return collide_PointvsSphere(bcenter + p, sphereCenter, sphereRadius);
+	if (Collision::collide_PointvsAxisAlignedBox(point, boxMin, boxMax))
+	{
+		// inside point is closer to an x face
+		if (std::abs(p.x) > std::abs(p.y) && std::abs(p.x) > std::abs(p.z))
+		{
+			if (p.x > 0)
+			{
+				n = glm::vec3(1, 0, 0);
+				p.x = bsize.x;
+			}
+			else
+			{
+				n = glm::vec3(-1, 0, 0);
+				p.x = -bsize.x;
+			}
+		}
 
-	return Intersection::Contact();
+		// inside point is closer to a y face
+		else if (std::abs(p.y) > std::abs(p.x) && std::abs(p.y) > std::abs(p.z))
+		{
+			if (p.y > 0)
+			{
+				n = glm::vec3(0, 1, 0);
+				p.y = bsize.y;
+			}
+			else
+			{
+				n = glm::vec3(0, -1, 0);
+				p.y = -bsize.y;
+			}
+		}
+
+		// inside point is closer to a z face
+		else
+		{
+			if (p.z > 0)
+			{
+				n = glm::vec3(0, 0, 1);
+				p.z = bsize.z;
+			}
+			else
+			{
+				n = glm::vec3(0, 0, -1);
+				p.z = -bsize.z;
+			}
+		}
+
+		// compute result and end
+		Contact contact;
+		contact.contactPointA = point;
+		contact.contactPointB = p + bcenter;
+		contact.normalA = -n;
+		contact.normalB = n;
+		return contact;
+	}
+	else
+	{
+		// tmp variables
+		bool inExtrudeX = false;
+		bool inExtrudeY = false;
+		bool inExtrudeZ = false;
+
+		// compute closest point on box
+		if (p.x > bsize.x)
+			p.x = bsize.x;
+		else if (p.x < -bsize.x)
+			p.x = -bsize.x;
+		else inExtrudeX = true;
+		if (p.y > bsize.y)
+			p.y = bsize.y;
+		else if (p.y < -bsize.y)
+			p.y = -bsize.y;
+		else inExtrudeY = true;
+		if (p.z > bsize.z)
+			p.z = bsize.z;
+		else if (p.z < -bsize.z)
+			p.z = -bsize.z;
+		else inExtrudeZ = true;
+		p += bcenter;
+
+		// compute box normal depending on point closest face
+		if (inExtrudeX && inExtrudeY && inExtrudeZ) // p is on a corner
+			n = glm::normalize(point - p);
+		else if (inExtrudeX && inExtrudeY) // p is on a Z edge
+			n = glm::normalize(point - glm::vec3(p.x, p.y, 0.f));
+		else if (inExtrudeX && inExtrudeZ) // p is on a Y edge
+			n = glm::normalize(point - glm::vec3(p.x, 0.f, p.z));
+		else if (inExtrudeZ && inExtrudeY) // p is on a X edge
+			n = glm::normalize(point - glm::vec3(0.f, p.y, p.z));
+		else if(inExtrudeX)
+			n = glm::normalize(point - glm::vec3(p.x, 0.f, 0.f));
+		else if (inExtrudeY)
+			n = glm::normalize(point - glm::vec3(0.f, p.y, 0.f));
+		else 
+			n = glm::normalize(point - glm::vec3(0.f, 0.f, p.z));
+
+		// compute result and end
+		Contact contact;
+		contact.contactPointA = point;
+		contact.contactPointB = p;
+		contact.normalA = -n;
+		contact.normalB = n;
+		return contact;
+	}
 }
 Intersection::Contact Intersection::intersect_PointvsSphere(const glm::vec3& point, const glm::vec3& sphereCenter, const float& sphereRadius)
 {
@@ -127,27 +230,55 @@ Intersection::Contact Intersection::intersect_PointvsCapsule(const glm::vec3& po
 }
 Intersection::Contact Intersection::intersect_PointvsHull(const glm::vec3& point, const std::vector<glm::vec3>& hullPoints, const std::vector<glm::vec3>& hullNormals, const std::vector<unsigned short>& hullFaces, const glm::mat4& hullBase)
 {
-	return Intersection::Contact();
-	/*Intersection::Contact contact;
-	bool outside = false;
+	// init
+	Contact contact;
+	float dmin = std::numeric_limits<float>::max();
 	glm::vec3 p = glm::vec3(glm::inverse(hullBase) * glm::vec4(point, 1.f));
-	for (unsigned int i = 0; i < hullNormals.size(); i++)
-	{
-		float d = 
-		if (glm::dot(hullNormals[i], p - hullPoints[hullFaces[3 * i]]) >= 0)
-		{
-			outside = true;
 
-		}
-	}
-	if(outside)
+	// point is inside hull
+	if (Collision::collide_PointvsHull(point, hullPoints, hullNormals, hullFaces, hullBase))
 	{
-		contact
+		// search closest face
+		for (unsigned int i = 0; i < hullNormals.size(); i++)
+		{
+			glm::vec3 n = glm::normalize(hullNormals[i]);
+			float d = std::abs(glm::dot(n, p - hullPoints[hullFaces[3 * i]]));
+			if (d < dmin)
+			{
+				dmin = d;
+				contact.normalB = n;
+			}
+		}
+
+		// compute result
+		contact.contactPointA = point;
+		contact.contactPointB = point + contact.normalB * dmin;
+		contact.normalA = -contact.normalB;
 	}
+
+	// point is outside
 	else
 	{
-		contact.contactPointA = point;
-		contact.contactPointB = point;
+		// search closest front face
+		for (unsigned int i = 0; i < hullNormals.size(); i++)
+		{
+			if (glm::dot(hullNormals[i], p - hullPoints[hullFaces[3 * i]]) >= 0)
+			{
+				Contact c = intersect_PointvsTriangle(point, hullPoints[hullFaces[3 * i]], hullPoints[hullFaces[3 * i + 1]], hullPoints[hullFaces[3 * i + 2]]);
+				float d = glm::length(point - contact.contactPointB);
+				if (d < dmin)
+				{
+					dmin = d;
+					contact = c;
+				}
+			}
+		}
 	}
-	return contact;*/
+
+	// end
+	contact.contactPointA = glm::vec3(hullBase * glm::vec4(contact.contactPointA, 1.f));
+	contact.contactPointB = glm::vec3(hullBase * glm::vec4(contact.contactPointB, 1.f));
+	contact.normalA = glm::vec3(hullBase * glm::vec4(contact.normalA, 0.f));
+	contact.normalB = glm::vec3(hullBase * glm::vec4(contact.normalB, 0.f));
+	return contact;
 }
