@@ -28,7 +28,6 @@ Makefile
 makefile
 
 # CMake
-CMakeLists.txt
 CMakeCache.txt
 CMakeFiles/*
 *.cmake
