@@ -6,10 +6,16 @@ Intersection::Contact Intersection::intersect_AxisAlignedBoxvsAxisAlignedBox(con
 }
 Intersection::Contact Intersection::intersect_AxisAlignedBoxvsSphere(const glm::vec3& boxMin, const glm::vec3& boxMax, const glm::vec3& sphereCenter, const float& sphereRadius)
 {
-	return Intersection::Contact();
+	// use intersect_PointvsAxisAlignedBox
+
+	Contact contact;
+
+	return contact;
 }
 Intersection::Contact Intersection::intersect_AxisAlignedBoxvsCapsule(const glm::vec3& boxMin, const glm::vec3& boxMax, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
 {
+	// use intersect_SegmentvsAxisAlignedBox
+
 	return Intersection::Contact();
 }
 

@@ -11,10 +11,12 @@ Intersection::Contact Intersection::intersect_OrientedBoxvsAxisAlignedBox(const 
 }
 Intersection::Contact Intersection::intersect_OrientedBoxvsSphere(const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax, const glm::vec3& sphereCenter, const float& sphereRadius)
 {
+	// use AABB vs sphere
 	return Intersection::Contact();
 }
 Intersection::Contact Intersection::intersect_OrientedBoxvsCapsule(const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
 {
+	// use (segment vs OBB).swap
 	return Intersection::Contact();
 }
 
