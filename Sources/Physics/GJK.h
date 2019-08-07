@@ -9,6 +9,7 @@ class GJK
 	public:
 		//	Public functions
 		static bool collide(const Shape& a, const Shape& b, std::vector<std::pair<glm::vec3, glm::vec3>>* shapePair = nullptr);
+		static Intersection::Contact intersect(const Shape& a, const Shape& b);
 		//
 
 	protected:
