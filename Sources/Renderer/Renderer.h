@@ -18,6 +18,7 @@ class Mesh;
 class Renderer : public Singleton<Renderer>
 {
 	friend class Singleton<Renderer>;
+	friend class Debug;
 
 	public:
 		//	Miscellaneous
@@ -67,12 +68,12 @@ class Renderer : public Singleton<Renderer>
 		RenderOption getRenderOption() const;
 
 
-		void addDrawShapeDefinition(Shape::ShapeType type, Mesh* mesh, Shader* shader);
+		//void addDrawShapeDefinition(Shape::ShapeType type, Mesh* mesh, Shader* shader);
 		//
 
 		//	Render function
 		void drawObject(Entity* object, const float* view, const float* projection);
-		void drawShape(const Shape* Shape, const float* view, const float* projection);
+		//void drawShape(const Shape* Shape, const float* view, const float* projection);
 		//
 
 		Shader* normalViewer;
@@ -123,7 +124,7 @@ class Renderer : public Singleton<Renderer>
 		unsigned int vboGridSize;
 		GLuint gridVAO, vertexbuffer, arraybuffer, colorbuffer, normalbuffer;
 
-		std::map<Shape::ShapeType, std::pair<Mesh*, Shader*> > drawShapeDefinition;
+		//std::map<Shape::ShapeType, std::pair<Mesh*, Shader*> > drawShapeDefinition;
 
 		unsigned int instanceDrawn, trianglesDrawn;
 		double dummy;

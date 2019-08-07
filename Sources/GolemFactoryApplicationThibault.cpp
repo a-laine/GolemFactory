@@ -50,6 +50,8 @@
 #include "Scene/RayEntityCollector.h"
 #include "Scene/RaySceneQuerry.h"
 
+#include "Utiles/Debug.h"
+
 #define GRID_SIZE 100
 #define GRID_ELEMENT_SIZE 5.f
 #define DEBUG 0
@@ -106,7 +108,7 @@ int main()
 
 	//	Test scene
 		Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("wired"));
-		initializeForestScene(false);
+		initializeForestScene(true);
 		world.getEntityFactory().createObject("cube", [](Entity* object)
 		{
 			object->setTransformation(glm::vec3(0.f, 0.f, -10.f), glm::vec3(1000, 1000, 10), glm::fquat());
@@ -195,6 +197,12 @@ int main()
 		    //Renderer::getInstance()->drawShape(testTree->getGlobalBoundingShape(), &view[0][0], &projection[0][0]);
 		}
 
+		Debug::view = currentCamera->getGlobalViewMatrix();
+		Debug::projection = glm::perspective(glm::radians(currentCamera->getVerticalFieldOfView(context->getViewportRatio())), context->getViewportRatio(), 0.1f, 1500.f);
+		Debug::color = glm::vec3(1.f, 1.f, 1.f);
+		//Debug::drawWiredCube(glm::translate(glm::mat4(1.f), glm::vec3(0, 0, 2)), glm::vec3(1, 1, 1));
+		Debug::drawWiredSphere(glm::vec3(0, 0, 2), 1);
+		//Debug::drawPoint(glm::vec3(0, 0, 1));
 
 		picking();
 		Renderer::getInstance()->renderHUD();
@@ -420,14 +428,8 @@ void initManagers()
 	Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE_WIRED, ResourceManager::getInstance()->getResource<Shader>("wired"));
 	Renderer::getInstance()->setShader(Renderer::INSTANCE_ANIMATABLE_WIRED, ResourceManager::getInstance()->getResource<Shader>("wiredSkinning"));
 
-
-	Renderer::getInstance()->addDrawShapeDefinition(Shape::POINT, ResourceManager::getInstance()->getResource<Mesh>("Shapes/point"), ResourceManager::getInstance()->getResource<Shader>("Shapes/point"));
-	Renderer::getInstance()->addDrawShapeDefinition(Shape::SEGMENT, ResourceManager::getInstance()->getResource<Mesh>("Shapes/point"), ResourceManager::getInstance()->getResource<Shader>("Shapes/segment"));
-	Renderer::getInstance()->addDrawShapeDefinition(Shape::TRIANGLE, ResourceManager::getInstance()->getResource<Mesh>("Shapes/point"), ResourceManager::getInstance()->getResource<Shader>("Shapes/triangle"));
-	Renderer::getInstance()->addDrawShapeDefinition(Shape::ORIENTED_BOX, ResourceManager::getInstance()->getResource<Mesh>("Shapes/box"), ResourceManager::getInstance()->getResource<Shader>("default"));
-	Renderer::getInstance()->addDrawShapeDefinition(Shape::AXIS_ALIGNED_BOX, ResourceManager::getInstance()->getResource<Mesh>("Shapes/box"), ResourceManager::getInstance()->getResource<Shader>("default"));
-	Renderer::getInstance()->addDrawShapeDefinition(Shape::SPHERE, ResourceManager::getInstance()->getResource<Mesh>("Shapes/sphere"), ResourceManager::getInstance()->getResource<Shader>("default"));
-	Renderer::getInstance()->addDrawShapeDefinition(Shape::CAPSULE, ResourceManager::getInstance()->getResource<Mesh>("Shapes/capsule"), ResourceManager::getInstance()->getResource<Shader>("default"));
+	// Debug
+	Debug::getInstance()->initialize("Shapes/point", "Shapes/box", "Shapes/sphere", "Shapes/point", "Shapes/segment", "default", "wired");
 
 	// Animator
 	Animator::getInstance();

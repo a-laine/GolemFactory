@@ -339,8 +339,8 @@ unsigned int Renderer::getNbDrawnTriangles() const { return trianglesDrawn; }
 Renderer::RenderOption Renderer::getRenderOption() const { return renderOption; }
 
 
-void Renderer::addDrawShapeDefinition(Shape::ShapeType type, Mesh* mesh, Shader* shader)
+/*void Renderer::addDrawShapeDefinition(Shape::ShapeType type, Mesh* mesh, Shader* shader)
 {
 	drawShapeDefinition[type] = std::pair<Mesh*, Shader*>(mesh, shader);
-}
+}*/
 //

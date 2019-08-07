@@ -83,42 +83,6 @@ void Renderer::drawObject(Entity* object, const float* view, const float* projec
 	instanceDrawn++;
 	trianglesDrawn += drawableComp->getMesh()->getNumberFaces();
 }
-void Renderer::drawShape(const Shape* Shape, const float* view, const float* projection)
-{
-	switch (Shape->type)
-	{
-		case Shape::POINT:
-			drawPoint(static_cast<const Point*>(Shape), view, projection);
-			break;
-		case Shape::SEGMENT:
-			drawSegment(static_cast<const Segment*>(Shape), view, projection);
-			break;
-		case Shape::TRIANGLE:
-			drawTriangle(static_cast<const Triangle*>(Shape), view, projection);
-			break;
-		case Shape::ORIENTED_BOX:
-			drawOrientedBox(static_cast<const OrientedBox*>(Shape), view, projection);
-			break;
-		case Shape::AXIS_ALIGNED_BOX:
-			drawAxisAlignedBox(static_cast<const AxisAlignedBox*>(Shape), view, projection);
-			break;
-		case Shape::SPHERE:
-			drawSphere(static_cast<const Sphere*>(Shape), view, projection);
-			break;
-		case Shape::CAPSULE:
-			drawCapsule(static_cast<const Capsule*>(Shape), view, projection);
-			break;
-		case Shape::HULL:
-			drawHull(static_cast<const Hull*>(Shape), normalViewer, view, projection);
-			drawHull(static_cast<const Hull*>(Shape), defaultShader[INSTANCE_DRAWABLE_WIRED], view, projection);
-			break;
-		default:
-			std::cerr << "WARNING : Shape type not yet supported" << std::endl;
-			break;
-	}
-}
-
-
 void Renderer::drawInstancedObject(Shader* s, Mesh* m, std::vector<glm::mat4>& models, const float* view, const float* projection)
 {
 	//	Get shader and prepare matrix
@@ -146,57 +110,8 @@ void Renderer::drawInstancedObject(Shader* s, Mesh* m, std::vector<glm::mat4>& m
 	instanceDrawn += (int)(models.size());
 	trianglesDrawn += (int)(models.size() * m->getNumberFaces());
 }
-//
 
-
-//	Shapes drawing functions
-void Renderer::drawPoint(const Point* point, const float* view, const float* projection)
-{
-	std::map<Shape::ShapeType, std::pair<Mesh*, Shader*> >::iterator it = drawShapeDefinition.find(Shape::POINT);
-	if (it != drawShapeDefinition.end())
-	{
-		//	Get shader and prepare matrix
-		Shader* shaderToUse = it->second.second;
-		loadMVPMatrix(shaderToUse, &glm::translate(glm::mat4(1.f), point->p)[0][0], view, projection);
-		if (!shaderToUse) return;
-		
-		//	override mesh color
-		int loc = shaderToUse->getUniformLocation("overrideColor");
-		if (loc >= 0) glUniform3fv(loc, 1, (float*)&COLOR_POINT);
-
-		//	Draw mesh
-		loadVAO(it->second.first->getVAO());
-		glDrawElements(GL_POINTS, 1, GL_UNSIGNED_SHORT, NULL);
-
-		if (loc >= 0) glUniform3fv(loc, 1, (float*)&glm::vec3(-1.f, 0.f, 0.f)[0]);
-	}
-	else std::cerr << "WARNING : drawPoint not associated or not yet implemented" << std::endl;
-}
-void Renderer::drawSegment(const Segment* segment, const float* view, const float* projection)
-{
-	std::map<Shape::ShapeType, std::pair<Mesh*, Shader*> >::iterator it = drawShapeDefinition.find(Shape::SEGMENT);
-	if (it != drawShapeDefinition.end())
-	{
-		//	Get shader and prepare matrix
-		Shader* shaderToUse = it->second.second;
-		loadMVPMatrix(shaderToUse, &glm::translate(glm::mat4(1.f), segment->p1)[0][0], view, projection);
-		if (!shaderToUse) return;
-
-		int loc = shaderToUse->getUniformLocation("vector");
-		if (loc >= 0) glUniform3fv(loc, 1, (float*)&(segment->p2 - segment->p1)[0]);
-
-		//	override mesh color
-		loc = shaderToUse->getUniformLocation("overrideColor");
-		if (loc >= 0) glUniform3fv(loc, 1, (float*)&COLOR_SEGMENT);
-
-		//	Draw mesh
-		loadVAO(it->second.first->getVAO());
-		glDrawElements(GL_POINTS, 1, GL_UNSIGNED_SHORT, NULL);
-
-		if (loc >= 0) glUniform3fv(loc, 1, (float*)&glm::vec3(-1.f, 0.f, 0.f)[0]);
-	}
-	else std::cerr << "WARNING : drawSegment not associated or not yet implemented" << std::endl;
-}
+/*
 void Renderer::drawTriangle(const Triangle* triangle, const float* view, const float* projection)
 {
 	std::map<Shape::ShapeType, std::pair<Mesh*, Shader*> >::iterator it = drawShapeDefinition.find(Shape::TRIANGLE);
@@ -225,85 +140,6 @@ void Renderer::drawTriangle(const Triangle* triangle, const float* view, const f
 		if (loc >= 0) glUniform3fv(loc, 1, (float*)&glm::vec3(-1.f, 0.f, 0.f)[0]);
 	}
 	else std::cerr << "WARNING : drawTriangle not associated or not yet implemented" << std::endl;
-}
-void Renderer::drawOrientedBox(const OrientedBox* box, const float* view, const float* projection)
-{
-	///	adapted to "Shapes/box.mesh"
-	std::map<Shape::ShapeType, std::pair<Mesh*, Shader*> >::iterator it = drawShapeDefinition.find(Shape::ORIENTED_BOX);
-	if (it != drawShapeDefinition.end())
-	{
-		//	Get shader and prepare matrix
-		Shader* shaderToUse = nullptr;
-		if (renderOption == WIREFRAME) shaderToUse = defaultShader[INSTANCE_DRAWABLE_WIRED];
-		else shaderToUse = it->second.second;
-
-		loadMVPMatrix(shaderToUse, &glm::scale(box->base, 0.5f * (box->max - box->min))[0][0], view, projection);
-		if (!shaderToUse) return;
-
-		//	override mesh color
-		int loc = shaderToUse->getUniformLocation("overrideColor");
-		if (loc >= 0) glUniform3fv(loc, 1, (float*)&COLOR_ORIENTEDBOX);
-
-		//	Draw mesh
-		loadVAO(it->second.first->getVAO());
-		glDrawElements(GL_TRIANGLES, (int)it->second.first->getFaces()->size(), GL_UNSIGNED_SHORT, NULL);
-
-		if (loc >= 0) glUniform3fv(loc, 1, (float*)&glm::vec3(-1.f, 0.f, 0.f)[0]);
-	}
-	else std::cerr << "WARNING : drawOrientedBox not associated or not yet implemented" << std::endl;
-}
-void Renderer::drawAxisAlignedBox(const AxisAlignedBox* box, const float* view, const float* projection)
-{
-	///	adapted to "Shapes/box.mesh"
-	std::map<Shape::ShapeType, std::pair<Mesh*, Shader*> >::iterator it = drawShapeDefinition.find(Shape::AXIS_ALIGNED_BOX);
-	if (it != drawShapeDefinition.end())
-	{
-		//	Get shader and prepare matrix
-		Shader* shaderToUse = nullptr;
-		if (renderOption == WIREFRAME) shaderToUse = defaultShader[INSTANCE_DRAWABLE_WIRED];
-		else shaderToUse = it->second.second;
-
-		glm::mat4 model = glm::translate(glm::mat4(1.f), 0.5f * (box->max + box->min));
-		model = glm::scale(model, 0.5f * (box->max - box->min));
-		loadMVPMatrix(shaderToUse, &model[0][0], view, projection);
-		if (!shaderToUse) return;
-
-		//	override mesh color
-		int loc = shaderToUse->getUniformLocation("overrideColor");
-		if (loc >= 0) glUniform3fv(loc, 1, (float*)&COLOR_AXISALIGNEDBOX);
-
-		//	Draw mesh
-		loadVAO(it->second.first->getVAO());
-		glDrawElements(GL_TRIANGLES, (int)it->second.first->getFaces()->size(), GL_UNSIGNED_SHORT, NULL);
-
-		if (loc >= 0) glUniform3fv(loc, 1, (float*)&glm::vec3(-1.f, 0.f, 0.f)[0]);
-	}
-	else std::cerr << "WARNING : drawAxisAlignedBox not associated or not yet implemented" << std::endl;
-}
-void Renderer::drawSphere(const Sphere* sphere, const float* view, const float* projection)
-{
-	///	adapted to "Shapes/sphere.mesh"
-	std::map<Shape::ShapeType, std::pair<Mesh*, Shader*> >::iterator it = drawShapeDefinition.find(Shape::SPHERE);
-	if (it != drawShapeDefinition.end())
-	{
-		//	Get shader and prepare matrix
-		Shader* shaderToUse = nullptr;
-		if (renderOption == WIREFRAME) shaderToUse = defaultShader[INSTANCE_DRAWABLE_WIRED];
-		else shaderToUse = it->second.second;
-		loadMVPMatrix(shaderToUse, &glm::translate(sphere->center)[0][0], view, projection);
-		if (!shaderToUse) return;
-
-		//	override mesh color
-		int loc = shaderToUse->getUniformLocation("overrideColor");
-		if (loc >= 0) glUniform3fv(loc, 1, (float*)&COLOR_SPHERE);
-
-		//	Draw mesh
-		loadVAO(it->second.first->getVAO());
-		glDrawElements(GL_TRIANGLES, (int)it->second.first->getFaces()->size(), GL_UNSIGNED_SHORT, NULL);
-
-		if (loc >= 0) glUniform3fv(loc, 1, (float*)&glm::vec3(-1.f, 0.f, 0.f)[0]);
-	}
-	else std::cerr << "WARNING : drawSphere not associated or not yet implemented" << std::endl;
 }
 void Renderer::drawCapsule(const Capsule* capsule, const float* view, const float* projection)
 {
@@ -357,20 +193,7 @@ void Renderer::drawCapsule(const Capsule* capsule, const float* view, const floa
 	}
 	else std::cerr << "WARNING : drawCapsule not associated or not yet implemented" << std::endl;
 }
-void Renderer::drawHull(const Hull* hull, Shader* shader, const float* view, const float* projection)
-{
-	loadMVPMatrix(shader, &hull->base[0][0], view, projection);
-	if (!shader) return;
-
-	//	override mesh color
-	int loc = shader->getUniformLocation("overrideColor");
-	if (loc >= 0 && shader == normalViewer) glUniform3fv(loc, 1, (float*)&COLOR_NORMAL);
-
-	loadVAO(hull->mesh->getVAO());
-	glDrawElements(GL_TRIANGLES, (int)hull->mesh->getFaces()->size(), GL_UNSIGNED_SHORT, NULL);
-
-	if (loc >= 0) glUniform3fv(loc, 1, (float*)&glm::vec3(-1.f, 0.f, 0.f)[0]);
-}
+*/
 //
 
 
