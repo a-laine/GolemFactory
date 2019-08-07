@@ -41,6 +41,10 @@ bool GJK::collide(const Shape& a, const Shape& b, std::vector<std::pair<glm::vec
 	//std::cout << "GJK : error : no solution found after maximum iteration (" << MAX_ITERATION << ")" << std::endl;
 	return false;
 }
+Intersection::Contact GJK::intersect(const Shape& a, const Shape& b)
+{
+	return Intersection::Contact();
+}
 //
 
 

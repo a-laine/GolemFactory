@@ -77,7 +77,7 @@ namespace
 				const Capsule* c = static_cast<const Capsule*>(&b);
 				return Intersection::intersect_SegmentvsCapsule(a->p1, a->p2, c->p1, c->p2, c->radius);
 			}
-			default: return Intersection::Contact();
+			default: return GJK::intersect(segment, b);
 		}
 	};
 	inline Intersection::Contact intersect_TrianglevsShape(const Shape& triangle, const Shape& b)
@@ -85,7 +85,7 @@ namespace
 		const Triangle* a = static_cast<const Triangle*>(&triangle);
 		switch (b.type)
 		{
-			case Shape::TRIANGLE: {
+			/*case Shape::TRIANGLE: {
 				const Triangle* c = static_cast<const Triangle*>(&b);
 				return Intersection::intersect_TrianglevsTriangle(a->p1, a->p2, a->p3, c->p1, c->p2, c->p3);
 			}
@@ -96,16 +96,16 @@ namespace
 			case Shape::AXIS_ALIGNED_BOX: {
 				const AxisAlignedBox* c = static_cast<const AxisAlignedBox*>(&b);
 				return Intersection::intersect_TrianglevsAxisAlignedBox(a->p1, a->p2, a->p3, c->min, c->max);
-			}
+			}*/
 			case Shape::SPHERE: {
 				const Sphere* c = static_cast<const Sphere*>(&b);
 				return Intersection::intersect_TrianglevsSphere(a->p1, a->p2, a->p3, c->center, c->radius);
 			}
-			case Shape::CAPSULE: {
+			/*case Shape::CAPSULE: {
 				const Capsule* c = static_cast<const Capsule*>(&b);
 				return Intersection::intersect_TrianglevsCapsule(a->p1, a->p2, a->p3, c->p1, c->p2, c->radius);
-			}
-			default: return Intersection::Contact();
+			}*/
+			default: return GJK::intersect(triangle, b);
 		}
 	};
 	inline Intersection::Contact intersect_OrientedBoxvsShape(const Shape& box, const Shape& b)
@@ -113,14 +113,14 @@ namespace
 		const OrientedBox* a = static_cast<const OrientedBox*>(&box);
 		switch (b.type)
 		{
-			case Shape::ORIENTED_BOX: {
+			/*case Shape::ORIENTED_BOX: {
 				const OrientedBox* c = static_cast<const OrientedBox*>(&b);
 				return Intersection::intersect_OrientedBoxvsOrientedBox(a->base, a->min, a->max, c->base, c->min, c->max);
 			}
 			case Shape::AXIS_ALIGNED_BOX: {
 				const AxisAlignedBox* c = static_cast<const AxisAlignedBox*>(&b);
 				return Intersection::intersect_OrientedBoxvsAxisAlignedBox(a->base, a->min, a->max, c->min, c->max);
-			}
+			}*/
 			case Shape::SPHERE: {
 				const Sphere* c = static_cast<const Sphere*>(&b);
 				return Intersection::intersect_OrientedBoxvsSphere(a->base, a->min, a->max, c->center, c->radius);
@@ -129,7 +129,7 @@ namespace
 				const Capsule* c = static_cast<const Capsule*>(&b);
 				return Intersection::intersect_OrientedBoxvsCapsule(a->base, a->min, a->max, c->p1, c->p2, c->radius);
 			}
-			default: return Intersection::Contact();
+			default: return GJK::intersect(box, b);
 		}
 	};
 	inline Intersection::Contact intersect_AxisAlignedBoxvsShape(const Shape& box, const Shape& b)
@@ -137,10 +137,10 @@ namespace
 		const AxisAlignedBox* a = static_cast<const AxisAlignedBox*>(&box);
 		switch (b.type)
 		{
-			case Shape::AXIS_ALIGNED_BOX: {
+			/*case Shape::AXIS_ALIGNED_BOX: {
 				const AxisAlignedBox* c = static_cast<const AxisAlignedBox*>(&b);
 				return Intersection::intersect_AxisAlignedBoxvsAxisAlignedBox(a->min, a->max, c->min, c->max);
-			}
+			}*/
 			case Shape::SPHERE: {
 				const Sphere* c = static_cast<const Sphere*>(&b);
 				return Intersection::intersect_AxisAlignedBoxvsSphere(a->min, a->max, c->center, c->radius);
@@ -149,7 +149,7 @@ namespace
 				const Capsule* c = static_cast<const Capsule*>(&b);
 				return Intersection::intersect_AxisAlignedBoxvsCapsule(a->min, a->max, c->p1, c->p2, c->radius);
 			}
-			default: return Intersection::Contact();
+			default: return GJK::intersect(box, b);
 		}
 	};
 	inline Intersection::Contact intersect_SpherevsShape(const Shape& sphere, const Shape& b)
@@ -165,6 +165,10 @@ namespace
 				const Capsule* c = static_cast<const Capsule*>(&b);
 				return Intersection::intersect_SpherevsCapsule(a->center, a->radius, c->p1, c->p2, c->radius);
 			}
+			case Shape::HULL: {
+				const Hull* c = static_cast<const Hull*>(&b);
+				return Intersection::intersect_SpherevsHull(a->center, a->radius, *c->mesh->getVertices(), *c->mesh->getNormals(), *c->mesh->getFaces(), c->base);
+			}
 			default: return Intersection::Contact();
 		}
 	};
@@ -176,7 +180,7 @@ namespace
 			const Capsule* c = static_cast<const Capsule*>(&b);
 			return Intersection::intersect_CapsulevsCapsule(a->p1, a->p2, a->radius, c->p1, c->p2, c->radius);
 		}
-		else return Intersection::Contact();
+		else return GJK::intersect(capsule, b);
 	};
 }
 //

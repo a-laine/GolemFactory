@@ -41,12 +41,12 @@ Intersection::Contact Intersection::intersect_SegmentvsSegment(const glm::vec3& 
 				contact.contactPointA = p1;
 				contact.contactPointB = segment2a;
 			}
-			if (d2 < d1 && d2 < d3 && d2 < d4)
+			else if (d2 < d1 && d2 < d3 && d2 < d4)
 			{
 				contact.contactPointA = p2;
 				contact.contactPointB = segment2b;
 			}
-			if (d3 < d2 && d3 < d1 && d3 < d4)
+			else if (d3 < d2 && d3 < d1 && d3 < d4)
 			{
 				contact.contactPointB = p3;
 				contact.contactPointA = segment1a;
