@@ -28,7 +28,7 @@ bool Collision::collide_PointvsTriangle(const glm::vec3& point, const glm::vec3&
 	//	check if point is coplanar to triangle
 	glm::vec3 u1 = triangle2 - triangle1;
 	glm::vec3 u2 = triangle3 - triangle1;
-	glm::vec3 n = glm::cross(u1, u2);
+	glm::vec3 n = glm::normalize(glm::cross(u1, u2));
 	glm::vec3 p = point - triangle1;
 
 	if (n == glm::vec3(0.f)) // flat triangle
@@ -44,14 +44,14 @@ bool Collision::collide_PointvsTriangle(const glm::vec3& point, const glm::vec3&
 	}
 	else if (glm::dot(p, n) <= COLLISION_EPSILON)
 	{
-		glm::normalize(n);
-
 		//	checking barycentric coordinates
-		float crossDot = glm::dot(u1, u2);
+		/*float crossDot = glm::dot(u1, u2);
 		float magnitute = glm::dot(u1, u1)*glm::dot(u2, u2) - crossDot*crossDot;
 		glm::vec2 barry;
 		barry.x = (glm::dot(u2, u2) * glm::dot(p, u1) - crossDot * glm::dot(p, u2)) / magnitute;
-		barry.y = (glm::dot(u1, u1) * glm::dot(p, u2) - crossDot * glm::dot(p, u1)) / magnitute;
+		barry.y = (glm::dot(u1, u1) * glm::dot(p, u2) - crossDot * glm::dot(p, u1)) / magnitute;*/
+
+		glm::vec2 barry = getBarycentricCoordinates(u1, u2, p);
 		return !(barry.x < 0.f || barry.y < 0.f || barry.x + barry.y > 1.f);
 	}
 	else return false;
