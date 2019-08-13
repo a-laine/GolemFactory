@@ -9,6 +9,9 @@ uniform mat4 projection;// projection matrix
 
 uniform vec3 vector = vec3(0.0 , 0.0 , 0.0);
 
+in vec3 fragmentColor[];
+out vec3 fragmentColor1;
+
 //	program
 void main()
 {
@@ -18,8 +21,10 @@ void main()
 	
 	//	draw segment
 	gl_Position = projection * view * vec4(p1 , 1.0);
+	fragmentColor1 = fragmentColor[0];
 	EmitVertex();
 	gl_Position = projection * view * vec4(p2, 1.0);
+	fragmentColor1 = fragmentColor[0];
 	EmitVertex();
 	EndPrimitive();
 }

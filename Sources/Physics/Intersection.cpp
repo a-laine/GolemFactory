@@ -1,6 +1,8 @@
 #include "Intersection.h"
 
 #include <iostream>
+#include <string>
+
 
 //	Private field
 namespace
@@ -171,6 +173,13 @@ namespace
 		}
 		else return Intersection::Contact();
 	};
+
+	// used for debug
+	void printError(const std::string& Shape1, const std::string& Shape2, const int& testNumber, int& e)
+	{
+		e++;
+		std::cout << "Error collision test line " << testNumber << " : (" << Shape1 << " vs " << Shape2 << ") : return unexpected result." << std::endl;
+	}
 }
 //
 
@@ -194,5 +203,18 @@ Intersection::Contact Intersection::intersect(const Shape& a, const Shape& b)
 		case Shape::CAPSULE:			return intersect_CapsulevsShape(Shape1, Shape2);
 		default:						return Intersection::Contact();
 	}
+}
+//
+
+
+//	Unitary tests
+int Intersection::debugUnitaryTest(const int& verboseLevel, const Hull* testHull)
+{
+	int errorCount = 0;
+
+	//
+
+
+	return errorCount;
 }
 //

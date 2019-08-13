@@ -1,6 +1,7 @@
 #include "OrientedBox.h"
 #include "Sphere.h"
 #include "AxisAlignedBox.h"
+#include "Physics/SpecificCollision/CollisionUtils.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
@@ -45,14 +46,14 @@ Shape* OrientedBox::duplicate() const { return new OrientedBox(*this); }
 glm::vec3 OrientedBox::GJKsupport(const glm::vec3& direction) const
 {
 	glm::vec3 d = glm::vec3(glm::inverse(base) * glm::vec4(direction, 0.f));
-	glm::vec3 support(0.f);
+	glm::vec3 support = glm::vec3(0.f);
 
-	if (d.x > 0) support.x = max.x;
-	else if(d.x < 0) support.x = min.x;
-	if (d.y > 0) support.y = max.y;
-	else if (d.y < 0) support.y = min.y;
-	if (d.z > 0) support.z = max.z;
-	else if (d.z < 0) support.z = min.z;
+	if (d.x > COLLISION_EPSILON) support.x = max.x;
+	else if(d.x < -COLLISION_EPSILON) support.x = min.x;
+	if (d.y > COLLISION_EPSILON) support.y = max.y;
+	else if (d.y < -COLLISION_EPSILON) support.y = min.y;
+	if (d.z > COLLISION_EPSILON) support.z = max.z;
+	else if (d.z < -COLLISION_EPSILON) support.z = min.z;
 
 	return glm::vec3(base * glm::vec4(support, 1.f));
 }

@@ -7,12 +7,17 @@ uniform mat4 model;
 uniform mat4 view; 		// view matrix
 uniform mat4 projection;// projection matrix
 
+in vec3 fragmentColor[];
+out vec3 fragmentColor1;
+
 //	draw functions
 void drawSegment(vec3 p1, vec3 p2)
 {
 	gl_Position = projection * view * vec4(p1 , 1.0);
+	fragmentColor1 = fragmentColor[0];
 	EmitVertex();
 	gl_Position = projection * view * vec4(p2, 1.0);
+	fragmentColor1 = fragmentColor[0];
 	EmitVertex();
 	EndPrimitive();
 }
