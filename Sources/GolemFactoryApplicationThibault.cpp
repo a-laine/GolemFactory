@@ -91,6 +91,7 @@ void updates(float elapseTime);
 
 
 bool wiredhull = true;
+Entity* testEntity = nullptr;
 
 // program
 int main()
@@ -108,11 +109,11 @@ int main()
 
 	//	Test scene
 		Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("wired"));
-		initializeForestScene(true);
+		initializeForestScene(false);
 		world.getEntityFactory().createObject("cube", [](Entity* object)
 		{
 			object->setTransformation(glm::vec3(0.f, 0.f, -10.f), glm::vec3(1000, 1000, 10), glm::fquat());
-			//object->removeComponent(object->getComponent<DrawableComponent>());
+			object->removeComponent(object->getComponent<DrawableComponent>());
 		});
 
 		avatar = world.getEntityFactory().createObject("peasant", [](Entity* object)
@@ -120,6 +121,7 @@ int main()
             DrawableComponent* drawable = object->getComponent<DrawableComponent>();
 			float scale = 1.7f / (drawable->getMeshBBMax() - drawable->getMeshBBMin()).z;
 			glm::vec3 pos = glm::vec3(-10.f, 0.f, -scale * drawable->getMeshBBMin().z);
+			drawable->setShader(nullptr);
 			object->setTransformation(pos, glm::vec3(scale), glm::toQuat(glm::rotate(glm::pi<float>() / 2.f + atan2(1.f, 0.f), glm::vec3(0.f, 0.f, 1.f))));
 
 			SkeletonComponent* skeletonComp = object->getComponent<SkeletonComponent>();
@@ -199,9 +201,22 @@ int main()
 
 		Debug::view = currentCamera->getGlobalViewMatrix();
 		Debug::projection = glm::perspective(glm::radians(currentCamera->getVerticalFieldOfView(context->getViewportRatio())), context->getViewportRatio(), 0.1f, 1500.f);
-		Debug::color = glm::vec3(1.f, 1.f, 1.f);
+
+		const Capsule* shape1 = static_cast<const Capsule*>(avatar->getGlobalBoundingShape());
+		const OrientedBox* shape2 = static_cast<const OrientedBox*>(testEntity->getGlobalBoundingShape());
+
+		if(Collision::collide(*shape1, *shape2))
+			Debug::color = Debug::red;
+		else Debug::color = Debug::white;
+
+		Debug::drawWiredCapsule(shape1->p1, shape1->p2, shape1->radius);
+		Debug::drawWiredCube(shape2->base * glm::translate(glm::mat4(1.f), 0.5f * (shape2->min + shape2->max)), 0.5f * (shape2->max - shape2->min)); //
+
+		Debug::color = Debug::green;
+		Intersection::Contact contact = Intersection::intersect(*shape1, *shape2);
+
 		//Debug::drawWiredCube(glm::translate(glm::mat4(1.f), glm::vec3(0, 0, 2)), glm::vec3(1, 1, 1));
-		Debug::drawWiredSphere(glm::vec3(0, 0, 2), 1);
+		//Debug::drawWiredSphere(glm::vec3(0, 0, 2), 1);
 		//Debug::drawPoint(glm::vec3(0, 0, 1));
 
 		picking();
@@ -265,7 +280,7 @@ void initializeForestScene(bool emptyPlace)
 			}
 		}
 
-		world.getEntityFactory().createObject("cube", [](Entity* object)
+		testEntity = world.getEntityFactory().createObject("cube", [](Entity* object)
 		{
 			object->getComponent<DrawableComponent>()->setShader(ResourceManager::getInstance()->getResource<Shader>("default"));
 			object->setTransformation(glm::vec3(0.f, 0.f, 20.f), glm::vec3(1.f), glm::normalize(glm::fquat(1.f, 0.1f, 0.3f, 1.f)));
@@ -274,6 +289,8 @@ void initializeForestScene(bool emptyPlace)
 			rb->setGravityFactor(1.f);
 			rb->setAngularVelocity(glm::vec3(1.f, 0, 0));
 			object->addComponent(rb);
+
+			object->getComponent<DrawableComponent>()->setShader(nullptr);
 		});
 	}
 
@@ -429,7 +446,7 @@ void initManagers()
 	Renderer::getInstance()->setShader(Renderer::INSTANCE_ANIMATABLE_WIRED, ResourceManager::getInstance()->getResource<Shader>("wiredSkinning"));
 
 	// Debug
-	Debug::getInstance()->initialize("Shapes/point", "Shapes/box", "Shapes/sphere", "Shapes/point", "Shapes/segment", "default", "wired");
+	Debug::getInstance()->initialize("Shapes/point", "Shapes/box", "Shapes/sphere", "Shapes/capsule", "Shapes/point", "Shapes/segment", "default", "wired");
 
 	// Animator
 	Animator::getInstance();

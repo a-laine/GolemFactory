@@ -31,7 +31,7 @@ class EntityFactory
 
 		void addToScene(Entity* object);
 
-		void createDrawable(Entity* object, const std::string& meshName, const std::string& shaderName);
+		void createDrawable(Entity* object, const std::string& meshName, const std::string& shaderName, const bool& hullGeneration = true);
 		void createAnimatable(Entity* object, const std::string& meshName, const std::string& skeletonName, const std::string& animationName, const std::string& shaderName);
 		
 		void addComponents(Entity* object, const std::vector<Component*>& components);

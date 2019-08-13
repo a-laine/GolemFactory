@@ -13,4 +13,5 @@
 namespace Intersection
 {
 	Contact intersect(const Shape& a, const Shape& b);
+	int debugUnitaryTest(const int& verboseLevel = 0, const Hull* testHull = nullptr);
 }

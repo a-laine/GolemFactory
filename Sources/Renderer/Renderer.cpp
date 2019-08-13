@@ -34,7 +34,6 @@ Renderer::Renderer() :
 	defaultShader[HUD] = nullptr;
 
 	drawGrid = true;
-	dummy = 0.0;
 }
 Renderer::~Renderer()
 {
@@ -140,10 +139,6 @@ void Renderer::render(CameraComponent* renderCam)
 	lastVAO = 0;
 	if (!context || !camera || !world || !renderCam) return;
 	
-	//	dummy animation timeline
-	dummy += 0.16 / 3.f;
-	if (dummy >= 6.28) dummy = 0.0;
-
 	//	bind matrix
 	glm::mat4 view = renderCam->getGlobalViewMatrix();
 	glm::mat4 projection = glm::perspective(glm::radians(renderCam->getVerticalFieldOfView(context->getViewportRatio())), context->getViewportRatio(), 0.1f, 1500.f);

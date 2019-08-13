@@ -35,31 +35,3 @@ void Swept::init(Entity* e)
 	box = AxisAlignedBox(min, max);
 }
 //
-
-//	Default
-/*PhysicsArtefacts::PhysicsArtefacts(Entity* e) : type(PhysicsArtefacts::ENTITY)
-{
-	data.entity = e;
-}
-PhysicsArtefacts::PhysicsArtefacts(Swept* s) : type(PhysicsArtefacts::SWEPT)
-{
-	data.swept = s;
-}
-//
-
-//
-bool PhysicsArtefacts::operator==(const PhysicsArtefacts& r) const
-{
-	void* a;
-	if (type == PhysicsArtefacts::SWEPT)
-		a = data.swept;
-	else a = data.entity;
-
-	void* b;
-	if (r.type == PhysicsArtefacts::SWEPT)
-		b = r.data.swept;
-	else b = r.data.entity;
-
-	return a == b;
-}*/
-//

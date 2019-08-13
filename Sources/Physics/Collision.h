@@ -14,5 +14,5 @@
 namespace Collision
 {
 	bool collide(const Shape& a, const Shape& b);
-	void debugUnitaryTest(const int& verboseLevel = 0, const Hull* testHull = nullptr);
+	int debugUnitaryTest(const int& verboseLevel = 0, const Hull* testHull = nullptr);
 };

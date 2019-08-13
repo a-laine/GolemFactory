@@ -66,14 +66,10 @@ class Renderer : public Singleton<Renderer>
 		unsigned int getNbDrawnInstances() const;
 		unsigned int getNbDrawnTriangles() const;
 		RenderOption getRenderOption() const;
-
-
-		//void addDrawShapeDefinition(Shape::ShapeType type, Mesh* mesh, Shader* shader);
 		//
 
 		//	Render function
 		void drawObject(Entity* object, const float* view, const float* projection);
-		//void drawShape(const Shape* Shape, const float* view, const float* projection);
 		//
 
 		Shader* normalViewer;
@@ -103,14 +99,6 @@ class Renderer : public Singleton<Renderer>
 		void loadVAO(const GLuint& vao);
 
 		void drawInstancedObject(Shader* s, Mesh* m, std::vector<glm::mat4>& models, const float* view, const float* projection);
-		void drawPoint(const Point* point, const float* view, const float* projection);
-		void drawSegment(const Segment* segment, const float* view, const float* projection);
-		void drawTriangle(const Triangle* triangle, const float* view, const float* projection);
-		void drawOrientedBox(const OrientedBox* box, const float* view, const float* projection);
-		void drawAxisAlignedBox(const AxisAlignedBox* box, const float* view, const float* projection);
-		void drawSphere(const Sphere* sphere, const float* view, const float* projection);
-		void drawCapsule(const Capsule* capsule, const float* view, const float* projection);
-		void drawHull(const Hull* hull, Shader* shader, const float* view, const float* projection);
 		//
 
 		//  Attributes
@@ -123,18 +111,12 @@ class Renderer : public Singleton<Renderer>
 		bool drawGrid;
 		unsigned int vboGridSize;
 		GLuint gridVAO, vertexbuffer, arraybuffer, colorbuffer, normalbuffer;
-
-		//std::map<Shape::ShapeType, std::pair<Mesh*, Shader*> > drawShapeDefinition;
-
 		unsigned int instanceDrawn, trianglesDrawn;
-		double dummy;
 		Shader* lastShader;
 		GLuint lastVAO;
 
 		std::map<Shader*, std::vector<Entity*> > simpleBatches;
 		std::map<Shader*, std::map<Mesh*, std::vector<glm::mat4> > > groupBatches;
 		//
-
-
 };
 

@@ -51,15 +51,19 @@ Entity* EntityFactory::createByType(const std::string& type)
 	}
 	else if(type == "sphere")
 	{
-		createDrawable(object, "icosphere.obj", "default");
+		createDrawable(object, "icosphere.obj", "default", false);
 		object->setShape(new Sphere(glm::vec3(0.f), 1.f));
 	}
-	else if(type == "cube")
-		createDrawable(object, "cube2.obj", "wired");
+	else if (type == "cube")
+	{
+		createDrawable(object, "cube2.obj", "wired", false);
+		DrawableComponent* drawable = object->getComponent<DrawableComponent>();
+		object->setShape(new OrientedBox(glm::mat4(1.f), drawable->getMeshBBMin(), drawable->getMeshBBMax()));
+	}
 	else if(type == "tree")
-		createDrawable(object, "firTree1.obj", "default");
+		createDrawable(object, "firTree1.obj", "default", true);
 	else if(type == "rock")
-		createDrawable(object, "rock1.obj", "default");
+		createDrawable(object, "rock1.obj", "default", true);
 	else { GF_ASSERT(0); }
 	return object;
 }
@@ -69,42 +73,47 @@ void EntityFactory::addToScene(Entity* object)
 	world->addToScene(object);
 }
 
-void EntityFactory::createDrawable(Entity* object, const std::string& meshName, const std::string& shaderName)
+void EntityFactory::createDrawable(Entity* object, const std::string& meshName, const std::string& shaderName, const bool& hullGeneration)
 {
 	DrawableComponent* drawable = new DrawableComponent(meshName, shaderName);
 	object->addComponent(drawable);
 
 	//	link, load or generate a convex hull for every entities
-	std::string hullname = meshName;
-	if (hullname.find_last_of('/') != std::string::npos)
-		hullname = hullname.substr(hullname.find_last_of('/') + 1);
-	if (hullname.find_first_of('.') != std::string::npos)
-		hullname = hullname.substr(0, hullname.find_first_of('.'));
-	hullname = "Hull/hull_" + hullname + Mesh::extension;
-
-	Mesh* m = ResourceManager::getInstance()->findResource<Mesh>(hullname);
-	if (m)
-		object->setShape(new Hull(m));
-	else if (ResourceManager::getInstance()->loadableResource<Mesh>(hullname))
+	if (hullGeneration)
 	{
-		m = ResourceManager::getInstance()->getResource<Mesh>(hullname);
-		ToolBox::optimizeHullMesh(m);
-		object->setShape(new Hull(m));
+		std::string hullname = meshName;
+		if (hullname.find_last_of('/') != std::string::npos)
+			hullname = hullname.substr(hullname.find_last_of('/') + 1);
+		if (hullname.find_first_of('.') != std::string::npos)
+			hullname = hullname.substr(0, hullname.find_first_of('.'));
+		hullname = "Hull/hull_" + hullname + Mesh::extension;
+
+		Mesh* m = ResourceManager::getInstance()->findResource<Mesh>(hullname);
+		if (m)
+			object->setShape(new Hull(m));
+		else if (ResourceManager::getInstance()->loadableResource<Mesh>(hullname))
+		{
+			m = ResourceManager::getInstance()->getResource<Mesh>(hullname);
+			ToolBox::optimizeHullMesh(m);
+			object->setShape(new Hull(m));
+		}
+		else
+		{
+			std::cout << "EntityFactory : Fail found hull of name : " << hullname << ". It will be automatically generated."<< std::endl;
+			IncrementalHull hullgenerator;
+			m = hullgenerator.getConvexHull(drawable->getMesh());
+			m->name = hullname;
+			MeshSaver::save(m, ResourceManager::getInstance()->getRepository() + "Meshes/", hullname);
+
+			ToolBox::optimizeHullMesh(m);
+			ResourceManager::getInstance()->addResource(m);
+			object->setShape(new Hull(m));
+		}
 	}
-	else
+	/*else
 	{
-		std::cout << "EntityFactory : Fail found hull of name : " << hullname << ". It will be automatically generated."<< std::endl;
-		IncrementalHull hullgenerator;
-		m = hullgenerator.getConvexHull(drawable->getMesh());
-		m->name = hullname;
-		MeshSaver::save(m, ResourceManager::getInstance()->getRepository() + "Meshes/", hullname);
-
-		ToolBox::optimizeHullMesh(m);
-		ResourceManager::getInstance()->addResource(m);
-		object->setShape(new Hull(m));
-	}
-
-    //object->setShape(new OrientedBox(glm::mat4(1.f), drawable->getMeshBBMin(), drawable->getMeshBBMax()));
+		object->setShape(new OrientedBox(glm::mat4(1.f), drawable->getMeshBBMin(), drawable->getMeshBBMax()));
+	}*/
 }
 
 void EntityFactory::createAnimatable(Entity* object, const std::string& meshName, const std::string& skeletonName, const std::string& animationName, const std::string& shaderName)
