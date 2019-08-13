@@ -218,8 +218,8 @@ int main()
 		Debug::drawLine(contact.contactPointA, contact.contactPointB);
 
 		Debug::color = Debug::blue;
-		Debug::drawLine(contact.contactPointA, contact.contactPointA + 0.2f * contact.normalA);
-		Debug::drawLine(contact.contactPointB, contact.contactPointB + 0.2f * contact.normalB);
+		Debug::drawLine(contact.contactPointA, contact.contactPointA + 0.15f * contact.normalA);
+		Debug::drawLine(contact.contactPointB, contact.contactPointB + 0.15f * contact.normalB);
 		
 
 		// 
