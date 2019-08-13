@@ -40,7 +40,7 @@ Intersection::Contact Intersection::intersect_PointvsTriangle(const glm::vec3& p
 		// compute closest point on each edges
 		glm::vec3 p1 = getSegmentClosestPoint(triangle1, triangle2, point);
 		glm::vec3 p2 = getSegmentClosestPoint(triangle3, triangle2, point);
-		glm::vec3 p3 = getSegmentClosestPoint(triangle3, triangle2, point);
+		glm::vec3 p3 = getSegmentClosestPoint(triangle3, triangle1, point);
 		
 		// compute distance for each of these point
 		float d1 = glm::length2(point - p1);
@@ -48,8 +48,8 @@ Intersection::Contact Intersection::intersect_PointvsTriangle(const glm::vec3& p
 		float d3 = glm::length2(point - p3);
 
 		// choose the best candidate
-		if (d1 > d2 && d1 > d3) p = p1;
-		else if (d2 > d1 && d2 > d3) p = p2;
+		if (d1 < d2 && d1 < d3) p = p1;
+		else if (d2 < d1 && d2 < d3) p = p2;
 		else p = p3;
 
 		// compute contact result and exit
