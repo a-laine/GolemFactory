@@ -203,22 +203,26 @@ int main()
 		Debug::projection = glm::perspective(glm::radians(currentCamera->getVerticalFieldOfView(context->getViewportRatio())), context->getViewportRatio(), 0.1f, 1500.f);
 
 		const Capsule* shape1 = static_cast<const Capsule*>(avatar->getGlobalBoundingShape());
-		const OrientedBox* shape2 = static_cast<const OrientedBox*>(testEntity->getGlobalBoundingShape());
+		const Sphere* shape2 = static_cast<const Sphere*>(testEntity->getGlobalBoundingShape());
 
 		if(Collision::collide(*shape1, *shape2))
 			Debug::color = Debug::red;
 		else Debug::color = Debug::white;
 
 		Debug::drawWiredCapsule(shape1->p1, shape1->p2, shape1->radius);
-		Debug::drawWiredCube(shape2->base * glm::translate(glm::mat4(1.f), 0.5f * (shape2->min + shape2->max)), 0.5f * (shape2->max - shape2->min)); //
+		Debug::drawWiredSphere(shape2->center, shape2->radius);
+		//Debug::drawWiredCube(shape2->base * glm::translate(glm::mat4(1.f), 0.5f * (shape2->min + shape2->max)), 0.5f * (shape2->max - shape2->min)); //
 
 		Debug::color = Debug::green;
-		Intersection::Contact contact = Intersection::intersect(*shape1, *shape2);
+		Intersection::Contact contact = Intersection::intersect(*shape2, *shape1);
+		Debug::drawLine(contact.contactPointA, contact.contactPointB);
 
-		//Debug::drawWiredCube(glm::translate(glm::mat4(1.f), glm::vec3(0, 0, 2)), glm::vec3(1, 1, 1));
-		//Debug::drawWiredSphere(glm::vec3(0, 0, 2), 1);
-		//Debug::drawPoint(glm::vec3(0, 0, 1));
+		Debug::color = Debug::blue;
+		Debug::drawLine(contact.contactPointA, contact.contactPointA + 0.2f * contact.normalA);
+		Debug::drawLine(contact.contactPointB, contact.contactPointB + 0.2f * contact.normalB);
+		
 
+		// 
 		picking();
 		Renderer::getInstance()->renderHUD();
 
@@ -280,7 +284,7 @@ void initializeForestScene(bool emptyPlace)
 			}
 		}
 
-		testEntity = world.getEntityFactory().createObject("cube", [](Entity* object)
+		testEntity = world.getEntityFactory().createObject("sphere", [](Entity* object)
 		{
 			object->getComponent<DrawableComponent>()->setShader(ResourceManager::getInstance()->getResource<Shader>("default"));
 			object->setTransformation(glm::vec3(0.f, 0.f, 20.f), glm::vec3(1.f), glm::normalize(glm::fquat(1.f, 0.1f, 0.3f, 1.f)));

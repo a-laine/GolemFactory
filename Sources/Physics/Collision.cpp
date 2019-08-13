@@ -337,9 +337,9 @@ int Collision::debugUnitaryTest(const int& verboseLevel, const Hull* testHull)
 		if (Collision::collide(testSegment, Segment(glm::vec3(0, 0, 0), glm::vec3(0, 0, 0))) == false && verboseLevel)
 			printError("segment", "segment", __LINE__ - 1, errorCount);
 		if (Collision::collide(testSegment, Segment(glm::vec3(0, 0, 1), glm::vec3(0, 0, 1))) == true && verboseLevel)
-			printError("segment", "segment", __LINE__ - 1);
+			printError("segment", "segment", __LINE__ - 1, errorCount);
 		if (Collision::collide(testSegment, Segment(glm::vec3(-2, 1, 0), glm::vec3(1, 0.5, 0))) == true && verboseLevel)
-			printError("segment", "segment", __LINE__ - 1);
+			printError("segment", "segment", __LINE__ - 1, errorCount);
 		
 		// ... vs Triangle
 		if (Collision::collide(testSegment, Triangle(glm::vec3(0, -1, -1), glm::vec3(0, 1, -1), glm::vec3(0, 0, 1))) == false && verboseLevel)

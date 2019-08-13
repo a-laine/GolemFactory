@@ -2,6 +2,7 @@
 #include "CollisionUtils.h"
 #include "Physics/SpecificCollision/CollisionTriangle.h"
 
+#include <glm/gtx/norm.hpp>
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/component_wise.hpp>
@@ -13,7 +14,7 @@ bool Collision::collide_SpherevsSphere(const glm::vec3& sphere1Center, const flo
 }
 bool Collision::collide_SpherevsCapsule(const glm::vec3& sphereCenter, const float& sphereRadius, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
 {
-	return glm::length(sphereCenter - getSegmentClosestPoint(capsule1, capsule2, sphereCenter)) <= sphereRadius + capsuleRadius;
+	return glm::length2(sphereCenter - getSegmentClosestPoint(capsule1, capsule2, sphereCenter)) < (sphereRadius + capsuleRadius)*(sphereRadius + capsuleRadius);
 }
 bool Collision::collide_SpherevsHull(const glm::vec3& sphereCenter, const float& sphereRadius, const std::vector<glm::vec3>& hullPoints, const std::vector<glm::vec3>& hullNormals, const std::vector<unsigned short>& hullFaces, const glm::mat4& hullBase)
 {
