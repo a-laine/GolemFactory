@@ -7,6 +7,7 @@
 
 
 
+
 //	Private field
 namespace
 {
