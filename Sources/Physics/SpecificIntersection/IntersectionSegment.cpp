@@ -252,7 +252,7 @@ Intersection::Contact Intersection::intersect_SegmentvsAxisAlignedBox(const glm:
 		// end and return
 		contact.contactPointB = p + bcenter;
 		contact.normalB = n;
-		contact.normalA = glm::cross(segment2 -segment1, glm::cross(n, segment2 - segment1));
+		contact.normalA = -glm::cross(segment2 - segment1, glm::cross(n, segment2 - segment1));
 		return contact;
 	}
 	else

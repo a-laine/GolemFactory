@@ -5,6 +5,7 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
+#include <vector>
 
 
 OrientedBox::OrientedBox(const glm::mat4& transformationMatrix, const glm::vec3& localMin, const glm::vec3& localMax)
@@ -17,9 +18,32 @@ Sphere OrientedBox::toSphere() const
 }
 AxisAlignedBox OrientedBox::toAxisAlignedBox() const
 {
-	glm::vec3 p1 = glm::vec3(base*glm::vec4(min, 1.f));
-	glm::vec3 p2 = glm::vec3(base*glm::vec4(max, 1.f));
-	return AxisAlignedBox(glm::min(p1, p2), glm::max(p1, p2));
+	std::vector<glm::vec3> corners;
+	corners.push_back(glm::vec3(base*glm::vec4(min.x, min.y, min.z, 1.f)));
+	corners.push_back(glm::vec3(base*glm::vec4(min.x, min.y, max.z, 1.f)));
+	corners.push_back(glm::vec3(base*glm::vec4(min.x, max.y, min.z, 1.f)));
+	corners.push_back(glm::vec3(base*glm::vec4(min.x, max.y, max.z, 1.f)));
+	corners.push_back(glm::vec3(base*glm::vec4(max.x, min.y, min.z, 1.f)));
+	corners.push_back(glm::vec3(base*glm::vec4(max.x, min.y, max.z, 1.f)));
+	corners.push_back(glm::vec3(base*glm::vec4(max.x, max.y, min.z, 1.f)));
+	corners.push_back(glm::vec3(base*glm::vec4(max.x, max.y, max.z, 1.f)));
+
+	glm::vec3 min(std::numeric_limits<float>::max());
+	glm::vec3 max(std::numeric_limits<float>::min());
+
+	for (unsigned int i = 0; i < corners.size(); i++)
+	{
+		if (corners[i].x < min.x) min.x = corners[i].x;
+		else if (corners[i].x > max.x) max.x = corners[i].x;
+
+		if (corners[i].y < min.y) min.y = corners[i].y;
+		else if (corners[i].y > max.y) max.y = corners[i].y;
+
+		if (corners[i].z < min.z) min.z = corners[i].z;
+		else if (corners[i].z > max.z) max.z = corners[i].z;
+	}
+
+	return AxisAlignedBox(min, max);
 }
 Shape& OrientedBox::operator=(const Shape& s)
 {
