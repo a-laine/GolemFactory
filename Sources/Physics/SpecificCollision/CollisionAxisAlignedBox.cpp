@@ -2,9 +2,12 @@
 #include "CollisionOrientedBox.h"
 #include "CollisionPoint.h"
 
+#include "Physics/SpecificIntersection/IntersectionSegment.h"
+
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/component_wise.hpp>
+#include <glm/gtx/norm.hpp>
 
 
 //	Specialized functions : axis aligned box
@@ -31,6 +34,14 @@ bool Collision::collide_AxisAlignedBoxvsSphere(const glm::vec3& boxMin, const gl
 bool Collision::collide_AxisAlignedBoxvsCapsule(const glm::vec3& boxMin, const glm::vec3& boxMax, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
 {
 	if (capsule1 == capsule2) return collide_AxisAlignedBoxvsSphere(boxMin, boxMax, capsule1, capsuleRadius);
-	else return collide_OrientedBoxvsCapsule(glm::mat4(1.f), boxMin, boxMax, capsule1, capsule2, capsuleRadius);
+	else
+	{
+		Intersection::Contact contact = Intersection::intersect_SegmentvsAxisAlignedBox(capsule1, capsule2, boxMin, boxMax);
+		if (glm::dot(contact.contactPointA - contact.contactPointB, contact.normalB) < 0)
+			return true;
+		else if (glm::length2(contact.contactPointA - contact.contactPointB) <= capsuleRadius * capsuleRadius)
+			return true;
+		else return false;
+	}
 }
 //

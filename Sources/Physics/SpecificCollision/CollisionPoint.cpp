@@ -1,9 +1,12 @@
 #include "CollisionPoint.h"
 #include "CollisionUtils.h"
 
+#include "Physics/SpecificIntersection/IntersectionPoint.h"
+
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/component_wise.hpp>
+#include <glm/gtx/norm.hpp>
 
 
 //	Specialized functions : point
@@ -42,7 +45,7 @@ bool Collision::collide_PointvsTriangle(const glm::vec3& point, const glm::vec3&
 		else if (d2 >= d1 && d2 >= d3) return collide_PointvsSegment(point, triangle1, triangle3);
 		else return collide_PointvsSegment(point, triangle3, triangle2);
 	}
-	else if (glm::dot(p, n) <= COLLISION_EPSILON)
+	else if (std::abs(glm::dot(p, n)) <= COLLISION_EPSILON)
 	{
 		//	checking barycentric coordinates
 		/*float crossDot = glm::dot(u1, u2);
@@ -84,11 +87,10 @@ bool Collision::collide_PointvsCapsule(const glm::vec3& point, const glm::vec3& 
 	if (capsule2 == capsule1) return glm::length(point - capsule1) <= std::max(capsuleRadius, COLLISION_EPSILON);
 	else
 	{
-		glm::vec3 s = capsule2 - capsule1;
-		glm::vec3 u = glm::normalize(capsule2 - capsule1);
-		glm::vec3 u2 = point - capsule1;
-		glm::vec3 u3 = u2 - glm::dot(u, u2) * u; // distance of point to segment
-		return glm::dot(u3, u3) <= std::max(capsuleRadius, COLLISION_EPSILON) && glm::dot(u, u2) <= glm::length(s) + capsuleRadius && glm::dot(u, u2) >= -capsuleRadius;
+		Intersection::Contact contact = Intersection::intersect_PointvsSegment(point, capsule1, capsule2);
+		if (glm::dot(contact.contactPointA - contact.contactPointB, contact.normalB) <= 0)
+			return true;
+		else return glm::length2(contact.contactPointA - contact.contactPointB) <= capsuleRadius * capsuleRadius;
 	}
 }
 bool Collision::collide_PointvsHull(const glm::vec3& point, const std::vector<glm::vec3>& hullPoints, const std::vector<glm::vec3>& hullNormals, const std::vector<unsigned short>& hullFaces, const glm::mat4& hullBase)

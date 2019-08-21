@@ -147,6 +147,10 @@ namespace
 				const Sphere* c = static_cast<const Sphere*>(&b);
 				return Collision::collide_AxisAlignedBoxvsSphere(a->min, a->max, c->center, c->radius);
 			}
+			case Shape::CAPSULE: {
+				const Capsule* c = static_cast<const Capsule*>(&b);
+				return Collision::collide_AxisAlignedBoxvsCapsule(a->min, a->max, c->p1, c->p2, c->radius);
+			}
 			default: return GJK::collide(aabox, b);
 		}
 	};

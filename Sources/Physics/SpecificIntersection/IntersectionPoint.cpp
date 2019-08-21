@@ -6,6 +6,9 @@
 #include <glm/gtx/norm.hpp>
 
 
+#include "Utiles/Debug.h"
+
+
 Intersection::Contact Intersection::intersect_PointvsPoint(const glm::vec3& point1, const glm::vec3& point2)
 {
 	glm::vec3 n = glm::normalize(point2 - point1);
@@ -48,8 +51,8 @@ Intersection::Contact Intersection::intersect_PointvsTriangle(const glm::vec3& p
 		float d3 = glm::length2(point - p3);
 
 		// choose the best candidate
-		if (d1 < d2 && d1 < d3) p = p1;
-		else if (d2 < d1 && d2 < d3) p = p2;
+		if (d1 <= d2 && d1 <= d3) p = p1;
+		else if (d2 <= d1 && d2 <= d3) p = p2;
 		else p = p3;
 
 		// compute contact result and exit
@@ -93,8 +96,12 @@ Intersection::Contact Intersection::intersect_PointvsAxisAlignedBox(const glm::v
 
 	if (Collision::collide_PointvsAxisAlignedBox(point, boxMin, boxMax))
 	{
+		const float dx = bsize.x - std::abs(p.x);
+		const float dy = bsize.y - std::abs(p.y);
+		const float dz = bsize.z - std::abs(p.z);
+
 		// inside point is closer to an x face
-		if (std::abs(p.x) > std::abs(p.y) && std::abs(p.x) > std::abs(p.z))
+		if (dx <= dy && dx <= dz)
 		{
 			if (p.x > 0)
 			{
@@ -109,7 +116,7 @@ Intersection::Contact Intersection::intersect_PointvsAxisAlignedBox(const glm::v
 		}
 
 		// inside point is closer to a y face
-		else if (std::abs(p.y) > std::abs(p.x) && std::abs(p.y) > std::abs(p.z))
+		else if (dy <= dx && dy <= dz)
 		{
 			if (p.y > 0)
 			{
@@ -199,8 +206,8 @@ Intersection::Contact Intersection::intersect_PointvsAxisAlignedBox(const glm::v
 Intersection::Contact Intersection::intersect_PointvsSphere(const glm::vec3& point, const glm::vec3& sphereCenter, const float& sphereRadius)
 {
 	Contact contact;
-	contact.normalB = glm::normalize(sphereCenter - point);
-	contact.normalA = -contact.normalB;
+	contact.normalB = -glm::normalize(sphereCenter - point);
+	contact.normalA = contact.normalB;
 	contact.contactPointA = point;
 	contact.contactPointB = sphereCenter + sphereRadius * contact.normalA;
 	return contact;
@@ -251,8 +258,8 @@ Intersection::Contact Intersection::intersect_PointvsHull(const glm::vec3& point
 		}
 
 		// compute result
-		contact.contactPointA = point;
-		contact.contactPointB = point + contact.normalB * dmin;
+		contact.contactPointA = p;
+		contact.contactPointB = p + contact.normalB * dmin;
 		contact.normalA = -contact.normalB;
 	}
 
@@ -264,8 +271,8 @@ Intersection::Contact Intersection::intersect_PointvsHull(const glm::vec3& point
 		{
 			if (glm::dot(hullNormals[i], p - hullPoints[hullFaces[3 * i]]) >= 0)
 			{
-				Contact c = intersect_PointvsTriangle(point, hullPoints[hullFaces[3 * i]], hullPoints[hullFaces[3 * i + 1]], hullPoints[hullFaces[3 * i + 2]]);
-				float d = glm::length(point - contact.contactPointB);
+				Contact c = intersect_PointvsTriangle(p, hullPoints[hullFaces[3 * i]], hullPoints[hullFaces[3 * i + 1]], hullPoints[hullFaces[3 * i + 2]]);
+				float d = glm::length2(p - c.contactPointB);
 				if (d < dmin)
 				{
 					dmin = d;
