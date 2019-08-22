@@ -69,7 +69,7 @@ namespace
 				else return d4;
 			}
 		}
-		else if (glm::dot(glm::cross(segment1b - segment1a, segment2a - segment1a), segment2b) < COLLISION_EPSILON) // coplanar segments
+		else if (std::abs(glm::dot(glm::normalize(n), segment2b)) < COLLISION_EPSILON) // coplanar segments
 		{
 			// https://www.lucidarme.me/intersection-of-segments/ 
 
@@ -80,14 +80,28 @@ namespace
 		}
 		else //	skew segment
 		{
-			glm::vec3 u1 = glm::normalize(s1);
-			glm::vec3 u2 = glm::normalize(s2);
-			n = glm::normalize(n);
-			float t1 = -glm::determinant(glm::mat3(segment1a - segment2a, u2, n));
-			float t2 = -glm::determinant(glm::mat3(segment1a - segment2a, u1, n));
-			t1 = glm::clamp(t1, 0.f, glm::length(s1));
-			t2 = glm::clamp(t2, 0.f, glm::length(s2));
-			return std::pair<glm::vec3, glm::vec3>(segment1a + u1*t1, segment2a + u2*t2);
+			//http://geomalgorithms.com/a07-_distance.html
+			glm::vec3 u = s1;
+			glm::vec3 v = s2;
+			glm::vec3 w = segment2a - segment1a;
+
+			float a = glm::dot(u, u);
+			float b = glm::dot(u, v);
+			float c = glm::dot(v, v);
+			float d = glm::dot(u, w);
+			float e = glm::dot(v, w);
+			float D = a*c - b*b;
+
+			float t1 = -(b*e - c*d) / D;
+			float t2 = -(a*e - b*d) / D;
+			float l1 = glm::length(s1);
+			float l2 = glm::length(s2);
+
+			if (t1 < 0.f) return std::pair<glm::vec3, glm::vec3>(segment1a, getSegmentClosestPoint(segment2a, segment2b, segment1a));
+			else if(t1 > l1) return std::pair<glm::vec3, glm::vec3>(segment1b, getSegmentClosestPoint(segment2a, segment2b, segment1b));
+			else if (t2 < 0.f) return std::pair<glm::vec3, glm::vec3>(getSegmentClosestPoint(segment1a, segment1b, segment2a), segment2a);
+			else if (t2 > l2) return std::pair<glm::vec3, glm::vec3>(getSegmentClosestPoint(segment1a, segment1b, segment2b), segment2b);
+			else return std::pair<glm::vec3, glm::vec3>(segment1a + u*t1, segment2a + v*t2);
 		}
 	}
 	inline glm::vec2 getBarycentricCoordinates(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& point)

@@ -11,75 +11,13 @@
 
 Intersection::Contact Intersection::intersect_SegmentvsSegment(const glm::vec3& segment1a, const glm::vec3& segment1b, const glm::vec3& segment2a, const glm::vec3& segment2b)
 {
-	glm::vec3 s1 = segment1b - segment1a;
-	glm::vec3 s2 = segment2b - segment2a;
-	glm::vec3 n = glm::cross(s1, s2);
-
-	if (n == glm::vec3(0.f))	// parallel or one segment is a point
-	{
-		if (s1 == glm::vec3(0.f))
-			return intersect_PointvsSegment(segment1a, segment2a, segment2b);
-		else if (s2 == glm::vec3(0.f))
-			return intersect_PointvsSegment(segment2a, segment1a, segment1b);
-		else // segment are parallel
-		{
-			// compute closest point of each corner of the paralellogram
-			glm::vec3 p1 = getSegmentClosestPoint(segment1a, segment1b, segment2a);
-			glm::vec3 p2 = getSegmentClosestPoint(segment1a, segment1b, segment2b);
-			glm::vec3 p3 = getSegmentClosestPoint(segment2a, segment2b, segment1a);
-			glm::vec3 p4 = getSegmentClosestPoint(segment2a, segment2b, segment1b);
-
-			float d1 = glm::length2(p1 - segment2a);
-			float d2 = glm::length2(p2 - segment2b);
-			float d3 = glm::length2(p3 - segment1a);
-			float d4 = glm::length2(p4 - segment1b);
-
-			// search for the minimal distance of each pair
-			Contact contact;
-			if (d1 < d2 && d1 < d3 && d1 < d4)
-			{
-				contact.contactPointA = p1;
-				contact.contactPointB = segment2a;
-			}
-			else if (d2 < d1 && d2 < d3 && d2 < d4)
-			{
-				contact.contactPointA = p2;
-				contact.contactPointB = segment2b;
-			}
-			else if (d3 < d2 && d3 < d1 && d3 < d4)
-			{
-				contact.contactPointB = p3;
-				contact.contactPointA = segment1a;
-			}
-			else
-			{
-				contact.contactPointB = p4;
-				contact.contactPointA = segment1b;
-			}
-
-			// finish computing result
-			contact.normalA = glm::normalize(contact.contactPointB - contact.contactPointA);
-			contact.normalB = -contact.normalA;
-			return contact;
-		}
-	}
-	else
-	{
-		// compute closest segment
-		glm::vec3 u1 = glm::normalize(s1);
-		glm::vec3 u2 = glm::normalize(s2);
-		n = glm::normalize(n);
-		float t1 = -glm::determinant(glm::mat3(segment1a - segment2a, u2, n)) / glm::dot(n, n);
-		float t2 = -glm::determinant(glm::mat3(segment1a - segment2a, u1, n)) / glm::dot(n, n);
-
-		// compute result
-		Contact contact;
-		contact.contactPointA = segment1a + u1 * t1;
-		contact.contactPointB = segment2a + u2 * t2;
-		contact.normalA = glm::normalize(contact.contactPointB - contact.contactPointA);
-		contact.normalB = -contact.normalA;
-		return contact;
-	}
+	Contact contact;
+	std::pair<glm::vec3, glm::vec3> p = getSegmentsClosestSegment(segment1a, segment1b, segment2a, segment2b);
+	contact.contactPointA = p.first;
+	contact.contactPointB = p.second;
+	contact.normalA = glm::normalize(contact.contactPointB - contact.contactPointA);
+	contact.normalB = -contact.normalA;
+	return contact;
 }
 Intersection::Contact Intersection::intersect_SegmentvsTriangle(const glm::vec3& segment1, const glm::vec3& segment2, const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3)
 {
@@ -87,8 +25,9 @@ Intersection::Contact Intersection::intersect_SegmentvsTriangle(const glm::vec3&
 	glm::vec3 v1 = triangle2 - triangle1;
 	glm::vec3 v2 = triangle3 - triangle1;
 	glm::vec3 n = glm::cross(v1, v2);
-
-	if (n == glm::vec3(0.f)) // flat triangle
+	
+	// flat triangle
+	if (n == glm::vec3(0.f)) 
 	{
 		glm::vec3 v3 = triangle3 - triangle2;
 		float d1 = glm::dot(v1, v1);
@@ -105,62 +44,40 @@ Intersection::Contact Intersection::intersect_SegmentvsTriangle(const glm::vec3&
 	if (Collision::collide_SegmentvsTriangle(segment1, segment2, triangle1, triangle2, triangle3, intersection))
 	{
 		Contact contact;
-		contact.contactPointA = intersection;
-		contact.contactPointB = intersection;
-		contact.normalB = n;
+		contact.contactPointA = intersection + triangle1;
+		contact.contactPointB = contact.contactPointA;
+		contact.normalB = glm::normalize(n);
 		if (glm::cross(n, segment2 - segment1) != glm::vec3(0.f))
-			contact.normalA = -n;
+			contact.normalA = -contact.normalB;
 		else
-			contact.normalB = glm::cross(n, glm::cross(segment2 - segment1, n));
+			contact.normalB = glm::normalize(glm::cross(n, glm::cross(segment2 - segment1, n)));
 		return contact;
 	}
-
-	// compute segment extremity projection on triangle plane
-	n = glm::normalize(n);
-	glm::vec3 p1 = segment1 - triangle1 - n * glm::dot(segment1 - triangle1, n);
-	glm::vec2 b1 = getBarycentricCoordinates(v1, v2, p1);
-	glm::vec3 pair1 = segment1;
-	glm::vec3 p2 = segment2 - triangle1 - n * glm::dot(segment2 - triangle1, n);
-	glm::vec2 b2 = getBarycentricCoordinates(v1, v2, p2);
-	glm::vec3 pair2 = segment2;
-	float dp1 = std::numeric_limits<float>::max();
-	float dp2 = std::numeric_limits<float>::max();
-	
-	// check if projection is on triangle and get the closest one in position 1
-	if (b1.x >= 0.f || b1.y >= 0.f || b1.x + b1.y <= 1.f)
-		dp1 = std::abs(glm::dot(segment1 - triangle1, n));
-	if (b2.x >= 0.f || b2.y >= 0.f || b2.x + b2.y <= 1.f)
-		dp1 = std::abs(glm::dot(segment2 - triangle1, n));
-	if (dp2 < dp1)
-	{
-		dp1 = dp2;
-		p1 = p2;
-		pair1 = pair2;
-	}
-	if(dp1 != std::numeric_limits<float>::max())
-		dp1 *= dp1;
-		
+			
 	// compute all segments of each edge with test segment
+	Contact c1 = intersect_PointvsTriangle(segment1, triangle1, triangle2, triangle3);
+	Contact c2 = intersect_PointvsTriangle(segment2, triangle1, triangle2, triangle3);
 	std::pair<glm::vec3, glm::vec3> s1 = getSegmentsClosestSegment(segment1, segment2, triangle1, triangle2);
 	std::pair<glm::vec3, glm::vec3> s2 = getSegmentsClosestSegment(segment1, segment2, triangle1, triangle3);
 	std::pair<glm::vec3, glm::vec3> s3 = getSegmentsClosestSegment(segment1, segment2, triangle2, triangle3);
 	float d1 = glm::length2(s1.first - s1.second);
 	float d2 = glm::length2(s2.first - s2.second);
 	float d3 = glm::length2(s3.first - s3.second);
+	float d4 = glm::length2(c1.contactPointA - c1.contactPointB);
+	float d5 = glm::length2(c2.contactPointA - c2.contactPointB);
 
 	// choose closest point set
 	Contact contact;
-	if (dp1 < d1 && dp1 < d2 && dp1 < d3)
-	{
-		contact.contactPointA = pair1;
-		contact.contactPointB = p1;
-	}
-	else if (d1 < d2 && d1 < d3)
+	if (d4 <= d5 && d4 <= d1 && d4 <= d2 && d4 <= d3)
+		return c1;
+	else if (d5 <= d4 && d5 <= d1 && d5 <= d2 && d5 <= d3)
+		return c2;
+	else if (d1 <= d4 && d1 <= d5 && d1 <= d2 && d1 <= d3)
 	{
 		contact.contactPointA = s1.first;
 		contact.contactPointB = s1.second;
 	}
-	else if (d2 < d1 && d2 < d3)
+	else if (d2 <= d4 && d2 <= d5 && d2 <= d1 && d2 <= d3)
 	{
 		contact.contactPointA = s2.first;
 		contact.contactPointB = s2.second;
@@ -268,9 +185,9 @@ Intersection::Contact Intersection::intersect_SegmentvsAxisAlignedBox(const glm:
 		candidates.push_back(getSegmentsClosestSegment(segment1, segment2, boxMin, glm::vec3(boxMin.x, boxMin.y, boxMax.z)));
 		candidates.push_back(getSegmentsClosestSegment(segment1, segment2, boxMin, glm::vec3(boxMin.x, boxMax.y, boxMin.z)));
 		candidates.push_back(getSegmentsClosestSegment(segment1, segment2, boxMin, glm::vec3(boxMax.x, boxMin.y, boxMin.z)));
-		candidates.push_back(getSegmentsClosestSegment(segment1, segment2, boxMax, glm::vec3(boxMax.x, boxMax.y, boxMin.x)));
-		candidates.push_back(getSegmentsClosestSegment(segment1, segment2, boxMax, glm::vec3(boxMax.x, boxMin.y, boxMax.x)));
-		candidates.push_back(getSegmentsClosestSegment(segment1, segment2, boxMax, glm::vec3(boxMin.x, boxMax.y, boxMax.x)));
+		candidates.push_back(getSegmentsClosestSegment(segment1, segment2, boxMax, glm::vec3(boxMax.x, boxMax.y, boxMin.z)));
+		candidates.push_back(getSegmentsClosestSegment(segment1, segment2, boxMax, glm::vec3(boxMax.x, boxMin.y, boxMax.z)));
+		candidates.push_back(getSegmentsClosestSegment(segment1, segment2, boxMax, glm::vec3(boxMin.x, boxMax.y, boxMax.z)));
 		candidates.push_back(getSegmentsClosestSegment(segment1, segment2, glm::vec3(boxMin.x, boxMax.y, boxMax.z), glm::vec3(boxMin.x, boxMin.y, boxMax.z)));
 		candidates.push_back(getSegmentsClosestSegment(segment1, segment2, glm::vec3(boxMin.x, boxMax.y, boxMax.z), glm::vec3(boxMin.x, boxMax.y, boxMin.z)));
 		candidates.push_back(getSegmentsClosestSegment(segment1, segment2, glm::vec3(boxMax.x, boxMax.y, boxMin.z), glm::vec3(boxMin.x, boxMax.y, boxMin.z)));

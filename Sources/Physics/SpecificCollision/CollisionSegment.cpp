@@ -28,14 +28,8 @@ bool Collision::collide_SegmentvsSegment(const glm::vec3& segment1a, const glm::
 	}
 	else
 	{
-		glm::vec3 u1 = glm::normalize(s1);
-		glm::vec3 u2 = glm::normalize(s2);
-		n = glm::normalize(n);
-		float t1 = -glm::determinant(glm::mat3(segment1a - segment2a, u2, n)) / glm::dot(n, n);
-		float t2 = -glm::determinant(glm::mat3(segment1a - segment2a, u1, n)) / glm::dot(n, n);
-
-		glm::vec3 d = segment2a + u2*t2 - (segment1a + u1*t1);
-		return glm::dot(d, d) <= COLLISION_EPSILON;
+		std::pair<glm::vec3, glm::vec3> p = getSegmentsClosestSegment(segment1a, segment1b, segment2a, segment2b);
+		return glm::dot(p.first - p.second, p.first - p.second) <= COLLISION_EPSILON;
 	}
 }
 bool Collision::collide_SegmentvsTriangle(const glm::vec3& segment1, const glm::vec3& segment2, const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, glm::vec3& intersection)
