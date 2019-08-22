@@ -216,9 +216,9 @@ Intersection::Contact Intersection::intersect_SegmentvsSphere(const glm::vec3& s
 
 	Contact contact;
 	contact.contactPointA = getSegmentClosestPoint(segment1, segment2, sphereCenter);
-	contact.contactPointB = sphereCenter;
-	contact.normalA = glm::normalize(contact.contactPointB - contact.contactPointA);
+	contact.normalA = glm::normalize(sphereCenter - contact.contactPointA);
 	contact.normalB = -contact.normalA;
+	contact.contactPointB = sphereCenter + sphereRadius * contact.normalB;
 	return contact;
 }
 Intersection::Contact Intersection::intersect_SegmentvsCapsule(const glm::vec3& segment1, const glm::vec3& segment2, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)

@@ -3,6 +3,7 @@
 #include "CollisionUtils.h"
 
 #include <iostream>
+#include <glm/gtx/norm.hpp>
 
 
 //	Specialized functions : segment
@@ -154,15 +155,17 @@ bool Collision::collide_SegmentvsSphere(const glm::vec3& segment1, const glm::ve
 {
 	if (segment2 == segment1) return collide_PointvsSphere(segment1, sphereCenter, sphereRadius);
 
-	glm::vec3 s = segment2 - segment1;
+	/*glm::vec3 s = segment2 - segment1;
 	glm::vec3 u = glm::normalize(s);
 	glm::vec3 u2 = sphereCenter - segment1;
 	glm::vec3 u3 = u2 - glm::dot(u, u2) * u; // distance (actualy a vector) of sphere center to ray
-	return glm::dot(u3, u3) <= sphereRadius*sphereRadius && glm::dot(u, u2) <= glm::length(s) && glm::dot(u, u2) >= 0.f;
+	return glm::dot(u3, u3) <= sphereRadius*sphereRadius && glm::dot(u, u2) <= glm::length(s) && glm::dot(u, u2) >= 0.f;*/
+	glm::vec3 p = getSegmentClosestPoint(segment1, segment2, sphereCenter);
+	return glm::length2(p - sphereCenter) < sphereRadius * sphereRadius;
 }
 bool Collision::collide_SegmentvsCapsule(const glm::vec3& segment1, const glm::vec3& segment2, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
 {
-	glm::vec3 s1 = segment2 - segment1;
+	/*glm::vec3 s1 = segment2 - segment1;
 	glm::vec3 s2 = capsule2 - capsule1;
 	glm::vec3 n = glm::cross(s1, s2);
 
@@ -191,7 +194,9 @@ bool Collision::collide_SegmentvsCapsule(const glm::vec3& segment1, const glm::v
 		glm::vec3 d = capsule1 + u2*t2 - (segment1 + u1*t1);
 
 		return glm::length(d) <= std::max(capsuleRadius, COLLISION_EPSILON);
-	}
+	}*/
+	std::pair<glm::vec3, glm::vec3> p = getSegmentsClosestSegment(segment1, segment2, capsule1, capsule2);
+	return glm::length2(p.first - p.second) < capsuleRadius * capsuleRadius;
 }
 //
 
