@@ -218,6 +218,7 @@ Intersection::Contact Intersection::intersect(const Shape& a, const Shape& b)
 			if (swaped) return intersect_SegmentvsShape(Shape1, Shape2).swap();
 			else return intersect_SegmentvsShape(Shape1, Shape2);
 		case Shape::TRIANGLE:
+			std::cout << "eee" << std::endl;
 			if (swaped) return intersect_TrianglevsShape(Shape1, Shape2).swap();
 			else return intersect_TrianglevsShape(Shape1, Shape2);
 		case Shape::ORIENTED_BOX:		

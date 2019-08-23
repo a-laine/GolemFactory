@@ -6,9 +6,9 @@ Intersection::Contact::Contact() : contactPointA(0.f), contactPointB(0.f), norma
 {}
 Intersection::Contact::Contact(const glm::vec3& A, const glm::vec3& B, const glm::vec3& nA, const glm::vec3& nB) : contactPointA(A), contactPointB(B), normalA(nA), normalB(nB)
 {}
-Intersection::Contact& Intersection::Contact::swap()
+Intersection::Contact Intersection::Contact::swap()
 {
-	std::swap(contactPointA, contactPointB);
-	std::swap(normalA, normalB);
-	return *this;
+	/*std::swap(contactPointA, contactPointB);
+	std::swap(normalA, normalB);*/
+	return Intersection::Contact(contactPointB, contactPointA, normalB, normalA);
 }
