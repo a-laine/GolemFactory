@@ -39,70 +39,33 @@ namespace
 	}
 	inline std::pair<glm::vec3, glm::vec3> getSegmentsClosestSegment(const glm::vec3& segment1a, const glm::vec3& segment1b, const glm::vec3& segment2a, const glm::vec3& segment2b)
 	{
-		glm::vec3 s1 = segment1b - segment1a;
-		glm::vec3 s2 = segment2b - segment2a;
-		glm::vec3 n = glm::cross(s1, s2);
+		//http://geomalgorithms.com/a07-_distance.html
+		glm::vec3 u = segment1b - segment1a;
+		glm::vec3 v = segment2b - segment2a;
+		glm::vec3 w = segment2a - segment1a;
 
-		if (glm::dot(n, n) < COLLISION_EPSILON)	// parallel or one segment is a point
+		float a = glm::dot(u, u);
+		float b = glm::dot(u, v);
+		float c = glm::dot(v, v);
+		float d = glm::dot(u, w);
+		float e = glm::dot(v, w);
+		float D = a*c - b*b;
+
+		float t1, t2;
+		if (D < COLLISION_EPSILON*COLLISION_EPSILON)
 		{
-			if (s1 == glm::vec3(0.f) && s2 == glm::vec3(0.f))
-				return std::pair<glm::vec3, glm::vec3>(segment1a, segment2a);
-			else if (s1 == glm::vec3(0.f))
-				return std::pair<glm::vec3, glm::vec3>(segment1a, getSegmentClosestPoint(segment2a, segment2b, segment1a));
-			else if (s2 == glm::vec3(0.f))
-				return std::pair<glm::vec3, glm::vec3>(getSegmentClosestPoint(segment1a, segment1b, segment2a), segment2a);
-			else // segment are parallel
-			{
-				auto d1 = std::pair<glm::vec3, glm::vec3>(segment1a, getSegmentClosestPoint(segment2a, segment2b, segment1a));
-				auto d2 = std::pair<glm::vec3, glm::vec3>(segment1b, getSegmentClosestPoint(segment2a, segment2b, segment1b));
-				auto d3 = std::pair<glm::vec3, glm::vec3>(getSegmentClosestPoint(segment1a, segment1b, segment2a), segment2a);
-				auto d4 = std::pair<glm::vec3, glm::vec3>(getSegmentClosestPoint(segment1a, segment1b, segment2b), segment2b);
-				
-				float f1 = glm::dot(d1.first - d1.second, d1.first - d1.second);
-				float f2 = glm::dot(d2.first - d2.second, d2.first - d2.second);
-				float f3 = glm::dot(d3.first - d3.second, d3.first - d3.second);
-				float f4 = glm::dot(d4.first - d4.second, d4.first - d4.second);
-
-				if (f1 < f2 && f1 < f3 && f1 < f4) return d1;
-				else if (f2 < f1 && f2 < f3 && f2 < f4) return d2;
-				else if (f3 < f1 && f3 < f2 && f3 < f4) return d3;
-				else return d4;
-			}
+			t1 = 0.0;
+			t2 = -(b>c ? d / b : e / c);
 		}
-		else if (std::abs(glm::dot(glm::normalize(n), segment2b)) < COLLISION_EPSILON) // coplanar segments
+		else
 		{
-			// https://www.lucidarme.me/intersection-of-segments/ 
-
-			glm::vec3 ss = segment2a - segment1a;
-			float t1 = glm::dot(glm::cross(ss, s2), n) / glm::dot(n, n);
-			float t2 = glm::dot(glm::cross(ss, s1), n) / glm::dot(n, n);
-			return std::pair<glm::vec3, glm::vec3>(segment1a + s1*glm::clamp(t1, 0.f, 1.f), segment2a + s2*glm::clamp(t2, 0.f, 1.f));
+			t1 = -(b*e - c*d) / D;
+			t2 = -(a*e - b*d) / D;
 		}
-		else //	skew segment
-		{
-			//http://geomalgorithms.com/a07-_distance.html
-			glm::vec3 u = s1;
-			glm::vec3 v = s2;
-			glm::vec3 w = segment2a - segment1a;
 
-			float a = glm::dot(u, u);
-			float b = glm::dot(u, v);
-			float c = glm::dot(v, v);
-			float d = glm::dot(u, w);
-			float e = glm::dot(v, w);
-			float D = a*c - b*b;
-
-			float t1 = -(b*e - c*d) / D;
-			float t2 = -(a*e - b*d) / D;
-			float l1 = glm::length(s1);
-			float l2 = glm::length(s2);
-
-			if (t1 < 0.f) return std::pair<glm::vec3, glm::vec3>(segment1a, getSegmentClosestPoint(segment2a, segment2b, segment1a));
-			else if(t1 > l1) return std::pair<glm::vec3, glm::vec3>(segment1b, getSegmentClosestPoint(segment2a, segment2b, segment1b));
-			else if (t2 < 0.f) return std::pair<glm::vec3, glm::vec3>(getSegmentClosestPoint(segment1a, segment1b, segment2a), segment2a);
-			else if (t2 > l2) return std::pair<glm::vec3, glm::vec3>(getSegmentClosestPoint(segment1a, segment1b, segment2b), segment2b);
-			else return std::pair<glm::vec3, glm::vec3>(segment1a + u*t1, segment2a + v*t2);
-		}
+		t1 = glm::clamp(t1, 0.f, 1.f);
+		t2 = glm::clamp(t2, 0.f, 1.f);
+		return std::pair<glm::vec3, glm::vec3>(segment1a + u*t1, segment2a + v*t2);
 	}
 	inline glm::vec2 getBarycentricCoordinates(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& point)
 	{

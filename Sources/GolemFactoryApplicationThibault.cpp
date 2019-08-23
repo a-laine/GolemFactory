@@ -209,7 +209,7 @@ int main()
 		auto u = shape2->toAxisAlignedBox();
 		//Triangle s2(u.min , u.max, glm::vec3(u.min.x, u.max.y, u.min.z));
 		//Segment s2(u.min, u.max);
-		Capsule s2(shape2->min, shape2->max, 0.3f);
+		auto s2 = *shape2;
 
 		if(Collision::collide(s1, s2))
 			Debug::color = Debug::red;
@@ -218,10 +218,10 @@ int main()
 		Debug::drawLine(s1.p1, s1.p2);
 
 		//Debug::drawWiredMesh(s2.mesh, s2.base);
-		Debug::drawWiredCapsule(s2.p1, s2.p2, s2.radius);
+		//Debug::drawWiredCapsule(s2.p1, s2.p2, s2.radius);
 		//Debug::drawWiredSphere(s2.center, s2.radius);
 		//Debug::drawWiredCube(glm::translate(glm::mat4(1.f), 0.5f * (s2.min + s2.max)), 0.5f * (s2.max - s2.min));
-		//Debug::drawWiredCube(shape2->base* glm::translate(glm::mat4(1.f), 0.5f * (shape2->min + shape2->max)), 0.5f * (shape2->max - shape2->min));
+		Debug::drawWiredCube(shape2->base* glm::translate(glm::mat4(1.f), 0.5f * (shape2->min + shape2->max)), 0.5f * (shape2->max - shape2->min));
 		//Debug::drawLine(s2.p1, s2.p2); Debug::drawLine(s2.p1, s2.p3); Debug::drawLine(s2.p2, s2.p3);
 		
 		Debug::color = Debug::green;
@@ -298,7 +298,7 @@ void initializeForestScene(bool emptyPlace)
 		testEntity = world.getEntityFactory().createObject("cube", [](Entity* object)
 		{
 			object->getComponent<DrawableComponent>()->setShader(ResourceManager::getInstance()->getResource<Shader>("default"));
-			object->setTransformation(glm::vec3(0.f, 0.f, 3.f), glm::vec3(1.f),  glm::normalize(glm::fquat(1.f, 0.1f, 0.3f, 1.f)));
+			object->setTransformation(glm::vec3(0.f, 0.f, 2.f), glm::vec3(1.f),  glm::normalize(glm::fquat(1.f, 0.1f, 0.3f, 1.f)));
 			RigidBody* rb = new RigidBody(RigidBody::DYNAMIC, RigidBody::CONTINUOUS);
 			rb->setMass(1.f);
 			rb->setGravityFactor(1.f);

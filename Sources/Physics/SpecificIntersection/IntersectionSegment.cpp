@@ -9,6 +9,10 @@
 #include <glm/gtx/norm.hpp>
 
 
+#include "Utiles/Debug.h"
+
+
+
 Intersection::Contact Intersection::intersect_SegmentvsSegment(const glm::vec3& segment1a, const glm::vec3& segment1b, const glm::vec3& segment2a, const glm::vec3& segment2b)
 {
 	Contact contact;
@@ -174,40 +178,35 @@ Intersection::Contact Intersection::intersect_SegmentvsAxisAlignedBox(const glm:
 	}
 	else
 	{
-		// add closest point on ABB to both segment extremities
-		std::vector<std::pair<glm::vec3, glm::vec3>> candidates;
-		Contact c = intersect_PointvsAxisAlignedBox(segment1, boxMin, boxMax);
-		candidates.push_back({ c.contactPointA, c.contactPointB });
-		c = intersect_PointvsAxisAlignedBox(segment2, boxMin, boxMax);
-		candidates.push_back({ c.contactPointA, c.contactPointB });
+		std::vector<Contact> candidates;
+		candidates.reserve(14);
+		candidates.push_back(intersect_PointvsAxisAlignedBox(segment1, boxMin, boxMax));
+		candidates.push_back(intersect_PointvsAxisAlignedBox(segment2, boxMin, boxMax));
+		candidates.push_back(intersect_SegmentvsSegment(segment1, segment2, boxMin, glm::vec3(boxMin.x, boxMin.y, boxMax.z)));
+		candidates.push_back(intersect_SegmentvsSegment(segment1, segment2, boxMin, glm::vec3(boxMin.x, boxMax.y, boxMin.z)));
+		candidates.push_back(intersect_SegmentvsSegment(segment1, segment2, boxMin, glm::vec3(boxMax.x, boxMin.y, boxMin.z)));
+		candidates.push_back(intersect_SegmentvsSegment(segment1, segment2, boxMax, glm::vec3(boxMax.x, boxMax.y, boxMin.z)));
+		candidates.push_back(intersect_SegmentvsSegment(segment1, segment2, boxMax, glm::vec3(boxMax.x, boxMin.y, boxMax.z)));
+		candidates.push_back(intersect_SegmentvsSegment(segment1, segment2, boxMax, glm::vec3(boxMin.x, boxMax.y, boxMax.z)));
+		candidates.push_back(intersect_SegmentvsSegment(segment1, segment2, glm::vec3(boxMin.x, boxMax.y, boxMax.z), glm::vec3(boxMin.x, boxMin.y, boxMax.z)));
+		candidates.push_back(intersect_SegmentvsSegment(segment1, segment2, glm::vec3(boxMin.x, boxMax.y, boxMax.z), glm::vec3(boxMin.x, boxMax.y, boxMin.z)));
+		candidates.push_back(intersect_SegmentvsSegment(segment1, segment2, glm::vec3(boxMax.x, boxMax.y, boxMin.z), glm::vec3(boxMin.x, boxMax.y, boxMin.z)));
+		candidates.push_back(intersect_SegmentvsSegment(segment1, segment2, glm::vec3(boxMax.x, boxMax.y, boxMin.z), glm::vec3(boxMax.x, boxMin.y, boxMin.z)));
+		candidates.push_back(intersect_SegmentvsSegment(segment1, segment2, glm::vec3(boxMax.x, boxMin.y, boxMax.z), glm::vec3(boxMin.x, boxMin.y, boxMax.z)));
+		candidates.push_back(intersect_SegmentvsSegment(segment1, segment2, glm::vec3(boxMax.x, boxMin.y, boxMax.z), glm::vec3(boxMax.x, boxMin.y, boxMin.z)));
 
-		// adding all cube edges to candidates
-		candidates.push_back(getSegmentsClosestSegment(segment1, segment2, boxMin, glm::vec3(boxMin.x, boxMin.y, boxMax.z)));
-		candidates.push_back(getSegmentsClosestSegment(segment1, segment2, boxMin, glm::vec3(boxMin.x, boxMax.y, boxMin.z)));
-		candidates.push_back(getSegmentsClosestSegment(segment1, segment2, boxMin, glm::vec3(boxMax.x, boxMin.y, boxMin.z)));
-		candidates.push_back(getSegmentsClosestSegment(segment1, segment2, boxMax, glm::vec3(boxMax.x, boxMax.y, boxMin.z)));
-		candidates.push_back(getSegmentsClosestSegment(segment1, segment2, boxMax, glm::vec3(boxMax.x, boxMin.y, boxMax.z)));
-		candidates.push_back(getSegmentsClosestSegment(segment1, segment2, boxMax, glm::vec3(boxMin.x, boxMax.y, boxMax.z)));
-		candidates.push_back(getSegmentsClosestSegment(segment1, segment2, glm::vec3(boxMin.x, boxMax.y, boxMax.z), glm::vec3(boxMin.x, boxMin.y, boxMax.z)));
-		candidates.push_back(getSegmentsClosestSegment(segment1, segment2, glm::vec3(boxMin.x, boxMax.y, boxMax.z), glm::vec3(boxMin.x, boxMax.y, boxMin.z)));
-		candidates.push_back(getSegmentsClosestSegment(segment1, segment2, glm::vec3(boxMax.x, boxMax.y, boxMin.z), glm::vec3(boxMin.x, boxMax.y, boxMin.z)));
-		candidates.push_back(getSegmentsClosestSegment(segment1, segment2, glm::vec3(boxMax.x, boxMax.y, boxMin.z), glm::vec3(boxMax.x, boxMin.y, boxMin.z)));
-		candidates.push_back(getSegmentsClosestSegment(segment1, segment2, glm::vec3(boxMax.x, boxMin.y, boxMax.z), glm::vec3(boxMin.x, boxMin.y, boxMax.z)));
-		candidates.push_back(getSegmentsClosestSegment(segment1, segment2, glm::vec3(boxMax.x, boxMin.y, boxMax.z), glm::vec3(boxMax.x, boxMin.y, boxMin.z)));
-		
-		// sorting functions
-		auto compare = [](std::pair<glm::vec3, glm::vec3> s1, std::pair<glm::vec3, glm::vec3> s2) {
-			return glm::length2(s1.first - s1.second) < glm::length2(s2.first - s2.second);
-		};
-		std::sort(candidates.begin(), candidates.end(), compare);
-
-		// end and return
-		Contact contact;
-		contact.contactPointA = candidates.front().first;
-		contact.contactPointB = candidates.front().second;
-		contact.normalA = glm::normalize(contact.contactPointB - contact.contactPointA);
-		contact.normalB = -contact.normalA;
-		return contact;
+		float dmin = std::numeric_limits<float>::max();
+		int k = 0;
+		for (unsigned int i = 0; i < candidates.size(); i++)
+		{
+			float d = glm::length2(candidates[i].contactPointA - candidates[i].contactPointB);
+			if (d < dmin)
+			{
+				k = i;
+				dmin = d;
+			}
+		}
+		return candidates[k];
 	}
 }
 Intersection::Contact Intersection::intersect_SegmentvsSphere(const glm::vec3& segment1, const glm::vec3& segment2, const glm::vec3& sphereCenter, const float& sphereRadius)

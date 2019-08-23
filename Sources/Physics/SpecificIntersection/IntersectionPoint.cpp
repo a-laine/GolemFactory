@@ -6,9 +6,6 @@
 #include <glm/gtx/norm.hpp>
 
 
-#include "Utiles/Debug.h"
-
-
 Intersection::Contact Intersection::intersect_PointvsPoint(const glm::vec3& point1, const glm::vec3& point2)
 {
 	glm::vec3 n = glm::normalize(point2 - point1);
