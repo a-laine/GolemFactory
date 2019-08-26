@@ -185,6 +185,10 @@ namespace
 		}
 		else return GJK::intersect(capsule, b);
 	};
+	inline Intersection::Contact  intersect_HullvsShape(const Shape& hull, const Shape& b)
+	{
+		return GJK::intersect(hull, b);
+	}
 
 	// used for debug
 	void printError(const std::string& Shape1, const std::string& Shape2, const int& testNumber, int& e)
@@ -195,20 +199,30 @@ namespace
 }
 //
 
+std::string shapeTypeToString(const Shape::ShapeType& type)
+{
+	switch (type)
+	{
+		case Shape::POINT:				return "point";
+		case Shape::SEGMENT:			return "segment";
+		case Shape::TRIANGLE:			return "triangle";
+		case Shape::ORIENTED_BOX:		return "oriented box";
+		case Shape::AXIS_ALIGNED_BOX:	return "axis aligned box";
+		case Shape::SPHERE:				return "sphere";
+		case Shape::CAPSULE:			return "capsule";
+		case Shape::HULL:				return "hull";
+		default:						return "unknown";
+	}
+}
 
 //	Public field
 Intersection::Contact Intersection::intersect(const Shape& a, const Shape& b)
 {
 	//	order objects
-	Shape& Shape1 = (Shape&)a;
-	Shape& Shape2 = (Shape&)b;
-	bool swaped = false;
-	if (a.type > b.type) 
-	{
-		std::swap(Shape1, Shape2);
-		swaped = true;
-	}
-
+	bool swaped = a.type > b.type;
+	Shape& Shape1 = swaped ? (Shape&)b : (Shape&)a;
+	Shape& Shape2 = swaped ? (Shape&)a : (Shape&)b;
+	
 	switch (Shape1.type)
 	{
 		case Shape::POINT:
@@ -218,7 +232,6 @@ Intersection::Contact Intersection::intersect(const Shape& a, const Shape& b)
 			if (swaped) return intersect_SegmentvsShape(Shape1, Shape2).swap();
 			else return intersect_SegmentvsShape(Shape1, Shape2);
 		case Shape::TRIANGLE:
-			std::cout << "eee" << std::endl;
 			if (swaped) return intersect_TrianglevsShape(Shape1, Shape2).swap();
 			else return intersect_TrianglevsShape(Shape1, Shape2);
 		case Shape::ORIENTED_BOX:		
@@ -227,7 +240,7 @@ Intersection::Contact Intersection::intersect(const Shape& a, const Shape& b)
 		case Shape::AXIS_ALIGNED_BOX:	
 			if (swaped) return intersect_AxisAlignedBoxvsShape(Shape1, Shape2).swap();
 			else return intersect_AxisAlignedBoxvsShape(Shape1, Shape2);
-		case Shape::SPHERE:	
+		case Shape::SPHERE:
 			if (swaped) return intersect_SpherevsShape(Shape1, Shape2).swap();
 			else return intersect_SpherevsShape(Shape1, Shape2);
 		case Shape::CAPSULE:			

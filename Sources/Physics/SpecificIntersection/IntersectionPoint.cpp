@@ -146,7 +146,7 @@ Intersection::Contact Intersection::intersect_PointvsAxisAlignedBox(const glm::v
 		Contact contact;
 		contact.contactPointA = point;
 		contact.contactPointB = p + bcenter;
-		contact.normalA = -n;
+		contact.normalA = glm::normalize(contact.contactPointB - point);
 		contact.normalB = n;
 		return contact;
 	}
@@ -195,7 +195,7 @@ Intersection::Contact Intersection::intersect_PointvsAxisAlignedBox(const glm::v
 		Contact contact;
 		contact.contactPointA = point;
 		contact.contactPointB = p;
-		contact.normalA = -n;
+		contact.normalA = glm::normalize(contact.contactPointB - point);
 		contact.normalB = n;
 		return contact;
 	}

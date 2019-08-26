@@ -2,10 +2,6 @@
 #include "CollisionPoint.h"
 #include "CollisionUtils.h"
 
-#include <iostream>
-#include <glm/gtx/norm.hpp>
-
-
 //	Specialized functions : segment
 bool Collision::collide_SegmentvsSegment(const glm::vec3& segment1a, const glm::vec3& segment1b, const glm::vec3& segment2a, const glm::vec3& segment2b)
 {
@@ -154,47 +150,11 @@ bool Collision::collide_SegmentvsAxisAlignedBox(const glm::vec3& segment1, const
 bool Collision::collide_SegmentvsSphere(const glm::vec3& segment1, const glm::vec3& segment2, const glm::vec3& sphereCenter, const float& sphereRadius)
 {
 	if (segment2 == segment1) return collide_PointvsSphere(segment1, sphereCenter, sphereRadius);
-
-	/*glm::vec3 s = segment2 - segment1;
-	glm::vec3 u = glm::normalize(s);
-	glm::vec3 u2 = sphereCenter - segment1;
-	glm::vec3 u3 = u2 - glm::dot(u, u2) * u; // distance (actualy a vector) of sphere center to ray
-	return glm::dot(u3, u3) <= sphereRadius*sphereRadius && glm::dot(u, u2) <= glm::length(s) && glm::dot(u, u2) >= 0.f;*/
 	glm::vec3 p = getSegmentClosestPoint(segment1, segment2, sphereCenter);
 	return glm::length2(p - sphereCenter) < sphereRadius * sphereRadius;
 }
 bool Collision::collide_SegmentvsCapsule(const glm::vec3& segment1, const glm::vec3& segment2, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
 {
-	/*glm::vec3 s1 = segment2 - segment1;
-	glm::vec3 s2 = capsule2 - capsule1;
-	glm::vec3 n = glm::cross(s1, s2);
-
-	if (n == glm::vec3(0.f))	// parallel or one segment is a point
-	{
-		if (s1 == glm::vec3(0.f))
-			return collide_PointvsCapsule(segment1, capsule1, capsule2, capsuleRadius);
-		else if (s2 == glm::vec3(0.f))
-			return collide_SegmentvsSphere(segment1, segment2, capsule1, capsuleRadius);
-		else // segment are parallel
-		{
-			std::pair<glm::vec3, glm::vec3> s = getSegmentsClosestSegment(segment1, segment2, capsule1, capsule2);
-			return glm::length(s.second - s.first) <= std::max(capsuleRadius, COLLISION_EPSILON);
-		}
-	}
-	else
-	{
-		glm::vec3 u1 = glm::normalize(s1);
-		glm::vec3 u2 = glm::normalize(s2);
-		n = glm::normalize(n);
-		float t1 = -glm::determinant(glm::mat3(segment1 - capsule1, u2, n)) / glm::dot(n, n);
-		float t2 = -glm::determinant(glm::mat3(segment1 - capsule1, u1, n)) / glm::dot(n, n);
-
-		t1 = glm::clamp(t1, 0.f, glm::length(s1));
-		t2 = glm::clamp(t2, 0.f, glm::length(s2));
-		glm::vec3 d = capsule1 + u2*t2 - (segment1 + u1*t1);
-
-		return glm::length(d) <= std::max(capsuleRadius, COLLISION_EPSILON);
-	}*/
 	std::pair<glm::vec3, glm::vec3> p = getSegmentsClosestSegment(segment1, segment2, capsule1, capsule2);
 	return glm::length2(p.first - p.second) < capsuleRadius * capsuleRadius;
 }

@@ -214,9 +214,12 @@ namespace
 bool Collision::collide(const Shape& a, const Shape& b)
 {
 	//	order objects
-	Shape& Shape1 = (Shape&) a;
+	bool swaped = a.type > b.type;
+	Shape& Shape1 = swaped ? (Shape&)b : (Shape&)a;
+	Shape& Shape2 = swaped ? (Shape&)a : (Shape&)b;
+	/*Shape& Shape1 = (Shape&) a;
 	Shape& Shape2 = (Shape&) b;
-	if (a.type > b.type) std::swap(Shape1, Shape2);
+	if (a.type > b.type) std::swap(Shape1, Shape2);*/
 
 	switch (Shape1.type)
 	{
