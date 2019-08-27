@@ -15,6 +15,9 @@
 
 Intersection::Contact Intersection::intersect_SegmentvsSegment(const glm::vec3& segment1a, const glm::vec3& segment1b, const glm::vec3& segment2a, const glm::vec3& segment2b)
 {
+	if (segment1a == segment1b) return intersect_PointvsSegment(segment1a, segment2a, segment2b);
+	else if (segment2a == segment2b) return intersect_PointvsSegment(segment2a, segment1a, segment2b).swap();
+
 	Contact contact;
 	std::pair<glm::vec3, glm::vec3> p = getSegmentsClosestSegment(segment1a, segment1b, segment2a, segment2b);
 	contact.contactPointA = p.first;
@@ -26,6 +29,7 @@ Intersection::Contact Intersection::intersect_SegmentvsSegment(const glm::vec3& 
 Intersection::Contact Intersection::intersect_SegmentvsTriangle(const glm::vec3& segment1, const glm::vec3& segment2, const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3)
 {
 	//	begin and eliminate special cases
+	if (segment1 == segment2) return intersect_PointvsTriangle(segment1, triangle1, triangle2, triangle3);
 	glm::vec3 v1 = triangle2 - triangle1;
 	glm::vec3 v2 = triangle3 - triangle1;
 	glm::vec3 n = glm::cross(v1, v2);

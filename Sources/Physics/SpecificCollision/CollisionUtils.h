@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <vector>
 
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -9,6 +10,7 @@
 #include <glm/gtx/norm.hpp>
 
 #define COLLISION_EPSILON 0.0001f
+#define quickClamp(x, y) (((x) <= 0.f) ? 0.f : ((x) >= (y) ? 1.f : ((x) / (y))))
 
 
 //	Private field
@@ -44,7 +46,7 @@ namespace
 		//http://geomalgorithms.com/a07-_distance.html
 		glm::vec3 u = segment1b - segment1a;
 		glm::vec3 v = segment2b - segment2a;
-		glm::vec3 w = segment2a - segment1a;
+		glm::vec3 w = segment1a - segment2a;
 
 		float a = glm::length2(u);
 		float b = glm::dot(u, v);
@@ -57,44 +59,62 @@ namespace
 		if (D < COLLISION_EPSILON*COLLISION_EPSILON)
 		{
 			t1 = 0.0;
-			t2 = -(b>c ? d / b : e / c);
+			t2 = (b>c ? d / b : e / c);
 		}
 		else
 		{
-			t1 = -(b*e - c*d) / D;
-			t2 = -(a*e - b*d) / D;
+			t1 = (b*e - c*d) / D;
+			t2 = (a*e - b*d) / D;
 		}
 
-		if (t1 < 0.f) // t1 = 0 is a quadratic limit check
+		if (t1 > 1.f || t2 > 1.f || t1 < 0.f || t2 < 0.f)
 		{
-			t1 = 0.f;
-			t2 = -(e + b) / c; //e / c;
-		}
-		else if (t1 > 1.f) // t1 = 1 is a quadratic limit check
-		{
-			t1 = 1.f;
-			t2 = -e / c; //(e + b) / c;
+			float t[2][2];
+			int edge = 0;
+
+			if (t1 < 0.f)
+			{
+				t[edge][0] = 0.f;
+				t[edge][1] = quickClamp(e, c);  // this is a clamp(e/c, 0, 1) but we compute the division just if needed
+				edge++;
+			}
+			else if (t1 > 1.f)
+			{
+				t[edge][0] = 1.f;
+				t[edge][1] = quickClamp(e + b, c);
+				edge++;
+			}
+			if (t2 < 0.f)
+			{
+				t[edge][0] = quickClamp(-d, a);
+				t[edge][1] = 0.f;
+				edge++;
+			}
+			else if (t2 > 1.f)
+			{
+				t[edge][0] = quickClamp(b - d, a);
+				t[edge][1] = 1.f;
+				edge++;
+			}
+
+			if (edge == 1) // only one edge of the limit square [0,1]x[0,1] is visible from (t1, t2) -> it's candidate
+			{
+				t1 = t[0][0];
+				t2 = t[0][1];
+			}
+			else if (glm::length2(w + u*t[0][0] - v*t[0][1]) <= glm::length2(w + u*t[1][0] - v*t[1][1])) // we choose the closer candidate (t1,t2)
+			{
+				t1 = t[0][0];
+				t2 = t[0][1];
+			}
+			else
+			{
+				t1 = t[1][0];
+				t2 = t[1][1];
+			}
 		}
 
-		if (t2 < 0.f)
-		{
-			t2 = 0.f;
-			t1 = glm::clamp(-d / a, 0.f, 1.f);
-		}
-		else if (t2 > 1.f)
-		{
-			t2 = 1.f;
-			t1 = glm::clamp((-d + b) / a, 0.f, 1.f);
-		}
-
-		//t1 = glm::clamp(t1, 0.f, 1.f);
-		//t2 = glm::clamp(t2, 0.f, 1.f);
-
-		/*if (t1 < 0.f) return std::pair<glm::vec3, glm::vec3>(segment1a, getSegmentClosestPoint(segment2a, segment2b, segment1a));
-		else if (t1 > 1.f) return std::pair<glm::vec3, glm::vec3>(segment1b, getSegmentClosestPoint(segment2a, segment2b, segment1b));
-		else if (t2 < 0.f) return std::pair<glm::vec3, glm::vec3>(getSegmentClosestPoint(segment1a, segment1b, segment2a), segment2a);
-		else if (t2 > 1.f) return std::pair<glm::vec3, glm::vec3>( getSegmentClosestPoint(segment1a, segment1b, segment2b), segment2b);
-		else*/ return std::pair<glm::vec3, glm::vec3>(segment1a + u*t1, segment2a + v*t2);
+		return std::pair<glm::vec3, glm::vec3>(segment1a + u*t1, segment2a + v*t2);
 	}
 	inline glm::vec2 getBarycentricCoordinates(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& point)
 	{

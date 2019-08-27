@@ -193,10 +193,6 @@ int main()
 		{
 			glm::mat4 view = currentCamera->getGlobalViewMatrix();
 			glm::mat4 projection = glm::perspective(glm::radians(currentCamera->getVerticalFieldOfView(context->getViewportRatio())), context->getViewportRatio(), 0.1f, 1500.f);
-			
-			//Renderer::getInstance()->drawShape(avatar->getGlobalBoundingShape(), &view[0][0], &projection[0][0]);
-			//Renderer::getInstance()->drawShape(testTree->getLocalBoundingShape(), &view[0][0], &projection[0][0]);
-		    //Renderer::getInstance()->drawShape(testTree->getGlobalBoundingShape(), &view[0][0], &projection[0][0]);
 		}
 
 		Debug::view = currentCamera->getGlobalViewMatrix();
@@ -207,30 +203,18 @@ int main()
 		
 		Capsule s1(shape1->p1, shape1->p2 + 0.5f * currentCamera->getRight(), shape1->radius);
 		auto u = shape2->toAxisAlignedBox();
-		//Triangle s2(u.min , u.max, glm::vec3(u.min.x, u.max.y, u.min.z));
 		Capsule s2(u.min, u.max, 1.f);
-		//auto s2 = *shape2;
 
 		if(Collision::collide(s1, s2))
 			Debug::color = Debug::red;
 		else Debug::color = Debug::white;
 
-		//Debug::drawPoint(s1.p);
-		//Debug::drawWiredSphere(s1.center, s1.radius);
 		Debug::drawWiredCapsule(s1.p1, s1.p2, s1.radius);
-		//Debug::drawLine(s1.p1, s1.p2);
-
-		//Debug::drawWiredMesh(s2.mesh, s2.base);
 		Debug::drawWiredCapsule(s2.p1, s2.p2, s2.radius);
 
 		Debug::color = Debug::magenta;
 		Debug::drawLine(s1.p1, s1.p2);
 		Debug::drawLine(s2.p1, s2.p2);
-		//Debug::drawLine(s2.p1, s2.p2);
-		//Debug::drawWiredSphere(s2.center, s2.radius);
-		//Debug::drawWiredCube(glm::translate(glm::mat4(1.f), 0.5f * (s2.min + s2.max)), 0.5f * (s2.max - s2.min));
-		//Debug::drawWiredCube(shape2->base* glm::translate(glm::mat4(1.f), 0.5f * (shape2->min + shape2->max)), 0.5f * (shape2->max - shape2->min));
-		//Debug::drawLine(s2.p1, s2.p2); Debug::drawLine(s2.p1, s2.p3); Debug::drawLine(s2.p2, s2.p3);
 		
 		Debug::color = Debug::green;
 		Intersection::Contact contact = Intersection::intersect(s1, s2);

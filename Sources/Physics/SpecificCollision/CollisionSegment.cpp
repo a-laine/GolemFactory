@@ -5,28 +5,23 @@
 //	Specialized functions : segment
 bool Collision::collide_SegmentvsSegment(const glm::vec3& segment1a, const glm::vec3& segment1b, const glm::vec3& segment2a, const glm::vec3& segment2b)
 {
+	if(segment1a == segment1b) return collide_PointvsSegment(segment1a, segment2a, segment2b);
+	else if (segment2a == segment2b) return collide_PointvsSegment(segment2a, segment1a, segment1b);
+
 	glm::vec3 s1 = segment1b - segment1a;
 	glm::vec3 s2 = segment2b - segment2a;
 	glm::vec3 n = glm::cross(s1, s2);
 
-	if (n == glm::vec3(0.f))	// parallel or one segment is a point
+	if (n == glm::vec3(0.f))	// parallel
 	{
-		if (s1 == glm::vec3(0.f))
-			return collide_PointvsSegment(segment1a, segment2a, segment2b);
-		else if (s2 == glm::vec3(0.f))
-			return collide_PointvsSegment(segment2a, segment1a, segment1b);
-		else // segment are parallel
-		{
-			glm::vec3 u1 = glm::normalize(s1);
-			glm::vec3 u3 = segment1a - segment2a;
-			glm::vec3 d = u3 - u1 * std::abs(glm::dot(u3, u1));
-			return glm::dot(d, d) <= COLLISION_EPSILON;
-		}
+		glm::vec3 u1 = glm::normalize(s1);
+		glm::vec3 u3 = segment1a - segment2a;
+		return glm::length2(u3 - u1 * std::abs(glm::dot(u3, u1))) <= COLLISION_EPSILON*COLLISION_EPSILON;
 	}
 	else
 	{
 		std::pair<glm::vec3, glm::vec3> p = getSegmentsClosestSegment(segment1a, segment1b, segment2a, segment2b);
-		return glm::dot(p.first - p.second, p.first - p.second) <= COLLISION_EPSILON;
+		return glm::length2(p.first - p.second) <= COLLISION_EPSILON*COLLISION_EPSILON;
 	}
 }
 bool Collision::collide_SegmentvsTriangle(const glm::vec3& segment1, const glm::vec3& segment2, const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, glm::vec3& intersection)
@@ -155,6 +150,9 @@ bool Collision::collide_SegmentvsSphere(const glm::vec3& segment1, const glm::ve
 }
 bool Collision::collide_SegmentvsCapsule(const glm::vec3& segment1, const glm::vec3& segment2, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
 {
+	if (segment1 == segment2) return collide_PointvsSegment(segment1, capsule1, capsule2);
+	else if (capsule1 == capsule2) return collide_SegmentvsSphere(segment1, segment2, capsule1, capsuleRadius);
+
 	std::pair<glm::vec3, glm::vec3> p = getSegmentsClosestSegment(segment1, segment2, capsule1, capsule2);
 	return glm::length2(p.first - p.second) < capsuleRadius * capsuleRadius;
 }
