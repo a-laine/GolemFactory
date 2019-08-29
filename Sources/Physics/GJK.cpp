@@ -1,5 +1,9 @@
 #include "GJK.h"
 #include "SpecificCollision/CollisionPoint.h"
+#include "SpecificCollision/CollisionUtils.h"
+
+//#include "SpecificIntersection/IntersectionPoint.h"
+
 #include "Utiles/Debug.h"
 
 #include <iostream>
@@ -46,9 +50,10 @@ Intersection::Contact GJK::intersect(const Shape& a, const Shape& b)
 {
 	std::vector<std::pair<glm::vec3, glm::vec3>> simplexPair;
 	collide(a, b, &simplexPair);
+	Intersection::Contact contact;
 
 	// draw minkowski pairs
-	Debug::color = Debug::green;
+	Debug::color = Debug::orange;
 	for (unsigned int i = 0; i < simplexPair.size(); i++)
 		Debug::drawLine(simplexPair[i].first, simplexPair[i].second);
 
@@ -63,9 +68,13 @@ Intersection::Contact GJK::intersect(const Shape& a, const Shape& b)
 	{
 		case 1:
 			Debug::drawPoint(simplexPair[0].first - simplexPair[0].second + offset);
+			contact = Intersection::intersect_PointvsPoint(simplexPair[0].first, simplexPair[0].second);
 			break;
 		case 2:
 			Debug::drawLine(simplexPair[0].first - simplexPair[0].second + offset, simplexPair[1].first - simplexPair[1].second + offset);
+			Debug::color = Debug::darkGreen;
+			Debug::drawLine(getSegmentClosestPoint(simplexPair[0].first - simplexPair[0].second + offset, simplexPair[1].first - simplexPair[1].second + offset, offset), offset);
+			contact = Intersection::intersect_SegmentvsSegment(simplexPair[0].first, simplexPair[1].first, simplexPair[0].second, simplexPair[1].second);
 			break;
 		case 3:
 			{
@@ -81,6 +90,10 @@ Intersection::Contact GJK::intersect(const Shape& a, const Shape& b)
 
 				Debug::color = Debug::blue;
 				Debug::drawLine(0.3333f*(p1 + p2 + p3), 0.3333f*(p1 + p2 + p3) + 0.15f*glm::normalize(n1));
+
+				Debug::color = Debug::darkGreen;
+				Intersection::Contact c = Intersection::intersect_PointvsTriangle(offset, p1, p2, p3);
+				Debug::drawLine(c.contactPointA, c.contactPointB);
 			}
 			break;
 		default:
@@ -112,12 +125,15 @@ Intersection::Contact GJK::intersect(const Shape& a, const Shape& b)
 				Debug::drawLine(0.3333f*(p1 + p2 + p4), 0.3333f*(p1 + p2 + p4) + 0.15f*glm::normalize(n2));
 				Debug::drawLine(0.3333f*(p2 + p4 + p3), 0.3333f*(p2 + p4 + p3) + 0.15f*glm::normalize(n3));
 				Debug::drawLine(0.3333f*(p1 + p4 + p3), 0.3333f*(p1 + p4 + p3) + 0.15f*glm::normalize(n4));
+
+				Debug::color = Debug::darkGreen;
+				Intersection::Contact c;
 			}
 			break;
 	}
 	
 
-	return Intersection::Contact();
+	return contact;
 }
 //
 
