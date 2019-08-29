@@ -198,26 +198,26 @@ int main()
 		Debug::view = currentCamera->getGlobalViewMatrix();
 		Debug::projection = glm::perspective(glm::radians(currentCamera->getVerticalFieldOfView(context->getViewportRatio())), context->getViewportRatio(), 0.1f, 1500.f);
 
-		const Capsule* shape1 = static_cast<const Capsule*>(avatar->getGlobalBoundingShape());
-		const OrientedBox* shape2 = static_cast<const OrientedBox*>(testEntity->getGlobalBoundingShape());
+		//const Capsule* shape1 = static_cast<const Capsule*>(avatar->getGlobalBoundingShape());
 		
-		Capsule s1(shape1->p1, shape1->p2 + 0.5f * currentCamera->getRight(), shape1->radius);
-		auto u = shape2->toAxisAlignedBox();
-		Capsule s2(u.min, u.max, 1.f);
+		const Hull* shape2 = static_cast<const Hull*>(testEntity->getGlobalBoundingShape());
+		Hull shape1 = Hull(shape2->mesh, glm::scale(avatar->getMatrix(), glm::vec3(5.f)));
 
-		if(Collision::collide(s1, s2))
+		//Capsule s1(shape1->p1, shape1->p2 + 0.5f * currentCamera->getRight(), shape1->radius);
+		//auto u = shape2->toAxisAlignedBox();
+		//Capsule s2(u.min, u.max, 1.f);
+
+		if(Collision::collide(shape1, *shape2))
 			Debug::color = Debug::red;
 		else Debug::color = Debug::white;
 
-		Debug::drawWiredCapsule(s1.p1, s1.p2, s1.radius);
-		Debug::drawWiredCapsule(s2.p1, s2.p2, s2.radius);
-
-		Debug::color = Debug::magenta;
-		Debug::drawLine(s1.p1, s1.p2);
-		Debug::drawLine(s2.p1, s2.p2);
-		
+		Debug::drawWiredMesh(shape1.mesh, shape1.base);
+		Debug::drawWiredMesh(shape2->mesh, shape2->base);
+		//Debug::drawWiredCapsule(s1.p1, s1.p2, s1.radius);
+		//Debug::drawWiredCapsule(s2.p1, s2.p2, s2.radius);
+				
 		Debug::color = Debug::green;
-		Intersection::Contact contact = Intersection::intersect(s1, s2);
+		Intersection::Contact contact = Intersection::intersect(shape1, *shape2);
 		Debug::drawLine(contact.contactPointA, contact.contactPointB);
 
 		Debug::color = Debug::blue;
@@ -287,10 +287,10 @@ void initializeForestScene(bool emptyPlace)
 			}
 		}*/
 
-		testEntity = world.getEntityFactory().createObject("cube", [](Entity* object)
+		testEntity = world.getEntityFactory().createObject("rock", [](Entity* object)
 		{
 			object->getComponent<DrawableComponent>()->setShader(ResourceManager::getInstance()->getResource<Shader>("default"));
-			object->setTransformation(glm::vec3(0.f, 0.f, 2.f), glm::vec3(1.f),  glm::normalize(glm::fquat(1.f, 0.1f, 0.3f, 1.f)));
+			object->setTransformation(glm::vec3(0.f, 0.f, 0.f), glm::vec3(5.f), glm::fquat(0,0,0,1)/*glm::normalize(glm::fquat(1.f, 0.1f, 0.3f, 1.f))*/);
 			RigidBody* rb = new RigidBody(RigidBody::DYNAMIC, RigidBody::CONTINUOUS);
 			rb->setMass(1.f);
 			rb->setGravityFactor(1.f);

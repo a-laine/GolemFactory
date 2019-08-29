@@ -185,10 +185,6 @@ namespace
 		}
 		else return GJK::intersect(capsule, b);
 	};
-	inline Intersection::Contact  intersect_HullvsShape(const Shape& hull, const Shape& b)
-	{
-		return GJK::intersect(hull, b);
-	}
 
 	// used for debug
 	void printError(const std::string& Shape1, const std::string& Shape2, const int& testNumber, int& e)
@@ -247,7 +243,7 @@ Intersection::Contact Intersection::intersect(const Shape& a, const Shape& b)
 			if (swaped) return intersect_CapsulevsShape(Shape1, Shape2).swap();
 			else return intersect_CapsulevsShape(Shape1, Shape2);
 		default:						
-			return Intersection::Contact();
+			return GJK::intersect(a, b);
 	}
 }
 //

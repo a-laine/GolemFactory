@@ -90,7 +90,9 @@ void EntityFactory::createDrawable(Entity* object, const std::string& meshName, 
 
 		Mesh* m = ResourceManager::getInstance()->findResource<Mesh>(hullname);
 		if (m)
+		{
 			object->setShape(new Hull(m));
+		}
 		else if (ResourceManager::getInstance()->loadableResource<Mesh>(hullname))
 		{
 			m = ResourceManager::getInstance()->getResource<Mesh>(hullname);
@@ -109,6 +111,7 @@ void EntityFactory::createDrawable(Entity* object, const std::string& meshName, 
 			ResourceManager::getInstance()->addResource(m);
 			object->setShape(new Hull(m));
 		}
+		ResourceManager::getInstance()->release(m);
 	}
 	/*else
 	{

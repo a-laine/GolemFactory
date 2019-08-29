@@ -12,7 +12,9 @@
 
 //	Default
 Hull::Hull(Mesh* m, glm::mat4 transform) : Shape(HULL), base(transform), mesh(m)
-{}
+{
+	ResourceManager::getInstance()->getResource(m);
+}
 Hull::~Hull()
 {
 	ResourceManager::getInstance()->release(mesh);
@@ -47,6 +49,7 @@ Shape& Hull::operator=(const Shape& s)
 		const Hull& h = *static_cast<const Hull*>(&s);
 		mesh = h.mesh;
 		base = h.base;
+		ResourceManager::getInstance()->getResource(mesh);
 	}
 	return *this;
 }
@@ -67,7 +70,7 @@ glm::vec3 Hull::GJKsupport(const glm::vec3& direction) const
 	glm::vec3 u = glm::vec3(glm::inverse(base) * glm::vec4(direction, 0.f));
 	float d = std::numeric_limits<float>::min();
 	glm::vec3 v = glm::vec3(0.f);
-	auto vertices = *mesh->getVertices();
+	const std::vector<glm::vec3>& vertices = *mesh->getVertices();
 	for (unsigned int i = 0; i < vertices.size(); i++)
 	{
 		float a = glm::dot(vertices[i], u);

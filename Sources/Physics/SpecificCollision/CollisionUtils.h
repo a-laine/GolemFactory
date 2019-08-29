@@ -120,11 +120,11 @@ namespace
 	{
 		float crossDot = glm::dot(v1, v2);
 		float magnitute = glm::dot(v1, v1)*glm::dot(v2, v2) - crossDot*crossDot;
-		glm::vec2 bary;
+		glm::vec2 barry;
 
-		bary.x = (glm::dot(v2, v2) * glm::dot(point, v1) - crossDot * glm::dot(point, v2)) / magnitute;
-		bary.y = (glm::dot(v1, v1) * glm::dot(point, v2) - crossDot * glm::dot(point, v1)) / magnitute;
-		return bary;
+		barry.x = (glm::dot(v2, v2) * glm::dot(point, v1) - crossDot * glm::dot(point, v2)) / magnitute;
+		barry.y = (glm::dot(v1, v1) * glm::dot(point, v2) - crossDot * glm::dot(point, v1)) / magnitute;
+		return barry;
 	}
 	//
 };

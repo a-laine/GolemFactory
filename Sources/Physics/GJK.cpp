@@ -1,6 +1,6 @@
 #include "GJK.h"
 #include "SpecificCollision/CollisionPoint.h"
-
+#include "Utiles/Debug.h"
 
 #include <iostream>
 
@@ -10,13 +10,12 @@
 bool GJK::collide(const Shape& a, const Shape& b, std::vector<std::pair<glm::vec3, glm::vec3>>* shapePair)
 {
 	// map optionnal result
-	std::vector<std::pair<glm::vec3, glm::vec3>>& simplexPoints = std::vector<std::pair<glm::vec3, glm::vec3>>();
-	if (shapePair)
-		simplexPoints = *shapePair;
+	std::vector<std::pair<glm::vec3, glm::vec3>> tmp;
+	std::vector<std::pair<glm::vec3, glm::vec3>>& simplexPoints = shapePair ? *shapePair : tmp;
 
 	// initialize loop
 	glm::vec3 direction = glm::vec3(1, 0, 0);
-	simplexPoints = { std::pair<glm::vec3, glm::vec3>(a.GJKsupport(direction), b.GJKsupport(-direction)) };
+	simplexPoints = { {a.GJKsupport(direction), b.GJKsupport(-direction)} };
 	glm::vec3 S = simplexPoints[0].first - simplexPoints[0].second;
 	std::vector<glm::vec3> simplex;
 	simplex.reserve(4);
@@ -29,12 +28,14 @@ bool GJK::collide(const Shape& a, const Shape& b, std::vector<std::pair<glm::vec
 		glm::vec3 A = a.GJKsupport(direction);
 		glm::vec3 B = b.GJKsupport(-direction);
 		S = A - B;
+		simplex.push_back(S);
+		simplexPoints.push_back({ A, B });
+
 		if (glm::dot(S, direction) < 0)
 			return false;
-		simplex.push_back(S);
-		simplexPoints.push_back(std::pair<glm::vec3, glm::vec3>(A, B));
 		if (containOrigin(simplex))
 			return true;
+
 		prepareSimplex(simplex, direction, simplexPoints);
 	}
 
@@ -43,6 +44,79 @@ bool GJK::collide(const Shape& a, const Shape& b, std::vector<std::pair<glm::vec
 }
 Intersection::Contact GJK::intersect(const Shape& a, const Shape& b)
 {
+	std::vector<std::pair<glm::vec3, glm::vec3>> simplexPair;
+	collide(a, b, &simplexPair);
+
+	// draw minkowski pairs
+	Debug::color = Debug::green;
+	for (unsigned int i = 0; i < simplexPair.size(); i++)
+		Debug::drawLine(simplexPair[i].first, simplexPair[i].second);
+
+	// draw shifted origin
+	glm::vec3 offset = glm::vec3(0,0,5);
+	Debug::color = Debug::black;
+	Debug::drawPoint(offset);
+
+	// draw latest simplex
+	Debug::color = Debug::magenta;
+	switch(simplexPair.size())
+	{
+		case 1:
+			Debug::drawPoint(simplexPair[0].first - simplexPair[0].second + offset);
+			break;
+		case 2:
+			Debug::drawLine(simplexPair[0].first - simplexPair[0].second + offset, simplexPair[1].first - simplexPair[1].second + offset);
+			break;
+		case 3:
+			{
+				glm::vec3 p1 = simplexPair[0].first - simplexPair[0].second + offset;
+				glm::vec3 p2 = simplexPair[1].first - simplexPair[1].second + offset;
+				glm::vec3 p3 = simplexPair[2].first - simplexPair[2].second + offset;
+				glm::vec3 n1 = glm::cross(p2 - p1, p3 - p1);
+
+				Debug::color = Debug::magenta;
+				Debug::drawLine(p1, p2);
+				Debug::drawLine(p1, p3);
+				Debug::drawLine(p3, p2);
+
+				Debug::color = Debug::blue;
+				Debug::drawLine(0.3333f*(p1 + p2 + p3), 0.3333f*(p1 + p2 + p3) + 0.15f*glm::normalize(n1));
+			}
+			break;
+		default:
+			{
+				glm::vec3 p1 = simplexPair[0].first - simplexPair[0].second + offset;
+				glm::vec3 p2 = simplexPair[1].first - simplexPair[1].second + offset;
+				glm::vec3 p3 = simplexPair[2].first - simplexPair[2].second + offset;
+				glm::vec3 p4 = simplexPair[3].first - simplexPair[3].second + offset;
+
+				glm::vec3 n1 = glm::cross(p2 - p1, p3 - p1);
+				if (glm::dot(n1, p4 - p1) > 0) n1 *= -1.f;
+				glm::vec3 n2 = glm::cross(p2 - p1, p4 - p1);
+				if (glm::dot(n2, p3 - p1) > 0) n2 *= -1.f;
+				glm::vec3 n3 = glm::cross(p4 - p3, p2 - p3);
+				if (glm::dot(n3, p1 - p3) > 0) n3 *= -1.f;
+				glm::vec3 n4 = glm::cross(p4 - p3, p1 - p3);
+				if (glm::dot(n4, p2 - p3) > 0) n4 *= -1.f;
+
+				Debug::color = Debug::magenta;
+				Debug::drawLine(p1, p2);
+				Debug::drawLine(p1, p3);
+				Debug::drawLine(p1, p4);
+				Debug::drawLine(p2, p3);
+				Debug::drawLine(p2, p4);
+				Debug::drawLine(p3, p4);
+
+				Debug::color = Debug::blue;
+				Debug::drawLine(0.3333f*(p1 + p2 + p3), 0.3333f*(p1 + p2 + p3) + 0.15f*glm::normalize(n1));
+				Debug::drawLine(0.3333f*(p1 + p2 + p4), 0.3333f*(p1 + p2 + p4) + 0.15f*glm::normalize(n2));
+				Debug::drawLine(0.3333f*(p2 + p4 + p3), 0.3333f*(p2 + p4 + p3) + 0.15f*glm::normalize(n3));
+				Debug::drawLine(0.3333f*(p1 + p4 + p3), 0.3333f*(p1 + p4 + p3) + 0.15f*glm::normalize(n4));
+			}
+			break;
+	}
+	
+
 	return Intersection::Contact();
 }
 //
@@ -207,7 +281,7 @@ bool GJK::containOrigin(std::vector<glm::vec3>& simplex)
 		if (glm::dot(n2, simplex[2] - simplex[0]) > 0) n2 *= -1.f;
 		glm::vec3 n3 = glm::cross(simplex[3] - simplex[2], simplex[1] - simplex[2]);
 		if (glm::dot(n3, simplex[0] - simplex[2]) > 0) n3 *= -1.f;
-		glm::vec3 n4 = glm::cross(simplex[3] - simplex[2], simplex[1] - simplex[2]);
+		glm::vec3 n4 = glm::cross(simplex[3] - simplex[2], simplex[0] - simplex[2]);
 		if (glm::dot(n4, simplex[1] - simplex[2]) > 0) n4 *= -1.f;
 
 		// test against origin

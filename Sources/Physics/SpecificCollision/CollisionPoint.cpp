@@ -19,11 +19,13 @@ bool Collision::collide_PointvsSegment(const glm::vec3& point, const glm::vec3& 
 	if (segment1 == segment2) return point == segment1;
 	else
 	{
-		glm::vec3 s = segment2 - segment1;
+		glm::vec3 u = point - getSegmentClosestPoint(segment1, segment2, point);
+		return glm::length2(u) < COLLISION_EPSILON;
+		/*glm::vec3 s = segment2 - segment1;
 		glm::vec3 u = glm::normalize(s);
 		glm::vec3 u2 = point - segment1;
 		glm::vec3 u3 = u2 - glm::dot(u, u2) * u; // distance of point to segment
-		return glm::dot(u3, u3) <= COLLISION_EPSILON && glm::dot(u, u2) <= glm::length(s) && glm::dot(u, u2) >= COLLISION_EPSILON;
+		return glm::dot(u3, u3) <= COLLISION_EPSILON && glm::dot(u, u2) <= glm::length(s) && glm::dot(u, u2) >= COLLISION_EPSILON;*/
 	}
 }
 bool Collision::collide_PointvsTriangle(const glm::vec3& point, const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3)
@@ -31,31 +33,25 @@ bool Collision::collide_PointvsTriangle(const glm::vec3& point, const glm::vec3&
 	//	check if point is coplanar to triangle
 	glm::vec3 u1 = triangle2 - triangle1;
 	glm::vec3 u2 = triangle3 - triangle1;
-	glm::vec3 n = glm::normalize(glm::cross(u1, u2));
+	glm::vec3 n = glm::cross(u1, u2);
 	glm::vec3 p = point - triangle1;
 
-	if (n == glm::vec3(0.f)) // flat triangle
+	if (glm::length2(n) <= COLLISION_EPSILON) // flat triangle
 	{
 		glm::vec3 u3 = triangle3 - triangle2;
-		float d1 = glm::dot(u1, u1);
-		float d2 = glm::dot(u2, u2);
-		float d3 = glm::dot(u3, u3);
+		float d1 = glm::length2(u1);
+		float d2 = glm::length2(u2);
+		float d3 = glm::length2(u3);
 
 		if (d1 >= d2 && d1 >= d3) return collide_PointvsSegment(point, triangle1, triangle2);
 		else if (d2 >= d1 && d2 >= d3) return collide_PointvsSegment(point, triangle1, triangle3);
 		else return collide_PointvsSegment(point, triangle3, triangle2);
 	}
-	else if (std::abs(glm::dot(p, n)) <= COLLISION_EPSILON)
+	else if (std::abs(glm::dot(p, glm::normalize(n))) <= COLLISION_EPSILON)
 	{
 		//	checking barycentric coordinates
-		/*float crossDot = glm::dot(u1, u2);
-		float magnitute = glm::dot(u1, u1)*glm::dot(u2, u2) - crossDot*crossDot;
-		glm::vec2 barry;
-		barry.x = (glm::dot(u2, u2) * glm::dot(p, u1) - crossDot * glm::dot(p, u2)) / magnitute;
-		barry.y = (glm::dot(u1, u1) * glm::dot(p, u2) - crossDot * glm::dot(p, u1)) / magnitute;*/
-
 		glm::vec2 barry = getBarycentricCoordinates(u1, u2, p);
-		return !(barry.x < 0.f || barry.y < 0.f || barry.x + barry.y > 1.f);
+		return !(barry.x < -COLLISION_EPSILON || barry.y < -COLLISION_EPSILON || barry.x + barry.y > 1.f);
 	}
 	else return false;
 }
