@@ -207,16 +207,16 @@ int main()
 		//auto u = shape2->toAxisAlignedBox();
 		//Capsule s2(u.min, u.max, 1.f);
 
-		if(Collision::collide(shape1, *shape2))
+		/*if(Collision::collide(shape1, *shape2))
 			Debug::color = Debug::red;
-		else Debug::color = Debug::white;
+		else*/ Debug::color = Debug::white;
 
 		Debug::drawWiredMesh(shape1.mesh, shape1.base);
 		Debug::drawWiredMesh(shape2->mesh, shape2->base);
 		//Debug::drawWiredCapsule(s1.p1, s1.p2, s1.radius);
 		//Debug::drawWiredCapsule(s2.p1, s2.p2, s2.radius);
 				
-		Debug::color = Debug::green;
+		Debug::color = Debug::white;
 		Intersection::Contact contact = Intersection::intersect(shape1, *shape2);
 		Debug::drawLine(contact.contactPointA, contact.contactPointB);
 

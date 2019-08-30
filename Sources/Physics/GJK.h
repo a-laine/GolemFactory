@@ -16,6 +16,7 @@ class GJK
 		//	Protected functions
 		static void prepareSimplex(std::vector<glm::vec3>& simplex, glm::vec3& direction, std::vector<std::pair<glm::vec3, glm::vec3>>& simplexPoints);
 		static bool containOrigin(std::vector<glm::vec3>& simplex);
+		static bool isNewPoint(const glm::vec3& point, std::vector<glm::vec3>& simplex);
 		//
 };
 

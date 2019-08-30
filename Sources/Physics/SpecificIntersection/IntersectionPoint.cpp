@@ -28,7 +28,19 @@ Intersection::Contact Intersection::intersect_PointvsSegment(const glm::vec3& po
 Intersection::Contact Intersection::intersect_PointvsTriangle(const glm::vec3& point, const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3)
 {
 	// compute variables and get barrycentric coordinates of projected point
-	glm::vec3 n = glm::normalize(glm::cross(triangle2 - triangle1, triangle3 - triangle1));
+	glm::vec3 n = glm::cross(triangle2 - triangle1, triangle3 - triangle1);
+	if (glm::length2(n) <= COLLISION_EPSILON) // flat triangle
+	{
+		float d1 = glm::length2(triangle2 - triangle1);
+		float d2 = glm::length2(triangle3 - triangle1);
+		float d3 = glm::length2(triangle3 - triangle2);
+
+		if (d1 >= d2 && d1 >= d3) return intersect_PointvsSegment(point, triangle1, triangle2);
+		else if (d2 >= d1 && d2 >= d3) return intersect_PointvsSegment(point, triangle1, triangle3);
+		else return intersect_PointvsSegment(point, triangle3, triangle2);
+	}
+
+	n = glm::normalize(n);
 	glm::vec3 p = point - triangle1;
 	if (glm::dot(p, n) < 0.f)
 		n *= -1.f;

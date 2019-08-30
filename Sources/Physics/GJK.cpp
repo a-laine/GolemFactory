@@ -32,6 +32,10 @@ bool GJK::collide(const Shape& a, const Shape& b, std::vector<std::pair<glm::vec
 		glm::vec3 A = a.GJKsupport(direction);
 		glm::vec3 B = b.GJKsupport(-direction);
 		S = A - B;
+
+		if (!isNewPoint(S, simplex))
+			return false;
+
 		simplex.push_back(S);
 		simplexPoints.push_back({ A, B });
 
@@ -49,7 +53,38 @@ bool GJK::collide(const Shape& a, const Shape& b, std::vector<std::pair<glm::vec
 Intersection::Contact GJK::intersect(const Shape& a, const Shape& b)
 {
 	std::vector<std::pair<glm::vec3, glm::vec3>> simplexPair;
-	collide(a, b, &simplexPair);
+	if (collide(a, b, &simplexPair))
+	{
+		std::vector<glm::vec3> simplex;
+		simplex.reserve(4);
+		for(unsigned int i=0; i<simplexPair.size(); i++)
+			simplex.push_back(simplexPair[i].first - simplexPair[i].second);
+		glm::vec3 direction(0.f);
+
+		for (unsigned int i = 0; i < MAX_ITERATION; i++)
+		{
+			/*prepareSimplex(simplex, direction, simplexPair);
+			glm::vec3 A = a.GJKsupport(direction);
+			glm::vec3 B = b.GJKsupport(-direction);
+			glm::vec3 S = A - B;
+
+			if (!isNewPoint(S, simplex))
+				break;
+			simplex.push_back(S);
+			simplexPair.push_back({ A, B });*/
+		}
+		/*
+			start with collision tmp result
+				1  f closest face of polyhedron
+				2  extend polyhedron through f
+				4  if not possible to extend : return f
+				3  goto 1
+		*/
+	}
+	else
+	{
+
+	}
 	Intersection::Contact contact;
 
 	// draw minkowski pairs
@@ -58,7 +93,7 @@ Intersection::Contact GJK::intersect(const Shape& a, const Shape& b)
 		Debug::drawLine(simplexPair[i].first, simplexPair[i].second);
 
 	// draw shifted origin
-	glm::vec3 offset = glm::vec3(0,0,5);
+	glm::vec3 offset = glm::vec3(0,0,3);
 	Debug::color = Debug::black;
 	Debug::drawPoint(offset);
 
@@ -72,7 +107,7 @@ Intersection::Contact GJK::intersect(const Shape& a, const Shape& b)
 			break;
 		case 2:
 			Debug::drawLine(simplexPair[0].first - simplexPair[0].second + offset, simplexPair[1].first - simplexPair[1].second + offset);
-			Debug::color = Debug::darkGreen;
+			Debug::color = Debug::red;
 			Debug::drawLine(getSegmentClosestPoint(simplexPair[0].first - simplexPair[0].second + offset, simplexPair[1].first - simplexPair[1].second + offset, offset), offset);
 			contact = Intersection::intersect_SegmentvsSegment(simplexPair[0].first, simplexPair[1].first, simplexPair[0].second, simplexPair[1].second);
 			break;
@@ -91,7 +126,7 @@ Intersection::Contact GJK::intersect(const Shape& a, const Shape& b)
 				Debug::color = Debug::blue;
 				Debug::drawLine(0.3333f*(p1 + p2 + p3), 0.3333f*(p1 + p2 + p3) + 0.15f*glm::normalize(n1));
 
-				Debug::color = Debug::darkGreen;
+				Debug::color = Debug::red;
 				Intersection::Contact c = Intersection::intersect_PointvsTriangle(offset, p1, p2, p3);
 				Debug::drawLine(c.contactPointA, c.contactPointB);
 			}
@@ -126,8 +161,57 @@ Intersection::Contact GJK::intersect(const Shape& a, const Shape& b)
 				Debug::drawLine(0.3333f*(p2 + p4 + p3), 0.3333f*(p2 + p4 + p3) + 0.15f*glm::normalize(n3));
 				Debug::drawLine(0.3333f*(p1 + p4 + p3), 0.3333f*(p1 + p4 + p3) + 0.15f*glm::normalize(n4));
 
-				Debug::color = Debug::darkGreen;
-				Intersection::Contact c;
+				Debug::color = Debug::red;
+				Intersection::Contact c, tmp;
+				float dmin = std::numeric_limits<float>::max();
+				std::vector<int> faceIndex;
+
+				tmp = Intersection::intersect_PointvsTriangle(offset, p1, p2, p3);
+				if (float d = glm::length2(tmp.contactPointA - tmp.contactPointB) < dmin)
+				{
+					c = tmp;
+					dmin = d;
+					faceIndex = { 0,1,2 };
+				}
+				tmp = Intersection::intersect_PointvsTriangle(offset, p1, p2, p4);
+				if (float d = glm::length2(tmp.contactPointA - tmp.contactPointB) < dmin)
+				{
+					c = tmp;
+					dmin = d;
+					faceIndex = { 0,1,3 };
+				}
+				tmp = Intersection::intersect_PointvsTriangle(offset, p4, p2, p3);
+				if (float d = glm::length2(tmp.contactPointA - tmp.contactPointB) < dmin)
+				{
+					c = tmp;
+					dmin = d;
+					faceIndex = { 3,1,2 };
+				}
+				tmp = Intersection::intersect_PointvsTriangle(offset, p1, p4, p3);
+				if (float d = glm::length2(tmp.contactPointA - tmp.contactPointB) < dmin)
+				{
+					c = tmp;
+					dmin = d;
+					faceIndex = { 0,3,2 };
+				}
+				Debug::drawLine(c.contactPointA, c.contactPointB);
+
+				// get contact in minkowski polyhedron
+				p1 = simplexPair[faceIndex[0]].first - simplexPair[faceIndex[0]].second;
+				p2 = simplexPair[faceIndex[1]].first - simplexPair[faceIndex[1]].second;
+				p3 = simplexPair[faceIndex[2]].first - simplexPair[faceIndex[2]].second;
+
+				c = Intersection::intersect_PointvsTriangle(glm::vec3(0.f), p1, p2, p3);
+
+				// compute barrycentric coordinates
+				glm::vec2 b = getBarycentricCoordinates(p2 - p1, p3 - p1, c.contactPointB - p1);
+
+				contact.contactPointA = simplexPair[faceIndex[0]].first + 
+					b.x * (simplexPair[faceIndex[1]].first - simplexPair[faceIndex[0]].first) + 
+					b.y * (simplexPair[faceIndex[2]].first - simplexPair[faceIndex[0]].first);
+				contact.contactPointB = simplexPair[faceIndex[0]].second +
+					b.x * (simplexPair[faceIndex[1]].second - simplexPair[faceIndex[0]].second) +
+					b.y * (simplexPair[faceIndex[2]].second - simplexPair[faceIndex[0]].second);
 			}
 			break;
 	}
@@ -166,6 +250,7 @@ void GJK::prepareSimplex(std::vector<glm::vec3>& simplex, glm::vec3& direction, 
 				glm::vec3 AB = simplex[1] - simplex[2];
 				glm::vec3 AC = simplex[0] - simplex[2];
 				glm::vec3 n = glm::cross(AB, AC);
+				//if (glm::dot(n, -simplex[2]) < 0.f) n *= -1.f;
 
 				if (glm::dot(glm::cross(n, AC), -simplex[2]) > 0)
 				{
@@ -312,5 +397,12 @@ bool GJK::containOrigin(std::vector<glm::vec3>& simplex)
 		std::cout << "GJK : error : simplex check not possible in normal case (dimension too high or too low)" << std::endl;
 		return true;
 	}
+}
+bool GJK::isNewPoint(const glm::vec3& point, std::vector<glm::vec3>& simplex)
+{
+	for (int i = 0; i < simplex.size(); i++)
+		if (simplex[i] == point)
+			return false;
+	return true;
 }
 //
