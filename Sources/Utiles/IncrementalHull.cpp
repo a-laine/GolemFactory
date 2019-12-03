@@ -49,18 +49,18 @@ Mesh* IncrementalHull::getConvexHull(Mesh* m)
 	for(unsigned int i=0; i < pointCloud.size() && maxIteration && !stop; i++)
 	{
 		//	test if point inside current hull
-		Face* f = nullptr;
+		//Face* f = nullptr;
 		bool inside = true;
 		for (auto it = hullFaces.begin(); it != hullFaces.end(); it++)
 		{
 			if (glm::dot(it->n, pointCloud[i] - it->p1) > EPSILON)
 			{
 				inside = false;
-				f = &(*it);
+				//f = &(*it);
 				break;
 			}
 		}
-		if (inside || !f)
+		if (inside)// || !f)
 			continue;
 
 		//	compute horizon

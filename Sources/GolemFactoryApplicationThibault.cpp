@@ -218,6 +218,7 @@ int main()
 				
 		Debug::color = Debug::white;
 		Intersection::Contact contact = Intersection::intersect(shape1, *shape2);
+		Debug::color = Debug::red;
 		Debug::drawLine(contact.contactPointA, contact.contactPointB);
 
 		Debug::color = Debug::blue;
