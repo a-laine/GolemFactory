@@ -51,6 +51,7 @@
 #include "Scene/RaySceneQuerry.h"
 
 #include "Utiles/Debug.h"
+#include "Physics/GJK.h"
 
 #define GRID_SIZE 100
 #define GRID_ELEMENT_SIZE 5.f
@@ -521,8 +522,12 @@ void events()
 
 	for (unsigned int i = 0; i < v.size(); i++)
 	{
+		//	debug
+		if (v[i] == SLOT8) GJK::max_iteration++;
+		else if (v[i] == SLOT9) GJK::max_iteration--;
+
 		//	micselenious
-		if (v[i] == QUIT) glfwSetWindowShouldClose(context->getParentWindow(), GL_TRUE);
+		else if (v[i] == QUIT) glfwSetWindowShouldClose(context->getParentWindow(), GL_TRUE);
 		else if (v[i] == CHANGE_CURSOR_MODE) EventHandler::getInstance()->setCursorMode(!EventHandler::getInstance()->getCursorMode());
 		else if (v[i] == ACTION)
 		{
