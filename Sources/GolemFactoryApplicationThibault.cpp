@@ -111,7 +111,7 @@ int main()
 	//	Test scene
 		Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("wired"));
 		initializeForestScene(false);
-		world.getEntityFactory().createObject("cube", [](Entity* object)
+		world.getEntityFactory().createObject("cube", [](Entity* object) // ground collider
 		{
 			object->setTransformation(glm::vec3(0.f, 0.f, -10.f), glm::vec3(1000, 1000, 10), glm::fquat());
 			object->removeComponent(object->getComponent<DrawableComponent>());
@@ -122,7 +122,7 @@ int main()
             DrawableComponent* drawable = object->getComponent<DrawableComponent>();
 			float scale = 1.7f / (drawable->getMeshBBMax() - drawable->getMeshBBMin()).z;
 			glm::vec3 pos = glm::vec3(-10.f, 0.f, -scale * drawable->getMeshBBMin().z);
-			drawable->setShader(nullptr);
+			//drawable->setShader(nullptr);
 			object->setTransformation(pos, glm::vec3(scale), glm::toQuat(glm::rotate(glm::pi<float>() / 2.f + atan2(1.f, 0.f), glm::vec3(0.f, 0.f, 1.f))));
 
 			SkeletonComponent* skeletonComp = object->getComponent<SkeletonComponent>();
@@ -161,7 +161,7 @@ int main()
 		Renderer::getInstance()->normalViewer = ResourceManager::getInstance()->getResource<Shader>("normalViewer");
 
 		//Entity* testTree = world.getEntityFactory().createObject("tree", glm::vec3(5, 0, 0), glm::vec3(1), glm::rotate(glm::quat(), glm::radians((rand() % 3600) / 10.f), glm::vec3(0, 0, 1)));
-		Collision::debugUnitaryTest(2, nullptr);
+		//Collision::debugUnitaryTest(2, nullptr);
 		
 
 	// init loop time tracking
@@ -191,18 +191,18 @@ int main()
 			Renderer::getInstance()->setRenderOption(Renderer::WIREFRAME);
 		else Renderer::getInstance()->setRenderOption(Renderer::DEFAULT);
 		Renderer::getInstance()->render(currentCamera);
-		{
+		/*{
 			glm::mat4 view = currentCamera->getGlobalViewMatrix();
 			glm::mat4 projection = glm::perspective(glm::radians(currentCamera->getVerticalFieldOfView(context->getViewportRatio())), context->getViewportRatio(), 0.1f, 1500.f);
-		}
+		}*/
 
 		Debug::view = currentCamera->getGlobalViewMatrix();
 		Debug::projection = glm::perspective(glm::radians(currentCamera->getVerticalFieldOfView(context->getViewportRatio())), context->getViewportRatio(), 0.1f, 1500.f);
 
 		//const Capsule* shape1 = static_cast<const Capsule*>(avatar->getGlobalBoundingShape());
 		
-		const Hull* shape2 = static_cast<const Hull*>(testEntity->getGlobalBoundingShape());
-		Hull shape1 = Hull(shape2->mesh, glm::scale(avatar->getMatrix(), glm::vec3(5.f)));
+		//const Hull* shape2 = static_cast<const Hull*>(testEntity->getGlobalBoundingShape());
+		//Hull shape1 = Hull(shape2->mesh, glm::scale(avatar->getMatrix(), glm::vec3(5.f)));
 
 		//Capsule s1(shape1->p1, shape1->p2 + 0.5f * currentCamera->getRight(), shape1->radius);
 		//auto u = shape2->toAxisAlignedBox();
@@ -210,9 +210,9 @@ int main()
 
 		/*if(Collision::collide(shape1, *shape2))
 			Debug::color = Debug::red;
-		else*/ Debug::color = Debug::white;
+		else Debug::color = Debug::white;*/
 
-		Debug::drawWiredMesh(shape1.mesh, shape1.base);
+		/*Debug::drawWiredMesh(shape1.mesh, shape1.base);
 		Debug::drawWiredMesh(shape2->mesh, shape2->base);
 		//Debug::drawWiredCapsule(s1.p1, s1.p2, s1.radius);
 		//Debug::drawWiredCapsule(s2.p1, s2.p2, s2.radius);
@@ -224,7 +224,7 @@ int main()
 
 		Debug::color = Debug::blue;
 		Debug::drawLine(contact.contactPointA, contact.contactPointA + 0.15f * contact.normalA);
-		Debug::drawLine(contact.contactPointB, contact.contactPointB + 0.15f * contact.normalB);
+		Debug::drawLine(contact.contactPointB, contact.contactPointB + 0.15f * contact.normalB);*/
 		
 
 		// 
@@ -272,7 +272,7 @@ void initializeForestScene(bool emptyPlace)
 		//world.getEntityFactory().createObject("rock", glm::vec3(0), glm::vec3(50.f, 50.f, 50.f));
 		//world.getEntityFactory().createObject([&hg](Entity* house) { hg.getHouse(house, 0, 100, 100); });
 
-		/*unsigned int N = 7;
+		unsigned int N = 7;
 		unsigned int N2 = 3;
 		for (unsigned int j = 0; j < N2; j++)
 		{
@@ -284,15 +284,16 @@ void initializeForestScene(bool emptyPlace)
 					object->setTransformation(p, glm::vec3(1.f), glm::fquat());
 					RigidBody* rb = new RigidBody(RigidBody::DYNAMIC);
 					rb->setMass(1.f);
+					rb->setGravityFactor(0.1f);
 					object->addComponent(rb);
 				});
 			}
-		}*/
+		}
 
-		testEntity = world.getEntityFactory().createObject("rock", [](Entity* object)
+		/*testEntity = world.getEntityFactory().createObject("rock", [](Entity* object)
 		{
 			object->getComponent<DrawableComponent>()->setShader(ResourceManager::getInstance()->getResource<Shader>("default"));
-			object->setTransformation(glm::vec3(0.f, 0.f, 0.f), glm::vec3(5.f), glm::fquat(0,0,0,1)/*glm::normalize(glm::fquat(1.f, 0.1f, 0.3f, 1.f))*/);
+			object->setTransformation(glm::vec3(0.f, 0.f, 0.f), glm::vec3(5.f), glm::fquat(0,0,0,1));
 			RigidBody* rb = new RigidBody(RigidBody::DYNAMIC, RigidBody::CONTINUOUS);
 			rb->setMass(1.f);
 			rb->setGravityFactor(1.f);
@@ -300,7 +301,7 @@ void initializeForestScene(bool emptyPlace)
 			
 			//object->addComponent(rb);
 			object->getComponent<DrawableComponent>()->setShader(nullptr);
-		});
+		});*/
 	}
 
 	// village

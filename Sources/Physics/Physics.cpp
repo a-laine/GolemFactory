@@ -8,6 +8,8 @@
 #include "Scene/SceneManager.h"
 #include "World/World.h"
 
+#include "Utiles/Debug.h"
+
 #define APPROXIMATION_FACTOR 10.f
 
 
@@ -263,8 +265,8 @@ void Physics::computeBoundingShapesAndDetectPairs(const float& elapsedTime, Scen
 		else swept->init(*it);
 		sweptList.push_back(swept);
 		
-		scene->removeObject(*it);
-		scene->addObject(*it);
+		/*scene->removeObject(*it);
+		scene->addObject(*it);*/
 	
 		auto box = swept->getBox();
 		proximityTest.result.clear();
@@ -297,6 +299,7 @@ void Physics::computeBoundingShapesAndDetectPairs(const float& elapsedTime, Scen
 		if (!collision)
 		{
 			integratePosition(*it, elapsedTime);
+			scene->updateObject(*it);
 		}
 	}
 }
@@ -363,12 +366,13 @@ void Physics::discreteSolver(const std::pair<std::vector<Entity*>, std::vector<E
 			if (Collision::collide(*end, *cluster.first[j]->getGlobalBoundingShape()))
 			{
 				Intersection::Contact contact = Intersection::intersect(*end, *cluster.first[j]->getGlobalBoundingShape());
+				Debug::color = Debug::magenta;
+				Debug::drawLine(contact.contactPointA, contact.contactPointB);
 			}
 		}
-		for (unsigned int j = 0; j < cluster.second.size(); j++)
-		{
 
-		}
+		//cluster.first[i]->setTransformation(rigidbody->predictPosition, cluster.first[i]->getScale(), glm::normalize(rigidbody->predictRotation));
+		//scene->updateObject(*it);
 	}
 }
 void Physics::continuousSolver(const std::pair<std::vector<Entity*>, std::vector<Entity*> >& cluster)

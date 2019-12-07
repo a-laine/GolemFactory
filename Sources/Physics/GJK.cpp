@@ -10,7 +10,7 @@
 #define MAX_ITERATION 50
 #define EPSILON 0.00001f
 
-int GJK::max_iteration = 15;
+int GJK::max_iteration = 1;
 bool GJK::verbose = true;
 bool GJK::gizmos = true;
 
@@ -68,18 +68,28 @@ Intersection::Contact GJK::intersect(const Shape& a, const Shape& b)
 	}
 	else
 	{
-		if (simplexPair.size() > 3)
-			hull.initFromTetrahedron(simplexPair);
-		else if (simplexPair.size() == 3)
-			hull.initFromTriangle(simplexPair);
-		else
+		/*if (simplexPair.size() > 3)
+			hull.initFromTetrahedron(simplexPair);*/
+		if (simplexPair.size() < 4)
 		{
 			glm::vec3 p1 = simplexPair[0].first - simplexPair[0].second;
 			glm::vec3 p2 = simplexPair[1].first - simplexPair[1].second;
-			glm::vec3 direction = glm::cross(glm::cross(p2 - p1, -p1), p2 - p1);
+
+			if (simplexPair.size() == 2)
+			{
+				glm::vec3 p1 = simplexPair[0].first - simplexPair[0].second;
+				glm::vec3 p2 = simplexPair[1].first - simplexPair[1].second;
+				glm::vec3 direction = glm::cross(glm::cross(p2 - p1, -p1), p2 - p1);
+				simplexPair.push_back(std::pair<glm::vec3, glm::vec3>({ a.GJKsupport(direction), b.GJKsupport(-direction) }));
+			}
+
+			glm::vec3 p3 = simplexPair[2].first - simplexPair[2].second;
+			glm::vec3 direction = glm::cross(p2 - p1, p3 - p1);
 			simplexPair.push_back(std::pair<glm::vec3, glm::vec3>({ a.GJKsupport(direction), b.GJKsupport(-direction) }));
-			hull.initFromTriangle(simplexPair);
+			//hull.initFromTriangle(simplexPair);
 		}
+
+		hull.initFromTetrahedron(simplexPair);
 		collision = false;
 	}
 
@@ -93,13 +103,13 @@ Intersection::Contact GJK::intersect(const Shape& a, const Shape& b)
 	unsigned short i;
 	for (i = 0; i < max_iteration; i++)
 	{
-		glm::vec3 direction = hull.getClosestFromOrigin()->n;
+		glm::vec3 direction = hull.getDirection(collision);
 		if (hull.add(a.GJKsupport(direction), b.GJKsupport(-direction)))
 			break;
 	}
 
 	// get closest minkowski diff faces to origin
-	GJKHull::Face& f = *hull.getClosestFromOrigin();
+	GJKHull::Face& f = *hull.getClosestFace(collision);
 	auto c = Intersection::intersect_PointvsTriangle(glm::vec3(0), f.p1, f.p2, f.p3);
 
 	//debug
@@ -460,6 +470,19 @@ void GJK::GJKHull::initFromTriangle(std::vector<std::pair<glm::vec3, glm::vec3>>
 }
 bool GJK::GJKHull::add(const glm::vec3& a, const glm::vec3& b)
 {
+	// special case : tetrahedron not yet initialized
+	/*if (faces.size() == 1)
+	{
+		Face f = faces.front();
+		std::vector<std::pair<glm::vec3, glm::vec3>> simplex;
+		simplex.push_back({ f.a1, f.b1 });
+		simplex.push_back({ f.a2, f.b2 });
+		simplex.push_back({ f.a3, f.b3 });
+		simplex.push_back({ a, b });
+		initFromTetrahedron(simplex);
+		return false;
+	}*/
+
 	//	test if point inside current hull or already existing
 	glm::vec3 p = a - b;
 	bool inside = true;
@@ -553,14 +576,64 @@ bool GJK::GJKHull::add(const glm::vec3& a, const glm::vec3& b)
 	}
 	return false;
 }
-GJK::GJKHull::Face* GJK::GJKHull::getClosestFromOrigin()
+glm::vec3 GJK::GJKHull::getDirection(bool collision)
+{
+	float dmin = std::numeric_limits<float>::max();
+	glm::vec3 direction;
+	if (collision)
+	{
+		for (auto it = faces.begin(); it != faces.end(); it++)
+		{
+			float d = glm::abs(glm::dot(it->n, -it->p1));
+			if (d < dmin)
+			{
+				dmin = d;
+				direction = it->n;
+			}
+		}
+	}
+	else
+	{
+		for (auto it = faces.begin(); it != faces.end(); it++)
+		{
+			glm::vec3* e1 = nullptr;
+			glm::vec3 *e2 = nullptr;
+			Intersection::Contact inter = Intersection::intersect_PointvsTriangle(glm::vec3(0), it->p1, it->p2, it->p3, e1, e2);
+			float d = glm::length2(inter.contactPointB);
+			
+			if (d < dmin)
+			{
+				dmin = d;
+
+				if (!e1) // closest is a point in triangle
+					direction = it->n;
+				else if (!e2) // closest is a corner
+					direction = -(*e1);
+				else // closest is an edge
+					direction = glm::cross(glm::cross((*e2) - (*e1), -(*e1)), (*e2) - (*e1));
+			}
+		}
+	}
+	return direction;
+}
+GJK::GJKHull::Face* GJK::GJKHull::getClosestFace(bool collision)
 {
 	float dmin = std::numeric_limits<float>::max();
 	Face* face = nullptr;
+	float d;
+
 	for (auto it = faces.begin(); it != faces.end(); it++)
 	{
-		Intersection::Contact inter = Intersection::intersect_PointvsTriangle(glm::vec3(0), it->p1, it->p2, it->p3);
-		float d = glm::length2(inter.contactPointB);
+		if (collision)
+		{
+			d = glm::abs(glm::dot(it->n, -it->p1));
+		}
+		else
+		{
+			Intersection::Contact inter = Intersection::intersect_PointvsTriangle(glm::vec3(0), it->p1, it->p2, it->p3);
+			d = glm::length2(inter.contactPointB);
+		}
+
 		if (d < dmin)
 		{
 			dmin = d;
@@ -614,7 +687,7 @@ std::list<GJK::GJKHull::Edge*> GJK::GJKHull::computeHorizon(const glm::vec3& eye
 	std::list<Edge*> horizon;
 	for (auto it = faces.begin(); it != faces.end(); it++)
 	{
-		if (glm::dot(it->n, eye - it->p1) > 0)
+		if (glm::dot(it->n, eye - it->p1) >= 0)
 		{
 			it->onHull = false;
 

@@ -73,7 +73,8 @@ class GJK
 				void initFromTetrahedron(std::vector<std::pair<glm::vec3, glm::vec3>> simplex);
 				void initFromTriangle(std::vector<std::pair<glm::vec3, glm::vec3>> simplex);
 				bool add(const glm::vec3& a, const glm::vec3& b);
-				Face* getClosestFromOrigin();
+				glm::vec3 getDirection(bool collision);
+				Face* getClosestFace(bool collision);
 				void draw(const glm::vec3& offset);
 
 				void associate(Face* f, Edge* e);
