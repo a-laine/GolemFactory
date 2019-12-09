@@ -53,6 +53,8 @@ Entity* EntityFactory::createByType(const std::string& type)
 	{
 		createDrawable(object, "icosphere.obj", "default", false);
 		object->setShape(new Sphere(glm::vec3(0.f), 1.f));
+		Sphere* a = reinterpret_cast<Sphere*>((Sphere*)object->getGlobalBoundingShape());
+		std::cout << "EntityFactory " << a->center.x << " " << a->center.y << " " << a->center.z << " " << 1.1*a->radius << std::endl;
 	}
 	else if (type == "cube")
 	{

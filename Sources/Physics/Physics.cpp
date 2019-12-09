@@ -18,6 +18,26 @@
 	https://digitalrune.github.io/DigitalRune-Documentation/html/138fc8fe-c536-40e0-af6b-0fb7e8eb9623.htm#Solutions
 */
 
+//	Debug
+void DrawShape(Shape* s)
+{
+	Debug::color = Debug::white;
+	switch (s->type)
+	{
+		case Shape::SPHERE:
+			{
+				Sphere* a = reinterpret_cast<Sphere*>(&s);
+				Debug::drawSphere(a->center,1.1*a->radius);
+				std::cout << "SPHERE " << a->center.x << " " << a->center.y << " " << a->center.z << " " << 1.1*a->radius << std::endl;
+			}
+			break;
+		default:
+			std::cout << "UNKNOWN" << std::endl;
+			break;
+	}
+}
+//
+
 //  Default
 Physics::Physics() : gravity(0.f, 0.f, -9.81f), proximityTest(glm::vec3(0), glm::vec3(0))
 {}
@@ -53,6 +73,7 @@ void Physics::stepSimulation(const float& elapsedTime, SceneManager* s)
 	computeClusters();
 	for (unsigned int i = 0; i < clusters.size(); i++)
 	{
+		std::cout << "cluster " << i << std::endl;
 		switch (getSolverType(clusters[i].first))
 		{
 			case RigidBody::DISCRETE:
@@ -68,6 +89,7 @@ void Physics::stepSimulation(const float& elapsedTime, SceneManager* s)
 				break;
 		}
 	}
+	//std::cout << std::endl;
 
 	clearTempoaryStruct(s);
 }
@@ -187,6 +209,9 @@ void Physics::predictTransform(const float& elapsedTime)
 {
 	for (std::set<Entity*>::iterator it = movingEntity.begin(); it != movingEntity.end();)
 	{
+		/*Sphere* a = reinterpret_cast<Sphere*>((Sphere*)(*it)->getGlobalBoundingShape());
+		std::cout << "predictTransform " << a->center.x << " " << a->center.y << " " << a->center.z << " " << 1.1*a->radius << std::endl;*/
+
 		RigidBody* rigidbody = (*it)->getComponent<RigidBody>();
 		if (!rigidbody)
 		{
@@ -256,6 +281,8 @@ void Physics::computeBoundingShapesAndDetectPairs(const float& elapsedTime, Scen
 {
 	for (std::set<Entity*>::iterator it = movingEntity.begin(); it != movingEntity.end(); ++it)
 	{
+		//DrawShape((Shape*)(*it)->getLocalBoundingShape());
+
 		Swept* swept = (*it)->swept;
 		if (!swept)
 		{
@@ -269,6 +296,12 @@ void Physics::computeBoundingShapesAndDetectPairs(const float& elapsedTime, Scen
 		scene->addObject(*it);*/
 	
 		auto box = swept->getBox();
+
+		Debug::color = Debug::black; 
+		Debug::drawWiredCube(glm::translate(0.5f * (box.min + box.max)), 0.5f * (box.max - box.min));
+		Debug::color = Debug::magenta;
+		Debug::drawLine((*it)->getPosition(), (*it)->getPosition() + (*it)->getComponent<RigidBody>()->velocity);
+
 		proximityTest.result.clear();
 		proximityTest.bbMin = box.min;
 		proximityTest.bbMax = box.max;
@@ -289,7 +322,7 @@ void Physics::computeBoundingShapesAndDetectPairs(const float& elapsedTime, Scen
 			else shape2 = const_cast<Shape*>(proximityList.result[i]->getGlobalBoundingShape());
 			
 			//	test collision
-			if (Collision::collide(swept->getBox(), *shape2))
+			if (shape2 && Collision::collide(swept->getBox(), *shape2))
 			{
 				collision = true;
 				collidingPairs.insert(std::pair<Entity*, Entity*>(*it, proximityList.result[i]));
@@ -301,6 +334,9 @@ void Physics::computeBoundingShapesAndDetectPairs(const float& elapsedTime, Scen
 			integratePosition(*it, elapsedTime);
 			scene->updateObject(*it);
 		}
+
+		/*Sphere* a = reinterpret_cast<Sphere*>((Sphere*)(*it)->getGlobalBoundingShape());
+		std::cout << "BB and pairs " << a->center.x << " " << a->center.y << " " << a->center.z << " " << 1.1*a->radius << std::endl;*/
 	}
 }
 void Physics::computeClusters()
@@ -357,11 +393,19 @@ void Physics::discreteSolver(const std::pair<std::vector<Entity*>, std::vector<E
 {
 	for (unsigned int i = 0; i < cluster.first.size(); i++)
 	{
-		RigidBody* rigidbody = cluster.first[i]->getComponent<RigidBody>();
-		Shape* end = cluster.first[i]->getGlobalBoundingShape()->duplicate();
-		end->transform(rigidbody->getDeltaPosition(), glm::vec3(1.f), rigidbody->getDeltaRotation());
+		/*Sphere* a = reinterpret_cast<Sphere*>((Sphere*)cluster.first[i]->getGlobalBoundingShape());
+		std::cout << "discreteSolver " << a->center.x << " " << a->center.y << " " << a->center.z << " " << 1.1*a->radius << std::endl;*/
+		//DrawShape((Shape*)cluster.first[i]->getLocalBoundingShape());
+		//std::cout << "   " << (unsigned long long)cluster.first[i] << std::endl;
+		//RigidBody* rigidbody = cluster.first[i]->getComponent<RigidBody>();
+		/*Shape* end = cluster.first[i]->getGlobalBoundingShape()->duplicate();
+		end->transform(rigidbody->getDeltaPosition(), glm::vec3(1.f), rigidbody->getDeltaRotation());*/
+		//DrawShape((Shape*)cluster.first[i]->getGlobalBoundingShape());
 
-		for (unsigned int j = i + 1; j < cluster.first.size(); j++)
+		//Debug::color = Debug::magenta;
+		//Debug::drawLine(cluster.first[i]->getPosition(), cluster.first[i]->getPosition() + rigidbody->velocity);
+
+		/*for (unsigned int j = i + 1; j < cluster.first.size(); j++)
 		{
 			if (Collision::collide(*end, *cluster.first[j]->getGlobalBoundingShape()))
 			{
@@ -369,8 +413,10 @@ void Physics::discreteSolver(const std::pair<std::vector<Entity*>, std::vector<E
 				Debug::color = Debug::magenta;
 				Debug::drawLine(contact.contactPointA, contact.contactPointB);
 			}
-		}
-
+		}*/
+		/*for (unsigned int j = i + 1; j < cluster.first.size(); j++)
+			//Debug::drawLine(cluster.first[i]->getPosition(), cluster.first[j]->getPosition());
+			DrawShape((Shape*)cluster.first[i]->getGlobalBoundingShape());*/
 		//cluster.first[i]->setTransformation(rigidbody->predictPosition, cluster.first[i]->getScale(), glm::normalize(rigidbody->predictRotation));
 		//scene->updateObject(*it);
 	}

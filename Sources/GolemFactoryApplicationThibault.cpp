@@ -182,7 +182,17 @@ int main()
 		updates((float)elapseTime);
 
 		//	physics
-		world.getPhysics().stepSimulation((float)elapseTime * 0.001f, &world.getSceneManager());
+		/*std::vector<UserEventType> v;
+		EventHandler::getInstance()->getFrameEvent(v);
+		for (unsigned int i = 0; i < v.size(); i++)
+		{
+			//	debug
+			if (v[i] == SLOT8)
+			{
+				world.getPhysics().stepSimulation((float)elapseTime * 0.001f, &world.getSceneManager());
+			}
+		}*/
+		world.getPhysics().stepSimulation((float)elapseTime * 0.00001f, &world.getSceneManager());
 
 		// Render scene & picking
 		if (WidgetManager::getInstance()->getBoolean("BBrendering"))
@@ -198,6 +208,10 @@ int main()
 
 		Debug::view = currentCamera->getGlobalViewMatrix();
 		Debug::projection = glm::perspective(glm::radians(currentCamera->getVerticalFieldOfView(context->getViewportRatio())), context->getViewportRatio(), 0.1f, 1500.f);
+		/*Debug::color = Debug::black;
+		float o = 0.2f;
+		Debug::drawLine(glm::vec3(0), glm::vec3(1, 0, o)); Debug::drawLine(glm::vec3(1, 0, o), glm::vec3(0, 0, 2 * o));
+		Debug::drawLine(glm::vec3(0, 0, 2 * o), glm::vec3(0, 1, 3 * o)); Debug::drawLine(glm::vec3(0, 1, 3 * o), glm::vec3(0, 0, 4 * o));*/
 
 		//const Capsule* shape1 = static_cast<const Capsule*>(avatar->getGlobalBoundingShape());
 		
@@ -273,22 +287,23 @@ void initializeForestScene(bool emptyPlace)
 		//world.getEntityFactory().createObject([&hg](Entity* house) { hg.getHouse(house, 0, 100, 100); });
 
 		unsigned int N = 7;
-		unsigned int N2 = 3;
+		unsigned int N2 = 2;
 		for (unsigned int j = 0; j < N2; j++)
 		{
 			for (unsigned int i = 0; i < N; i++)
 			{
-				glm::vec3 p = glm::vec3(5.f * cos((float)i / N * 2.f * glm::pi<float>()), 5.f * sin((float)i / N * 2.f * glm::pi<float>()), 20.f*(j + 1));
+				glm::vec3 p = glm::vec3(5.f * cos((float)i / N * 2.f * glm::pi<float>()), 5.f * sin((float)i / N * 2.f * glm::pi<float>()), 10.f*(j + 1));
 				world.getEntityFactory().createObject("sphere", [&p](Entity* object)
 				{
 					object->setTransformation(p, glm::vec3(1.f), glm::fquat());
 					RigidBody* rb = new RigidBody(RigidBody::DYNAMIC);
 					rb->setMass(1.f);
-					rb->setGravityFactor(0.1f);
+					rb->setGravityFactor(1.f);
 					object->addComponent(rb);
 				});
 			}
 		}
+		return;
 
 		/*testEntity = world.getEntityFactory().createObject("rock", [](Entity* object)
 		{
@@ -524,11 +539,11 @@ void events()
 	for (unsigned int i = 0; i < v.size(); i++)
 	{
 		//	debug
-		if (v[i] == SLOT8) GJK::max_iteration++;
+		/*if (v[i] == SLOT8) GJK::max_iteration++;
 		else if (v[i] == SLOT9) GJK::max_iteration--;
 
 		//	micselenious
-		else if (v[i] == QUIT) glfwSetWindowShouldClose(context->getParentWindow(), GL_TRUE);
+		else */if (v[i] == QUIT) glfwSetWindowShouldClose(context->getParentWindow(), GL_TRUE);
 		else if (v[i] == CHANGE_CURSOR_MODE) EventHandler::getInstance()->setCursorMode(!EventHandler::getInstance()->getCursorMode());
 		else if (v[i] == ACTION)
 		{
