@@ -55,7 +55,6 @@ class Physics
 		void computeBoundingShapesAndDetectPairs(const float& elapsedTime, SceneManager* scene);
 		void computeClusters();
 		
-		void integratePosition(Entity* entity, const float& elapsedTime);
 		void clearTempoaryStruct(SceneManager* scene);
 		//
 

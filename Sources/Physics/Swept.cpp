@@ -28,7 +28,7 @@ void Swept::init(Entity* e)
 
 	auto start = entity->getGlobalBoundingShape()->toAxisAlignedBox();
 	auto end = start;
-	//end.transform(dp, glm::vec3(1.f), dq);
+	end.transform(dp, glm::vec3(1.f), dq);
 
 	glm::vec3 min = glm::vec3(glm::min(start.min.x, end.min.x), glm::min(start.min.y, end.min.y), glm::min(start.min.z, end.min.z));
 	glm::vec3 max = glm::vec3(glm::max(start.max.x, end.max.x), glm::max(start.max.y, end.max.y), glm::max(start.max.z, end.max.z));

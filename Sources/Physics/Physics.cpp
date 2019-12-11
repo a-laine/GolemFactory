@@ -11,32 +11,13 @@
 #include "Utiles/Debug.h"
 
 #define APPROXIMATION_FACTOR 10.f
+#define EPSILON 0.000001f
 
 
 /*
 	https://www.sidefx.com/docs/houdini/nodes/dop/rigidbodysolver.html
 	https://digitalrune.github.io/DigitalRune-Documentation/html/138fc8fe-c536-40e0-af6b-0fb7e8eb9623.htm#Solutions
 */
-
-//	Debug
-void DrawShape(Shape* s)
-{
-	Debug::color = Debug::white;
-	switch (s->type)
-	{
-		case Shape::SPHERE:
-			{
-				Sphere* a = reinterpret_cast<Sphere*>(&s);
-				Debug::drawSphere(a->center,1.1*a->radius);
-				std::cout << "SPHERE " << a->center.x << " " << a->center.y << " " << a->center.z << " " << 1.1*a->radius << std::endl;
-			}
-			break;
-		default:
-			std::cout << "UNKNOWN" << std::endl;
-			break;
-	}
-}
-//
 
 //  Default
 Physics::Physics() : gravity(0.f, 0.f, -9.81f), proximityTest(glm::vec3(0), glm::vec3(0))
@@ -73,7 +54,7 @@ void Physics::stepSimulation(const float& elapsedTime, SceneManager* s)
 	computeClusters();
 	for (unsigned int i = 0; i < clusters.size(); i++)
 	{
-		std::cout << "cluster " << i << std::endl;
+		//std::cout << "cluster " << i << std::endl;
 		switch (getSolverType(clusters[i].first))
 		{
 			case RigidBody::DISCRETE:
@@ -87,6 +68,11 @@ void Physics::stepSimulation(const float& elapsedTime, SceneManager* s)
 				break;
 			default:
 				break;
+		}
+
+		for (unsigned int j = 0; j < clusters[i].first.size(); j++)
+		{
+			s->updateObject(clusters[i].first[j]);
 		}
 	}
 	//std::cout << std::endl;
@@ -209,9 +195,6 @@ void Physics::predictTransform(const float& elapsedTime)
 {
 	for (std::set<Entity*>::iterator it = movingEntity.begin(); it != movingEntity.end();)
 	{
-		/*Sphere* a = reinterpret_cast<Sphere*>((Sphere*)(*it)->getGlobalBoundingShape());
-		std::cout << "predictTransform " << a->center.x << " " << a->center.y << " " << a->center.z << " " << 1.1*a->radius << std::endl;*/
-
 		RigidBody* rigidbody = (*it)->getComponent<RigidBody>();
 		if (!rigidbody)
 		{
@@ -257,14 +240,14 @@ void Physics::predictTransform(const float& elapsedTime)
 
 			//	predict orientation
 			rigidbody->deltaRotation = 0.5f * elapsedTime * glm::fquat(0.f, rigidbody->angularVelocity.x, rigidbody->angularVelocity.y, rigidbody->angularVelocity.z) * (*it)->getOrientation();
-			rigidbody->predictRotation = (*it)->getOrientation() +rigidbody->deltaRotation;
+			rigidbody->predictRotation = (*it)->getOrientation() + rigidbody->deltaRotation;
 			
 			//	clear
 			rigidbody->forces.clear();
 			rigidbody->torques.clear();
 
 			//	check new static
-			if(rigidbody->isResting())
+			/*if(glm::length2(rigidbody->velocity) < 0.01f && glm::length2(rigidbody->angularVelocity) < 0.01f)
 			{
 				if ((*it)->swept)
 				{
@@ -273,7 +256,7 @@ void Physics::predictTransform(const float& elapsedTime)
 				}
 				it = movingEntity.erase(it);
 			}
-			else ++it;
+			else */++it;
 		}
 	}
 }
@@ -281,8 +264,6 @@ void Physics::computeBoundingShapesAndDetectPairs(const float& elapsedTime, Scen
 {
 	for (std::set<Entity*>::iterator it = movingEntity.begin(); it != movingEntity.end(); ++it)
 	{
-		//DrawShape((Shape*)(*it)->getLocalBoundingShape());
-
 		Swept* swept = (*it)->swept;
 		if (!swept)
 		{
@@ -291,16 +272,7 @@ void Physics::computeBoundingShapesAndDetectPairs(const float& elapsedTime, Scen
 		}
 		else swept->init(*it);
 		sweptList.push_back(swept);
-		
-		/*scene->removeObject(*it);
-		scene->addObject(*it);*/
-	
 		auto box = swept->getBox();
-
-		Debug::color = Debug::black; 
-		Debug::drawWiredCube(glm::translate(0.5f * (box.min + box.max)), 0.5f * (box.max - box.min));
-		Debug::color = Debug::magenta;
-		Debug::drawLine((*it)->getPosition(), (*it)->getPosition() + (*it)->getComponent<RigidBody>()->velocity);
 
 		proximityTest.result.clear();
 		proximityTest.bbMin = box.min;
@@ -331,12 +303,10 @@ void Physics::computeBoundingShapesAndDetectPairs(const float& elapsedTime, Scen
 
 		if (!collision)
 		{
-			integratePosition(*it, elapsedTime);
+			RigidBody* rigidbody = (*it)->getComponent<RigidBody>();
+			(*it)->setTransformation(rigidbody->predictPosition, (*it)->getScale(), glm::normalize(rigidbody->predictRotation));
 			scene->updateObject(*it);
 		}
-
-		/*Sphere* a = reinterpret_cast<Sphere*>((Sphere*)(*it)->getGlobalBoundingShape());
-		std::cout << "BB and pairs " << a->center.x << " " << a->center.y << " " << a->center.z << " " << 1.1*a->radius << std::endl;*/
 	}
 }
 void Physics::computeClusters()
@@ -371,19 +341,24 @@ void Physics::computeClusters()
 		clusters.emplace_back(std::make_pair(dynamicEntities, staticEntities));
 	}
 }
-
-void Physics::integratePosition(Entity* entity, const float& elapsedTime)
-{
-	RigidBody* rigidbody = entity->getComponent<RigidBody>();
-	entity->setTransformation(rigidbody->predictPosition, entity->getScale(), glm::normalize(rigidbody->predictRotation));
-}
 void Physics::clearTempoaryStruct(SceneManager* scene)
 {
-	for (std::set<Entity*>::iterator it = movingEntity.begin(); it != movingEntity.end(); ++it)
+	/*for (std::set<Entity*>::iterator it = movingEntity.begin(); it != movingEntity.end();)
 	{
-		scene->removeObject(*it);
-		scene->addObject(*it);
+		RigidBody* rigidbody = (*it)->getComponent<RigidBody>();
+		if (glm::length2(rigidbody->deltaPosition) < EPSILON && glm::length2(rigidbody->deltaRotation) < EPSILON)
+		{
+			if ((*it)->swept)
+			{
+				delete (*it)->swept;
+				(*it)->swept = nullptr;
+			}
+			it = movingEntity.erase(it);
+		}
+		else ++it;
 	}
+	if (movingEntity.empty())
+		std::cout << "no more moving entities" << std::endl;*/
 	sweptList.clear();
 }
 //
@@ -391,34 +366,76 @@ void Physics::clearTempoaryStruct(SceneManager* scene)
 //  Solveurs
 void Physics::discreteSolver(const std::pair<std::vector<Entity*>, std::vector<Entity*> >& cluster)
 {
+	/*for (unsigned int i = 0; i < cluster.second.size(); i++)
+		std::cout << "  ." << (unsigned long long)cluster.second[i] << std::endl;*/
+
 	for (unsigned int i = 0; i < cluster.first.size(); i++)
 	{
-		/*Sphere* a = reinterpret_cast<Sphere*>((Sphere*)cluster.first[i]->getGlobalBoundingShape());
-		std::cout << "discreteSolver " << a->center.x << " " << a->center.y << " " << a->center.z << " " << 1.1*a->radius << std::endl;*/
-		//DrawShape((Shape*)cluster.first[i]->getLocalBoundingShape());
 		//std::cout << "   " << (unsigned long long)cluster.first[i] << std::endl;
-		//RigidBody* rigidbody = cluster.first[i]->getComponent<RigidBody>();
-		/*Shape* end = cluster.first[i]->getGlobalBoundingShape()->duplicate();
-		end->transform(rigidbody->getDeltaPosition(), glm::vec3(1.f), rigidbody->getDeltaRotation());*/
-		//DrawShape((Shape*)cluster.first[i]->getGlobalBoundingShape());
 
-		//Debug::color = Debug::magenta;
-		//Debug::drawLine(cluster.first[i]->getPosition(), cluster.first[i]->getPosition() + rigidbody->velocity);
+		RigidBody* rigidbody = cluster.first[i]->getComponent<RigidBody>();
+		Shape* end = cluster.first[i]->getGlobalBoundingShape()->duplicate();
+		end->transform(rigidbody->getDeltaPosition(), glm::vec3(1.f), rigidbody->getDeltaRotation());
 
-		/*for (unsigned int j = i + 1; j < cluster.first.size(); j++)
+		for (unsigned int j = i + 1; j < cluster.first.size(); j++)
 		{
+			/*std::cout << "   " << (unsigned long long)cluster.first[i] << " " << (unsigned long long)cluster.first[j] << std::endl;
+
+			Sphere s1 = end->toSphere();
+			Sphere s2 = cluster.first[j]->getGlobalBoundingShape()->toSphere();
+			//end2.transform(rigidbody->getDeltaPosition(), glm::vec3(1.f), rigidbody->getDeltaRotation());
+			Debug::color = Debug::white;
+			Debug::drawWiredSphere(s1.center, s1.radius);
+			Debug::color = Debug::orange;
+			Debug::drawWiredSphere(s2.center, s2.radius);*/
+
+
 			if (Collision::collide(*end, *cluster.first[j]->getGlobalBoundingShape()))
 			{
 				Intersection::Contact contact = Intersection::intersect(*end, *cluster.first[j]->getGlobalBoundingShape());
+				glm::vec3 inter = contact.contactPointB - contact.contactPointA;
+				end->transform(inter, glm::vec3(1.f), glm::quat(0, 0, 0, 1));
+				rigidbody->deltaPosition += inter;
+				rigidbody->velocity = 0.6f * glm::reflect(rigidbody->velocity, contact.normalB);
+
+				/*Debug::color = Debug::magenta;
+				Debug::drawLine(contact.contactPointA, contact.contactPointB);
+
+				Debug::color = Debug::black;
+				Debug::drawLine(contact.contactPointA, contact.contactPointA + contact.normalA);
+				Debug::drawLine(contact.contactPointB, contact.contactPointB + contact.normalB);
+
+				std::cout << "toto" << std::endl;*/
+			}
+		}
+
+
+		for (unsigned int j = 0; j < cluster.second.size(); j++)
+		{
+			if (Collision::collide(*end, *cluster.second[j]->getGlobalBoundingShape()))
+			{
+				Intersection::Contact contact = Intersection::intersect(*end, *cluster.second[j]->getGlobalBoundingShape());
+				glm::vec3 inter = contact.contactPointB - contact.contactPointA;
+				end->transform(inter, glm::vec3(1.f), glm::quat(0, 0, 0, 1));
+				rigidbody->deltaPosition += inter;
+				rigidbody->velocity = 0.6f *glm::reflect(rigidbody->velocity, contact.normalB);
+				//rigidbody->forces.push_back(contact.normalB * glm::abs(glm::dot(rigidbody->acceleration, contact.normalB)));
+
+
 				Debug::color = Debug::magenta;
 				Debug::drawLine(contact.contactPointA, contact.contactPointB);
+
+				Debug::color = Debug::black;
+				Debug::drawLine(contact.contactPointA, contact.contactPointA + contact.normalA);
+				Debug::drawLine(contact.contactPointB, contact.contactPointB + contact.normalB);
 			}
-		}*/
-		/*for (unsigned int j = i + 1; j < cluster.first.size(); j++)
-			//Debug::drawLine(cluster.first[i]->getPosition(), cluster.first[j]->getPosition());
-			DrawShape((Shape*)cluster.first[i]->getGlobalBoundingShape());*/
-		//cluster.first[i]->setTransformation(rigidbody->predictPosition, cluster.first[i]->getScale(), glm::normalize(rigidbody->predictRotation));
-		//scene->updateObject(*it);
+		}
+
+		cluster.first[i]->setTransformation(
+			cluster.first[i]->getPosition() + rigidbody->deltaPosition,
+			cluster.first[i]->getScale(),
+			glm::normalize(cluster.first[i]->getOrientation() + rigidbody->deltaRotation));
+		delete end;
 	}
 }
 void Physics::continuousSolver(const std::pair<std::vector<Entity*>, std::vector<Entity*> >& cluster)

@@ -10,12 +10,12 @@ class Sphere : public Shape
 		//
 
 		//	Public functions
-		virtual Sphere toSphere() const override;
-		virtual AxisAlignedBox toAxisAlignedBox() const override;
-		virtual Shape& operator=(const Shape& s) override;
-		virtual void transform(const glm::vec3& position, const glm::vec3& scale, const glm::fquat& orientation) override;
-		virtual Shape* duplicate() const override;
-		virtual glm::vec3 GJKsupport(const glm::vec3& direction) const override;
+		Sphere toSphere() const override;
+		AxisAlignedBox toAxisAlignedBox() const override;
+		Shape& operator=(const Shape& s) override;
+		void transform(const glm::vec3& position, const glm::vec3& scale, const glm::fquat& orientation) override;
+		Shape* duplicate() const override;
+		glm::vec3 GJKsupport(const glm::vec3& direction) const override;
 		//
 
 		//	Attributes

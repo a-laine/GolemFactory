@@ -10,7 +10,7 @@
 //	Specialized functions : sphere
 bool Collision::collide_SpherevsSphere(const glm::vec3& sphere1Center, const float& sphere1Radius, const glm::vec3& sphere2Center, const float& sphere2Radius)
 {
-	return glm::length(sphere2Center - sphere1Center) <= sphere1Radius + sphere2Radius;
+	return glm::length2(sphere2Center - sphere1Center) <= (sphere1Radius + sphere2Radius)*(sphere1Radius + sphere2Radius);
 }
 bool Collision::collide_SpherevsCapsule(const glm::vec3& sphereCenter, const float& sphereRadius, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
 {

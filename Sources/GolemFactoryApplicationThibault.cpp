@@ -189,10 +189,10 @@ int main()
 			//	debug
 			if (v[i] == SLOT8)
 			{
-				world.getPhysics().stepSimulation((float)elapseTime * 0.001f, &world.getSceneManager());
+				world.getPhysics().stepSimulation(0.016, &world.getSceneManager());
 			}
 		}*/
-		world.getPhysics().stepSimulation((float)elapseTime * 0.00001f, &world.getSceneManager());
+		world.getPhysics().stepSimulation(0.0016f, &world.getSceneManager());
 
 		// Render scene & picking
 		if (WidgetManager::getInstance()->getBoolean("BBrendering"))

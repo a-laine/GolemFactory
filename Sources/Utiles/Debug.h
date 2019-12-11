@@ -25,6 +25,10 @@ class Debug : public Singleton<Debug>
 		static void drawMesh(const Mesh* const mesh, const glm::mat4& transform) { Debug::mesh(mesh, transform, This->wiredShader); };
 
 		static void drawWiredCube(const glm::mat4& transform, const glm::vec3& size) { Debug::mesh(This->cubeMesh, glm::scale(transform, size), This->wiredShader); };
+		static void drawWiredCube(const glm::mat4& transform, const glm::vec3& min, const glm::vec3& max)
+		{
+			Debug::mesh(This->cubeMesh, glm::scale(glm::translate(glm::mat4(1.f), 0.5f * (max + min)) * transform, 0.5f * (max - min)), This->wiredShader);
+		};
 		static void drawWiredSphere(const glm::vec3& center, const float& radius) { Debug::mesh(This->sphereMesh, glm::scale(glm::translate(glm::mat4(1.f), center), glm::vec3(radius)), This->wiredShader); };
 		static void drawWiredCapsule(const glm::vec3& point1, const glm::vec3& point2, const float& radius) { Debug::capsule(point1, point2, radius, This->wiredShader); };
 		static void drawWiredMesh(const Mesh* const mesh, const glm::mat4& transform) { Debug::mesh(mesh, transform, This->wiredShader); };

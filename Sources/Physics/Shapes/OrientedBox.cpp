@@ -16,34 +16,23 @@ Sphere OrientedBox::toSphere() const
 	glm::vec3 p2 = glm::vec3(base*glm::vec4(max, 1.f));
 	return Sphere(0.5f*(p1 + p2), 0.5f*glm::length(p2 - p1));
 }
+glm::mat4 absMat4(const glm::mat4& m)
+{
+	glm::mat4 r;
+	for (int i = 0; i < 4; i++)
+		for (int j = 0; j < 4; j++)
+			r[i][j] = glm::abs(m[i][j]);
+	return r;
+}
 AxisAlignedBox OrientedBox::toAxisAlignedBox() const
 {
-	std::vector<glm::vec3> corners;
-	corners.push_back(glm::vec3(base*glm::vec4(min.x, min.y, min.z, 1.f)));
-	corners.push_back(glm::vec3(base*glm::vec4(min.x, min.y, max.z, 1.f)));
-	corners.push_back(glm::vec3(base*glm::vec4(min.x, max.y, min.z, 1.f)));
-	corners.push_back(glm::vec3(base*glm::vec4(min.x, max.y, max.z, 1.f)));
-	corners.push_back(glm::vec3(base*glm::vec4(max.x, min.y, min.z, 1.f)));
-	corners.push_back(glm::vec3(base*glm::vec4(max.x, min.y, max.z, 1.f)));
-	corners.push_back(glm::vec3(base*glm::vec4(max.x, max.y, min.z, 1.f)));
-	corners.push_back(glm::vec3(base*glm::vec4(max.x, max.y, max.z, 1.f)));
+	glm::vec3 center = 0.5f * (max + min);
+	glm::vec3 size = 0.5f * (max - min);
 
-	glm::vec3 min(std::numeric_limits<float>::max());
-	glm::vec3 max(std::numeric_limits<float>::min());
+	glm::vec3 newCenter = glm::vec3((glm::translate(center) * base)[3]);
+	glm::vec3 newSize =  glm::vec3(absMat4(base) * glm::vec4(size, 0.f));
 
-	for (unsigned int i = 0; i < corners.size(); i++)
-	{
-		if (corners[i].x < min.x) min.x = corners[i].x;
-		else if (corners[i].x > max.x) max.x = corners[i].x;
-
-		if (corners[i].y < min.y) min.y = corners[i].y;
-		else if (corners[i].y > max.y) max.y = corners[i].y;
-
-		if (corners[i].z < min.z) min.z = corners[i].z;
-		else if (corners[i].z > max.z) max.z = corners[i].z;
-	}
-
-	return AxisAlignedBox(min, max);
+	return AxisAlignedBox(newCenter - newSize, newCenter + newSize);
 }
 Shape& OrientedBox::operator=(const Shape& s)
 {

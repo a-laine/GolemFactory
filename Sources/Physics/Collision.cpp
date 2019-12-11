@@ -231,7 +231,7 @@ bool Collision::collide(const Shape& a, const Shape& b)
 		case Shape::SPHERE:				return collide_SpherevsShape(Shape1, Shape2);
 		case Shape::CAPSULE:			return collide_CapsulevsShape(Shape1, Shape2);
 		case Shape::HULL:				return collide_HullvsShape(Shape1, Shape2);
-		default:						return false;
+		default: std::cout << "ERROR" << std::endl; return false;
 	}
 }
 int Collision::debugUnitaryTest(const int& verboseLevel, const Hull* testHull)
