@@ -66,6 +66,8 @@ class RigidBody : public Component
 		float mass;
 		float inverseMass;
 		float gravityFactor;
+		float bouncyness;
+		float friction;
 
 		glm::mat3 inertia;
 		glm::mat3 inverseInertia;
@@ -82,9 +84,11 @@ class RigidBody : public Component
 
 	private:
 		//	Internal (used by Physics engine)
-		glm::vec3 predictPosition;
+		glm::vec3 previousPosition;
+		//glm::vec3 predictPosition;
 		glm::vec3 deltaPosition;
-		glm::fquat predictRotation;
+		//glm::fquat predictRotation;
 		glm::fquat deltaRotation;
+		glm::fquat previousOrientation;
 		//
 };

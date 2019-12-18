@@ -140,7 +140,7 @@ int main()
 		freeflyCamera = world.getEntityFactory().createObject([](Entity* object)
 		{
 			object->setPosition(glm::vec3(0, -20, 5));
-			object->setShape(new Sphere());
+			//object->setShape(new Sphere());
 			CameraComponent* ffCam = new CameraComponent(true);
 			ffCam->lookAt(glm::vec3(0, 1, 0));
 			object->addComponent(ffCam);
@@ -192,7 +192,7 @@ int main()
 				world.getPhysics().stepSimulation(0.016, &world.getSceneManager());
 			}
 		}*/
-		world.getPhysics().stepSimulation(0.0016f, &world.getSceneManager());
+		world.getPhysics().stepSimulation(0.016f, &world.getSceneManager());
 
 		// Render scene & picking
 		if (WidgetManager::getInstance()->getBoolean("BBrendering"))

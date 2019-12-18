@@ -59,6 +59,7 @@ class Physics
 		//
 
 		//  Solveurs
+		void impactSolver(const Intersection::Contact& contact, RigidBody* rb1, RigidBody* rb2, Shape* end, const glm::vec3& actionLine);
 		void discreteSolver(const std::pair<std::vector<Entity*>, std::vector<Entity*> >& cluster);
 		void continuousSolver(const std::pair<std::vector<Entity*>, std::vector<Entity*> >& cluster);
 		void supersamplingSolver(const std::pair<std::vector<Entity*>, std::vector<Entity*> >& cluster);

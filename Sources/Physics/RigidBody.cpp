@@ -3,8 +3,8 @@
 #include <iostream>
 
 //	Default
-RigidBody::RigidBody(const RigidBodyType& type, const SolverType& solver) : type(type), solver(solver), mass(1.f), gravityFactor(1.f), inertia(1.f),
-	velocity(0.f), acceleration(0.f), angularVelocity(0.f), angularAcceleration(0.f)
+RigidBody::RigidBody(const RigidBodyType& type, const SolverType& solver) : type(type), solver(solver), mass(1.f), gravityFactor(1.f), bouncyness(0.8f), friction(0.1f),
+	inertia(1.f), velocity(0.f), acceleration(0.f), angularVelocity(0.f), angularAcceleration(0.f)
 {
 	inverseMass = 1.f / mass;
 	inverseInertia = glm::inverse(inertia);

@@ -235,12 +235,14 @@ void Physics::predictTransform(const float& elapsedTime)
 			rigidbody->angularVelocity += elapsedTime * rigidbody->angularAcceleration;
 
 			//	predict position
+			rigidbody->previousPosition = (*it)->getPosition();
 			rigidbody->deltaPosition = rigidbody->velocity * elapsedTime;
-			rigidbody->predictPosition = (*it)->getPosition() + rigidbody->deltaPosition;
+			//rigidbody->predictPosition = (*it)->getPosition() + rigidbody->deltaPosition;
 
 			//	predict orientation
+			rigidbody->previousOrientation = (*it)->getOrientation();
 			rigidbody->deltaRotation = 0.5f * elapsedTime * glm::fquat(0.f, rigidbody->angularVelocity.x, rigidbody->angularVelocity.y, rigidbody->angularVelocity.z) * (*it)->getOrientation();
-			rigidbody->predictRotation = (*it)->getOrientation() + rigidbody->deltaRotation;
+			//rigidbody->predictRotation = (*it)->getOrientation() + rigidbody->deltaRotation;
 			
 			//	clear
 			rigidbody->forces.clear();
@@ -304,7 +306,7 @@ void Physics::computeBoundingShapesAndDetectPairs(const float& elapsedTime, Scen
 		if (!collision)
 		{
 			RigidBody* rigidbody = (*it)->getComponent<RigidBody>();
-			(*it)->setTransformation(rigidbody->predictPosition, (*it)->getScale(), glm::normalize(rigidbody->predictRotation));
+			(*it)->setTransformation((*it)->getPosition() + rigidbody->deltaPosition, (*it)->getScale(), glm::normalize((*it)->getOrientation() + rigidbody->deltaRotation));
 			scene->updateObject(*it);
 		}
 	}
@@ -364,70 +366,68 @@ void Physics::clearTempoaryStruct(SceneManager* scene)
 //
 
 //  Solveurs
+void Physics::impactSolver(const Intersection::Contact& contact, RigidBody* rb1, RigidBody* rb2, Shape* end, const glm::vec3& actionLine)
+{
+	glm::vec3 inter = contact.contactPointB - contact.contactPointA;
+	end->transform(inter, glm::vec3(1.f), glm::quat(0, 0, 0, 1));
+	rb1->deltaPosition += inter;
+
+	if (!rb2 || rb2->mass == 0.f || rb2->type == RigidBody::STATIC)
+	{
+		///v1(n+1) = -b1 * v1(n)   -> normal  speed
+		///v1(n+1) = f1 * v1(n)   -> tangancial speed
+
+		glm::vec3 a = glm::dot(rb1->velocity, contact.normalB) * contact.normalB;
+		rb1->velocity = -rb1->bouncyness * a + (1.f - rb1->friction) * (rb1->velocity - a);
+	}
+	else
+	{
+		float bouncyness = glm::min(rb1->bouncyness, rb2->bouncyness);
+		glm::vec3 d = glm::normalize(actionLine);
+		float v1 = glm::dot(rb1->velocity, d);
+		float v2 = glm::dot(rb2->velocity, -d);
+		float a = bouncyness * (v1 - v2);
+		float b = rb1->mass * v1 + rb2->mass * v2;
+
+		float V1 = (b - rb2->mass * a) / (rb1->mass + rb2->mass);
+		float V2 = a + V1;
+
+		rb1->velocity = V1 * d + (1.f - rb1->friction) * (rb1->velocity - v1 * d);
+		rb2->velocity = V2 * d + (1.f - rb2->friction) * (rb2->velocity - v2 * d);
+	}
+}
 void Physics::discreteSolver(const std::pair<std::vector<Entity*>, std::vector<Entity*> >& cluster)
 {
-	/*for (unsigned int i = 0; i < cluster.second.size(); i++)
-		std::cout << "  ." << (unsigned long long)cluster.second[i] << std::endl;*/
+	/// for solver iteration count
+	///		compute contact list
+	///		if list is empty
+	///			break
+	///     for all contact
+	///			resolve by applying force impulse
+	///			update the shape position, velocity, ...
 
 	for (unsigned int i = 0; i < cluster.first.size(); i++)
 	{
-		//std::cout << "   " << (unsigned long long)cluster.first[i] << std::endl;
-
 		RigidBody* rigidbody = cluster.first[i]->getComponent<RigidBody>();
 		Shape* end = cluster.first[i]->getGlobalBoundingShape()->duplicate();
 		end->transform(rigidbody->getDeltaPosition(), glm::vec3(1.f), rigidbody->getDeltaRotation());
 
 		for (unsigned int j = i + 1; j < cluster.first.size(); j++)
 		{
-			/*std::cout << "   " << (unsigned long long)cluster.first[i] << " " << (unsigned long long)cluster.first[j] << std::endl;
-
-			Sphere s1 = end->toSphere();
-			Sphere s2 = cluster.first[j]->getGlobalBoundingShape()->toSphere();
-			//end2.transform(rigidbody->getDeltaPosition(), glm::vec3(1.f), rigidbody->getDeltaRotation());
-			Debug::color = Debug::white;
-			Debug::drawWiredSphere(s1.center, s1.radius);
-			Debug::color = Debug::orange;
-			Debug::drawWiredSphere(s2.center, s2.radius);*/
-
-
 			if (Collision::collide(*end, *cluster.first[j]->getGlobalBoundingShape()))
 			{
 				Intersection::Contact contact = Intersection::intersect(*end, *cluster.first[j]->getGlobalBoundingShape());
-				glm::vec3 inter = contact.contactPointB - contact.contactPointA;
-				end->transform(inter, glm::vec3(1.f), glm::quat(0, 0, 0, 1));
-				rigidbody->deltaPosition += inter;
-				rigidbody->velocity = 0.6f * glm::reflect(rigidbody->velocity, contact.normalB);
-
-				/*Debug::color = Debug::magenta;
-				Debug::drawLine(contact.contactPointA, contact.contactPointB);
-
-				Debug::color = Debug::black;
-				Debug::drawLine(contact.contactPointA, contact.contactPointA + contact.normalA);
-				Debug::drawLine(contact.contactPointB, contact.contactPointB + contact.normalB);
-
-				std::cout << "toto" << std::endl;*/
+				RigidBody* rb2 = cluster.first[j]->getComponent<RigidBody>();
+				impactSolver(contact, rigidbody, rb2, end, cluster.first[i]->getPosition() - cluster.first[j]->getPosition());
 			}
 		}
-
 
 		for (unsigned int j = 0; j < cluster.second.size(); j++)
 		{
 			if (Collision::collide(*end, *cluster.second[j]->getGlobalBoundingShape()))
 			{
 				Intersection::Contact contact = Intersection::intersect(*end, *cluster.second[j]->getGlobalBoundingShape());
-				glm::vec3 inter = contact.contactPointB - contact.contactPointA;
-				end->transform(inter, glm::vec3(1.f), glm::quat(0, 0, 0, 1));
-				rigidbody->deltaPosition += inter;
-				rigidbody->velocity = 0.6f *glm::reflect(rigidbody->velocity, contact.normalB);
-				//rigidbody->forces.push_back(contact.normalB * glm::abs(glm::dot(rigidbody->acceleration, contact.normalB)));
-
-
-				Debug::color = Debug::magenta;
-				Debug::drawLine(contact.contactPointA, contact.contactPointB);
-
-				Debug::color = Debug::black;
-				Debug::drawLine(contact.contactPointA, contact.contactPointA + contact.normalA);
-				Debug::drawLine(contact.contactPointB, contact.contactPointB + contact.normalB);
+				impactSolver(contact, rigidbody, cluster.second[j]->getComponent<RigidBody>(), end, cluster.first[i]->getPosition() - cluster.second[j]->getPosition());
 			}
 		}
 
