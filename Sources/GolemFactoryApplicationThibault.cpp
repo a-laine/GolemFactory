@@ -140,7 +140,7 @@ int main()
 		freeflyCamera = world.getEntityFactory().createObject([](Entity* object)
 		{
 			object->setPosition(glm::vec3(0, -20, 5));
-			//object->setShape(new Sphere());
+			object->setShape(new Sphere());
 			CameraComponent* ffCam = new CameraComponent(true);
 			ffCam->lookAt(glm::vec3(0, 1, 0));
 			object->addComponent(ffCam);
@@ -292,13 +292,17 @@ void initializeForestScene(bool emptyPlace)
 		{
 			for (unsigned int i = 0; i < N; i++)
 			{
-				glm::vec3 p = glm::vec3(5.f * cos((float)i / N * 2.f * glm::pi<float>()), 5.f * sin((float)i / N * 2.f * glm::pi<float>()), 10.f*(j + 1));
-				world.getEntityFactory().createObject("sphere", [&p](Entity* object)
+				glm::vec3 p = glm::vec3(5.f * cos((float)i / N * 2.f * glm::pi<float>()), 5.f * sin((float)i / N * 2.f * glm::pi<float>()), 2.f*(j + 1));
+				p += N2 * 0.5f * glm::normalize(p);
+				world.getEntityFactory().createObject("sphere", [&p, &j](Entity* object)
 				{
-					object->setTransformation(p, glm::vec3(1.f), glm::fquat());
+					//auto q = glm::normalize(glm::fquat(0.01f *(rand() % 100), 0.01f *(rand() % 100), 0.01f *(rand() % 100), 0.01f *(rand() % 100)));
+					auto q = glm::fquat(0, 0, 0, 1);
+					object->setTransformation(p, glm::vec3(1.f), q);
 					RigidBody* rb = new RigidBody(RigidBody::DYNAMIC);
 					rb->setMass(1.f);
 					rb->setGravityFactor(1.f);
+					//rb->setAngularVelocity(glm::vec3(0,1,0));
 					object->addComponent(rb);
 				});
 			}

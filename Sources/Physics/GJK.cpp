@@ -10,9 +10,9 @@
 #define MAX_ITERATION 50
 #define EPSILON 0.00001f
 
-int GJK::max_iteration = 1;
-bool GJK::verbose = true;
-bool GJK::gizmos = true;
+int GJK::max_iteration = 50;
+bool GJK::verbose = false;
+bool GJK::gizmos = false;
 
 //	Public functions
 bool GJK::collide(const Shape& a, const Shape& b, std::vector<std::pair<glm::vec3, glm::vec3>>* shapePair)

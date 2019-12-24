@@ -366,34 +366,41 @@ void Physics::clearTempoaryStruct(SceneManager* scene)
 //
 
 //  Solveurs
-void Physics::impactSolver(const Intersection::Contact& contact, RigidBody* rb1, RigidBody* rb2, Shape* end, const glm::vec3& actionLine)
+void Physics::impactSolver(const Intersection::Contact& contact, RigidBody* rb1, RigidBody* rb2, const glm::vec3& actionLine)
 {
 	glm::vec3 inter = contact.contactPointB - contact.contactPointA;
-	end->transform(inter, glm::vec3(1.f), glm::quat(0, 0, 0, 1));
+	//end->transform(inter, glm::vec3(1.f), glm::quat(0, 0, 0, 1));
 	rb1->deltaPosition += inter;
 
 	if (!rb2 || rb2->mass == 0.f || rb2->type == RigidBody::STATIC)
 	{
 		///v1(n+1) = -b1 * v1(n)   -> normal  speed
-		///v1(n+1) = f1 * v1(n)   -> tangancial speed
+		///v1(n+1) =  f1 * v1(n)   -> tangancial speed
 
+		//glm::vec3 n = glm::normalize(contact.normalB);
 		glm::vec3 a = glm::dot(rb1->velocity, contact.normalB) * contact.normalB;
-		rb1->velocity = -rb1->bouncyness * a + (1.f - rb1->friction) * (rb1->velocity - a);
+		glm::vec3 v2 = -rb1->bouncyness * a +(1.f - rb1->friction) * (rb1->velocity - a);
+		rb1->forces.push_back(rb1->mass / 0.016f * (v2 - rb1->velocity));
+		//rb1->velocity = v2;
 	}
 	else
 	{
 		float bouncyness = glm::min(rb1->bouncyness, rb2->bouncyness);
-		glm::vec3 d = glm::normalize(actionLine);
+		glm::vec3 d = glm::normalize(inter);
 		float v1 = glm::dot(rb1->velocity, d);
-		float v2 = glm::dot(rb2->velocity, -d);
+		float v2 = glm::dot(rb2->velocity, d);
 		float a = bouncyness * (v1 - v2);
 		float b = rb1->mass * v1 + rb2->mass * v2;
 
 		float V1 = (b - rb2->mass * a) / (rb1->mass + rb2->mass);
 		float V2 = a + V1;
 
-		rb1->velocity = V1 * d + (1.f - rb1->friction) * (rb1->velocity - v1 * d);
-		rb2->velocity = V2 * d + (1.f - rb2->friction) * (rb2->velocity - v2 * d);
+		glm::vec3 vf1 = V1 * d + (1.f - rb1->friction) * (rb1->velocity - v1 * d);
+		glm::vec3 vf2 = V2 * d + (1.f - rb2->friction) * (rb2->velocity - v2 * d);
+
+		rb1->forces.push_back(rb1->mass / 0.016f * (vf1 - rb1->velocity));
+		rb2->forces.push_back(rb2->mass / 0.016f * (vf2 - rb2->velocity));
+		//rb1->velocity = vf1;
 	}
 }
 void Physics::discreteSolver(const std::pair<std::vector<Entity*>, std::vector<Entity*> >& cluster)
@@ -418,7 +425,7 @@ void Physics::discreteSolver(const std::pair<std::vector<Entity*>, std::vector<E
 			{
 				Intersection::Contact contact = Intersection::intersect(*end, *cluster.first[j]->getGlobalBoundingShape());
 				RigidBody* rb2 = cluster.first[j]->getComponent<RigidBody>();
-				impactSolver(contact, rigidbody, rb2, end, cluster.first[i]->getPosition() - cluster.first[j]->getPosition());
+				impactSolver(contact, rigidbody, rb2, cluster.first[i]->getPosition() - cluster.first[j]->getPosition());
 			}
 		}
 
@@ -427,7 +434,7 @@ void Physics::discreteSolver(const std::pair<std::vector<Entity*>, std::vector<E
 			if (Collision::collide(*end, *cluster.second[j]->getGlobalBoundingShape()))
 			{
 				Intersection::Contact contact = Intersection::intersect(*end, *cluster.second[j]->getGlobalBoundingShape());
-				impactSolver(contact, rigidbody, cluster.second[j]->getComponent<RigidBody>(), end, cluster.first[i]->getPosition() - cluster.second[j]->getPosition());
+				impactSolver(contact, rigidbody, nullptr, cluster.first[i]->getPosition() - cluster.second[j]->getPosition());
 			}
 		}
 
