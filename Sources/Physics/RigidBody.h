@@ -42,6 +42,8 @@ class RigidBody : public Component
 		void setVelocity(const glm::vec3& v);
 		void setAngularAcceleration(const glm::vec3& a);
 		void setAngularVelocity(const glm::vec3& v);
+		void setBouncyness(const float& b);
+		void setFriction(const float& f);
 
 		RigidBodyType getType() const;
 		float getMass() const;

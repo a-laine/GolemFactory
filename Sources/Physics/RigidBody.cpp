@@ -3,7 +3,7 @@
 #include <iostream>
 
 //	Default
-RigidBody::RigidBody(const RigidBodyType& type, const SolverType& solver) : type(type), solver(solver), mass(1.f), gravityFactor(1.f), bouncyness(0.1f), friction(0.1f),
+RigidBody::RigidBody(const RigidBodyType& type, const SolverType& solver) : type(type), solver(solver), mass(1.f), gravityFactor(1.f), bouncyness(0.5f), friction(0.1f),
 	inertia(1.f), velocity(0.f), acceleration(0.f), angularVelocity(0.f), angularAcceleration(0.f)
 {
 	inverseMass = 1.f / mass;
@@ -21,6 +21,8 @@ void RigidBody::setAcceleration(const glm::vec3& a) { acceleration = a; }
 void RigidBody::setVelocity(const glm::vec3& v) { velocity = v; }
 void RigidBody::setAngularAcceleration(const glm::vec3& a) { angularAcceleration = a; }
 void RigidBody::setAngularVelocity(const glm::vec3& v) { angularVelocity = v; }
+void RigidBody::setBouncyness(const float& b) { bouncyness = b; }
+void RigidBody::setFriction(const float& f) { friction = f; }
 
 
 RigidBody::RigidBodyType RigidBody::getType() const { return type; }

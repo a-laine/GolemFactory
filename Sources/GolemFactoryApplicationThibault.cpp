@@ -82,6 +82,7 @@ struct {
 
 // prototypes
 void initializeForestScene(bool emptyPlace = false);
+void initializePhysicsScene(int testCase = -1);
 std::string checkResourcesDirectory();
 
 void initManagers();
@@ -110,7 +111,8 @@ int main()
 
 	//	Test scene
 		Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("wired"));
-		initializeForestScene(false);
+		//initializeForestScene(false);
+		initializePhysicsScene(0);
 		world.getEntityFactory().createObject("cube", [](Entity* object) // ground collider
 		{
 			object->setTransformation(glm::vec3(0.f, 0.f, -10.f), glm::vec3(1000, 1000, 10), glm::fquat());
@@ -403,6 +405,35 @@ void initializeForestScene(bool emptyPlace)
 	{
 		std::cout << "Instance count : " << world.getObjectCount() << std::endl;
 		std::cout << "House count : " << vilageHouseCount  << std::endl;
+	}
+}
+void initializePhysicsScene(int testCase)
+{
+	glClearColor(0.6f, 0.85f, 0.91f, 0.f);
+	Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("greenGrass"));
+
+	if (testCase == 0)
+	{
+		unsigned int N = 20;
+		for (unsigned int i = 0; i < N; i++)
+		{
+			for (unsigned int j = 0; j < N; j++)
+			{
+				float r = 1.f;// 0.02f *(rand() % 100) + 0.3f;
+				glm::vec3 p = glm::vec3(5.f * (i - N / 2.f), 5.f * (j - N / 2.f), r);
+				world.getEntityFactory().createObject("sphere", [&p, &r](Entity* object)
+				{
+					object->setTransformation(p, glm::vec3(r), glm::fquat(0, 0, 0, 1));
+					RigidBody* rb = new RigidBody(RigidBody::DYNAMIC);
+					rb->setMass(3.f * r);
+					rb->setBouncyness(0.1f);
+					rb->setFriction(0.f);
+					rb->setGravityFactor(1.f);
+					rb->setVelocity(glm::vec3(0.1f *((rand() % 200) - 100), 0.1f *((rand() % 200) - 100), 0));
+					object->addComponent(rb);
+				});
+			}
+		}
 	}
 }
 std::string checkResourcesDirectory()
