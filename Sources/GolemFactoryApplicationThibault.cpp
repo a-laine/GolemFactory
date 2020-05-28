@@ -112,7 +112,7 @@ int main()
 	//	Test scene
 		Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("wired"));
 		//initializeForestScene(false);
-		initializePhysicsScene(0);
+		//initializePhysicsScene(0);
 		world.getEntityFactory().createObject("cube", [](Entity* object) // ground collider
 		{
 			object->setTransformation(glm::vec3(0.f, 0.f, -10.f), glm::vec3(1000, 1000, 10), glm::fquat());
