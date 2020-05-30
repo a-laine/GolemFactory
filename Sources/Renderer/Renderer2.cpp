@@ -13,6 +13,9 @@
 #include <Animation/SkeletonComponent.h>
 
 
+#include "World/WorldComponents/Map.h"
+
+
 
 //	Drawing functions
 void Renderer::drawObject(Entity* object, const float* view, const float* projection)
@@ -99,7 +102,18 @@ void Renderer::drawInstancedObject(Shader* s, Mesh* m, std::vector<glm::mat4>& m
 	instanceDrawn += (int)(models.size());
 	trianglesDrawn += (int)(models.size() * m->getNumberFaces());
 }
+void Renderer::drawMap(Map* map, const float* view, const float* projection)
+{
+	glm::mat4 m = glm::scale(glm::mat4(1.f), 256.f * glm::vec3(512, 512, 16));
+	lastShader = nullptr;
+	loadMVPMatrix(defaultShader[INSTANCE_DRAWABLE_WIRED], &m[0][0], view, projection);
 
+	loadVAO(map->getVAO());
+	glDrawElements(GL_TRIANGLES, map->getFacesCount(), GL_UNSIGNED_INT, NULL);
+
+	instanceDrawn++;
+	trianglesDrawn += map->getFacesCount();
+}
 /*
 void Renderer::drawTriangle(const Triangle* triangle, const float* view, const float* projection)
 {

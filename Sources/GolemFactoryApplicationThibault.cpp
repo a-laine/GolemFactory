@@ -53,8 +53,8 @@
 #include "Utiles/Debug.h"
 #include "Physics/GJK.h"
 
-#define GRID_SIZE 100
-#define GRID_ELEMENT_SIZE 5.f
+#define GRID_SIZE 512
+#define GRID_ELEMENT_SIZE 1.f
 #define DEBUG 0
 
 
@@ -108,18 +108,26 @@ int main()
 
 	//	Collision test
 		WidgetManager::getInstance()->setActiveHUD("debug");
-
-	//	Test scene
-		Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("wired"));
-		//initializeForestScene(false);
-		//initializePhysicsScene(0);
 		world.getEntityFactory().createObject("cube", [](Entity* object) // ground collider
 		{
 			object->setTransformation(glm::vec3(0.f, 0.f, -10.f), glm::vec3(1000, 1000, 10), glm::fquat());
 			object->removeComponent(object->getComponent<DrawableComponent>());
 		});
 
-		avatar = world.getEntityFactory().createObject("peasant", [](Entity* object)
+	//	Test scene
+		Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("wired"));
+		//initializeForestScene(false);
+		//initializePhysicsScene(0);
+		//Renderer::getInstance()->setGridVisible(false);
+		if (world.getMap().loadFromHeightmap(ResourceManager::getInstance()->getRepository() + "/Textures/", "mountains512.png"))
+		{
+			std::cout << "Map loaded !" << std::endl;
+		}
+		else
+		{
+			std::cout << "ERROR in map loading" << std::endl;
+		}
+		/*avatar = world.getEntityFactory().createObject("peasant", [](Entity* object)
 		{
             DrawableComponent* drawable = object->getComponent<DrawableComponent>();
 			float scale = 1.7f / (drawable->getMeshBBMax() - drawable->getMeshBBMin()).z;
@@ -137,11 +145,11 @@ int main()
 
 			//currentCamera = tbCam;
 			avatarZeroHeight = object->getPosition().z;
-		});
+		});*/
 
 		freeflyCamera = world.getEntityFactory().createObject([](Entity* object)
 		{
-			object->setPosition(glm::vec3(0, -20, 5));
+			object->setPosition(glm::vec3(0, 0, 5));
 			object->setShape(new Sphere());
 			CameraComponent* ffCam = new CameraComponent(true);
 			ffCam->lookAt(glm::vec3(0, 1, 0));
@@ -207,9 +215,11 @@ int main()
 			glm::mat4 view = currentCamera->getGlobalViewMatrix();
 			glm::mat4 projection = glm::perspective(glm::radians(currentCamera->getVerticalFieldOfView(context->getViewportRatio())), context->getViewportRatio(), 0.1f, 1500.f);
 		}*/
-
+		 
 		Debug::view = currentCamera->getGlobalViewMatrix();
-		Debug::projection = glm::perspective(glm::radians(currentCamera->getVerticalFieldOfView(context->getViewportRatio())), context->getViewportRatio(), 0.1f, 1500.f);
+		Debug::projection = glm::perspective(glm::radians(currentCamera->getVerticalFieldOfView(context->getViewportRatio())), context->getViewportRatio(), 0.1f, 30000.f);  //far = 1500.f
+		Renderer::getInstance()->drawMap(world.getMapPtr(), &Debug::view[0][0], &Debug::projection[0][0]);
+
 		/*Debug::color = Debug::black;
 		float o = 0.2f;
 		Debug::drawLine(glm::vec3(0), glm::vec3(1, 0, o)); Debug::drawLine(glm::vec3(1, 0, o), glm::vec3(0, 0, 2 * o));
@@ -569,7 +579,7 @@ void events()
 	std::vector<UserEventType> v;
 	EventHandler::getInstance()->getFrameEvent(v);
 
-	bool isTrackBall = currentCamera->getParentEntity() == avatar;
+	bool isTrackBall = avatar != nullptr && currentCamera->getParentEntity() == avatar;
 
 	for (unsigned int i = 0; i < v.size(); i++)
 	{
@@ -580,7 +590,7 @@ void events()
 		//	micselenious
 		else */if (v[i] == QUIT) glfwSetWindowShouldClose(context->getParentWindow(), GL_TRUE);
 		else if (v[i] == CHANGE_CURSOR_MODE) EventHandler::getInstance()->setCursorMode(!EventHandler::getInstance()->getCursorMode());
-		else if (v[i] == ACTION)
+		else if (v[i] == ACTION && avatar != nullptr)
 		{
 			if (isTrackBall)
 			{
@@ -601,24 +611,24 @@ void events()
 		}
 
 		//	avatar related
-		else if (v[i] == SLOT1) Animator::getInstance()->launchAnimation(avatar, "hello");
-		else if (v[i] == SLOT2) Animator::getInstance()->launchAnimation(avatar, "yes");
-		else if (v[i] == SLOT3) Animator::getInstance()->launchAnimation(avatar, "no");
+		else if (v[i] == SLOT1 && avatar) Animator::getInstance()->launchAnimation(avatar, "hello");
+		else if (v[i] == SLOT2 && avatar) Animator::getInstance()->launchAnimation(avatar, "yes");
+		else if (v[i] == SLOT3 && avatar) Animator::getInstance()->launchAnimation(avatar, "no");
 		else if (v[i] == FORWARD || v[i] == BACKWARD || v[i] == LEFT || v[i] == RIGHT)
 		{
-			if (EventHandler::getInstance()->isActivated(v[i]) && isTrackBall)
+			if (EventHandler::getInstance()->isActivated(v[i]) && isTrackBall && avatar)
 			{
 				if (EventHandler::getInstance()->isActivated(RUN)) Animator::getInstance()->launchAnimation(avatar, "run");
 				else Animator::getInstance()->launchAnimation(avatar, "walk");
 			}
 			else if (!EventHandler::getInstance()->isActivated(FORWARD) && !EventHandler::getInstance()->isActivated(BACKWARD) && 
-				     !EventHandler::getInstance()->isActivated(LEFT) && !EventHandler::getInstance()->isActivated(RIGHT) )
+				     !EventHandler::getInstance()->isActivated(LEFT) && !EventHandler::getInstance()->isActivated(RIGHT) && avatar)
 			{
 				Animator::getInstance()->stopAnimation(avatar, "run");
 				Animator::getInstance()->stopAnimation(avatar, "walk");
 			}
 		}
-		else if (v[i] == RUN)
+		else if (v[i] == RUN && avatar)
 		{
 			if (EventHandler::getInstance()->isActivated(RUN))
 			{
@@ -652,7 +662,8 @@ void events()
 void updates(float elapseTime)
 {
 	//	animate avatar
-	Animator::getInstance()->animate(avatar, elapseTime);
+	if(avatar)
+		Animator::getInstance()->animate(avatar, elapseTime);
 
 	//	Compute HUD picking parameters
 	if (EventHandler::getInstance()->getCursorMode())
@@ -681,7 +692,7 @@ void updates(float elapseTime)
 	WidgetManager::getInstance()->update((float)elapseTime, EventHandler::getInstance()->isActivated(USE1));
 
 	//	Move avatar if needed
-	if (currentCamera->getParentEntity() == avatar)
+	if (avatar && currentCamera->getParentEntity() == avatar)
 	{
 		//	compute direction and speed
 		glm::vec3 direction = glm::vec3(0.f);
@@ -829,7 +840,7 @@ void updates(float elapseTime)
 	}
 
 	// animate camera
-	if (currentCamera->getParentEntity() == avatar)
+	if (avatar && currentCamera->getParentEntity() == avatar)
 	{
 		if (!EventHandler::getInstance()->getCursorMode())
 		{
@@ -851,7 +862,7 @@ void updates(float elapseTime)
 	else
 	{
 		CameraComponent* ffCam = freeflyCamera->getComponent<CameraComponent>();
-		CameraComponent* tbCam = avatar->getComponent<CameraComponent>();
+		//CameraComponent* tbCam = avatar->getComponent<CameraComponent>();
 		
 		// Rotation
 		if (!EventHandler::getInstance()->getCursorMode())
@@ -886,7 +897,7 @@ void updates(float elapseTime)
 		if (angle > 160.f) angle = 160.f;
 		else if (angle < 3.f) angle = 3.f;
 
-		tbCam->setFieldOfView(angle);
+		//tbCam->setFieldOfView(angle);
 		ffCam->setFieldOfView(angle);
 	}
 

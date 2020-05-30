@@ -3,6 +3,7 @@
 #include "Scene/SceneManager.h"
 #include "World/WorldComponents/EntityFactory.h"
 #include "World/WorldComponents/EntityManager.h"
+#include "World/WorldComponents/Map.h"
 #include "Physics/Physics.h"
 
 
@@ -34,6 +35,9 @@ class World
 		const EntityFactory& getEntityFactory() const;
 		Physics& getPhysics();
 		const Physics& getPhysics() const;
+		Map& getMap();
+		const Map& getMap() const;
+		Map* getMapPtr();
 
 		bool addToScene(Entity* object);
 		//
@@ -50,5 +54,6 @@ class World
 		SceneManager sceneManager;
 		EntityFactory entityFactory;
 		EntityManager entityManager;
+		Map map;
 };
 
