@@ -118,7 +118,7 @@ int main()
 		Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("wired"));
 		//initializeForestScene(false);
 		//initializePhysicsScene(0);
-		//Renderer::getInstance()->setGridVisible(false);
+		Renderer::getInstance()->setGridVisible(false);
 		if (world.getMap().loadFromHeightmap(ResourceManager::getInstance()->getRepository() + "/Textures/", "mountains512.png"))
 		{
 			std::cout << "Map loaded !" << std::endl;
@@ -908,5 +908,8 @@ void updates(float elapseTime)
 		frustrumCamera->setPosition(currentCamera->getGlobalPosition());
 		world.updateObject(frustrumCamera);
 	}
+
+	// Map streaming
+	world.getMapPtr()->update(freeflyCamera->getPosition());
 }
 //

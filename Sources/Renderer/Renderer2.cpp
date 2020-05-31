@@ -14,6 +14,7 @@
 
 
 #include "World/WorldComponents/Map.h"
+#include "Terrain/Chunk.h"
 
 
 
@@ -104,12 +105,29 @@ void Renderer::drawInstancedObject(Shader* s, Mesh* m, std::vector<glm::mat4>& m
 }
 void Renderer::drawMap(Map* map, const float* view, const float* projection)
 {
-	glm::mat4 m = glm::scale(glm::mat4(1.f), 256.f * glm::vec3(512, 512, 16));
+	glm::mat4 m = map->getModelMatrix();
 	lastShader = nullptr;
+
+	// raw
 	loadMVPMatrix(defaultShader[INSTANCE_DRAWABLE_WIRED], &m[0][0], view, projection);
 
 	loadVAO(map->getVAO());
 	glDrawElements(GL_TRIANGLES, map->getFacesCount(), GL_UNSIGNED_INT, NULL);
+
+	// chunks
+	std::vector<glm::ivec2> chunksIndexes = map->getDrawableChunks();
+	for (int i = 0; i < chunksIndexes.size(); i++)
+	{
+		Chunk* chunk = map->getChunk(chunksIndexes[i].x, chunksIndexes[i].y);
+
+		if (chunk->getNeedVBOUpdate())
+			chunk->updateVBO();
+
+		loadMVPMatrix(defaultShader[INSTANCE_DRAWABLE_WIRED], chunk->getModelMatrixPtr(), view, projection);
+
+		loadVAO(chunk->getVAO());
+		glDrawElements(GL_TRIANGLES, chunk->getFacesCount(), GL_UNSIGNED_INT, NULL);
+	}
 
 	instanceDrawn++;
 	trianglesDrawn += map->getFacesCount();
