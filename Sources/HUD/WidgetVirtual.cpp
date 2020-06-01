@@ -36,6 +36,11 @@ WidgetVirtual::~WidgetVirtual()
 		glDeleteBuffers(1, &batchList[i].texturesBuffer);
 		glDeleteBuffers(1, &batchList[i].facesBuffer);
 		glDeleteVertexArrays(1, &batchList[i].vao);
+
+		batchList[i].verticesBuffer = 0;
+		batchList[i].texturesBuffer = 0;
+		batchList[i].facesBuffer = 0;
+		batchList[i].vao = 0;
 	}
 
 	//	free shared resources

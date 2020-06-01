@@ -8,7 +8,8 @@ float Chunk::rugosity = 1.f;
 
 //	Default
 Chunk::Chunk(unsigned int randomSeed, glm::mat4 model, const float& cornerHeight) :
-	needVBOUpdate(false), initialized(false), lod(1), seed(randomSeed), next(randomSeed), modelMatrix(model), corner(cornerHeight)
+	needVBOUpdate(false), initialized(false), lod(1), seed(randomSeed), next(randomSeed), modelMatrix(model), corner(cornerHeight), 
+	vao(0), verticesBuffer(0), colorsBuffer(0), normalsBuffer(0), facesBuffer(0)
 {}
 Chunk::~Chunk()
 {
@@ -66,6 +67,12 @@ void Chunk::free()
 	glDeleteBuffers(1, &colorsBuffer);
 	glDeleteBuffers(1, &facesBuffer);
 	glDeleteVertexArrays(1, &vao);
+
+	verticesBuffer = 0;
+	normalsBuffer = 0;
+	colorsBuffer = 0;
+	facesBuffer = 0;
+	vao = 0;
 }
 void Chunk::addLOD()	// N(4logN + 5logN)
 {
@@ -181,6 +188,7 @@ GLuint Chunk::getVAO() const { return vao; }
 //	Private functions
 void Chunk::initializeVBO()
 {
+	/*
 	glGenBuffers(1, &verticesBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, verticesBuffer);
 	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), vertices.data(), GL_DYNAMIC_DRAW);
@@ -200,9 +208,47 @@ void Chunk::initializeVBO()
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, facesBuffer);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, faces.size() * sizeof(unsigned int), faces.data(), GL_DYNAMIC_DRAW);
 	//glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, faces.size() * sizeof(unsigned int), faces.data());
+	*/
+
+
+	glGenBuffers(1, &verticesBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, verticesBuffer);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), vertices.data(), GL_STATIC_DRAW);
+
+	glGenBuffers(1, &normalsBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, normalsBuffer);
+	glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), normals.data(), GL_STATIC_DRAW);
+
+	glGenBuffers(1, &colorsBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, colorsBuffer);
+	glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(glm::vec3), colors.data(), GL_STATIC_DRAW);
+
+	glGenBuffers(1, &facesBuffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, facesBuffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, faces.size() * sizeof(unsigned int), faces.data(), GL_STATIC_DRAW);
 }
 void Chunk::initializeVAO()
 {
+	/*
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
+
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, verticesBuffer);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
+	glEnableVertexAttribArray(1);
+	glBindBuffer(GL_ARRAY_BUFFER, normalsBuffer);
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
+	glEnableVertexAttribArray(2);
+	glBindBuffer(GL_ARRAY_BUFFER, colorsBuffer);
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, facesBuffer);
+	glBindVertexArray(0);
+	*/
+
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 
@@ -223,6 +269,8 @@ void Chunk::initializeVAO()
 
 	needVBOUpdate = false;
 	initialized = glIsBuffer(verticesBuffer) && glIsBuffer(normalsBuffer) && glIsBuffer(colorsBuffer) && glIsBuffer(facesBuffer) && glIsVertexArray(vao);
+
+	std::cout <<"new ("<< (unsigned long)this<<"): "<< verticesBuffer << " " << normalsBuffer << " " << colorsBuffer << " " << facesBuffer << " " << vao << std::endl;
 }
 void Chunk::updateVBO()
 {

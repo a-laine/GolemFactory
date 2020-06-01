@@ -287,6 +287,12 @@ void Mesh::clear()
     glDeleteBuffers(1, &facesBuffer);
     glDeleteVertexArrays(1, &vao);
 
+	verticesBuffer = 0;
+	normalsBuffer = 0;
+	colorsBuffer = 0;
+	facesBuffer = 0;
+	vao = 0;
+
     //	delete bounding box attributes
     vBBox.clear();
     fBBox.clear();
@@ -295,12 +301,19 @@ void Mesh::clear()
     glDeleteBuffers(1, &fBBoxBuffer);
     glDeleteVertexArrays(1, &BBoxVao);
 
+	vBBoxBuffer = 0;
+	fBBoxBuffer = 0;
+	BBoxVao = 0;
+
     if(hasSkeleton())
     {
         weights.clear();
         bones.clear();
         glDeleteBuffers(1, &bonesBuffer);
         glDeleteBuffers(1, &weightsBuffer);
+
+		bonesBuffer = 0;
+		weightsBuffer = 0;
     }
 }
 

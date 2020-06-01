@@ -26,6 +26,12 @@ Map::~Map()
 	glDeleteBuffers(1, &colorsBuffer);
 	glDeleteBuffers(1, &facesBuffer);
 	glDeleteVertexArrays(1, &vao);
+
+	verticesBuffer = 0;
+	normalsBuffer = 0;
+	colorsBuffer = 0;
+	facesBuffer = 0;
+	vao = 0;
 }
 //
 
@@ -154,7 +160,7 @@ void Map::update(const glm::vec3& playerPosition)
 				{
 					Chunk* chunk = chunks[v.x][v.y];
 					float d = glm::length(glm::vec2(i, j));
-					if (d < 1.f) // radius (in chunk)
+					if (d < 5.f) // radius (in chunk)
 					{
 						drawableChunks.push_back(v);
 						if (!chunk->initialized)
@@ -165,10 +171,10 @@ void Map::update(const glm::vec3& playerPosition)
 							float z3 = inBound(v.x + 1, v.y) ? chunks[v.x + 1][v.y + 1]->getCorner() : z0;
 
 							chunk->initialize(z0, z0, z0);
-							while(chunk->getLod() < 4)
+							/*while(chunk->getLod() < 4)
 							{
 								chunk->addLOD();
-							}
+							}*/
 							chunk->initializeVBO();
 							chunk->initializeVAO();
 
