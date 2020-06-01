@@ -1,4 +1,5 @@
-Wired{
+Wired
+{
 	vertex :   "wired.vs";
 	fragment : "wired.fs";
 	geometry : "wired.gs";

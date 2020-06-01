@@ -8,8 +8,6 @@
 
 class Chunk
 {
-	friend class Map;
-
 	public:
 		//	Default
 		Chunk(unsigned int seed, glm::mat4 model, const float& cornerHeight);
@@ -56,6 +54,9 @@ class Chunk
 		float randf(const float& min = -1.f, const float& max = 1.f, const unsigned int& quantum = 32768) const;
 		unsigned int randi();
 		void randJump(const unsigned int& jumpCount);
+
+		unsigned int instantiateVertex(const glm::vec3& v, const float&  amplitude);
+		unsigned int instantiateVertex(const float& x, const float& y, const float& z, const float&  amplitude);
 		//
 
 		//	Miscellaneous

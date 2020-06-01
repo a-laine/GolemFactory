@@ -3,11 +3,12 @@
 #include "Resources/Loader/ImageLoader.h"
 
 #include <iostream>
+#include <set>
 #include <glm/gtc/matrix_transform.hpp>
 
 
 //	Default
-Map::Map() : height(0), width(0), chunks(nullptr), amplitude(16.f), scale(1.f), vao(0), facesCount(0), lastPlayerPos(-1, -1)
+Map::Map() : height(0), width(0), chunks(nullptr), amplitude(16.f), scale(1.f), vao(0), facesCount(0), lastPlayerCell(-1, -1)
 {}
 Map::~Map()
 {
@@ -66,36 +67,25 @@ bool Map::loadFromHeightmap(const std::string& resourceDirectory, const std::str
 	std::vector<glm::vec3> normals;
 	std::vector<glm::vec3> colors;
 	std::vector<unsigned int> faces;
-	glm::vec3 color = glm::vec3(0.3f, 0.3f, 0.3f);
+	glm::vec3 color = glm::vec3(1.f, 1.f, 1.f);
 	
+	for (int w = 0; w < width; w++)
+		for (int h = 0; h < height; h++)
+		{
+			vertices.push_back(getVertex(w, h));
+			normals.push_back(getNormal(w, h));
+			colors.push_back(color);
+		}
 	for (int w = 0; w < width - 1; w++)
 		for (int h = 0; h < height - 1; h++)
 		{
-			vertices.push_back(glm::vec3((float)w / (width - 1) - 0.5f, (float)h / (height - 1) - 0.5f, chunks[w][h]->getCorner()));
-			vertices.push_back(glm::vec3((float)w / (width - 1) - 0.5f, (float)(h + 1) / (height - 1) - 0.5f, chunks[w][h + 1]->getCorner()));
-			vertices.push_back(glm::vec3((float)(w + 1) / (width - 1) - 0.5f, (float)h / (height - 1) - 0.5f, chunks[w + 1][h]->getCorner()));
+			faces.push_back(w * height + h);
+			faces.push_back((w + 1) * height + h);
+			faces.push_back(w * height + h + 1);
 
-			glm::vec3 n1 = glm::cross(vertices[vertices.size() - 2] - vertices[vertices.size() - 1], vertices[vertices.size() - 3] - vertices[vertices.size() - 1]);
-			normals.push_back(n1);  colors.push_back(color);
-			normals.push_back(n1);  colors.push_back(color);
-			normals.push_back(n1);  colors.push_back(color);
-
-			faces.push_back((int)vertices.size() - 3);
-			faces.push_back((int)vertices.size() - 2);
-			faces.push_back((int)vertices.size() - 1);
-
-			vertices.push_back(glm::vec3((float)w / (width - 1) - 0.5f, (float)(h + 1) / (height - 1) - 0.5f, chunks[w][h + 1]->getCorner()));
-			vertices.push_back(glm::vec3((float)(w + 1) / (width - 1) - 0.5f, (float)h / (height - 1) - 0.5f, chunks[w + 1][h]->getCorner()));
-			vertices.push_back(glm::vec3((float)(w + 1) / (width - 1) - 0.5f, (float)(h + 1) / (height - 1) - 0.5f, chunks[w + 1][h + 1]->getCorner()));
-
-			glm::vec3 n2 = glm::cross(vertices[vertices.size() - 3] - vertices[vertices.size() - 2], vertices[vertices.size() - 1] - vertices[vertices.size() - 2]);
-			normals.push_back(n2);  colors.push_back(color);
-			normals.push_back(n2);  colors.push_back(color);
-			normals.push_back(n2);  colors.push_back(color);
-			
-			faces.push_back((int)vertices.size() - 3);
-			faces.push_back((int)vertices.size() - 2);
-			faces.push_back((int)vertices.size() - 1);
+			faces.push_back(w * height + h + 1);
+			faces.push_back((w + 1) * height + h);
+			faces.push_back((w + 1) * height + h + 1);
 		}
 	facesCount = (unsigned int)faces.size();
 
@@ -143,42 +133,44 @@ bool Map::loadFromHeightmap(const std::string& resourceDirectory, const std::str
 
 void Map::update(const glm::vec3& playerPosition)
 {
-	//std::cout << "Map update center : " << playerPosition.x << " " << playerPosition.y << std::endl;
+	bool detailsEnable = true;
+	float externalRadius = 5.f;
 
-	glm::ivec2 p = worldToChunk(playerPosition);
-	if (lastPlayerPos != p)
+	glm::ivec2 playerCell = worldToChunk(playerPosition);
+	if (lastPlayerCell != playerCell)
 	{
-		lastPlayerPos = p;
+		lastPlayerCell = playerCell;
 		drawableChunks.clear();
 		int checkingSquareRaduis = 7;
 
+		// chunk update
 		for (int i = -checkingSquareRaduis; i < checkingSquareRaduis + 1; i++)
 			for (int j = -checkingSquareRaduis; j < checkingSquareRaduis + 1; j++)
 			{
-				glm::ivec2 v = glm::ivec2(p.x + i, p.y + j);
+				glm::ivec2 v = glm::ivec2(playerCell.x + i, playerCell.y + j);
 				if (v.x < width && v.y < height && v.x >= 0 && v.y >= 0)
 				{
 					Chunk* chunk = chunks[v.x][v.y];
 					float d = glm::length(glm::vec2(i, j));
-					if (d < 5.f) // radius (in chunk)
+					if (d < externalRadius) // radius (in chunk)
 					{
 						drawableChunks.push_back(v);
-						if (!chunk->initialized)
+						if (!chunk->isInitialized() && detailsEnable)
 						{
 							float z0 = chunks[v.x][v.y]->getCorner();
-							float z1 = inBound(v.x + 1, v.y) ? chunks[v.x + 1][v.y]->getCorner() : z0;
-							float z2 = inBound(v.x + 1, v.y) ? chunks[v.x][v.y + 1]->getCorner() : z0;
-							float z3 = inBound(v.x + 1, v.y) ? chunks[v.x + 1][v.y + 1]->getCorner() : z0;
+							float z1 = inBound(v.x - 1, v.y) ? chunks[v.x - 1][v.y]->getCorner() : z0;
+							float z2 = inBound(v.x, v.y - 1) ? chunks[v.x][v.y - 1]->getCorner() : z0;
+							float z3 = inBound(v.x - 1, v.y - 1) ? chunks[v.x - 1][v.y - 1]->getCorner() : z0;
 
-							chunk->initialize(z0, z0, z0);
-							/*while(chunk->getLod() < 4)
+							chunk->initialize(z1, z3, z2);
+							for (int i = 0; i < 10 && chunk->getLod() < 6; i++)
 							{
 								chunk->addLOD();
-							}*/
+							}
 							chunk->initializeVBO();
 							chunk->initializeVAO();
 
-							if(!chunk->initialized)
+							if(!chunk->isInitialized())
 								std::cout << "error" << std::endl;
 						}
 					}
@@ -189,23 +181,37 @@ void Map::update(const glm::vec3& playerPosition)
 				}
 			}
 
-		std::cout << "Map update center : " << p.x << " " << p.y << " " << drawableChunks.size() << std::endl;
+		// discarded part of Map mesh
+		discardedFaces.clear();
+		for (unsigned int i = 0; i < drawableChunks.size(); i++)
+		{
+			unsigned int baseIndex = (drawableChunks[i].x - 1) * (height - 1) + (drawableChunks[i].y-1);
+			discardedFaces.push_back(2 * baseIndex);
+			discardedFaces.push_back(2 * baseIndex + 1);
+		}
+
+		//std::cout << "discarded faces count : " << discardedFaces.size() << std::endl;
 	}
 }
 //
 
 //	Set / Get
+void Map::setShader(Shader* s) { shader = s; }
+
+
 unsigned int Map::getFacesCount() const { return facesCount; }
 GLuint Map::getVAO() const { return vao; }
 Chunk* Map::getChunk(const int& w, const int& h) { return chunks[w][h]; }
 std::vector<glm::ivec2> Map::getDrawableChunks() { return drawableChunks; }
-glm::mat4 Map::getModelMatrix() const { return glm::scale(glm::mat4(1.f), glm::vec3(scale * (height - 1), scale * (width - 1), scale)); }
+glm::mat4 Map::getModelMatrix() const { return glm::scale(glm::mat4(1.f), glm::vec3(height - 1, width - 1, 1.f)); }
+glm::vec3 Map::getScale() const { return scale; }
+Shader* Map::getShader() { return shader; }
 
 
 glm::ivec2 Map::worldToChunk(glm::vec3 p) const
 {
-	glm::vec3 firstChunkPos = glm::vec3(-0.5f * width - 0.5f, -0.5f * height - 0.5f, 0);
-	glm::vec3 v = p - firstChunkPos;
+	glm::vec2 firstChunkPos = glm::vec2(-0.5f * width - 0.5f, -0.5f * height - 0.5f);
+	glm::vec2 v = glm::vec2(p.x / scale.x, p.y / scale.y) - firstChunkPos;
 	return glm::ivec2((int)v.x, (int)v.y);
 }
 bool Map::inBound(const int& x, const int& y) const
@@ -215,5 +221,46 @@ bool Map::inBound(const int& x, const int& y) const
 	else if (y >= height || y < 0)
 		return false;
 	else return true;
+}
+
+
+const std::vector<int>& Map::getDiscardedFaces() const { return discardedFaces; }
+//
+
+
+// Privates functions
+glm::vec3 Map::getVertex(const int& x, const int& y)
+{
+	return glm::vec3((float)x / (width - 1) - 0.5f, (float)y / (height - 1) - 0.5f, chunks[x][y]->getCorner());
+}
+glm::vec3 Map::getNormal(const int& x, const int& y)
+{
+	float h0 = chunks[x][y]->getCorner();
+
+	glm::vec3 n = glm::vec3(0.f);
+	int count = 0;
+
+	if (inBound(x + 1, y))
+	{
+		count++;
+		n += glm::normalize(glm::vec3(h0 - chunks[x + 1][y]->getCorner(), 0.f, 1.f));
+	}
+	if (inBound(x - 1, y))
+	{
+		count++;
+		n += glm::normalize(glm::vec3(chunks[x - 1][y]->getCorner() - h0, 0.f, 1.f));
+	}
+	if (inBound(x, y + 1))
+	{
+		count++;
+		n += glm::normalize(glm::vec3(0.f, h0 - chunks[x][y + 1]->getCorner(), 1.f));
+	}
+	if (inBound(x, y - 1))
+	{
+		count++;
+		n += glm::normalize(glm::vec3(0.f, chunks[x][y - 1]->getCorner() - h0, 1.f));
+	}
+
+	return (1.f / count) * n;
 }
 //

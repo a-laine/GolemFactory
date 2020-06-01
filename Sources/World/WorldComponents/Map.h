@@ -7,6 +7,7 @@
 #include <glm/glm.hpp>
 
 #include "Terrain/Chunk.h"
+#include "Resources/Shader.h"
 
 class Map
 {
@@ -23,14 +24,20 @@ class Map
 		//
 
 		//	Set / Get
+		void setShader(Shader* s);
+
 		unsigned int getFacesCount() const;
 		GLuint getVAO() const;
 		Chunk* getChunk(const int& h, const  int& w);
 		std::vector<glm::ivec2> getDrawableChunks();
 		glm::mat4 getModelMatrix() const;
+		glm::vec3 getScale() const;
+		Shader* getShader();
 
 		glm::ivec2 worldToChunk(glm::vec3 p) const;
 		bool inBound(const int& x, const int& y) const;
+
+		const std::vector<int>& getDiscardedFaces() const;
 		//
 
 		//	Attributes
@@ -38,10 +45,32 @@ class Map
 		Chunk*** chunks;
 		unsigned int** seeds;
 		float amplitude;
-		float scale;
+		glm::vec3 scale;
 		//
 
 	private:
+		//
+		struct gfvertex
+		{
+			gfvertex(const float& x, const float& y) : v(x, y) {};
+			gfvertex(const glm::vec3& u) : v(u.x, u.y) {};
+			gfvertex(const glm::vec2& u) : v(u) {};
+
+			glm::vec2 v;
+			bool operator<(const gfvertex& o) const
+			{
+				if (v.x != o.v.x)
+					return v.x < o.v.x;
+				else return v.y < o.v.y;
+			}
+		};
+		//
+
+		// Privates functions
+		glm::vec3 getVertex(const int& x, const int& y);
+		glm::vec3 getNormal(const int& x, const int& y);
+		//
+
 		//	Attributes
 		GLuint  vao,
 			verticesBuffer,
@@ -50,6 +79,9 @@ class Map
 			facesBuffer;
 		unsigned int facesCount;
 		std::vector<glm::ivec2> drawableChunks;
-		glm::ivec2 lastPlayerPos;
+		std::vector<int> discardedFaces;
+		glm::ivec2 lastPlayerCell;
+
+		Shader* shader;
 		//
 };

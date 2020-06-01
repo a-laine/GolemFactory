@@ -21,7 +21,7 @@ void main()
 {
 	gl_Position = projection * view * model * vec4(position, 1.0);
 	fragmentNormal_gs = (view * model * vec4(normal, 0.0)).xyz;
-	fragmentColor_gs = 2.0 * vertexcolor;
+	fragmentColor_gs = 1.0 * vertexcolor;
 	
 	vec3 eyeDirectionCameraSpace = - ( view * model * vec4(position, 1.0)).xyz;
 	vec3 lightPositionCameraSpace = (view * lightCoordinateWorldSpace).xyz;

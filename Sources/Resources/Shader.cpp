@@ -41,7 +41,7 @@ void Shader::initialize(GLuint  vertexSh, GLuint fragSh, GLuint geomShr, GLuint 
     textureCount = 0;
     attributesType = attType;
 
-    //	get default matrix attribute location
+    //	get attributes location
     for(auto& it = attType.begin(); it != attType.end(); it++)
     {
         const std::string& uniformName = it->first;

@@ -4,6 +4,7 @@
 #include <sstream>
 
 #include <glm/gtx/vector_angle.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include <EntityComponent/Entity.hpp>
 #include <HUD/WidgetManager.h>
@@ -105,12 +106,18 @@ void Renderer::drawInstancedObject(Shader* s, Mesh* m, std::vector<glm::mat4>& m
 }
 void Renderer::drawMap(Map* map, const float* view, const float* projection)
 {
-	glm::mat4 m = map->getModelMatrix();
+	glm::mat4 scale = glm::scale(glm::mat4(1.f), map->getScale());
+	glm::mat4 m = scale * map->getModelMatrix();
 	lastShader = nullptr;
 
 	// raw
-	loadMVPMatrix(defaultShader[INSTANCE_DRAWABLE_WIRED], &m[0][0], view, projection);
-
+	loadMVPMatrix(map->getShader(), &m[0][0], view, projection);
+	std::vector<int> list = map->getDiscardedFaces();
+	int loc = map->getShader()->getUniformLocation("listsize");
+	if (loc >= 0) glUniform1i(loc, (int)list.size());
+	loc = map->getShader()->getUniformLocation("list");
+	if (loc >= 0) glUniform1iv(loc, glm::min((int)list.size(), 256), list.data());
+	
 	loadVAO(map->getVAO());
 	glDrawElements(GL_TRIANGLES, map->getFacesCount(), GL_UNSIGNED_INT, NULL);
 
@@ -119,11 +126,12 @@ void Renderer::drawMap(Map* map, const float* view, const float* projection)
 	for (int i = 0; i < chunksIndexes.size(); i++)
 	{
 		Chunk* chunk = map->getChunk(chunksIndexes[i].x, chunksIndexes[i].y);
+		glm::mat4 model = scale * chunk->getModelMatrix();
 
 		if (chunk->getNeedVBOUpdate())
 			chunk->updateVBO();
 
-		loadMVPMatrix(defaultShader[INSTANCE_DRAWABLE_WIRED], chunk->getModelMatrixPtr(), view, projection);
+		loadMVPMatrix(defaultShader[INSTANCE_DRAWABLE_WIRED], &model[0][0], view, projection);
 
 		loadVAO(chunk->getVAO());
 		glDrawElements(GL_TRIANGLES, chunk->getFacesCount(), GL_UNSIGNED_INT, NULL);
