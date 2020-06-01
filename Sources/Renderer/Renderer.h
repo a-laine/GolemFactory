@@ -70,7 +70,7 @@ class Renderer : public Singleton<Renderer>
 
 		//	Render function
 		void drawObject(Entity* object, const float* view, const float* projection);
-		void drawMap(Map* map, const float* view, const float* projection);
+		void drawMap(Map* map, const float* view, const float* projection, Shader* s = nullptr);
 		//
 
 		Shader* normalViewer;

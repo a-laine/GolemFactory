@@ -104,7 +104,7 @@ void Renderer::drawInstancedObject(Shader* s, Mesh* m, std::vector<glm::mat4>& m
 	instanceDrawn += (int)(models.size());
 	trianglesDrawn += (int)(models.size() * m->getNumberFaces());
 }
-void Renderer::drawMap(Map* map, const float* view, const float* projection)
+void Renderer::drawMap(Map* map, const float* view, const float* projection, Shader* s)
 {
 	glm::mat4 scale = glm::scale(glm::mat4(1.f), map->getScale());
 	glm::mat4 m = scale * map->getModelMatrix();
@@ -126,15 +126,14 @@ void Renderer::drawMap(Map* map, const float* view, const float* projection)
 	for (int i = 0; i < chunksIndexes.size(); i++)
 	{
 		Chunk* chunk = map->getChunk(chunksIndexes[i].x, chunksIndexes[i].y);
-		glm::mat4 model = scale * chunk->getModelMatrix();
+		if (chunk->isInitialized())
+		{
+			glm::mat4 model = scale * chunk->getModelMatrix();
+			loadMVPMatrix(defaultShader[INSTANCE_DRAWABLE], &model[0][0], view, projection);
 
-		if (chunk->getNeedVBOUpdate())
-			chunk->updateVBO();
-
-		loadMVPMatrix(defaultShader[INSTANCE_DRAWABLE_WIRED], &model[0][0], view, projection);
-
-		loadVAO(chunk->getVAO());
-		glDrawElements(GL_TRIANGLES, chunk->getFacesCount(), GL_UNSIGNED_INT, NULL);
+			loadVAO(chunk->getVAO());
+			glDrawElements(GL_TRIANGLES, chunk->getFacesCount(), GL_UNSIGNED_INT, NULL);
+		}
 	}
 
 	instanceDrawn++;

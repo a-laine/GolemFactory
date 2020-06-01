@@ -8,7 +8,7 @@
 
 
 //	Default
-Map::Map() : height(0), width(0), chunks(nullptr), amplitude(16.f), scale(1.f), vao(0), facesCount(0), lastPlayerCell(-1, -1)
+Map::Map() : height(0), width(0), chunks(nullptr), amplitude(16.f), scale(256.f), vao(0), facesCount(0), lastPlayerCell(-1, -1)
 {}
 Map::~Map()
 {
@@ -134,18 +134,19 @@ bool Map::loadFromHeightmap(const std::string& resourceDirectory, const std::str
 void Map::update(const glm::vec3& playerPosition)
 {
 	bool detailsEnable = true;
-	float externalRadius = 5.f;
+	float externalRadius = 6.5f;
 
 	glm::ivec2 playerCell = worldToChunk(playerPosition);
 	if (lastPlayerCell != playerCell)
 	{
 		lastPlayerCell = playerCell;
 		drawableChunks.clear();
-		int checkingSquareRaduis = 7;
+		int checkingSquareRadius = 7;
+		jobList.clear();
 
 		// chunk update
-		for (int i = -checkingSquareRaduis; i < checkingSquareRaduis + 1; i++)
-			for (int j = -checkingSquareRaduis; j < checkingSquareRaduis + 1; j++)
+		for (int i = -checkingSquareRadius; i < checkingSquareRadius + 1; i++)
+			for (int j = -checkingSquareRadius; j < checkingSquareRadius + 1; j++)
 			{
 				glm::ivec2 v = glm::ivec2(playerCell.x + i, playerCell.y + j);
 				if (v.x < width && v.y < height && v.x >= 0 && v.y >= 0)
@@ -162,17 +163,19 @@ void Map::update(const glm::vec3& playerPosition)
 							float z2 = inBound(v.x, v.y - 1) ? chunks[v.x][v.y - 1]->getCorner() : z0;
 							float z3 = inBound(v.x - 1, v.y - 1) ? chunks[v.x - 1][v.y - 1]->getCorner() : z0;
 
+							unsigned int bottomSeed = inBound(v.x - 1, v.y) ? chunks[v.x - 1][v.y]->getSeed() : 0;
+							unsigned int rightSeed = inBound(v.x, v.y - 1) ? chunks[v.x][v.y - 1]->getSeed() : 0;
+
 							chunk->initialize(z1, z3, z2);
-							for (int i = 0; i < 10 && chunk->getLod() < 6; i++)
-							{
-								chunk->addLOD();
-							}
+							chunk->addLOD(bottomSeed, rightSeed, false);
 							chunk->initializeVBO();
 							chunk->initializeVAO();
 
 							if(!chunk->isInitialized())
 								std::cout << "error" << std::endl;
 						}
+
+						jobList.push_back(glm::ivec4(v.x, v.y, i, j));
 					}
 					else
 					{
@@ -187,10 +190,35 @@ void Map::update(const glm::vec3& playerPosition)
 		{
 			unsigned int baseIndex = (drawableChunks[i].x - 1) * (height - 1) + (drawableChunks[i].y-1);
 			discardedFaces.push_back(2 * baseIndex);
-			discardedFaces.push_back(2 * baseIndex + 1);
 		}
 
-		//std::cout << "discarded faces count : " << discardedFaces.size() << std::endl;
+		std::cout << "discarded faces count : " << discardedFaces.size() << std::endl << std::endl << std::endl;
+	}
+
+	// do defered jobs
+	if(!jobList.empty() && detailsEnable)
+	{
+		glm::ivec2 v = glm::ivec2(jobList.back().x, jobList.back().y);
+		Chunk* chunk = chunks[v.x][v.y];
+		float d = glm::length(glm::vec2(jobList.back().z, jobList.back().w));
+
+		if (chunk->getLod() < getLod(d) && detailsEnable)
+		{
+			unsigned int bottomSeed = inBound(v.x - 1, v.y) ? chunks[v.x - 1][v.y]->getSeed() : 0;
+			unsigned int rightSeed = inBound(v.x, v.y - 1) ? chunks[v.x][v.y - 1]->getSeed() : 0;
+
+			for (int k = 0; k < 10 && chunk->getLod() < getLod(d); k++)
+				chunk->addLOD(bottomSeed, rightSeed, true);
+			chunk->updateVBO();
+		}
+		else if (chunk->getLod() > getLod(d) && detailsEnable)
+		{
+			for (int k = 0; k < 10 && chunk->getLod() > getLod(d); k++)
+				chunk->removeLOD();
+			chunk->updateVBO();
+		}
+
+		jobList.pop_back();
 	}
 }
 //
@@ -262,5 +290,13 @@ glm::vec3 Map::getNormal(const int& x, const int& y)
 	}
 
 	return (1.f / count) * n;
+}
+int Map::getLod(float d)
+{
+	if (d < 2.2f) return 9;
+	else if (d < 3.2f) return 7;
+	else if (d < 4.2f) return 5;
+	else if (d < 5.2f) return 3;
+	else return 2;
 }
 //

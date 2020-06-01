@@ -9,7 +9,6 @@ uniform mat4 model; 	// model matrix (has to be present at this location)
 uniform mat4 view; 		// view matrix
 uniform mat4 projection;// projection matrix
 uniform int listsize = 0;
-uniform vec2 list[100];
 
 // output
 out vec3 lightDirectionCameraSpace_gs;
@@ -19,18 +18,6 @@ out vec3 color_gs;
 vec4 lightCoordinateWorldSpace = vec4(1000,200,1500,1);
 
 // program
-float valid()
-{
-	int result = 0;
-	if(listsize != 0)
-		result = 1;
-	for(int i = 0; i < min(listsize, 100); i++)
-	{
-		if(position.x == list[i].x && position.y == list[i].y)
-			return 2;
-	}
-	return result;
-}
 void main()
 {
 	gl_Position = projection * view * model * vec4(position, 1.0);

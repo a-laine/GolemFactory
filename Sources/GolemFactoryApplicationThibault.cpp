@@ -65,6 +65,7 @@ World world;
 Entity* avatar = nullptr;
 Entity* freeflyCamera = nullptr;
 Entity* frustrumCamera = nullptr;
+Shader* normalShader = nullptr;
 
 double completeTime = 16.;
 double averageCompleteTime = 16.;
@@ -113,6 +114,8 @@ int main()
 			object->setTransformation(glm::vec3(0.f, 0.f, -10.f), glm::vec3(1000, 1000, 10), glm::fquat());
 			object->removeComponent(object->getComponent<DrawableComponent>());
 		});
+
+		normalShader = ResourceManager::getInstance()->getResource<Shader>("normalViewer");
 
 	//	Test scene
 		Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("wired"));
@@ -218,7 +221,7 @@ int main()
 		 
 		Debug::view = currentCamera->getGlobalViewMatrix();
 		Debug::projection = glm::perspective(glm::radians(currentCamera->getVerticalFieldOfView(context->getViewportRatio())), context->getViewportRatio(), 0.1f, 30000.f);  //far = 1500.f
-		Renderer::getInstance()->drawMap(world.getMapPtr(), &Debug::view[0][0], &Debug::projection[0][0]);
+		Renderer::getInstance()->drawMap(world.getMapPtr(), &Debug::view[0][0], &Debug::projection[0][0], normalShader);
 
 		/*Debug::color = Debug::black;
 		float o = 0.2f;
@@ -516,7 +519,7 @@ void initManagers()
 	Renderer::getInstance()->setShader(Renderer::INSTANCE_ANIMATABLE_BB, ResourceManager::getInstance()->getResource<Shader>("skeletonBB"));
 	Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE_WIRED, ResourceManager::getInstance()->getResource<Shader>("wired"));
 	Renderer::getInstance()->setShader(Renderer::INSTANCE_ANIMATABLE_WIRED, ResourceManager::getInstance()->getResource<Shader>("wiredSkinning"));
-
+	
 	// Debug
 	Debug::getInstance()->initialize("Shapes/point", "Shapes/box", "Shapes/sphere", "Shapes/capsule", "Shapes/point", "Shapes/segment", "default", "wired");
 

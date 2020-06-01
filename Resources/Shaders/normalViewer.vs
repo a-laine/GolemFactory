@@ -16,6 +16,6 @@ out vec4 delta_gs;
 void main()
 {
 	gl_Position = projection * view * model * vec4(position, 1.0);
-	delta_gs = projection * view * model * vec4(position + 0.3 * normal, 1.0);
+	delta_gs = projection * view * model * vec4(position + 0.1 * normal, 1.0);
 }
 

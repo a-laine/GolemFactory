@@ -21,7 +21,7 @@ float valid()
 {
 	for(int i = 0; i < min(listsize, 256); i++)
 	{
-		if(gl_PrimitiveIDIn == list[i])
+		if(gl_PrimitiveIDIn == list[i] || gl_PrimitiveIDIn == list[i] + 1)
 			return -1;
 	}
 	return 0;

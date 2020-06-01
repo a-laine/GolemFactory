@@ -17,7 +17,7 @@ class Chunk
 		//	Public functions
 		void initialize(const float& topLeft, const float& topRight, const float& bottomRight);
 		void free();
-		void addLOD();
+		void addLOD(const unsigned int& seed1, const unsigned int&  seed2, bool debug);
 		void removeLOD();
 
 		void initializeVBO();
@@ -34,8 +34,9 @@ class Chunk
 		float* getModelMatrixPtr();
 		uint8_t getLod() const;
 		float getCorner();
-		std::vector<float> getLeftBorder(const uint8_t& targetLod);
-		std::vector<float> getBottomBorder(const uint8_t& targetLod);
+		unsigned int getSeed();
+		//std::vector<float> getLeftBorder(const uint8_t& targetLod);
+		//std::vector<float> getBottomBorder(const uint8_t& targetLod);
 		bool getNeedVBOUpdate() const;
 		unsigned int getFacesCount() const;
 		GLuint getVAO() const;
@@ -51,9 +52,10 @@ class Chunk
 		void splitFace(const unsigned int& i0, const unsigned int& i1, const unsigned int& i2, const unsigned int& i3, const float& amplitude);
 		void mergeFace(unsigned int i0, unsigned int i1, unsigned int i2, unsigned int i3);
 		
-		float randf(const float& min = -1.f, const float& max = 1.f, const unsigned int& quantum = 32768) const;
+		float randf(const float& min = -1.f, const float& max = 1.f, const unsigned int& quantum = 32768);
 		unsigned int randi();
-		void randJump(const unsigned int& jumpCount);
+		//void randJump(const unsigned int& jumpCount);
+		void initRandomNumberGenerator(const unsigned int& offset, const unsigned int& newseed);
 
 		unsigned int instantiateVertex(const glm::vec3& v, const float&  amplitude);
 		unsigned int instantiateVertex(const float& x, const float& y, const float& z, const float&  amplitude);

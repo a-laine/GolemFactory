@@ -69,6 +69,7 @@ class Map
 		// Privates functions
 		glm::vec3 getVertex(const int& x, const int& y);
 		glm::vec3 getNormal(const int& x, const int& y);
+		int getLod(float d);
 		//
 
 		//	Attributes
@@ -81,6 +82,7 @@ class Map
 		std::vector<glm::ivec2> drawableChunks;
 		std::vector<int> discardedFaces;
 		glm::ivec2 lastPlayerCell;
+		std::vector<glm::ivec4> jobList;
 
 		Shader* shader;
 		//

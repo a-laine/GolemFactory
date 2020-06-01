@@ -2,7 +2,7 @@
 #include <iostream>
 
 //	Shared attributes
-uint8_t Chunk::maxSubdivide = 6;
+uint8_t Chunk::maxSubdivide = 10;
 float Chunk::rugosity = 1.f;
 //
 
@@ -30,7 +30,7 @@ void Chunk::initialize(const float& topLeft, const float& topRight, const float&
 
 	colors.push_back(glm::vec3(1, 0, 0));
 	colors.push_back(glm::vec3(0, 1, 0));
-	colors.push_back(glm::vec3(0.2, 0.2, 1));
+	colors.push_back(glm::vec3(0, 0, 1));
 	colors.push_back(glm::vec3(1, 1, 0));
 
 	normals.push_back(glm::vec3(0, 0, 1));
@@ -49,7 +49,7 @@ void Chunk::initialize(const float& topLeft, const float& topRight, const float&
 	faces.push_back(0); faces.push_back(2); faces.push_back(3);
 
 	// end
-	lodVerticesCount.push_back((unsigned int)vertices.size());
+	lodVerticesCount.push_back(4);
 }
 void Chunk::free()
 {
@@ -76,20 +76,55 @@ void Chunk::free()
 	facesBuffer = 0;
 	vao = 0;
 }
-void Chunk::addLOD()	// N(4logN + 5logN)
+void Chunk::addLOD(const unsigned int&  seed1, const unsigned int&  seed2, bool debug)	// N(4logN + 5logN)
 {
 	if (lod < maxSubdivide)
 	{
 		// initialization
 		needVBOUpdate = true;
-		float step = 1.f / (int)glm::pow(2, lod - 1);
-		lod++;
+		int subdivision = (int)glm::pow(2, lod - 1);
+		float step = 1.f / subdivision;
 		unsigned int initialVerticesCount = (unsigned int)vertices.size();
+		float amplitude = 0.1f * step;
+		const int offset = (int)glm::pow(2, maxSubdivide - 1);
 
 		// clear old data
 		faces.clear();
 
+		// inject neibors borders vertices
+		initRandomNumberGenerator(subdivision - 1, seed1);
+		for (float y = -0.5f; y < 0.5f; y += step)
+		{
+			unsigned int i0 = indexes[gfvertex(-0.5f, y)];
+			unsigned int i1 = indexes[gfvertex(-0.5f, y + step)];
+			instantiateVertex(0.5f * (vertices[i0] + vertices[i1]), amplitude);
+		}
+		initRandomNumberGenerator(offset + subdivision - 1, seed2);
+		for (float x = -0.5f; x < 0.5f; x += step)
+		{
+			unsigned int i0 = indexes[gfvertex(x, -0.5f)];
+			unsigned int i1 = indexes[gfvertex(x + step, -0.5f)];
+			instantiateVertex(0.5f * (vertices[i0] + vertices[i1]), amplitude);
+		}
+
+		// inject personal border
+		initRandomNumberGenerator(subdivision - 1, seed);
+		for (float y = -0.5f; y < 0.5f; y += step)
+		{
+			unsigned int i0 = indexes[gfvertex(0.5f, y)];
+			unsigned int i1 = indexes[gfvertex(0.5f, y + step)];
+			instantiateVertex(0.5f * (vertices[i0] + vertices[i1]), amplitude);
+		}
+		initRandomNumberGenerator(offset + subdivision - 1, seed);
+		for (float x = -0.5f; x < 0.5f; x += step)
+		{
+			unsigned int i0 = indexes[gfvertex(x, 0.5f)];
+			unsigned int i1 = indexes[gfvertex(x + step, 0.5f)];
+			instantiateVertex(0.5f * (vertices[i0] + vertices[i1]), amplitude);
+		}
+
 		// split all squares
+		initRandomNumberGenerator(2 * offset + subdivision - 1, seed);
 		for (float x = -0.5f; x < 0.5f; x += step)
 			for (float y = -0.5f; y < 0.5f; y += step)
 			{
@@ -98,11 +133,31 @@ void Chunk::addLOD()	// N(4logN + 5logN)
 				unsigned int i2 = indexes[gfvertex(x + step, y)];
 				unsigned int i3 = indexes[gfvertex(x + step, y + step)];
 
-				splitFace(i0, i1, i2, i3, 0.1f* step);
+				splitFace(i0, i1, i2, i3, amplitude);
+			}
+
+		lod++;
+		step *= 0.5f;
+		
+		// sooth normals
+		for (float x = -0.5f + step; x < 0.5f - step; x += step)
+			for (float y = -0.5f + step; y < 0.5f - step; y += step)
+			{
+				unsigned int index = indexes[gfvertex(x, y)];
+				glm::vec3 n(vertices[indexes[gfvertex(x - step, y)]].z - vertices[indexes[gfvertex(x + step, y)]].z,
+					vertices[indexes[gfvertex(x, y - step)]].z - vertices[indexes[gfvertex(x, y + step)]].z,
+					4 * step);
+				normals[indexes[gfvertex(x, y)]] = glm::normalize(n);
 			}
 
 		// save sizes
 		lodVerticesCount.push_back((unsigned int)vertices.size() - initialVerticesCount);
+		
+
+		if (debug)
+		{
+			
+		}
 	}
 }
 void Chunk::removeLOD()   // N(4logN + 5logN)
@@ -112,18 +167,19 @@ void Chunk::removeLOD()   // N(4logN + 5logN)
 		// initialization
 		needVBOUpdate = true;
 		lod--;
-		float step = 1.f / ((int)glm::pow(2, lod) - 1);
+		int subdivision = (int)glm::pow(2, lod - 1);
+		float step = 1.f / subdivision;
 
 		// clear old data
-		vertices.erase(vertices.begin() + lodVerticesCount.back(), vertices.end());
-		colors.erase(colors.begin() + lodVerticesCount.back(), colors.end());
-		normals.erase(normals.begin() + lodVerticesCount.back(), normals.end());
+		vertices.erase(vertices.end() - lodVerticesCount.back(), vertices.end());
+		colors.erase(colors.end() - lodVerticesCount.back(), colors.end());
+		normals.erase(normals.end() - lodVerticesCount.back(), normals.end());
 		faces.clear();
 		lodVerticesCount.pop_back();
 
 		// merge all squares
-		for (float x = -0.5f; x <= 0.5f; x += step)
-			for (float y = -0.5f; y <= 0.5f; y += step)
+		for (float x = -0.5f; x < 0.5f; x += step)
+			for (float y = -0.5f; y < 0.5f; y += step)
 			{
 				unsigned int i0 = indexes[gfvertex(x, y)];
 				unsigned int i1 = indexes[gfvertex(x, y + step)];
@@ -132,7 +188,21 @@ void Chunk::removeLOD()   // N(4logN + 5logN)
 
 				mergeFace(i0, i1, i2, i3);
 			}
+
+		// sooth normals
+		for (float x = -0.5f + step; x < 0.5f - step; x += step)
+			for (float y = -0.5f + step; y < 0.5f - step; y += step)
+			{
+				unsigned int index = indexes[gfvertex(x, y)];
+				glm::vec3 n(vertices[indexes[gfvertex(x - step, y)]].z - vertices[indexes[gfvertex(x + step, y)]].z,
+					vertices[indexes[gfvertex(x, y - step)]].z - vertices[indexes[gfvertex(x, y + step)]].z,
+					4 * step);
+				normals[indexes[gfvertex(x, y)]] = glm::normalize(n);
+			}
+
 	}
+	if (lod == 1)
+		free();
 }
 //
 
@@ -149,29 +219,8 @@ float* Chunk::getModelMatrixPtr() { return &modelMatrix[0][0]; }
 uint8_t Chunk::getLod() const { return lod; }
 
 
-float Chunk::getCorner()
-{
-	return corner;
-}
-std::vector<float> Chunk::getLeftBorder(const uint8_t& targetLod)
-{
-	std::vector<float> result;
-	next = seed;
-	result.push_back(randf());
-	for (uint8_t i = 0; i < targetLod; i++)
-		result.push_back(randf());
-	return result;
-}
-std::vector<float> Chunk::getBottomBorder(const uint8_t& targetLod)
-{
-	std::vector<float> result;
-	next = seed;
-	result.push_back(randf());
-	randJump((unsigned int)glm::pow(2, maxSubdivide));
-	for (uint8_t i = 0; i < targetLod; i++)
-		result.push_back(randf());
-	return result;
-}
+float Chunk::getCorner(){ return corner; }
+unsigned int Chunk::getSeed() { return seed; }
 
 
 unsigned int Chunk::getFacesCount() const { return (unsigned int)faces.size(); }
@@ -185,19 +234,23 @@ void Chunk::initializeVBO()
 {
 	glGenBuffers(1, &verticesBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, verticesBuffer);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), vertices.data(), GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), nullptr, GL_DYNAMIC_DRAW);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(glm::vec3), vertices.data());
 
 	glGenBuffers(1, &normalsBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, normalsBuffer);
-	glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), normals.data(), GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), nullptr, GL_DYNAMIC_DRAW);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, normals.size() * sizeof(glm::vec3), normals.data());
 
 	glGenBuffers(1, &colorsBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, colorsBuffer);
-	glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(glm::vec3), colors.data(), GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(glm::vec3), nullptr, GL_DYNAMIC_DRAW);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, colors.size() * sizeof(glm::vec3), colors.data());
 
 	glGenBuffers(1, &facesBuffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, facesBuffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, faces.size() * sizeof(unsigned int), faces.data(), GL_DYNAMIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, faces.size() * sizeof(unsigned int), nullptr, GL_DYNAMIC_DRAW);
+	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, faces.size() * sizeof(unsigned int), faces.data());
 }
 void Chunk::initializeVAO()
 {
@@ -226,7 +279,22 @@ void Chunk::updateVBO()
 {
 	needVBOUpdate = false;
 
-	glBindVertexArray(0);
+	glDeleteBuffers(1, &verticesBuffer);
+	glDeleteBuffers(1, &normalsBuffer);
+	glDeleteBuffers(1, &colorsBuffer);
+	glDeleteBuffers(1, &facesBuffer);
+	glDeleteVertexArrays(1, &vao);
+
+	verticesBuffer = 0;
+	normalsBuffer = 0;
+	colorsBuffer = 0;
+	facesBuffer = 0;
+	vao = 0;
+
+	initializeVBO();
+	initializeVAO();
+
+	/*glBindVertexArray(0);
 
 	glBindBuffer(GL_ARRAY_BUFFER, verticesBuffer);
 	glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(glm::vec3), vertices.data());
@@ -238,7 +306,7 @@ void Chunk::updateVBO()
 	glBufferSubData(GL_ARRAY_BUFFER, 0, colors.size() * sizeof(glm::vec3), colors.data());
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, facesBuffer);
-	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, faces.size() * sizeof(unsigned int), faces.data());
+	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, faces.size() * sizeof(unsigned int), faces.data());*/
 }
 
 
@@ -298,18 +366,19 @@ void Chunk::mergeFace(unsigned int i0, unsigned int i1, unsigned int i2, unsigne
 }
 
 
-float Chunk::randf(const float& min, const float& max, const unsigned int& quantum) const
+float Chunk::randf(const float& min, const float& max, const unsigned int& quantum)
 {
-	return min + (rand() % quantum) * (max - min) / quantum;
+	return min + (randi() % quantum) * (max - min) / quantum;
 }
 unsigned int Chunk::randi() // RAND_MAX assumed to be 32767 
 {
 	next = next * 1103515245 + 12345;
 	return (unsigned int)(next / 65536) % 32768;
 }
-void Chunk::randJump(const unsigned int& jumpCount)
+void Chunk::initRandomNumberGenerator(const unsigned int& offset, const unsigned int& newseed)
 {
-	for(unsigned int i = 0; i<jumpCount; i++)
+	next = newseed;
+	for (unsigned int i = 0; i < offset; i++)
 		next = next * 1103515245 + 12345;
 }
 
@@ -324,7 +393,7 @@ unsigned int Chunk::instantiateVertex(const glm::vec3& base, const float& amplit
 	{
 		glm::vec3 v = glm::vec3(base.x, base.y, base.z + amplitude * randf());
 		vertices.push_back(v);
-		colors.push_back(glm::vec3(1, 1, 1));
+		colors.push_back(glm::vec3(1.f, 1.f, 1.f));
 		normals.push_back(glm::vec3(0, 0, 1));
 		indexes[gfvertex(base)] = (unsigned int)vertices.size() - 1;
 		return (unsigned int)vertices.size() - 1;
