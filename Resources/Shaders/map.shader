@@ -10,7 +10,6 @@ Map
 		view : "mat4";
 		projection : "mat4";
 		overrideColor : "vec3";
-		listsize : "int";
-		list : "int array256";
+		exclusion : "ivec4";
 	};
 }

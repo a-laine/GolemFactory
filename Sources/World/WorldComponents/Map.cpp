@@ -8,7 +8,7 @@
 
 
 //	Default
-Map::Map() : height(0), width(0), chunks(nullptr), amplitude(16.f), scale(256.f), vao(0), facesCount(0), lastPlayerCell(-1, -1)
+Map::Map() : height(0), width(0), chunks(nullptr), amplitude(16.f), scale(16.f), vao(0), facesCount(0), lastPlayerCell(-1, -1)
 {}
 Map::~Map()
 {
@@ -134,26 +134,26 @@ bool Map::loadFromHeightmap(const std::string& resourceDirectory, const std::str
 void Map::update(const glm::vec3& playerPosition)
 {
 	bool detailsEnable = true;
-	float externalRadius = 6.5f;
+	float externalRadius = 10.5f;
 
 	glm::ivec2 playerCell = worldToChunk(playerPosition);
 	if (lastPlayerCell != playerCell)
 	{
 		lastPlayerCell = playerCell;
 		drawableChunks.clear();
-		int checkingSquareRadius = 7;
+		int checkingSquareRadius = 10;
 		jobList.clear();
 
 		// chunk update
-		for (int i = -checkingSquareRadius; i < checkingSquareRadius + 1; i++)
-			for (int j = -checkingSquareRadius; j < checkingSquareRadius + 1; j++)
+		for (int i = -checkingSquareRadius - 2; i < checkingSquareRadius + 3; i++)
+			for (int j = -checkingSquareRadius - 2; j < checkingSquareRadius + 3; j++)
 			{
 				glm::ivec2 v = glm::ivec2(playerCell.x + i, playerCell.y + j);
 				if (v.x < width && v.y < height && v.x >= 0 && v.y >= 0)
 				{
 					Chunk* chunk = chunks[v.x][v.y];
 					float d = glm::length(glm::vec2(i, j));
-					if (d < externalRadius) // radius (in chunk)
+					if (i >= -checkingSquareRadius && j >= -checkingSquareRadius && i < checkingSquareRadius + 1 && j < checkingSquareRadius + 1) // radius (in chunk)
 					{
 						drawableChunks.push_back(v);
 						if (!chunk->isInitialized() && detailsEnable)
@@ -175,7 +175,9 @@ void Map::update(const glm::vec3& playerPosition)
 								std::cout << "error" << std::endl;
 						}
 
-						jobList.push_back(glm::ivec4(v.x, v.y, i, j));
+						int lod = getLod(d);
+						if(chunk->getLod() != lod)
+							jobList.push_back(glm::ivec4(v.x, v.y, lod, 0));
 					}
 					else
 					{
@@ -185,14 +187,12 @@ void Map::update(const glm::vec3& playerPosition)
 			}
 
 		// discarded part of Map mesh
-		discardedFaces.clear();
-		for (unsigned int i = 0; i < drawableChunks.size(); i++)
-		{
-			unsigned int baseIndex = (drawableChunks[i].x - 1) * (height - 1) + (drawableChunks[i].y-1);
-			discardedFaces.push_back(2 * baseIndex);
-		}
+		exclusionZone.x = height - 1;
+		exclusionZone.y = checkingSquareRadius;
+		exclusionZone.w = playerCell.x - 1;
+		exclusionZone.z = playerCell.y - 1;
 
-		std::cout << "discarded faces count : " << discardedFaces.size() << std::endl << std::endl << std::endl;
+		//std::cout << "discarded faces count : " << discardedFaces.size() << std::endl << std::endl << std::endl;
 	}
 
 	// do defered jobs
@@ -200,20 +200,20 @@ void Map::update(const glm::vec3& playerPosition)
 	{
 		glm::ivec2 v = glm::ivec2(jobList.back().x, jobList.back().y);
 		Chunk* chunk = chunks[v.x][v.y];
-		float d = glm::length(glm::vec2(jobList.back().z, jobList.back().w));
+		int lod = jobList.back().z;
 
-		if (chunk->getLod() < getLod(d) && detailsEnable)
+		if (chunk->getLod() < lod && detailsEnable)
 		{
 			unsigned int bottomSeed = inBound(v.x - 1, v.y) ? chunks[v.x - 1][v.y]->getSeed() : 0;
 			unsigned int rightSeed = inBound(v.x, v.y - 1) ? chunks[v.x][v.y - 1]->getSeed() : 0;
 
-			for (int k = 0; k < 10 && chunk->getLod() < getLod(d); k++)
+			for (int k = 0; k < 10 && chunk->getLod() < lod ; k++)
 				chunk->addLOD(bottomSeed, rightSeed, true);
 			chunk->updateVBO();
 		}
-		else if (chunk->getLod() > getLod(d) && detailsEnable)
+		else if (chunk->getLod() > lod && detailsEnable)
 		{
-			for (int k = 0; k < 10 && chunk->getLod() > getLod(d); k++)
+			for (int k = 0; k < 10 && chunk->getLod() > lod; k++)
 				chunk->removeLOD();
 			chunk->updateVBO();
 		}
@@ -250,9 +250,7 @@ bool Map::inBound(const int& x, const int& y) const
 		return false;
 	else return true;
 }
-
-
-const std::vector<int>& Map::getDiscardedFaces() const { return discardedFaces; }
+glm::ivec4 Map::getExclusionZone() const { return exclusionZone; }
 //
 
 
@@ -293,10 +291,14 @@ glm::vec3 Map::getNormal(const int& x, const int& y)
 }
 int Map::getLod(float d)
 {
-	if (d < 2.2f) return 9;
-	else if (d < 3.2f) return 7;
-	else if (d < 4.2f) return 5;
-	else if (d < 5.2f) return 3;
-	else return 2;
+	float weight = 1.f;
+
+	if (d < 2.2f) return weight * 8;
+	else if (d < 3.2f) return weight * 7;
+	else if (d < 4.7f) return weight * 6;
+	else if (d < 6.2f) return weight * 5;
+	else if (d < 7.7f) return weight * 4;
+	else if (d < 9.2f) return weight * 3;
+	else return weight * 2;
 }
 //

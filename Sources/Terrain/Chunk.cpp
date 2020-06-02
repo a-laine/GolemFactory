@@ -133,7 +133,7 @@ void Chunk::addLOD(const unsigned int&  seed1, const unsigned int&  seed2, bool 
 				unsigned int i2 = indexes[gfvertex(x + step, y)];
 				unsigned int i3 = indexes[gfvertex(x + step, y + step)];
 
-				splitFace(i0, i1, i2, i3, amplitude);
+				splitFace(i0, i1, i2, i3, amplitude, 0.5f * step);
 			}
 
 		lod++;
@@ -310,7 +310,7 @@ void Chunk::updateVBO()
 }
 
 
-void Chunk::splitFace(const unsigned int& i0, const unsigned int& i1, const unsigned int& i2, const unsigned int& i3, const float& amplitude) // 5logN
+void Chunk::splitFace(const unsigned int& i0, const unsigned int& i1, const unsigned int& i2, const unsigned int& i3, const float& amplitude, const float& step) // 5logN
 {
 	// generate new vertices
 	glm::vec3 v0 = vertices[i0];
@@ -319,12 +319,18 @@ void Chunk::splitFace(const unsigned int& i0, const unsigned int& i1, const unsi
 	glm::vec3 v3 = vertices[i3];
 
 	// get indexes
-	unsigned int i4 = instantiateVertex(0.5f * (v0 + v1), amplitude);
+	unsigned int i4 = instantiateVertexSmooth(0.5f * (v0 + v1), step, amplitude);
+	unsigned int i6 = instantiateVertexSmooth(0.5f * (v0 + v2), step, amplitude);
+	unsigned int i5 = instantiateVertexSmooth(0.5f * (v2 + v3), step, amplitude);
+	unsigned int i7 = instantiateVertexSmooth(0.5f * (v3 + v1), step, amplitude);
+	unsigned int i8 = instantiateVertex(0.25f * (v0 + v1 + v2 + v3), amplitude);
+
+	/*unsigned int i4 = instantiateVertex(0.5f * (v0 + v1), amplitude);
 	unsigned int i5 = instantiateVertex(0.5f * (v2 + v3), amplitude);
 	unsigned int i6 = instantiateVertex(0.5f * (v0 + v2), amplitude);
 	unsigned int i7 = instantiateVertex(0.5f * (v3 + v1), amplitude);
-	unsigned int i8 = instantiateVertex(0.25f * (v0 + v1 + v2 + v3), amplitude);
-		
+	unsigned int i8 = instantiateVertex(0.25f * (v0 + v1 + v2 + v3), amplitude);*/
+	
 	// create new faces
 	faces.push_back(i0); faces.push_back(i8); faces.push_back(i4);
 	faces.push_back(i0); faces.push_back(i6); faces.push_back(i8);
@@ -399,5 +405,41 @@ unsigned int Chunk::instantiateVertex(const glm::vec3& base, const float& amplit
 		return (unsigned int)vertices.size() - 1;
 	}
 	else return it->second;
+}
+unsigned int Chunk::instantiateVertexSmooth(const glm::vec3& v, const float& step, const float&  amplitude)
+{
+	glm::vec3 base = glm::vec3(v.x, v.y, 0.f);
+	int n = 0;
+
+	auto it = indexes.find(gfvertex(v.x + step, v.y));
+	if (it != indexes.end())
+	{
+		n++;
+		base.z += vertices[it->second].z;
+	}
+
+	it = indexes.find(gfvertex(v.x - step, v.y));
+	if (it != indexes.end())
+	{
+		n++;
+		base.z += vertices[it->second].z;
+	}
+
+	it = indexes.find(gfvertex(v.x, v.y + step));
+	if (it != indexes.end())
+	{
+		n++;
+		base.z += vertices[it->second].z;
+	}
+
+	it = indexes.find(gfvertex(v.x, v.y - step));
+	if (it != indexes.end())
+	{
+		n++;
+		base.z += vertices[it->second].z;
+	}
+
+	base.z /= (float)n;
+	return instantiateVertex(base, amplitude);
 }
 //

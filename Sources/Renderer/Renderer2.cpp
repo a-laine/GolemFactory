@@ -112,16 +112,19 @@ void Renderer::drawMap(Map* map, const float* view, const float* projection, Sha
 
 	// raw
 	loadMVPMatrix(map->getShader(), &m[0][0], view, projection);
-	std::vector<int> list = map->getDiscardedFaces();
-	int loc = map->getShader()->getUniformLocation("listsize");
-	if (loc >= 0) glUniform1i(loc, (int)list.size());
-	loc = map->getShader()->getUniformLocation("list");
-	if (loc >= 0) glUniform1iv(loc, glm::min((int)list.size(), 256), list.data());
+	glm::ivec4 exclusion = map->getExclusionZone();
+	int loc = map->getShader()->getUniformLocation("exclusion");
+	if (loc >= 0) glUniform4iv(loc, 1, (int*)&exclusion);
 	
 	loadVAO(map->getVAO());
 	glDrawElements(GL_TRIANGLES, map->getFacesCount(), GL_UNSIGNED_INT, NULL);
+	instanceDrawn++;
+	trianglesDrawn += map->getFacesCount();
+
 
 	// chunks
+	loc = defaultShader[INSTANCE_DRAWABLE]->getUniformLocation("overrideColor");
+	glm::vec3 color;
 	std::vector<glm::ivec2> chunksIndexes = map->getDrawableChunks();
 	for (int i = 0; i < chunksIndexes.size(); i++)
 	{
@@ -131,13 +134,19 @@ void Renderer::drawMap(Map* map, const float* view, const float* projection, Sha
 			glm::mat4 model = scale * chunk->getModelMatrix();
 			loadMVPMatrix(defaultShader[INSTANCE_DRAWABLE], &model[0][0], view, projection);
 
+			int lod = chunk->getLod();
+			color = 0.25f * glm::vec3(lod % 3, (lod / 3) % 3, (lod / 9) % 3) + glm::vec3(0.25f);
+			if (loc >= 0) glUniform3fv(loc, 1, (float*)&color);
+
 			loadVAO(chunk->getVAO());
 			glDrawElements(GL_TRIANGLES, chunk->getFacesCount(), GL_UNSIGNED_INT, NULL);
+
+			instanceDrawn++;
+			trianglesDrawn += chunk->getFacesCount();
 		}
 	}
-
-	instanceDrawn++;
-	trianglesDrawn += map->getFacesCount();
+	color = glm::vec3(-1.0, 0.0, 0.0);
+	if (loc >= 0) glUniform3fv(loc, 1, (float*)&color);
 }
 /*
 void Renderer::drawTriangle(const Triangle* triangle, const float* view, const float* projection)

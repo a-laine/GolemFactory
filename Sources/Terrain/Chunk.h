@@ -49,7 +49,7 @@ class Chunk
 
 	private:
 		//	Private functions
-		void splitFace(const unsigned int& i0, const unsigned int& i1, const unsigned int& i2, const unsigned int& i3, const float& amplitude);
+		void splitFace(const unsigned int& i0, const unsigned int& i1, const unsigned int& i2, const unsigned int& i3, const float& amplitude, const float& step);
 		void mergeFace(unsigned int i0, unsigned int i1, unsigned int i2, unsigned int i3);
 		
 		float randf(const float& min = -1.f, const float& max = 1.f, const unsigned int& quantum = 32768);
@@ -59,6 +59,7 @@ class Chunk
 
 		unsigned int instantiateVertex(const glm::vec3& v, const float&  amplitude);
 		unsigned int instantiateVertex(const float& x, const float& y, const float& z, const float&  amplitude);
+		unsigned int instantiateVertexSmooth(const glm::vec3& v, const float& step, const float&  amplitude);
 		//
 
 		//	Miscellaneous

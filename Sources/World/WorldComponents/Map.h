@@ -37,7 +37,7 @@ class Map
 		glm::ivec2 worldToChunk(glm::vec3 p) const;
 		bool inBound(const int& x, const int& y) const;
 
-		const std::vector<int>& getDiscardedFaces() const;
+		glm::ivec4 getExclusionZone() const;
 		//
 
 		//	Attributes
@@ -80,7 +80,7 @@ class Map
 			facesBuffer;
 		unsigned int facesCount;
 		std::vector<glm::ivec2> drawableChunks;
-		std::vector<int> discardedFaces;
+		glm::ivec4 exclusionZone;
 		glm::ivec2 lastPlayerCell;
 		std::vector<glm::ivec4> jobList;
 

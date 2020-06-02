@@ -14,16 +14,19 @@ out vec3 normal_fs;
 out vec3 color_fs;
 out float valid_fs;
 
-uniform int listsize = 0;
-uniform int list[256];
+uniform ivec4 exclusion;
 
 float valid()
 {
-	for(int i = 0; i < min(listsize, 256); i++)
-	{
-		if(gl_PrimitiveIDIn == list[i] || gl_PrimitiveIDIn == list[i] + 1)
-			return -1;
-	}
+	int height = exclusion.x;
+	int size = exclusion.y;
+	ivec2 minCorner = ivec2(exclusion.z - size, exclusion.w - size);
+	ivec2 maxCorner = ivec2(exclusion.z + size, exclusion.w + size);
+	int primitiveIDIn = gl_PrimitiveIDIn / 2;
+	ivec2 face =  ivec2(primitiveIDIn % height, primitiveIDIn / height);
+	
+	if(face.x >= minCorner.x && face.x <= maxCorner.x && face.y >= minCorner.y && face.y <= maxCorner.y)
+		return -1;
 	return 0;
 }
 
