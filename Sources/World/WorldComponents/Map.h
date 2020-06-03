@@ -46,6 +46,7 @@ class Map
 		unsigned int** seeds;
 		float amplitude;
 		glm::vec3 scale;
+		float lodRadius[6];
 		//
 
 	private:

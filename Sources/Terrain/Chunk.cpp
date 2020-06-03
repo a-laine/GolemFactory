@@ -28,10 +28,10 @@ void Chunk::initialize(const float& topLeft, const float& topRight, const float&
 	vertices.push_back(glm::vec3( 0.5f, -0.5f, bottomRight));
 	vertices.push_back(glm::vec3(-0.5f, -0.5f, topRight));
 
-	colors.push_back(glm::vec3(1, 0, 0));
-	colors.push_back(glm::vec3(0, 1, 0));
-	colors.push_back(glm::vec3(0, 0, 1));
-	colors.push_back(glm::vec3(1, 1, 0));
+	colors.push_back(glm::vec3(1, 1, 1));
+	colors.push_back(glm::vec3(1, 1, 1));
+	colors.push_back(glm::vec3(1, 1, 1));
+	colors.push_back(glm::vec3(1, 1, 1));
 
 	normals.push_back(glm::vec3(0, 0, 1));
 	normals.push_back(glm::vec3(0, 0, 1));
@@ -75,6 +75,10 @@ void Chunk::free()
 	colorsBuffer = 0;
 	facesBuffer = 0;
 	vao = 0;
+
+	facesCenter = 0;
+	facesBorder = 0;
+	facesBorderSeamless = 0;
 }
 void Chunk::addLOD(const unsigned int&  seed1, const unsigned int&  seed2, bool debug)	// N(4logN + 5logN)
 {
@@ -85,74 +89,22 @@ void Chunk::addLOD(const unsigned int&  seed1, const unsigned int&  seed2, bool 
 		int subdivision = (int)glm::pow(2, lod - 1);
 		float step = 1.f / subdivision;
 		unsigned int initialVerticesCount = (unsigned int)vertices.size();
-		float amplitude = 0.1f * step;
+		float amplitude = 0.1f * step * rugosity;
 		const int offset = (int)glm::pow(2, maxSubdivide - 1);
 
 		// clear old data
 		faces.clear();
 
-		// inject neibors borders vertices
-		initRandomNumberGenerator(subdivision - 1, seed1);
-		for (float y = -0.5f; y < 0.5f; y += step)
-		{
-			unsigned int i0 = indexes[gfvertex(-0.5f, y)];
-			unsigned int i1 = indexes[gfvertex(-0.5f, y + step)];
-			instantiateVertex(0.5f * (vertices[i0] + vertices[i1]), amplitude);
-		}
-		initRandomNumberGenerator(offset + subdivision - 1, seed2);
-		for (float x = -0.5f; x < 0.5f; x += step)
-		{
-			unsigned int i0 = indexes[gfvertex(x, -0.5f)];
-			unsigned int i1 = indexes[gfvertex(x + step, -0.5f)];
-			instantiateVertex(0.5f * (vertices[i0] + vertices[i1]), amplitude);
-		}
-
-		// inject personal border
-		initRandomNumberGenerator(subdivision - 1, seed);
-		for (float y = -0.5f; y < 0.5f; y += step)
-		{
-			unsigned int i0 = indexes[gfvertex(0.5f, y)];
-			unsigned int i1 = indexes[gfvertex(0.5f, y + step)];
-			instantiateVertex(0.5f * (vertices[i0] + vertices[i1]), amplitude);
-		}
-		initRandomNumberGenerator(offset + subdivision - 1, seed);
-		for (float x = -0.5f; x < 0.5f; x += step)
-		{
-			unsigned int i0 = indexes[gfvertex(x, 0.5f)];
-			unsigned int i1 = indexes[gfvertex(x + step, 0.5f)];
-			instantiateVertex(0.5f * (vertices[i0] + vertices[i1]), amplitude);
-		}
-
 		// split all squares
+		instantiateBorders(seed1, seed2, offset, subdivision, step, amplitude);
 		initRandomNumberGenerator(2 * offset + subdivision - 1, seed);
-		for (float x = -0.5f; x < 0.5f; x += step)
-			for (float y = -0.5f; y < 0.5f; y += step)
-			{
-				unsigned int i0 = indexes[gfvertex(x, y)];
-				unsigned int i1 = indexes[gfvertex(x, y + step)];
-				unsigned int i2 = indexes[gfvertex(x + step, y)];
-				unsigned int i3 = indexes[gfvertex(x + step, y + step)];
-
-				splitFace(i0, i1, i2, i3, amplitude, 0.5f * step);
-			}
+		splitCenter(step, amplitude);
+		generateBorders(step);
+		generateSeamlessBorders(step);
 
 		lod++;
-		step *= 0.5f;
-		
-		// sooth normals
-		for (float x = -0.5f + step; x < 0.5f - step; x += step)
-			for (float y = -0.5f + step; y < 0.5f - step; y += step)
-			{
-				unsigned int index = indexes[gfvertex(x, y)];
-				glm::vec3 n(vertices[indexes[gfvertex(x - step, y)]].z - vertices[indexes[gfvertex(x + step, y)]].z,
-					vertices[indexes[gfvertex(x, y - step)]].z - vertices[indexes[gfvertex(x, y + step)]].z,
-					4 * step);
-				normals[indexes[gfvertex(x, y)]] = glm::normalize(n);
-			}
-
-		// save sizes
+		smoothNormals(0.5f * step);
 		lodVerticesCount.push_back((unsigned int)vertices.size() - initialVerticesCount);
-		
 
 		if (debug)
 		{
@@ -223,7 +175,9 @@ float Chunk::getCorner(){ return corner; }
 unsigned int Chunk::getSeed() { return seed; }
 
 
-unsigned int Chunk::getFacesCount() const { return (unsigned int)faces.size(); }
+unsigned int Chunk::getCenterFacesCount() const { return facesCenter; }
+unsigned int Chunk::getBorderFacesCount() const { return facesBorder; }
+unsigned int Chunk::getSeamlessBorderFacesCount() const { return facesBorderSeamless; }
 GLuint Chunk::getVAO() const { return vao; }
 //
 
@@ -310,7 +264,7 @@ void Chunk::updateVBO()
 }
 
 
-void Chunk::splitFace(const unsigned int& i0, const unsigned int& i1, const unsigned int& i2, const unsigned int& i3, const float& amplitude, const float& step) // 5logN
+void Chunk::splitFace(const unsigned int& i0, const unsigned int& i1, const unsigned int& i2, const unsigned int& i3, const float& amplitude, const float& step, const uint8_t& faceMode) // 5logN
 {
 	// generate new vertices
 	glm::vec3 v0 = vertices[i0];
@@ -325,21 +279,15 @@ void Chunk::splitFace(const unsigned int& i0, const unsigned int& i1, const unsi
 	unsigned int i7 = instantiateVertexSmooth(0.5f * (v3 + v1), step, amplitude);
 	unsigned int i8 = instantiateVertex(0.25f * (v0 + v1 + v2 + v3), amplitude);
 
-	/*unsigned int i4 = instantiateVertex(0.5f * (v0 + v1), amplitude);
-	unsigned int i5 = instantiateVertex(0.5f * (v2 + v3), amplitude);
-	unsigned int i6 = instantiateVertex(0.5f * (v0 + v2), amplitude);
-	unsigned int i7 = instantiateVertex(0.5f * (v3 + v1), amplitude);
-	unsigned int i8 = instantiateVertex(0.25f * (v0 + v1 + v2 + v3), amplitude);*/
-	
 	// create new faces
-	faces.push_back(i0); faces.push_back(i8); faces.push_back(i4);
-	faces.push_back(i0); faces.push_back(i6); faces.push_back(i8);
-	faces.push_back(i4); faces.push_back(i7); faces.push_back(i1);
-	faces.push_back(i4); faces.push_back(i8); faces.push_back(i7);
-	faces.push_back(i6); faces.push_back(i5); faces.push_back(i8);
-	faces.push_back(i6); faces.push_back(i2); faces.push_back(i5);
-	faces.push_back(i8); faces.push_back(i3); faces.push_back(i7);
-	faces.push_back(i8); faces.push_back(i5); faces.push_back(i3);
+	if (faceMode & 0x01) { faces.push_back(i0); faces.push_back(i8); faces.push_back(i4); }
+	if (faceMode & 0x02) { faces.push_back(i0); faces.push_back(i6); faces.push_back(i8); }
+	if (faceMode & 0x04) { faces.push_back(i4); faces.push_back(i8); faces.push_back(i1); }
+	if (faceMode & 0x08) { faces.push_back(i1); faces.push_back(i8); faces.push_back(i7); }
+	if (faceMode & 0x10) { faces.push_back(i7); faces.push_back(i8); faces.push_back(i3); }
+	if (faceMode & 0x20) { faces.push_back(i3); faces.push_back(i8); faces.push_back(i5); }
+	if (faceMode & 0x40) { faces.push_back(i5); faces.push_back(i8); faces.push_back(i2); }
+	if (faceMode & 0x80) { faces.push_back(i2); faces.push_back(i8); faces.push_back(i6); }
 }
 void Chunk::mergeFace(unsigned int i0, unsigned int i1, unsigned int i2, unsigned int i3) // 5logN
 {	
@@ -387,6 +335,7 @@ void Chunk::initRandomNumberGenerator(const unsigned int& offset, const unsigned
 	for (unsigned int i = 0; i < offset; i++)
 		next = next * 1103515245 + 12345;
 }
+
 
 unsigned int Chunk::instantiateVertex(const float& x, const float& y, const float& z, const float& amplitude)
 {
@@ -441,5 +390,227 @@ unsigned int Chunk::instantiateVertexSmooth(const glm::vec3& v, const float& ste
 
 	base.z /= (float)n;
 	return instantiateVertex(base, amplitude);
+}
+
+
+void Chunk::smoothNormals(const float& step)
+{
+	for (float x = -0.5f + step; x < 0.5f - step; x += step)
+		for (float y = -0.5f + step; y < 0.5f - step; y += step)
+		{
+			unsigned int index = indexes[gfvertex(x, y)];
+			glm::vec3 n(vertices[indexes[gfvertex(x - step, y)]].z - vertices[indexes[gfvertex(x + step, y)]].z,
+				vertices[indexes[gfvertex(x, y - step)]].z - vertices[indexes[gfvertex(x, y + step)]].z,
+				4 * step);
+			normals[indexes[gfvertex(x, y)]] = glm::normalize(n);
+		}
+}
+void Chunk::splitCenter(const float& step, const float& amplitude)
+{
+	for (float x = -0.5f; x < 0.5f; x += step)
+		for (float y = -0.5f; y < 0.5f; y += step)
+		{
+			unsigned int i0 = indexes[gfvertex(x, y)];
+			unsigned int i1 = indexes[gfvertex(x, y + step)];
+			unsigned int i2 = indexes[gfvertex(x + step, y)];
+			unsigned int i3 = indexes[gfvertex(x + step, y + step)];
+
+			splitFace(i0, i1, i2, i3, amplitude, 0.5f * step, (x != -0.5f && y != -0.5f && x != 0.5f - step && y != 0.5f - step) ? 0xFF : 0x00);
+		}
+	facesCenter = (unsigned int)faces.size();
+}
+void Chunk::instantiateBorders(const unsigned int&  seed1, const unsigned int&  seed2, const int& offset, const int subdivision, const float& step, const float& amplitude)
+{
+	// inject neibors borders vertices
+	initRandomNumberGenerator(subdivision - 1, seed1);
+	for (float y = -0.5f; y < 0.5f; y += step)
+	{
+		unsigned int i0 = indexes[gfvertex(-0.5f, y)];
+		unsigned int i1 = indexes[gfvertex(-0.5f, y + step)];
+		instantiateVertex(0.5f * (vertices[i0] + vertices[i1]), amplitude);
+	}
+	initRandomNumberGenerator(offset + subdivision - 1, seed2);
+	for (float x = -0.5f; x < 0.5f; x += step)
+	{
+		unsigned int i0 = indexes[gfvertex(x, -0.5f)];
+		unsigned int i1 = indexes[gfvertex(x + step, -0.5f)];
+		instantiateVertex(0.5f * (vertices[i0] + vertices[i1]), amplitude);
+	}
+
+	// inject personal border
+	initRandomNumberGenerator(subdivision - 1, seed);
+	for (float y = -0.5f; y < 0.5f; y += step)
+	{
+		unsigned int i0 = indexes[gfvertex(0.5f, y)];
+		unsigned int i1 = indexes[gfvertex(0.5f, y + step)];
+		instantiateVertex(0.5f * (vertices[i0] + vertices[i1]), amplitude);
+	}
+	initRandomNumberGenerator(offset + subdivision - 1, seed);
+	for (float x = -0.5f; x < 0.5f; x += step)
+	{
+		unsigned int i0 = indexes[gfvertex(x, 0.5f)];
+		unsigned int i1 = indexes[gfvertex(x + step, 0.5f)];
+		instantiateVertex(0.5f * (vertices[i0] + vertices[i1]), amplitude);
+	}
+}
+void Chunk::generateBorders(const float& step)
+{
+	/*
+		(n) = vertex index
+		 n  = face bit
+
+			(1)-----------(7)-----------(3)
+			 | \           |          /  |
+			 |   \    4    |   5    /    |
+			 |     \       |      /      |
+			 |       \     |    /        |
+			 |   3      \  |  /     6    |
+			(1)-----------(7)-----------(3)
+			 |          /  | \           |
+			 |   1    /    |   \    7    |
+			 |     /       |     \       |
+			 |   /   2     | 8     \     |
+			 | /           |          \  |
+			(0)-----------(6)-----------(2)
+	*/
+
+	unsigned int facesBorderStart = (unsigned int)faces.size();
+	for (float x = -0.5f; x < 0.5f; x += step)
+	{
+		uint16_t mode = 0b00011000;
+		if (x != -0.5f && x != 0.5f - step) mode = 0b11111111;
+		else if(x == -0.5f) mode = 0b01111000;
+		else if (x == 0.5f - step) mode = 0b00011101;
+		
+		generateFaces(x, 0.5f - step, step, mode);
+	}
+	facesBorder = (unsigned int)(faces.size() - facesBorderStart);
+
+	for (float x = -0.5f; x < 0.5f; x += step)
+	{
+		uint16_t mode = 0b10000010;
+		if (x != -0.5f && x != 0.5f - step) mode = 0b11111111;
+		else if (x == -0.5f) mode = 0b11100010;
+		else if (x == 0.5f - step) mode = 0b10000111;
+
+		generateFaces(x, -0.5f, step, mode);
+	}
+
+	for (float y = -0.5f; y < 0.5f; y += step)
+	{
+		uint16_t mode = 0b00000101;
+		if (y != -0.5f && y != 0.5f - step) mode = 0b11111111;
+		else if (y == -0.5f) mode = 0b00011101;
+		else if (y == 0.5f - step) mode = 0b10000111;
+
+		generateFaces(-0.5f, y, step, mode);
+	}
+
+	for (float y = -0.5f; y < 0.5f; y += step)
+	{
+		uint16_t mode = 0b01100000;
+		if (y != -0.5f && y != 0.5f - step) mode = 0b11111111;
+		else if (y == -0.5f) mode = 0b01111000;
+		else if (y == 0.5f - step) mode = 0b11100010;
+
+		generateFaces(0.5f - step, y, step, mode);
+	}
+}
+void Chunk::generateSeamlessBorders(const float& step)
+{
+	/* sama as before and add degenerated faces
+		(n) = vertex index
+		 n  = face bit
+
+		(1)-----------(7)-----------(3)
+		 | \                      /  |
+		 |   \                  /    |
+		 |     \      10      /      |
+		 |       \          /        |
+		 |          \     /          |
+		(1)    9      (7)      11   (3)
+		 |          /    \           |
+		 |        /        \         |
+		 |     /             \       |
+		 |   /        12       \     |
+		 | /                      \  |
+		(0)-----------(6)-----------(2)
+	*/
+
+	unsigned int facesSeamlessBorderStart = (unsigned int)faces.size();
+	for (float x = -0.5f; x < 0.5f; x += step)
+	{
+		uint16_t mode = 0b1000000000;
+		if (x != -0.5f && x != 0.5f - step) mode = 0b1011100111;
+		else if (x == -0.5f) mode = 0b1001100000;
+		else if (x == 0.5f - step) mode = 0b1000000101;
+
+		generateFaces(x, 0.5f - step, step, mode);
+	}
+	facesBorderSeamless = (unsigned int)(faces.size() - facesSeamlessBorderStart);
+
+	for (float x = -0.5f; x < 0.5f; x += step)
+	{
+		uint16_t mode = 0b100000000000;
+		if (x != -0.5f && x != 0.5f - step) mode = 0b100001111101;
+		else if (x == -0.5f) mode = 0b100001100000;
+		else if (x == 0.5f - step) mode = 0b100000000101;
+
+		generateFaces(x, -0.5f, step, mode);
+	}
+
+	for (float y = -0.5f; y < 0.5f; y += step)
+	{
+		uint16_t mode = 0b100000000;
+		if (y != -0.5f && y != 0.5f - step) mode = 0b111111010;
+		else if (y == -0.5f) mode = 0b100011000;
+		else if (y == 0.5f - step) mode = 0b110000010;
+
+		generateFaces(-0.5f, y, step, mode);
+	}
+
+	for (float y = -0.5f; y < 0.5f; y += step)
+	{
+		uint16_t mode = 0b10000000000;
+		if (y != -0.5f && y != 0.5f - step) mode = 0b10010011111;
+		else if (y == -0.5f) mode = 0b10000011000;
+		else if (y == 0.5f - step) mode = 0b10010000010;
+
+		generateFaces(0.5f - step, y, step, mode);
+	}
+}
+void Chunk::generateFaces(const float& x, const float& y, const float& step, const uint16_t& faceMode)
+{
+	unsigned int i0 = indexes[gfvertex(x, y)];
+	unsigned int i1 = indexes[gfvertex(x, y + step)];
+	unsigned int i2 = indexes[gfvertex(x + step, y)];
+	unsigned int i3 = indexes[gfvertex(x + step, y + step)];
+
+	glm::vec3 v0 = vertices[i0];
+	glm::vec3 v1 = vertices[i1];
+	glm::vec3 v2 = vertices[i2];
+	glm::vec3 v3 = vertices[i3];
+
+	unsigned int i4 = indexes[gfvertex(0.5f * (v0 + v1))];
+	unsigned int i6 = indexes[gfvertex(0.5f * (v0 + v2))];
+	unsigned int i5 = indexes[gfvertex(0.5f * (v2 + v3))];
+	unsigned int i7 = indexes[gfvertex(0.5f * (v3 + v1))];
+	unsigned int i8 = indexes[gfvertex(0.25f * (v0 + v1 + v2 + v3))];
+
+	if (faceMode & 0x01) { faces.push_back(i0); faces.push_back(i8); faces.push_back(i4); } //face 1
+	if (faceMode & 0x02) { faces.push_back(i0); faces.push_back(i6); faces.push_back(i8); } //face 2
+	if (faceMode & 0x04) { faces.push_back(i4); faces.push_back(i8); faces.push_back(i1); } //face 3
+	if (faceMode & 0x08) { faces.push_back(i1); faces.push_back(i8); faces.push_back(i7); } //face 4
+	if (faceMode & 0x10) { faces.push_back(i7); faces.push_back(i8); faces.push_back(i3); } //face 5
+	if (faceMode & 0x20) { faces.push_back(i3); faces.push_back(i8); faces.push_back(i5); } //face 6
+	if (faceMode & 0x40) { faces.push_back(i5); faces.push_back(i8); faces.push_back(i2); } //face 7
+	if (faceMode & 0x80) { faces.push_back(i2); faces.push_back(i8); faces.push_back(i6); } //face 8
+
+	if (faceMode & 0x100) { faces.push_back(i0); faces.push_back(i8); faces.push_back(i1); } //face 9
+	if (faceMode & 0x200) { faces.push_back(i1); faces.push_back(i8); faces.push_back(i3); } //face 10
+	if (faceMode & 0x400) { faces.push_back(i3); faces.push_back(i8); faces.push_back(i2); } //face 11
+	if (faceMode & 0x800) { faces.push_back(i2); faces.push_back(i8); faces.push_back(i0); } //face 12
+
+	//std::cout << (int)faceMode << " ";
 }
 //

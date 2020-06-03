@@ -14,7 +14,7 @@ out vec3 normal_fs;
 out vec3 color_fs;
 out float valid_fs;
 
-uniform ivec4 exclusion;
+uniform ivec4 exclusion = ivec4(-1 , 0 , 0 , 0);
 
 float valid()
 {
@@ -25,6 +25,8 @@ float valid()
 	int primitiveIDIn = gl_PrimitiveIDIn / 2;
 	ivec2 face =  ivec2(primitiveIDIn % height, primitiveIDIn / height);
 	
+	if(height < 0)
+		return 0;
 	if(face.x >= minCorner.x && face.x <= maxCorner.x && face.y >= minCorner.y && face.y <= maxCorner.y)
 		return -1;
 	return 0;

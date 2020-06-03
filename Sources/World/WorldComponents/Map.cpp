@@ -9,7 +9,14 @@
 
 //	Default
 Map::Map() : height(0), width(0), chunks(nullptr), amplitude(16.f), scale(16.f), vao(0), facesCount(0), lastPlayerCell(-1, -1)
-{}
+{
+	lodRadius[0] = 2.2f;
+	lodRadius[1] = 3.2f;
+	lodRadius[2] = 4.7f;
+	lodRadius[3] = 6.2f;
+	lodRadius[4] = 7.7f;
+	lodRadius[5] = 9.2f;
+}
 Map::~Map()
 {
 	if (chunks)
@@ -291,14 +298,12 @@ glm::vec3 Map::getNormal(const int& x, const int& y)
 }
 int Map::getLod(float d)
 {
-	float weight = 1.f;
-
-	if (d < 2.2f) return weight * 8;
-	else if (d < 3.2f) return weight * 7;
-	else if (d < 4.7f) return weight * 6;
-	else if (d < 6.2f) return weight * 5;
-	else if (d < 7.7f) return weight * 4;
-	else if (d < 9.2f) return weight * 3;
-	else return weight * 2;
+	if (d < lodRadius[0]) return 8;
+	else if (d < lodRadius[1]) return 7;
+	else if (d < lodRadius[2]) return 6;
+	else if (d < lodRadius[3]) return 5;
+	else if (d < lodRadius[4]) return 4;
+	else if (d < lodRadius[5]) return 3;
+	else return 2;
 }
 //

@@ -18,7 +18,6 @@
 #include "Terrain/Chunk.h"
 
 
-
 //	Drawing functions
 void Renderer::drawObject(Entity* object, const float* view, const float* projection)
 {
@@ -107,11 +106,10 @@ void Renderer::drawInstancedObject(Shader* s, Mesh* m, std::vector<glm::mat4>& m
 void Renderer::drawMap(Map* map, const float* view, const float* projection, Shader* s)
 {
 	glm::mat4 scale = glm::scale(glm::mat4(1.f), map->getScale());
-	glm::mat4 m = scale * map->getModelMatrix();
-	lastShader = nullptr;
+	glm::mat4 model = scale * map->getModelMatrix();
 
 	// raw
-	loadMVPMatrix(map->getShader(), &m[0][0], view, projection);
+	loadMVPMatrix(map->getShader(), &model[0][0], view, projection);
 	glm::ivec4 exclusion = map->getExclusionZone();
 	int loc = map->getShader()->getUniformLocation("exclusion");
 	if (loc >= 0) glUniform4iv(loc, 1, (int*)&exclusion);
@@ -119,66 +117,100 @@ void Renderer::drawMap(Map* map, const float* view, const float* projection, Sha
 	loadVAO(map->getVAO());
 	glDrawElements(GL_TRIANGLES, map->getFacesCount(), GL_UNSIGNED_INT, NULL);
 	instanceDrawn++;
-	trianglesDrawn += map->getFacesCount();
-
+	trianglesDrawn += map->getFacesCount() / 6;
 
 	// chunks
-	loc = defaultShader[INSTANCE_DRAWABLE]->getUniformLocation("overrideColor");
+	exclusion = glm::ivec4(-1, 0, 0, 0);
+	if (loc >= 0) glUniform4iv(loc, 1, (int*)&exclusion);
+	loc = map->getShader()->getUniformLocation("overrideColor");
 	glm::vec3 color;
+
 	std::vector<glm::ivec2> chunksIndexes = map->getDrawableChunks();
 	for (int i = 0; i < chunksIndexes.size(); i++)
 	{
-		Chunk* chunk = map->getChunk(chunksIndexes[i].x, chunksIndexes[i].y);
+		glm::ivec2 v = chunksIndexes[i];
+		Chunk* chunk = map->getChunk(v.x, v.y);
 		if (chunk->isInitialized())
 		{
-			glm::mat4 model = scale * chunk->getModelMatrix();
-			loadMVPMatrix(defaultShader[INSTANCE_DRAWABLE], &model[0][0], view, projection);
+			model = scale * chunk->getModelMatrix();
+			loadMVPMatrix(map->getShader(), &model[0][0], view, projection);
+			//color = 0.25f * glm::vec3(lod % 3, (lod / 3) % 3, (lod / 9) % 3) + glm::vec3(0.25f);
+			//if (loc >= 0) glUniform3fv(loc, 1, (float*)&color);
+			loadVAO(chunk->getVAO());
 
 			int lod = chunk->getLod();
-			color = 0.25f * glm::vec3(lod % 3, (lod / 3) % 3, (lod / 9) % 3) + glm::vec3(0.25f);
-			if (loc >= 0) glUniform3fv(loc, 1, (float*)&color);
+			int lodLeft  = map->inBound(v.x - 1, v.y) ? map->getChunk(v.x - 1, v.y)->getLod() : lod;
+			int lodRight = map->inBound(v.x + 1, v.y) ? map->getChunk(v.x + 1, v.y)->getLod() : lod;
+			int lodUp    = map->inBound(v.x, v.y + 1) ? map->getChunk(v.x, v.y + 1)->getLod() : lod;
+			int lodDown  = map->inBound(v.x, v.y - 1) ? map->getChunk(v.x, v.y - 1)->getLod() : lod;
 
-			loadVAO(chunk->getVAO());
-			glDrawElements(GL_TRIANGLES, chunk->getFacesCount(), GL_UNSIGNED_INT, NULL);
+			//color = glm::vec3(1, 1, 1); if (loc >= 0) glUniform3fv(loc, 1, (float*)&color);
+			glDrawElements(GL_TRIANGLES, chunk->getCenterFacesCount(), GL_UNSIGNED_INT, NULL);
+			trianglesDrawn += chunk->getCenterFacesCount() / 6;
+			
+			unsigned int offset;
+			//color = glm::vec3(1, 0, 0); if (loc >= 0) glUniform3fv(loc, 1, (float*)&color);
+			if (lod > lodUp)
+			{
+				offset = chunk->getCenterFacesCount() + 4 * chunk->getBorderFacesCount();
+				glDrawElements(GL_TRIANGLES, chunk->getSeamlessBorderFacesCount(), GL_UNSIGNED_INT, (void*)(offset * sizeof(unsigned int)));
+				trianglesDrawn += chunk->getSeamlessBorderFacesCount() / 6;
+			}
+			else
+			{
+				offset = chunk->getCenterFacesCount();
+				glDrawElements(GL_TRIANGLES, chunk->getBorderFacesCount(), GL_UNSIGNED_INT, (void*)(offset * sizeof(unsigned int)));
+				trianglesDrawn += chunk->getBorderFacesCount() / 6;
+			}
 
+			//color = glm::vec3(0, 1, 0); if (loc >= 0) glUniform3fv(loc, 1, (float*)&color);
+			if (lod > lodDown) 
+			{
+				offset = chunk->getCenterFacesCount() + 4 * chunk->getBorderFacesCount() + chunk->getSeamlessBorderFacesCount();
+				glDrawElements(GL_TRIANGLES, chunk->getSeamlessBorderFacesCount(), GL_UNSIGNED_INT, (void*)(offset * sizeof(unsigned int)));
+				trianglesDrawn += chunk->getSeamlessBorderFacesCount() / 6;
+			}
+			else 
+			{
+				offset = chunk->getCenterFacesCount() + chunk->getBorderFacesCount();
+				glDrawElements(GL_TRIANGLES, chunk->getBorderFacesCount(), GL_UNSIGNED_INT, (void*)(offset * sizeof(unsigned int)));
+				trianglesDrawn += chunk->getBorderFacesCount() / 6;
+			}
+
+			//color = glm::vec3(0, 0, 1); if (loc >= 0) glUniform3fv(loc, 1, (float*)&color);
+			if (lod > lodLeft)
+			{
+				offset = chunk->getCenterFacesCount() + 4 * chunk->getBorderFacesCount() + 2 * chunk->getSeamlessBorderFacesCount();
+				glDrawElements(GL_TRIANGLES, chunk->getSeamlessBorderFacesCount(), GL_UNSIGNED_INT, (void*)(offset * sizeof(unsigned int)));
+				trianglesDrawn += chunk->getSeamlessBorderFacesCount() / 6;
+			}
+			else
+			{
+				offset = chunk->getCenterFacesCount() + 2 * chunk->getBorderFacesCount();
+				glDrawElements(GL_TRIANGLES, chunk->getBorderFacesCount(), GL_UNSIGNED_INT, (void*)(offset * sizeof(unsigned int)));
+				trianglesDrawn += chunk->getBorderFacesCount() / 6;
+			}
+
+			//color = glm::vec3(1, 1, 0); if (loc >= 0) glUniform3fv(loc, 1, (float*)&color);
+			if (lod > lodRight)
+			{
+				offset = chunk->getCenterFacesCount() + 4 * chunk->getBorderFacesCount() + 3 * chunk->getSeamlessBorderFacesCount();
+				glDrawElements(GL_TRIANGLES, chunk->getSeamlessBorderFacesCount(), GL_UNSIGNED_INT, (void*)(offset * sizeof(unsigned int)));
+				trianglesDrawn += chunk->getSeamlessBorderFacesCount() / 6;
+			}
+			else
+			{
+				offset = chunk->getCenterFacesCount() + 3 * chunk->getBorderFacesCount();
+				glDrawElements(GL_TRIANGLES, chunk->getBorderFacesCount(), GL_UNSIGNED_INT, (void*)(offset * sizeof(unsigned int)));
+				trianglesDrawn += chunk->getBorderFacesCount() / 6;
+			}
+			
 			instanceDrawn++;
-			trianglesDrawn += chunk->getFacesCount();
 		}
 	}
 	color = glm::vec3(-1.0, 0.0, 0.0);
 	if (loc >= 0) glUniform3fv(loc, 1, (float*)&color);
 }
-/*
-void Renderer::drawTriangle(const Triangle* triangle, const float* view, const float* projection)
-{
-	std::map<Shape::ShapeType, std::pair<Mesh*, Shader*> >::iterator it = drawShapeDefinition.find(Shape::TRIANGLE);
-	if (it != drawShapeDefinition.end())
-	{
-		//	Get shader and prepare matrix
-		Shader* shaderToUse = it->second.second;
-		loadMVPMatrix(shaderToUse, &glm::translate(glm::mat4(1.f), triangle->p1)[0][0], view, projection);
-		if (!shaderToUse) return;
-
-		int loc = shaderToUse->getUniformLocation("wired");
-		if (loc >= 0) glUniform1i(loc, (renderOption == WIREFRAME) ? 1 : 0);
-		loc = shaderToUse->getUniformLocation("vector1");
-		if (loc >= 0) glUniform3fv(loc, 1, (float*)&(triangle->p2 - triangle->p1)[0]);
-		loc = shaderToUse->getUniformLocation("vector2");
-		if (loc >= 0) glUniform3fv(loc, 1, (float*)&(triangle->p3 - triangle->p1)[0]);
-
-		//	override mesh color
-		loc = shaderToUse->getUniformLocation("overrideColor");
-		if (loc >= 0) glUniform3fv(loc, 1, (float*)&COLOR_TRIANGLE);
-
-		//	Draw mesh
-		loadVAO(it->second.first->getVAO());
-		glDrawElements(GL_POINTS, 1, GL_UNSIGNED_SHORT, NULL);
-
-		if (loc >= 0) glUniform3fv(loc, 1, (float*)&glm::vec3(-1.f, 0.f, 0.f)[0]);
-	}
-	else std::cerr << "WARNING : drawTriangle not associated or not yet implemented" << std::endl;
-}
-*/
 //
 
 
