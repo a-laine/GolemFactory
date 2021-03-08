@@ -2,6 +2,7 @@
 
 
 #include "WidgetBoard.h"
+#include <Resources/Font.h>
 
 class WidgetConsole : public WidgetBoard
 {

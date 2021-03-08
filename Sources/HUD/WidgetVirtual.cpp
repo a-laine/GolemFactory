@@ -1,6 +1,6 @@
 #include "WidgetVirtual.h"
-#include "../Physics/SpecificCollision/CollisionUtils.h"
-#include "../Physics/Collision.h"
+#include <Physics/SpecificCollision/CollisionUtils.h>
+#include <Physics/Collision.h>
 
 //  Default
 WidgetVirtual::WidgetVirtual(const WidgetType& t, const uint8_t& config, const std::string& shaderName) : type(t), configuration(config)

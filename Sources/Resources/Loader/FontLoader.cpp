@@ -1,11 +1,11 @@
 #include "FontLoader.h"
+#include "ImageLoader.h"
 
 #include <iostream>
 #include <sstream>
 
 #include <Utiles/Parser/Reader.h>
 #include <Utiles/ToolBox.h>
-#include <Resources/Loader/ImageLoader.h>
 
 
 

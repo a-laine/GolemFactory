@@ -1,7 +1,7 @@
 #include "IntersectionOrientedBox.h"
 
-#include "Physics/SpecificIntersection/IntersectionPoint.h"
-#include "Physics/SpecificIntersection/IntersectionSegment.h"
+#include "IntersectionPoint.h"
+#include "IntersectionSegment.h"
 
 
 Intersection::Contact Intersection::intersect_OrientedBoxvsOrientedBox(const glm::mat4& box1Tranform, const glm::vec3& box1Min, const glm::vec3& box1Max, const glm::mat4& box2Tranform, const glm::vec3& box2Min, const glm::vec3& box2Max)

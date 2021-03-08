@@ -1,8 +1,8 @@
 #include "RayEntityCollector.h"
-#include "Physics/Collision.h"
-#include "Renderer/DrawableComponent.h"
-#include "Animation/SkeletonComponent.h"
-#include "Resources/Mesh.h"
+#include <Physics/Collision.h>
+#include <Renderer/DrawableComponent.h>
+#include <Animation/SkeletonComponent.h>
+#include <Resources/Mesh.h>
 
 #include <glm/gtx/component_wise.hpp>
 

@@ -1,10 +1,10 @@
 #include "TextureLoader.h"
+#include "ImageLoader.h"
 
 #include <iostream>
 
-#include "Utiles/Parser/Reader.h"
-#include "Resources/Loader/ImageLoader.h"
-#include "Resources/Texture.h"
+#include <Utiles/Parser/Reader.h>
+#include <Resources/Texture.h>
 
 
 

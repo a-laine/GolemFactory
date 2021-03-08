@@ -1,6 +1,6 @@
 #include "Shader.h"
+#include "Loader/ShaderLoader.h"
 
-#include <Resources/Loader/ShaderLoader.h>
 #include <Utiles/Parser/Reader.h>
 #include <Utiles/Assert.hpp>
 
@@ -42,7 +42,7 @@ void Shader::initialize(GLuint  vertexSh, GLuint fragSh, GLuint geomShr, GLuint 
     attributesType = attType;
 
     //	get attributes location
-    for(auto& it = attType.begin(); it != attType.end(); it++)
+    for(auto it = attType.begin(); it != attType.end(); it++)
     {
         const std::string& uniformName = it->first;
         GLint uniformLocation = glGetUniformLocation(program, uniformName.c_str());

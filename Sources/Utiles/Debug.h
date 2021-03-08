@@ -2,9 +2,9 @@
 
 #include <glm/glm.hpp>
 
-#include "Utiles/Singleton.h"
-#include "Resources/ResourceManager.h"
-#include "Renderer/Renderer.h"
+#include "Singleton.h"
+#include <Resources/ResourceManager.h>
+#include <Renderer/Renderer.h>
 
 
 class Debug : public Singleton<Debug>

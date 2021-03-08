@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Resources/Mesh.h"
+#include <Resources/Mesh.h>
 
 #include <vector>
 #include <set>

@@ -2,7 +2,7 @@
 #include "CollisionOrientedBox.h"
 #include "CollisionPoint.h"
 
-#include "Physics/SpecificIntersection/IntersectionSegment.h"
+#include <Physics/SpecificIntersection/IntersectionSegment.h>
 
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/matrix_transform.hpp>

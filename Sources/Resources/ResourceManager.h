@@ -1,10 +1,11 @@
 #pragma once
-#include "Utiles/Singleton.h"
-#include "Utiles/Mutex.h"
-#include "Utiles/Assert.hpp"
-#include "Resources/ResourceVirtual.h"
-#include "Resources/IResourceLoader.h"
-#include "Utiles/ToolBox.h"
+
+#include <Utiles/Singleton.h>
+#include <Utiles/Mutex.h>
+#include <Utiles/Assert.hpp>
+#include "ResourceVirtual.h"
+#include "IResourceLoader.h"
+#include <Utiles/ToolBox.h>
 
 #include <vector>
 #include <map>

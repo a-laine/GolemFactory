@@ -1,15 +1,15 @@
 #include "IntersectionSegment.h"
 
 #include "IntersectionPoint.h"
-#include "Physics/SpecificCollision/CollisionUtils.h"
-#include "Physics/SpecificCollision/CollisionSegment.h"
+#include <Physics/SpecificCollision/CollisionUtils.h>
+#include <Physics/SpecificCollision/CollisionSegment.h>
 
 #include <iostream>
 
 #include <glm/gtx/norm.hpp>
 
 
-#include "Utiles/Debug.h"
+#include <Utiles/Debug.h>
 
 
 
@@ -49,7 +49,7 @@ Intersection::Contact Intersection::intersect_SegmentvsTriangle(const glm::vec3&
 
 	// eliminate collision case
 	glm::vec3 intersection;
-	if (Collision::collide_SegmentvsTriangle(segment1, segment2, triangle1, triangle2, triangle3, intersection))
+	if (Collision::collide_SegmentvsTriangle(segment1, segment2, triangle1, triangle2, triangle3, &intersection))
 	{
 		Contact contact;
 		contact.contactPointA = intersection + triangle1;

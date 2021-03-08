@@ -1,10 +1,10 @@
 #include "IntersectionAxisAlignedBox.h"
 
-#include "Physics/SpecificCollision/CollisionAxisAlignedBox.h"
-#include "Physics/SpecificCollision/CollisionPoint.h"
+#include <Physics/SpecificCollision/CollisionAxisAlignedBox.h>
+#include <Physics/SpecificCollision/CollisionPoint.h>
 
-#include "Physics/SpecificIntersection/IntersectionPoint.h"
-#include "Physics/SpecificIntersection/IntersectionSegment.h"
+#include "IntersectionPoint.h"
+#include "IntersectionSegment.h"
 
 
 Intersection::Contact Intersection::intersect_AxisAlignedBoxvsAxisAlignedBox(const glm::vec3& box1Min, const glm::vec3& box1Max, const glm::vec3& box2Min, const glm::vec3& box2Max)

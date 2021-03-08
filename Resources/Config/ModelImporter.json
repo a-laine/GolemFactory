@@ -1,0 +1,94 @@
+{
+	"escape": {
+		"eventPublished": "ESCAPE",
+		"configuration": [ "button", "down" ],
+		"listeningKey": [ 256 ]
+	},
+	"leftClick": {
+		"eventPublished": "CLICK_LEFT",
+		"configuration": [ "button", "down" ],
+		"listeningMouse": [ 0 ]
+	},
+	"rightClick": {
+		"eventPublished": "CLICK_RIGHT",
+		"configuration": [ "button", "down" ],
+		"listeningMouse": [ 1 ]
+	},
+	"middleClick": {
+		"eventPublished": "CLICK_MIDDLE",
+		"configuration": [ "button", "down" ],
+		"listeningMouse": [ 2 ]
+	},
+	"doubleLeftClick": {
+		"eventPublished": "DOUBLE_CLICK_LEFT",
+		"configuration": "sequence",
+		"listeningMouse": [ 0, 0 ]
+	},
+	"enter": {
+		"eventPublished": "ENTER",
+		"configuration": [ "button", "down" ],
+		"listeningKey": [ 257 ]
+	},
+
+	"help": {
+		"eventPublished": "HELP",
+		"configuration": [ "button", "down" ],
+		"listeningKey": [ 290 ]
+	},
+	"quit": {
+		"eventPublished": "QUIT",
+		"configuration": [ "button", "down" ],
+		"listeningKey": [ 256 ]
+	},
+
+	"F3": {
+		"eventPublished": "F3",
+		"configuration": [ "button", "down" ],
+		"listeningKey": [ 292 ]
+	},
+	"F4": {
+		"eventPublished": "F4",
+		"configuration": [ "button", "down" ],
+		"listeningKey": [ 293 ]
+	},
+	"F5": {
+		"eventPublished": "F5",
+		"configuration": [ "button", "down" ],
+		"listeningKey": [ 294 ]
+	},
+	"F6": {
+		"eventPublished": "F6",
+		"configuration": [ "button", "down" ],
+		"listeningKey": [ 295 ]
+	},
+	"F7": {
+		"eventPublished": "F7",
+		"configuration": [ "button", "down" ],
+		"listeningKey": [ 296 ]
+	},
+	"F8": {
+		"eventPublished": "F8",
+		"configuration": [ "button", "down" ],
+		"listeningKey": [ 297 ]
+	},
+	"F9": {
+		"eventPublished": "F9",
+		"configuration": [ "button", "down" ],
+		"listeningKey": [ 298 ]
+	},
+	"F10": {
+		"eventPublished": "F10",
+		"configuration": [ "button", "down" ],
+		"listeningKey": [ 299 ]
+	},
+	"F11": {
+		"eventPublished": "F11",
+		"configuration": [ "button", "down" ],
+		"listeningKey": [ 300 ]
+	},
+	"F12": {
+		"eventPublished": "F12",
+		"configuration": [ "button", "down" ],
+		"listeningKey": [ 301 ]
+	}
+}

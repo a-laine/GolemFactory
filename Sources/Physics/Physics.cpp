@@ -3,12 +3,12 @@
 #include <set>
 
 #include "RigidBody.h"
-#include "Renderer/DrawableComponent.h"
-#include "Animation/SkeletonComponent.h"
-#include "Scene/SceneManager.h"
-#include "World/World.h"
+#include <Renderer/DrawableComponent.h>
+#include <Animation/SkeletonComponent.h>
+#include <Scene/SceneManager.h>
+#include <World/World.h>
 
-#include "Utiles/Debug.h"
+#include <Utiles/Debug.h>
 
 #define APPROXIMATION_FACTOR 10.f
 #define EPSILON 0.000001f

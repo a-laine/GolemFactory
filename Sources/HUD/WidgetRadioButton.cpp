@@ -1,6 +1,6 @@
 #include "WidgetRadioButton.h"
-#include "../Physics/SpecificCollision/CollisionUtils.h"
-#include "../Physics/Collision.h"
+#include <Physics/SpecificCollision/CollisionUtils.h>
+#include <Physics/Collision.h>
 
 //	string define
 #define TEXT_MAX_CHAR			40

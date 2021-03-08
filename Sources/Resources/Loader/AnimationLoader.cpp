@@ -2,8 +2,8 @@
 
 #include <iostream>
 
-#include "Utiles/Parser/Reader.h"
-#include "Resources/Animation.h"
+#include <Utiles/Parser/Reader.h>
+#include <Resources/Animation.h>
 
 
 

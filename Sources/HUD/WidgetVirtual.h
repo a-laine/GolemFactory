@@ -8,10 +8,9 @@
 #include <glm/gtx/transform.hpp>
 
 #include <Resources/ResourceManager.h>
-#include "Resources/Mesh.h"
-#include "Resources/Texture.h"
-#include "Resources/Shader.h"
-#include "Resources/Font.h"
+#include <Resources/Mesh.h>
+#include <Resources/Texture.h>
+#include <Resources/Shader.h>
 
 
 class WidgetVirtual

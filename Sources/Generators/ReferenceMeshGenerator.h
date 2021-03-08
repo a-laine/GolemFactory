@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Resources/ResourceManager.h"
-#include "Resources/Mesh.h"
+#include <Resources/ResourceManager.h>
+#include <Resources/Mesh.h>
 
 
 class ReferenceMeshGenerator

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "EntityComponent/Entity.hpp"
+#include <EntityComponent/Entity.hpp>
 
 class VirtualEntityCollector
 {

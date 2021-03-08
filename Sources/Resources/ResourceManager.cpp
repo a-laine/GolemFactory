@@ -1,9 +1,9 @@
 #include "ResourceManager.h"
+#include "Shader.h"
+#include "Loader/ShaderLoader.h"
 
 #include <Utiles/ToolBox.h>
 
-#include "Resources/Shader.h"
-#include "Resources/Loader/ShaderLoader.h"
 
 //  Default
 ResourceManager::ResourceManager(const std::string& path)

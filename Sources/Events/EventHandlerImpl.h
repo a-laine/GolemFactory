@@ -11,14 +11,15 @@
 #include <algorithm>
 #include <fstream>
 
-#include "Utiles/Mutex.h"
 
 #include <glm/glm.hpp>
 #include <GLFW/glfw3.h>
 
+#include <Utiles/Mutex.h>
+#include <Utiles/Singleton.h>
+
 #include "Event.h"
 #include "EventSequence.h"
-#include "Utiles/Singleton.h"
 
 /** \class EventHandlerImpl
 *	\brief Base class for the event handler implementation.

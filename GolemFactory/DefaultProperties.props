@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(SolutionDir)..\Sources;$(SolutionDir)..\Externals\1-GLFW\include;$(SolutionDir)..\Externals\2-GLEW\include;$(SolutionDir)..\Externals\3-GLM\include;$(SolutionDir)..\Externals\4-ASSIMP\include</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <WarningLevel>Level3</WarningLevel>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>opengl32.lib;glfw3.lib;glew32.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\Externals\1-GLFW\lib $(PlatformArchitecture);$(SolutionDir)..\Externals\2-GLEW\lib $(PlatformArchitecture);$(SolutionDir)..\Externals\4-ASSIMP\lib $(PlatformArchitecture)\$(ConfigurationName);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <PostBuildEvent>
+      <Command>call $(SolutionDir)PostBuild.bat $(TargetExt) $(TargetDir) $(SolutionDir)..\Externals\ $(Configuration) $(PlatformArchitecture)</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup />
+</Project>

@@ -1,7 +1,7 @@
 #include "OrientedBox.h"
 #include "Sphere.h"
 #include "AxisAlignedBox.h"
-#include "Physics/SpecificCollision/CollisionUtils.h"
+#include <Physics/SpecificCollision/CollisionUtils.h>
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>

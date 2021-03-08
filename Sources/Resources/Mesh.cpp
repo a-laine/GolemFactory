@@ -1,8 +1,8 @@
 #include "Mesh.h"
+#include "Loader/MeshLoader.h"
+#include "Loader/AssimpLoader.h"
 
 #include <Utiles/Assert.hpp>
-#include <Resources/Loader/MeshLoader.h>
-#include <Resources/Loader/AssimpLoader.h>
 
 
 //  Static attributes

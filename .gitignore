@@ -10,13 +10,11 @@
 # Compiled Dynamic libraries
 *.so
 *.dylib
-*.dll
 
 # Compiled Static libraries
 *.lai
 *.la
 *.a
-*.lib
 
 # Executables
 *.exe
@@ -34,9 +32,6 @@ CMakeFiles/*
 
 # Visual Studio
 .vs/*
-*.sln
-*.vcxproj
-*.vcxproj.*
 *.vspx
 
 
@@ -45,4 +40,5 @@ bin/
 tmp/
 Debug/
 Release/
-
+x64/
+v16/

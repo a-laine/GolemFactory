@@ -5,7 +5,7 @@
 #include <glm/glm.hpp>
 
 #include "ResourceVirtual.h"
-#include "Physics/BoundingVolume.h"
+#include <Physics/BoundingVolume.h>
 
 
 class Mesh : public ResourceVirtual

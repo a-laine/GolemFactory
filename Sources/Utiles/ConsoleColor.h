@@ -18,7 +18,7 @@ namespace ConsoleColor
 		MAGENTA,
 		CYAN,
 		WHITE,
-		DEFAULT
+		CLASSIC
 	};
 	//
 
@@ -34,7 +34,7 @@ namespace ConsoleColor
 	std::ostream& magenta(std::ostream& stream);
 	std::ostream& cyan(std::ostream& stream);
 	std::ostream& white(std::ostream& stream);
-	std::ostream& default(std::ostream& stream);
+	std::ostream& classic(std::ostream& stream);
 	//
 
 	//	Into string

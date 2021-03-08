@@ -1,5 +1,5 @@
 #include "RaySceneQuerry.h"
-#include "Physics/Collision.h"
+#include <Physics/Collision.h>
 
 RaySceneQuerry::RaySceneQuerry(const glm::vec3& pos, const glm::vec3& dir, float maxDist) : position(pos), direction(dir), distance(maxDist)
 {}

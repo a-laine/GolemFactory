@@ -7,16 +7,16 @@
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 
-#include "Utiles/Mutex.h"
+#include <Utiles/Mutex.h>
+#include <Utiles/Singleton.h>
+#include <Events/EventHandler.h>
 
-#include "Utiles/Singleton.h"
-#include "Events/EventHandler.h"
-#include "HUD/Layer.h"
-#include "HUD/WidgetImage.h"
-#include "HUD/WidgetBoard.h"
-#include "HUD/WidgetLabel.h"
-#include "HUD/WidgetConsole.h"
-#include "HUD/WidgetRadioButton.h"
+#include "Layer.h"
+#include "WidgetImage.h"
+#include "WidgetBoard.h"
+#include "WidgetLabel.h"
+#include "WidgetConsole.h"
+#include "WidgetRadioButton.h"
 
 
 #define ANGLE_VERTICAL_HUD_PROJECTION 45.f

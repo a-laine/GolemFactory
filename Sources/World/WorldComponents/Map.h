@@ -6,8 +6,8 @@
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 
-#include "Terrain/Chunk.h"
-#include "Resources/Shader.h"
+#include <Terrain/Chunk.h>
+#include <Resources/Shader.h>
 
 class Map
 {

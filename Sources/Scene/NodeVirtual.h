@@ -3,9 +3,9 @@
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 
-#include "EntityComponent/Entity.hpp"
-#include "VirtualEntityCollector.h"
-#include "Physics/Swept.h"
+#include <EntityComponent/Entity.hpp>
+#include <Scene/VirtualEntityCollector.h>
+#include <Physics/Swept.h>
 
 class World;
 

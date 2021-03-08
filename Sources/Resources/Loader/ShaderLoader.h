@@ -3,8 +3,8 @@
 #include <map>
 #include <GL/glew.h>
 
-#include "Resources/IResourceLoader.h"
-#include "Resources/Shader.h"
+#include <Resources/IResourceLoader.h>
+#include <Resources/Shader.h>
 
 
 

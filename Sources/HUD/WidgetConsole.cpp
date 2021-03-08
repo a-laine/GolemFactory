@@ -1,6 +1,6 @@
 #include "WidgetConsole.h"
-#include "../Physics/SpecificCollision/CollisionUtils.h"
-#include "../Physics/Collision.h"
+#include <Physics/SpecificCollision/CollisionUtils.h>
+#include <Physics/Collision.h>
 
 
 //	string define

@@ -2,8 +2,8 @@
 
 #include <glm/glm.hpp>
 
-#include "Resources/IResourceLoader.h"
-#include "Resources/Joint.h"
+#include <Resources/IResourceLoader.h>
+#include <Resources/Joint.h>
 
 
 

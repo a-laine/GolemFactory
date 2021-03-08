@@ -1,5 +1,5 @@
 #include "Debug.h"
-#include "Resources/Shader.h"
+#include <Resources/Shader.h>
 
 #include <glm/gtx/vector_angle.hpp>
 

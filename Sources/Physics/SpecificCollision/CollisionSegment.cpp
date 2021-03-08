@@ -24,7 +24,7 @@ bool Collision::collide_SegmentvsSegment(const glm::vec3& segment1a, const glm::
 		return glm::length2(p.first - p.second) <= COLLISION_EPSILON*COLLISION_EPSILON;
 	}
 }
-bool Collision::collide_SegmentvsTriangle(const glm::vec3& segment1, const glm::vec3& segment2, const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, glm::vec3& intersection)
+bool Collision::collide_SegmentvsTriangle(const glm::vec3& segment1, const glm::vec3& segment2, const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, glm::vec3* intersection)
 {
 	//	begin and eliminate special cases
 	glm::vec3 v1 = triangle2 - triangle1;
@@ -54,10 +54,14 @@ bool Collision::collide_SegmentvsTriangle(const glm::vec3& segment1, const glm::
 
 	float depth = glm::dot(n, triangle1 - segment1) / glm::dot(n, u);
 	if (depth > glm::length(s) || depth < 0.f) return false; // too far or beind
-	intersection = segment1 + depth*u - triangle1;
+
+	glm::vec3 dummy;
+	if (!intersection)
+		intersection = &dummy;
+	*intersection = segment1 + depth*u - triangle1;
 
 	//	checking barycentric coordinates
-	glm::vec2 bary = getBarycentricCoordinates(v1, v2, intersection);
+	glm::vec2 bary = getBarycentricCoordinates(v1, v2, *intersection);
 	return !(bary.x < 0.f || bary.y < 0.f || bary.x + bary.y > 1.f);
 }
 bool Collision::collide_SegmentvsOrientedBox(const glm::vec3& segment1, const glm::vec3& segment2, const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax)

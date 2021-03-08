@@ -15,7 +15,7 @@ std::ostream& ConsoleColor::blue(std::ostream& stream) { stream << getColorStrin
 std::ostream& ConsoleColor::magenta(std::ostream& stream) { stream << getColorString(MAGENTA); return stream; }
 std::ostream& ConsoleColor::cyan(std::ostream& stream) { stream << getColorString(CYAN); return stream; }
 std::ostream& ConsoleColor::white(std::ostream& stream) { stream << getColorString(WHITE); return stream; }
-std::ostream& ConsoleColor::default(std::ostream& stream) { stream << getColorString(DEFAULT); return stream; }
+std::ostream& ConsoleColor::classic(std::ostream& stream) { stream << getColorString(CLASSIC); return stream; }
 //
 
 //	Into string

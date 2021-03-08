@@ -1,6 +1,7 @@
 #pragma once
 
 #include "WidgetVirtual.h"
+#include <Resources/Font.h>
 
 class WidgetLabel : public WidgetVirtual
 {

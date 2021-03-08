@@ -1,5 +1,6 @@
-// Golem Factory 1.0.cpp: define console application entry point
+// Golem Factory 2.0.cpp: define console application entry point
 //
+
 
 
 #include <iostream>
@@ -55,7 +56,7 @@
 
 #define GRID_SIZE 512
 #define GRID_ELEMENT_SIZE 1.f
-#define DEBUG 0
+#define DEBUG_LEVEL 0
 
 
 
@@ -101,7 +102,7 @@ int main()
 {
 	std::cout << "Application start" << std::endl;
 	Application application;
-	context = application.createWindow("Golem Factory v1.0", 1600, 900);
+	context = application.createWindow("Thibault test", 1600, 900);
 	context->makeCurrent();
 	context->setVSync(true);
 	application.initGLEW(1);
@@ -414,7 +415,7 @@ void initializeForestScene(bool emptyPlace)
 		}
 	
 	//	debug
-	if (DEBUG)
+	if (DEBUG_LEVEL)
 	{
 		std::cout << "Instance count : " << world.getObjectCount() << std::endl;
 		std::cout << "House count : " << vilageHouseCount  << std::endl;
@@ -468,7 +469,7 @@ std::string checkResourcesDirectory()
 void initManagers()
 {
 	std::string resourceRepository = checkResourcesDirectory();
-	if (DEBUG) std::cout << "Found resources folder at : " << resourceRepository << std::endl;
+	if (DEBUG_LEVEL) std::cout << "Found resources folder at : " << resourceRepository << std::endl;
 
 	// Init Event handler
 	EventHandler::getInstance()->addWindow(context->getParentWindow());

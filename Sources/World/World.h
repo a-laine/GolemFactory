@@ -1,10 +1,10 @@
 #pragma once
 
-#include "Scene/SceneManager.h"
 #include "World/WorldComponents/EntityFactory.h"
 #include "World/WorldComponents/EntityManager.h"
 #include "World/WorldComponents/Map.h"
-#include "Physics/Physics.h"
+#include <Scene/SceneManager.h>
+#include <Physics/Physics.h>
 
 
 class World

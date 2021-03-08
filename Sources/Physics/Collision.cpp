@@ -1,6 +1,6 @@
 #include "Collision.h"
 #include "GJK.h"
-#include "Resources/Mesh.h"
+#include <Resources/Mesh.h>
 
 #include <iostream>
 #include <string>

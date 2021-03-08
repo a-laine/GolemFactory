@@ -3,7 +3,7 @@
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtc/constants.hpp>
 
-#include "EntityComponent/Entity.hpp"
+#include <EntityComponent/Entity.hpp>
 
 
 CameraComponent::CameraComponent(bool freeRotations)

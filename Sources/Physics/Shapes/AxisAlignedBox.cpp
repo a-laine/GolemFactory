@@ -1,10 +1,10 @@
 #include "AxisAlignedBox.h"
 #include "Sphere.h"
+#include "OrientedBox.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
 
-#include "OrientedBox.h"
 
 
 AxisAlignedBox::AxisAlignedBox(const glm::vec3& cornerMin, const glm::vec3& cornerMax)

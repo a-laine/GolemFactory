@@ -1,8 +1,7 @@
 #include "Texture.h"
+#include "Loader/TextureLoader.h"
 
 #include <Utiles/Assert.hpp>
-#include <Resources/Loader/TextureLoader.h>
-#include <Resources/Loader/ImageLoader.h>
 
 //  Static attributes
 char const * const Texture::directory = "Textures/";

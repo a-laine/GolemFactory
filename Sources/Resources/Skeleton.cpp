@@ -1,7 +1,7 @@
 #include "Skeleton.h"
+#include "Loader/SkeletonLoader.h"
 
 #include <Utiles/Assert.hpp>
-#include <Resources/Loader/SkeletonLoader.h>
 
 //  Static attributes
 char const * const Skeleton::directory = "Skeletons/";

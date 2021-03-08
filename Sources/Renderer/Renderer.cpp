@@ -3,14 +3,14 @@
 #include <iostream>
 #include <sstream>
 
-#include "EntityComponent/Entity.hpp"
-#include "HUD/WidgetManager.h"
-#include "Scene/FrustrumSceneQuerry.h"
-#include "Scene/FrustrumEntityCollector.h"
-#include "Resources/ResourceManager.h"
-#include "Resources/Skeleton.h"
-#include "Renderer/DrawableComponent.h"
-#include "Animation/SkeletonComponent.h"
+#include <EntityComponent/Entity.hpp>
+#include <HUD/WidgetManager.h>
+#include <Scene/FrustrumSceneQuerry.h>
+#include <Scene/FrustrumEntityCollector.h>
+#include <Resources/ResourceManager.h>
+#include <Resources/Skeleton.h>
+#include <Renderer/DrawableComponent.h>
+#include <Animation/SkeletonComponent.h>
 
 
 #define BATCH_SIZE 32

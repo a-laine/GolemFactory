@@ -1,6 +1,6 @@
 #include "IntersectionSphere.h"
-#include "Physics/SpecificCollision/CollisionUtils.h"
 #include "IntersectionPoint.h"
+#include <Physics/SpecificCollision/CollisionUtils.h>
 
 Intersection::Contact Intersection::intersect_SpherevsSphere(const glm::vec3& sphere1Center, const float& sphere1Radius, const glm::vec3& sphere2Center, const float& sphere2Radius)
 {

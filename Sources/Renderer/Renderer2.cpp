@@ -14,8 +14,8 @@
 #include <Animation/SkeletonComponent.h>
 
 
-#include "World/WorldComponents/Map.h"
-#include "Terrain/Chunk.h"
+#include <World/WorldComponents/Map.h>
+#include <Terrain/Chunk.h>
 
 
 //	Drawing functions

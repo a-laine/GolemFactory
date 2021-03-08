@@ -8,5 +8,5 @@
 
 enum EventEnum
 {
-    #include "../UserEnum.enum"
+    #include <UserEnum.enum>
 };

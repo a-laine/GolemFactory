@@ -1,0 +1,389 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{6dfbb19b-fee2-44c8-adbf-0102084069ce}</ProjectGuid>
+    <RootNamespace>Engine</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\DefaultProperties.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\DefaultProperties.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\DefaultProperties.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="..\DefaultProperties.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <PublicIncludeDirectories>
+    </PublicIncludeDirectories>
+    <AllProjectIncludesArePublic>true</AllProjectIncludesArePublic>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <PublicIncludeDirectories>
+    </PublicIncludeDirectories>
+    <AllProjectIncludesArePublic>true</AllProjectIncludesArePublic>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <PublicIncludeDirectories>$(SolutionDir)..\Sources;C:\Users\Thibault\Documents\Programmation\1-GLFW\include;C:\Users\Thibault\Documents\Programmation\2-GLEW\include;C:\Users\Thibault\Documents\Programmation\3-GLM\include;C:\Users\Thibault\Documents\Programmation\4-ASSIMP\include;$(PublicIncludeDirectories)</PublicIncludeDirectories>
+    <AllProjectIncludesArePublic>true</AllProjectIncludesArePublic>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <PublicIncludeDirectories>$(SolutionDir)..\Sources;C:\Users\Thibault\Documents\Programmation\1-GLFW\include;C:\Users\Thibault\Documents\Programmation\2-GLEW\include;C:\Users\Thibault\Documents\Programmation\3-GLM\include;C:\Users\Thibault\Documents\Programmation\4-ASSIMP\include;$(PublicIncludeDirectories)</PublicIncludeDirectories>
+    <AllProjectIncludesArePublic>true</AllProjectIncludesArePublic>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>opengl32.lib;glfw3.lib;glew32.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\Sources;C:\Users\Thibault\Documents\Programmation\1-GLFW\lib 32;C:\Users\Thibault\Documents\Programmation\2-GLEW\lib\Release\Win32;C:\Users\Thibault\Documents\Programmation\4-ASSIMP\lib 32\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>opengl32.lib;glfw3.lib;glew32.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\Sources;C:\Users\Thibault\Documents\Programmation\1-GLFW\lib 32;C:\Users\Thibault\Documents\Programmation\2-GLEW\lib\Release\Win32;C:\Users\Thibault\Documents\Programmation\4-ASSIMP\lib 32\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>opengl32.lib;glfw3.lib;glew32.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Users\Thibault\Documents\Programmation\1-GLFW\lib 64;C:\Users\Thibault\Documents\Programmation\2-GLEW\lib\Release\x64;C:\Users\Thibault\Documents\Programmation\4-ASSIMP\lib 64\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <Lib>
+      <AdditionalLibraryDirectories>C:\Users\Thibault\Documents\Programmation\1-GLFW\lib 64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>opengl32.lib;glfw3.lib;glew32.lib;assimp-vc140-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Users\Thibault\Documents\Programmation\1-GLFW\lib 64;C:\Users\Thibault\Documents\Programmation\2-GLEW\lib\Release\x64;C:\Users\Thibault\Documents\Programmation\4-ASSIMP\lib 64\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+    <Lib>
+      <AdditionalLibraryDirectories>C:\Users\Thibault\Documents\Programmation\1-GLFW\lib 64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\Sources\Animation\AnimationComponent.cpp" />
+    <ClCompile Include="..\..\Sources\Animation\Animator.cpp" />
+    <ClCompile Include="..\..\Sources\Animation\SkeletonComponent.cpp" />
+    <ClCompile Include="..\..\Sources\Core\Application.cpp" />
+    <ClCompile Include="..\..\Sources\Core\RenderContext.cpp" />
+    <ClCompile Include="..\..\Sources\EntityComponent\Entity.cpp" />
+    <ClCompile Include="..\..\Sources\EntityComponent\EntityBase.cpp" />
+    <ClCompile Include="..\..\Sources\Events\Event.cpp" />
+    <ClCompile Include="..\..\Sources\Events\EventHandlerEnum.cpp" />
+    <ClCompile Include="..\..\Sources\Events\EventHandlerImpl.cpp" />
+    <ClCompile Include="..\..\Sources\Events\EventHandlerString.cpp" />
+    <ClCompile Include="..\..\Sources\Events\EventSequence.cpp" />
+    <ClCompile Include="..\..\Sources\Generators\HouseGenerator.cpp" />
+    <ClCompile Include="..\..\Sources\Generators\ReferenceMeshGenerator.cpp" />
+    <ClCompile Include="..\..\Sources\HUD\Layer.cpp" />
+    <ClCompile Include="..\..\Sources\HUD\Loader\WidgetSaver.cpp" />
+    <ClCompile Include="..\..\Sources\HUD\WidgetBoard.cpp" />
+    <ClCompile Include="..\..\Sources\HUD\WidgetConsole.cpp" />
+    <ClCompile Include="..\..\Sources\HUD\WidgetImage.cpp" />
+    <ClCompile Include="..\..\Sources\HUD\WidgetLabel.cpp" />
+    <ClCompile Include="..\..\Sources\HUD\WidgetManager.cpp" />
+    <ClCompile Include="..\..\Sources\HUD\WidgetRadioButton.cpp" />
+    <ClCompile Include="..\..\Sources\HUD\WidgetVirtual.cpp" />
+    <ClCompile Include="..\..\Sources\Physics\Collision.cpp" />
+    <ClCompile Include="..\..\Sources\Physics\CollisionReport.cpp" />
+    <ClCompile Include="..\..\Sources\Physics\GJK.cpp" />
+    <ClCompile Include="..\..\Sources\Physics\Intersection.cpp" />
+    <ClCompile Include="..\..\Sources\Physics\Physics.cpp" />
+    <ClCompile Include="..\..\Sources\Physics\RigidBody.cpp" />
+    <ClCompile Include="..\..\Sources\Physics\Shapes\AxisAlignedBox.cpp" />
+    <ClCompile Include="..\..\Sources\Physics\Shapes\Capsule.cpp" />
+    <ClCompile Include="..\..\Sources\Physics\Shapes\Hull.cpp" />
+    <ClCompile Include="..\..\Sources\Physics\Shapes\OrientedBox.cpp" />
+    <ClCompile Include="..\..\Sources\Physics\Shapes\Point.cpp" />
+    <ClCompile Include="..\..\Sources\Physics\Shapes\Segment.cpp" />
+    <ClCompile Include="..\..\Sources\Physics\Shapes\Shape.cpp" />
+    <ClCompile Include="..\..\Sources\Physics\Shapes\Sphere.cpp" />
+    <ClCompile Include="..\..\Sources\Physics\Shapes\Triangle.cpp" />
+    <ClCompile Include="..\..\Sources\Physics\SpecificCollision\CollisionAxisAlignedBox.cpp" />
+    <ClCompile Include="..\..\Sources\Physics\SpecificCollision\CollisionCapsule.cpp" />
+    <ClCompile Include="..\..\Sources\Physics\SpecificCollision\CollisionOrientedBox.cpp" />
+    <ClCompile Include="..\..\Sources\Physics\SpecificCollision\CollisionPoint.cpp" />
+    <ClCompile Include="..\..\Sources\Physics\SpecificCollision\CollisionSegment.cpp" />
+    <ClCompile Include="..\..\Sources\Physics\SpecificCollision\CollisionSphere.cpp" />
+    <ClCompile Include="..\..\Sources\Physics\SpecificCollision\CollisionTriangle.cpp" />
+    <ClCompile Include="..\..\Sources\Physics\SpecificIntersection\IntersectionAxisAlignedBox.cpp" />
+    <ClCompile Include="..\..\Sources\Physics\SpecificIntersection\IntersectionCapsule.cpp" />
+    <ClCompile Include="..\..\Sources\Physics\SpecificIntersection\IntersectionContact.cpp" />
+    <ClCompile Include="..\..\Sources\Physics\SpecificIntersection\IntersectionOrientedBox.cpp" />
+    <ClCompile Include="..\..\Sources\Physics\SpecificIntersection\IntersectionPoint.cpp" />
+    <ClCompile Include="..\..\Sources\Physics\SpecificIntersection\IntersectionSegment.cpp" />
+    <ClCompile Include="..\..\Sources\Physics\SpecificIntersection\IntersectionSphere.cpp" />
+    <ClCompile Include="..\..\Sources\Physics\SpecificIntersection\IntersectionTriangle.cpp" />
+    <ClCompile Include="..\..\Sources\Physics\Swept.cpp" />
+    <ClCompile Include="..\..\Sources\Renderer\CameraComponent.cpp" />
+    <ClCompile Include="..\..\Sources\Renderer\DrawableComponent.cpp" />
+    <ClCompile Include="..\..\Sources\Renderer\Renderer.cpp" />
+    <ClCompile Include="..\..\Sources\Renderer\Renderer2.cpp" />
+    <ClCompile Include="..\..\Sources\Resources\Animation.cpp" />
+    <ClCompile Include="..\..\Sources\Resources\Font.cpp" />
+    <ClCompile Include="..\..\Sources\Resources\Joint.cpp" />
+    <ClCompile Include="..\..\Sources\Resources\Loader\AnimationLoader.cpp" />
+    <ClCompile Include="..\..\Sources\Resources\Loader\AnimationSaver.cpp" />
+    <ClCompile Include="..\..\Sources\Resources\Loader\AssimpLoader.cpp" />
+    <ClCompile Include="..\..\Sources\Resources\Loader\FontLoader.cpp" />
+    <ClCompile Include="..\..\Sources\Resources\Loader\ImageLoader.cpp" />
+    <ClCompile Include="..\..\Sources\Resources\Loader\MeshLoader.cpp" />
+    <ClCompile Include="..\..\Sources\Resources\Loader\MeshSaver.cpp" />
+    <ClCompile Include="..\..\Sources\Resources\Loader\ShaderLoader.cpp" />
+    <ClCompile Include="..\..\Sources\Resources\Loader\SkeletonLoader.cpp" />
+    <ClCompile Include="..\..\Sources\Resources\Loader\SkeletonSaver.cpp" />
+    <ClCompile Include="..\..\Sources\Resources\Loader\TextureLoader.cpp" />
+    <ClCompile Include="..\..\Sources\Resources\Mesh.cpp" />
+    <ClCompile Include="..\..\Sources\Resources\ResourceManager.cpp" />
+    <ClCompile Include="..\..\Sources\Resources\ResourceVirtual.cpp" />
+    <ClCompile Include="..\..\Sources\Resources\Shader.cpp" />
+    <ClCompile Include="..\..\Sources\Resources\Skeleton.cpp" />
+    <ClCompile Include="..\..\Sources\Resources\Texture.cpp" />
+    <ClCompile Include="..\..\Sources\Scene\BoxSceneQuerry.cpp" />
+    <ClCompile Include="..\..\Sources\Scene\FrustrumEntityCollector.cpp" />
+    <ClCompile Include="..\..\Sources\Scene\FrustrumSceneQuerry.cpp" />
+    <ClCompile Include="..\..\Sources\Scene\NodeVirtual.cpp" />
+    <ClCompile Include="..\..\Sources\Scene\RayEntityCollector.cpp" />
+    <ClCompile Include="..\..\Sources\Scene\RaySceneQuerry.cpp" />
+    <ClCompile Include="..\..\Sources\Scene\SceneManager.cpp" />
+    <ClCompile Include="..\..\Sources\Scene\VirtualEntityCollector.cpp" />
+    <ClCompile Include="..\..\Sources\Scene\VirtualSceneQuerry.cpp" />
+    <ClCompile Include="..\..\Sources\Terrain\Chunk.cpp" />
+    <ClCompile Include="..\..\Sources\Utiles\ConsoleColor.cpp" />
+    <ClCompile Include="..\..\Sources\Utiles\Debug.cpp" />
+    <ClCompile Include="..\..\Sources\Utiles\GiftWrapping.cpp" />
+    <ClCompile Include="..\..\Sources\Utiles\IncrementalHull.cpp" />
+    <ClCompile Include="..\..\Sources\Utiles\Parser\Reader.cpp" />
+    <ClCompile Include="..\..\Sources\Utiles\Parser\Variant.cpp" />
+    <ClCompile Include="..\..\Sources\Utiles\Parser\Writer.cpp" />
+    <ClCompile Include="..\..\Sources\Utiles\QuickHull.cpp" />
+    <ClCompile Include="..\..\Sources\Utiles\ToolBox.cpp" />
+    <ClCompile Include="..\..\Sources\World\World.cpp" />
+    <ClCompile Include="..\..\Sources\World\WorldComponents\EntityFactory.cpp" />
+    <ClCompile Include="..\..\Sources\World\WorldComponents\EntityManager.cpp" />
+    <ClCompile Include="..\..\Sources\World\WorldComponents\Map.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Sources\Animation\AnimationComponent.h" />
+    <ClInclude Include="..\..\Sources\Animation\Animator.h" />
+    <ClInclude Include="..\..\Sources\Animation\SkeletonComponent.h" />
+    <ClInclude Include="..\..\Sources\Core\Application.h" />
+    <ClInclude Include="..\..\Sources\Core\RenderContext.h" />
+    <ClInclude Include="..\..\Sources\EntityComponent\Component.hpp" />
+    <ClInclude Include="..\..\Sources\EntityComponent\Entity.hpp" />
+    <ClInclude Include="..\..\Sources\EntityComponent\EntityBase.hpp" />
+    <ClInclude Include="..\..\Sources\Events\Event.h" />
+    <ClInclude Include="..\..\Sources\Events\EventEnum.h" />
+    <ClInclude Include="..\..\Sources\Events\EventHandler.h" />
+    <ClInclude Include="..\..\Sources\Events\EventHandlerEnum.h" />
+    <ClInclude Include="..\..\Sources\Events\EventHandlerImpl.h" />
+    <ClInclude Include="..\..\Sources\Events\EventHandlerString.h" />
+    <ClInclude Include="..\..\Sources\Events\EventSequence.h" />
+    <ClInclude Include="..\..\Sources\Generators\HouseGenerator.h" />
+    <ClInclude Include="..\..\Sources\Generators\ReferenceMeshGenerator.h" />
+    <ClInclude Include="..\..\Sources\HUD\Layer.h" />
+    <ClInclude Include="..\..\Sources\HUD\Loader\WidgetSaver.h" />
+    <ClInclude Include="..\..\Sources\HUD\WidgetBoard.h" />
+    <ClInclude Include="..\..\Sources\HUD\WidgetConsole.h" />
+    <ClInclude Include="..\..\Sources\HUD\WidgetImage.h" />
+    <ClInclude Include="..\..\Sources\HUD\WidgetLabel.h" />
+    <ClInclude Include="..\..\Sources\HUD\WidgetManager.h" />
+    <ClInclude Include="..\..\Sources\HUD\WidgetRadioButton.h" />
+    <ClInclude Include="..\..\Sources\HUD\WidgetVirtual.h" />
+    <ClInclude Include="..\..\Sources\Physics\BoundingVolume.h" />
+    <ClInclude Include="..\..\Sources\Physics\Collision.h" />
+    <ClInclude Include="..\..\Sources\Physics\CollisionReport.h" />
+    <ClInclude Include="..\..\Sources\Physics\GJK.h" />
+    <ClInclude Include="..\..\Sources\Physics\Intersection.h" />
+    <ClInclude Include="..\..\Sources\Physics\Physics.h" />
+    <ClInclude Include="..\..\Sources\Physics\RigidBody.h" />
+    <ClInclude Include="..\..\Sources\Physics\Shapes\AxisAlignedBox.h" />
+    <ClInclude Include="..\..\Sources\Physics\Shapes\Capsule.h" />
+    <ClInclude Include="..\..\Sources\Physics\Shapes\Hull.h" />
+    <ClInclude Include="..\..\Sources\Physics\Shapes\OrientedBox.h" />
+    <ClInclude Include="..\..\Sources\Physics\Shapes\Point.h" />
+    <ClInclude Include="..\..\Sources\Physics\Shapes\Segment.h" />
+    <ClInclude Include="..\..\Sources\Physics\Shapes\Shape.h" />
+    <ClInclude Include="..\..\Sources\Physics\Shapes\Sphere.h" />
+    <ClInclude Include="..\..\Sources\Physics\Shapes\Triangle.h" />
+    <ClInclude Include="..\..\Sources\Physics\SpecificCollision\CollisionAxisAlignedBox.h" />
+    <ClInclude Include="..\..\Sources\Physics\SpecificCollision\CollisionCapsule.h" />
+    <ClInclude Include="..\..\Sources\Physics\SpecificCollision\CollisionOrientedBox.h" />
+    <ClInclude Include="..\..\Sources\Physics\SpecificCollision\CollisionPoint.h" />
+    <ClInclude Include="..\..\Sources\Physics\SpecificCollision\CollisionSegment.h" />
+    <ClInclude Include="..\..\Sources\Physics\SpecificCollision\CollisionSphere.h" />
+    <ClInclude Include="..\..\Sources\Physics\SpecificCollision\CollisionTriangle.h" />
+    <ClInclude Include="..\..\Sources\Physics\SpecificCollision\CollisionUtils.h" />
+    <ClInclude Include="..\..\Sources\Physics\SpecificIntersection\IntersectionAxisAlignedBox.h" />
+    <ClInclude Include="..\..\Sources\Physics\SpecificIntersection\IntersectionCapsule.h" />
+    <ClInclude Include="..\..\Sources\Physics\SpecificIntersection\IntersectionContact.h" />
+    <ClInclude Include="..\..\Sources\Physics\SpecificIntersection\IntersectionOrientedBox.h" />
+    <ClInclude Include="..\..\Sources\Physics\SpecificIntersection\IntersectionPoint.h" />
+    <ClInclude Include="..\..\Sources\Physics\SpecificIntersection\IntersectionSegment.h" />
+    <ClInclude Include="..\..\Sources\Physics\SpecificIntersection\IntersectionSphere.h" />
+    <ClInclude Include="..\..\Sources\Physics\SpecificIntersection\IntersectionTriangle.h" />
+    <ClInclude Include="..\..\Sources\Physics\Swept.h" />
+    <ClInclude Include="..\..\Sources\Renderer\CameraComponent.h" />
+    <ClInclude Include="..\..\Sources\Renderer\DrawableComponent.h" />
+    <ClInclude Include="..\..\Sources\Renderer\Renderer.h" />
+    <ClInclude Include="..\..\Sources\Resources\Animation.h" />
+    <ClInclude Include="..\..\Sources\Resources\Font.h" />
+    <ClInclude Include="..\..\Sources\Resources\IResourceLoader.h" />
+    <ClInclude Include="..\..\Sources\Resources\Joint.h" />
+    <ClInclude Include="..\..\Sources\Resources\Loader\AnimationLoader.h" />
+    <ClInclude Include="..\..\Sources\Resources\Loader\AnimationSaver.h" />
+    <ClInclude Include="..\..\Sources\Resources\Loader\AssimpLoader.h" />
+    <ClInclude Include="..\..\Sources\Resources\Loader\FontLoader.h" />
+    <ClInclude Include="..\..\Sources\Resources\Loader\ImageLoader.h" />
+    <ClInclude Include="..\..\Sources\Resources\Loader\MeshLoader.h" />
+    <ClInclude Include="..\..\Sources\Resources\Loader\MeshSaver.h" />
+    <ClInclude Include="..\..\Sources\Resources\Loader\ShaderLoader.h" />
+    <ClInclude Include="..\..\Sources\Resources\Loader\SkeletonLoader.h" />
+    <ClInclude Include="..\..\Sources\Resources\Loader\SkeletonSaver.h" />
+    <ClInclude Include="..\..\Sources\Resources\Loader\stb_image.h" />
+    <ClInclude Include="..\..\Sources\Resources\Loader\TextureLoader.h" />
+    <ClInclude Include="..\..\Sources\Resources\Mesh.h" />
+    <ClInclude Include="..\..\Sources\Resources\ResourceManager.h" />
+    <ClInclude Include="..\..\Sources\Resources\ResourceVirtual.h" />
+    <ClInclude Include="..\..\Sources\Resources\Shader.h" />
+    <ClInclude Include="..\..\Sources\Resources\Skeleton.h" />
+    <ClInclude Include="..\..\Sources\Resources\Texture.h" />
+    <ClInclude Include="..\..\Sources\Scene\BoxSceneQuerry.h" />
+    <ClInclude Include="..\..\Sources\Scene\FrustrumEntityCollector.h" />
+    <ClInclude Include="..\..\Sources\Scene\FrustrumSceneQuerry.h" />
+    <ClInclude Include="..\..\Sources\Scene\NodeVirtual.h" />
+    <ClInclude Include="..\..\Sources\Scene\RayEntityCollector.h" />
+    <ClInclude Include="..\..\Sources\Scene\RaySceneQuerry.h" />
+    <ClInclude Include="..\..\Sources\Scene\SceneManager.h" />
+    <ClInclude Include="..\..\Sources\Scene\VirtualEntityCollector.h" />
+    <ClInclude Include="..\..\Sources\Scene\VirtualSceneQuerry.h" />
+    <ClInclude Include="..\..\Sources\Terrain\Chunk.h" />
+    <ClInclude Include="..\..\Sources\Utiles\Assert.hpp" />
+    <ClInclude Include="..\..\Sources\Utiles\ConsoleColor.h" />
+    <ClInclude Include="..\..\Sources\Utiles\Debug.h" />
+    <ClInclude Include="..\..\Sources\Utiles\GiftWrapping.h" />
+    <ClInclude Include="..\..\Sources\Utiles\IncrementalHull.h" />
+    <ClInclude Include="..\..\Sources\Utiles\Mutex.h" />
+    <ClInclude Include="..\..\Sources\Utiles\Parser\Reader.h" />
+    <ClInclude Include="..\..\Sources\Utiles\Parser\Variant.h" />
+    <ClInclude Include="..\..\Sources\Utiles\Parser\Writer.h" />
+    <ClInclude Include="..\..\Sources\Utiles\QuickHull.h" />
+    <ClInclude Include="..\..\Sources\Utiles\SafeFoxwardList.h" />
+    <ClInclude Include="..\..\Sources\Utiles\Singleton.h" />
+    <ClInclude Include="..\..\Sources\Utiles\System.h" />
+    <ClInclude Include="..\..\Sources\Utiles\ToolBox.h" />
+    <ClInclude Include="..\..\Sources\World\World.h" />
+    <ClInclude Include="..\..\Sources\World\WorldComponents\EntityFactory.h" />
+    <ClInclude Include="..\..\Sources\World\WorldComponents\EntityManager.h" />
+    <ClInclude Include="..\..\Sources\World\WorldComponents\Map.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

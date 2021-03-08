@@ -4,8 +4,8 @@
 
 #include <glm/glm.hpp>
 
-#include "../Skeleton.h"
-#include "Utiles/Parser/Variant.h"
+#include <Resources/Skeleton.h>
+#include <Utiles/Parser/Variant.h>
 
 class SkeletonSaver
 {

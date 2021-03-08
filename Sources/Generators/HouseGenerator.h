@@ -7,8 +7,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-#include "Resources/ResourceManager.h"
-#include "Resources/Mesh.h"
+#include <Resources/ResourceManager.h>
+#include <Resources/Mesh.h>
 
 /*
 	TODO :

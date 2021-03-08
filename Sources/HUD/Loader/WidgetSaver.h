@@ -4,17 +4,15 @@
 
 #include <glm/glm.hpp>
 
-#include "../Layer.h"
-#include "../WidgetVirtual.h"
+#include <HUD/Layer.h>
+#include <HUD/WidgetVirtual.h>
+#include <HUD/WidgetLabel.h>
+#include <HUD/WidgetImage.h>
+#include <HUD/WidgetConsole.h>
+#include <HUD/WidgetBoard.h>
+#include <HUD/WidgetRadioButton.h>
 
-#include "../WidgetLabel.h"
-#include "../WidgetImage.h"
-#include "../WidgetConsole.h"
-#include "../WidgetBoard.h"
-#include "../WidgetRadioButton.h"
-
-
-#include "Utiles/Parser/Variant.h"
+#include <Utiles/Parser/Variant.h>
 
 class WidgetSaver
 {

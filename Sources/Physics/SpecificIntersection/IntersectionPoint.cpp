@@ -1,7 +1,7 @@
 #include "IntersectionPoint.h"
 
-#include "Physics/SpecificCollision/CollisionUtils.h"
-#include "Physics/SpecificCollision/CollisionPoint.h"
+#include <Physics/SpecificCollision/CollisionUtils.h>
+#include <Physics/SpecificCollision/CollisionPoint.h>
 
 #include <glm/gtx/norm.hpp>
 

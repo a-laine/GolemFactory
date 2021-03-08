@@ -3,8 +3,8 @@
 
 #include <glm/glm.hpp>
 
-#include "../Animation.h"
-#include "Utiles/Parser/Variant.h"
+#include <Resources/Animation.h>
+#include <Utiles/Parser/Variant.h>
 
 class AnimationSaver
 {

@@ -1,5 +1,5 @@
 #include "BoxSceneQuerry.h"
-#include "Physics/Collision.h"
+#include <Physics/Collision.h>
 
 
 BoxSceneQuerry::BoxSceneQuerry(const glm::vec3& cornerMin, const glm::vec3& cornerMax) : bbMin(cornerMin), bbMax(cornerMax)

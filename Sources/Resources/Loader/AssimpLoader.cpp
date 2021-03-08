@@ -6,10 +6,10 @@
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 
-#include "Utiles/Assert.hpp"
-#include "Resources/Mesh.h"
-#include "Resources/Skeleton.h"
-#include "Resources/Animation.h"
+#include <Utiles/Assert.hpp>
+#include <Resources/Mesh.h>
+#include <Resources/Skeleton.h>
+#include <Resources/Animation.h>
 
 
 

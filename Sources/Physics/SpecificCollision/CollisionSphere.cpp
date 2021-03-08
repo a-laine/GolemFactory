@@ -1,6 +1,6 @@
 #include "CollisionSphere.h"
 #include "CollisionUtils.h"
-#include "Physics/SpecificCollision/CollisionTriangle.h"
+#include "CollisionTriangle.h"
 
 #include <glm/gtx/norm.hpp>
 #include <glm/gtx/transform.hpp>

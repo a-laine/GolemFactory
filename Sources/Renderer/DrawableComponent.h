@@ -3,7 +3,7 @@
 #include <string>
 #include <glm/glm.hpp>
 
-#include "EntityComponent\Component.hpp"
+#include <EntityComponent\Component.hpp>
 
 
 class Shader;

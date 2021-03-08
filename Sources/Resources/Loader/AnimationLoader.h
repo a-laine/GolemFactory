@@ -2,8 +2,8 @@
 
 #include <map>
 
-#include "Resources/IResourceLoader.h"
-#include "Resources/Joint.h"
+#include <Resources/IResourceLoader.h>
+#include <Resources/Joint.h>
 
 
 class AnimationLoader : public IResourceLoader

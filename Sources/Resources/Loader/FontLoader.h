@@ -3,8 +3,8 @@
 #include <map>
 #include <glm/glm.hpp>
 
-#include "Resources/IResourceLoader.h"
-#include "Resources/Font.h"
+#include <Resources/IResourceLoader.h>
+#include <Resources/Font.h>
 
 
 class FontLoader : public IResourceLoader
