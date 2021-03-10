@@ -11,7 +11,7 @@
 
 #include <Utiles/Singleton.h>
 #include "EventHandlerImpl.h"
-#include "EventEnum.h"
+//#include "EventEnum.h"
 
 /** \class EventHandlerEnum
 *	\brief Second part of the event handler implementation.
@@ -34,7 +34,7 @@ class EventHandlerEnum : public EventHandlerImpl, public Singleton<EventHandlerE
 		*
 		*	\param file : The key mapping configuration file to load.
 		*/
-        void loadKeyMapping(const std::string& file);
+        void loadKeyMapping(const std::string& file, const std::string& enumFile);
 
         /*!
 		*	\brief Load a new key mapping configuration.
@@ -47,20 +47,20 @@ class EventHandlerEnum : public EventHandlerImpl, public Singleton<EventHandlerE
 		*	\param path : The new repository location of key mapping configuration files.
 		*	\param file : The key mapping configuration file to load.
 		*/
-		void loadKeyMapping(const std::string& path,std::string file);
+		void loadKeyMapping(const std::string& path, std::string eventFilename, std::string enumFilename);
 
 		/*!
 		*	\brief Verify if an event is actually activated or not.
 		*	\param eventName : The event to check. In user defined enumeration.
 		*	\return true if event is activated, false otherwise
 		*/
-        bool isActivated(EventEnum eventName);
+        bool isActivated(int eventName);
 
 		/*!
 		*	\brief Fill a container with all event published since last frame.
 		*	\param buffer : A container to store events.
 		*/
-        void getFrameEvent(std::vector<EventEnum>& buffer);
+        void getFrameEvent(std::vector<int>& buffer);
 
 		/*!
 		*	\brief Explicitly publish an event.
@@ -70,7 +70,7 @@ class EventHandlerEnum : public EventHandlerImpl, public Singleton<EventHandlerE
 		*
 		*	\param literalEvent : Event to publish.
 		*/
-        void addFrameEvent(EventEnum literalEvent);
+        void addFrameEvent(int literalEvent);
 
 		/*!
 		*	\brief Create and add a simple event.
@@ -83,13 +83,13 @@ class EventHandlerEnum : public EventHandlerImpl, public Singleton<EventHandlerE
 		*	\param key : The key for the input
 		*	\param config : The configuration for the event
 		*/
-        void addEvent(EventEnum eventName,Event::InputType call,int key = -1,uint8_t config = Event::DOWN_FLAG|Event::BUTTON);
+        void addEvent(int eventName,Event::InputType call,int key = -1,uint8_t config = Event::DOWN_FLAG|Event::BUTTON);
 
 		/*!
 		*	\brief Remove and delete a specific event
 		*	\param eventName : the event to delete.
 		*/
-        void removeEvent(EventEnum eventName);
+        void removeEvent(int eventName);
 
 		/*!
 		*	\brief Remove and delete all event handled
@@ -143,10 +143,10 @@ class EventHandlerEnum : public EventHandlerImpl, public Singleton<EventHandlerE
         //
 
         //  Attributes
-        std::map<Event*,EventEnum> eventMapping;		//!< Container for assosiate Event object -> user event
-        std::multimap<EventEnum,Event*> userMapping;	//!< Container for assosiate user event -> Event object
-        std::vector<EventEnum> frameEvent;				//!< The list of all event occured and non treated yet
-		std::vector<EventEnum> specialAddedEvent;
-        std::vector<EventEnum> frameEventBuffer;		//!< A buffer used for thread safe uses
+        std::map<Event*, int> eventMapping;		//!< Container for assosiate Event object -> user event
+        std::multimap<int,Event*> userMapping;	//!< Container for assosiate user event -> Event object
+        std::vector<int> frameEvent;				//!< The list of all event occured and non treated yet
+		std::vector<int> specialAddedEvent;
+        std::vector<int> frameEventBuffer;		//!< A buffer used for thread safe uses
         //
 };

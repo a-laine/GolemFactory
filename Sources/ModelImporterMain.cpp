@@ -50,9 +50,14 @@
 #include "Utiles/Debug.h"
 #include "Physics/GJK.h"
 
-#define GRID_SIZE 512
+#define GRID_SIZE 10
 #define GRID_ELEMENT_SIZE 1.f
 #define DEBUG_LEVEL 0
+
+enum EventEnum
+{
+	#include <ModelImporterEventEnum.enum>
+};
 
 
 //	global attributes
@@ -97,7 +102,7 @@ int main()
 	initManagers();
 
 	//	Collision test
-	WidgetManager::getInstance()->setActiveHUD("debug");
+	//WidgetManager::getInstance()->setActiveHUD("debug");
 	world.getEntityFactory().createObject("cube", [](Entity* object) // ground collider
 		{
 			object->setTransformation(glm::vec3(0.f, 0.f, -10.f), glm::vec3(1000, 1000, 10), glm::fquat());
@@ -106,18 +111,20 @@ int main()
 
 	//normalShader = ResourceManager::getInstance()->getResource<Shader>("normalViewer");
 
-	//	Test scene
+	//	Empty scene
 	Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("wired"));
 	Renderer::getInstance()->setGridVisible(true);
 	Renderer::getInstance()->normalViewer = ResourceManager::getInstance()->getResource<Shader>("normalViewer");
 
 	freeflyCamera = world.getEntityFactory().createObject([](Entity* object)
 		{
-			object->setPosition(glm::vec3(0, 0, 5));
+			glm::vec3 p(-5, -3, 3);
+			object->setPosition(p);
 			object->setShape(new Sphere());
 			CameraComponent* ffCam = new CameraComponent(true);
-			ffCam->lookAt(glm::vec3(0, 1, 0));
+			ffCam->lookAt(-p);
 			object->addComponent(ffCam);
+			Renderer::getInstance()->setCamera(ffCam);
 
 			currentCamera = ffCam;
 		});
@@ -190,7 +197,7 @@ void initManagers()
 	// Init Event handler
 	EventHandler::getInstance()->addWindow(context->getParentWindow());
 	EventHandler::getInstance()->setRepository(resourceRepository);
-	EventHandler::getInstance()->loadKeyMapping("ModelImporter");
+	EventHandler::getInstance()->loadKeyMapping("ModelImporter", "ModelImporterEventEnum");
 	EventHandler::getInstance()->setCursorMode(true);
 	EventHandler::getInstance()->setResizeCallback(WidgetManager::resizeCallback);
 
@@ -245,6 +252,7 @@ void initManagers()
 	//	HUD
 	WidgetManager::getInstance()->setInitialViewportRatio(context->getViewportRatio());
 	WidgetManager::getInstance()->loadHud("default");
+	WidgetManager::getInstance()->loadHud("ModelImporter");
 }
 void picking()
 {
@@ -304,6 +312,8 @@ void events()
 	{
 		//	debug
 		if (v[i] == QUIT) glfwSetWindowShouldClose(context->getParentWindow(), GL_TRUE);
+
+		//else if (v[i] == F10)  EventHandler::getInstance()->getCursorPositionRelative();
 		
 		else if (v[i] == HELP) WidgetManager::getInstance()->setActiveHUD((WidgetManager::getInstance()->getActiveHUD() == "help" ? "" : "help"));
 		else if (v[i] == F9)   WidgetManager::getInstance()->setActiveHUD((WidgetManager::getInstance()->getActiveHUD() == "debug" ? "" : "debug"));
@@ -337,43 +347,46 @@ void updates(float elapseTime)
 	WidgetManager::getInstance()->setString("drawcalls",
 		"Instances :\n  " + std::to_string(Renderer::getInstance()->getNbDrawnInstances() + WidgetManager::getInstance()->getNbDrawnWidgets()) +
 		"\n\nTriangles :\n  " + std::to_string(Renderer::getInstance()->getNbDrawnTriangles() + WidgetManager::getInstance()->getNbDrawnTriangles()));
-	WidgetManager::getInstance()->update((float)elapseTime, EventHandler::getInstance()->isActivated(USE1));
+	WidgetManager::getInstance()->update((float)elapseTime, EventHandler::getInstance()->isActivated(CLICK_LEFT));
 
 	// animate camera
-	// Rotation
-	CameraComponent* ffCam = freeflyCamera->getComponent<CameraComponent>();
-	if (!EventHandler::getInstance()->getCursorMode())
+	if (!WidgetManager::getInstance()->isUnderMouse())
 	{
-		float sensitivity = 0.2f;
-		float yaw = glm::radians(-sensitivity * EventHandler::getInstance()->getCursorPositionRelative().x);
-		float pitch = glm::radians(-sensitivity * EventHandler::getInstance()->getCursorPositionRelative().y);
-		ffCam->rotate(pitch, yaw);
+		// Rotation
+		CameraComponent* ffCam = freeflyCamera->getComponent<CameraComponent>();
+		if (EventHandler::getInstance()->isActivated(CLICK_RIGHT))
+		{
+			float sensitivity = 0.2f;
+			float yaw = glm::radians(-sensitivity * EventHandler::getInstance()->getCursorPositionRelative().x);
+			float pitch = glm::radians(-sensitivity * EventHandler::getInstance()->getCursorPositionRelative().y);
+			ffCam->rotate(pitch, yaw);
+		}
+
+		// Translation
+		glm::vec3 direction(0., 0., 0.);
+		float speed = ffCam->getFieldOfView();
+		if (EventHandler::getInstance()->isActivated(CLICK_MIDDLE))
+		{
+			glm::vec2 delta = EventHandler::getInstance()->getCursorPositionRelative();
+
+			float sensitivity = 0.00001f;
+			direction = ffCam->getUp() * delta.y - ffCam->getRight()* delta.x;
+			direction *= sensitivity;
+		}
+
+		if (direction.x || direction.y || direction.z)
+		{
+			freeflyCamera->setPosition(freeflyCamera->getPosition() + direction * (elapseTime * speed));
+			world.updateObject(freeflyCamera);
+		}
+
+		// FOV
+		float angle = ffCam->getFieldOfView() - 2.f * EventHandler::getInstance()->getScrollingRelative().y;
+		if (angle > 160.f) angle = 160.f;
+		else if (angle < 3.f) angle = 3.f;
+
+		ffCam->setFieldOfView(angle);
 	}
 
-	// Translation
-	glm::vec3 direction(0., 0., 0.);
-	glm::vec3 forward = ffCam->getForward(); // global because free rotations
-	glm::vec3 right = ffCam->getRight(); // global because free rotations
-
-	float speed = 0.003f;
-	if (EventHandler::getInstance()->isActivated(FORWARD)) direction += forward;
-	if (EventHandler::getInstance()->isActivated(BACKWARD)) direction -= forward;
-	if (EventHandler::getInstance()->isActivated(LEFT)) direction -= right;
-	if (EventHandler::getInstance()->isActivated(RIGHT)) direction += right;
-	if (EventHandler::getInstance()->isActivated(SNEAKY)) speed /= 10.f;
-	if (EventHandler::getInstance()->isActivated(RUN)) speed *= 10.f;
-
-	if (direction.x || direction.y || direction.z)
-	{
-		freeflyCamera->setPosition(freeflyCamera->getPosition() + glm::normalize(direction) * elapseTime * speed);
-		world.updateObject(freeflyCamera);
-	}
-
-	// FOV
-	float angle = ffCam->getFieldOfView() + EventHandler::getInstance()->getScrollingRelative().y;
-	if (angle > 160.f) angle = 160.f;
-	else if (angle < 3.f) angle = 3.f;
-
-	ffCam->setFieldOfView(angle);
 }
 //

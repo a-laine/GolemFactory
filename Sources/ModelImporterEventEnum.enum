@@ -1,0 +1,39 @@
+/*	THIS FILE MUST RESPECT THE C FILE STRUCTURE TO BE VALID
+ *
+ *	For that you just have to specify the interior of a structure like in C.
+ *	Comment block just like this one are supported and comment line too.
+ *  The parser is intentation independant.
+ *
+ *	One limitation : for an explicit value attribution place the value in the same line,
+ *  like "FORWARD = 1,". if not result is not guarantee.
+ *
+ */
+
+//  keyboard,
+	ESCAPE = 1,
+	ENTER,
+	DELETE_KEY,
+	HELP,
+	QUIT,
+
+//  miscellaneous,
+	CLICK_LEFT,
+	CLICK_RIGHT,
+	CLICK_MIDDLE,
+	DOUBLE_CLICK_LEFT,
+	
+//	alternative functions (useful for debug or changing HUD)
+	F1,
+	F2,
+	F3,
+	F4,
+	F5,
+	F6,
+	F7,
+	F8,
+	F9,
+	F10,
+	F11,
+	F12,
+	
+	

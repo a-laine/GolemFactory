@@ -8,7 +8,7 @@
 //  Default
 EventHandlerEnum::EventHandlerEnum(const std::string& path) : EventHandlerImpl(path)
 {
-    addEvent(QUIT,Event::KEY,GLFW_KEY_ESCAPE);
+    //addEvent(QUIT, Event::KEY, GLFW_KEY_ESCAPE);
 }
 EventHandlerEnum::~EventHandlerEnum()
 {
@@ -17,19 +17,27 @@ EventHandlerEnum::~EventHandlerEnum()
 //
 
 //  Public functions
-void EventHandlerEnum::loadKeyMapping(const std::string& file)
+void EventHandlerEnum::loadKeyMapping(const std::string& file, const std::string& enumFile)
 {
-	loadKeyMapping(repository,file);
+	loadKeyMapping(repository, file, enumFile);
 }
-void EventHandlerEnum::loadKeyMapping(const std::string& path,std::string filename)
+void EventHandlerEnum::loadKeyMapping(const std::string& path, std::string eventFilename, std::string enumFilename)
 {
-	if (filename.empty())
-		filename = "RPG key mapping";
+	if (eventFilename.empty())
+	{
+		eventFilename = "RPG key mapping";
+		std::cout << "EventHandler : eventFilename not specified, was set to " << eventFilename << std::endl;
+	}
+	if (enumFilename.empty())
+	{
+		enumFilename = "DefaultUserEventEnum";
+		std::cout << "EventHandler : enumFilename not specified, was set to " << enumFilename << std::endl;
+	}
 
 	//	initialize variable
 	std::string line, name, tmp;
-	std::map<Event*, EventEnum> eventMappingBuffer;
-	std::multimap<EventEnum, Event*> userMappingBuffer;
+	std::map<Event*, int> eventMappingBuffer;
+	std::multimap<int, Event*> userMappingBuffer;
 	std::map<int, std::vector<Event*> > keyboardListenersBuffer;
 	std::map<int, std::vector<Event*> > mouseButtonListenersBuffer;
 	std::vector<Event*> charEnteredListenersBuffer;
@@ -41,8 +49,14 @@ void EventHandlerEnum::loadKeyMapping(const std::string& path,std::string filena
 
     //  Create map userEnum string to int map
 	{
-		std::string file = ToolBox::openAndCleanCStyleFile(path + "../Sources/UserEnum.enum");
-		if (file.empty()) return;
+		std::string fullpath = path + "../Sources/" + enumFilename + ".enum";
+		std::string file = ToolBox::openAndCleanCStyleFile(fullpath);
+		if (file.empty())
+		{
+			std::cerr << "EventHandler : Fail to open or parse file (empty) :" << std::endl;
+			std::cerr << "               " << fullpath << std::endl;
+			return;
+		}
 		
 		int index = 0;
 		std::stringstream userEnumStream(file);
@@ -87,15 +101,16 @@ void EventHandlerEnum::loadKeyMapping(const std::string& path,std::string filena
 	{
 		//	load and parse file into variant structure
 		Variant v; Variant* tmpvariant;
+		std::string fullpath = path + "Config/" + eventFilename + ".json";
 		try
 		{
-			Reader::parseFile(v, path + "Config/" + filename + ".json");
+			Reader::parseFile(v, fullpath);
 			tmpvariant = &(v.getMap().begin()->second);
 		}
 		catch (std::exception&)
 		{
-			std::cerr << "EventHandler : Fail to open or parse file :" << std::endl;
-			std::cerr << "               " << path + "Config/" + filename + ".cfg" << std::endl;
+			std::cerr << "EventHandler : Fail to open or parse file (variant loading fail) :" << std::endl;
+			std::cerr << "               " << fullpath << std::endl;
 			return;
 		}
 		Variant& configMap = *tmpvariant;
@@ -187,8 +202,8 @@ void EventHandlerEnum::loadKeyMapping(const std::string& path,std::string filena
 					continue;
 				}
 
-				userMappingBuffer.insert(std::pair<EventEnum, Event*>((EventEnum)enumMap[name], event));
-				eventMappingBuffer[event] = (EventEnum)enumMap[name];
+				userMappingBuffer.insert(std::pair<int, Event*>(enumMap[name], event));
+				eventMappingBuffer[event] = enumMap[name];
 			}
 
 			//	Attach keyboard input
@@ -288,7 +303,7 @@ void EventHandlerEnum::loadKeyMapping(const std::string& path,std::string filena
         dragAndDropListeners.swap(dragAndDropListenersBuffer);
     mutex.unlock();
 }
-bool EventHandlerEnum::isActivated(EventEnum eventName)
+bool EventHandlerEnum::isActivated(int eventName)
 {
     bool b = false;
     mutex.lock();
@@ -306,24 +321,24 @@ bool EventHandlerEnum::isActivated(EventEnum eventName)
     return b;
 }
 
-void EventHandlerEnum::getFrameEvent(std::vector<EventEnum>& buffer)
+void EventHandlerEnum::getFrameEvent(std::vector<int>& buffer)
 {
     mutex.lock();
     buffer.insert(buffer.end(),frameEvent.begin(),frameEvent.end());
     configuration |= CLEAR_EVENT_LIST;
     mutex.unlock();
 }
-void EventHandlerEnum::addFrameEvent(EventEnum literalEvent)
+void EventHandlerEnum::addFrameEvent(int literalEvent)
 {
     mutex.lock();
 	specialAddedEvent.insert(specialAddedEvent.end(),literalEvent);
     mutex.unlock();
 }
 
-void EventHandlerEnum::addEvent(EventEnum eventName,Event::InputType call,int key,uint8_t config)
+void EventHandlerEnum::addEvent(int eventName,Event::InputType call,int key,uint8_t config)
 {
     mutex.lock();
-    std::pair<EventEnum,Event*> p;
+    std::pair<int,Event*> p;
         p.first = eventName;
         p.second = new Event(config);
         p.second->addInput(call,key);
@@ -333,7 +348,7 @@ void EventHandlerEnum::addEvent(EventEnum eventName,Event::InputType call,int ke
     EventHandlerImpl::addEvent(event,call,key);
     mutex.unlock();
 }
-void EventHandlerEnum::removeEvent(EventEnum eventName)
+void EventHandlerEnum::removeEvent(int eventName)
 {
     mutex.lock();
     try

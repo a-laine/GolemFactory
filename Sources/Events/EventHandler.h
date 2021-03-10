@@ -9,7 +9,7 @@
 #ifndef USE_STRING_EVENT_TYPE
     #include "EventHandlerEnum.h"
     typedef EventHandlerEnum EventHandler;
-    typedef EventEnum UserEventType;
+    typedef int UserEventType;
 
 #else
     #include "EventHandlerString.h"

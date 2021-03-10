@@ -239,7 +239,7 @@ void Renderer::renderHUD()
 	uint8_t stencilMask = 0x00;
 
 	//	draw all widget in hudList
-	auto wList = WidgetManager::getInstance()->hudList;
+	std::map<std::string, std::vector<Layer*>>& wList = WidgetManager::getInstance()->hudList;
 	for (std::map<std::string, std::vector<Layer*> >::iterator it = wList.begin(); it != wList.end(); ++it)
 	{
 		for (unsigned int i = 0; i < it->second.size(); i++)

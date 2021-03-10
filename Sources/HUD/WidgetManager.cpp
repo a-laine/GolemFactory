@@ -18,14 +18,18 @@ void WidgetManager::loadHud(const std::string& hudName)
 {
 	if (hudName == "default")
 	{
-		if (hudList.find("debug") == hudList.end()) loadDebugHud();
-		if (hudList.find("help") == hudList.end())loadHelpHud();
-		if (hudList.find("rendering") == hudList.end())loadRenderingHud();
+		if (hudList.find("debug") == hudList.end())
+			generateDebugHud();
+		if (hudList.find("help") == hudList.end())
+			generateHelpHud();
+		if (hudList.find("rendering") == hudList.end())
+			generateRenderingHud();
 
 		//	push away all HUD but active
 		for (auto it = hudList.begin(); it != hudList.end(); ++it)
 		{
-			if (it->first == activeHud) continue;
+			if (it->first == activeHud)
+				continue;
 			for (unsigned int i = 0; i < it->second.size(); i++)
 			{
 				glm::vec3 direction = it->second[i]->getScreenPosition();
@@ -34,6 +38,11 @@ void WidgetManager::loadHud(const std::string& hudName)
 				it->second[i]->setPosition(it->second[i]->getScreenPosition() + 0.1f * glm::normalize(direction));
 			}
 		}
+	}
+	else
+	{
+		if (hudList.find(hudName) != hudList.end())
+			return;
 	}
 }
 void WidgetManager::update(const float& elapsedTime, const bool& clickButtonPressed)
@@ -231,6 +240,7 @@ void WidgetManager::setPickingParameters(const glm::mat4& base, const glm::vec3&
 std::string WidgetManager::getActiveHUD() const { return activeHud; }
 unsigned int WidgetManager::getNbDrawnWidgets() const { return widgetDrawn; }
 unsigned int WidgetManager::getNbDrawnTriangles() const { return trianglesDrawn; }
+bool WidgetManager::isUnderMouse() const { return !hoverWidgetList.empty(); }
 //
 
 
@@ -299,7 +309,7 @@ void WidgetManager::resizeCallback(int w, int h)
 
 
 //	Protected functions
-void WidgetManager::loadDebugHud()
+void WidgetManager::generateDebugHud()
 {
 	//	top title
 	WidgetBoard* board1 = new WidgetBoard(WidgetVirtual::VISIBLE | WidgetVirtual::RESPONSIVE);
@@ -460,7 +470,7 @@ void WidgetManager::loadDebugHud()
 	}
 	writer.write(hud);
 }
-void WidgetManager::loadHelpHud()
+void WidgetManager::generateHelpHud()
 {
 	//	top title
 	WidgetBoard* board1 = new WidgetBoard(WidgetVirtual::VISIBLE | WidgetVirtual::RESPONSIVE);
@@ -562,7 +572,7 @@ void WidgetManager::loadHelpHud()
 	}
 	writer.write(hud);
 }
-void WidgetManager::loadRenderingHud()
+void WidgetManager::generateRenderingHud()
 {
 	//	top title
 	WidgetBoard* board1 = new WidgetBoard(WidgetVirtual::VISIBLE | WidgetVirtual::RESPONSIVE);

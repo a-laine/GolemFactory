@@ -58,6 +58,7 @@ class WidgetManager : public Singleton<WidgetManager>
 		std::string getActiveHUD() const;
 		unsigned int getNbDrawnWidgets() const;
 		unsigned int getNbDrawnTriangles() const;
+		bool isUnderMouse() const;
 		//
 
 	private:
@@ -67,9 +68,9 @@ class WidgetManager : public Singleton<WidgetManager>
 		//
 
 		//	Protected functions
-		void loadDebugHud();
-		void loadHelpHud();
-		void loadRenderingHud();
+		void generateDebugHud();
+		void generateHelpHud();
+		void generateRenderingHud();
 		//
 
 		//	Attributes

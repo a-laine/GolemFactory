@@ -28,6 +28,7 @@
 #include "Animation/AnimationComponent.h"
 #include "Animation/SkeletonComponent.h"
 #include "Core/Application.h"
+#include "Events/EventEnum.h"
 
 #include <Resources/Texture.h>
 #include <Resources/Font.h>
@@ -474,7 +475,7 @@ void initManagers()
 	// Init Event handler
 	EventHandler::getInstance()->addWindow(context->getParentWindow());
 	EventHandler::getInstance()->setRepository(resourceRepository);
-	EventHandler::getInstance()->loadKeyMapping("RPG Key mapping");
+	EventHandler::getInstance()->loadKeyMapping("RPG Key mapping", "");
 	EventHandler::getInstance()->setCursorMode(false);
 	EventHandler::getInstance()->setResizeCallback(WidgetManager::resizeCallback);
 
