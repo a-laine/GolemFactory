@@ -25,9 +25,10 @@
 
 //  Default
 WidgetConsole::WidgetConsole(const uint8_t& config, const std::string& shaderName) : 
-	WidgetBoard(config | NEED_UPDATE | SPECIAL, shaderName), sizeChar(0.1f), margin(0.07f), firstCursory(0.f), elevator(0.f), elevatorLength(0.f), elevatorRange(0.f)
+	WidgetBoard(config | (uint8_t)OrphanFlags::NEED_UPDATE | (uint8_t)ConsoleFlags::NEED_TEXT_UPDATE, shaderName),
+	sizeChar(0.1f), margin(0.07f), firstCursory(0.f), elevator(0.f), elevatorLength(0.f), elevatorRange(0.f)
 {
-	type = CONSOLE;
+	type = WidgetVirtual::WidgetType::CONSOLE;
 	font = nullptr;
 }
 WidgetConsole::~WidgetConsole()
@@ -40,24 +41,24 @@ WidgetConsole::~WidgetConsole()
 //	Public functions
 void WidgetConsole::update(const float& elapseTime)
 {
-	State s = (State)(configuration & STATE_MASK);
-	colors[CURRENT] = 0.9f * colors[CURRENT] + 0.1f * colors[s];
-	positions[CURRENT] = positions[s];
-	sizes[CURRENT] = sizes[s];
+	State s = (State)(configuration & (uint8_t)State::STATE_MASK);
+	colors[State::CURRENT] = 0.9f * colors[State::CURRENT] + 0.1f * colors[s];
+	positions[State::CURRENT] = positions[s];
+	sizes[State::CURRENT] = sizes[s];
 
 	//	update buffers if needed
 	updateCooldown += elapseTime;
 	if (updateCooldown > 500.f)
 	{
 		updateCooldown = 0.f;
-		if (configuration & NEED_UPDATE)
+		if (configuration & (uint8_t)OrphanFlags::NEED_UPDATE)
 		{
-			configuration &= ~NEED_UPDATE;
+			configuration &= ~(uint8_t)OrphanFlags::NEED_UPDATE;
 			updateBuffers();
 		}
-		if (configuration & SPECIAL)
+		if (configuration & (uint8_t)ConsoleFlags::NEED_TEXT_UPDATE)
 		{
-			configuration &= ~SPECIAL;
+			configuration &= ~(uint8_t)ConsoleFlags::NEED_TEXT_UPDATE;
 			parseText();
 			updateTextBuffer();
 		}
@@ -66,9 +67,9 @@ void WidgetConsole::update(const float& elapseTime)
 }
 void WidgetConsole::initialize(const float& bThickness, const float& bWidth, const uint8_t& corner)
 {
-	colors[CURRENT] = colors[(State)(configuration & STATE_MASK)];
-	positions[CURRENT] = positions[(State)(configuration & STATE_MASK)];
-	sizes[CURRENT] = sizes[(State)(configuration & STATE_MASK)];
+	colors[State::CURRENT] = colors[(State)(configuration & (uint8_t)State::STATE_MASK)];
+	positions[State::CURRENT] = positions[(State)(configuration & (uint8_t)State::STATE_MASK)];
+	sizes[State::CURRENT] = sizes[(State)(configuration & (uint8_t)State::STATE_MASK)];
 
 	borderThickness = bThickness;
 	borderWidth = bWidth;
@@ -100,37 +101,37 @@ void WidgetConsole::draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model
 
 		//	draw border
 		loc = s->getUniformLocation("color");
-		if (loc >= 0) glUniform4fv(loc, 1, &colors[CURRENT].x);
+		if (loc >= 0) glUniform4fv(loc, 1, &colors[State::CURRENT].x);
 		glBindVertexArray(batchList[BATCH_INDEX_BORDER].vao);
 		glDrawElements(GL_TRIANGLES, (int)batchList[BATCH_INDEX_BORDER].faces.size(), GL_UNSIGNED_SHORT, NULL);
 
 		//	draw center at different alpha
-		glm::vec4 color = glm::vec4(colors[CURRENT].x, colors[CURRENT].y, colors[CURRENT].z, 0.5f * colors[CURRENT].w);
+		glm::vec4 color = glm::vec4(colors[State::CURRENT].x, colors[State::CURRENT].y, colors[State::CURRENT].z, 0.5f * colors[State::CURRENT].w);
 		loc = s->getUniformLocation("color");
 		if (loc >= 0) glUniform4fv(loc, 1, &color.x);
 		glBindVertexArray(batchList[BATCH_INDEX_CENTER].vao);
 		glDrawElements(GL_TRIANGLES, (int)batchList[BATCH_INDEX_CENTER].faces.size(), GL_UNSIGNED_SHORT, NULL);
 
 	//	elevator
-	float selection = sizeChar * linesLength.size() - (sizes[CURRENT].y - 2.f * borderThickness);
+	float selection = sizeChar * linesLength.size() - (sizes[State::CURRENT].y - 2.f * borderThickness);
 	if (false || selection > 0.f)
 	{
 		drawClippingShape(BATCH_INDEX_CLIPPING_ELEVATOR, true, s, stencilMask);
 
 			//	draw elevator
-			color = glm::vec4(0.7f * colors[CURRENT].x, 0.7f * colors[CURRENT].y, 0.7f * colors[CURRENT].z, colors[CURRENT].w);
+			color = glm::vec4(0.7f * colors[State::CURRENT].x, 0.7f * colors[State::CURRENT].y, 0.7f * colors[State::CURRENT].z, colors[State::CURRENT].w);
 			loc = s->getUniformLocation("color");
 			if (loc >= 0) glUniform4fv(loc, 1, &color.x);
 			float selectionPart = (elevator - 0.5f) * elevatorRange;
 			loc = s->getUniformLocation("model");
-			if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, &glm::translate(model, positions[CURRENT] + glm::vec3(0.f, 0.f, selectionPart))[0][0]);
+			if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, &glm::translate(model, positions[State::CURRENT] + glm::vec3(0.f, 0.f, selectionPart))[0][0]);
 
 			glBindVertexArray(batchList[BATCH_INDEX_ELEVATOR].vao);
 			glDrawElements(GL_TRIANGLES, (int)batchList[BATCH_INDEX_ELEVATOR].faces.size(), GL_UNSIGNED_SHORT, NULL);
 
 			//	reset model matrix on shader
 			loc = s->getUniformLocation("model");
-			if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, &glm::translate(model, positions[CURRENT])[0][0]);
+			if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, &glm::translate(model, positions[State::CURRENT])[0][0]);
 
 		//	unclip
 		drawClippingShape(BATCH_INDEX_CLIPPING_ELEVATOR, false, s, stencilMask);
@@ -149,7 +150,7 @@ void WidgetConsole::draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model
 
 		//	go to elevator selection part
 		loc = s->getUniformLocation("model");
-		if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, &glm::translate(model, positions[CURRENT] + glm::vec3(0.f, 0.f, -elevator * selection))[0][0]);
+		if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, &glm::translate(model, positions[State::CURRENT] + glm::vec3(0.f, 0.f, -elevator * selection))[0][0]);
 
 		//	draw text
 		loc = s->getUniformLocation("color");
@@ -160,7 +161,7 @@ void WidgetConsole::draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model
 
 		//	reset model matrix on shader
 		loc = s->getUniformLocation("model");
-		if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, &glm::translate(model, positions[CURRENT])[0][0]);
+		if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, &glm::translate(model, positions[State::CURRENT])[0][0]);
 
 	//	unclip zone
 	drawClippingShape(BATCH_INDEX_CLIPPING, false, s, stencilMask);
@@ -197,13 +198,13 @@ bool WidgetConsole::mouseEvent(const glm::mat4& base, const glm::vec3& ray, cons
 		//	compute relative cursor y (0 = at bottom, 1 = at top)
 		float depth = glm::dot(normal, p1) / glm::dot(normal, ray);
 		glm::vec3 intersection = depth * ray - p1;
-		float cursory = (intersection.y / parentscale + sizes[CURRENT].y/2 - elevatorLength) / elevatorRange;
+		float cursory = (intersection.y / parentscale + sizes[State::CURRENT].y/2 - elevatorLength) / elevatorRange;
 
-		if ((configuration & STATE_MASK) != ACTIVE)
+		if ((configuration & (uint8_t)State::STATE_MASK) != (uint8_t)State::ACTIVE)
 			firstCursory = cursory - elevator;
 
 		elevator = glm::clamp(cursory - firstCursory, 0.f, 1.f);
-		setState(ACTIVE);
+		setState(State::ACTIVE);
 		return true;
 	}
 	else return false;
@@ -216,24 +217,24 @@ void WidgetConsole::setFont(const std::string& fontName)
 {
 	ResourceManager::getInstance()->release(font);
 	font = ResourceManager::getInstance()->getResource<Font>(fontName);
-	configuration |= SPECIAL;
+	configuration |= (uint8_t)ConsoleFlags::NEED_TEXT_UPDATE;
 }
 void WidgetConsole::setSizeChar(const float& f)
 {
 	sizeChar = f;
-	configuration |= SPECIAL;
+	configuration |= (uint8_t)ConsoleFlags::NEED_TEXT_UPDATE;
 }
 void WidgetConsole::setMargin(const float& f)
 {
 	margin = f;
-	configuration |= SPECIAL;
+	configuration |= (uint8_t)ConsoleFlags::NEED_TEXT_UPDATE;
 }
 void WidgetConsole::append(const std::string& s)
 {
 	if (!s.empty())
 	{
 		text += s + '\n';
-		configuration |= SPECIAL;
+		configuration |= (uint8_t)ConsoleFlags::NEED_TEXT_UPDATE;
 		elevator = 0.f;
 	}
 }
@@ -270,7 +271,7 @@ void WidgetConsole::updateBuffers(const bool& firstInit)
 
 	//	text clipping Shape (like center but a little smaller)
 	DrawBatch clippingShape;
-	glm::vec3 dimension = glm::vec3(0.5f * sizes[CURRENT].x - borderThickness, 0.f, 0.5f * sizes[CURRENT].y - borderThickness);
+	glm::vec3 dimension = glm::vec3(0.5f * sizes[State::CURRENT].x - borderThickness, 0.f, 0.5f * sizes[State::CURRENT].y - borderThickness);
 	glm::vec3 elevatorMax, elevatorMin;
 
 	clippingShape.vertices.push_back(glm::vec3(0.f, 0.f, 0.f));
@@ -435,8 +436,8 @@ void WidgetConsole::updateTextBuffer()
 	for (unsigned int i = 0; i < text.size(); i++)
 	{
 		//	init parameters
-		glm::vec2 o(positions[CURRENT].x - 0.5f * sizes[CURRENT].x - borderThickness + margin,
-			positions[CURRENT].z + borderThickness - 0.5f * sizes[CURRENT].y + sizeChar * (linesLength.size() - 1 - line));
+		glm::vec2 o(positions[State::CURRENT].x - 0.5f * sizes[State::CURRENT].x - borderThickness + margin,
+			positions[State::CURRENT].z + borderThickness - 0.5f * sizes[State::CURRENT].y + sizeChar * (linesLength.size() - 1 - line));
 		Font::Patch patch = font->getPatch(text[i]);
 		float charLength = std::abs((patch.corner2.x - patch.corner1.x) / (patch.corner2.y - patch.corner1.y));
 

@@ -9,7 +9,7 @@ class WidgetImage : public WidgetVirtual
 
 	public:
 		//  Default
-		WidgetImage(const std::string& textureName= "default", const uint8_t& config = VISIBLE, const std::string& shaderName = "defaultWidget");
+		WidgetImage(const std::string& textureName= "default", const uint8_t& config = (uint8_t)WidgetVirtual::OrphanFlags::VISIBLE, const std::string& shaderName = "defaultWidget");
 		virtual ~WidgetImage();
 		//
 

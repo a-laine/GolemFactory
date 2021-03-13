@@ -5,20 +5,20 @@
 //  Default
 WidgetVirtual::WidgetVirtual(const WidgetType& t, const uint8_t& config, const std::string& shaderName) : type(t), configuration(config)
 {
-	sizes[DEFAULT] = glm::vec2(1.f);
-	sizes[HOVER] = glm::vec2(1.f);
-	sizes[ACTIVE] = glm::vec2(1.f);
-	sizes[CURRENT] = glm::vec2(1.f);
+	sizes[State::DEFAULT] = glm::vec2(1.f);
+	sizes[State::HOVER] = glm::vec2(1.f);
+	sizes[State::ACTIVE] = glm::vec2(1.f);
+	sizes[State::CURRENT] = glm::vec2(1.f);
 
-	positions[DEFAULT] = glm::vec3(0.f);
-	positions[HOVER] = glm::vec3(0.f);
-	positions[ACTIVE] = glm::vec3(0.f);
-	positions[CURRENT] = glm::vec3(0.f);
+	positions[State::DEFAULT] = glm::vec3(0.f);
+	positions[State::HOVER] = glm::vec3(0.f);
+	positions[State::ACTIVE] = glm::vec3(0.f);
+	positions[State::CURRENT] = glm::vec3(0.f);
 
-	colors[DEFAULT] = glm::vec4(1.f);
-	colors[HOVER] = glm::vec4(1.f);
-	colors[ACTIVE] = glm::vec4(1.f);
-	colors[CURRENT] = glm::vec4(1.f);
+	colors[State::DEFAULT] = glm::vec4(1.f);
+	colors[State::HOVER] = glm::vec4(1.f);
+	colors[State::ACTIVE] = glm::vec4(1.f);
+	colors[State::CURRENT] = glm::vec4(1.f);
 
 	shader = ResourceManager::getInstance()->getResource<Shader>(shaderName);
 	texture = nullptr;
@@ -60,7 +60,7 @@ void WidgetVirtual::draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model
 	if (loc >= 0) glUniform1i(loc, (texture ? 1 : 0));
 
 	//	draw all batches
-	State state = (State)(configuration & STATE_MASK);
+	State state = (State)(configuration & (uint8_t)State::STATE_MASK);
 	loc = s->getUniformLocation("color");
 	if (loc >= 0) glUniform4fv(loc, 1, &colors[state].x);
 	for (unsigned int i = 0; i < batchList.size(); i++)
@@ -71,10 +71,10 @@ void WidgetVirtual::draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model
 }
 void WidgetVirtual::update(const float& elapseTime)
 {
-	State s = (State)(configuration & STATE_MASK);
-	colors[CURRENT] = colors[s];
-	positions[CURRENT] = positions[s];
-	sizes[CURRENT] = sizes[s];
+	State s = (State)(configuration & (uint8_t)State::STATE_MASK);
+	colors[State::CURRENT] = colors[s];
+	positions[State::CURRENT] = positions[s];
+	sizes[State::CURRENT] = sizes[s];
 }
 bool WidgetVirtual::intersect(const glm::mat4& base, const glm::vec3& ray)
 {
@@ -107,52 +107,52 @@ bool WidgetVirtual::getBoolean() const { return false; }
 //  Set/get functions
 void WidgetVirtual::setState(State state)
 {
-	configuration &= ~STATE_MASK;
-	configuration |= state % CURRENT;
+	configuration &= ~(uint8_t)State::STATE_MASK;
+	configuration |= (uint8_t)state % (uint8_t)State::CURRENT;
 }
 void WidgetVirtual::setSize(const glm::vec2& s, const State& state)
 {
-	if (state == ALL)
+	if (state == State::ALL)
 	{
-		sizes[DEFAULT] = s;
-		sizes[HOVER] = s;
-		sizes[ACTIVE] = s;
-		sizes[CURRENT] = s;
+		sizes[State::DEFAULT] = s;
+		sizes[State::HOVER] = s;
+		sizes[State::ACTIVE] = s;
+		sizes[State::CURRENT] = s;
 	}
 	else sizes[state] = s;
-	if(configuration & RESPONSIVE) configuration |= NEED_UPDATE;
+	if(configuration & (uint8_t)OrphanFlags::RESPONSIVE) configuration |= (uint8_t)OrphanFlags::NEED_UPDATE;
 }
 void WidgetVirtual::setPosition(const glm::vec3& p, const State& state)
 {
-	if (state == ALL)
+	if (state == State::ALL)
 	{
-		positions[DEFAULT] = p;
-		positions[HOVER] = p;
-		positions[ACTIVE] = p;
-		positions[CURRENT] = p;
+		positions[State::DEFAULT] = p;
+		positions[State::HOVER] = p;
+		positions[State::ACTIVE] = p;
+		positions[State::CURRENT] = p;
 	}
 	else positions[state] = p;
 }
 void WidgetVirtual::setColor(const glm::vec4& c, const State& state) 
 {
-	if (state == ALL)
+	if (state == State::ALL)
 	{
-		colors[DEFAULT] = c;
-		colors[HOVER] = c;
-		colors[ACTIVE] = c;
-		colors[CURRENT] = c;
+		colors[State::DEFAULT] = c;
+		colors[State::HOVER] = c;
+		colors[State::ACTIVE] = c;
+		colors[State::CURRENT] = c;
 	}
 	else colors[state] = c;
 }
 void WidgetVirtual::setVisibility(const bool& visible)
 {
-	if (visible) configuration |= VISIBLE;
-	else configuration &= ~VISIBLE;
+	if (visible) configuration |= (uint8_t)OrphanFlags::VISIBLE;
+	else configuration &= ~(uint8_t)OrphanFlags::VISIBLE;
 }
 void WidgetVirtual::setResponsive(const bool& responsive)
 {
-	if (responsive) configuration |= RESPONSIVE;
-	else configuration &= ~RESPONSIVE;
+	if (responsive) configuration |= (uint8_t)OrphanFlags::RESPONSIVE;
+	else configuration &= ~(uint8_t)OrphanFlags::RESPONSIVE;
 }
 void WidgetVirtual::setTexture(const std::string& textureName)
 {
@@ -165,27 +165,31 @@ void WidgetVirtual::setShader(const std::string& shaderName)
 	ResourceManager::getInstance()->release(shader);
 	shader = ResourceManager::getInstance()->getResource<Shader>(shaderName);
 }
+void WidgetVirtual::setConfiguration(const uint8_t& config)
+{
+	configuration = config;
+}
 
 
 WidgetVirtual::WidgetType WidgetVirtual::getType() const { return type; }
-WidgetVirtual::State WidgetVirtual::getState() const { return (State)(configuration & STATE_MASK); }
+WidgetVirtual::State WidgetVirtual::getState() const { return (State)(configuration & (uint8_t)State::STATE_MASK); }
 glm::vec2 WidgetVirtual::getSize(State state)
 {
-	if (state == CURRENT) return sizes[(State)(configuration & STATE_MASK)];
-	else return sizes[(State)((int)state % CURRENT)];
+	if (state == State::CURRENT) return sizes[(State)(configuration & (uint8_t)State::STATE_MASK)];
+	else return sizes[(State)((int)state % (uint8_t)State::CURRENT)];
 }
 glm::vec3 WidgetVirtual::getPosition(State state)
 {
-	if (state == CURRENT) return positions[(State)(configuration & STATE_MASK)];
-	else return positions[(State)((int)state % CURRENT)];
+	if (state == State::CURRENT) return positions[(State)(configuration & (uint8_t)State::STATE_MASK)];
+	else return positions[(State)((int)state % (uint8_t)State::CURRENT)];
 }
 glm::vec4 WidgetVirtual::getColor(const unsigned int& index, State state)
 {
-	if (state == CURRENT) return colors[(State)(configuration & STATE_MASK)];
-	else return colors[(State)((int)state % CURRENT)];
+	if (state == State::CURRENT) return colors[(State)(configuration & (uint8_t)State::STATE_MASK)];
+	else return colors[(State)((int)state % (uint8_t)State::CURRENT)];
 }
-bool WidgetVirtual::isVisible() const { return (configuration & VISIBLE)!=0; }
-bool WidgetVirtual::isResponsive() const { return (configuration & RESPONSIVE) != 0; }
+bool WidgetVirtual::isVisible() const { return (configuration & (uint8_t)OrphanFlags::VISIBLE)!=0; }
+bool WidgetVirtual::isResponsive() const { return (configuration & (uint8_t)OrphanFlags::RESPONSIVE) != 0; }
 Shader* WidgetVirtual::getShader() const { return shader; }
 Texture* WidgetVirtual::getTexture() const { return texture; }
 unsigned int WidgetVirtual::getNumberFaces() const

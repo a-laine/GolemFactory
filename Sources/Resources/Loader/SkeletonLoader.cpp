@@ -18,7 +18,7 @@ bool SkeletonLoader::load(const std::string& resourceDirectory, const std::strin
     }
     catch(std::exception&)
     {
-        if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::ERRORS)
+        if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
             std::cerr << "ERROR : loading skeleton : " << fileName << " : fail to open file" << std::endl;
         return false;
     }
@@ -86,9 +86,9 @@ bool SkeletonLoader::load(const std::string& resourceDirectory, const std::strin
             joints.push_back(joint);
         }
     }
-    catch(std::exception& e)
+    catch(const std::exception& e)
     {
-        if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::ERRORS)
+        if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
             std::cerr << "ERROR : loading shader : " << fileName << " : " << e.what() << std::endl;
         roots.clear();
         joints.clear();

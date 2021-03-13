@@ -20,7 +20,7 @@
 WidgetRadioButton::WidgetRadioButton(const uint8_t& config, const std::string& shaderName) : 
 	WidgetLabel(config, shaderName), checked(false), onTexture(nullptr), offTexture(nullptr), lastEventState(false)
 {
-	type = RADIO_BUTTON;
+	type = WidgetVirtual::WidgetType::RADIO_BUTTON;
 }
 WidgetRadioButton::~WidgetRadioButton()
 {
@@ -32,16 +32,16 @@ WidgetRadioButton::~WidgetRadioButton()
 //	Public functions
 void WidgetRadioButton::update(const float& elapseTime)
 {
-	State s = (State)(configuration & STATE_MASK);
-	colors[CURRENT] = colors[s];
-	positions[CURRENT] = positions[s];
-	sizes[CURRENT] = sizes[s];
+	State s = (State)(configuration & (uint8_t)State::STATE_MASK);
+	colors[State::CURRENT] = colors[s];
+	positions[State::CURRENT] = positions[s];
+	sizes[State::CURRENT] = sizes[s];
 
 	//	update buffers if needed
 	updateCooldown += elapseTime;
-	if (configuration & NEED_UPDATE && updateCooldown > 100.f)
+	if (configuration & (uint8_t)OrphanFlags::NEED_UPDATE && updateCooldown > 100.f)
 	{
-		configuration &= ~NEED_UPDATE;
+		configuration &= ~(uint8_t)OrphanFlags::NEED_UPDATE;
 		updateCooldown = 0.f;
 		if (!font) return;
 
@@ -53,10 +53,10 @@ void WidgetRadioButton::update(const float& elapseTime)
 void WidgetRadioButton::initialize(const std::string& txt, uint8_t textConfig)
 {
 	//	init
-	State s = (State)(configuration & STATE_MASK);
-	colors[CURRENT] = colors[s];
-	positions[CURRENT] = positions[s];
-	sizes[CURRENT] = sizes[s];
+	State s = (State)(configuration & (uint8_t)State::STATE_MASK);
+	colors[State::CURRENT] = colors[s];
+	positions[State::CURRENT] = positions[s];
+	sizes[State::CURRENT] = sizes[s];
 	if (!font) return;
 
 	text = txt;
@@ -89,7 +89,7 @@ void WidgetRadioButton::draw(Shader* s, uint8_t& stencilMask, const glm::mat4& m
 
 	//	draw batch 0 (text)
 	loc = s->getUniformLocation("color");
-	if (loc >= 0) glUniform4fv(loc, 1, &colors[CURRENT].x);
+	if (loc >= 0) glUniform4fv(loc, 1, &colors[State::CURRENT].x);
 
 	glBindVertexArray(batchList[BATCH_INDEX_TEXT].vao);
 	glDrawElements(GL_TRIANGLES, (int)batchList[BATCH_INDEX_TEXT].faces.size(), GL_UNSIGNED_SHORT, NULL);//BATCH_INDEX_TEXT
@@ -167,12 +167,12 @@ bool WidgetRadioButton::mouseEvent(const glm::mat4& base, const glm::vec3& ray, 
 void WidgetRadioButton::setTextureOn(const std::string& name)
 {
 	ResourceManager::getInstance()->release(onTexture);
-	onTexture = ResourceManager::getInstance()->getResource<Texture>(name, Texture::TEXTURE_2D | Texture::USE_MIPMAP);
+	onTexture = ResourceManager::getInstance()->getResource<Texture>(name, (uint8_t)Texture::TextureConfiguration::TEXTURE_2D | (uint8_t)Texture::TextureConfiguration::USE_MIPMAP);
 }
 void WidgetRadioButton::setTextureOff(const std::string& name)
 {
 	ResourceManager::getInstance()->release(offTexture);
-	offTexture = ResourceManager::getInstance()->getResource<Texture>(name, Texture::TEXTURE_2D | Texture::USE_MIPMAP);
+	offTexture = ResourceManager::getInstance()->getResource<Texture>(name, (uint8_t)Texture::TextureConfiguration::TEXTURE_2D | (uint8_t)Texture::TextureConfiguration::USE_MIPMAP);
 }
 
 void WidgetRadioButton::setBoolean(const bool& b) { checked = b; }
@@ -237,10 +237,10 @@ void WidgetRadioButton::updateBuffers()
 
 	//	clipping rectangle
 	DrawBatch quad;
-		quad.vertices.push_back(glm::vec3(-0.5f * sizes[CURRENT].x,                    0.f, -0.5f * sizes[CURRENT].y));
-		quad.vertices.push_back(glm::vec3(-0.5f * sizes[CURRENT].x,                    0.f,  0.5f * sizes[CURRENT].y));
-		quad.vertices.push_back(glm::vec3( 0.5f * sizes[CURRENT].x - sizes[CURRENT].y, 0.f,  0.5f * sizes[CURRENT].y));
-		quad.vertices.push_back(glm::vec3( 0.5f * sizes[CURRENT].x - sizes[CURRENT].y, 0.f, -0.5f * sizes[CURRENT].y));
+		quad.vertices.push_back(glm::vec3(-0.5f * sizes[State::CURRENT].x, 0.f, -0.5f * sizes[State::CURRENT].y));
+		quad.vertices.push_back(glm::vec3(-0.5f * sizes[State::CURRENT].x, 0.f,  0.5f * sizes[State::CURRENT].y));
+		quad.vertices.push_back(glm::vec3( 0.5f * sizes[State::CURRENT].x - sizes[State::CURRENT].y, 0.f,  0.5f * sizes[State::CURRENT].y));
+		quad.vertices.push_back(glm::vec3( 0.5f * sizes[State::CURRENT].x - sizes[State::CURRENT].y, 0.f, -0.5f * sizes[State::CURRENT].y));
 
 		quad.textures.push_back(glm::vec2(0.f, 1.f));
 		quad.textures.push_back(glm::vec2(0.f, 0.f));
@@ -256,10 +256,10 @@ void WidgetRadioButton::updateBuffers()
 
 	//	clipping rectangle
 	DrawBatch checkbox;
-		checkbox.vertices.push_back(glm::vec3(0.5f * sizes[CURRENT].x - sizes[CURRENT].y, 0.f, -0.5f * sizes[CURRENT].y));
-		checkbox.vertices.push_back(glm::vec3(0.5f * sizes[CURRENT].x - sizes[CURRENT].y, 0.f,  0.5f * sizes[CURRENT].y));
-		checkbox.vertices.push_back(glm::vec3(0.5f * sizes[CURRENT].x,                    0.f,  0.5f * sizes[CURRENT].y));
-		checkbox.vertices.push_back(glm::vec3(0.5f * sizes[CURRENT].x,                    0.f, -0.5f * sizes[CURRENT].y));
+		checkbox.vertices.push_back(glm::vec3(0.5f * sizes[State::CURRENT].x - sizes[State::CURRENT].y, 0.f, -0.5f * sizes[State::CURRENT].y));
+		checkbox.vertices.push_back(glm::vec3(0.5f * sizes[State::CURRENT].x - sizes[State::CURRENT].y, 0.f,  0.5f * sizes[State::CURRENT].y));
+		checkbox.vertices.push_back(glm::vec3(0.5f * sizes[State::CURRENT].x, 0.f,  0.5f * sizes[State::CURRENT].y));
+		checkbox.vertices.push_back(glm::vec3(0.5f * sizes[State::CURRENT].x, 0.f, -0.5f * sizes[State::CURRENT].y));
 
 		checkbox.textures.push_back(glm::vec2(0.f, 1.f));
 		checkbox.textures.push_back(glm::vec2(0.f, 0.f));

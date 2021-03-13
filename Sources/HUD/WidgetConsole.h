@@ -10,7 +10,7 @@ class WidgetConsole : public WidgetBoard
 
 	public:
 		//  Default
-		WidgetConsole(const uint8_t& config = VISIBLE, const std::string& shaderName = "defaultWidget");
+		WidgetConsole(const uint8_t& config = (uint8_t)WidgetVirtual::OrphanFlags::VISIBLE, const std::string& shaderName = "defaultWidget");
 		virtual ~WidgetConsole();
 		//
 
@@ -50,4 +50,9 @@ class WidgetConsole : public WidgetBoard
 		float firstCursory;
 		float elevator, elevatorLength, elevatorRange;
 		//
+
+		enum class ConsoleFlags : uint8_t
+		{
+			NEED_TEXT_UPDATE = (uint8_t)WidgetVirtual::OrphanFlags::SPECIAL
+		};
 };

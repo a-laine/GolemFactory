@@ -49,9 +49,10 @@ void Shader::initialize(GLuint  vertexSh, GLuint fragSh, GLuint geomShr, GLuint 
         attributesLocation[uniformName] = uniformLocation;
         if(uniformLocation < 0)
         {
-            if(uniformName.size() >= 3 && uniformName[0] == 'g' && uniformName[1] == 'l' && uniformName[2] == '_' && ResourceVirtual::logVerboseLevel >= ResourceVirtual::ERRORS)
+            if(uniformName.size() >= 3 && uniformName[0] == 'g' && uniformName[1] == 'l' && uniformName[2] == '_' && 
+                ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
                 std::cerr << "ERROR : loading shader : " << name << " : error in loading '" << uniformName << "' : name format not allowed, remove the 'gl_' prefix." << std::endl;
-            else if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::ERRORS)
+            else if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
                 std::cerr << "ERROR : loading shader : " << name << " : ERROR in loading '" << uniformName << "' variable location : " << uniformLocation << "; maybe the variable name does not correspond to an active uniform variable" << std::endl;
         }
     }

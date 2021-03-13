@@ -39,6 +39,7 @@ class Layer
 		void setOrientation(const float& yaw, const float& pitch, const float& roll);
 		void setVisibility(const bool& visible);
 		void setResponsive(const bool& responsive);
+		void setConfiguration(const uint8_t& config);
 
 		bool isVisible() const;
 		bool isResponsive() const;

@@ -36,7 +36,7 @@ class Renderer : public Singleton<Renderer>
 			INSTANCE_ANIMATABLE_BB,
 			INSTANCE_ANIMATABLE_WIRED
 		};
-		enum RenderOption
+		enum class RenderOption
 		{
 			DEFAULT,
 			BOUNDING_BOX,

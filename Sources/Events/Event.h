@@ -52,7 +52,7 @@ class Event
 		*	And the InputType enumeration permit to differenciate this diferent callback
 		*
 		*/
-        enum InputType
+        enum class InputType
         {
             KEY = 1,					//!< Input of type Keyboard key pressed or released
             CHAR = 2,					//!< Input of type char entered (for text entry)

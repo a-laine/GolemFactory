@@ -3,9 +3,10 @@
 #define BATCH_INDEX_QUAD 0
 
 //  Default
-WidgetImage::WidgetImage(const std::string& textureName, const uint8_t& config, const std::string& shaderName) : WidgetVirtual(WidgetVirtual::IMAGE, config, shaderName)
+WidgetImage::WidgetImage(const std::string& textureName, const uint8_t& config, const std::string& shaderName) : 
+	WidgetVirtual(WidgetVirtual::WidgetType::IMAGE, config, shaderName)
 {
-	texture = ResourceManager::getInstance()->getResource<Texture>(textureName, Texture::TEXTURE_2D);
+	texture = ResourceManager::getInstance()->getResource<Texture>(textureName, Texture::TextureConfiguration::TEXTURE_2D);
 }
 WidgetImage::~WidgetImage() {}
 //
@@ -14,16 +15,16 @@ WidgetImage::~WidgetImage() {}
 void WidgetImage::initialize()
 {
 	//	init
-	colors[CURRENT] = colors[(State)(configuration & STATE_MASK)];
-	positions[CURRENT] = positions[(State)(configuration & STATE_MASK)];
-	sizes[CURRENT] = sizes[(State)(configuration & STATE_MASK)];
+	colors[State::CURRENT] = colors[(State)(configuration & (uint8_t)State::STATE_MASK)];
+	positions[State::CURRENT] = positions[(State)(configuration & (uint8_t)State::STATE_MASK)];
+	sizes[State::CURRENT] = sizes[(State)(configuration & (uint8_t)State::STATE_MASK)];
 
 	//	fill batch
 	DrawBatch quad;
-		quad.vertices.push_back(glm::vec3(-0.5f * sizes[CURRENT].x, 0.f, -0.5f * sizes[CURRENT].y));
-		quad.vertices.push_back(glm::vec3(-0.5f * sizes[CURRENT].x, 0.f,  0.5f * sizes[CURRENT].y));
-		quad.vertices.push_back(glm::vec3( 0.5f * sizes[CURRENT].x, 0.f,  0.5f * sizes[CURRENT].y));
-		quad.vertices.push_back(glm::vec3( 0.5f * sizes[CURRENT].x, 0.f, -0.5f * sizes[CURRENT].y));
+		quad.vertices.push_back(glm::vec3(-0.5f * sizes[State::CURRENT].x, 0.f, -0.5f * sizes[State::CURRENT].y));
+		quad.vertices.push_back(glm::vec3(-0.5f * sizes[State::CURRENT].x, 0.f,  0.5f * sizes[State::CURRENT].y));
+		quad.vertices.push_back(glm::vec3( 0.5f * sizes[State::CURRENT].x, 0.f,  0.5f * sizes[State::CURRENT].y));
+		quad.vertices.push_back(glm::vec3( 0.5f * sizes[State::CURRENT].x, 0.f, -0.5f * sizes[State::CURRENT].y));
 
 		quad.textures.push_back(glm::vec2(0.f, 1.f));
 		quad.textures.push_back(glm::vec2(0.f, 0.f));

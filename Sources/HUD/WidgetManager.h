@@ -71,6 +71,8 @@ class WidgetManager : public Singleton<WidgetManager>
 		void generateDebugHud();
 		void generateHelpHud();
 		void generateRenderingHud();
+
+		bool tryExtractVector(const Variant& variant, glm::vec3& vector, std::string& error) const;
 		//
 
 		//	Attributes
@@ -83,7 +85,6 @@ class WidgetManager : public Singleton<WidgetManager>
 		unsigned int widgetDrawn, trianglesDrawn;
 
 		glm::vec3 pickingRay;
-		//glm::vec3 pickingOrigin;
 		glm::mat4 pickingBase;
 		std::set<WidgetVirtual*> hoverWidgetList;
 		std::list<WidgetVirtual*> activeWidgetList;

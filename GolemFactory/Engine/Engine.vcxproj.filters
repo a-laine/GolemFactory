@@ -438,6 +438,9 @@
     <ClCompile Include="..\..\Sources\Physics\Swept.cpp">
       <Filter>Fichiers sources\Physics</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Sources\HUD\Loader\WidgetLoader.cpp">
+      <Filter>Fichiers sources\HUD\Loader</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Sources\Animation\AnimationComponent.h">
@@ -775,6 +778,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Sources\Physics\Swept.h">
       <Filter>Fichiers d%27en-tête\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\HUD\Loader\WidgetLoader.h">
+      <Filter>Fichiers d%27en-tête\HUD\Loader</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

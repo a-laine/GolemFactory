@@ -9,9 +9,9 @@
 namespace ConsoleColor
 {
 	//	Miscelleneous
-	enum Color
+	enum class Color : int
 	{
-		RED,
+		RED = 0,
 		GREEN,
 		YELLOW,
 		BLUE,
@@ -20,10 +20,6 @@ namespace ConsoleColor
 		WHITE,
 		CLASSIC
 	};
-	//
-
-	//	Aroud message
-	std::string print(std::string& msg, const Color& color);
 	//
 
 	//	Into stream

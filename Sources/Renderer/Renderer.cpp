@@ -18,7 +18,7 @@
 
 //  Default
 Renderer::Renderer() : 
-	normalViewer(nullptr), renderOption(DEFAULT), 
+	normalViewer(nullptr), renderOption(RenderOption::DEFAULT),
 	vboGridSize(0), gridVAO(0), vertexbuffer(0), arraybuffer(0), colorbuffer(0), normalbuffer(0),
 	instanceDrawn(0), trianglesDrawn(0), lastShader(nullptr)
 {

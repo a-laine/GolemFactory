@@ -8,7 +8,7 @@ class WidgetRadioButton : public WidgetLabel
 
 	public:
 		//  Default
-		WidgetRadioButton(const uint8_t& config = VISIBLE, const std::string& shaderName = "defaultWidget");
+		WidgetRadioButton(const uint8_t& config = (uint8_t)WidgetVirtual::OrphanFlags::VISIBLE, const std::string& shaderName = "defaultWidget");
 		virtual ~WidgetRadioButton();
 		//
 

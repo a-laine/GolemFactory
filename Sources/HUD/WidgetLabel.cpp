@@ -18,7 +18,8 @@
 
 //  Default
 WidgetLabel::WidgetLabel(const uint8_t& config, const std::string& shaderName) : 
-	WidgetVirtual(WidgetVirtual::LABEL, config | NEED_UPDATE, shaderName), textConfiguration(0x00), sizeChar(0.1f), updateCooldown(0.f)
+	WidgetVirtual(WidgetVirtual::WidgetType::LABEL, config | (uint8_t)OrphanFlags::NEED_UPDATE, shaderName), 
+	textConfiguration(0x00), sizeChar(0.1f), updateCooldown(0.f)
 {
 	font = nullptr;
 }
@@ -33,10 +34,10 @@ WidgetLabel::~WidgetLabel()
 void WidgetLabel::initialize(const std::string& txt, uint8_t textConfig)
 {
 	//	init
-	State s = (State)(configuration & STATE_MASK);
-	colors[CURRENT] = colors[s];
-	positions[CURRENT] = positions[s];
-	sizes[CURRENT] = sizes[s];
+	State s = (State)(configuration & (uint8_t)State::STATE_MASK);
+	colors[State::CURRENT] = colors[s];
+	positions[State::CURRENT] = positions[s];
+	sizes[State::CURRENT] = sizes[s];
 	if (!font) return;
 		
 	text = txt;
@@ -55,16 +56,16 @@ void WidgetLabel::initialize(const std::string& txt, uint8_t textConfig)
 }
 void WidgetLabel::update(const float& elapseTime)
 {
-	State s = (State)(configuration & STATE_MASK);
-	colors[CURRENT] = colors[s];
-	positions[CURRENT] = positions[s];
-	sizes[CURRENT] = sizes[s];
+	State s = (State)(configuration & (uint8_t)State::STATE_MASK);
+	colors[State::CURRENT] = colors[s];
+	positions[State::CURRENT] = positions[s];
+	sizes[State::CURRENT] = sizes[s];
 
 	//	update buffers if needed
 	updateCooldown += elapseTime;
-	if (configuration & NEED_UPDATE && updateCooldown > 100.f)
+	if (configuration & (uint8_t)OrphanFlags::NEED_UPDATE && updateCooldown > 100.f)
 	{
-		configuration &= ~NEED_UPDATE;
+		configuration &= ~(uint8_t)OrphanFlags::NEED_UPDATE;
 		updateCooldown = 0.f;
 		if (!font) return;
 
@@ -87,7 +88,7 @@ void WidgetLabel::draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model)
 
 	//	draw batch 0 (text)
 	loc = s->getUniformLocation("color");
-	if (loc >= 0) glUniform4fv(loc, 1, &colors[CURRENT].x);
+	if (loc >= 0) glUniform4fv(loc, 1, &colors[State::CURRENT].x);
 
 	glBindVertexArray(batchList[BATCH_INDEX_TEXT].vao);
 	glDrawElements(GL_TRIANGLES, (int)batchList[BATCH_INDEX_TEXT].faces.size(), GL_UNSIGNED_SHORT, NULL);
@@ -135,7 +136,7 @@ void WidgetLabel::setString(const std::string& newText)
 	if (newText != text)
 	{
 		text = newText;
-		configuration |= NEED_UPDATE;
+		configuration |= (uint8_t)OrphanFlags::NEED_UPDATE;
 	}
 }
 std::string WidgetLabel::getString() const { return text; }
@@ -144,7 +145,7 @@ void WidgetLabel::append(const std::string& s)
 	if (!s.empty())
 	{
 		text += s;
-		configuration |= NEED_UPDATE;
+		configuration |= (uint8_t)OrphanFlags::NEED_UPDATE;
 	}
 }
 //
@@ -155,12 +156,12 @@ void WidgetLabel::setFont(const std::string& fontName)
 {
 	ResourceManager::getInstance()->release(font);
 	font = ResourceManager::getInstance()->getResource<Font>(fontName);
-	configuration |= NEED_UPDATE;
+	configuration |= (uint8_t)OrphanFlags::NEED_UPDATE;
 }
 void WidgetLabel::setSizeChar(const float& f)
 {
 	sizeChar = f;
-	configuration |= NEED_UPDATE;
+	configuration |= (uint8_t)OrphanFlags::NEED_UPDATE;
 }
 
 
@@ -244,10 +245,10 @@ void WidgetLabel::updateBuffers()
 
 	//	clipping rectangle
 	DrawBatch quad;
-		quad.vertices.push_back(glm::vec3(-0.5f * sizes[CURRENT].x, 0.f, -0.5f * sizes[CURRENT].y));
-		quad.vertices.push_back(glm::vec3(-0.5f * sizes[CURRENT].x, 0.f,  0.5f * sizes[CURRENT].y));
-		quad.vertices.push_back(glm::vec3( 0.5f * sizes[CURRENT].x, 0.f,  0.5f * sizes[CURRENT].y));
-		quad.vertices.push_back(glm::vec3( 0.5f * sizes[CURRENT].x, 0.f, -0.5f * sizes[CURRENT].y));
+		quad.vertices.push_back(glm::vec3(-0.5f * sizes[State::CURRENT].x, 0.f, -0.5f * sizes[State::CURRENT].y));
+		quad.vertices.push_back(glm::vec3(-0.5f * sizes[State::CURRENT].x, 0.f,  0.5f * sizes[State::CURRENT].y));
+		quad.vertices.push_back(glm::vec3( 0.5f * sizes[State::CURRENT].x, 0.f,  0.5f * sizes[State::CURRENT].y));
+		quad.vertices.push_back(glm::vec3( 0.5f * sizes[State::CURRENT].x, 0.f, -0.5f * sizes[State::CURRENT].y));
 
 		quad.textures.push_back(glm::vec2(0.f, 1.f));
 		quad.textures.push_back(glm::vec2(0.f, 0.f));
@@ -307,7 +308,7 @@ void WidgetLabel::parseText()
 glm::vec2 WidgetLabel::getLineOrigin(const unsigned int& lineIndex, const uint8_t& textConfiguration)
 {
 	glm::vec2 origin(0.f, 0.f);
-	glm::vec2 size(sizes[CURRENT]);
+	glm::vec2 size(sizes[State::CURRENT]);
 	switch (textConfiguration & (HORIZONTAL_MASK | VERTICAL_MASK))
 	{
 		case CENTER:

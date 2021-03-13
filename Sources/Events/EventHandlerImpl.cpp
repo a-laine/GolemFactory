@@ -226,13 +226,13 @@ void EventHandlerImpl::addEvent(Event* event,Event::InputType call,int key)
     if(!event) return;
     switch(call)
     {
-        case Event::KEY:            keyboardListeners[key].push_back(event);     break;
-        case Event::MOUSEBUTTON:    mouseButtonListeners[key].push_back(event);  break;
-        case Event::CHAR:           charEnteredListeners.push_back(event);       break;
-        case Event::CURSORPOS:      cursorPositionListeners.push_back(event);    break;
-        case Event::CURSORENTER:    cursorEnterListeners.push_back(event);       break;
-        case Event::SCROLLING:      scrollingListeners.push_back(event);         break;
-        case Event::DRAGANDDROP:    dragAndDropListeners.push_back(event);       break;
+        case Event::InputType::KEY:            keyboardListeners[key].push_back(event);     break;
+        case Event::InputType::MOUSEBUTTON:    mouseButtonListeners[key].push_back(event);  break;
+        case Event::InputType::CHAR:           charEnteredListeners.push_back(event);       break;
+        case Event::InputType::CURSORPOS:      cursorPositionListeners.push_back(event);    break;
+        case Event::InputType::CURSORENTER:    cursorEnterListeners.push_back(event);       break;
+        case Event::InputType::SCROLLING:      scrollingListeners.push_back(event);         break;
+        case Event::InputType::DRAGANDDROP:    dragAndDropListeners.push_back(event);       break;
         default: return;
     }
 }
@@ -244,7 +244,7 @@ void EventHandlerImpl::removeEvent(Event* event)
     {
         switch(event->inputList[i].first.callback)
         {
-            case Event::KEY:
+            case Event::InputType::KEY:
                 try
                 {
                     auto eventList = keyboardListeners.at(event->inputList[i].first.key);
@@ -253,7 +253,7 @@ void EventHandlerImpl::removeEvent(Event* event)
                 }
                 catch(std::out_of_range){}
                 break;
-            case Event::MOUSEBUTTON:
+            case Event::InputType::MOUSEBUTTON:
                 try
                 {
                     auto eventList = mouseButtonListeners.at(event->inputList[i].first.key);
@@ -262,31 +262,31 @@ void EventHandlerImpl::removeEvent(Event* event)
                 }
                 catch(std::out_of_range){}
                 break;
-           case Event::CHAR:
+           case Event::InputType::CHAR:
                 {
                     auto it = std::find(charEnteredListeners.begin(),charEnteredListeners.end(),event);
                     if(it!=charEnteredListeners.end()) charEnteredListeners.erase(it);
                 }
                 break;
-           case Event::CURSORPOS:
+           case Event::InputType::CURSORPOS:
                 {
                     auto it = std::find(cursorPositionListeners.begin(),cursorPositionListeners.end(),event);
                     if(it!=cursorPositionListeners.end()) cursorPositionListeners.erase(it);
                 }
                 break;
-           case Event::CURSORENTER:
+           case Event::InputType::CURSORENTER:
                 {
                     auto it = std::find(cursorEnterListeners.begin(),cursorEnterListeners.end(),event);
                     if(it!=cursorEnterListeners.end()) cursorEnterListeners.erase(it);
                 }
                 break;
-           case Event::SCROLLING:
+           case Event::InputType::SCROLLING:
                 {
                     auto it = std::find(scrollingListeners.begin(),scrollingListeners.end(),event);
                     if(it!=scrollingListeners.end()) scrollingListeners.erase(it);
                 }
                 break;
-           case Event::DRAGANDDROP:
+           case Event::InputType::DRAGANDDROP:
                 {
                     auto it = std::find(dragAndDropListeners.begin(),dragAndDropListeners.end(),event);
                     if(it!=dragAndDropListeners.end()) dragAndDropListeners.erase(it);
@@ -314,14 +314,14 @@ void EventHandlerImpl::keyCallback(GLFWwindow* window, int key, int scancode, in
 			//	first pass process chord
 			for(unsigned int i=0;i<events.size();i++)	
 			{
-				if ((events[i]->configuration & Event::TYPE_MASK) == Event::CHORD && events[i]->check(Event::KEY, key, action))
+				if ((events[i]->configuration & Event::TYPE_MASK) == Event::CHORD && events[i]->check(Event::InputType::KEY, key, action))
 					This->emitUserEvent(events[i]);
 			}
 
 			//	second pass process !chord
 			for(unsigned int i=0;i<events.size();i++)	
 			{
-				if ((events[i]->configuration&Event::TYPE_MASK) != Event::CHORD && events[i]->check(Event::KEY, key, action))
+				if ((events[i]->configuration&Event::TYPE_MASK) != Event::CHORD && events[i]->check(Event::InputType::KEY, key, action))
 					This->emitUserEvent(events[i]);
 			}
 		}
@@ -330,14 +330,14 @@ void EventHandlerImpl::keyCallback(GLFWwindow* window, int key, int scancode, in
 			//	first pass process !chord
 			for (unsigned int i = 0; i<events.size(); i++)
 			{
-				if ((events[i]->configuration&Event::TYPE_MASK) != Event::CHORD && events[i]->check(Event::KEY, key, action))
+				if ((events[i]->configuration&Event::TYPE_MASK) != Event::CHORD && events[i]->check(Event::InputType::KEY, key, action))
 					This->emitUserEvent(events[i]);
 			}
 
 			//	second pass process chord
 			for (unsigned int i = 0; i<events.size(); i++)
 			{
-				if ((events[i]->configuration & Event::TYPE_MASK) == Event::CHORD && events[i]->check(Event::KEY, key, action))
+				if ((events[i]->configuration & Event::TYPE_MASK) == Event::CHORD && events[i]->check(Event::InputType::KEY, key, action))
 					This->emitUserEvent(events[i]);
 			}
 		}
@@ -351,7 +351,7 @@ void EventHandlerImpl::charCallback(GLFWwindow* window, unsigned int codepoint)
     for(unsigned int i=0;i<This->charEnteredListeners.size();i++)
     {
         if((This->charEnteredListeners[i]->configuration & Event::TYPE_MASK)==Event::CHORD &&
-           This->charEnteredListeners[i]->check(Event::CHAR,codepoint,-1))
+           This->charEnteredListeners[i]->check(Event::InputType::CHAR,codepoint,-1))
         {
             chord = true;
             This->emitUserEvent(This->charEnteredListeners[i]);
@@ -361,7 +361,7 @@ void EventHandlerImpl::charCallback(GLFWwindow* window, unsigned int codepoint)
     for(unsigned int i=0;i<This->charEnteredListeners.size();i++)
     {
         if((This->charEnteredListeners[i]->configuration&Event::TYPE_MASK)!=Event::CHORD &&
-           This->charEnteredListeners[i]->check(Event::CHAR,codepoint,-1))
+           This->charEnteredListeners[i]->check(Event::InputType::CHAR,codepoint,-1))
             This->emitUserEvent(This->charEnteredListeners[i]);
     }
 }
@@ -377,14 +377,14 @@ void EventHandlerImpl::cursorPositionCallback(GLFWwindow* window, double xpos, d
 		//	first pass process chord
 		for(unsigned int i=0;i<This->cursorPositionListeners.size();i++)
 		{
-			if((This->cursorPositionListeners[i]->configuration&Event::TYPE_MASK)==Event::CHORD && This->cursorPositionListeners[i]->check(Event::CURSORPOS,-1,-1))
+			if((This->cursorPositionListeners[i]->configuration&Event::TYPE_MASK)==Event::CHORD && This->cursorPositionListeners[i]->check(Event::InputType::CURSORPOS,-1,-1))
 				This->emitUserEvent(This->cursorPositionListeners[i]);
 		}
 
 		//	second pass process !chord
 		for(unsigned int i=0;i<This->cursorPositionListeners.size();i++)
 		{
-			if((This->cursorPositionListeners[i]->configuration&Event::TYPE_MASK)!=Event::CHORD && This->cursorPositionListeners[i]->check(Event::CURSORPOS,-1,-1))
+			if((This->cursorPositionListeners[i]->configuration&Event::TYPE_MASK)!=Event::CHORD && This->cursorPositionListeners[i]->check(Event::InputType::CURSORPOS,-1,-1))
 				This->emitUserEvent(This->cursorPositionListeners[i]);
 		}
 	}
@@ -393,14 +393,14 @@ void EventHandlerImpl::cursorPositionCallback(GLFWwindow* window, double xpos, d
 		//	first pass process !chord
 		for (unsigned int i = 0; i<This->cursorPositionListeners.size(); i++)
 		{
-			if ((This->cursorPositionListeners[i]->configuration&Event::TYPE_MASK) != Event::CHORD && This->cursorPositionListeners[i]->check(Event::CURSORPOS, -1, -1))
+			if ((This->cursorPositionListeners[i]->configuration&Event::TYPE_MASK) != Event::CHORD && This->cursorPositionListeners[i]->check(Event::InputType::CURSORPOS, -1, -1))
 				This->emitUserEvent(This->cursorPositionListeners[i]);
 		}
 		
 		//	second pass process chord
 		for (unsigned int i = 0; i<This->cursorPositionListeners.size(); i++)
 		{
-			if ((This->cursorPositionListeners[i]->configuration&Event::TYPE_MASK) == Event::CHORD && This->cursorPositionListeners[i]->check(Event::CURSORPOS, -1, -1))
+			if ((This->cursorPositionListeners[i]->configuration&Event::TYPE_MASK) == Event::CHORD && This->cursorPositionListeners[i]->check(Event::InputType::CURSORPOS, -1, -1))
 				This->emitUserEvent(This->cursorPositionListeners[i]);
 		}
 	}
@@ -413,14 +413,14 @@ void EventHandlerImpl::cursorEnterCallback(GLFWwindow* window, int entered)
 		//	first pass process chord
 		for (unsigned int i = 0; i < This->cursorEnterListeners.size(); i++)
 		{
-			if ((This->cursorEnterListeners[i]->configuration&Event::TYPE_MASK) == Event::CHORD && This->cursorEnterListeners[i]->check(Event::CURSORENTER, entered, -1))
+			if ((This->cursorEnterListeners[i]->configuration&Event::TYPE_MASK) == Event::CHORD && This->cursorEnterListeners[i]->check(Event::InputType::CURSORENTER, entered, -1))
 				This->emitUserEvent(This->cursorEnterListeners[i]);
 		}
 
 		//	second pass process !chord
 		for (unsigned int i = 0; i < This->cursorEnterListeners.size(); i++)
 		{
-			if ((This->cursorEnterListeners[i]->configuration&Event::TYPE_MASK) != Event::CHORD && This->cursorEnterListeners[i]->check(Event::CURSORENTER, entered, -1))
+			if ((This->cursorEnterListeners[i]->configuration&Event::TYPE_MASK) != Event::CHORD && This->cursorEnterListeners[i]->check(Event::InputType::CURSORENTER, entered, -1))
 				This->emitUserEvent(This->cursorEnterListeners[i]);
 		}
 	}
@@ -429,14 +429,14 @@ void EventHandlerImpl::cursorEnterCallback(GLFWwindow* window, int entered)
 		//	first pass process !chord
 		for (unsigned int i = 0; i < This->cursorEnterListeners.size(); i++)
 		{
-			if ((This->cursorEnterListeners[i]->configuration&Event::TYPE_MASK) != Event::CHORD && This->cursorEnterListeners[i]->check(Event::CURSORENTER, entered, -1))
+			if ((This->cursorEnterListeners[i]->configuration&Event::TYPE_MASK) != Event::CHORD && This->cursorEnterListeners[i]->check(Event::InputType::CURSORENTER, entered, -1))
 				This->emitUserEvent(This->cursorEnterListeners[i]);
 		}
 
 		//	second pass process chord
 		for (unsigned int i = 0; i < This->cursorEnterListeners.size(); i++)
 		{
-			if ((This->cursorEnterListeners[i]->configuration&Event::TYPE_MASK) == Event::CHORD && This->cursorEnterListeners[i]->check(Event::CURSORENTER, entered, -1))
+			if ((This->cursorEnterListeners[i]->configuration&Event::TYPE_MASK) == Event::CHORD && This->cursorEnterListeners[i]->check(Event::InputType::CURSORENTER, entered, -1))
 				This->emitUserEvent(This->cursorEnterListeners[i]);
 		}
 	}
@@ -452,14 +452,14 @@ void EventHandlerImpl::mouseButtonCallback(GLFWwindow* window, int button, int a
 			//	first pass process chord
 			for(unsigned int i=0;i<events.size();i++)
 			{
-				if ((events[i]->configuration&Event::TYPE_MASK) == Event::CHORD && events[i]->check(Event::MOUSEBUTTON, button, action))
+				if ((events[i]->configuration&Event::TYPE_MASK) == Event::CHORD && events[i]->check(Event::InputType::MOUSEBUTTON, button, action))
 					This->emitUserEvent(events[i]);
 			}
 
 			//	second pass process !chord
 			for (unsigned int i = 0; i < events.size(); i++)
 			{
-				if ((events[i]->configuration&Event::TYPE_MASK) != Event::CHORD && events[i]->check(Event::MOUSEBUTTON, button, action))
+				if ((events[i]->configuration&Event::TYPE_MASK) != Event::CHORD && events[i]->check(Event::InputType::MOUSEBUTTON, button, action))
 					This->emitUserEvent(events[i]);
 			}
 		}
@@ -468,14 +468,14 @@ void EventHandlerImpl::mouseButtonCallback(GLFWwindow* window, int button, int a
 			//	first pass process !chord
 			for (unsigned int i = 0; i<events.size(); i++)
 			{
-				if ((events[i]->configuration&Event::TYPE_MASK) != Event::CHORD && events[i]->check(Event::MOUSEBUTTON, button, action))
+				if ((events[i]->configuration&Event::TYPE_MASK) != Event::CHORD && events[i]->check(Event::InputType::MOUSEBUTTON, button, action))
 					This->emitUserEvent(events[i]);
 			}
 
 			//	second pass process chord
 			for (unsigned int i = 0; i<events.size(); i++)
 			{
-				if ((events[i]->configuration&Event::TYPE_MASK) == Event::CHORD && events[i]->check(Event::MOUSEBUTTON, button, action))
+				if ((events[i]->configuration&Event::TYPE_MASK) == Event::CHORD && events[i]->check(Event::InputType::MOUSEBUTTON, button, action))
 					This->emitUserEvent(events[i]);
 			}
 		}
@@ -492,14 +492,14 @@ void EventHandlerImpl::scrollingCallback(GLFWwindow* window, double xoffset, dou
 		//	first pass process chord
 		for(unsigned int i=0;i<This->scrollingListeners.size();i++)
 		{
-			if((This->scrollingListeners[i]->configuration&Event::TYPE_MASK)==Event::CHORD && This->scrollingListeners[i]->check(Event::SCROLLING,-1,-1))
+			if((This->scrollingListeners[i]->configuration&Event::TYPE_MASK)==Event::CHORD && This->scrollingListeners[i]->check(Event::InputType::SCROLLING,-1,-1))
 				This->emitUserEvent(This->scrollingListeners[i]);
 		}
 
 		//	second pass process !chord
 		for(unsigned int i=0;i<This->scrollingListeners.size();i++)
 		{
-			if((This->scrollingListeners[i]->configuration&Event::TYPE_MASK)!=Event::CHORD && This->scrollingListeners[i]->check(Event::SCROLLING,-1,-1))
+			if((This->scrollingListeners[i]->configuration&Event::TYPE_MASK)!=Event::CHORD && This->scrollingListeners[i]->check(Event::InputType::SCROLLING,-1,-1))
 				This->emitUserEvent(This->scrollingListeners[i]);
 		}
 	}
@@ -508,14 +508,14 @@ void EventHandlerImpl::scrollingCallback(GLFWwindow* window, double xoffset, dou
 		//	first pass process !chord
 		for (unsigned int i = 0; i<This->scrollingListeners.size(); i++)
 		{
-			if ((This->scrollingListeners[i]->configuration&Event::TYPE_MASK) != Event::CHORD && This->scrollingListeners[i]->check(Event::SCROLLING, -1, -1))
+			if ((This->scrollingListeners[i]->configuration&Event::TYPE_MASK) != Event::CHORD && This->scrollingListeners[i]->check(Event::InputType::SCROLLING, -1, -1))
 				This->emitUserEvent(This->scrollingListeners[i]);
 		}
 
 		//	second pass process chord
 		for (unsigned int i = 0; i<This->scrollingListeners.size(); i++)
 		{
-			if ((This->scrollingListeners[i]->configuration&Event::TYPE_MASK) == Event::CHORD && This->scrollingListeners[i]->check(Event::SCROLLING, -1, -1))
+			if ((This->scrollingListeners[i]->configuration&Event::TYPE_MASK) == Event::CHORD && This->scrollingListeners[i]->check(Event::InputType::SCROLLING, -1, -1))
 				This->emitUserEvent(This->scrollingListeners[i]);
 		}
 	}
@@ -528,14 +528,14 @@ void EventHandlerImpl::dropCallback(GLFWwindow* window, int count, const char** 
 		//	first pass process chord
 		for(unsigned int i=0;i<This->dragAndDropListeners.size();i++)
 		{
-			if((This->dragAndDropListeners[i]->configuration&Event::TYPE_MASK)==Event::CHORD && This->dragAndDropListeners[i]->check(Event::DRAGANDDROP,-1,-1))
+			if((This->dragAndDropListeners[i]->configuration&Event::TYPE_MASK)==Event::CHORD && This->dragAndDropListeners[i]->check(Event::InputType::DRAGANDDROP,-1,-1))
 				This->emitUserEvent(This->dragAndDropListeners[i]);
 		}
 
 		//	second pass process !chord
 		for(unsigned int i=0;i<This->dragAndDropListeners.size();i++)
 		{
-			if((This->dragAndDropListeners[i]->configuration&Event::TYPE_MASK)!=Event::CHORD && This->dragAndDropListeners[i]->check(Event::DRAGANDDROP,-1,-1))
+			if((This->dragAndDropListeners[i]->configuration&Event::TYPE_MASK)!=Event::CHORD && This->dragAndDropListeners[i]->check(Event::InputType::DRAGANDDROP,-1,-1))
 				This->emitUserEvent(This->dragAndDropListeners[i]);
 		}
 	}
@@ -544,14 +544,14 @@ void EventHandlerImpl::dropCallback(GLFWwindow* window, int count, const char** 
 		//	first pass process !chord
 		for (unsigned int i = 0; i<This->dragAndDropListeners.size(); i++)
 		{
-			if ((This->dragAndDropListeners[i]->configuration&Event::TYPE_MASK) != Event::CHORD && This->dragAndDropListeners[i]->check(Event::DRAGANDDROP, -1, -1))
+			if ((This->dragAndDropListeners[i]->configuration&Event::TYPE_MASK) != Event::CHORD && This->dragAndDropListeners[i]->check(Event::InputType::DRAGANDDROP, -1, -1))
 				This->emitUserEvent(This->dragAndDropListeners[i]);
 		}
 
 		//	second pass process chord
 		for (unsigned int i = 0; i<This->dragAndDropListeners.size(); i++)
 		{
-			if ((This->dragAndDropListeners[i]->configuration&Event::TYPE_MASK) == Event::CHORD && This->dragAndDropListeners[i]->check(Event::DRAGANDDROP, -1, -1))
+			if ((This->dragAndDropListeners[i]->configuration&Event::TYPE_MASK) == Event::CHORD && This->dragAndDropListeners[i]->check(Event::InputType::DRAGANDDROP, -1, -1))
 				This->emitUserEvent(This->dragAndDropListeners[i]);
 		}
 	}

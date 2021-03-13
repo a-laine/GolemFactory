@@ -16,25 +16,26 @@ class Texture : public ResourceVirtual
         static void setDefaultName(const std::string& name);
 
         //  Miscellaneous
-        enum TextureConfiguration
+        enum class TextureConfiguration
         {
             TEXTURE_1D = 1,         //!< 1 dimension texture
             TEXTURE_2D = 2,         //!< 2 dimensions texture
             TEXTURE_3D = 3,         //!< 3 dimensions texture
             TYPE_MASK = 0x03,       //!< the type mask byte
 
-            USE_MIPMAP = 1<<2,      //!< the mip-map flag
-            MIN_NEAREST = 1<<3,     //!< if not the GL_LINEAR criterion is used for minify
-            MAG_NEAREST = 1<<4,     //!< if not the GL_LINEAR criterion is used for magify
+            USE_MIPMAP = 1 << 2,      //!< the mip-map flag
+            MIN_NEAREST = 1 << 3,     //!< if not the GL_LINEAR criterion is used for minify
+            MAG_NEAREST = 1 << 4,     //!< if not the GL_LINEAR criterion is used for magify
 
-            WRAP_CLAMP = 0<<5,      //!< clamp coordinates to the texture limit
-            WRAP_REPEAT = 1<<5,     //!< repeat if coordinates greater than 1
-            WRAP_MIRROR = 2<<5,     //!< same as repeat but mirrored the repeated texture
-            WRAP_MASK = 0x03<<5,    //!< wrap mask byte
+            WRAP_CLAMP = 0 << 5,      //!< clamp coordinates to the texture limit
+            WRAP_REPEAT = 1 << 5,     //!< repeat if coordinates greater than 1
+            WRAP_MIRROR = 2 << 5,     //!< same as repeat but mirrored the repeated texture
+            WRAP_MASK = 0x03 << 5     //!< wrap mask byte
         };
         //
 
         //  Default
+        explicit Texture(const std::string& textureName, TextureConfiguration conf);
 		explicit Texture(const std::string& textureName, uint8_t conf = 0x0);
         ~Texture();
 

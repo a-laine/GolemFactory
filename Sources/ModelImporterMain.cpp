@@ -40,15 +40,16 @@
 #include <Resources/Loader/ImageLoader.h>
 #include <Resources/Loader/TextureLoader.h>
 
-#include "Physics/Physics.h"
-#include "Physics/RigidBody.h"
+#include <Physics/Physics.h>
+#include <Physics/RigidBody.h>
 
-#include "Resources/Loader/MeshSaver.h"
-#include "Scene/RayEntityCollector.h"
-#include "Scene/RaySceneQuerry.h"
+#include <Resources/Loader/MeshSaver.h>
+#include <Scene/RayEntityCollector.h>
+#include <Scene/RaySceneQuerry.h>
 
-#include "Utiles/Debug.h"
-#include "Physics/GJK.h"
+#include <Utiles/Debug.h>
+#include <Physics/GJK.h>
+#include <Utiles/ConsoleColor.h>
 
 #define GRID_SIZE 10
 #define GRID_ELEMENT_SIZE 1.f
@@ -93,7 +94,8 @@ void updates(float elapseTime);
 // program
 int main()
 {
-	std::cout << "Application start" << std::endl;
+	std::cout << ConsoleColor::getColorString(ConsoleColor::Color::GREEN) << "Application start";
+	std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
 	Application application;
 	context = application.createWindow("Model Importer", 1600, 900);
 	context->makeCurrent();
@@ -102,7 +104,7 @@ int main()
 	initManagers();
 
 	//	Collision test
-	//WidgetManager::getInstance()->setActiveHUD("debug");
+	//WidgetManager::getInstance()->setActiveHUD("ModelImporter");
 	world.getEntityFactory().createObject("cube", [](Entity* object) // ground collider
 		{
 			object->setTransformation(glm::vec3(0.f, 0.f, -10.f), glm::vec3(1000, 1000, 10), glm::fquat());
@@ -136,7 +138,9 @@ int main()
 	double dummy = 0;
 
 	//	game loop
-	std::cout << "game loop initiated" << std::endl;
+	std::cout << ConsoleColor::getColorString(ConsoleColor::Color::GREEN) << "Game loop initiated";
+	std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
+
 	while (!application.shouldExit())
 	{
 		// begin loop
@@ -148,8 +152,8 @@ int main()
 
 		// Render scene & picking
 		if (WidgetManager::getInstance()->getBoolean("wireframe"))
-			Renderer::getInstance()->setRenderOption(Renderer::WIREFRAME);
-		else Renderer::getInstance()->setRenderOption(Renderer::DEFAULT);
+			Renderer::getInstance()->setRenderOption(Renderer::RenderOption::WIREFRAME);
+		else Renderer::getInstance()->setRenderOption(Renderer::RenderOption::DEFAULT);
 		Renderer::getInstance()->render(currentCamera);
 
 		// picking & HUD
@@ -168,7 +172,9 @@ int main()
 	}
 
 	//	end
-	std::cout << "ending game" << std::endl;
+	std::cout << ConsoleColor::getColorString(ConsoleColor::Color::GREEN) << "Ending game";
+	std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
+
 	world.clearGarbage();
 	ResourceManager::getInstance()->clearGarbage();
 	return 0;
@@ -202,7 +208,7 @@ void initManagers()
 	EventHandler::getInstance()->setResizeCallback(WidgetManager::resizeCallback);
 
 	// Init Resources manager
-	ResourceVirtual::logVerboseLevel = ResourceVirtual::ALL;
+	ResourceVirtual::logVerboseLevel = ResourceVirtual::VerboseLevel::ALL;
 	ResourceManager::getInstance()->setRepository(resourceRepository);
 	Texture::setDefaultName("10points.png");
 	Font::setDefaultName("Comic Sans MS");
@@ -212,7 +218,7 @@ void initManagers()
 	Animation::setDefaultName("human");
 	ResourceManager::getInstance()->addNewResourceLoader(".animation", new AnimationLoader());
 	ResourceManager::getInstance()->addNewResourceLoader(".font", new FontLoader());
-	ResourceManager::getInstance()->addNewResourceLoader("assimp", new AssimpLoader(AssimpLoader::MESH));
+	ResourceManager::getInstance()->addNewResourceLoader("assimp", new AssimpLoader(AssimpLoader::ResourceType::MESH));
 	ResourceManager::getInstance()->addNewResourceLoader(".mesh", new MeshLoader());
 	ResourceManager::getInstance()->addNewResourceLoader(".shader", new ShaderLoader());
 	ResourceManager::getInstance()->addNewResourceLoader(".skeleton", new SkeletonLoader());
@@ -253,6 +259,7 @@ void initManagers()
 	WidgetManager::getInstance()->setInitialViewportRatio(context->getViewportRatio());
 	WidgetManager::getInstance()->loadHud("default");
 	WidgetManager::getInstance()->loadHud("ModelImporter");
+	WidgetManager::getInstance()->setActiveHUD("ModelImporter");
 }
 void picking()
 {
@@ -288,7 +295,7 @@ void picking()
 		if (WidgetManager::getInstance()->getBoolean("BBpicking"))
 		{
 			Renderer::RenderOption option = Renderer::getInstance()->getRenderOption();
-			Renderer::getInstance()->setRenderOption(option == Renderer::DEFAULT ? Renderer::BOUNDING_BOX : Renderer::DEFAULT);
+			Renderer::getInstance()->setRenderOption(option == Renderer::RenderOption::DEFAULT ? Renderer::RenderOption::BOUNDING_BOX : Renderer::RenderOption::DEFAULT);
 			glm::mat4 view = currentCamera->getGlobalViewMatrix();
 			glm::mat4 projection = glm::perspective(glm::radians(currentCamera->getVerticalFieldOfView(context->getViewportRatio())), context->getViewportRatio(), 0.1f, 1500.f);
 
@@ -318,6 +325,7 @@ void events()
 		else if (v[i] == HELP) WidgetManager::getInstance()->setActiveHUD((WidgetManager::getInstance()->getActiveHUD() == "help" ? "" : "help"));
 		else if (v[i] == F9)   WidgetManager::getInstance()->setActiveHUD((WidgetManager::getInstance()->getActiveHUD() == "debug" ? "" : "debug"));
 		else if (v[i] == F10)  WidgetManager::getInstance()->setActiveHUD((WidgetManager::getInstance()->getActiveHUD() == "rendering" ? "" : "rendering"));
+		else if (v[i] == F11)  WidgetManager::getInstance()->setActiveHUD((WidgetManager::getInstance()->getActiveHUD() == "ModelImporter" ? "" : "ModelImporter"));
 
 		else if (v[i] == F4)   WidgetManager::getInstance()->setBoolean("wireframe", !WidgetManager::getInstance()->getBoolean("wireframe"));
 	}

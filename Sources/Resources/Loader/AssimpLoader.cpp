@@ -3,8 +3,10 @@
 #include <iostream>
 #include <limits>
 
+#pragma warning(push, 0)
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
+#pragma warning(pop)
 
 #include <Utiles/Assert.hpp>
 #include <Resources/Mesh.h>
@@ -31,7 +33,7 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
     const aiScene* scene = importer.ReadFile(file.c_str(), aiProcessPreset_TargetRealtime_MaxQuality);
     if(!scene)
     {
-        if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::ERRORS)
+        if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
             std::cerr << "ERROR : AssimpLoader : " << fileName << " : could not open file" << std::endl;
         return false;
     }
@@ -148,7 +150,7 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
                         bones[vertexIndex].z = boneMap[boneName];
                         weights[vertexIndex].z = vertexWeight;
                     }
-                    else if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::ERRORS)
+                    else if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
                     {
                         std::cerr << "ERROR : AssimpLoader : vertex at position " << vertices[vertexIndex].x << ' ' << vertices[vertexIndex].y << ' ' << vertices[vertexIndex].z;
                         std::cerr << ": more than 3 bones weights defined" << std::endl;
@@ -287,19 +289,19 @@ void AssimpLoader::initialize(ResourceVirtual* resource)
 {
     switch(firstResource)
     {
-        case MESH:
+        case ResourceType::MESH:
         {
             Mesh* mesh = static_cast<Mesh*>(resource);
             mesh->initialize(vertices, normales, colors, faces, bones, weights);
             break;
         }
-        case SKELETON:
+        case ResourceType::SKELETON:
         {
             Skeleton* skeleton = static_cast<Skeleton*>(resource);
             skeleton->initialize(roots, joints);
             break;
         }
-        case ANIMATION:
+        case ResourceType::ANIMATION:
         {
             Animation* animation = static_cast<Animation*>(resource);
             animation->initialize(animations);
@@ -313,19 +315,19 @@ void AssimpLoader::initialize(ResourceVirtual* resource)
 void AssimpLoader::getResourcesToRegister(std::vector<ResourceVirtual*>& resourceList)
 {
     resourceList.reserve(2);
-    if(firstResource != MESH)
+    if(firstResource != ResourceType::MESH)
     {
         Mesh* mesh = new Mesh(resourceName);
         mesh->initialize(vertices, normales, colors, faces, bones, weights);
         resourceList.push_back(mesh);
     }
-    if(firstResource != SKELETON)
+    if(firstResource != ResourceType::SKELETON)
     {
         Skeleton* skeleton = new Skeleton(resourceName);
         skeleton->initialize(roots, joints);
         resourceList.push_back(skeleton);
     }
-    if(firstResource != ANIMATION)
+    if(firstResource != ResourceType::ANIMATION)
     {
         Animation* animation = new Animation(resourceName);
         animation->initialize(animations);

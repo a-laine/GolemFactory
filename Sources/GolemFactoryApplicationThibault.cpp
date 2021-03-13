@@ -211,10 +211,10 @@ int main()
 
 		// Render scene & picking
 		if (WidgetManager::getInstance()->getBoolean("BBrendering"))
-			Renderer::getInstance()->setRenderOption(Renderer::BOUNDING_BOX);
+			Renderer::getInstance()->setRenderOption(Renderer::RenderOption::BOUNDING_BOX);
 		else if (WidgetManager::getInstance()->getBoolean("wireframe"))
-			Renderer::getInstance()->setRenderOption(Renderer::WIREFRAME);
-		else Renderer::getInstance()->setRenderOption(Renderer::DEFAULT);
+			Renderer::getInstance()->setRenderOption(Renderer::RenderOption::WIREFRAME);
+		else Renderer::getInstance()->setRenderOption(Renderer::RenderOption::DEFAULT);
 		Renderer::getInstance()->render(currentCamera);
 		/*{
 			glm::mat4 view = currentCamera->getGlobalViewMatrix();
@@ -480,7 +480,7 @@ void initManagers()
 	EventHandler::getInstance()->setResizeCallback(WidgetManager::resizeCallback);
 
 	// Init Resources manager
-	ResourceVirtual::logVerboseLevel = ResourceVirtual::ALL;
+	ResourceVirtual::logVerboseLevel = ResourceVirtual::VerboseLevel::ALL;
 	ResourceManager::getInstance()->setRepository(resourceRepository);
     Texture::setDefaultName("10points.png");
     Font::setDefaultName("Comic Sans MS");
@@ -490,7 +490,7 @@ void initManagers()
     Animation::setDefaultName("human");
     ResourceManager::getInstance()->addNewResourceLoader(".animation", new AnimationLoader());
     ResourceManager::getInstance()->addNewResourceLoader(".font", new FontLoader());
-    ResourceManager::getInstance()->addNewResourceLoader("assimp", new AssimpLoader(AssimpLoader::MESH));
+    ResourceManager::getInstance()->addNewResourceLoader("assimp", new AssimpLoader(AssimpLoader::ResourceType::MESH));
     ResourceManager::getInstance()->addNewResourceLoader(".mesh", new MeshLoader());
     ResourceManager::getInstance()->addNewResourceLoader(".shader", new ShaderLoader());
     ResourceManager::getInstance()->addNewResourceLoader(".skeleton", new SkeletonLoader());
@@ -566,7 +566,7 @@ void picking()
 		if (WidgetManager::getInstance()->getBoolean("BBpicking"))
 		{
 			Renderer::RenderOption option = Renderer::getInstance()->getRenderOption();
-			Renderer::getInstance()->setRenderOption(option == Renderer::DEFAULT ? Renderer::BOUNDING_BOX : Renderer::DEFAULT);
+			Renderer::getInstance()->setRenderOption(option == Renderer::RenderOption::DEFAULT ? Renderer::RenderOption::BOUNDING_BOX : Renderer::RenderOption::DEFAULT);
 			glm::mat4 view = currentCamera->getGlobalViewMatrix();
 			glm::mat4 projection = glm::perspective(glm::radians(currentCamera->getVerticalFieldOfView(context->getViewportRatio())), context->getViewportRatio(), 0.1f, 1500.f);
 

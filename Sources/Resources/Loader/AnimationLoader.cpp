@@ -18,7 +18,7 @@ bool AnimationLoader::load(const std::string& resourceDirectory, const std::stri
     }
     catch(std::exception&)
     {
-        if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::ERRORS)
+        if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
             std::cerr << "ERROR : loading animation : " << fileName << " : fail to open or parse file" << std::endl;
         return false;
     }
@@ -158,7 +158,7 @@ bool AnimationLoader::load(const std::string& resourceDirectory, const std::stri
     catch(std::exception&)
     {
         //	Print errors in Log file or output
-        if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::ERRORS)
+        if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
         {
             std::cerr << "ERROR : loading animation : " << fileName << " : ";
             for(unsigned int i = 0; i < errors.size(); i++)

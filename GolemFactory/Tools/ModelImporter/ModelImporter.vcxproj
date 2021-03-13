@@ -150,6 +150,11 @@
       <Project>{6dfbb19b-fee2-44c8-adbf-0102084069ce}</Project>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\Resources\Config\ModelImporter.json" />
+    <None Include="..\..\..\Resources\GUI\ModelImporter.gui" />
+    <None Include="..\..\..\Sources\ModelImporterEventEnum.enum" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

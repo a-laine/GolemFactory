@@ -5,6 +5,10 @@
 #include <Utiles/Parser/Reader.h>
 
 
+ShaderLoader::ShaderLoader() : vertexShader(0), fragmentShader(0), geometricShader(0), tessControlShader(0), tessEvalShader(0), program(0)
+{
+
+}
 
 bool ShaderLoader::load(const std::string& resourceDirectory, const std::string& fileName)
 {
@@ -23,7 +27,7 @@ bool ShaderLoader::load(const std::string& resourceDirectory, const std::string&
     }
     catch(std::exception&)
     {
-        if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::ERRORS)
+        if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
             std::cerr << "ERROR : loading shader : " << fileName << " : fail to open or parse file" << std::endl;
         return false;
     }
@@ -32,7 +36,7 @@ bool ShaderLoader::load(const std::string& resourceDirectory, const std::string&
 
     if(shaderMap.getType() != Variant::MAP)
     {
-        if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::ERRORS)
+        if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
             std::cerr << "ERROR : loading shader : " << fileName << " : wrong file formating" << std::endl;
         return false;
     }
@@ -43,7 +47,7 @@ bool ShaderLoader::load(const std::string& resourceDirectory, const std::string&
     try { tmpName = path + shaderMap["vertex"].toString(); }
     catch(std::exception&)
     {
-        if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::WARNINGS)
+        if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::WARNINGS)
             std::cerr << "WARNING : loading shader : " << fileName << " : fail to parse vertex shader name, try loading default.vs instead" << std::endl;
         tmpName = path + "default.vs";
     }
@@ -56,7 +60,7 @@ bool ShaderLoader::load(const std::string& resourceDirectory, const std::string&
     try { tmpName = path + shaderMap["fragment"].toString(); }
     catch(std::exception&)
     {
-        if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::WARNINGS)
+        if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::WARNINGS)
             std::cerr << "WARNING : loading shader : " << fileName << " : fail to parse fragment shader name, try loading default.fs instead" << std::endl;
         tmpName = path + "default.fs";
     }
@@ -131,7 +135,7 @@ bool ShaderLoader::load(const std::string& resourceDirectory, const std::string&
             }
             catch(std::exception&)
             {
-                if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::WARNINGS)
+                if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::WARNINGS)
                     std::cerr << "WARNING : loading shader : " << fileName << " : fail to load uniform : " << it->first << std::endl;
             }
         }
@@ -179,12 +183,12 @@ bool ShaderLoader::loadShader(Shader::ShaderType shaderType, std::string fileNam
     if(shaderType == Shader::VERTEX_SH || shaderType == Shader::FRAGMENT_SH)
     {
         gravityIssue = "ERROR";
-        errorLevel = ResourceVirtual::ERRORS;
+        errorLevel = ResourceVirtual::VerboseLevel::ERRORS;
     }
     else
     {
         gravityIssue = "WARRNING";
-        errorLevel = ResourceVirtual::WARNINGS;
+        errorLevel = ResourceVirtual::VerboseLevel::WARNINGS;
     }
 
     if(!file.good())
@@ -239,7 +243,7 @@ bool ShaderLoader::loadShader(Shader::ShaderType shaderType, std::string fileNam
         char *log = new char[logsize];
         glGetShaderInfoLog(shader, logsize, &logsize, log);
 
-        if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::ERRORS)
+        if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
         {
             std::cerr << "ERROR : loading shader : " << fileName << " : in resource " << Shader::toString(shaderType) << " : fail to compile" << std::endl << std::endl;
             std::cerr << log << std::endl << std::endl;

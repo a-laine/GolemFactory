@@ -21,7 +21,7 @@ class ResourceVirtual
 
     public:
         //  Miscellaneous
-		enum VerboseLevel
+		enum class VerboseLevel
 		{
             NONE = 0,
 			ERRORS = 1,		//!< Just print errors in log

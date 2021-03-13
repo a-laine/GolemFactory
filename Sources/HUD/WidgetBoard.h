@@ -22,7 +22,7 @@ class WidgetBoard : public WidgetVirtual
 		//
 
 		//  Default
-		WidgetBoard(const uint8_t& config = VISIBLE, const std::string& shaderName = "defaultWidget");
+		WidgetBoard(const uint8_t& config = (uint8_t)WidgetVirtual::OrphanFlags::VISIBLE, const std::string& shaderName = "defaultWidget");
 		virtual ~WidgetBoard();
 		//
 

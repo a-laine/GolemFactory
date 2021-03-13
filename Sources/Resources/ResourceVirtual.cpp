@@ -1,7 +1,7 @@
 #include "ResourceVirtual.h"
 
 //	Static attributes
-ResourceVirtual::VerboseLevel ResourceVirtual::logVerboseLevel = ResourceVirtual::NONE;
+ResourceVirtual::VerboseLevel ResourceVirtual::logVerboseLevel = ResourceVirtual::VerboseLevel::NONE;
 //
 
 //  Default
@@ -41,9 +41,9 @@ void ResourceVirtual::assign(const ResourceVirtual* other)
 //	Protected functions
 void ResourceVirtual::printErrorLog(const std::string& resourceName, const int& errorLine, bool& printHeader)
 {
-	if (printHeader && logVerboseLevel >= ResourceVirtual::WARNINGS)
+	if (printHeader && logVerboseLevel >= ResourceVirtual::VerboseLevel::WARNINGS)
 		std::cerr << "WARNING : loading resource : " << resourceName << " : wrong number of argument successfully parsed :" << std::endl;
-	if (logVerboseLevel >= ResourceVirtual::WARNINGS)
+	if (logVerboseLevel >= ResourceVirtual::VerboseLevel::WARNINGS)
 		std::cerr << "   check line : " << errorLine << std::endl;
 	printHeader = true;
 }

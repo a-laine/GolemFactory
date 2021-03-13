@@ -5,7 +5,7 @@
 
 //  Default
 WidgetBoard::WidgetBoard(const uint8_t& config, const std::string& shaderName) : 
-	WidgetVirtual(WidgetVirtual::BOARD, config | NEED_UPDATE, shaderName), cornerConfiguration(0x00), borderWidth(0.f), borderThickness(0.f), updateCooldown(0.f)
+	WidgetVirtual(WidgetVirtual::WidgetType::BOARD, config | (uint8_t)WidgetVirtual::OrphanFlags::NEED_UPDATE, shaderName), cornerConfiguration(0x00), borderWidth(0.f), borderThickness(0.f), updateCooldown(0.f)
 {}
 WidgetBoard::~WidgetBoard() {}
 //
@@ -13,9 +13,9 @@ WidgetBoard::~WidgetBoard() {}
 //  Public functions
 void WidgetBoard::initialize(const float& bThickness, const float& bWidth, const uint8_t& corner)
 {
-	colors[CURRENT] = colors[(State)(configuration & STATE_MASK)];
-	positions[CURRENT] = positions[(State)(configuration & STATE_MASK)];
-	sizes[CURRENT] = sizes[(State)(configuration & STATE_MASK)];
+	colors[State::CURRENT] = colors[(State)(configuration & (uint8_t)State::STATE_MASK)];
+	positions[State::CURRENT] = positions[(State)(configuration & (uint8_t)State::STATE_MASK)];
+	sizes[State::CURRENT] = sizes[(State)(configuration & (uint8_t)State::STATE_MASK)];
 
 	borderThickness = bThickness;
 	borderWidth = bWidth;
@@ -25,7 +25,7 @@ void WidgetBoard::initialize(const float& bThickness, const float& bWidth, const
 	batchList.push_back(DrawBatch());	//	BATCH_INDEX_CENTER
 	updateBuffers(true);
 
-	if(configuration & RESPONSIVE) 
+	if(configuration & (uint8_t)WidgetVirtual::OrphanFlags::RESPONSIVE)
 	{
 		initializeVBO(BATCH_INDEX_BORDER, GL_DYNAMIC_DRAW);
 		initializeVBO(BATCH_INDEX_CENTER, GL_DYNAMIC_DRAW);
@@ -47,13 +47,13 @@ void WidgetBoard::draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model)
 
 	//	draw border
 	loc = s->getUniformLocation("color");
-	if (loc >= 0) glUniform4fv(loc, 1, &colors[CURRENT].x);
+	if (loc >= 0) glUniform4fv(loc, 1, &colors[State::CURRENT].x);
 
 	glBindVertexArray(batchList[BATCH_INDEX_BORDER].vao);
 	glDrawElements(GL_TRIANGLES, (int)batchList[BATCH_INDEX_BORDER].faces.size(), GL_UNSIGNED_SHORT, NULL);
 
 	//	draw center at different alpha
-	glm::vec4 color(colors[CURRENT].x, colors[CURRENT].y, colors[CURRENT].z, 0.5f * colors[CURRENT].w);
+	glm::vec4 color(colors[State::CURRENT].x, colors[State::CURRENT].y, colors[State::CURRENT].z, 0.5f * colors[State::CURRENT].w);
 	loc = s->getUniformLocation("color");
 	if (loc >= 0) glUniform4fv(loc, 1, &color.x);
 
@@ -62,20 +62,20 @@ void WidgetBoard::draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model)
 }
 void WidgetBoard::update(const float& elapseTime)
 {
-	State s = (State)(configuration & STATE_MASK);
-	colors[CURRENT] = 0.9f * colors[CURRENT] + 0.1f * colors[s];
-	positions[CURRENT] = positions[s];
-	sizes[CURRENT] = sizes[s];
+	State s = (State)(configuration & (uint8_t)State::STATE_MASK);
+	colors[State::CURRENT] = 0.9f * colors[State::CURRENT] + 0.1f * colors[s];
+	positions[State::CURRENT] = positions[s];
+	sizes[State::CURRENT] = sizes[s];
 
 	//	update buffers if needed
-	if (configuration & RESPONSIVE)
+	if (configuration & (uint8_t)WidgetVirtual::OrphanFlags::RESPONSIVE)
 	{
 		updateCooldown += elapseTime;
-		if (configuration & NEED_UPDATE && updateCooldown > 500.f)
+		if (configuration & (uint8_t)WidgetVirtual::OrphanFlags::NEED_UPDATE && updateCooldown > 500.f)
 		{
 			updateBuffers();
 			updateVBOs();
-			configuration &= ~NEED_UPDATE;
+			configuration &= ~(uint8_t)WidgetVirtual::OrphanFlags::NEED_UPDATE;
 			updateCooldown = 0.f;
 		}
 	}
@@ -87,7 +87,7 @@ void WidgetBoard::updateBuffers(const bool& firstInit)
 {
 
 	DrawBatch border, center;
-	glm::vec3 dimension = glm::vec3(0.5f * sizes[CURRENT].x - borderThickness, 0.f, 0.5f * sizes[CURRENT].y - borderThickness);
+	glm::vec3 dimension = glm::vec3(0.5f * sizes[State::CURRENT].x - borderThickness, 0.f, 0.5f * sizes[State::CURRENT].y - borderThickness);
 	const float pi = glm::pi<float>();
 	unsigned int borderCornerIndex;
 

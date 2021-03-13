@@ -31,7 +31,7 @@ bool FontLoader::load(const std::string& resourceDirectory, const std::string& f
     }
     catch(std::exception&)
     {
-        if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::ERRORS)
+        if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
             std::cerr << "ERROR : loading font : " << fileName << " : fail to open or parse file" << std::endl;
         return false;
     }
@@ -45,7 +45,7 @@ bool FontLoader::load(const std::string& resourceDirectory, const std::string& f
     }
     catch(std::exception&)
     {
-        if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::ERRORS)
+        if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
             std::cerr << "ERROR : loading font : " << fileName << " : texture attribute field not found" << std::endl;
         return false;
     }
@@ -55,7 +55,7 @@ bool FontLoader::load(const std::string& resourceDirectory, const std::string& f
     image = ImageLoader::loadFromFile(textureFile, x, y, n, ImageLoader::RGB_ALPHA);
     if(!image)
     {
-        if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::ERRORS)
+        if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
             std::cerr << "ERROR : loading font : " << fileName << " : fail loading texture image" << std::endl;
         return false;
     }
@@ -72,7 +72,7 @@ bool FontLoader::load(const std::string& resourceDirectory, const std::string& f
     try { defaultChar = fontInfo["default"].toInt(); }
     catch(std::exception&) { defaultChar = begin; }
     if(defaultChar > end) defaultChar = begin;
-    charTable.assign(end - begin + 1, Font::Patch());
+    charTable.assign((int)end - begin + 1, Font::Patch());
 
     //  Extract and prepare file array for parsing
     std::string arrayFile;
@@ -82,14 +82,14 @@ bool FontLoader::load(const std::string& resourceDirectory, const std::string& f
     }
     catch(std::exception&)
     {
-        if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::ERRORS)
+        if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
             std::cerr << "ERROR : loading font : " << fileName << " : fail open char array" << std::endl;
         charTable.clear();
         return false;
     }
     if(arrayFile.empty())
     {
-        if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::WARNINGS)
+        if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::WARNINGS)
             std::cerr << "WARNING : loading font : " << fileName << " : char array file empty" << std::endl;
         begin = 0;
         end = 0;

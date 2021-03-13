@@ -26,7 +26,8 @@ void Renderer::drawObject(Entity* object, const float* view, const float* projec
 	ShaderIdentifier shaderWire = INSTANCE_DRAWABLE_WIRED;
 	DrawableComponent* drawableComp = object->getComponent<DrawableComponent>();
 	SkeletonComponent* skeletonComp = object->getComponent<SkeletonComponent>();
-	if (!drawableComp || !drawableComp->isValid()) return;
+	if (!drawableComp || !drawableComp->isValid()) 
+		return;
 	if (skeletonComp && skeletonComp->isValid())
 	{
 		shaderType = INSTANCE_ANIMATABLE;
@@ -36,12 +37,18 @@ void Renderer::drawObject(Entity* object, const float* view, const float* projec
 
 	//	Get shader and prepare matrix
 	Shader* shaderToUse;
-	if (renderOption == BOUNDING_BOX) shaderToUse = defaultShader[shaderBBType];
-	else if (renderOption == WIREFRAME) shaderToUse = defaultShader[shaderWire];
-	else shaderToUse = defaultShader[shaderType];
-	if (!shaderToUse) shaderToUse = drawableComp->getShader();
+	if (renderOption == RenderOption::BOUNDING_BOX) 
+		shaderToUse = defaultShader[shaderBBType];
+	else if (renderOption == RenderOption::WIREFRAME) 
+		shaderToUse = defaultShader[shaderWire];
+	else 
+		shaderToUse = defaultShader[shaderType];
+	if (!shaderToUse) 
+		shaderToUse = drawableComp->getShader();
+
 	loadMVPMatrix(shaderToUse, &object->getMatrix()[0][0], view, projection);
-	if (!shaderToUse) return;
+	if (!shaderToUse) 
+		return;
 
 	if (shaderType == INSTANCE_ANIMATABLE)
 	{
@@ -58,12 +65,12 @@ void Renderer::drawObject(Entity* object, const float* view, const float* projec
 	}
 
 	//	Draw mesh
-	if (renderOption == BOUNDING_BOX && shaderType == INSTANCE_ANIMATABLE)
+	if (renderOption == RenderOption::BOUNDING_BOX && shaderType == INSTANCE_ANIMATABLE)
 	{
 		loadVAO(skeletonComp->getCapsuleVAO());
 		glDrawArrays(GL_POINTS, 0, (int)skeletonComp->getSegmentsIndex().size());
 	}
-	else if (renderOption == BOUNDING_BOX)
+	else if (renderOption == RenderOption::BOUNDING_BOX)
 	{
 		loadVAO(drawableComp->getMesh()->getBBoxVAO());
 		glDrawElements(GL_TRIANGLES, (int)drawableComp->getMesh()->getBBoxFaces()->size(), GL_UNSIGNED_SHORT, NULL);
@@ -80,17 +87,22 @@ void Renderer::drawInstancedObject(Shader* s, Mesh* m, std::vector<glm::mat4>& m
 {
 	//	Get shader and prepare matrix
 	Shader* shaderToUse;
-	if (renderOption == BOUNDING_BOX) shaderToUse = defaultShader[INSTANCE_DRAWABLE_BB];
-	else if (renderOption == WIREFRAME) shaderToUse = defaultShader[INSTANCE_DRAWABLE_WIRED];
-	else shaderToUse = defaultShader[INSTANCE_DRAWABLE];
-	if (!shaderToUse || !shaderToUse->getInstanciable()) shaderToUse = s;
-	else shaderToUse = shaderToUse->getInstanciable();
+	if (renderOption == RenderOption::BOUNDING_BOX) 
+		shaderToUse = defaultShader[INSTANCE_DRAWABLE_BB];
+	else if (renderOption == RenderOption::WIREFRAME) 
+		shaderToUse = defaultShader[INSTANCE_DRAWABLE_WIRED];
+	else 
+		shaderToUse = defaultShader[INSTANCE_DRAWABLE];
+	if (!shaderToUse || !shaderToUse->getInstanciable()) 
+		shaderToUse = s;
+	else 
+		shaderToUse = shaderToUse->getInstanciable();
 
 	//	Load MVP matrix
 	loadMVPMatrix(shaderToUse, (const float*)models.data(), view, projection, (int)models.size());
 
 	//	Draw instanced
-	if (renderOption == BOUNDING_BOX)
+	if (renderOption == RenderOption::BOUNDING_BOX)
 	{
 		loadVAO(m->getBBoxVAO());
 		glDrawElementsInstanced(GL_TRIANGLES, (int)m->getBBoxFaces()->size(), GL_UNSIGNED_SHORT, NULL, (unsigned short)models.size());

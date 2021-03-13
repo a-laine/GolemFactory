@@ -11,6 +11,8 @@
 class ShaderLoader : public IResourceLoader
 {
     public:
+        ShaderLoader();
+
         bool load(const std::string& resourceDirectory, const std::string& fileName) override;
         void initialize(ResourceVirtual* resource) override;
         void getResourcesToRegister(std::vector<ResourceVirtual*>& resourceList) override;

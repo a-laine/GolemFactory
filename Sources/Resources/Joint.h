@@ -33,7 +33,7 @@ struct JointPose
 
 struct KeyFrame
 {
-	float time;
+	float time = 0.f;
 	std::vector<JointPose> poses;
 };
 

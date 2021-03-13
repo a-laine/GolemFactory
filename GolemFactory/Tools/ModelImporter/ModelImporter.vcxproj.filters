@@ -19,4 +19,15 @@
       <Filter>Fichiers sources</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\..\Resources\GUI\ModelImporter.gui">
+      <Filter>Fichiers de ressources</Filter>
+    </None>
+    <None Include="..\..\..\Resources\Config\ModelImporter.json">
+      <Filter>Fichiers de ressources</Filter>
+    </None>
+    <None Include="..\..\..\Sources\ModelImporterEventEnum.enum">
+      <Filter>Fichiers de ressources</Filter>
+    </None>
+  </ItemGroup>
 </Project>

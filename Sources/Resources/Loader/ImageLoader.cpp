@@ -33,7 +33,7 @@ bool ImageLoader::load(const std::string& resourceDirectory, const std::string& 
     textureData = ImageLoader::loadFromFile(getFileName(resourceDirectory, fileName), x, y, n, ImageLoader::RGB_ALPHA);
     if(!textureData)
     {
-        if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::ERRORS)
+        if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
             std::cerr << "ERROR : loading texture : " << fileName << " : fail to open file";
         return false;
     }

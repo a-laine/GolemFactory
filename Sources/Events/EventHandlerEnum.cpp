@@ -107,7 +107,7 @@ void EventHandlerEnum::loadKeyMapping(const std::string& path, std::string event
 			Reader::parseFile(v, fullpath);
 			tmpvariant = &(v.getMap().begin()->second);
 		}
-		catch (std::exception&)
+		catch (const std::exception&)
 		{
 			std::cerr << "EventHandler : Fail to open or parse file (variant loading fail) :" << std::endl;
 			std::cerr << "               " << fullpath << std::endl;
@@ -133,7 +133,7 @@ void EventHandlerEnum::loadKeyMapping(const std::string& path, std::string event
 				name = currentEvent["eventPublished"].toString();
 				if(enumMap.find(name) == enumMap.end()) throw std::logic_error("unknown publisher declared");
 			}
-			catch (std::exception& e)
+			catch (const std::exception& e)
 			{
 				if (!errorHeaderPrinted) { errorHeaderPrinted = true; std::cerr << "EventHandler : Errors occurs in loading key mapping :" << std::endl; }
 				std::cerr << "               Event '" << it->first <<"' : " << e.what() << std::endl;
@@ -169,7 +169,7 @@ void EventHandlerEnum::loadKeyMapping(const std::string& path, std::string event
 					if((eventConfig & Event::TYPE_MASK) > Event::SEQUENCE) throw std::logic_error("invalid configuration combination");
 				}
 			}
-			catch (std::exception& e)
+			catch (const std::exception& e)
 			{
 				if (!errorHeaderPrinted) { errorHeaderPrinted = true; std::cerr << "EventHandler : Errors occurs in loading key mapping :" << std::endl; }
 				std::cerr << "               Event '" << it->first << "' : " << e.what() << std::endl;
@@ -212,12 +212,12 @@ void EventHandlerEnum::loadKeyMapping(const std::string& path, std::string event
 				for (auto it2 = currentEvent["listeningKey"].getArray().begin(); it2 != currentEvent["listeningKey"].getArray().end(); it2++)
 				{
 					int key = it2->toInt();
-					event->addInput(Event::KEY, key);
+					event->addInput(Event::InputType::KEY, key);
 					auto it3 = std::find(keyboardListenersBuffer[key].begin(), keyboardListenersBuffer[key].end(), event);
 					if (it3 == keyboardListenersBuffer[key].end()) keyboardListenersBuffer[key].insert(keyboardListenersBuffer[key].end(), event);
 				}
 			}
-			catch (std::exception&) {}
+			catch (const std::exception&) {}
 
 			//	Attach mouse input
 			try
@@ -225,67 +225,67 @@ void EventHandlerEnum::loadKeyMapping(const std::string& path, std::string event
 				for (auto it2 = currentEvent["listeningMouse"].getArray().begin(); it2 != currentEvent["listeningMouse"].getArray().end(); it2++)
 				{
 					int key = it2->toInt();
-					event->addInput(Event::MOUSEBUTTON, key);
+					event->addInput(Event::InputType::MOUSEBUTTON, key);
 					auto it3 = std::find(mouseButtonListenersBuffer[key].begin(), mouseButtonListenersBuffer[key].end(), event);
 					if (it3 == mouseButtonListenersBuffer[key].end()) mouseButtonListenersBuffer[key].insert(mouseButtonListenersBuffer[key].end(), event);
 				}
 			}
-			catch (std::exception&) {}
+			catch (const std::exception&) {}
 
 			//	Attach scrolling input
 			try
 			{
 				if (currentEvent["listeningScroll"].toBool())
 				{
-					event->addInput(Event::SCROLLING, -1);
+					event->addInput(Event::InputType::SCROLLING, -1);
 					scrollingListenersBuffer.push_back(event);
 				}
 			}
-			catch (std::exception&) {}
+			catch (const std::exception&) {}
 
 			//	Attach text input
 			try
 			{
 				if (currentEvent["listeningText"].toBool())
 				{
-					event->addInput(Event::CHAR, -1);
+					event->addInput(Event::InputType::CHAR, -1);
 					scrollingListenersBuffer.push_back(event);
 				}
 			}
-			catch (std::exception&) {}
+			catch (const std::exception&) {}
 
 			//	Attach cursor position input
 			try
 			{
 				if (currentEvent["listeningCursorPos"].toBool())
 				{
-					event->addInput(Event::CURSORPOS, -1);
+					event->addInput(Event::InputType::CURSORPOS, -1);
 					scrollingListenersBuffer.push_back(event);
 				}
 			}
-			catch (std::exception&) {}
+			catch (const std::exception&) {}
 
 			//	Attach cursor entred input
 			try
 			{
 				if (currentEvent["listeningCursorEntred"].toBool())
 				{
-					event->addInput(Event::CURSORENTER, -1);
+					event->addInput(Event::InputType::CURSORENTER, -1);
 					scrollingListenersBuffer.push_back(event);
 				}
 			}
-			catch (std::exception&) {}
+			catch (const std::exception&) {}
 
 			//	Attach cursor drag and drop input
 			try
 			{
 				if (currentEvent["listeningDragDrop"].toBool())
 				{
-					event->addInput(Event::DRAGANDDROP, -1);
+					event->addInput(Event::InputType::DRAGANDDROP, -1);
 					scrollingListenersBuffer.push_back(event);
 				}
 			}
-			catch (std::exception&) {}
+			catch (const std::exception&) {}
 		}
 	}
 

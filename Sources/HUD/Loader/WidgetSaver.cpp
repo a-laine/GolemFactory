@@ -10,12 +10,12 @@ Variant WidgetSaver::serialize(WidgetVirtual* w, std::map<std::string, WidgetVir
 	//	write type
 	switch (w->type)
 	{
-		case WidgetVirtual::VIRTUAL:		rootVariant.insert("type", Variant("VIRTUAL"));		break;
-		case WidgetVirtual::BOARD:			rootVariant.insert("type", Variant("BOARD"));		break;
-		case WidgetVirtual::IMAGE:			rootVariant.insert("type", Variant("IMAGE"));		break;
-		case WidgetVirtual::LABEL:			rootVariant.insert("type", Variant("LABEL"));		break;
-		case WidgetVirtual::CONSOLE:		rootVariant.insert("type", Variant("CONSOLE"));		break;
-		case WidgetVirtual::RADIO_BUTTON:	rootVariant.insert("type", Variant("RADIO_BUTTON"));break;
+		case WidgetVirtual::WidgetType::VIRTUAL:		rootVariant.insert("type", Variant("VIRTUAL"));		break;
+		case WidgetVirtual::WidgetType::BOARD:			rootVariant.insert("type", Variant("BOARD"));		break;
+		case WidgetVirtual::WidgetType::IMAGE:			rootVariant.insert("type", Variant("IMAGE"));		break;
+		case WidgetVirtual::WidgetType::LABEL:			rootVariant.insert("type", Variant("LABEL"));		break;
+		case WidgetVirtual::WidgetType::CONSOLE:		rootVariant.insert("type", Variant("CONSOLE"));		break;
+		case WidgetVirtual::WidgetType::RADIO_BUTTON:	rootVariant.insert("type", Variant("RADIO_BUTTON"));break;
 		default:							rootVariant.insert("type", Variant("UNKNOWN"));		break;
 	}
 
@@ -23,36 +23,39 @@ Variant WidgetSaver::serialize(WidgetVirtual* w, std::map<std::string, WidgetVir
 	rootVariant.insert("config", Variant((int)w->configuration));
 
 	//	write sizes
-	if (w->sizes[WidgetVirtual::DEFAULT] == w->sizes[WidgetVirtual::HOVER] && w->sizes[WidgetVirtual::DEFAULT] == w->sizes[WidgetVirtual::ACTIVE] && w->sizes[WidgetVirtual::DEFAULT] == w->sizes[WidgetVirtual::CURRENT])
-		rootVariant.insert("sizeAll", ToolBox::getFromVec2(w->sizes[WidgetVirtual::DEFAULT]));
+	const glm::vec2& s = w->sizes[WidgetVirtual::State::DEFAULT];
+	if (s == w->sizes[WidgetVirtual::State::HOVER] && s == w->sizes[WidgetVirtual::State::ACTIVE] && s == w->sizes[WidgetVirtual::State::CURRENT])
+		rootVariant.insert("sizeAll", ToolBox::getFromVec2(s));
 	else
 	{
-		rootVariant.insert("sizeDefault", ToolBox::getFromVec2(w->sizes[WidgetVirtual::DEFAULT]));
-		rootVariant.insert("sizeHover", ToolBox::getFromVec2(w->sizes[WidgetVirtual::HOVER]));
-		rootVariant.insert("sizeActive", ToolBox::getFromVec2(w->sizes[WidgetVirtual::ACTIVE]));
-		rootVariant.insert("sizeCurrent", ToolBox::getFromVec2(w->sizes[WidgetVirtual::CURRENT]));
+		rootVariant.insert("sizeDefault", ToolBox::getFromVec2(s));
+		rootVariant.insert("sizeHover", ToolBox::getFromVec2(w->sizes[WidgetVirtual::State::HOVER]));
+		rootVariant.insert("sizeActive", ToolBox::getFromVec2(w->sizes[WidgetVirtual::State::ACTIVE]));
+		rootVariant.insert("sizeCurrent", ToolBox::getFromVec2(w->sizes[WidgetVirtual::State::CURRENT]));
 	}
 
 	//	write positions
-	if (w->positions[WidgetVirtual::DEFAULT] == w->positions[WidgetVirtual::HOVER] && w->positions[WidgetVirtual::DEFAULT] == w->positions[WidgetVirtual::ACTIVE] && w->positions[WidgetVirtual::DEFAULT] == w->positions[WidgetVirtual::CURRENT])
-		rootVariant.insert("positionAll", ToolBox::getFromVec3(w->positions[WidgetVirtual::DEFAULT]));
+	const glm::vec3& p = w->positions[WidgetVirtual::State::DEFAULT];
+	if (p == w->positions[WidgetVirtual::State::HOVER] && p == w->positions[WidgetVirtual::State::ACTIVE] && p == w->positions[WidgetVirtual::State::CURRENT])
+		rootVariant.insert("positionAll", ToolBox::getFromVec3(p));
 	else
 	{
-		rootVariant.insert("positionDefault", ToolBox::getFromVec3(w->positions[WidgetVirtual::DEFAULT]));
-		rootVariant.insert("positionHover", ToolBox::getFromVec3(w->positions[WidgetVirtual::HOVER]));
-		rootVariant.insert("positionActive", ToolBox::getFromVec3(w->positions[WidgetVirtual::ACTIVE]));
-		rootVariant.insert("positionCurrent", ToolBox::getFromVec3(w->positions[WidgetVirtual::CURRENT]));
+		rootVariant.insert("positionDefault", ToolBox::getFromVec3(p));
+		rootVariant.insert("positionHover", ToolBox::getFromVec3(w->positions[WidgetVirtual::State::HOVER]));
+		rootVariant.insert("positionActive", ToolBox::getFromVec3(w->positions[WidgetVirtual::State::ACTIVE]));
+		rootVariant.insert("positionCurrent", ToolBox::getFromVec3(w->positions[WidgetVirtual::State::CURRENT]));
 	}
 
 	//	write colors
-	if (w->colors[WidgetVirtual::DEFAULT] == w->colors[WidgetVirtual::HOVER] && w->colors[WidgetVirtual::DEFAULT] == w->colors[WidgetVirtual::ACTIVE] && w->colors[WidgetVirtual::DEFAULT] == w->colors[WidgetVirtual::CURRENT])
-		rootVariant.insert("colorAll", ToolBox::getFromVec4(w->colors[WidgetVirtual::DEFAULT]));
+	const glm::vec4& c = w->colors[WidgetVirtual::State::DEFAULT];
+	if (c == w->colors[WidgetVirtual::State::HOVER] && c == w->colors[WidgetVirtual::State::ACTIVE] && c == w->colors[WidgetVirtual::State::CURRENT])
+		rootVariant.insert("colorAll", ToolBox::getFromVec4(c));
 	else
 	{
-		rootVariant.insert("colorDefault", ToolBox::getFromVec4(w->colors[WidgetVirtual::DEFAULT]));
-		rootVariant.insert("colorHover", ToolBox::getFromVec4(w->colors[WidgetVirtual::HOVER]));
-		rootVariant.insert("colorActive", ToolBox::getFromVec4(w->colors[WidgetVirtual::ACTIVE]));
-		rootVariant.insert("colorCurrent", ToolBox::getFromVec4(w->colors[WidgetVirtual::CURRENT]));
+		rootVariant.insert("colorDefault", ToolBox::getFromVec4(c));
+		rootVariant.insert("colorHover", ToolBox::getFromVec4(w->colors[WidgetVirtual::State::HOVER]));
+		rootVariant.insert("colorActive", ToolBox::getFromVec4(w->colors[WidgetVirtual::State::ACTIVE]));
+		rootVariant.insert("colorCurrent", ToolBox::getFromVec4(w->colors[WidgetVirtual::State::CURRENT]));
 	}
 
 	//	write shader and texture name
@@ -64,19 +67,19 @@ Variant WidgetSaver::serialize(WidgetVirtual* w, std::map<std::string, WidgetVir
 	//	derivate type
 	switch (w->type)
 	{
-		case WidgetVirtual::BOARD:
+		case WidgetVirtual::WidgetType::BOARD:
 			serializeBoard(static_cast<WidgetBoard*>(w), rootVariant);
 			break;
-		case WidgetVirtual::IMAGE:
+		case WidgetVirtual::WidgetType::IMAGE:
 			serializeImage(static_cast<WidgetImage*>(w), rootVariant);
 			break;
-		case WidgetVirtual::LABEL:
+		case WidgetVirtual::WidgetType::LABEL:
 			serializeLabel(static_cast<WidgetLabel*>(w), rootVariant);
 			break;
-		case WidgetVirtual::CONSOLE:
+		case WidgetVirtual::WidgetType::CONSOLE:
 			serializeConsole(static_cast<WidgetConsole*>(w), rootVariant);
 			break;
-		case WidgetVirtual::RADIO_BUTTON:
+		case WidgetVirtual::WidgetType::RADIO_BUTTON:
 			serializeRadioButton(static_cast<WidgetRadioButton*>(w), rootVariant);
 			break;
 		default: break;

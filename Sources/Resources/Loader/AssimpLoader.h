@@ -17,7 +17,7 @@ class AssimpLoader : public IResourceLoader
 {
     public:
         //  Miscellaneous
-        enum ResourceType
+        enum class ResourceType
         {
             MESH,
             SKELETON,

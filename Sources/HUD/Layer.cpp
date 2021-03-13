@@ -41,6 +41,10 @@ void Layer::setResponsive(const bool& responsive)
 	if (responsive) configuration |= RESPONSIVE;
 	else configuration &= ~RESPONSIVE;
 }
+void Layer::setConfiguration(const uint8_t& config)
+{
+	configuration = config;
+}
 
 
 

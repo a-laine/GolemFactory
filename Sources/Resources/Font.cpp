@@ -26,7 +26,7 @@ void Font::initialize(uint8_t* image, const glm::vec2& imageSize, unsigned short
 
     if(!initOpenGL(image, (int) imageSize.x, (int) imageSize.y))
     {
-        if(logVerboseLevel >= ResourceVirtual::ERRORS)
+        if(logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
             std::cerr << "ERROR : loading font : " << name << " : fail create OPENGL texture" << std::endl;
         state = INVALID;
         return;
@@ -47,7 +47,7 @@ void Font::initialize(uint8_t* image, const glm::vec2& imageSize, unsigned short
 
     if(!initOpenGL(image, (int) imageSize.x, (int) imageSize.y))
     {
-        if(logVerboseLevel >= ResourceVirtual::ERRORS)
+        if(logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
             std::cerr << "ERROR : loading font : " << name << " : fail create OPENGL texture" << std::endl;
         state = INVALID;
         return;
