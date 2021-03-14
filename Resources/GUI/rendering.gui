@@ -27,6 +27,7 @@
     "screenPosition" : [0.00000, 0.00300, 0.05400 ],
     "size" : 0.05000,
     "targetPosition" : [0.00000, 0.00300, 0.05400 ] },
+	
 "layer_2" : {
     "children" : {
         "BBpicking" : {

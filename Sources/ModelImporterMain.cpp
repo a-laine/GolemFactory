@@ -51,20 +51,27 @@
 #include <Physics/GJK.h>
 #include <Utiles/ConsoleColor.h>
 
-#define GRID_SIZE 10
-#define GRID_ELEMENT_SIZE 1.f
-#define DEBUG_LEVEL 0
-
 enum EventEnum
 {
 	#include <ModelImporterEventEnum.enum>
 };
+
+#include <Utiles/DirectoryWatcher.h>
+
+
+
+#define GRID_SIZE 10
+#define GRID_ELEMENT_SIZE 1.f
+#define DEBUG_LEVEL 0
+
 
 
 //	global attributes
 RenderContext* context = nullptr;
 World world;
 Entity* freeflyCamera = nullptr;
+DirectoryWatcher* watcher = nullptr;
+
 //Shader* normalShader = nullptr;
 
 double completeTime = 16.;
@@ -97,14 +104,17 @@ int main()
 	std::cout << ConsoleColor::getColorString(ConsoleColor::Color::GREEN) << "Application start";
 	std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
 	Application application;
-	context = application.createWindow("Model Importer", 1600, 900);
+	context = application.createWindow("GolemFactory : Model Importer", 1600, 900);
 	context->makeCurrent();
 	context->setVSync(true);
 	application.initGLEW(1);
 	initManagers();
+	application.changeIcon(ResourceManager::getInstance()->getRepository() + "Textures/cubeIcon.png");
+
+	watcher = new DirectoryWatcher(ResourceManager::getInstance()->getRepository() + "GUI");
+	watcher->createNewFileWatcher("ModelImporter.gui");
 
 	//	Collision test
-	//WidgetManager::getInstance()->setActiveHUD("ModelImporter");
 	world.getEntityFactory().createObject("cube", [](Entity* object) // ground collider
 		{
 			object->setTransformation(glm::vec3(0.f, 0.f, -10.f), glm::vec3(1000, 1000, 10), glm::fquat());
@@ -175,6 +185,7 @@ int main()
 	std::cout << ConsoleColor::getColorString(ConsoleColor::Color::GREEN) << "Ending game";
 	std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
 
+	delete watcher;
 	world.clearGarbage();
 	ResourceManager::getInstance()->clearGarbage();
 	return 0;
@@ -328,6 +339,21 @@ void events()
 		else if (v[i] == F11)  WidgetManager::getInstance()->setActiveHUD((WidgetManager::getInstance()->getActiveHUD() == "ModelImporter" ? "" : "ModelImporter"));
 
 		else if (v[i] == F4)   WidgetManager::getInstance()->setBoolean("wireframe", !WidgetManager::getInstance()->getBoolean("wireframe"));
+	}
+
+	if (watcher->hasChanges())
+	{
+		std::vector<std::string> files = watcher->getAllChanges();
+		for (unsigned int i = 0; i < files.size(); i++)
+			if (files[i].find_first_of("ModelImporter") != std::string::npos)
+			{
+				std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CYAN) << "ModelImporter GUI hot reload" << std::flush;
+				std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
+
+				WidgetManager::getInstance()->deleteHud("ModelImporter");
+				WidgetManager::getInstance()->loadHud("ModelImporter");
+				//WidgetManager::getInstance()->setActiveHUD("ModelImporter");
+			}
 	}
 }
 void updates(float elapseTime)

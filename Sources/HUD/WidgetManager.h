@@ -36,6 +36,7 @@ class WidgetManager : public Singleton<WidgetManager>
 		//	Public functions
 		void update(const float& elapsedTime, const bool& clickButtonPressed);
 		void loadHud(const std::string& hudName);
+		void deleteHud(const std::string& hudName);
 
 		void addAssociation(WidgetVirtual* w, const std::string& associationName);
 		void setBoolean(const std::string& associationName, const bool& b);
@@ -71,8 +72,6 @@ class WidgetManager : public Singleton<WidgetManager>
 		void generateDebugHud();
 		void generateHelpHud();
 		void generateRenderingHud();
-
-		bool tryExtractVector(const Variant& variant, glm::vec3& vector, std::string& error) const;
 		//
 
 		//	Attributes

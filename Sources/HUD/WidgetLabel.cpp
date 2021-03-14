@@ -7,7 +7,7 @@
 #define TEXT_MAX_CHAR			200
 
 //	drawing define
-#define LINE_MARGIN_LEFT		0.5f
+#define SIDE_LINE_MARGIN		0.5f
 #define TEX_OFFSET				0.00586f
 #define ITALIC_RATIO			0.5f
 
@@ -280,7 +280,8 @@ void WidgetLabel::updateVBOs()
 }
 void WidgetLabel::parseText()
 {
-	if (!font) return;
+	if (!font)
+		return;
 
 	linesLength.clear();
 	float length = 0.f;
@@ -303,7 +304,8 @@ void WidgetLabel::parseText()
 				break;
 		}
 	}
-	if (!text.empty()) linesLength.push_back(length);
+	if (!text.empty())
+		linesLength.push_back(length);
 }
 glm::vec2 WidgetLabel::getLineOrigin(const unsigned int& lineIndex, const uint8_t& textConfiguration)
 {
@@ -351,6 +353,21 @@ glm::vec2 WidgetLabel::getLineOrigin(const unsigned int& lineIndex, const uint8_
 			break;
 		default: break;
 	}
-	return origin + glm::vec2(sizeChar * LINE_MARGIN_LEFT, 0.f);
+
+	glm::vec2 margin;
+	switch (textConfiguration & HORIZONTAL_MASK)
+	{
+		case LEFT:
+			margin = glm::vec2(sizeChar * SIDE_LINE_MARGIN, 0.f);
+			break;
+		case RIGHT:
+			margin = -glm::vec2(sizeChar * SIDE_LINE_MARGIN, 0.f);;
+			break;
+		default:
+			margin = glm::vec2(0.f);
+			break;
+	}
+
+	return origin + margin;
 }
 //

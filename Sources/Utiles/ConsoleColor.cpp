@@ -36,13 +36,13 @@ std::string ConsoleColor::getColorString(const Color& color)
 				SetConsoleTextAttribute(ConsoleColor::hConsole, FOREGROUND_RED | FOREGROUND_GREEN);
 				return "";
 			case Color::BLUE:
-				SetConsoleTextAttribute(ConsoleColor::hConsole, FOREGROUND_BLUE);
+				SetConsoleTextAttribute(ConsoleColor::hConsole, FOREGROUND_GREEN | FOREGROUND_BLUE);
 				return "";
 			case Color::MAGENTA:
 				SetConsoleTextAttribute(ConsoleColor::hConsole, FOREGROUND_RED | FOREGROUND_BLUE);
 				return "";
 			case Color::CYAN:
-				SetConsoleTextAttribute(ConsoleColor::hConsole, FOREGROUND_GREEN | FOREGROUND_BLUE);
+				SetConsoleTextAttribute(ConsoleColor::hConsole, FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY);
 				return "";
 			case Color::WHITE:
 				SetConsoleTextAttribute(ConsoleColor::hConsole, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);

@@ -3,6 +3,7 @@
 #include <Utiles/Parser/Writer.h>
 #include <Utiles/Parser/Reader.h>
 #include <HUD/Loader/WidgetLoader.h>
+#include <Utiles/ConsoleColor.h>
 
 //  Default
 WidgetManager::WidgetManager() : widgetDrawn(0), trianglesDrawn(0), pickingRay(0.f), lastViewportRatio(1.f) {}
@@ -39,38 +40,85 @@ void WidgetManager::loadHud(const std::string& hudName)
 		try
 		{
 			Reader::parseFile(v, fullpath);
-			tmpvariant = &(v.getMap().begin()->second);
+			Variant::MapType::iterator it = v.getMap().begin();
+			tmpvariant = &(it->second);
 		}
 		catch (const std::exception&)
 		{
-			std::cerr << "EventHandler : Fail to open or parse file (variant loading fail) :" << std::endl;
+			std::cerr << "WidgetManager : Fail to open or parse file (variant loading fail) :" << std::endl;
 			std::cerr << "               " << fullpath << std::endl;
 			return;
 		}
 		Variant& hudMap = *tmpvariant;
+		if (hudMap.getType() != Variant::VariantType::MAP)
+		{
+			std::cerr << "WidgetManager : base variant is not a map :" << std::endl;
+			std::cerr << "               " << fullpath << std::endl;
+			return;
+		}
 
 		// iterate over layers
-		std::string errorHeader = "EventHandler : Error parsing " + hudName + ".gui";
-		std::string errorIndent = "               ";
-		bool showErrorHeader = true;
+		std::string errorHeader = "WidgetManager : Error parsing " + hudName + ".gui";
+		const std::string errorIndent = "               ";
+		const std::string discardedMsg = "-> layer has been discarded";
+		std::vector<Layer*> layers;
+		bool errorOccur = false;
+		int fatalErrorCount = 0;
+		int lastFatalError = 0;
 
-		for (auto it = hudMap.getMap().begin(); it != hudMap.getMap().end(); it++)
+		for (Variant::MapType::iterator it = hudMap.getMap().begin(); it != hudMap.getMap().end(); it++)
 		{
-			Layer* layer = WidgetLoader::deserialize(it->second, it->first, associations, errorHeader, errorIndent);
+			if (errorHeader.empty())
+			{
+				errorOccur = true;
+				if (lastFatalError)
+					errorHeader = errorIndent + discardedMsg + ", parsing continue";
+				else
+					errorHeader = errorIndent + "-> layer has warning, parsing continue";
+			}
+
+			int errorCount = 0;
+			Layer* layer = WidgetLoader::deserialize(it->second, it->first, associations, errorHeader, errorIndent, errorCount);
+			fatalErrorCount += errorCount;
+			lastFatalError = errorCount;
 
 			if (layer)
 			{
-				auto children = layer->getChildrenList();
-				for (auto it = children.begin(); it != children.end(); ++it)
-					widgetList.insert(*it);
+				std::vector<WidgetVirtual*>& children = layer->getChildrenList();
+				for (unsigned int i = 0; i < children.size(); i++)
+					addWidget(children[i]);
 
-				layerList.insert(layer);
-				hudList[hudName].push_back(layer);
+				addLayer(layer);
+				layers.push_back(layer);
+
+				if (activeHud == hudName)
+				{
+					layer->setTargetPosition(layer->getScreenPosition());
+					layer->setPosition(layer->getScreenPosition());
+				}
+				else
+				{
+					glm::vec3 direction = layer->getScreenPosition();
+					if (direction == glm::vec3(0.f)) 
+						direction = glm::vec3(0.f, 0.f, 1.f);
+					else
+						direction = glm::normalize(direction);
+					layer->setTargetPosition(layer->getScreenPosition() + 0.1f * direction);
+					layer->setPosition(layer->getScreenPosition() + 0.1f * direction);
+				}
 			}
+		}
+		if (!layers.empty())
+		{
+			hudList[hudName] = layers;
+		}
+		if (errorOccur)
+		{
+			std::cerr << ConsoleColor::getColorString(ConsoleColor::Color::RED) << errorIndent << (lastFatalError ? discardedMsg : "-> end") << std::flush;
+			std::cerr << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
 		}
 	}
 
-	//	push away all HUD but active
 	for (auto it = hudList.begin(); it != hudList.end(); ++it)
 	{
 		if (it->first == activeHud)
@@ -78,11 +126,37 @@ void WidgetManager::loadHud(const std::string& hudName)
 		for (unsigned int i = 0; i < it->second.size(); i++)
 		{
 			glm::vec3 direction = it->second[i]->getScreenPosition();
-			if (direction == glm::vec3(0.f)) direction = glm::vec3(0.f, 0.f, 1.f);
-			it->second[i]->setTargetPosition(it->second[i]->getScreenPosition() + 0.1f * glm::normalize(direction));
-			it->second[i]->setPosition(it->second[i]->getScreenPosition() + 0.1f * glm::normalize(direction));
+			if (direction == glm::vec3(0.f)) 
+				direction = glm::vec3(0.f, 0.f, 1.f);
+			else
+				direction = glm::normalize(direction);
+			it->second[i]->setTargetPosition(it->second[i]->getScreenPosition() + 0.1f * direction);
+			it->second[i]->setPosition(it->second[i]->getScreenPosition() + 0.1f * direction);
 		}
 	}
+}
+void WidgetManager::deleteHud(const std::string& hudName)
+{
+	std::map<std::string, std::vector<Layer*>>::iterator it = hudList.find(hudName);
+	if (it == hudList.end())
+		return;
+
+	/*if (hudName == activeHud)
+		setActiveHUD("");*/
+
+	for (unsigned int i = 0; i < it->second.size(); i++)
+	{
+		Layer* layer = it->second[i];
+		removeLayer(layer);
+		std::vector<WidgetVirtual*>& children = layer->getChildrenList();
+		for (unsigned int j = 0; j < children.size(); j++)
+		{
+			removeWidget(children[j]);
+			delete children[j];
+		}
+		delete layer;
+	}
+	hudList.erase(it);
 }
 void WidgetManager::update(const float& elapsedTime, const bool& clickButtonPressed)
 {
@@ -222,6 +296,9 @@ void WidgetManager::addWidget(WidgetVirtual* w) { widgetList.insert(w); }
 void WidgetManager::removeWidget(WidgetVirtual* w)
 {
 	widgetList.erase(w);
+	hoverWidgetList.erase(w);
+	activeWidgetList.remove(w);
+	activeWidgetParentList.erase(w);
 	for (auto it = associations.begin(); it != associations.end(); )
 	{
 		if (it->second == w)
@@ -230,7 +307,16 @@ void WidgetManager::removeWidget(WidgetVirtual* w)
 	}
 }
 void WidgetManager::addLayer(Layer* l) { layerList.insert(l); }
-void WidgetManager::removeLayer(Layer* l) { layerList.erase(l); }
+void WidgetManager::removeLayer(Layer* l)
+{
+	layerList.erase(l);
+	for (auto it = activeWidgetParentList.begin(); it != activeWidgetParentList.end(); )
+	{
+		if (it->second == l)
+			it = activeWidgetParentList.erase(it);
+		else ++it;
+	}
+}
 //
 
 
@@ -240,10 +326,10 @@ void WidgetManager::setInitialViewportRatio(float viewportRatio)
 	lastViewportRatio = viewportRatio;
 }
 
-void WidgetManager::setActiveHUD(const std::string& s)
+void WidgetManager::setActiveHUD(const std::string& name)
 {
 	//	activate new HUD layer
-	std::map<std::string, std::vector<Layer*> >::iterator it = hudList.find(s);
+	std::map<std::string, std::vector<Layer*> >::iterator it = hudList.find(name);
 	if (it != hudList.end())
 	{
 		for (unsigned int i = 0; i < it->second.size(); i++)
@@ -260,13 +346,14 @@ void WidgetManager::setActiveHUD(const std::string& s)
 		for (unsigned int i = 0; i < it->second.size(); i++)
 		{
 			glm::vec3 direction = it->second[i]->getScreenPosition();
-			if (direction == glm::vec3(0.f)) direction = glm::vec3(0.f, 0.f, 1.f);
+			if (direction == glm::vec3(0.f))
+				direction = glm::vec3(0.f, 0.f, 1.f);
 			it->second[i]->setTargetPosition(it->second[i]->getScreenPosition() + 0.1f * glm::normalize(direction));
 		}
 	}
 
 	//	swap
-	activeHud = s;
+	activeHud = name;
 }
 void WidgetManager::setPickingParameters(const glm::mat4& base, const glm::vec3& ray)//, const glm::vec3& origin)
 {

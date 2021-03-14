@@ -441,6 +441,12 @@
     <ClCompile Include="..\..\Sources\HUD\Loader\WidgetLoader.cpp">
       <Filter>Fichiers sources\HUD\Loader</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Sources\Utiles\FileWatcher.cpp">
+      <Filter>Fichiers sources\Utiles</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Sources\Utiles\DirectoryWatcher.cpp">
+      <Filter>Fichiers sources\Utiles</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Sources\Animation\AnimationComponent.h">
@@ -781,6 +787,12 @@
     </ClInclude>
     <ClInclude Include="..\..\Sources\HUD\Loader\WidgetLoader.h">
       <Filter>Fichiers d%27en-tête\HUD\Loader</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Utiles\FileWatcher.h">
+      <Filter>Fichiers d%27en-tête\Utiles</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Utiles\DirectoryWatcher.h">
+      <Filter>Fichiers d%27en-tête\Utiles</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

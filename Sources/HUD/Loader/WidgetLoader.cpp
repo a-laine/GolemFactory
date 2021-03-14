@@ -5,10 +5,11 @@
 
 
 //	Public functions
-WidgetVirtual* WidgetLoader::deserialize(const Variant& variant, const std::string& variantName, std::string& errorHeader, const std::string& errorIndent)
+WidgetVirtual* WidgetLoader::deserialize(const Variant& variant, const std::string& variantName, std::string& errorHeader, const std::string& errorIndent, int& errorCount)
 {
 	if (variant.getType() != Variant::MAP)
 	{
+		errorCount++;
 		printError(variantName, "is not a map", errorHeader, errorIndent);
 		return nullptr;
 	}
@@ -19,15 +20,15 @@ WidgetVirtual* WidgetLoader::deserialize(const Variant& variant, const std::stri
 		WidgetVirtual* widget = nullptr;
 
 		if (type == "LABEL")
-			widget = deserializeLabel(variant, variantName, errorHeader, errorIndent);
+			widget = deserializeLabel(variant, variantName, errorHeader, errorIndent, errorCount);
 		else if (type == "BOARD")
-			widget = deserializeBoard(variant, variantName, errorHeader, errorIndent);
+			widget = deserializeBoard(variant, variantName, errorHeader, errorIndent, errorCount);
 		else if (type == "IMAGE")
-			widget = deserializeImage(variant, variantName, errorHeader, errorIndent);
+			widget = deserializeImage(variant, variantName, errorHeader, errorIndent, errorCount);
 		else if (type == "CONSOLE")
-			widget = deserializeConsole(variant, variantName, errorHeader, errorIndent);
+			widget = deserializeConsole(variant, variantName, errorHeader, errorIndent, errorCount);
 		else if (type == "RADIO_BUTTON")
-			widget = deserializeRadioButton(variant, variantName, errorHeader, errorIndent);
+			widget = deserializeRadioButton(variant, variantName, errorHeader, errorIndent, errorCount);
 		else
 			printError(variantName, "has unknown type", errorHeader, errorIndent);
 
@@ -35,15 +36,17 @@ WidgetVirtual* WidgetLoader::deserialize(const Variant& variant, const std::stri
 	}
 	catch (const std::exception&)
 	{
+		errorCount++;
 		printError(variantName, "has no string field \"type\"", errorHeader, errorIndent);
 	}
 
 	return nullptr;
 }
-Layer* WidgetLoader::deserialize(const Variant& variant, const std::string& variantName, std::map<std::string, WidgetVirtual*>& association, std::string& errorHeader, const std::string& errorIndent)
+Layer* WidgetLoader::deserialize(const Variant& variant, const std::string& variantName, std::map<std::string, WidgetVirtual*>& association, std::string& errorHeader, const std::string& errorIndent, int& errorCount)
 {
 	if (variant.getType() != Variant::MAP)
 	{
+		errorCount++;
 		printError(variantName, "is nor a map", errorHeader, errorIndent);
 		return nullptr;
 	}
@@ -60,13 +63,15 @@ Layer* WidgetLoader::deserialize(const Variant& variant, const std::string& vari
 			layer->setSize((float)v.toInt());
 		else
 		{
+			errorCount++;
 			printError(variantName, "has none float field \"size\"", errorHeader, errorIndent);
 			layer->setSize(1.f);
 		}
 	}
 	catch (const std::exception&)
 	{
-		printError(variantName, "has invalid field \"size\"", errorHeader, errorIndent);
+		errorCount++;
+		printError(variantName, "has invalid or none field \"size\"", errorHeader, errorIndent);
 	}
 
 	try // layer.config
@@ -75,6 +80,7 @@ Layer* WidgetLoader::deserialize(const Variant& variant, const std::string& vari
 	}
 	catch (const std::exception&)
 	{
+		errorCount++;
 		printError(variantName, "has invalid or none int field \"config\"", errorHeader, errorIndent);
 	}
 
@@ -85,10 +91,14 @@ Layer* WidgetLoader::deserialize(const Variant& variant, const std::string& vari
 		if (tryExtractVector(variant["screenPosition"], &vector.x, 3, error))
 			layer->setScreenPosition(vector);
 		else
+		{
+			errorCount++;
 			printError(variantName + ".screenPosition ", error, errorHeader, errorIndent);
+		}
 	}
 	catch (const std::exception&)
 	{
+		errorCount++;
 		printError(variantName, "has invalid or none array field \"screenPosition\"", errorHeader, errorIndent);
 	}
 
@@ -97,10 +107,14 @@ Layer* WidgetLoader::deserialize(const Variant& variant, const std::string& vari
 		if (tryExtractVector(variant["targetPosition"], &vector.x, 3, error))
 			layer->setTargetPosition(vector);
 		else
+		{
+			errorCount++;
 			printError(variantName + ".targetPosition ", error, errorHeader, errorIndent);
+		}
 	}
 	catch (const std::exception&)
 	{
+		errorCount++;
 		printError(variantName, "has invalid or none array field \"targetPosition\"", errorHeader, errorIndent);
 	}
 
@@ -122,12 +136,14 @@ Layer* WidgetLoader::deserialize(const Variant& variant, const std::string& vari
 		children = &variant["children"];
 		if (children->getType() != Variant::MAP)
 		{
+			errorCount++;
 			printError(variantName + ".children", "is not a map", errorHeader, errorIndent);
 			children = nullptr;
 		}
 	}
 	catch (const std::exception&)
 	{
+		errorCount++;
 		printError(variantName, "has invalid or none map field \"children\"", errorHeader, errorIndent);
 	}
 	if (!children)
@@ -136,6 +152,7 @@ Layer* WidgetLoader::deserialize(const Variant& variant, const std::string& vari
 		return nullptr;
 	}
 
+	std::vector<std::string> names;
 	bool hasAssociation = false;
 	for (auto it = children->getMap().begin(); it != children->getMap().end(); it++)
 	{
@@ -144,11 +161,12 @@ Layer* WidgetLoader::deserialize(const Variant& variant, const std::string& vari
 		
 		if (child.getType() != Variant::MAP)
 		{
+			errorCount++;
 			printError(variantName + "." + name, "is not a map", errorHeader, errorIndent);
 			continue;
 		}
 
-		WidgetVirtual* widget = deserialize(child, variantName + "." + name, errorHeader, errorIndent);
+		WidgetVirtual* widget = deserialize(child, variantName + "." + name, errorHeader, errorIndent, errorCount);
 
 		if (widget && name.find("unknown_") == std::string::npos)
 		{
@@ -167,12 +185,23 @@ Layer* WidgetLoader::deserialize(const Variant& variant, const std::string& vari
 			});
 	}
 
+	if (errorHeader.empty() && errorCount != 0)
+	{
+		for (unsigned int i = 0; i < names.size(); i++)
+			association.erase(names[i]);
+		std::vector<WidgetVirtual*>& children = layer->getChildrenList();
+		for (unsigned int i = 0; i < children.size(); i++)
+			delete children[i];
+		delete layer;
+		return nullptr;
+	}
+
 	return layer;
 }
 //
 
 //	Protected functions
-WidgetBoard* WidgetLoader::deserializeBoard(const Variant& variant, const std::string& variantName, std::string& errorHeader, const std::string& errorIndent)
+WidgetBoard* WidgetLoader::deserializeBoard(const Variant& variant, const std::string& variantName, std::string& errorHeader, const std::string& errorIndent, int& errorCount)
 {
 	WidgetBoard* board = new WidgetBoard();
 
@@ -182,16 +211,17 @@ WidgetBoard* WidgetLoader::deserializeBoard(const Variant& variant, const std::s
 	}
 	catch (const std::exception&)
 	{
+		errorCount++;
 		printError(variantName, "has invalid or none int field \"config\"", errorHeader, errorIndent);
 	}
 
-	tryLoadSizes(board, variant, variantName, errorHeader, errorIndent);
-	tryLoadPositions(board, variant, variantName, errorHeader, errorIndent);
-	tryLoadColors(board, variant, variantName, errorHeader, errorIndent);
+	tryLoadSizes(board, variant, variantName, errorHeader, errorIndent, errorCount);
+	tryLoadPositions(board, variant, variantName, errorHeader, errorIndent, errorCount);
+	tryLoadColors(board, variant, variantName, errorHeader, errorIndent, errorCount);
 
 	uint8_t cornerConfig = 0;
-	float borderWidth = 0.1f;
-	float borderThickness = 0.02f;
+	float borderWidth = 0.f;
+	float borderThickness = 0.f;
 
 	try // board.cornerConfig
 	{
@@ -240,7 +270,7 @@ WidgetBoard* WidgetLoader::deserializeBoard(const Variant& variant, const std::s
 
 	return board;
 }
-WidgetImage* WidgetLoader::deserializeImage(const Variant& variant, const std::string& variantName, std::string& errorHeader, const std::string& errorIndent)
+WidgetImage* WidgetLoader::deserializeImage(const Variant& variant, const std::string& variantName, std::string& errorHeader, const std::string& errorIndent, int& errorCount)
 {
 	WidgetImage* image = new WidgetImage();
 
@@ -250,12 +280,13 @@ WidgetImage* WidgetLoader::deserializeImage(const Variant& variant, const std::s
 	}
 	catch (const std::exception&)
 	{
+		errorCount++;
 		printError(variantName, "has invalid or none int field \"config\"", errorHeader, errorIndent);
 	}
 
-	tryLoadSizes(image, variant, variantName, errorHeader, errorIndent);
-	tryLoadPositions(image, variant, variantName, errorHeader, errorIndent);
-	tryLoadColors(image, variant, variantName, errorHeader, errorIndent);
+	tryLoadSizes(image, variant, variantName, errorHeader, errorIndent, errorCount);
+	tryLoadPositions(image, variant, variantName, errorHeader, errorIndent, errorCount);
+	tryLoadColors(image, variant, variantName, errorHeader, errorIndent, errorCount);
 
 	try // image.texture
 	{
@@ -263,6 +294,7 @@ WidgetImage* WidgetLoader::deserializeImage(const Variant& variant, const std::s
 	}
 	catch (const std::exception&)
 	{
+		errorCount++;
 		printError(variantName, "has invalid or none string field \"texture\"", errorHeader, errorIndent);
 	}
 
@@ -270,7 +302,7 @@ WidgetImage* WidgetLoader::deserializeImage(const Variant& variant, const std::s
 
 	return image;
 }
-WidgetLabel* WidgetLoader::deserializeLabel(const Variant& variant, const std::string& variantName, std::string& errorHeader, const std::string& errorIndent)
+WidgetLabel* WidgetLoader::deserializeLabel(const Variant& variant, const std::string& variantName, std::string& errorHeader, const std::string& errorIndent, int& errorCount)
 {
 	WidgetLabel* label = new WidgetLabel();
 
@@ -280,6 +312,7 @@ WidgetLabel* WidgetLoader::deserializeLabel(const Variant& variant, const std::s
 	}
 	catch (const std::exception&)
 	{
+		errorCount++;
 		printError(variantName, "has invalid or none int field \"config\"", errorHeader, errorIndent);
 	}
 
@@ -294,12 +327,13 @@ WidgetLabel* WidgetLoader::deserializeLabel(const Variant& variant, const std::s
 			label->setSizeChar((float)v.toInt());
 		else
 		{
+			errorCount++;
 			printError(variantName, "has none float field \"sizeChar\"", errorHeader, errorIndent);
-			label->setSizeChar(1.f);
 		}
 	}
 	catch (const std::exception&)
 	{
+		errorCount++;
 		printError(variantName, "has invalid or none float field \"sizeChar\"", errorHeader, errorIndent);
 	}
 
@@ -309,12 +343,13 @@ WidgetLabel* WidgetLoader::deserializeLabel(const Variant& variant, const std::s
 	}
 	catch (const std::exception&)
 	{
+		errorCount++;
 		printError(variantName, "has invalid or none string field \"font\"", errorHeader, errorIndent);
 	}
 
-	tryLoadSizes(label, variant, variantName, errorHeader, errorIndent);
-	tryLoadPositions(label, variant, variantName, errorHeader, errorIndent);
-	tryLoadColors(label, variant, variantName, errorHeader, errorIndent);
+	tryLoadSizes(label, variant, variantName, errorHeader, errorIndent, errorCount);
+	tryLoadPositions(label, variant, variantName, errorHeader, errorIndent, errorCount);
+	tryLoadColors(label, variant, variantName, errorHeader, errorIndent, errorCount);
 
 	uint8_t textConfig = 0;
 	try // label.textConfiguration
@@ -323,6 +358,7 @@ WidgetLabel* WidgetLoader::deserializeLabel(const Variant& variant, const std::s
 	}
 	catch (const std::exception&)
 	{
+		errorCount++;
 		printError(variantName, "has invalid or none int field \"textConfiguration\"", errorHeader, errorIndent);
 	}
 	try // label.text
@@ -331,12 +367,13 @@ WidgetLabel* WidgetLoader::deserializeLabel(const Variant& variant, const std::s
 	}
 	catch (const std::exception&)
 	{
+		label->initialize("", textConfig);
 		printError(variantName, "has invalid or none string field \"text\"", errorHeader, errorIndent);
 	}
 
 	return label;
 }
-WidgetConsole* WidgetLoader::deserializeConsole(const Variant& variant, const std::string& variantName, std::string& errorHeader, const std::string& errorIndent)
+WidgetConsole* WidgetLoader::deserializeConsole(const Variant& variant, const std::string& variantName, std::string& errorHeader, const std::string& errorIndent, int& errorCount)
 {
 	WidgetConsole* console = new WidgetConsole();
 
@@ -346,12 +383,13 @@ WidgetConsole* WidgetLoader::deserializeConsole(const Variant& variant, const st
 	}
 	catch (const std::exception&)
 	{
+		errorCount++;
 		printError(variantName, "has invalid or none int field \"config\"", errorHeader, errorIndent);
 	}
 
-	tryLoadSizes(console, variant, variantName, errorHeader, errorIndent);
-	tryLoadPositions(console, variant, variantName, errorHeader, errorIndent);
-	tryLoadColors(console, variant, variantName, errorHeader, errorIndent);
+	tryLoadSizes(console, variant, variantName, errorHeader, errorIndent, errorCount);
+	tryLoadPositions(console, variant, variantName, errorHeader, errorIndent, errorCount);
+	tryLoadColors(console, variant, variantName, errorHeader, errorIndent, errorCount);
 
 	try // console.sizeChar
 	{
@@ -364,12 +402,13 @@ WidgetConsole* WidgetLoader::deserializeConsole(const Variant& variant, const st
 			console->setSizeChar((float)v.toInt());
 		else
 		{
+			errorCount++;
 			printError(variantName, "has none float field \"sizeChar\"", errorHeader, errorIndent);
-			console->setSizeChar(1.f);
 		}
 	}
 	catch (const std::exception&)
 	{
+		errorCount++;
 		printError(variantName, "has invalid or none float field \"sizeChar\"", errorHeader, errorIndent);
 	}
 
@@ -399,6 +438,7 @@ WidgetConsole* WidgetLoader::deserializeConsole(const Variant& variant, const st
 	}
 	catch (const std::exception&)
 	{
+		errorCount++;
 		printError(variantName, "has invalid or none string field \"font\"", errorHeader, errorIndent);
 	}
 
@@ -462,7 +502,7 @@ WidgetConsole* WidgetLoader::deserializeConsole(const Variant& variant, const st
 
 	return console;
 }
-WidgetRadioButton* WidgetLoader::deserializeRadioButton(const Variant& variant, const std::string& variantName, std::string& errorHeader, const std::string& errorIndent)
+WidgetRadioButton* WidgetLoader::deserializeRadioButton(const Variant& variant, const std::string& variantName, std::string& errorHeader, const std::string& errorIndent, int& errorCount)
 {
 	WidgetRadioButton* button = new WidgetRadioButton();
 
@@ -472,12 +512,13 @@ WidgetRadioButton* WidgetLoader::deserializeRadioButton(const Variant& variant, 
 	}
 	catch (const std::exception&)
 	{
+		errorCount++;
 		printError(variantName, "has invalid or none int field \"config\"", errorHeader, errorIndent);
 	}
 
-	tryLoadSizes(button, variant, variantName, errorHeader, errorIndent);
-	tryLoadPositions(button, variant, variantName, errorHeader, errorIndent);
-	tryLoadColors(button, variant, variantName, errorHeader, errorIndent);
+	tryLoadSizes(button, variant, variantName, errorHeader, errorIndent, errorCount);
+	tryLoadPositions(button, variant, variantName, errorHeader, errorIndent, errorCount);
+	tryLoadColors(button, variant, variantName, errorHeader, errorIndent, errorCount);
 
 	try // button.sizeChar
 	{
@@ -490,12 +531,13 @@ WidgetRadioButton* WidgetLoader::deserializeRadioButton(const Variant& variant, 
 			button->setSizeChar((float)v.toInt());
 		else
 		{
+			errorCount++;
 			printError(variantName, "has none float field \"sizeChar\"", errorHeader, errorIndent);
-			button->setSizeChar(1.f);
 		}
 	}
 	catch (const std::exception&)
 	{
+		errorCount++;
 		printError(variantName, "has invalid or none float field \"sizeChar\"", errorHeader, errorIndent);
 	}
 
@@ -505,6 +547,7 @@ WidgetRadioButton* WidgetLoader::deserializeRadioButton(const Variant& variant, 
 	}
 	catch (const std::exception&)
 	{
+		errorCount++;
 		printError(variantName, "has invalid or none string field \"onTexture\"", errorHeader, errorIndent);
 	}
 
@@ -514,6 +557,7 @@ WidgetRadioButton* WidgetLoader::deserializeRadioButton(const Variant& variant, 
 	}
 	catch (const std::exception&)
 	{
+		errorCount++;
 		printError(variantName, "has invalid or none string field \"offTexture\"", errorHeader, errorIndent);
 	}
 
@@ -523,6 +567,7 @@ WidgetRadioButton* WidgetLoader::deserializeRadioButton(const Variant& variant, 
 	}
 	catch (const std::exception&)
 	{
+		errorCount++;
 		printError(variantName, "has invalid or none string field \"font\"", errorHeader, errorIndent);
 	}
 
@@ -554,7 +599,7 @@ WidgetRadioButton* WidgetLoader::deserializeRadioButton(const Variant& variant, 
 
 
 
-void WidgetLoader::tryLoadSizes(WidgetVirtual* w, const Variant& variant, const std::string& variantName, std::string& errorHeader, const std::string& errorIndent)
+void WidgetLoader::tryLoadSizes(WidgetVirtual* w, const Variant& variant, const std::string& variantName, std::string& errorHeader, const std::string& errorIndent, int& errorCount)
 {
 	glm::vec2 size;
 	std::string error;
@@ -568,7 +613,10 @@ void WidgetLoader::tryLoadSizes(WidgetVirtual* w, const Variant& variant, const 
 			oneLoaded = true;
 		}
 		else
+		{
+			errorCount++;
 			printError(variantName + ".sizeActive", error, errorHeader, errorIndent);
+		}
 	}
 	catch (const std::exception&) {}
 	
@@ -580,7 +628,10 @@ void WidgetLoader::tryLoadSizes(WidgetVirtual* w, const Variant& variant, const 
 			oneLoaded = true;
 		}
 		else
+		{
+			errorCount++;
 			printError(variantName + ".sizeCurrent", error, errorHeader, errorIndent);
+		}
 	}
 	catch (const std::exception&) {}
 
@@ -592,7 +643,10 @@ void WidgetLoader::tryLoadSizes(WidgetVirtual* w, const Variant& variant, const 
 			oneLoaded = true;
 		}
 		else
+		{
+			errorCount++;
 			printError(variantName + ".sizeDefault", error, errorHeader, errorIndent);
+		}
 	}
 	catch (const std::exception&) {}
 
@@ -604,7 +658,10 @@ void WidgetLoader::tryLoadSizes(WidgetVirtual* w, const Variant& variant, const 
 			oneLoaded = true;
 		}
 		else
+		{
+			errorCount++;
 			printError(variantName + ".sizeHover", error, errorHeader, errorIndent);
+		}
 	}
 	catch (const std::exception&) {}
 
@@ -619,14 +676,17 @@ void WidgetLoader::tryLoadSizes(WidgetVirtual* w, const Variant& variant, const 
 			oneLoaded = true;
 		}
 		else
+		{
+			errorCount++;
 			printError(variantName + ".sizeAll", error, errorHeader, errorIndent);
+		}
 	}
 	catch (const std::exception&) {}
 
 	if (!oneLoaded)
 		printError(variantName, "no size tag was found", errorHeader, errorIndent);
 }
-void WidgetLoader::tryLoadPositions(WidgetVirtual* w, const Variant& variant, const std::string& variantName, std::string& errorHeader, const std::string& errorIndent)
+void WidgetLoader::tryLoadPositions(WidgetVirtual* w, const Variant& variant, const std::string& variantName, std::string& errorHeader, const std::string& errorIndent, int& errorCount)
 {
 	glm::vec3 position;
 	std::string error;
@@ -640,7 +700,10 @@ void WidgetLoader::tryLoadPositions(WidgetVirtual* w, const Variant& variant, co
 			oneLoaded = true;
 		}
 		else
+		{
+			errorCount++;
 			printError(variantName + ".positionActive", error, errorHeader, errorIndent);
+		}
 	}
 	catch (const std::exception&) {}
 
@@ -652,7 +715,10 @@ void WidgetLoader::tryLoadPositions(WidgetVirtual* w, const Variant& variant, co
 			oneLoaded = true;
 		}
 		else
+		{
+			errorCount++;
 			printError(variantName + ".positionCurrent", error, errorHeader, errorIndent);
+		}
 	}
 	catch (const std::exception&) {}
 
@@ -664,7 +730,10 @@ void WidgetLoader::tryLoadPositions(WidgetVirtual* w, const Variant& variant, co
 			oneLoaded = true;
 		}
 		else
+		{
+			errorCount++;
 			printError(variantName + ".positionDefault", error, errorHeader, errorIndent);
+		}
 	}
 	catch (const std::exception&) {}
 
@@ -676,7 +745,10 @@ void WidgetLoader::tryLoadPositions(WidgetVirtual* w, const Variant& variant, co
 			oneLoaded = true;
 		}
 		else
+		{
+			errorCount++;
 			printError(variantName + ".positionHover", error, errorHeader, errorIndent);
+		}
 	}
 	catch (const std::exception&) {}
 
@@ -691,14 +763,20 @@ void WidgetLoader::tryLoadPositions(WidgetVirtual* w, const Variant& variant, co
 			oneLoaded = true;
 		}
 		else
+		{
+			errorCount++;
 			printError(variantName + ".positionAll", error, errorHeader, errorIndent);
+		}
 	}
 	catch (const std::exception&) {}
 
 	if (!oneLoaded)
+	{
+		errorCount++;
 		printError(variantName, "no position tag was found", errorHeader, errorIndent);
+	}
 }
-void WidgetLoader::tryLoadColors(WidgetVirtual* w, const Variant& variant, const std::string& variantName, std::string& errorHeader, const std::string& errorIndent)
+void WidgetLoader::tryLoadColors(WidgetVirtual* w, const Variant& variant, const std::string& variantName, std::string& errorHeader, const std::string& errorIndent, int& errorCount)
 {
 	glm::vec4 color;
 	std::string error;
@@ -712,7 +790,10 @@ void WidgetLoader::tryLoadColors(WidgetVirtual* w, const Variant& variant, const
 			oneLoaded = true;
 		}
 		else
+		{
+			errorCount++;
 			printError(variantName + ".colorActive", error, errorHeader, errorIndent);
+		}
 	}
 	catch (const std::exception&) {}
 
@@ -724,7 +805,10 @@ void WidgetLoader::tryLoadColors(WidgetVirtual* w, const Variant& variant, const
 			oneLoaded = true;
 		}
 		else
+		{
+			errorCount++;
 			printError(variantName + ".colorCurrent", error, errorHeader, errorIndent);
+		}
 	}
 	catch (const std::exception&) {}
 
@@ -736,7 +820,10 @@ void WidgetLoader::tryLoadColors(WidgetVirtual* w, const Variant& variant, const
 			oneLoaded = true;
 		}
 		else
+		{
+			errorCount++;
 			printError(variantName + ".colorDefault", error, errorHeader, errorIndent);
+		}
 	}
 	catch (const std::exception&) {}
 
@@ -748,7 +835,10 @@ void WidgetLoader::tryLoadColors(WidgetVirtual* w, const Variant& variant, const
 			oneLoaded = true;
 		}
 		else
+		{
+			errorCount++;
 			printError(variantName + ".colorHover", error, errorHeader, errorIndent);
+		}
 	}
 	catch (const std::exception&) {}
 
@@ -763,7 +853,10 @@ void WidgetLoader::tryLoadColors(WidgetVirtual* w, const Variant& variant, const
 			oneLoaded = true;
 		}
 		else
+		{
+			errorCount++;
 			printError(variantName + ".colorAll", error, errorHeader, errorIndent);
+		}
 	}
 	catch (const std::exception&) {}
 

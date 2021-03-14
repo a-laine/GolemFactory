@@ -258,6 +258,8 @@
     <ClCompile Include="..\..\Sources\Terrain\Chunk.cpp" />
     <ClCompile Include="..\..\Sources\Utiles\ConsoleColor.cpp" />
     <ClCompile Include="..\..\Sources\Utiles\Debug.cpp" />
+    <ClCompile Include="..\..\Sources\Utiles\DirectoryWatcher.cpp" />
+    <ClCompile Include="..\..\Sources\Utiles\FileWatcher.cpp" />
     <ClCompile Include="..\..\Sources\Utiles\GiftWrapping.cpp" />
     <ClCompile Include="..\..\Sources\Utiles\IncrementalHull.cpp" />
     <ClCompile Include="..\..\Sources\Utiles\Parser\Reader.cpp" />
@@ -369,6 +371,8 @@
     <ClInclude Include="..\..\Sources\Utiles\Assert.hpp" />
     <ClInclude Include="..\..\Sources\Utiles\ConsoleColor.h" />
     <ClInclude Include="..\..\Sources\Utiles\Debug.h" />
+    <ClInclude Include="..\..\Sources\Utiles\DirectoryWatcher.h" />
+    <ClInclude Include="..\..\Sources\Utiles\FileWatcher.h" />
     <ClInclude Include="..\..\Sources\Utiles\GiftWrapping.h" />
     <ClInclude Include="..\..\Sources\Utiles\IncrementalHull.h" />
     <ClInclude Include="..\..\Sources\Utiles\Mutex.h" />

@@ -4,6 +4,7 @@
 #include <algorithm>
 
 #include <Utiles/Assert.hpp>
+#include <Resources/Loader/ImageLoader.h>
 
 
 
@@ -154,6 +155,14 @@ void Application::closeWindow(GLFWwindow* window)
 		m_contexts.erase(itContext);
 		delete context;
 	}
+}
+
+void Application::changeIcon(const std::string& fullpath)
+{
+	int channel;
+	GLFWimage icon;
+	icon.pixels = ImageLoader::loadFromFile(fullpath, icon.width, icon.height, channel, ImageLoader::RGB_ALPHA);
+	glfwSetWindowIcon(m_mainWindow, 1, &icon);
 }
 
 void Application::GLFWErrorCallback(int error, const char* description)
