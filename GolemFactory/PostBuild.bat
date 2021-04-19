@@ -17,7 +17,7 @@ echo copy glew32.dll
 robocopy "%3\2-GLEW\lib %5" %2 glew32.dll /w:2 /log+:%2log.txt >nul
 
 echo copy assimp-vc140-mt.dll
-robocopy "%3\4-ASSIMP\lib %5\%4" %2 assimp-vc140-mt.dll /w:2 /log+:%2log.txt >nul
+robocopy "%3\4-ASSIMP\lib %5 %4" %2 assimp-vc140-mt.dll /w:2 /log+:%2log.txt >nul
 
 Rem this error is just for devellopement of this script (to avoid recompiling the project)
 Rem EXIT /B 1
