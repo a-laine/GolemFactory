@@ -447,6 +447,9 @@
     <ClCompile Include="..\..\Sources\Utiles\DirectoryWatcher.cpp">
       <Filter>Fichiers sources\Utiles</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Sources\Utiles\OpenSaveFileDialog.cpp">
+      <Filter>Fichiers sources\Utiles</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Sources\Animation\AnimationComponent.h">
@@ -792,6 +795,9 @@
       <Filter>Fichiers d%27en-tête\Utiles</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Sources\Utiles\DirectoryWatcher.h">
+      <Filter>Fichiers d%27en-tête\Utiles</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Utiles\OpenSaveFileDialog.h">
       <Filter>Fichiers d%27en-tête\Utiles</Filter>
     </ClInclude>
   </ItemGroup>

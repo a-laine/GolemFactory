@@ -19,6 +19,10 @@ class WidgetBoard : public WidgetVirtual
 			BOTTOM_RIGHT = 1 << 2,
 			BOTTOM_LEFT = 1 << 3
 		};
+		enum class BoardFlags : uint8_t
+		{
+			CAN_BE_ACTIVATED = (uint8_t)WidgetVirtual::OrphanFlags::SPECIAL
+		};
 		//
 
 		//  Default
@@ -30,6 +34,7 @@ class WidgetBoard : public WidgetVirtual
 		virtual void initialize(const float& bThickness, const float& bWidth, const uint8_t& corner = 0x00);
 		virtual void draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model) override;
 		virtual void update(const float& elapseTime) override;
+		virtual bool mouseEvent(const glm::mat4& base, const glm::vec3& ray, const float& parentscale, const bool& clicked) override;
 		//
 
 	protected:
@@ -43,5 +48,6 @@ class WidgetBoard : public WidgetVirtual
 		float borderWidth;
 		float borderThickness;
 		float updateCooldown;
+		//bool activated;
 		//
 };

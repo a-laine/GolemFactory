@@ -48,6 +48,7 @@
 #include <Scene/RaySceneQuerry.h>
 
 #include <Utiles/Debug.h>
+#include <Utiles/OpenSaveFileDialog.h>
 #include <Physics/GJK.h>
 #include <Utiles/ConsoleColor.h>
 
@@ -95,6 +96,8 @@ void initManagers();
 void picking();
 void events();
 void updates(float elapseTime);
+void Import();
+void Export();
 //
 
 
@@ -339,6 +342,25 @@ void events()
 		else if (v[i] == F11)  WidgetManager::getInstance()->setActiveHUD((WidgetManager::getInstance()->getActiveHUD() == "ModelImporter" ? "" : "ModelImporter"));
 
 		else if (v[i] == F4)   WidgetManager::getInstance()->setBoolean("wireframe", !WidgetManager::getInstance()->getBoolean("wireframe"));
+
+		else if (v[i] == CLICK_LEFT && !EventHandler::getInstance()->isActivated(CLICK_LEFT)) // released
+		{
+			auto widgets = WidgetManager::getInstance()->getActiveWidgets();
+			for (auto it = widgets.begin(); it != widgets.end(); ++it)
+			{
+				auto associations = WidgetManager::getInstance()->getWidgetAssociations(*it);
+				if (associations)
+				{
+					for (unsigned int i = 0; i < associations->size(); i++)
+					{
+						if (associations->at(i) == "ImportButton")
+							Import();
+						else if (associations->at(i) == "ExportButton")
+							Export();
+					}
+				}
+			}
+		}
 	}
 
 	if (watcher->hasChanges())
@@ -422,5 +444,25 @@ void updates(float elapseTime)
 		ffCam->setFieldOfView(angle);
 	}
 
+}
+//
+
+// 
+void Import()
+{
+	std::cout << "Import" << std::endl;
+
+	std::string filename;
+	bool success = OpenSaveFileDialog::OpenFile(filename);
+	if (success)
+	{
+		std::cout << filename << std::endl;
+	}
+
+
+}
+void Export()
+{
+	std::cout << "Export" << std::endl;
 }
 //

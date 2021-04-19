@@ -62,14 +62,14 @@
         "textConfiguration": 32, 
         "type": "LABEL"
       },
-      "unknown_3": {
+      "ImportButton": {
         "borderThickness": 0.015000,
         "borderWidth": 0.05000,
         "colorActive": [ 0.20000, 0.20000, 0.20000, 1.00000 ],
         "colorHover": [ 0.50000, 0.50000, 0.50000, 1.00000 ],
         "colorCurrent": [ 0.50000, 0.00000, 0.00000, 1.00000 ],
         "colorDefault": [ 0.50000, 0.00000, 0.00000, 1.00000 ],
-        "config": 112,
+        "config": 240,
         "cornerConfig": 3,
         "positionAll": [ -0.45000, 0.0100, 0.20000 ],
         "sizeAll": [ 0.70000, 0.15000 ],
@@ -86,14 +86,14 @@
         "textConfiguration": 32, 
         "type": "LABEL"
       },
-      "unknown_5": {
+      "ExportButton": {
         "borderThickness": 0.015000,
         "borderWidth": 0.05000,
         "colorActive": [ 0.20000, 0.20000, 0.20000, 1.00000 ],
         "colorHover": [ 0.50000, 0.50000, 0.50000, 1.00000 ],
         "colorCurrent": [ 0.00000, 0.00000, 0.50000, 1.00000 ],
         "colorDefault": [ 0.00000, 0.00000, 0.50000, 1.00000 ],
-        "config": 112,
+        "config": 240,
         "cornerConfig": 3,
         "positionAll": [ 0.45000, 0.0100, 0.20000 ],
         "sizeAll": [ 0.70000, 0.15000 ],

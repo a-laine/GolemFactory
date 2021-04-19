@@ -78,6 +78,7 @@ void WidgetManager::loadHud(const std::string& hudName)
 			}
 
 			int errorCount = 0;
+			std::map<std::string, WidgetVirtual*> associations;
 			Layer* layer = WidgetLoader::deserialize(it->second, it->first, associations, errorHeader, errorIndent, errorCount);
 			fatalErrorCount += errorCount;
 			lastFatalError = errorCount;
@@ -106,6 +107,9 @@ void WidgetManager::loadHud(const std::string& hudName)
 					layer->setTargetPosition(layer->getScreenPosition() + 0.1f * direction);
 					layer->setPosition(layer->getScreenPosition() + 0.1f * direction);
 				}
+
+				for (std::map<std::string, WidgetVirtual*>::iterator it = associations.begin(); it != associations.end(); ++it)
+					addAssociation(it->second, it->first);
 			}
 		}
 		if (!layers.empty())
@@ -206,29 +210,32 @@ void WidgetManager::update(const float& elapsedTime, const bool& clickButtonPres
 	if (clickButtonPressed)
 		for (std::set<WidgetVirtual*>::iterator it = hoverWidgetList.begin(); it != hoverWidgetList.end(); ++it)
 		{
-			if((*it)->mouseEvent(pickingBase * tmpParentList[*it]->getModelMatrix(), pickingRay, tmpParentList[*it]->getSize(), clickButtonPressed))
+			glm::mat4 model = pickingBase * tmpParentList[*it]->getModelMatrix();
+			if((*it)->mouseEvent(glm::translate(model, (*it)->getPosition()), pickingRay, tmpParentList[*it]->getSize(), clickButtonPressed))
 			{
-				activeWidgetList.insert(activeWidgetList.end(), *it);
+				activeWidgetList.insert(*it);
 				activeWidgetParentList[*it] = tmpParentList[*it];
 			}
 		}
 	
 	//	special update on active widget
-	for (std::list<WidgetVirtual*>::iterator it = activeWidgetList.begin(); it != activeWidgetList.end();)
+	std::set<WidgetVirtual*> inactiveWidgetList;
+	for (std::set<WidgetVirtual*>::iterator it = activeWidgetList.begin(); it != activeWidgetList.end(); ++it)
 	{
-		if((*it)->mouseEvent(glm::translate(pickingBase * activeWidgetParentList[*it]->getModelMatrix(), (*it)->getPosition()), pickingRay, activeWidgetParentList[*it]->getSize(), clickButtonPressed))
-			++it;
-		else 
+		if(!(*it)->mouseEvent(glm::translate(pickingBase * activeWidgetParentList[*it]->getModelMatrix(), 
+			(*it)->getPosition()), pickingRay, activeWidgetParentList[*it]->getSize(), clickButtonPressed))
 		{
-			if (hoverWidgetList.find(*it) == hoverWidgetList.end()) (*it)->setState(WidgetVirtual::State::DEFAULT);
-			else (*it)->setState(WidgetVirtual::State::HOVER);
-			it = activeWidgetList.erase(it);
+			if (hoverWidgetList.find(*it) == hoverWidgetList.end())
+				(*it)->setState(WidgetVirtual::State::DEFAULT);
+			else
+				(*it)->setState(WidgetVirtual::State::HOVER);
+			inactiveWidgetList.insert(*it);
 		}
 	}
-	for (auto it = activeWidgetParentList.begin(); it != activeWidgetParentList.end();)
+	for (std::set<WidgetVirtual*>::iterator it = inactiveWidgetList.begin(); it != inactiveWidgetList.end(); ++it)
 	{
-		if (std::find(activeWidgetList.begin(), activeWidgetList.end(), it->first) != activeWidgetList.end()) ++it;
-		else it = activeWidgetParentList.erase(it);
+		activeWidgetList.erase(*it);
+		activeWidgetParentList.erase(*it);
 	}
 
 	//	update all layers and widgets
@@ -239,15 +246,41 @@ void WidgetManager::update(const float& elapsedTime, const bool& clickButtonPres
 }
 
 
-void WidgetManager::addAssociation(WidgetVirtual* w, const std::string& associationName)
+void WidgetManager::addAssociation(WidgetVirtual* widget, const std::string& associationName)
 {
-	associations[associationName] = w;
+	associationsNameToWidget[associationName] = widget;
+
+	std::map<WidgetVirtual*, std::vector<std::string>>::iterator it = associationsWidgetToName.find(widget);
+	if (it == associationsWidgetToName.end())
+	{
+		std::vector<std::string> names;
+		names.push_back(associationName);
+		associationsWidgetToName[widget] = names;
+	}
+	else
+		it->second.push_back(associationName);
+}
+void WidgetManager::removeAssociation(WidgetVirtual* widget, const std::string& associationName)
+{
+	associationsNameToWidget.erase(associationName);
+
+	std::map<WidgetVirtual*, std::vector<std::string>>::iterator it = associationsWidgetToName.find(widget);
+	if (it != associationsWidgetToName.end())
+	{
+		std::vector<std::string> newList;
+		for (unsigned int i = 0; i < it->second.size(); i++)
+		{
+			if (it->second[i] != associationName)
+				newList.push_back(it->second[i]);
+		}
+		it->second.swap(newList);
+	}
 }
 void WidgetManager::setBoolean(const std::string& associationName, const bool& b)
 {
 	try
 	{
-		WidgetVirtual* w = associations.at(associationName);
+		WidgetVirtual* w = associationsNameToWidget.at(associationName);
 		if (w) w->setBoolean(b);
 	}
 	catch (const std::out_of_range &) {}
@@ -256,7 +289,7 @@ void WidgetManager::setString(const std::string& associationName, const std::str
 {
 	try
 	{
-		WidgetVirtual* w = associations.at(associationName);
+		WidgetVirtual* w = associationsNameToWidget.at(associationName);
 		if (w) w->setString(s);
 	}
 	catch (const std::out_of_range &) {}
@@ -265,7 +298,7 @@ void WidgetManager::append(const std::string& associationName, const std::string
 {
 	try
 	{
-		WidgetVirtual* w = associations.at(associationName);
+		WidgetVirtual* w = associationsNameToWidget.at(associationName);
 		if (w) w->append(s);
 	}
 	catch (const std::out_of_range &) {}
@@ -274,7 +307,7 @@ std::string WidgetManager::getString(const std::string& associationName)
 {
 	try
 	{
-		WidgetVirtual* w = associations.at(associationName);
+		WidgetVirtual* w = associationsNameToWidget.at(associationName);
 		if (w) return w->getString();
 	}
 	catch (const std::out_of_range &) {}
@@ -284,7 +317,7 @@ bool WidgetManager::getBoolean(const std::string& associationName)
 {
 	try
 	{
-		WidgetVirtual* w = associations.at(associationName);
+		WidgetVirtual* w = associationsNameToWidget.at(associationName);
 		if (w) return w->getBoolean();
 	}
 	catch (const std::out_of_range &) {}
@@ -297,13 +330,15 @@ void WidgetManager::removeWidget(WidgetVirtual* w)
 {
 	widgetList.erase(w);
 	hoverWidgetList.erase(w);
-	activeWidgetList.remove(w);
+	activeWidgetList.erase(w);
 	activeWidgetParentList.erase(w);
-	for (auto it = associations.begin(); it != associations.end(); )
+
+	std::map<WidgetVirtual*, std::vector<std::string>>::iterator it = associationsWidgetToName.find(w);
+	if (it != associationsWidgetToName.end())
 	{
-		if (it->second == w)
-			it = associations.erase(it);
-		else ++it;
+		for (unsigned int i = 0; i < it->second.size(); i++)
+			associationsNameToWidget.erase(it->second[i]);
+		associationsWidgetToName.erase(it);
 	}
 }
 void WidgetManager::addLayer(Layer* l) { layerList.insert(l); }
@@ -355,11 +390,10 @@ void WidgetManager::setActiveHUD(const std::string& name)
 	//	swap
 	activeHud = name;
 }
-void WidgetManager::setPickingParameters(const glm::mat4& base, const glm::vec3& ray)//, const glm::vec3& origin)
+void WidgetManager::setPickingParameters(const glm::mat4& base, const glm::vec3& ray)
 {
 	pickingRay = ray;
 	pickingBase = base;
-	//pickingOrigin = origin;
 }
 
 
@@ -367,6 +401,14 @@ std::string WidgetManager::getActiveHUD() const { return activeHud; }
 unsigned int WidgetManager::getNbDrawnWidgets() const { return widgetDrawn; }
 unsigned int WidgetManager::getNbDrawnTriangles() const { return trianglesDrawn; }
 bool WidgetManager::isUnderMouse() const { return !hoverWidgetList.empty(); }
+const std::set<WidgetVirtual*>& WidgetManager::getActiveWidgets() const { return activeWidgetList; }
+const std::vector<std::string>* WidgetManager::getWidgetAssociations(WidgetVirtual* widget)
+{
+	std::map<WidgetVirtual*, std::vector<std::string>>::iterator it = associationsWidgetToName.find(widget);
+	if (it != associationsWidgetToName.end())
+		return &(it->second);
+	else return nullptr;
+}
 //
 
 
@@ -580,7 +622,7 @@ void WidgetManager::generateDebugHud()
 	hudList["debug"].push_back(layer5);
 	hudList["debug"].push_back(layer6);
 
-	return;
+	/*return;
 
 	//	save into file
 	std::ofstream file(ResourceManager::getInstance()->getRepository() + "GUI/debug.gui", std::ofstream::out);
@@ -596,7 +638,7 @@ void WidgetManager::generateDebugHud()
 		Variant tmp = WidgetSaver::serialize(hudList["debug"][i], associations, startingUnknownIndex);
 		hud.insert("layer_" + std::to_string(i + 1), tmp);
 	}
-	writer.write(hud);
+	writer.write(hud);*/
 }
 void WidgetManager::generateHelpHud()
 {
@@ -650,7 +692,7 @@ void WidgetManager::generateHelpHud()
 	hudList["help"].push_back(layer1);
 	hudList["help"].push_back(layer2);
 
-	return;
+	/*return;
 	//	push text
 	console->append(" ");
 	console->append("Special :");
@@ -700,7 +742,7 @@ void WidgetManager::generateHelpHud()
 		Variant tmp = WidgetSaver::serialize(hudList["help"][i], associations, startingUnknownIndex);
 		hud.insert("layer_" + std::to_string(i + 1), tmp);
 	}
-	writer.write(hud);
+	writer.write(hud);*/
 }
 void WidgetManager::generateRenderingHud()
 {
@@ -835,7 +877,7 @@ void WidgetManager::generateRenderingHud()
 	hudList["rendering"].push_back(layer2);
 	hudList["rendering"].push_back(layer3);
 	
-	return;
+	/*return;
 
 	//	save into file
 	std::ofstream file(ResourceManager::getInstance()->getRepository() + "GUI/rendering.gui", std::ofstream::out);
@@ -851,6 +893,6 @@ void WidgetManager::generateRenderingHud()
 		Variant tmp = WidgetSaver::serialize(hudList["rendering"][i], associations, startingUnknownIndex);
 		hud.insert("layer_" + std::to_string(i + 1), tmp);
 	}
-	writer.write(hud);
+	writer.write(hud);*/
 }
 //

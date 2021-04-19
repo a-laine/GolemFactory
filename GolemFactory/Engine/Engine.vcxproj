@@ -262,6 +262,7 @@
     <ClCompile Include="..\..\Sources\Utiles\FileWatcher.cpp" />
     <ClCompile Include="..\..\Sources\Utiles\GiftWrapping.cpp" />
     <ClCompile Include="..\..\Sources\Utiles\IncrementalHull.cpp" />
+    <ClCompile Include="..\..\Sources\Utiles\OpenSaveFileDialog.cpp" />
     <ClCompile Include="..\..\Sources\Utiles\Parser\Reader.cpp" />
     <ClCompile Include="..\..\Sources\Utiles\Parser\Variant.cpp" />
     <ClCompile Include="..\..\Sources\Utiles\Parser\Writer.cpp" />
@@ -376,6 +377,7 @@
     <ClInclude Include="..\..\Sources\Utiles\GiftWrapping.h" />
     <ClInclude Include="..\..\Sources\Utiles\IncrementalHull.h" />
     <ClInclude Include="..\..\Sources\Utiles\Mutex.h" />
+    <ClInclude Include="..\..\Sources\Utiles\OpenSaveFileDialog.h" />
     <ClInclude Include="..\..\Sources\Utiles\Parser\Reader.h" />
     <ClInclude Include="..\..\Sources\Utiles\Parser\Variant.h" />
     <ClInclude Include="..\..\Sources\Utiles\Parser\Writer.h" />

@@ -130,6 +130,8 @@ void DirectoryWatcher::errorHandler() const
 
 size_t DirectoryWatcher::getLastModificationDate(const std::string& path, std::string* error) const
 {
+
+#ifdef GF_OS_WINDOWS
     struct stat data;
     if (stat(path.c_str(), &data) != 0)
     {
@@ -160,6 +162,12 @@ size_t DirectoryWatcher::getLastModificationDate(const std::string& path, std::s
             return std::hash<std::string>{}(std::string(timebuf));
     }
     return 0;
+
+#elif GF_OS_MACOS
+
+#elif GF_OS_LINUX
+
+#endif 
 }
 //
 

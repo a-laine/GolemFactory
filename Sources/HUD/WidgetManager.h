@@ -38,7 +38,8 @@ class WidgetManager : public Singleton<WidgetManager>
 		void loadHud(const std::string& hudName);
 		void deleteHud(const std::string& hudName);
 
-		void addAssociation(WidgetVirtual* w, const std::string& associationName);
+		void addAssociation(WidgetVirtual* widget, const std::string& associationName);
+		void removeAssociation(WidgetVirtual* widget, const std::string& associationName);
 		void setBoolean(const std::string& associationName, const bool& b);
 		void setString(const std::string& associationName, const std::string& s);
 		void append(const std::string& associationName, const std::string& s);
@@ -60,6 +61,8 @@ class WidgetManager : public Singleton<WidgetManager>
 		unsigned int getNbDrawnWidgets() const;
 		unsigned int getNbDrawnTriangles() const;
 		bool isUnderMouse() const;
+		const std::set<WidgetVirtual*>& getActiveWidgets() const;
+		const std::vector<std::string>* getWidgetAssociations(WidgetVirtual* widget);
 		//
 
 	private:
@@ -79,14 +82,15 @@ class WidgetManager : public Singleton<WidgetManager>
 		std::set<WidgetVirtual*> widgetList;
 		std::map<std::string, std::vector<Layer*> > hudList;
 		std::string activeHud;
-		std::map<std::string, WidgetVirtual*> associations;
+		std::map<std::string, WidgetVirtual*> associationsNameToWidget;
+		std::map<WidgetVirtual*, std::vector<std::string>> associationsWidgetToName;
 
 		unsigned int widgetDrawn, trianglesDrawn;
 
 		glm::vec3 pickingRay;
 		glm::mat4 pickingBase;
 		std::set<WidgetVirtual*> hoverWidgetList;
-		std::list<WidgetVirtual*> activeWidgetList;
+		std::set<WidgetVirtual*> activeWidgetList;
 		std::map<WidgetVirtual*, Layer*> activeWidgetParentList;
 
 		float lastViewportRatio;

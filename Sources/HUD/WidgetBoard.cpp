@@ -5,7 +5,8 @@
 
 //  Default
 WidgetBoard::WidgetBoard(const uint8_t& config, const std::string& shaderName) : 
-	WidgetVirtual(WidgetVirtual::WidgetType::BOARD, config | (uint8_t)WidgetVirtual::OrphanFlags::NEED_UPDATE, shaderName), cornerConfiguration(0x00), borderWidth(0.f), borderThickness(0.f), updateCooldown(0.f)
+	WidgetVirtual(WidgetVirtual::WidgetType::BOARD, config | (uint8_t)WidgetVirtual::OrphanFlags::NEED_UPDATE, shaderName), 
+	cornerConfiguration(0x00), borderWidth(0.f), borderThickness(0.f), updateCooldown(0.f)//, lastEventState(false)
 {}
 WidgetBoard::~WidgetBoard() {}
 //
@@ -79,6 +80,18 @@ void WidgetBoard::update(const float& elapseTime)
 			updateCooldown = 0.f;
 		}
 	}
+}
+bool WidgetBoard::mouseEvent(const glm::mat4& base, const glm::vec3& ray, const float& parentscale, const bool& clicked)
+{
+	if ((configuration & (uint8_t)BoardFlags::CAN_BE_ACTIVATED))
+	{
+		if (clicked && WidgetVirtual::intersect(base, ray))
+		{
+			setState(State::ACTIVE);
+			return true;
+		}
+	}
+	return false;
 }
 //
 

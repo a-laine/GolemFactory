@@ -6,7 +6,7 @@
 	},
 	"leftClick": {
 		"eventPublished": "CLICK_LEFT",
-		"configuration": [ "button", "down" ],
+		"configuration": [ "button", "down", "up" ],
 		"listeningMouse": [ 0 ]
 	},
 	"rightClick": {
