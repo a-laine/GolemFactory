@@ -50,9 +50,11 @@
 	QUICKSAVE,
 	QUICKLOAD,
 	SCREENSHOT,
+	PAUSE,
 	QUIT,
 	
 //	alternative functions (useful for debug or changing HUD)
+	ALT,
 	F1,
 	F2,
 	F3,

@@ -7,7 +7,7 @@
 
 
 //	Specialized functions : triangle
-bool Collision::collide_TrianglevsTriangle(const glm::vec3& triangle1a, const glm::vec3&triangle1b, const glm::vec3& triangle1c, const glm::vec3& triangle2a, const glm::vec3& triangle2b, const glm::vec3& triangle2c)
+bool Collision2::collide_TrianglevsTriangle(const glm::vec3& triangle1a, const glm::vec3&triangle1b, const glm::vec3& triangle1c, const glm::vec3& triangle2a, const glm::vec3& triangle2b, const glm::vec3& triangle2c)
 {
 	//	easy but overkill
 	if (collide_SegmentvsTriangle(triangle1a, triangle1b, triangle2a, triangle2b, triangle2c)) return true;
@@ -17,7 +17,7 @@ bool Collision::collide_TrianglevsTriangle(const glm::vec3& triangle1a, const gl
 	else if (collide_SegmentvsTriangle(triangle2a, triangle2c, triangle1a, triangle1b, triangle1c)) return true;
 	else  return collide_SegmentvsTriangle(triangle2b, triangle2c, triangle1a, triangle1b, triangle1c);
 }
-bool Collision::collide_TrianglevsOrientedBox(const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax)
+/*bool Collision::collide_TrianglevsOrientedBox(const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax)
 {
 	//	flat triangle
 	if (triangle1 == triangle2) return collide_SegmentvsOrientedBox(triangle1, triangle3, boxTranform, boxMin, boxMax);
@@ -64,12 +64,12 @@ bool Collision::collide_TrianglevsOrientedBox(const glm::vec3& triangle1, const 
 	else if (glm::dot(ze2, distance) > projectHalfBox(ze2, sb) + projectTriangle(ze2, edge1, edge2)) return false;
 	else if (glm::dot(ze3, distance) > projectHalfBox(ze3, sb) + projectTriangle(ze3, edge1, edge2)) return false;
 	else return true;
-}
-bool Collision::collide_TrianglevsAxisAlignedBox(const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, const glm::vec3& boxMin, const glm::vec3& boxMax)
+}*/
+bool Collision2::collide_TrianglevsAxisAlignedBox(const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, const glm::vec3& boxMin, const glm::vec3& boxMax)
 {
 	return collide_TrianglevsOrientedBox(triangle1, triangle2, triangle3, glm::mat4(1.f), boxMin, boxMax);
 }
-bool Collision::collide_TrianglevsSphere(const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, const glm::vec3& sphereCenter, const float& sphereRadius)
+bool Collision2::collide_TrianglevsSphere(const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, const glm::vec3& sphereCenter, const float& sphereRadius)
 {
 	if (triangle1 == triangle2) return collide_SegmentvsSphere(triangle1, triangle3, sphereCenter, sphereRadius);
 	else if (triangle1 == triangle3) return collide_SegmentvsSphere(triangle1, triangle2, sphereCenter, sphereRadius);
@@ -81,15 +81,15 @@ bool Collision::collide_TrianglevsSphere(const glm::vec3& triangle1, const glm::
 	glm::vec3 p = (sphereCenter - triangle1) - glm::dot(sphereCenter - triangle1, n) * n;
 
 	//	getting closest point in triangle from barycentric coordinates
-	glm::vec2 bary = getBarycentricCoordinates(u1, u2, p);
+	glm::vec2 bary = CollisionUtils::getBarycentricCoordinates(u1, u2, p);
 	if (bary.x < 0.f) bary.x = 0.f;
 	if (bary.y < 0.f) bary.y = 0.f;
 	if (bary.x + bary.y > 1.f) bary /= (bary.x + bary.y);
 
 	glm::vec3 closest = triangle1 + bary.x*u1 + bary.y*u2;
-	return collide_PointvsSphere(closest, sphereCenter, sphereRadius);
+	return false;// collide_PointvsSphere(closest, sphereCenter, sphereRadius);
 }
-bool Collision::collide_TrianglevsCapsule(const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
+bool Collision2::collide_TrianglevsCapsule(const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
 {
 	if (capsule1 == capsule2) return collide_TrianglevsSphere(triangle1, triangle2, triangle3, capsule1, capsuleRadius);
 	if (collide_TrianglevsSphere(triangle1, triangle2, triangle3, capsule1, capsuleRadius)) return true;

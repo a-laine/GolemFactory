@@ -6,7 +6,7 @@
 #include <glm/gtx/component_wise.hpp>
 
 
-Sphere::Sphere(const glm::vec3& position, const float& r) : Shape(SPHERE), center(position), radius(r) {}
+Sphere::Sphere(const glm::vec3& position, const float& r) : Shape(ShapeType::SPHERE), center(position), radius(r) {}
 Sphere Sphere::toSphere() const { return *this; }
 AxisAlignedBox Sphere::toAxisAlignedBox() const
 {
@@ -14,7 +14,7 @@ AxisAlignedBox Sphere::toAxisAlignedBox() const
 }
 Shape& Sphere::operator=(const Shape& s)
 {
-	if (s.type == Shape::SPHERE)
+	if (s.type == Shape::ShapeType::SPHERE)
 	{
 		const Sphere& sphere = *static_cast<const Sphere*>(&s);
 		center = sphere.center;
@@ -31,4 +31,12 @@ void Sphere::transform(const glm::vec3& position, const glm::vec3& scale, const 
 	radius = radius * glm::compMax(scale);
 }
 Shape* Sphere::duplicate() const { return new Sphere(*this); }
-glm::vec3 Sphere::GJKsupport(const glm::vec3& direction) const { return center + glm::normalize(direction) * radius; }
+glm::vec3 Sphere::support(const glm::vec3& direction) const { return center + glm::normalize(direction) * radius; }
+glm::mat3 Sphere::computeInertiaMatrix() const
+{
+	return glm::mat3(2.f / 5.f * radius * radius);
+}
+void Sphere::getFacingFace(const glm::vec3& direction, std::vector<glm::vec3>& points) const
+{
+	points.push_back(center + glm::normalize(direction) * radius);
+}

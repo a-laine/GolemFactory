@@ -5,7 +5,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
 
-Triangle::Triangle(const glm::vec3& a, const glm::vec3& b, const glm::vec3& c) : Shape(TRIANGLE), p1(a), p2(b), p3(c) {}
+Triangle::Triangle(const glm::vec3& a, const glm::vec3& b, const glm::vec3& c) : Shape(ShapeType::TRIANGLE), p1(a), p2(b), p3(c) {}
 Sphere Triangle::toSphere() const
 {
 	glm::vec3 u1 = p2 - p1;
@@ -35,7 +35,7 @@ AxisAlignedBox Triangle::toAxisAlignedBox() const
 }
 Shape& Triangle::operator=(const Shape& s)
 {
-	if (s.type == Shape::TRIANGLE)
+	if (s.type == Shape::ShapeType::TRIANGLE)
 	{
 		const Triangle& triangle = *static_cast<const Triangle*>(&s);
 		p1 = triangle.p1;
@@ -54,7 +54,7 @@ void Triangle::transform(const glm::vec3& position, const glm::vec3& scale, cons
 	p3 = glm::vec3(m * glm::vec4(p3, 1.f));
 }
 Shape* Triangle::duplicate() const { return new Triangle(*this); }
-glm::vec3 Triangle::GJKsupport(const glm::vec3& direction) const
+glm::vec3 Triangle::support(const glm::vec3& direction) const
 {
 	float a = glm::dot(p1, direction);
 	float b = glm::dot(p2, direction);
@@ -63,4 +63,10 @@ glm::vec3 Triangle::GJKsupport(const glm::vec3& direction) const
 	if (a > b && a > c) return p1;
 	else if (b > a && b > c) return p2;
 	else return p3;
+}
+void Triangle::getFacingFace(const glm::vec3& direction, std::vector<glm::vec3>& points) const
+{
+	points.push_back(p1);
+	points.push_back(p2);
+	points.push_back(p3);
 }

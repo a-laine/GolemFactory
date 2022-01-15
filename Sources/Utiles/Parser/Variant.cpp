@@ -49,7 +49,7 @@ Variant::Variant(const float& var) : type(Variant::FLOAT) {
 Variant::Variant(const double& var) : type(Variant::DOUBLE) {
     value.Double=var; }
 
-Variant::Variant(const std::string& var) : type(Variant::STRING) {
+Variant::Variant(const std::string& var, bool asCodeBlock) : type(asCodeBlock ? Variant::CODEBLOCK : Variant::STRING) {
     value.String = new std::string(var); }
 
 Variant::Variant(const char* var) : type(Variant::STRING) {
@@ -99,7 +99,7 @@ float Variant::toFloat() const {
 
 std::string Variant::toString() const
 {
-    if(type!=Variant::STRING)
+    if (type != Variant::STRING && type != Variant::CODEBLOCK)
 		throw std::logic_error("Variant::toString : wrong type");
     return *value.String;
 }
@@ -456,3 +456,9 @@ Variant& Variant::insert(const std::string& key, const Variant &val)
     return (*value.Map)[key];
 }
 
+void Variant::setAsCodeBlock(const std::string& source)
+{
+    setToNull();
+    type = Variant::CODEBLOCK;
+    value.String = new std::string(source);
+}

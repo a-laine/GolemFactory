@@ -1,22 +1,173 @@
-#include "CollisionSphere.h"
 #include "CollisionUtils.h"
-#include "CollisionTriangle.h"
+#include <Physics/Collision.h>
 
-#include <glm/gtx/norm.hpp>
-#include <glm/gtx/transform.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/component_wise.hpp>
+//#include <glm/gtx/norm.hpp>
+//#include <glm/gtx/transform.hpp>
+//#include <glm/gtc/matrix_transform.hpp>
+//#include <glm/gtx/component_wise.hpp>
 
 //	Specialized functions : sphere
-bool Collision::collide_SpherevsSphere(const glm::vec3& sphere1Center, const float& sphere1Radius, const glm::vec3& sphere2Center, const float& sphere2Radius)
+bool Collision::collide_SpherevsSphere(const glm::vec3& sphere1Center, const float& sphere1Radius, const glm::vec3& sphere2Center, const float& sphere2Radius, CollisionReport* report)
 {
-	return glm::length2(sphere2Center - sphere1Center) <= (sphere1Radius + sphere2Radius)*(sphere1Radius + sphere2Radius);
+	glm::vec3 v = sphere2Center - sphere1Center;
+	float radiusSum = sphere1Radius + sphere2Radius;
+	float vv = glm::length2(v);
+
+	if (vv > radiusSum * radiusSum)
+		return false;
+	else
+	{
+		if (report)
+		{
+			float length = glm::sqrt(vv);
+			report->collision = true;
+			report->depths.push_back(radiusSum - length);
+
+			if (length > COLLISION_EPSILON)
+				report->normal = v / length;
+			else
+				report->normal = glm::vec3(0, 1, 0);
+
+			report->points.push_back(sphere1Center + sphere1Radius * report->normal);
+		}
+		return true;
+	}
 }
-bool Collision::collide_SpherevsCapsule(const glm::vec3& sphereCenter, const float& sphereRadius, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
+
+bool Collision::collide_SpherevsCapsule(const glm::vec3& sphereCenter, const float& sphereRadius, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius, CollisionReport* report)
 {
-	return glm::length2(sphereCenter - getSegmentClosestPoint(capsule1, capsule2, sphereCenter)) < (sphereRadius + capsuleRadius)*(sphereRadius + capsuleRadius);
+	glm::vec3 closest = CollisionUtils::getSegmentClosestPoint(capsule1, capsule2, sphereCenter);
+	float radiusSum = sphereRadius + capsuleRadius;
+	glm::vec3 v = closest - sphereCenter;
+	float vv = glm::length2(v);
+
+	if (vv > radiusSum * radiusSum)
+		return false;
+	else
+	{
+		if (report)
+		{
+			float length = glm::sqrt(vv);
+			report->collision = true;
+			report->depths.push_back(radiusSum - length);
+
+			if (length > COLLISION_EPSILON)
+				report->normal = v / length;
+			else
+			{
+				glm::vec3 s = capsule1 - capsule2;
+				report->normal = abs(s.x) > abs(s.z) ? glm::vec3(-s.y, s.x, 0.0) : glm::vec3(0.0, -s.z, s.y);
+				report->normal = glm::normalize(report->normal);
+			}
+			report->points.push_back(sphereCenter + sphereRadius * report->normal);
+		}
+		return true;
+	}
 }
-bool Collision::collide_SpherevsHull(const glm::vec3& sphereCenter, const float& sphereRadius, const std::vector<glm::vec3>& hullPoints, const std::vector<glm::vec3>& hullNormals, const std::vector<unsigned short>& hullFaces, const glm::mat4& hullBase)
+bool Collision::collide_CapsulevsSphere(const glm::vec3& sphereCenter, const float& sphereRadius, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius, CollisionReport* report)
+{
+	glm::vec3 closest = CollisionUtils::getSegmentClosestPoint(capsule1, capsule2, sphereCenter);
+	float radiusSum = sphereRadius + capsuleRadius;
+	glm::vec3 v = sphereCenter - closest;
+	float vv = glm::length2(v);
+
+	if (vv > radiusSum * radiusSum)
+		return false;
+	else
+	{
+		if (report)
+		{
+			float length = glm::sqrt(vv);
+			report->collision = true;
+			report->depths.push_back(radiusSum - length);
+
+			if (length > COLLISION_EPSILON)
+				report->normal = v / length;
+			else
+			{
+				glm::vec3 s = capsule1 - capsule2;
+				report->normal = abs(s.x) > abs(s.z) ? glm::vec3(-s.y, s.x, 0.0) : glm::vec3(0.0, -s.z, s.y);
+				report->normal = glm::normalize(report->normal);
+			}
+			report->points.push_back(closest + capsuleRadius * report->normal);
+		}
+		return true;
+	}
+}
+
+bool Collision::collide_AxisAlignedBoxvsSphere(const glm::vec3& boxMin, const glm::vec3& boxMax, const glm::vec3& sphereCenter, const float& sphereRadius, CollisionReport* report)
+{
+	if (Collision::collide_AxisAlignedBoxvsPoint(sphereCenter, boxMin, boxMax, report))
+	{
+		if (report)
+			report->depths.back() += sphereRadius;
+		return true;
+	}
+
+	glm::vec3 center = 0.5f * (boxMax + boxMin);
+	glm::vec3 size = 0.5f * glm::abs(boxMax - boxMin);
+	glm::vec3 p = sphereCenter - center;
+	glm::vec3 closest = center + glm::clamp(p, -size, size);
+	glm::vec3 v = sphereCenter - closest;
+	float vv = glm::length2(v);
+
+	if (vv > sphereRadius * sphereRadius)
+		return false;
+	else
+	{
+		if (report)
+		{
+			float length = glm::sqrt(vv);
+			report->collision = true;
+			report->depths.push_back(sphereRadius - length);
+			report->points.push_back(closest);
+
+			if (length > COLLISION_EPSILON)
+				report->normal = v / length;
+			else
+				report->normal = glm::normalize(closest - center);
+		}
+		return true;
+	}
+}
+bool Collision::collide_SpherevsAxisAlignedBox(const glm::vec3& boxMin, const glm::vec3& boxMax, const glm::vec3& sphereCenter, const float& sphereRadius, CollisionReport* report)
+{
+	if (Collision::collide_PointvsAxisAlignedBox(sphereCenter, boxMin, boxMax, report))
+	{
+		if (report)
+			report->depths.back() += sphereRadius;
+		return true;
+	}
+
+	glm::vec3 center = 0.5f * (boxMax + boxMin);
+	glm::vec3 size = 0.5f * glm::abs(boxMax - boxMin);
+	glm::vec3 p = sphereCenter - center;
+	glm::vec3 closest = center + glm::clamp(p, -size, size);
+	glm::vec3 v = closest - sphereCenter;
+	float vv = glm::length2(v);
+
+	if (vv > sphereRadius * sphereRadius)
+		return false;
+	else
+	{
+		if (report)
+		{
+			float length = glm::sqrt(vv);
+			report->collision = true;
+			report->depths.push_back(sphereRadius - length);
+
+			if (length > COLLISION_EPSILON)
+				report->normal = v / length;
+			else
+				report->normal = glm::normalize(center - closest);
+			report->points.push_back(sphereCenter + report->depths.back() * report->normal);
+		}
+		return true;
+	}
+}
+
+
+/*bool Collision::collide_SpherevsHull(const glm::vec3& sphereCenter, const float& sphereRadius, const std::vector<glm::vec3>& hullPoints, const std::vector<glm::vec3>& hullNormals, const std::vector<unsigned short>& hullFaces, const glm::mat4& hullBase, CollisionReport* report)
 {
 	struct Triangle
 	{
@@ -43,5 +194,5 @@ bool Collision::collide_SpherevsHull(const glm::vec3& sphereCenter, const float&
 			return true;
 	}
 	return false;
-}
+}*/
 //

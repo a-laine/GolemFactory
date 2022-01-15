@@ -49,6 +49,10 @@ class SceneManager
 		void getEntities(VirtualSceneQuerry* collisionTest, VirtualEntityCollector* entityCollector);
 		//
 
+		//	Debug
+		void draw();
+		//
+
 	private:
 		//	Miscellaneous
 		struct InstanceTrack

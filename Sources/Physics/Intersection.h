@@ -1,6 +1,6 @@
 #pragma once
 
-#include "BoundingVolume.h"
+/*#include "BoundingVolume.h"
 
 #include "SpecificIntersection/IntersectionPoint.h"
 #include "SpecificIntersection/IntersectionSegment.h"
@@ -14,4 +14,4 @@ namespace Intersection
 {
 	Contact intersect(const Shape& a, const Shape& b);
 	int debugUnitaryTest(const int& verboseLevel = 0, const Hull* testHull = nullptr);
-}
+}*/

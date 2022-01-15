@@ -21,7 +21,7 @@ bool RayEntityCollector::operator() (Entity* entity)
 	//	first pass test -> test ray vs object OBB or capsules
 	if (animatable)
 	{
-		glm::mat4 model = entity->getMatrix();
+		glm::mat4 model = entity->getTransformMatrix();
 		float scale = glm::compMax(entity->getScale());
 		const std::vector<glm::mat4> pose = entity->getComponent<SkeletonComponent>()->getPose();
 		const std::vector<glm::ivec2>& segments = entity->getComponent<SkeletonComponent>()->getSegmentsIndex();
@@ -42,14 +42,15 @@ bool RayEntityCollector::operator() (Entity* entity)
 	}
 	else
 	{
-		if (!Collision::collide(Segment(position, position + distance * direction), *entity->getGlobalBoundingShape()))
+		Segment ray(position, position + distance * direction);
+		if (!Collision::collide(&ray, entity->getGlobalBoundingShape()))
 			return false;
 	}
 
 	//	second test -> test ray vs all object triangles
 	const std::vector<glm::vec3>& vertices = *mesh->getVertices();
 	const std::vector<unsigned short>& faces = *mesh->getFaces();
-	glm::mat4 model = entity->getMatrix();
+	glm::mat4 model = entity->getTransformMatrix();
 	float collisionDistance = std::numeric_limits<float>::max();
 
 	if (animatable)

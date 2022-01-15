@@ -180,7 +180,7 @@ void Renderer::render(CameraComponent* renderCam)
 			shader = comp->getShader()->getInstanciable();
 			Mesh* m = comp->getMesh();
 			std::vector<glm::mat4>& batch = groupBatches[shader][m];
-			batch.push_back(object->getMatrix());
+			batch.push_back(object->getTransformMatrix());
 			if (batch.size() >= BATCH_SIZE)
 			{
 				drawInstancedObject(shader, m, batch, &view[0][0], &projection[0][0]);

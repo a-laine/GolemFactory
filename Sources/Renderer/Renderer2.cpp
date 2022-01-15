@@ -46,7 +46,7 @@ void Renderer::drawObject(Entity* object, const float* view, const float* projec
 	if (!shaderToUse) 
 		shaderToUse = drawableComp->getShader();
 
-	loadMVPMatrix(shaderToUse, &object->getMatrix()[0][0], view, projection);
+	loadMVPMatrix(shaderToUse, &object->getTransformMatrix()[0][0], view, projection);
 	if (!shaderToUse) 
 		return;
 

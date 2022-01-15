@@ -5,6 +5,7 @@
 #include "SceneManager.h"
 #include <Utiles/Assert.hpp>
 #include <Physics/Swept.h>
+#include <Utiles/Debug.h>
 
 
 
@@ -206,12 +207,12 @@ glm::vec3 SceneManager::getObjectSize(const Entity* entity) const
 	else
 	{
 		const Shape* Shape = entity->getGlobalBoundingShape();
-		if (Shape->type == Shape::ORIENTED_BOX)
+		if (Shape->type == Shape::ShapeType::ORIENTED_BOX)
 		{
 			const OrientedBox& box = *static_cast<const OrientedBox*>(Shape);
 			return box.max - box.min;
 		}
-		else if (Shape->type == Shape::AXIS_ALIGNED_BOX)
+		else if (Shape->type == Shape::ShapeType::AXIS_ALIGNED_BOX)
 		{
 			const AxisAlignedBox& box = *static_cast<const AxisAlignedBox*>(Shape);
 			return box.max - box.min;
@@ -226,6 +227,18 @@ glm::vec3 SceneManager::getObjectSize(const Entity* entity) const
 }
 
 
+void SceneManager::draw()
+{
+	Debug::getInstance()->color = Debug::black;
+	VirtualSceneQuerry getAllTest;
+	getSceneNodes(&getAllTest);
+	const std::vector<const NodeVirtual*>& nodes = getAllTest.getResult();
+	for (const NodeVirtual* node : nodes)
+	{
+		if (node->getObjectCount() != 0)
+			node->draw();
+	}
+}
 
 //	Physics engine related
 /*NodeVirtual* SceneManager::addSwept(Swept* object)

@@ -41,6 +41,11 @@
 		"listeningKey": [ 256 ]
 	},
 
+	"ALT" : {
+		"eventPublished": "ALT",
+		"configuration": [ "button"],
+		"listeningKey": [ 342 ]
+	},
 	"F3": {
 		"eventPublished": "F3",
 		"configuration": [ "button", "down" ],

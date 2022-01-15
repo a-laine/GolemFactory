@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "RigidBody.h"
+#include "Shapes/Shape.h"
 
 class Entity;
 class RigidBody;
@@ -18,15 +19,20 @@ class CollisionReport
 		//
 
 		// Public Methode
-		void Clear();
+		void clear();
 		//
 
 		// base infos
-		bool collision;					// if the two objects are in collision
+		bool collision;
+		bool computeManifoldContacts;	
 		RigidBody *body1, *body2;		
 		Entity *entity1, *entity2;
+		Shape *shape1, *shape2;
 
-		// GJK / EPA output
-		glm::vec3 contactPoint1, contactPoint2;
-		glm::vec3 normal1, normal2;
+		glm::vec3 normal;
+		std::vector<glm::vec3> points;
+		std::vector<float> depths;
+
+		std::vector<glm::vec3> shape1face;
+		std::vector<glm::vec3> shape2face;
 };

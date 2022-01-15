@@ -3,7 +3,7 @@
 #include <unordered_map>
 
 #include "Collision.h"
-#include "Intersection.h"
+#include "Constraint.h"
 #include "Utiles/Singleton.h"
 #include "Resources/Mesh.h"
 #include "Scene/BoxSceneQuerry.h"
@@ -15,19 +15,30 @@
 class Physics
 {
 	public:
+		//	Debug
+		static bool drawSweptBoxes;
+		static bool drawClustersAABB; 
+		static bool drawCollisions;
+		//
+
 		//  Default
 		Physics();
 		~Physics();
 		//
 
 		//	Public functions
-		void stepSimulation(const float& elapsedTime, SceneManager* s);
+		void stepSimulation(const float& elapsedTime, SceneManager* scene);
+
+		void debugDraw();
+		void drawImGui();
 		//
 
 		//	Set / get ...
 		void setGravity(const glm::vec3& g);
+		void setDefaultFriction(const float& f);
 
 		glm::vec3 getGravity() const;
+		float getDefaultFriction() const;
 
 		void addMovingEntity(Entity* e);
 		//
@@ -45,8 +56,15 @@ class Physics
 			private:
 				void getNeighbours(Entity* node, std::vector<Entity*>& result);
 
-				std::set<Entity*> nodes;
 				std::map<Entity*, std::pair<std::set<Entity*>, bool> > graph;
+		};
+		class Cluster
+		{
+			public:
+				std::vector<Entity*> dynamicEntities;
+				std::vector<RigidBody*> bodies;
+				std::vector<Entity*> staticEntities;
+				std::vector<Constraint> constraints;
 		};
 		//
 
@@ -54,32 +72,35 @@ class Physics
 		void predictTransform(const float& elapsedTime);
 		void computeBoundingShapesAndDetectPairs(const float& elapsedTime, SceneManager* scene);
 		void computeClusters();
-		
+		void createConstraint(const unsigned int& clusterIndex, const float& deltaTime);
 		void clearTempoaryStruct(SceneManager* scene);
 		//
 
 		//  Solveurs
-		void impactSolver(const Intersection::Contact& contact, RigidBody* rb1, RigidBody* rb2, const glm::vec3& actionLine);
-		void discreteSolver(const std::pair<std::vector<Entity*>, std::vector<Entity*> >& cluster);
-		void continuousSolver(const std::pair<std::vector<Entity*>, std::vector<Entity*> >& cluster);
-		void supersamplingSolver(const std::pair<std::vector<Entity*>, std::vector<Entity*> >& cluster);
+		void solveConstraint(const unsigned int& clusterIndex, const float& deltaTime);
 		//
 
 		//	Usefull functions
 		RigidBody::SolverType getSolverType(const std::vector<Entity*>& cluster);
-		/*Mesh* extractMesh(Entity* entity) const;
-		bool extractIsAnimatable(Entity* entity) const;*/
+		//void createReportConstraints(Cluster& cluster, CollisionReport& report);
 		//
 
 		//	Attributes
 		glm::vec3 gravity;
+		float defaultFriction;
 		std::set<Entity*> movingEntity;
-		BoxSceneQuerry proximityTest;
-		VirtualEntityCollector proximityList;
-		std::vector<Swept*> sweptList;
-		std::set<std::pair<Entity*, Entity*> > collidingPairs;
-		std::vector<std::pair<std::vector<Entity*>, std::vector<Entity*> > > clusters;
-		std::vector<Intersection::Contact> collisionList;
-		EntityGraph clusterFinder;
+
+			/// Broad phase
+			BoxSceneQuerry proximityTest;
+			VirtualEntityCollector proximityList;
+			std::vector<Swept*> sweptList;
+
+			/// Second broad phase and cluster computing
+			std::set<std::pair<Entity*, Entity*> > dynamicPairs;
+			std::map<Entity*, std::vector<Entity*> > dynamicCollisions;
+			std::map<Entity*, std::vector<Entity*> > staticCollisions;
+			std::vector<Cluster> clusters;
+			EntityGraph clusterFinder;
+
 		//
 };

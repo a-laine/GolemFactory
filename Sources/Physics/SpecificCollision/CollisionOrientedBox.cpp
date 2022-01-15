@@ -4,7 +4,7 @@
 
 
 //	Specialized functions : oriented box
-bool Collision::collide_OrientedBoxvsOrientedBox(const glm::mat4& box1Tranform, const glm::vec3& box1Min, const glm::vec3& box1Max, const glm::mat4& box2Tranform, const glm::vec3& box2Min, const glm::vec3& box2Max)
+/*bool Collision::collide_OrientedBoxvsOrientedBox(const glm::mat4& box1Tranform, const glm::vec3& box1Min, const glm::vec3& box1Max, const glm::mat4& box2Tranform, const glm::vec3& box2Min, const glm::vec3& box2Max)
 {
 	//	axis to check in absolute base
 	glm::vec3 xb1 = glm::vec3(box1Tranform[0]);
@@ -53,8 +53,8 @@ bool Collision::collide_OrientedBoxvsOrientedBox(const glm::mat4& box1Tranform, 
 bool Collision::collide_OrientedBoxvsAxisAlignedBox(const glm::mat4& box1Tranform, const glm::vec3& box1Min, const glm::vec3& box1Max, const glm::vec3& box2Min, const glm::vec3& box2Max)
 {
 	return collide_OrientedBoxvsOrientedBox(box1Tranform, box1Min, box1Max, glm::mat4(1.f), box2Min, box2Max);
-}
-bool Collision::collide_OrientedBoxvsSphere(const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax, const glm::vec3& sphereCenter, const float& sphereRadius)
+}*/
+bool Collision2::collide_OrientedBoxvsSphere(const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax, const glm::vec3& sphereCenter, const float& sphereRadius)
 {
 	//	for help read https://github.com/gszauer/GamePhysicsCookbook/blob/master/Code/Geometry3D.cpp
 	//	line 165
@@ -83,9 +83,9 @@ bool Collision::collide_OrientedBoxvsSphere(const glm::mat4& boxTranform, const 
 	else if (d < -bsize.z) d = -bsize.z;
 	boxClosestPoint += d* bz;
 
-	return collide_PointvsSphere(boxClosestPoint, sphereCenter, sphereRadius);
+	return false;// collide_PointvsSphere(boxClosestPoint, sphereCenter, sphereRadius);
 }
-bool Collision::collide_OrientedBoxvsCapsule(const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
+bool Collision2::collide_OrientedBoxvsCapsule(const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
 {
 	if (capsule1 == capsule2) return collide_OrientedBoxvsSphere(boxTranform, boxMin, boxMax, capsule1, capsuleRadius);
 
@@ -96,25 +96,25 @@ bool Collision::collide_OrientedBoxvsCapsule(const glm::mat4& boxTranform, const
 	glm::vec3 bz = glm::vec3(boxTranform[2]);	// box local z
 
 	glm::vec3 closestBoxPoint = bcenter;
-	glm::vec3 closestSegmentPoint = getSegmentClosestPoint(capsule1, capsule2, closestBoxPoint);
+	glm::vec3 closestSegmentPoint = CollisionUtils::getSegmentClosestPoint(capsule1, capsule2, closestBoxPoint);
 
 	float d = glm::dot(bx, closestSegmentPoint - closestBoxPoint);
 	if (d > bsize.x) d = bsize.x;
 	else if (d < -bsize.x) d = -bsize.x;
 	closestBoxPoint += d* bx;
-	closestSegmentPoint = getSegmentClosestPoint(capsule1, capsule2, closestBoxPoint);
+	closestSegmentPoint = CollisionUtils::getSegmentClosestPoint(capsule1, capsule2, closestBoxPoint);
 
 	d = glm::dot(by, closestSegmentPoint - closestBoxPoint);
 	if (d > bsize.y) d = bsize.y;
 	else if (d < -bsize.y) d = -bsize.y;
 	closestBoxPoint += d* by;
-	closestSegmentPoint = getSegmentClosestPoint(capsule1, capsule2, closestBoxPoint);
+	closestSegmentPoint = CollisionUtils::getSegmentClosestPoint(capsule1, capsule2, closestBoxPoint);
 
 	d = glm::dot(bz, closestSegmentPoint - closestBoxPoint);
 	if (d > bsize.z) d = bsize.z;
 	else if (d < -bsize.z) d = -bsize.z;
 	closestBoxPoint += d* bz;
-	closestSegmentPoint = getSegmentClosestPoint(capsule1, capsule2, closestBoxPoint);
+	closestSegmentPoint = CollisionUtils::getSegmentClosestPoint(capsule1, capsule2, closestBoxPoint);
 
 	return glm::length(closestBoxPoint - closestSegmentPoint) <= capsuleRadius;
 }

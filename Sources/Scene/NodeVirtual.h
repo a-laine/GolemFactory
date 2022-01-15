@@ -74,6 +74,7 @@ class NodeVirtual
 		//	Entities / objects related
 		void addObject(Entity* object);
 		bool removeObject(Entity* object);
+		unsigned int  getObjectCount() const;
 		const std::vector<Entity*>& getEntitiesList() const;
 		//
 
@@ -86,6 +87,7 @@ class NodeVirtual
 
 		//	Debug
 		Entity* getDebugCube();
+		void draw() const;
 		//
 
 		//	Attributes

@@ -1,6 +1,7 @@
 #include "NodeVirtual.h"
 #include <World/World.h>
 #include <Utiles/Assert.hpp>
+#include <Utiles/Debug.h>
 
 #include <glm/gtx/component_wise.hpp>
 #include <algorithm>
@@ -35,8 +36,8 @@ void NodeVirtual::init(const glm::vec3 bbMin, const glm::vec3 bbMax, const glm::
 	halfSize = (bbMax - bbMin) * 0.5f;
 	allowanceSize = glm::compMin(bbMax - bbMin) * ALLOWANCE_SIZE_FACTOR;
 
-	if(debugWorld)
-		debugCube = debugWorld->getEntityFactory().createObject("cube", position, halfSize, glm::quat(1, 0, 0, 0));
+	/*if(debugWorld)
+		debugCube = debugWorld->getEntityFactory().createObject("cube", position, halfSize, glm::quat(1, 0, 0, 0));*/
 
 	if(depth > 0)
 	{
@@ -132,7 +133,6 @@ void NodeVirtual::addObject(Entity* object)
 	objectList.push_back(object);
 	object->getParentWorld()->getOwnership(object);
 }
-
 bool NodeVirtual::removeObject(Entity* object)
 {
 	auto it = std::find(objectList.begin(), objectList.end(), object);
@@ -145,6 +145,10 @@ bool NodeVirtual::removeObject(Entity* object)
 		return true;
 	}
 	return false;
+}
+unsigned int  NodeVirtual::getObjectCount() const
+{
+	return (unsigned int)objectList.size();
 }
 
 void NodeVirtual::addNode(NodeVirtual* node)
@@ -254,3 +258,9 @@ const std::vector<Entity*>& NodeVirtual::getEntitiesList() const { return object
 
 
 Entity* NodeVirtual::getDebugCube() { return debugCube; }
+
+void NodeVirtual::draw() const 
+{
+	Debug::getInstance()->color = objectList.empty() ? Debug::black : Debug::red;
+	Debug::getInstance()->drawWiredCube(glm::mat4(1.f), getBBMin(), getBBMax());
+}

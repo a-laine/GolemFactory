@@ -1,5 +1,5 @@
 #include "GJK.h"
-#include "SpecificCollision/CollisionPoint.h"
+//#include "SpecificCollision/CollisionPoint.h"
 #include "SpecificCollision/CollisionUtils.h"
 
 
@@ -10,517 +10,587 @@
 #define MAX_ITERATION 50
 #define EPSILON 0.00001f
 
-int GJK::max_iteration = 50;
+//int GJK::max_iteration = 50;
 bool GJK::verbose = false;
-bool GJK::gizmos = false;
+bool GJK::gizmos = true;
 
 //	Public functions
-bool GJK::collide(const Shape& a, const Shape& b, std::vector<std::pair<glm::vec3, glm::vec3>>* shapePair)
+bool GJK::collide(const Shape& a, const Shape& b, CollisionReport* report)
 {
-	// map optionnal result
-	std::vector<std::pair<glm::vec3, glm::vec3>> tmp;
-	std::vector<std::pair<glm::vec3, glm::vec3>>& simplexPoints = shapePair ? *shapePair : tmp;
-
-	// initialize loop
+	// initialize GJK search
 	glm::vec3 direction = glm::vec3(1, 0, 0);
-	simplexPoints = { {a.GJKsupport(direction), b.GJKsupport(-direction)} };
-	glm::vec3 S = simplexPoints[0].first - simplexPoints[0].second;
-	std::vector<glm::vec3> simplex;
+	std::vector<MinkowskiPoint> simplex;
 	simplex.reserve(4);
-	simplex.push_back(S);
-	direction = -direction;
 
 	// iterate
-	for(unsigned int i=0; i < MAX_ITERATION; i++)
+	for (unsigned int i = 0; i < MAX_ITERATION; i++)
 	{
-		glm::vec3 A = a.GJKsupport(direction);
-		glm::vec3 B = b.GJKsupport(-direction);
-		S = A - B;
-
-		if (!isNewPoint(S, simplex))
+		MinkowskiPoint S = MinkowskiPoint(a.support(direction), b.support(-direction));
+		if (!isNewPoint(simplex, S))
 			return false;
 
 		simplex.push_back(S);
-		simplexPoints.push_back({ A, B });
 
-		if (glm::dot(S, direction) < 0)
+		if (glm::dot(S.p, direction) < 0)
 			return false;
-		if (containOrigin(simplex))
-			return true;
 
-		prepareSimplex(simplex, direction, simplexPoints);
+		if (containOrigin(simplex, report == nullptr))
+		{
+			if (report)
+			{
+				report->collision = true;
+				report->shape1 = (Shape*)&a;
+				report->shape2 = (Shape*)&b;
+
+				if (simplex.size() >= 4)
+				{
+					expandSimplex(a, b, report, simplex);
+				}
+				else
+				{
+					std::cout << "WTF" << std::endl;// error
+				}
+			}
+			return true;
+		}
+
+		// simplex simplify and direction compute
+		switch (simplex.size())
+		{
+			case 1:
+				direction = -simplex[0].p;
+				break;
+
+			case 2:
+				{
+					if (glm::dot(simplex[1].p - simplex[0].p, -simplex[0].p) > 0)
+						direction = glm::cross(glm::cross(simplex[1].p - simplex[0].p, -simplex[0].p), simplex[1].p - simplex[0].p);
+					else
+					{
+						direction = -simplex[0].p;
+						simplex.pop_back();
+						//simplex = std::vector<MinkowskiPoint>{ simplex[0] };
+					}
+				}
+				break;
+
+			case 3:
+				{
+					//	simplex = { C, B, A}
+					glm::vec3 AB = simplex[1].p - simplex[2].p;
+					glm::vec3 AC = simplex[0].p - simplex[2].p;
+					glm::vec3 n = glm::cross(AB, AC);
+
+					if (glm::dot(glm::cross(n, AC), -simplex[2].p) > 0)
+					{
+						if (glm::dot(AC, -simplex[2].p) > 0)
+						{
+							direction = glm::cross(glm::cross(AC, -simplex[2].p), AC);
+							simplex[1] = simplex[2];
+							simplex.pop_back();
+							//simplex = std::vector<MinkowskiPoint>{ simplex[0], simplex[2] };
+						}
+						else
+						{
+							if (glm::dot(AB, -simplex[2].p) > 0)
+							{
+								direction = glm::cross(glm::cross(AB, -simplex[2].p), AB);
+								simplex[0] = simplex[1];
+								simplex[1] = simplex[2];
+								simplex.pop_back();
+								//simplex = std::vector<MinkowskiPoint>{ simplex[1], simplex[2] };
+							}
+							else
+							{
+								MinkowskiPoint p = simplex[2];
+								simplex.clear();
+								simplex.push_back(p);
+								direction = -simplex[2].p;
+								//simplex = std::vector<MinkowskiPoint>{ simplex[2] };
+							}
+						}
+					}
+					else
+					{
+						if (glm::dot(glm::cross(AB, n), -simplex[2].p) > 0)
+						{
+							if (glm::dot(AB, -simplex[2].p) > 0)
+							{
+								direction = glm::cross(glm::cross(AB, -simplex[2].p), AB);
+								simplex[0] = simplex[1];
+								simplex[1] = simplex[2];
+								simplex.pop_back();
+								//simplex = std::vector<MinkowskiPoint>{ simplex[1], simplex[2] };
+							}
+							else
+							{
+								MinkowskiPoint p = simplex[2];
+								simplex.clear();
+								simplex.push_back(p);
+								direction = -p.p;
+								//simplex = std::vector<MinkowskiPoint>{ simplex[2] };
+							}
+						}
+						else
+						{
+							if (glm::dot(n, -simplex[2].p) > 0)
+								direction = n;
+							else
+								direction = -n;
+						}
+					}
+				}
+				break;
+
+			case 4:
+				{
+					// compute and orient normals
+					glm::vec3 n1 = glm::normalize(glm::cross(simplex[1].p - simplex[0].p, simplex[2].p - simplex[0].p));
+					if (glm::dot(n1, simplex[3].p - simplex[0].p) > 0) n1 *= -1.f;
+					glm::vec3 n2 = glm::normalize(glm::cross(simplex[1].p - simplex[0].p, simplex[3].p - simplex[0].p));
+					if (glm::dot(n2, simplex[2].p - simplex[0].p) > 0) n2 *= -1.f;
+					glm::vec3 n3 = glm::normalize(glm::cross(simplex[3].p - simplex[2].p, simplex[1].p - simplex[2].p));
+					if (glm::dot(n3, simplex[0].p - simplex[2].p) > 0) n3 *= -1.f;
+					glm::vec3 n4 = glm::normalize(glm::cross(simplex[3].p - simplex[2].p, simplex[0].p - simplex[2].p));
+					if (glm::dot(n4, simplex[1].p - simplex[2].p) > 0) n4 *= -1.f;
+
+					// compute distance of faces regardless origin
+					float d1 = glm::dot(n1, -simplex[0].p);
+					if (d1 < 0) d1 = std::numeric_limits<float>::max();
+					float d2 = glm::dot(n2, -simplex[0].p);
+					if (d2 < 0) d2 = std::numeric_limits<float>::max();
+					float d3 = glm::dot(n3, -simplex[2].p);
+					if (d3 < 0) d3 = std::numeric_limits<float>::max();
+					float d4 = glm::dot(n4, -simplex[2].p);
+					if (d4 < 0) d4 = std::numeric_limits<float>::max();
+
+					// face 1 is closest
+					if (d1 < d2 && d1 < d3 && d1 < d4)
+					{
+						//simplex = std::vector<MinkowskiPoint>{ simplex[0], simplex[1], simplex[2] };
+						simplex.pop_back();
+						direction = n1;
+					}
+
+					// face 2 closest
+					else if (d2 < d1 && d2 < d3 && d2 < d4)
+					{
+						//simplex = std::vector<MinkowskiPoint>{ simplex[0], simplex[1], simplex[3] };
+						simplex[2] = simplex[3];
+						simplex.pop_back();
+						direction = n2;
+					}
+
+					// face 3
+					else if (d3 < d1 && d3 < d2 && d3 < d4)
+					{
+						simplex[0] = simplex[1];
+						simplex[1] = simplex[2];
+						simplex[2] = simplex[3];
+						simplex.pop_back();
+						//simplex = std::vector<MinkowskiPoint>{ simplex[1], simplex[2], simplex[3] };
+						direction = n3;
+					}
+
+					//face 4
+					else
+					{
+						simplex[1] = simplex[2];
+						simplex[2] = simplex[3];
+						simplex.pop_back();
+						//simplex = std::vector<MinkowskiPoint>{ simplex[0], simplex[2], simplex[3] };
+						direction = n4;
+					}
+				}
+				break;
+
+			default:
+				if (verbose)
+					std::cout << "GJK : error : simplex size not supported" << std::endl;
+				break;
+		}
 	}
 
-	if(verbose)
+	if (verbose)
 		std::cout << "GJK : error : no solution found after maximum iteration (" << MAX_ITERATION << ")" << std::endl;
 	return false;
 }
-Intersection::Contact GJK::intersect(const Shape& a, const Shape& b)
+void GJK::expandSimplex(const Shape& a, const Shape& b, CollisionReport* report, const std::vector<MinkowskiPoint>& simplex)
 {
 	GJKHull hull;
-	std::vector<std::pair<glm::vec3, glm::vec3>> simplexPair;
-	Intersection::Contact contact;
-	bool collision;
-	if (collide(a, b, &simplexPair))
+	hull.initFromTetrahedron(simplex);
+	if (hull.faces.size() < 4)
 	{
-		hull.initFromTetrahedron(simplexPair);
-		collision = true;
-	}
-	else
-	{
-		/*if (simplexPair.size() > 3)
-			hull.initFromTetrahedron(simplexPair);*/
-		if (simplexPair.size() < 4)
-		{
-			glm::vec3 p1 = simplexPair[0].first - simplexPair[0].second;
-			glm::vec3 p2 = simplexPair[1].first - simplexPair[1].second;
-
-			if (simplexPair.size() == 2)
-			{
-				glm::vec3 p1 = simplexPair[0].first - simplexPair[0].second;
-				glm::vec3 p2 = simplexPair[1].first - simplexPair[1].second;
-				glm::vec3 direction = glm::cross(glm::cross(p2 - p1, -p1), p2 - p1);
-				simplexPair.push_back(std::pair<glm::vec3, glm::vec3>({ a.GJKsupport(direction), b.GJKsupport(-direction) }));
-			}
-
-			glm::vec3 p3 = simplexPair[2].first - simplexPair[2].second;
-			glm::vec3 direction = glm::cross(p2 - p1, p3 - p1);
-			simplexPair.push_back(std::pair<glm::vec3, glm::vec3>({ a.GJKsupport(direction), b.GJKsupport(-direction) }));
-			//hull.initFromTriangle(simplexPair);
-		}
-
-		hull.initFromTetrahedron(simplexPair);
-		collision = false;
+		// fatal error
+		report->collision = false;
+		return;
 	}
 
-	/*
-		start with collision tmp result
-			1  f closest face of polyhedron
-			2  extend polyhedron through f
-			4  if not possible to extend : return f
-			3  goto 1
-	*/
-	unsigned short i;
-	for (i = 0; i < max_iteration; i++)
+	Face* closestFace;
+
+	unsigned int i = 0;
+	for (; i < MAX_ITERATION; i++)
 	{
-		glm::vec3 direction = hull.getDirection(collision);
-		if (hull.add(a.GJKsupport(direction), b.GJKsupport(-direction)))
+		closestFace = hull.getClosestFaceToOrigin();
+		if (hull.add(MinkowskiPoint(a.support(closestFace->n), b.support(-closestFace->n))))
 			break;
 	}
 
-	// get closest minkowski diff faces to origin
-	GJKHull::Face& f = *hull.getClosestFace(collision);
-	auto c = Intersection::intersect_PointvsTriangle(glm::vec3(0), f.p1, f.p2, f.p3);
+	float depth = glm::dot(closestFace->n, closestFace->p1.p);
+	glm::vec3 proj = depth * closestFace->n;
+	report->depths.push_back(std::abs(depth));
 
 	//debug
-	if (gizmos)
+	/*if (gizmos)
 	{
 		glm::vec3 offset(0, 0, 3);
 		Debug::color = Debug::black;
 		Debug::drawPoint(offset);
 		Debug::color = Debug::red;
-		Debug::drawLine(c.contactPointA + offset, c.contactPointB + offset);
+		Debug::drawLine(offset, proj + offset);
 		hull.draw(offset);
 		if (verbose)
-			std::cout << i << " / " << max_iteration << std::endl;
-	}
+			std::cout << i << " / " << MAX_ITERATION << std::endl;
+	}*/
 
+	glm::vec2 barr = CollisionUtils::getBarycentricCoordinates(closestFace->p2.p - closestFace->p1.p, closestFace->p3.p - closestFace->p1.p, proj - closestFace->p1.p, true);
 
-	// get contact in minkowski polyhedron
-	c = Intersection::intersect_PointvsTriangle(glm::vec3(0.f), f.p1, f.p2, f.p3);
-	glm::vec2 barr = getBarycentricCoordinates(f.p2 - f.p1, f.p3 - f.p1, c.contactPointB - f.p1);
+	glm::vec3 at1 = closestFace->p1.a;
+	glm::vec3 at2 = closestFace->p2.a;
+	glm::vec3 at3 = closestFace->p3.a;
 
-	contact.contactPointA = f.a1 + barr.x * (f.a2 - f.a1) + barr.y * (f.a3 - f.a1);
-	contact.contactPointB = f.b1 + barr.x * (f.b2 - f.b1) + barr.y * (f.b3 - f.b1);
-	contact.normalA = glm::normalize(glm::cross(f.a2 - f.a1, f.a3 - f.a1));
-	contact.normalB = glm::normalize(glm::cross(f.b2 - f.b1, f.b3 - f.b1));
+	glm::vec3 u1 = at2 - at1;	float l1 = glm::length2(u1);
+	glm::vec3 u2 = at3 - at1;	float l2 = glm::length2(u2);
+	glm::vec3 u3 = at2 - at3;	float l3 = glm::length2(u3);
 
-	if (collision)
-	{
-		if (glm::dot(contact.normalA, contact.contactPointB - contact.contactPointA) > 0)
-			contact.normalA *= -1.f;
-		if (glm::dot(contact.normalB, contact.contactPointA - contact.contactPointB) > 0)
-			contact.normalB *= -1.f;
-	}
+	glm::vec3 pa = at1 + barr.x * u1 + barr.y * u2;
+	glm::vec3 pb = closestFace->p1.b + barr.x * (closestFace->p2.b - closestFace->p1.b) + barr.y * (closestFace->p3.b - closestFace->p1.b);
+	report->points.push_back(pa);
+
+	if (l1 > COLLISION_EPSILON && l2 > COLLISION_EPSILON && l3 > COLLISION_EPSILON)
+		report->normal = glm::normalize(glm::cross(u1, u2));
 	else
 	{
-		if (glm::dot(contact.normalA, contact.contactPointB - contact.contactPointA) < 0)
-			contact.normalA *= -1.f;
-		if (glm::dot(contact.normalB, contact.contactPointA - contact.contactPointB) < 0)
-			contact.normalB *= -1.f;
+		glm::vec3 edge;
+		if (l1 > l2 && l1 > l3)
+			edge = u1;
+		else if (l2 > l1 && l2 > l3)
+			edge = u2;
+		else edge = u3;
+
+		if (glm::length2(edge) > COLLISION_EPSILON)
+		{
+			edge = glm::normalize(edge);
+			report->normal = glm::normalize(proj - glm::dot(proj, edge) * edge);
+		}
+		else
+			report->normal = glm::normalize(proj);
 	}
 
-	return contact;
+	if (glm::dot(report->normal, proj) < 0.f)
+		report->normal *= -1.f;
+
+	if (report->computeManifoldContacts)
+		computeManifoldContacts(a, b, report);
+}
+void GJK::computeManifoldContacts(const Shape& a, const Shape& b, CollisionReport* report)
+{
+	// the two feature faces
+	a.getFacingFace(report->normal, report->shape1face);
+	b.getFacingFace(-report->normal, report->shape2face);
+	if (report->shape1face.size() < 3 || report->shape2face.size() < 3)
+		return;
+
+	if (gizmos)
+	{
+		const float pointRadius = 0.01f;
+		Debug::color = Debug::green;
+		for (unsigned int i = 0; i < report->shape1face.size(); i++)
+			Debug::drawSphere(report->shape1face[i], pointRadius);
+
+		Debug::color = Debug::blue;
+		for (unsigned int i = 0; i < report->shape2face.size(); i++)
+			Debug::drawSphere(report->shape2face[i], pointRadius);
+	}
+
+	glm::vec3 originalPoint = report->points.back();
+	float originalDepth = report->depths.back();
+	report->points.clear();
+	report->depths.clear();
+
+	// compute faces normals
+	glm::vec3 n1 = glm::normalize(glm::cross(report->shape1face[1]- report->shape1face[0], report->shape1face[2] - report->shape1face[0]));
+	if (glm::dot(n1, report->normal) < 0.f)
+		n1 *= -1.f;
+	glm::vec3 n2 = glm::normalize(glm::cross(report->shape2face[1] - report->shape2face[0], report->shape2face[2] - report->shape2face[0]));
+	if (glm::dot(n2, report->normal) < 0.f)
+		n2 *= -1.f;
+	float dot = glm::dot(n1, n2);
+
+	// project face1 on face2 -> if corner is inside hull, it's a contact point
+	std::vector<glm::vec3> projection;
+	for (unsigned int i = 0; i < report->shape1face.size(); i++)
+	{
+		float depth = glm::dot(report->normal, report->shape1face[i] - report->shape2face[0]);
+		glm::vec3 p = report->shape1face[i] - depth * report->normal;
+		projection.push_back(p);
+
+		if (depth > 0.f && inside(report->shape2face, p))
+		{
+			report->points.push_back(p);
+			report->depths.push_back(depth);
+		}
+	}
+
+	// test face2 on projected hull -> if it's inside it's a contact point
+	for (unsigned int i = 0; i < report->shape2face.size(); i++)
+	{
+		if (inside(projection, report->shape2face[i]))
+		{
+			float depth = glm::dot(report->shape1face[0] - report->shape2face[i], n1) / dot;
+			report->points.push_back(report->shape2face[i] + depth * n2);
+			report->depths.push_back(depth);
+		}
+	}
+
+	// edge vs edge
+	glm::vec3 intersection;
+	for (unsigned int i = 0; i < report->shape1face.size(); i++)
+	{
+		glm::vec3 s1a = report->shape1face[i];
+		glm::vec3 s1b = report->shape1face[(i + 1) % report->shape1face.size()];
+		for (unsigned int j = 0; j < report->shape2face.size(); j++)
+		{
+			glm::vec3 s2a = report->shape2face[j];
+			glm::vec3 s2b = report->shape2face[(j + 1) % report->shape2face.size()];
+
+			if (collide(s1a, s1b, s2a, s2b, intersection))
+			{
+				float depth = glm::dot(intersection - report->shape2face[0], n2);
+				report->points.push_back(intersection);
+				report->depths.push_back(depth);
+			}
+		}
+	}
+
+	// end
+	if (report->points.empty())
+	{
+		report->points.push_back(originalPoint);
+		report->depths.push_back(originalDepth);
+	}
 }
 //
 
 
 //	Private functions
-void GJK::prepareSimplex(std::vector<glm::vec3>& simplex, glm::vec3& direction, std::vector<std::pair<glm::vec3, glm::vec3>>& simplexPoints)
+bool GJK::isNewPoint(const std::vector<MinkowskiPoint>& simplex, const MinkowskiPoint& p)
 {
-	switch (simplex.size())
-	{
-		case 1:
-			direction = -simplex[0];
-			break;
-
-		case 2:
-			if (glm::dot(simplex[1] - simplex[0], -simplex[0]) > 0)
-			{
-				direction = glm::cross(glm::cross(simplex[1] - simplex[0], -simplex[0]), simplex[1] - simplex[0]);
-			}
-			else
-			{
-				simplex = std::vector<glm::vec3>{ simplex[0] };
-				simplexPoints = std::vector<std::pair<glm::vec3, glm::vec3>>{ simplexPoints[0] };
-				direction = -simplex[0];
-			}
-			break;
-
-		case 3:
-			{
-				//	simplex = { C, B, A}
-				glm::vec3 AB = simplex[1] - simplex[2];
-				glm::vec3 AC = simplex[0] - simplex[2];
-				glm::vec3 n = glm::cross(AB, AC);
-				//if (glm::dot(n, -simplex[2]) < 0.f) n *= -1.f;
-
-				if (glm::dot(glm::cross(n, AC), -simplex[2]) > 0)
-				{
-					if (glm::dot(AC, -simplex[2]) > 0)
-					{
-						simplex = std::vector<glm::vec3>{ simplex[0], simplex[2] };
-						simplexPoints = std::vector<std::pair<glm::vec3, glm::vec3>>{ simplexPoints[0], simplexPoints[2] };
-						direction = glm::cross(glm::cross(AC, -simplex[2]), AC);
-					}
-					else
-					{
-						if (glm::dot(AB, -simplex[2]) > 0)
-						{
-							simplex = std::vector<glm::vec3>{ simplex[1], simplex[2] };
-							simplexPoints = std::vector<std::pair<glm::vec3, glm::vec3>>{ simplexPoints[1], simplexPoints[2] };
-							direction = glm::cross(glm::cross(AB, -simplex[2]), AB);
-						}
-						else
-						{
-							simplex = std::vector<glm::vec3>{ simplex[2] };
-							simplexPoints = std::vector<std::pair<glm::vec3, glm::vec3>>{ simplexPoints[2] };
-							direction = -simplex[2];
-						}
-					}
-				}
-				else
-				{
-					if (glm::dot(glm::cross(AB, n), -simplex[2]) > 0)
-					{
-						if (glm::dot(AB, -simplex[2]) > 0)
-						{
-							simplex = std::vector<glm::vec3>{ simplex[1], simplex[2] };
-							simplexPoints = std::vector<std::pair<glm::vec3, glm::vec3>>{ simplexPoints[1], simplexPoints[2] };
-							direction = glm::cross(glm::cross(AB, -simplex[2]), AB);
-						}
-						else
-						{
-							simplex = std::vector<glm::vec3>{ simplex[2] };
-							simplexPoints = std::vector<std::pair<glm::vec3, glm::vec3>>{ simplexPoints[2] };
-							direction = -simplex[2];
-						}
-					}
-					else
-					{
-						if (glm::dot(n, -simplex[2]) > 0)
-							direction = n;
-						else
-							direction = -n;
-					}
-				}
-			}
-			break;
-
-		case 4:
-			{
-				// compute and orient normals
-				glm::vec3 n1 = glm::normalize(glm::cross(simplex[1] - simplex[0], simplex[2] - simplex[0]));
-				if (glm::dot(n1, simplex[3] - simplex[0]) > 0) n1 *= -1.f;
-				glm::vec3 n2 = glm::normalize(glm::cross(simplex[1] - simplex[0], simplex[3] - simplex[0]));
-				if (glm::dot(n2, simplex[2] - simplex[0]) > 0) n2 *= -1.f;
-				glm::vec3 n3 = glm::normalize(glm::cross(simplex[3] - simplex[2], simplex[1] - simplex[2]));
-				if (glm::dot(n3, simplex[0] - simplex[2]) > 0) n3 *= -1.f;
-				glm::vec3 n4 = glm::normalize(glm::cross(simplex[3] - simplex[2], simplex[0] - simplex[2]));
-				if (glm::dot(n4, simplex[1] - simplex[2]) > 0) n4 *= -1.f;
-
-				// compute distance of faces regardless origin
-				float d1 = glm::dot(n1, -simplex[0]);
-				if (d1 < 0) d1 = std::numeric_limits<float>::max();
-				float d2 = glm::dot(n2, -simplex[0]);
-				if (d2 < 0) d2 = std::numeric_limits<float>::max();
-				float d3 = glm::dot(n3, -simplex[2]);
-				if (d3 < 0) d3 = std::numeric_limits<float>::max();
-				float d4 = glm::dot(n4, -simplex[2]);
-				if (d4 < 0) d4 = std::numeric_limits<float>::max();
-
-				// face 1 is closest
-				if (d1 < d2 && d1 < d3 && d1 < d4)
-				{
-					simplex = std::vector<glm::vec3>{ simplex[0], simplex[1], simplex[2] };
-					simplexPoints = std::vector<std::pair<glm::vec3, glm::vec3>>{ simplexPoints[0], simplexPoints[1], simplexPoints[2] };
-					direction = n1;
-				}
-
-				// face 2 closest
-				else if (d2 < d1 && d2 < d3 && d2 < d4)
-				{
-					simplex = std::vector<glm::vec3>{ simplex[0], simplex[1], simplex[3] };
-					simplexPoints = std::vector<std::pair<glm::vec3, glm::vec3>>{ simplexPoints[0], simplexPoints[1], simplexPoints[3] };
-					direction = n2;
-				}
-
-				// face 3
-				else if (d3 < d1 && d3 < d2 && d3 < d4)
-				{
-					 simplex = std::vector<glm::vec3>{ simplex[1], simplex[2], simplex[3] };
-					 simplexPoints = std::vector<std::pair<glm::vec3, glm::vec3>>{ simplexPoints[1], simplexPoints[2], simplexPoints[3] };
-					 direction = n3;
-				}
-
-				//face 4
-				else
-				{
-					simplex = std::vector<glm::vec3>{ simplex[0], simplex[2], simplex[3] };
-					simplexPoints = std::vector<std::pair<glm::vec3, glm::vec3>>{ simplexPoints[0], simplexPoints[2], simplexPoints[3] };
-					direction = n4;
-				}
-			}
-			break;
-
-		default:
-			if (verbose)
-				std::cout << "GJK : error : simplex size not supported" << std::endl;
-			break;
-	}
+	for (const MinkowskiPoint& point : simplex)
+		if (point == p)
+			return false;
+	return true;
 }
-bool GJK::containOrigin(std::vector<glm::vec3>& simplex)
+bool GJK::containOrigin(const std::vector<MinkowskiPoint>& simplex, const bool& earlyExit)
 {
-	if (simplex.size() == 1)
-		return simplex[0] == glm::vec3(0, 0, 0);
+	if (simplex.size() < 3)
+		return earlyExit && simplex[0].p == glm::vec3(0, 0, 0);
 	else if (simplex.size() == 2)
-		return Collision::collide_PointvsSegment(glm::vec3(0, 0, 0), simplex[0], simplex[1]);
+		return earlyExit && Collision::collide_PointvsSegment(glm::vec3(0, 0, 0), simplex[0].p, simplex[1].p);
 	else if (simplex.size() == 3)
-		return Collision::collide_PointvsTriangle(glm::vec3(0, 0, 0), simplex[0], simplex[1], simplex[2]);
+		return earlyExit && Collision::collide_PointvsTriangle(glm::vec3(0, 0, 0), simplex[0].p, simplex[1].p, simplex[2].p);
 	else if (simplex.size() == 4)
 	{
 		// compute and orien simplex normals
-		glm::vec3 n1 = glm::cross(simplex[1] - simplex[0], simplex[2] - simplex[0]);
-		if (glm::dot(n1, simplex[3] - simplex[0]) > 0) n1 *= -1.f;
-		glm::vec3 n2 = glm::cross(simplex[1] - simplex[0], simplex[3] - simplex[0]);
-		if (glm::dot(n2, simplex[2] - simplex[0]) > 0) n2 *= -1.f;
-		glm::vec3 n3 = glm::cross(simplex[3] - simplex[2], simplex[1] - simplex[2]);
-		if (glm::dot(n3, simplex[0] - simplex[2]) > 0) n3 *= -1.f;
-		glm::vec3 n4 = glm::cross(simplex[3] - simplex[2], simplex[0] - simplex[2]);
-		if (glm::dot(n4, simplex[1] - simplex[2]) > 0) n4 *= -1.f;
+		glm::vec3 n1 = glm::cross(simplex[1].p - simplex[0].p, simplex[2].p - simplex[0].p);
+		if (glm::dot(n1, simplex[3].p - simplex[0].p) > 0) n1 *= -1.f;
+		glm::vec3 n2 = glm::cross(simplex[1].p - simplex[0].p, simplex[3].p - simplex[0].p);
+		if (glm::dot(n2, simplex[2].p - simplex[0].p) > 0) n2 *= -1.f;
+		glm::vec3 n3 = glm::cross(simplex[3].p - simplex[2].p, simplex[1].p - simplex[2].p);
+		if (glm::dot(n3, simplex[0].p - simplex[2].p) > 0) n3 *= -1.f;
+		glm::vec3 n4 = glm::cross(simplex[3].p - simplex[2].p, simplex[0].p - simplex[2].p);
+		if (glm::dot(n4, simplex[1].p - simplex[2].p) > 0) n4 *= -1.f;
 
 		// test against origin
-		if (glm::dot(n1, -simplex[0]) > 0) return false;
-		else if (glm::dot(n2, -simplex[0]) > 0) return false;
-		else if (glm::dot(n3, -simplex[2]) > 0) return false;
-		else if (glm::dot(n4, -simplex[2]) > 0) return false;
+		if (glm::dot(n1, -simplex[0].p) > 0) return false;
+		else if (glm::dot(n2, -simplex[0].p) > 0) return false;
+		else if (glm::dot(n3, -simplex[2].p) > 0) return false;
+		else if (glm::dot(n4, -simplex[2].p) > 0) return false;
 		else return true;
 	}
-	else 
+	else
 	{
 		if (verbose)
-			std::cout << "GJK : error : simplex check not possible in normal case (dimension too high or too low)" << std::endl;
+			std::cout << "GJK::containOrigin : simplex check not possible in normal case (dimension too high or too low)" << std::endl;
 		return true;
 	}
 }
-bool GJK::isNewPoint(const glm::vec3& point, std::vector<glm::vec3>& simplex)
+bool GJK::collide(const glm::vec3& s1a, const glm::vec3& s1b, const glm::vec3& s2a, const glm::vec3& s2b, glm::vec3& intersection)
 {
-	for (int i = 0; i < simplex.size(); i++)
-		if (simplex[i] == point)
+	glm::vec3 u = s1b - s1a;
+	glm::vec3 v = s2b - s2a;
+	glm::vec3 w = s1a - s2a;
+
+	float a = glm::length2(u);
+	float b = glm::dot(u, v);
+	float c = glm::length2(v);
+	float d = glm::dot(u, w);
+	float e = glm::dot(v, w);
+
+	float D = a * c - b * b;
+	if (D < COLLISION_EPSILON * COLLISION_EPSILON)
+		return false;
+
+	float t1 = (b * e - c * d) / D;
+	float t2 = (a * e - b * d) / D;
+
+	if (t1 > 1.f || t2 > 1.f || t1 < 0.f || t2 < 0.f)
+		return false;
+
+	intersection = s1a + t1 * u;
+	return true;
+}
+bool GJK::inside(std::vector<glm::vec3>& hull, const glm::vec3& point)
+{
+	glm::vec3 sign;
+	for (unsigned int i = 0; i < hull.size(); i++)
+	{
+		glm::vec3 u = hull[(i + 1) % hull.size()] - hull[i];
+		glm::vec3 v = point - hull[i];
+		glm::vec3 n = glm::cross(u, v);
+
+		if (i == 0)
+			sign = n;
+		else if (glm::dot(n, sign) <= 0.f)
 			return false;
+	}
 	return true;
 }
 //
 
 //	Nested classes
-void GJK::GJKHull::initFromTetrahedron(std::vector<std::pair<glm::vec3, glm::vec3>> simplex)
+GJK::MinkowskiPoint::MinkowskiPoint(const glm::vec3& _a, const glm::vec3& _b) : 
+	a(_a), b(_b), p(_a - _b) {}
+bool GJK::MinkowskiPoint::operator==(const MinkowskiPoint& _other) const
+{
+	if (a != _other.a || b != _other.b)
+		return false;
+	else
+		return true;
+}
+bool GJK::MinkowskiPoint::operator< (const MinkowskiPoint& _other) const
+{
+	if (p.x != _other.p.x)
+		return p.x < _other.p.x;
+	else if (p.y != _other.p.y)
+		return p.y < _other.p.y;
+	else
+		return p.z < _other.p.z;
+}
+
+
+
+GJK::Face::Face(const MinkowskiPoint& _p1, const MinkowskiPoint& _p2, const MinkowskiPoint& _p3, const glm::vec3& _n) :
+	p1(_p1), p2(_p2), p3(_p3), n(_n),
+	onHull(true), e1(nullptr), e2(nullptr), e3(nullptr)
+{}
+GJK::Edge::Edge(const MinkowskiPoint& _p1, const MinkowskiPoint& _p2) :
+	p1(_p1), p2(_p2), horizonCheck(2), f1(nullptr), f2(nullptr)
+{}
+
+
+
+
+
+
+void GJK::GJKHull::initFromTetrahedron(const std::vector<MinkowskiPoint>& simplex)
 {
 	// clear previous values (needed if a shared GJKHull is used)
 	points.clear();
 	edges.clear();
 	faces.clear();
 
-	//	minkowski difference simplex points (from previous collision result)
-	glm::vec3 p1 = simplex[0].first - simplex[0].second;
-	glm::vec3 p2 = simplex[1].first - simplex[1].second;
-	glm::vec3 p3 = simplex[2].first - simplex[2].second;
-	glm::vec3 p4 = simplex[3].first - simplex[3].second;
+	points.insert(simplex[0]);
+	points.insert(simplex[1]);
+	points.insert(simplex[2]);
+	points.insert(simplex[3]);
 
 	//	faces normals
-	glm::vec3 n1 = glm::cross(p2 - p1, p3 - p1);
-	if (glm::dot(n1, p4 - p1) > 0) n1 *= -1.f;
-	glm::vec3 n2 = glm::cross(p2 - p1, p4 - p1);
-	if (glm::dot(n2, p3 - p1) > 0) n2 *= -1.f;
-	glm::vec3 n3 = glm::cross(p4 - p3, p2 - p3);
-	if (glm::dot(n3, p1 - p3) > 0) n3 *= -1.f;
-	glm::vec3 n4 = glm::cross(p4 - p3, p1 - p3);
-	if (glm::dot(n4, p2 - p3) > 0) n4 *= -1.f;
+	glm::vec3 n1 = glm::normalize(glm::cross(simplex[1].p - simplex[0].p, simplex[2].p - simplex[0].p));
+	if (glm::dot(n1, simplex[3].p - simplex[0].p) > 0)
+		n1 *= -1.f;
 
-	Face f1(simplex[0].first, simplex[1].first, simplex[2].first, simplex[0].second, simplex[1].second, simplex[2].second, n1); // p1, p2, p3
-	Face f2(simplex[0].first, simplex[1].first, simplex[3].first, simplex[0].second, simplex[1].second, simplex[3].second, n2); // p1, p2, p4
-	Face f3(simplex[1].first, simplex[2].first, simplex[3].first, simplex[1].second, simplex[2].second, simplex[3].second, n3); // p2, p3, p4
-	Face f4(simplex[0].first, simplex[2].first, simplex[3].first, simplex[0].second, simplex[2].second, simplex[3].second, n4); // p1, p3, p4
+	glm::vec3 n2 = glm::normalize(glm::cross(simplex[1].p - simplex[0].p, simplex[3].p - simplex[0].p));
+	if (glm::dot(n2, simplex[2].p - simplex[0].p) > 0)
+		n2 *= -1.f;
 
-	Edge e1(simplex[0].first, simplex[1].first, simplex[0].second, simplex[1].second);
-	Edge e2(simplex[1].first, simplex[2].first, simplex[1].second, simplex[2].second);
-	Edge e3(simplex[0].first, simplex[2].first, simplex[0].second, simplex[2].second);
-	Edge e4(simplex[3].first, simplex[0].first, simplex[3].second, simplex[0].second);
-	Edge e5(simplex[3].first, simplex[1].first, simplex[3].second, simplex[1].second);
-	Edge e6(simplex[3].first, simplex[2].first, simplex[3].second, simplex[2].second);
+	glm::vec3 n3 = glm::normalize(glm::cross(simplex[3].p - simplex[2].p, simplex[1].p - simplex[2].p));
+	if (glm::dot(n3, simplex[0].p - simplex[2].p) > 0)
+		n3 *= -1.f;
 
-	Face* f1ptr = &(*faces.insert(faces.end(), f1));
-	Face* f2ptr = &(*faces.insert(faces.end(), f2));
-	Face* f3ptr = &(*faces.insert(faces.end(), f3));
-	Face* f4ptr = &(*faces.insert(faces.end(), f4));
+	glm::vec3 n4 = glm::normalize(glm::cross(simplex[3].p - simplex[2].p, simplex[0].p - simplex[2].p));
+	if (glm::dot(n4, simplex[1].p - simplex[2].p) > 0)
+		n4 *= -1.f;
 
-	Edge* e1ptr = &(*edges.insert(edges.end(), e1));
-	Edge* e2ptr = &(*edges.insert(edges.end(), e2));
-	Edge* e3ptr = &(*edges.insert(edges.end(), e3));
-	Edge* e4ptr = &(*edges.insert(edges.end(), e4));
-	Edge* e5ptr = &(*edges.insert(edges.end(), e5));
-	Edge* e6ptr = &(*edges.insert(edges.end(), e6));
+	// faces
+	Face* f1 = &(*faces.insert(faces.end(), Face(simplex[0], simplex[1], simplex[2], n1)));
+	Face* f2 = &(*faces.insert(faces.end(), Face(simplex[0], simplex[1], simplex[3], n2)));
+	Face* f3 = &(*faces.insert(faces.end(), Face(simplex[1], simplex[2], simplex[3], n3)));
+	Face* f4 = &(*faces.insert(faces.end(), Face(simplex[0], simplex[2], simplex[3], n4)));
 
-	associate(f1ptr, e1ptr); associate(f1ptr, e2ptr); associate(f1ptr, e3ptr);
-	associate(f2ptr, e1ptr); associate(f2ptr, e4ptr); associate(f2ptr, e5ptr);
-	associate(f3ptr, e2ptr); associate(f3ptr, e5ptr); associate(f3ptr, e6ptr);
-	associate(f4ptr, e3ptr); associate(f4ptr, e4ptr); associate(f4ptr, e6ptr);
+	// edges
+	Edge* e1 = &(*edges.insert(edges.end(), Edge(simplex[0], simplex[1])));
+	Edge* e2 = &(*edges.insert(edges.end(), Edge(simplex[1], simplex[2])));
+	Edge* e3 = &(*edges.insert(edges.end(), Edge(simplex[0], simplex[2])));
+	Edge* e4 = &(*edges.insert(edges.end(), Edge(simplex[3], simplex[0])));
+	Edge* e5 = &(*edges.insert(edges.end(), Edge(simplex[3], simplex[1])));
+	Edge* e6 = &(*edges.insert(edges.end(), Edge(simplex[3], simplex[2])));
 
-	points.insert(Vertex(p1));
-	points.insert(Vertex(p2));
-	points.insert(Vertex(p3));
-	points.insert(Vertex(p4));
-
-	/*
-	//	print
-	for (auto it = faces.begin(); it != faces.end(); it++)
-	{
-		std::cout << "f " << (unsigned long)&(*it) << " : " << std::endl;
-		std::cout << "   " << (unsigned long)(it->e1) << std::endl;
-		std::cout << "   " << (unsigned long)(it->e2) << std::endl;
-		std::cout << "   " << (unsigned long)(it->e3) << std::endl;
-	}
-	for (auto it = edges.begin(); it != edges.end(); it++)
-	{
-		std::cout << "e " << (unsigned long)&(*it) << " : " << std::endl;
-		std::cout << "   " << (unsigned long)(it->f1) << std::endl;
-		std::cout << "   " << (unsigned long)(it->f2) << std::endl;
-	}
-	std::cout << std::endl << std::endl;
-	*/
+	// linking
+	associate(f1, e1); associate(f1, e2); associate(f1, e3);
+	associate(f2, e1); associate(f2, e4); associate(f2, e5);
+	associate(f3, e2); associate(f3, e5); associate(f3, e6);
+	associate(f4, e3); associate(f4, e4); associate(f4, e6);
 }
-void GJK::GJKHull::initFromTriangle(std::vector<std::pair<glm::vec3, glm::vec3>> simplex)
+bool GJK::GJKHull::add(const MinkowskiPoint& point)
 {
-	// clear previous values (needed if a shared GJKHull is used)
-	points.clear();
-	edges.clear();
-	faces.clear();
-
-	// triangle verticies
-	glm::vec3 p1 = simplex[0].first - simplex[0].second;
-	glm::vec3 p2 = simplex[1].first - simplex[1].second;
-	glm::vec3 p3 = simplex[2].first - simplex[2].second;
-	glm::vec3 n1 = glm::cross(p2 - p1, p3 - p1);
-	if (glm::dot(n1, -p1) < 0) n1 *= -1.f;
-
-	//	faces & edges
-	Face f1(simplex[0].first, simplex[1].first, simplex[2].first, simplex[0].second, simplex[1].second, simplex[2].second, n1);
-	Edge e1(simplex[0].first, simplex[1].first, simplex[0].second, simplex[1].second);
-	Edge e2(simplex[1].first, simplex[2].first, simplex[1].second, simplex[2].second);
-	Edge e3(simplex[0].first, simplex[2].first, simplex[0].second, simplex[2].second);
-
-	//	push & associate
-	Face* f1ptr = &(*faces.insert(faces.end(), f1));
-	Edge* e1ptr = &(*edges.insert(edges.end(), e1));
-	Edge* e2ptr = &(*edges.insert(edges.end(), e2));
-	Edge* e3ptr = &(*edges.insert(edges.end(), e3));
-	associate(f1ptr, e1ptr); associate(f1ptr, e2ptr); associate(f1ptr, e3ptr);
-
-	points.insert(Vertex(p1));
-	points.insert(Vertex(p2));
-	points.insert(Vertex(p3));
-
-
-	/*
-	//	print
-	for (auto it = faces.begin(); it != faces.end(); it++)
-	{
-		std::cout << "f " << (unsigned long)&(*it) << " : " << std::endl;
-		std::cout << "   " << (unsigned long)(it->e1) << std::endl;
-		std::cout << "   " << (unsigned long)(it->e2) << std::endl;
-		std::cout << "   " << (unsigned long)(it->e3) << std::endl;
-	}
-	for (auto it = edges.begin(); it != edges.end(); it++)
-	{
-		std::cout << "e " << (unsigned long)&(*it) << " : " << std::endl;
-		std::cout << "   " << (unsigned long)(it->f1) << std::endl;
-		std::cout << "   " << (unsigned long)(it->f2) << std::endl;
-	}
-	std::cout << std::endl << std::endl;
-	*/
-}
-bool GJK::GJKHull::add(const glm::vec3& a, const glm::vec3& b)
-{
-	// special case : tetrahedron not yet initialized
-	/*if (faces.size() == 1)
-	{
-		Face f = faces.front();
-		std::vector<std::pair<glm::vec3, glm::vec3>> simplex;
-		simplex.push_back({ f.a1, f.b1 });
-		simplex.push_back({ f.a2, f.b2 });
-		simplex.push_back({ f.a3, f.b3 });
-		simplex.push_back({ a, b });
-		initFromTetrahedron(simplex);
-		return false;
-	}*/
-
 	//	test if point inside current hull or already existing
-	glm::vec3 p = a - b;
 	bool inside = true;
 	for (auto it = faces.begin(); it != faces.end(); it++)
 	{
-		if (glm::dot(it->n, p - it->p1) > EPSILON)
+		if (glm::dot(it->n, point.p - it->p1.p) > EPSILON)
 		{
 			inside = false;
 			break;
 		}
 	}
-	if (inside) return true;
-	if (!points.insert(Vertex(p)).second) return true;
+	if (inside)
+		return true;
+	if (!points.insert(point).second)
+		return true;
 	
 	//	compute horizon
 	for (auto it = edges.begin(); it != edges.end(); it++)
 		it->horizonCheck = 2;
 	for (auto it = faces.begin(); it != faces.end(); it++)
 		it->onHull = true;
-	std::list<Edge*> horizon = computeHorizon(p);
+	std::list<Edge*> horizon = computeHorizon(point.p);
 
 	//	compute cone faces
 	for (auto it = horizon.begin(); it != horizon.end(); it++)
 	{
-		//  create edges aliases
-		glm::vec3 a1 = (*it)->a1;
-		glm::vec3 b1 = (*it)->b1;
-		glm::vec3 a2 = (*it)->a2;
-		glm::vec3 b2 = (*it)->b2;
-
 		//	create cone face and add it to hull
-		faces.insert(faces.end(), Face(a1, a2, a, b1, b2, b, glm::normalize(glm::cross((*it)->p2 - (*it)->p1, p - (*it)->p1))));
+		glm::vec3 n = glm::normalize(glm::cross((*it)->p2.p - (*it)->p1.p, point.p - (*it)->p1.p));
+		faces.insert(faces.end(), Face((*it)->p1, (*it)->p2, point, n));
 		Face* face = &faces.back();
-		if (checkFaceNormal(*face)) face->n *= -1.f;
+		if (checkFaceNormal(*face))
+			face->n *= -1.f;
 
 		//  create new horizon edge
-		if (!(*it)->f1) (*it)->f1 = face;
-		else if (!(*it)->f2) (*it)->f2 = face;
+		if (!(*it)->f1) 
+			(*it)->f1 = face;
+		else if (!(*it)->f2) 
+			(*it)->f2 = face;
 		else
 		{
 			if (verbose)
@@ -530,14 +600,17 @@ bool GJK::GJKHull::add(const glm::vec3& a, const glm::vec3& b)
 		face->e1 = (*it);
 
 		// create others edges
-		Edge* e2 = existingEdge((*it)->p1, p);
+		Edge* e2 = existingEdge((*it)->p1, point);
 		if (!e2)
 		{
-			edges.insert(edges.end(), Edge((*it)->a1, a, (*it)->b1, b));
+			edges.insert(edges.end(), Edge((*it)->p1, point));
 			e2 = &edges.back();
 		}
-		if (!e2->f1) e2->f1 = face;
-		else if (!e2->f2) e2->f2 = face;
+
+		if (!e2->f1) 
+			e2->f1 = face;
+		else if (!e2->f2) 
+			e2->f2 = face;
 		else
 		{
 			if (verbose)
@@ -546,14 +619,17 @@ bool GJK::GJKHull::add(const glm::vec3& a, const glm::vec3& b)
 		}
 		face->e2 = e2;
 
-		Edge* e3 = existingEdge((*it)->p2, p);
+		Edge* e3 = existingEdge((*it)->p2, point);
 		if (!e3)
 		{
-			edges.insert(edges.end(), Edge((*it)->a2, a, (*it)->b2, b));
+			edges.insert(edges.end(), Edge((*it)->p2, point));
 			e3 = &edges.back();
 		}
-		if (!e3->f1) e3->f1 = face;
-		else if (!e3->f2) e3->f2 = face;
+
+		if (!e3->f1) 
+			e3->f1 = face;
+		else if (!e3->f2) 
+			e3->f2 = face;
 		else
 		{
 			if (verbose)
@@ -576,64 +652,14 @@ bool GJK::GJKHull::add(const glm::vec3& a, const glm::vec3& b)
 	}
 	return false;
 }
-glm::vec3 GJK::GJKHull::getDirection(bool collision)
+GJK::Face* GJK::GJKHull::getClosestFaceToOrigin()
 {
 	float dmin = std::numeric_limits<float>::max();
-	glm::vec3 direction;
-	if (collision)
-	{
-		for (auto it = faces.begin(); it != faces.end(); it++)
-		{
-			float d = glm::abs(glm::dot(it->n, -it->p1));
-			if (d < dmin)
-			{
-				dmin = d;
-				direction = it->n;
-			}
-		}
-	}
-	else
-	{
-		for (auto it = faces.begin(); it != faces.end(); it++)
-		{
-			glm::vec3* e1 = nullptr;
-			glm::vec3 *e2 = nullptr;
-			Intersection::Contact inter = Intersection::intersect_PointvsTriangle(glm::vec3(0), it->p1, it->p2, it->p3, e1, e2);
-			float d = glm::length2(inter.contactPointB);
-			
-			if (d < dmin)
-			{
-				dmin = d;
-
-				if (!e1) // closest is a point in triangle
-					direction = it->n;
-				else if (!e2) // closest is a corner
-					direction = -(*e1);
-				else // closest is an edge
-					direction = glm::cross(glm::cross((*e2) - (*e1), -(*e1)), (*e2) - (*e1));
-			}
-		}
-	}
-	return direction;
-}
-GJK::GJKHull::Face* GJK::GJKHull::getClosestFace(bool collision)
-{
-	float dmin = std::numeric_limits<float>::max();
-	Face* face = nullptr;
-	float d;
+	Face* face = &faces.front();
 
 	for (auto it = faces.begin(); it != faces.end(); it++)
 	{
-		if (collision)
-		{
-			d = glm::abs(glm::dot(it->n, -it->p1));
-		}
-		else
-		{
-			Intersection::Contact inter = Intersection::intersect_PointvsTriangle(glm::vec3(0), it->p1, it->p2, it->p3);
-			d = glm::length2(inter.contactPointB);
-		}
-
+		float d = glm::abs(glm::dot(it->n, -it->p1.p));
 		if (d < dmin)
 		{
 			dmin = d;
@@ -642,14 +668,15 @@ GJK::GJKHull::Face* GJK::GJKHull::getClosestFace(bool collision)
 	}
 	return face;
 }
+
+
 void GJK::GJKHull::draw(const glm::vec3& offset)
 {
 	for (auto it = faces.begin(); it != faces.end(); it++)
 	{
-		glm::vec3 p1 = it->p1 + offset;
-		glm::vec3 p2 = it->p2 + offset;
-		glm::vec3 p3 = it->p3 + offset;
-		//glm::vec3 n1 = it->n;
+		glm::vec3 p1 = it->p1.p + offset;
+		glm::vec3 p2 = it->p2.p + offset;
+		glm::vec3 p3 = it->p3.p + offset;
 
 		Debug::color = Debug::magenta;
 		Debug::drawLine(p1, p2);
@@ -660,18 +687,27 @@ void GJK::GJKHull::draw(const glm::vec3& offset)
 		Debug::drawLine(0.3333f*(p1 + p2 + p3), 0.3333f*(p1 + p2 + p3) + 0.15f*it->n);
 	}
 }
-void GJK::GJKHull::associate(Face* f, Edge* e)
-{
-	if (f->e1 == nullptr) f->e1 = e;
-	else if (f->e2 == nullptr) f->e2 = e;
-	else if (f->e3 == nullptr) f->e3 = e;
-	else if (verbose)std::cout << "GJKHull : Fatal error ! : a face (triangle) has more than 3 edges" << std::endl;
 
-	if (e->f1 == nullptr) e->f1 = f;
-	else if (e->f2 == nullptr) e->f2 = f;
-	else if (verbose)std::cout << "GJKHull : Fatal error ! : an edge has more than 2 faces" << std::endl;
+
+void GJK::GJKHull::associate(Face* f, Edge* e) const
+{
+	if (f->e1 == nullptr)
+		f->e1 = e;
+	else if (f->e2 == nullptr)
+		f->e2 = e;
+	else if (f->e3 == nullptr)
+		f->e3 = e;
+	else if (verbose)
+		std::cout << "GJKHull : Fatal error ! : a face (triangle) has more than 3 edges" << std::endl;
+
+	if (e->f1 == nullptr) 
+		e->f1 = f;
+	else if (e->f2 == nullptr) 
+		e->f2 = f;
+	else if (verbose)
+		std::cout << "GJKHull : Fatal error ! : an edge has more than 2 faces" << std::endl;
 }
-GJK::GJKHull::Edge* GJK::GJKHull::existingEdge(const glm::vec3& p1, const glm::vec3& p2)
+GJK::Edge* GJK::GJKHull::existingEdge(const MinkowskiPoint& p1, const MinkowskiPoint& p2)
 {
 	for (auto it = edges.begin(); it != edges.end(); it++)
 	{
@@ -682,12 +718,12 @@ GJK::GJKHull::Edge* GJK::GJKHull::existingEdge(const glm::vec3& p1, const glm::v
 	}
 	return nullptr;
 }
-std::list<GJK::GJKHull::Edge*> GJK::GJKHull::computeHorizon(const glm::vec3& eye)
+std::list<GJK::Edge*> GJK::GJKHull::computeHorizon(const glm::vec3& eye)
 {
 	std::list<Edge*> horizon;
 	for (auto it = faces.begin(); it != faces.end(); it++)
 	{
-		if (glm::dot(it->n, eye - it->p1) >= 0)
+		if (glm::dot(it->n, eye - it->p1.p) >= 0)
 		{
 			it->onHull = false;
 
@@ -699,29 +735,42 @@ std::list<GJK::GJKHull::Edge*> GJK::GJKHull::computeHorizon(const glm::vec3& eye
 			horizon.insert(horizon.end(), it->e2);
 			horizon.insert(horizon.end(), it->e3);
 
-			if (it->e1->f1 == &(*it)) it->e1->f1 = nullptr;
-			else if (it->e1->f2 == &(*it)) it->e1->f2 = nullptr;
-			if (it->e2->f1 == &(*it)) it->e2->f1 = nullptr;
-			else if (it->e2->f2 == &(*it)) it->e2->f2 = nullptr;
-			if (it->e3->f1 == &(*it)) it->e3->f1 = nullptr;
-			else if (it->e3->f2 == &(*it)) it->e3->f2 = nullptr;
+			if (it->e1->f1 == &(*it))
+				it->e1->f1 = nullptr;
+			else if (it->e1->f2 == &(*it))
+				it->e1->f2 = nullptr;
+
+			if (it->e2->f1 == &(*it)) 
+				it->e2->f1 = nullptr;
+			else if (it->e2->f2 == &(*it)) 
+				it->e2->f2 = nullptr;
+
+			if (it->e3->f1 == &(*it)) 
+				it->e3->f1 = nullptr;
+			else if (it->e3->f2 == &(*it)) 
+				it->e3->f2 = nullptr;
 		}
 	}
 
 	for (auto it = horizon.begin(); it != horizon.end(); )
 	{
-		if ((*it)->horizonCheck == 0) it = horizon.erase(it);
-		else it++;
+		if ((*it)->horizonCheck == 0) 
+			it = horizon.erase(it);
+		else 
+			it++;
 	}
 	return horizon;
 }
-bool GJK::GJKHull::checkFaceNormal(const Face& f)
+bool GJK::GJKHull::checkFaceNormal(const Face& f) const
 {
 	for (auto it = faces.begin(); it != faces.end(); it++)
 	{
-		if (glm::dot(f.n, it->p1 - f.p1) > EPSILON) return true;
-		else if (glm::dot(f.n, it->p2 - f.p1) > EPSILON) return true;
-		else if (glm::dot(f.n, it->p3 - f.p1) > EPSILON) return true;
+		if (glm::dot(f.n, it->p1.p - f.p1.p) > EPSILON)
+			return true;
+		else if (glm::dot(f.n, it->p2.p - f.p1.p) > EPSILON)
+			return true;
+		else if (glm::dot(f.n, it->p3.p - f.p1.p) > EPSILON)
+			return true;
 	}
 	return false;
 }

@@ -10,7 +10,7 @@ Intersection::Contact Intersection::intersect_CapsulevsCapsule(const glm::vec3& 
 	else if (capsule2a == capsule2b) return intersect_SpherevsCapsule(capsule2a, capsule2Radius, capsule1a, capsule1b, capsule1Radius).swap();
 
 	Contact contact;
-	std::pair<glm::vec3, glm::vec3> p = getSegmentsClosestSegment(capsule1a, capsule1b, capsule2a, capsule2b);
+	std::pair<glm::vec3, glm::vec3> p = CollisionUtils::getSegmentsClosestSegment(capsule1a, capsule1b, capsule2a, capsule2b);
 	contact.normalA = glm::normalize(p.second - p.first);
 	contact.normalB = -contact.normalA;
 	contact.contactPointA = p.first + contact.normalA * capsule1Radius;

@@ -10,7 +10,7 @@ Intersection::Contact Intersection::intersect_SpherevsSphere(const glm::vec3& sp
 Intersection::Contact Intersection::intersect_SpherevsCapsule(const glm::vec3& sphereCenter, const float& sphereRadius, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
 {
 	Contact contact;
-	contact.contactPointB = getSegmentClosestPoint(capsule1, capsule2, sphereCenter);
+	contact.contactPointB = CollisionUtils::getSegmentClosestPoint(capsule1, capsule2, sphereCenter);
 	if (contact.contactPointB == capsule1)
 	{
 		contact.normalB = glm::normalize(sphereCenter - capsule1);

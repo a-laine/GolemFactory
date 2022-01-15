@@ -19,14 +19,14 @@ VirtualSceneQuerry::CollisionType FrustrumSceneQuerry::operator() (const NodeVir
 		return VirtualSceneQuerry::NONE;
 
 	//	out of horizontal range
-	float maxAbsoluteDimension = (std::max)(size.x, (std::max)(size.y, size.z)) / 2.f;
-	float maxTangentDimension = abs(size.x * cameraLeftAxis.x) / 2.f + abs(size.y * cameraLeftAxis.y) / 2.f + abs(size.z * cameraLeftAxis.z) / 2.f;
-	if (abs(glm::dot(p, cameraLeftAxis)) - maxTangentDimension > std::abs(forwardFloat) * tan(glm::radians(cameraHorizontalAngle)) + FRUSTRUM_COEFF * maxAbsoluteDimension)
+	float maxAbsoluteDimension = 0.5f * std::max(size.x, std::max(size.y, size.z));
+	float maxTangentDimension = 0.5f * (abs(size.x * cameraLeftAxis.x) + abs(size.y * cameraLeftAxis.y) + abs(size.z * cameraLeftAxis.z));
+	if (abs(glm::dot(p, cameraLeftAxis)) - maxTangentDimension > forwardFloat * tan(glm::radians(cameraHorizontalAngle)) + FRUSTRUM_COEFF * maxAbsoluteDimension)
 		return VirtualSceneQuerry::NONE;
 
 	//	out of vertical range
-	maxTangentDimension = abs(size.x * cameraVerticalAxis.x) / 2.f + abs(size.y * cameraVerticalAxis.y) / 2.f + abs(size.z * cameraVerticalAxis.z) / 2.f;
-	if (abs(glm::dot(p, cameraVerticalAxis)) - maxTangentDimension > abs(forwardFloat) * tan(glm::radians(cameraVerticalAngle)) + FRUSTRUM_COEFF * maxAbsoluteDimension)
+	maxTangentDimension = 0.5f * (abs(size.x * cameraVerticalAxis.x) + abs(size.y * cameraVerticalAxis.y) + abs(size.z * cameraVerticalAxis.z));
+	if (abs(glm::dot(p, cameraVerticalAxis)) - maxTangentDimension > forwardFloat * tan(glm::radians(cameraVerticalAngle)) + FRUSTRUM_COEFF * maxAbsoluteDimension)
 		return VirtualSceneQuerry::NONE;
 
 	result.push_back(node);

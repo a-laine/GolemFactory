@@ -405,9 +405,6 @@
     <ClCompile Include="..\..\Sources\Physics\SpecificIntersection\IntersectionOrientedBox.cpp">
       <Filter>Fichiers sources\Physics\SpecificIntersection</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Sources\Physics\SpecificIntersection\IntersectionPoint.cpp">
-      <Filter>Fichiers sources\Physics\SpecificIntersection</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\Sources\Physics\SpecificIntersection\IntersectionSegment.cpp">
       <Filter>Fichiers sources\Physics\SpecificIntersection</Filter>
     </ClCompile>
@@ -424,9 +421,6 @@
       <Filter>Fichiers sources\Physics</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Sources\Physics\GJK.cpp">
-      <Filter>Fichiers sources\Physics</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\Physics\Intersection.cpp">
       <Filter>Fichiers sources\Physics</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Sources\Physics\Physics.cpp">
@@ -449,6 +443,12 @@
     </ClCompile>
     <ClCompile Include="..\..\Sources\Utiles\OpenSaveFileDialog.cpp">
       <Filter>Fichiers sources\Utiles</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Sources\Physics\SpecificCollision\CollisionUtils.cpp">
+      <Filter>Fichiers sources\Physics\SpecificCollision</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Sources\Physics\Constraint.cpp">
+      <Filter>Fichiers sources\Physics</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -725,9 +725,6 @@
     <ClInclude Include="..\..\Sources\Physics\SpecificCollision\CollisionOrientedBox.h">
       <Filter>Fichiers d%27en-tête\Physics\SpecificCollision</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Sources\Physics\SpecificCollision\CollisionPoint.h">
-      <Filter>Fichiers d%27en-tête\Physics\SpecificCollision</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Sources\Physics\SpecificCollision\CollisionSegment.h">
       <Filter>Fichiers d%27en-tête\Physics\SpecificCollision</Filter>
     </ClInclude>
@@ -752,9 +749,6 @@
     <ClInclude Include="..\..\Sources\Physics\SpecificIntersection\IntersectionOrientedBox.h">
       <Filter>Fichiers d%27en-tête\Physics\SpecificIntersection</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Sources\Physics\SpecificIntersection\IntersectionPoint.h">
-      <Filter>Fichiers d%27en-tête\Physics\SpecificIntersection</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Sources\Physics\SpecificIntersection\IntersectionSegment.h">
       <Filter>Fichiers d%27en-tête\Physics\SpecificIntersection</Filter>
     </ClInclude>
@@ -776,9 +770,6 @@
     <ClInclude Include="..\..\Sources\Physics\GJK.h">
       <Filter>Fichiers d%27en-tête\Physics</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Sources\Physics\Intersection.h">
-      <Filter>Fichiers d%27en-tête\Physics</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Sources\Physics\Physics.h">
       <Filter>Fichiers d%27en-tête\Physics</Filter>
     </ClInclude>
@@ -798,6 +789,15 @@
       <Filter>Fichiers d%27en-tête\Utiles</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Sources\Utiles\OpenSaveFileDialog.h">
+      <Filter>Fichiers d%27en-tête\Utiles</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Physics\Collision.hpp">
+      <Filter>Fichiers d%27en-tête\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Physics\Constraint.h">
+      <Filter>Fichiers d%27en-tête\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Utiles\ImguiConfig.h">
       <Filter>Fichiers d%27en-tête\Utiles</Filter>
     </ClInclude>
   </ItemGroup>

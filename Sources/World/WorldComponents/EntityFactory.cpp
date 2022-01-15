@@ -16,21 +16,23 @@ EntityFactory::EntityFactory(World* parentWorld)
 	: world(parentWorld)
 {}
 
-Entity* EntityFactory::createObject(const std::string& type, const glm::vec3& position, const glm::vec3& scale, const glm::quat& orientation)
+Entity* EntityFactory::createObject(const std::string& type, const glm::vec3& position, const glm::vec3& scale, const glm::quat& orientation, const std::string& name)
 {
 	Entity* object = createByType(type);
 	if(object)
 	{
+		object->setName(name);
 		object->setTransformation(position, scale, orientation);
 		addToScene(object);
 	}
 	return object;
 }
 
-Entity* EntityFactory::createObject(const std::vector<Component*>& components, const glm::vec3& position, const glm::vec3& scale, const glm::quat& orientation)
+Entity* EntityFactory::createObject(const std::vector<Component*>& components, const glm::vec3& position, const glm::vec3& scale, const glm::quat& orientation, const std::string& name)
 {
 	Entity* object = createEntity();
 	addComponents(object, components);
+	object->setName(name);
 	object->setTransformation(position, scale, orientation);
 	addToScene(object);
 	return object;
@@ -70,6 +72,9 @@ Entity* EntityFactory::createByType(const std::string& type)
 
 void EntityFactory::addToScene(Entity* object)
 {
+	RigidBody* rigidbody = object->getComponent<RigidBody>();
+	if (rigidbody)
+		rigidbody->initialize(rigidbody->getMass());
 	world->addToScene(object);
 }
 

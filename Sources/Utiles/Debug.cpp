@@ -17,6 +17,7 @@ const glm::vec3 Debug::grey = glm::vec3(0.2f, 0.2f, 0.2f);
 const glm::vec3 Debug::red = glm::vec3(1.f, 0.f, 0.f);
 const glm::vec3 Debug::green = glm::vec3(0.f, 1.f, 0.f);
 const glm::vec3 Debug::blue = glm::vec3(0.f, 0.f, 1.f);
+const glm::vec3 Debug::yellow = glm::vec3(1.f, 1.f, 0.f);
 
 const glm::vec3 Debug::darkBlue = glm::vec3(0.103f, 0.103f, 0.403f);
 const glm::vec3 Debug::darkGreen = glm::vec3(0.f, 0.25f, 0.f);
@@ -53,6 +54,28 @@ void Debug::initialize(const std::string& pointMeshName, const std::string& cube
 	segmentShader = ResourceManager::getInstance()->getResource<Shader>(segmentShaderName);
 	defaultShader = ResourceManager::getInstance()->getResource<Shader>(defaultShaderName);
 	wiredShader = ResourceManager::getInstance()->getResource<Shader>(wiredShaderName);
+}
+void Debug::drawLineCube(const glm::mat4& transform, const glm::vec3& size)
+{
+	glm::vec3 x = size.x * glm::vec3(transform[0]);
+	glm::vec3 y = size.y * glm::vec3(transform[1]);
+	glm::vec3 z = size.z * glm::vec3(transform[2]);
+	glm::vec3 center = glm::vec3(transform[3]);
+
+	drawLine(center + x + y + z, center + x + y - z);
+	drawLine(center + x - y + z, center + x - y - z);
+	drawLine(center - x + y + z, center - x + y - z);
+	drawLine(center - x - y + z, center - x - y - z);
+
+	drawLine(center + x + y + z, center + x - y + z);
+	drawLine(center + x + y - z, center + x - y - z);
+	drawLine(center - x + y + z, center - x - y + z);
+	drawLine(center - x + y - z, center - x - y - z);
+
+	drawLine(center + x + y + z, center - x + y + z);
+	drawLine(center + x + y - z, center - x + y - z);
+	drawLine(center + x - y + z, center - x - y + z);
+	drawLine(center + x - y - z, center - x - y - z);
 }
 //
 

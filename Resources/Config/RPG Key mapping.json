@@ -158,6 +158,11 @@ DefaultRPGKeyMapping
 		configuration : ["button","down"];
 		listeningKey : [290];
 	};
+	pause : {
+		eventPublished : "PAUSE";
+		configuration : ["button","down"];
+		listeningKey : [80];
+	};
 	changeCursorMode : {
 		eventPublished : "CHANGE_CURSOR_MODE";
 		configuration : ["button","down"];
@@ -188,6 +193,11 @@ DefaultRPGKeyMapping
 	
 	
 
+	ALT : {
+		eventPublished : "ALT";
+		configuration : ["button"];
+		listeningKey : [342];
+	};
 	F3 : {
 		eventPublished : "F3";
 		configuration : ["button","down"];

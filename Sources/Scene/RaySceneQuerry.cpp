@@ -8,7 +8,10 @@ VirtualSceneQuerry::CollisionType RaySceneQuerry::operator() (const NodeVirtual*
 {
 	//	Segment/AABB collision test
 	glm::vec3 s = 1.01f * glm::vec3(node->getAllowanceSize());
-	if (Collision::collide_SegmentvsAxisAlignedBox(position, position + distance*direction, node->getBBMin() - s, node->getBBMax() + s))
+	Segment ray(position, position + distance * direction);
+	AxisAlignedBox box(node->getBBMin() - s, node->getBBMax() + s);
+
+	if (Collision::collide(&ray, &box))
 	{
 		result.push_back(node);
 		return VirtualSceneQuerry::OVERLAP;

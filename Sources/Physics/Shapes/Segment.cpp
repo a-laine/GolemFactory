@@ -6,7 +6,7 @@
 #include <glm/gtx/quaternion.hpp>
 
 
-Segment::Segment(const glm::vec3& a, const glm::vec3& b) : Shape(SEGMENT), p1(a), p2(b) {}
+Segment::Segment(const glm::vec3& a, const glm::vec3& b) : Shape(ShapeType::SEGMENT), p1(a), p2(b) {}
 Sphere Segment::toSphere() const { return Sphere(0.5f*(p1 + p2), 0.5f*glm::length(p1 - p2)); }
 AxisAlignedBox Segment::toAxisAlignedBox() const
 {
@@ -14,7 +14,7 @@ AxisAlignedBox Segment::toAxisAlignedBox() const
 }
 Shape& Segment::operator=(const Shape& s)
 {
-	if (s.type == Shape::SEGMENT)
+	if (s.type == Shape::ShapeType::SEGMENT)
 	{
 		const Segment& segment = *static_cast<const Segment*>(&s);
 		p1 = segment.p1;
@@ -31,9 +31,14 @@ void Segment::transform(const glm::vec3& position, const glm::vec3& scale, const
 	p2 = glm::vec3(m * glm::vec4(p2, 1.f));
 }
 Shape* Segment::duplicate() const { return new Segment(*this); }
-glm::vec3 Segment::GJKsupport(const glm::vec3& direction) const
+glm::vec3 Segment::support(const glm::vec3& direction) const
 {
 	if (glm::dot(p1, direction) > glm::dot(p2, direction))
 		return p1;
 	else return p2;
+}
+void Segment::getFacingFace(const glm::vec3& direction, std::vector<glm::vec3>& points) const
+{
+	points.push_back(p1);
+	points.push_back(p2);
 }

@@ -11,7 +11,7 @@
 #include <glm/gtx/quaternion.hpp>
 
 //	Default
-Hull::Hull(Mesh* m, glm::mat4 transform) : Shape(HULL), base(transform), mesh(m)
+Hull::Hull(Mesh* m, glm::mat4 transform) : Shape(ShapeType::HULL), base(transform), mesh(m)
 {
 	ResourceManager::getInstance()->getResource(m);
 }
@@ -44,7 +44,7 @@ AxisAlignedBox Hull::toAxisAlignedBox() const
 }
 Shape& Hull::operator=(const Shape& s)
 {
-	if (s.type == Shape::HULL)
+	if (s.type == Shape::ShapeType::HULL)
 	{
 		const Hull& h = *static_cast<const Hull*>(&s);
 		mesh = h.mesh;
@@ -65,7 +65,7 @@ Shape* Hull::duplicate() const
 	ResourceManager::getInstance()->getResource(mesh);
 	return new Hull(mesh, base);
 }
-glm::vec3 Hull::GJKsupport(const glm::vec3& direction) const
+glm::vec3 Hull::support(const glm::vec3& direction) const
 {
 	glm::vec3 u = glm::vec3(glm::inverse(base) * glm::vec4(direction, 0.f));
 	float d = std::numeric_limits<float>::min();
@@ -81,5 +81,28 @@ glm::vec3 Hull::GJKsupport(const glm::vec3& direction) const
 		}
 	}
 	return glm::vec3(base * glm::vec4(v, 1.f));
+}
+void Hull::getFacingFace(const glm::vec3& direction, std::vector<glm::vec3>& points) const
+{
+	glm::vec3 localDirection = glm::vec3(glm::inverse(base) * glm::vec4(direction, 0.f));
+	const std::vector<glm::vec3>& vertices = *mesh->getVertices();
+	const std::vector<unsigned short>& faces = *mesh->getFaces();
+	const std::vector<glm::vec3>& normals = *mesh->getNormals();
+	float dotMax = std::numeric_limits<float>::min();
+	
+	unsigned int mostFace = 0;
+	for (unsigned int i = 0; i < faces.size(); i += 3)
+	{
+		float dot = glm::dot(normals[i], direction);
+		if (dot > dotMax)
+		{
+			dotMax = dot;
+			mostFace = i;
+		}
+	}
+
+	points.push_back(glm::vec3(base * glm::vec4(vertices[mostFace], 1.f)));
+	points.push_back(glm::vec3(base * glm::vec4(vertices[mostFace + 1], 1.f)));
+	points.push_back(glm::vec3(base * glm::vec4(vertices[mostFace + 2], 1.f)));
 }
 //

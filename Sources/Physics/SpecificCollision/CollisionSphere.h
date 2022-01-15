@@ -4,7 +4,7 @@
 
 #include "Physics/BoundingVolume.h"
 
-namespace Collision
+namespace Collision2
 {
 	//	Specialized functions : Sphere vs all other (except previous Shape)
 	bool collide_SpherevsSphere(const glm::vec3& sphere1Center, const float& sphere1Radius, const glm::vec3& sphere2Center, const float& sphere2Radius);

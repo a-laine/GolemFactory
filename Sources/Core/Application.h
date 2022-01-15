@@ -8,6 +8,8 @@
 
 #include "RenderContext.h"
 
+#include "Utiles/ImguiConfig.h"
+
 #include <string>
 
 
@@ -30,8 +32,11 @@ class Application
 
 		void changeIcon(const std::string& iconName);
 
+
 	private:
 		static void GLFWErrorCallback(int error, const char* description);
+
+		void ImGuiShut();
 
 		std::vector<RenderContext*> m_contexts;
 		std::vector<GLFWwindow*> m_windows;

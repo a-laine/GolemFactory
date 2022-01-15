@@ -1,0 +1,99 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Fichiers sources">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Fichiers d%27en-tête">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Fichiers de ressources">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Fichiers d%27en-tête\backends">
+      <UniqueIdentifier>{070b005a-2261-47f5-8d70-e1d31e687d3c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Fichiers sources\backends">
+      <UniqueIdentifier>{3c9c28ec-dbf3-42c1-b94b-290a967ee755}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Fichiers d%27en-tête\misc">
+      <UniqueIdentifier>{7daed4a4-0958-495f-92c6-297de03f30a3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Fichiers sources\misc">
+      <UniqueIdentifier>{0b2b0c84-c8bd-4b9d-9446-3c4f4764991a}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Externals\imgui\imconfig.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Externals\imgui\imgui.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Externals\imgui\imgui_internal.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Externals\imgui\imstb_rectpack.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Externals\imgui\imstb_textedit.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Externals\imgui\imstb_truetype.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Externals\imgui\backends\imgui_impl_glfw.h">
+      <Filter>Fichiers d%27en-tête\backends</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Externals\imgui\backends\imgui_impl_opengl3.h">
+      <Filter>Fichiers d%27en-tête\backends</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Externals\imgui\backends\imgui_impl_opengl3_loader.h">
+      <Filter>Fichiers d%27en-tête\backends</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Externals\imgui\misc\cpp\imgui_stdlib.h">
+      <Filter>Fichiers d%27en-tête\misc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Externals\imgui\misc\freetype\imgui_freetype.h">
+      <Filter>Fichiers d%27en-tête\misc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Externals\imgui\misc\single_file\imgui_single_file.h">
+      <Filter>Fichiers d%27en-tête\misc</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\Externals\imgui\imgui.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Externals\imgui\imgui_demo.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Externals\imgui\imgui_draw.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Externals\imgui\imgui_tables.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Externals\imgui\imgui_widgets.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Externals\imgui\backends\imgui_impl_glfw.cpp">
+      <Filter>Fichiers sources\backends</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Externals\imgui\backends\imgui_impl_opengl3.cpp">
+      <Filter>Fichiers sources\backends</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Externals\imgui\misc\fonts\binary_to_compressed_c.cpp">
+      <Filter>Fichiers sources\misc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Externals\imgui\misc\freetype\imgui_freetype.cpp">
+      <Filter>Fichiers sources\misc</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Externals\imgui\misc\cpp\imgui_stdlib.cpp">
+      <Filter>Fichiers sources\misc</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

@@ -20,7 +20,8 @@ class Variant
             DOUBLE,
             STRING,
             ARRAY,
-            MAP
+            MAP,
+            CODEBLOCK
         };
 
         //++++ constructors / destructors
@@ -33,7 +34,7 @@ class Variant
         Variant(const int64_t& var);
         Variant(const float& var);
         Variant(const double& var);
-        Variant(const std::string& var);
+        Variant(const std::string& var, bool asCodeBlock = false);
         Variant(const char* var);
         Variant(const ArrayType& var);
         Variant(const MapType& var);
@@ -102,6 +103,8 @@ class Variant
         Variant& insert(const std::string& key, const double& val);
         Variant& insert(const std::string& key, const std::string& val);
         Variant& insert(const std::string& key, const char* val);
+
+        void setAsCodeBlock(const std::string& source);
 
 
     private:

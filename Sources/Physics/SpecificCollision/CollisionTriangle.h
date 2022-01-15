@@ -4,7 +4,7 @@
 
 #include "Physics/BoundingVolume.h"
 
-namespace Collision
+namespace Collision2
 {
 	//	Specialized functions : Triangle vs all other (except previous Shape)
 	bool collide_TrianglevsTriangle(const glm::vec3& triangle1a, const glm::vec3&triangle1b, const glm::vec3& triangle1c, const glm::vec3& triangle2a, const glm::vec3& triangle2b, const glm::vec3& triangle2c);

@@ -24,8 +24,8 @@ class Swept
 		//	Attributes
 		Entity* entity;
 		AxisAlignedBox box;
-		glm::vec3 dp;
-		glm::fquat dq;
+		//glm::vec3 dp;
+		//glm::fquat dq;
 		//
 };
 

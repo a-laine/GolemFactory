@@ -4,7 +4,7 @@
 
 #include "Physics/BoundingVolume.h"
 
-namespace Collision
+namespace Collision2
 {
 	//	Specialized functions : Axis Aligned Box vs all other (except previous Shape)
 	bool collide_AxisAlignedBoxvsAxisAlignedBox(const glm::vec3& box1Min, const glm::vec3& box1Max, const glm::vec3& box2Min, const glm::vec3& box2Max);

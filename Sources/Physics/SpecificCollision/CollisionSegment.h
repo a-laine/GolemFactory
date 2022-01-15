@@ -4,7 +4,7 @@
 
 #include "Physics/BoundingVolume.h"
 
-namespace Collision
+namespace Collision2
 {
 	//	Specialized functions : Segment vs all other (except previous Shape)
 	bool collide_SegmentvsSegment(const glm::vec3& segment1a, const glm::vec3& segment1b, const glm::vec3& segment2a, const glm::vec3& segment2b);

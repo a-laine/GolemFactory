@@ -90,12 +90,12 @@ GLuint Shader::getShaderID(ShaderType shaderType) const
 {
     switch(shaderType)
     {
-        case VERTEX_SH:     return vertexShader;
-        case GEOMETRIC_SH:  return geometricShader;
-        case FRAGMENT_SH:   return fragmentShader;
-        case PROGRAM_SH:    return program;
-        case TESS_EVAL_SH:  return tessEvalShader;
-        case TESS_CONT_SH:  return tessControlShader;
+        case ShaderType::VERTEX_SH:     return vertexShader;
+        case ShaderType::GEOMETRIC_SH:  return geometricShader;
+        case ShaderType::FRAGMENT_SH:   return fragmentShader;
+        case ShaderType::PROGRAM_SH:    return program;
+        case ShaderType::TESS_EVAL_SH:  return tessEvalShader;
+        case ShaderType::TESS_CONT_SH:  return tessControlShader;
         default:            return 0;
     }
 }
@@ -103,12 +103,12 @@ bool Shader::useShaderType(ShaderType shaderType) const
 {
     switch(shaderType)
     {
-        case VERTEX_SH:     return glIsShader(vertexShader) != 0;
-        case GEOMETRIC_SH:  return glIsShader(geometricShader) != 0;
-        case FRAGMENT_SH:   return glIsShader(fragmentShader) != 0;
-        case PROGRAM_SH:    return glIsShader(program) != 0;
-        case TESS_EVAL_SH:  return glIsShader(tessEvalShader) != 0;
-        case TESS_CONT_SH:  return glIsShader(tessControlShader) != 0;
+        case ShaderType::VERTEX_SH:     return glIsShader(vertexShader) != 0;
+        case ShaderType::GEOMETRIC_SH:  return glIsShader(geometricShader) != 0;
+        case ShaderType::FRAGMENT_SH:   return glIsShader(fragmentShader) != 0;
+        case ShaderType::PROGRAM_SH:    return glIsShader(program) != 0;
+        case ShaderType::TESS_EVAL_SH:  return glIsShader(tessEvalShader) != 0;
+        case ShaderType::TESS_CONT_SH:  return glIsShader(tessControlShader) != 0;
         default:            return false;
     }
 }
@@ -151,11 +151,11 @@ std::string Shader::toString(ShaderType shaderType)
 {
 	switch (shaderType)
 	{
-		case VERTEX_SH:     return "vertex shader";
-		case GEOMETRIC_SH:  return "geometry shader";
-		case FRAGMENT_SH:   return "fragment shader";
-		case TESS_EVAL_SH:  return "tesselation evaluation shader";
-		case TESS_CONT_SH:  return "tesselation control shader";
+		case ShaderType::VERTEX_SH:     return "vertex shader";
+		case ShaderType::GEOMETRIC_SH:  return "geometry shader";
+		case ShaderType::FRAGMENT_SH:   return "fragment shader";
+		case ShaderType::TESS_EVAL_SH:  return "tesselation evaluation shader";
+		case ShaderType::TESS_CONT_SH:  return "tesselation control shader";
 		default: return "unknown shader";
 	}
 }

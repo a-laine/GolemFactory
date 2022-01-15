@@ -4,7 +4,7 @@
 
 #include "Physics/BoundingVolume.h"
 
-namespace Collision
+namespace Collision2
 {
 	//	Specialized functions : Oriented Box vs all other (except previous Shape)
 	bool collide_OrientedBoxvsOrientedBox(const glm::mat4& box1Tranform, const glm::vec3& box1Min, const glm::vec3& box1Max, const glm::mat4& box2Tranform, const glm::vec3& box2Min, const glm::vec3& box2Max);

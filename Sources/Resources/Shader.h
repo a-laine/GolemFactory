@@ -18,7 +18,7 @@ class Shader : public ResourceVirtual
         static void setDefaultName(const std::string& name);
 
         //  Miscellaneous
-        enum ShaderType
+        enum class ShaderType
         {
             VERTEX_SH = 1,      //!< vertex shader
             FRAGMENT_SH = 2,    //!< fragment shader

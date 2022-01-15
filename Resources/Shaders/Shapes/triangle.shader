@@ -1,9 +1,5 @@
 Triangle
 {
-	vertex :   "Shapes/point.vs";
-	geometry : "Shapes/triangle.gs";
-	fragment : "Shapes/triangle.fs";
-	
 	uniform :
 	{
 		model : "mat4";
@@ -15,5 +11,84 @@ Triangle
 		
 		wired : "int";
 		overrideColor : "vec3";
+	};
+	
+	vertex :   "Shapes/point.vs";
+	
+	geometry : 
+	{
+		#version 330
+
+		layout(points) in;
+		layout(triangle_strip, max_vertices = 3) out;
+
+		uniform mat4 model;
+		uniform mat4 view; 		// view matrix
+		uniform mat4 projection;// projection matrix
+
+		uniform vec3 vector1 = vec3(0.0 , 0.0 , 0.0);
+		uniform vec3 vector2 = vec3(0.0 , 0.0 , 0.0);
+
+		// output
+		out vec3 barycentricCoord;
+
+
+		//	program
+		void main()
+		{
+			//	create alias
+			vec3 p1 = (model * gl_in[0].gl_Position).xyz;
+			vec3 p2 = p1 + vector1;
+			vec3 p3 = p1 + vector2;
+			
+			//	draw segment
+			gl_Position = projection * view * vec4(p1 , 1.0);
+			barycentricCoord = vec3(1.0 , 0.0 , 0.0);
+			EmitVertex();
+			gl_Position = projection * view * vec4(p2, 1.0);
+			barycentricCoord = vec3(0.0 , 1.0 , 0.0);
+			EmitVertex();
+			gl_Position = projection * view * vec4(p3, 1.0);
+			barycentricCoord = vec3(0.0 , 0.0 , 1.0);
+			EmitVertex();
+			EndPrimitive();
+		}
+	};
+	
+	fragment : 
+	{
+		#version 330
+
+		// input
+		in vec3 barycentricCoord;
+		in vec3 fragmentColor;
+
+		uniform int wired = 0;
+		uniform vec3 overrideColor = vec3(-1.0 , 0.0 , 0.0);
+
+		// output
+		layout (location = 0) out vec3 fragColor;
+
+
+		// program
+		float edgeFactor()
+		{
+			vec3 d = fwidth(barycentricCoord);
+			vec3 a3 = smoothstep(vec3(0.0), d * 0.9 , barycentricCoord);
+			return min(min(a3.x, a3.y), a3.z);
+		}
+
+		void main()
+		{
+			vec3 color = fragmentColor;
+			if (overrideColor.x >= 0.0)
+				color = overrideColor;
+			if(wired != 0)
+			{
+				if(edgeFactor() < 1.0) fragColor = color;
+				else discard;	
+			}
+			else fragColor = color;
+		}
 	};
 }

@@ -10,7 +10,10 @@ namespace Collision
 	//	Specialized functions : point vs all other
 	bool collide_PointvsPoint(const glm::vec3& point1, const glm::vec3& point2, CollisionReport* report = nullptr);
 	bool collide_PointvsSegment(const glm::vec3& point, const glm::vec3& segment1, const glm::vec3& segment2, CollisionReport* report = nullptr);
+	bool collide_SegmentvsPoint(const glm::vec3& point, const glm::vec3& segment1, const glm::vec3& segment2, CollisionReport* report = nullptr);
 	bool collide_PointvsTriangle(const glm::vec3& point, const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, CollisionReport* report = nullptr);
+	bool collide_TrianglevsPoint(const glm::vec3& point, const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, CollisionReport* report = nullptr);
+
 	bool collide_PointvsOrientedBox(const glm::vec3& point, const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax, CollisionReport* report = nullptr);
 	bool collide_PointvsAxisAlignedBox(const glm::vec3& point, const glm::vec3& boxMin, const glm::vec3& boxMax, CollisionReport* report = nullptr);
 	bool collide_PointvsSphere(const glm::vec3& point, const glm::vec3& sphereCenter, const float& sphereRadius, CollisionReport* report = nullptr);

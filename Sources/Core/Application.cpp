@@ -7,7 +7,6 @@
 #include <Resources/Loader/ImageLoader.h>
 
 
-
 Application::Application() : m_mainWindow(nullptr), m_shouldExit(false)
 {
 	if (!glfwInit())
@@ -23,6 +22,7 @@ Application::Application() : m_mainWindow(nullptr), m_shouldExit(false)
 
 Application::~Application()
 {
+	ImGuiShut();
 	for (RenderContext* context : m_contexts)
 	{
 		delete context;
@@ -64,6 +64,7 @@ bool Application::shouldExit()
 
 void Application::exitProgram(int returnCode)
 {
+	ImGuiShut();
 	glfwTerminate();
 	exit(returnCode);
 }
@@ -80,7 +81,29 @@ RenderContext* Application::createWindow(const char* title, int width, int heigh
 		if (m_mainWindow == nullptr)
 		{
 			m_mainWindow = window;
+			context->makeCurrent();
+
+#ifdef USE_IMGUI
+			IMGUI_CHECKVERSION();
+			ImGui::CreateContext();
+
+			ImGuiIO& io = ImGui::GetIO();
+			io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
+
+			ImGui::StyleColorsDark();
+
+			ImGuiStyle& style = ImGui::GetStyle();
+			if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+			{
+				style.WindowRounding = 0.0f;
+				style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+			}
+
+			ImGui_ImplGlfw_InitForOpenGL(window, true);
+			ImGui_ImplOpenGL3_Init("#version 130");
+#endif
 		}
+
 		m_windows.push_back(window);
 		m_contexts.push_back(context);
 	}
@@ -155,6 +178,15 @@ void Application::closeWindow(GLFWwindow* window)
 		m_contexts.erase(itContext);
 		delete context;
 	}
+}
+
+void Application::ImGuiShut()
+{
+#ifdef USE_IMGUI
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
+#endif
 }
 
 void Application::changeIcon(const std::string& fullpath)

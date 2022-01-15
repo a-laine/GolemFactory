@@ -32,6 +32,12 @@ class Debug : public Singleton<Debug>
 		static void drawWiredSphere(const glm::vec3& center, const float& radius) { Debug::mesh(This->sphereMesh, glm::scale(glm::translate(glm::mat4(1.f), center), glm::vec3(radius)), This->wiredShader); };
 		static void drawWiredCapsule(const glm::vec3& point1, const glm::vec3& point2, const float& radius) { Debug::capsule(point1, point2, radius, This->wiredShader); };
 		static void drawWiredMesh(const Mesh* const mesh, const glm::mat4& transform) { Debug::mesh(mesh, transform, This->wiredShader); };
+
+		static void drawLineCube(const glm::mat4& transform, const glm::vec3& size);
+		static void drawLineCube(const glm::mat4& transform, const glm::vec3& min, const glm::vec3& max)
+		{
+			Debug::drawLineCube(glm::translate(glm::mat4(1.f), 0.5f * (max + min)) * transform, 0.5f * (max - min));
+		}
 		//
 
 		//	Log fuctions
@@ -53,6 +59,7 @@ class Debug : public Singleton<Debug>
 		static const glm::vec3 red;
 		static const glm::vec3 green;
 		static const glm::vec3 blue;
+		static const glm::vec3 yellow;
 
 		static const glm::vec3 darkBlue;
 		static const glm::vec3 darkGreen;

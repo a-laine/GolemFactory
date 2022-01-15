@@ -193,8 +193,8 @@
     <ClCompile Include="..\..\Sources\HUD\WidgetVirtual.cpp" />
     <ClCompile Include="..\..\Sources\Physics\Collision.cpp" />
     <ClCompile Include="..\..\Sources\Physics\CollisionReport.cpp" />
+    <ClCompile Include="..\..\Sources\Physics\Constraint.cpp" />
     <ClCompile Include="..\..\Sources\Physics\GJK.cpp" />
-    <ClCompile Include="..\..\Sources\Physics\Intersection.cpp" />
     <ClCompile Include="..\..\Sources\Physics\Physics.cpp" />
     <ClCompile Include="..\..\Sources\Physics\RigidBody.cpp" />
     <ClCompile Include="..\..\Sources\Physics\Shapes\AxisAlignedBox.cpp" />
@@ -213,11 +213,11 @@
     <ClCompile Include="..\..\Sources\Physics\SpecificCollision\CollisionSegment.cpp" />
     <ClCompile Include="..\..\Sources\Physics\SpecificCollision\CollisionSphere.cpp" />
     <ClCompile Include="..\..\Sources\Physics\SpecificCollision\CollisionTriangle.cpp" />
+    <ClCompile Include="..\..\Sources\Physics\SpecificCollision\CollisionUtils.cpp" />
     <ClCompile Include="..\..\Sources\Physics\SpecificIntersection\IntersectionAxisAlignedBox.cpp" />
     <ClCompile Include="..\..\Sources\Physics\SpecificIntersection\IntersectionCapsule.cpp" />
     <ClCompile Include="..\..\Sources\Physics\SpecificIntersection\IntersectionContact.cpp" />
     <ClCompile Include="..\..\Sources\Physics\SpecificIntersection\IntersectionOrientedBox.cpp" />
-    <ClCompile Include="..\..\Sources\Physics\SpecificIntersection\IntersectionPoint.cpp" />
     <ClCompile Include="..\..\Sources\Physics\SpecificIntersection\IntersectionSegment.cpp" />
     <ClCompile Include="..\..\Sources\Physics\SpecificIntersection\IntersectionSphere.cpp" />
     <ClCompile Include="..\..\Sources\Physics\SpecificIntersection\IntersectionTriangle.cpp" />
@@ -303,9 +303,10 @@
     <ClInclude Include="..\..\Sources\HUD\WidgetVirtual.h" />
     <ClInclude Include="..\..\Sources\Physics\BoundingVolume.h" />
     <ClInclude Include="..\..\Sources\Physics\Collision.h" />
+    <ClInclude Include="..\..\Sources\Physics\Collision.hpp" />
     <ClInclude Include="..\..\Sources\Physics\CollisionReport.h" />
+    <ClInclude Include="..\..\Sources\Physics\Constraint.h" />
     <ClInclude Include="..\..\Sources\Physics\GJK.h" />
-    <ClInclude Include="..\..\Sources\Physics\Intersection.h" />
     <ClInclude Include="..\..\Sources\Physics\Physics.h" />
     <ClInclude Include="..\..\Sources\Physics\RigidBody.h" />
     <ClInclude Include="..\..\Sources\Physics\Shapes\AxisAlignedBox.h" />
@@ -320,7 +321,6 @@
     <ClInclude Include="..\..\Sources\Physics\SpecificCollision\CollisionAxisAlignedBox.h" />
     <ClInclude Include="..\..\Sources\Physics\SpecificCollision\CollisionCapsule.h" />
     <ClInclude Include="..\..\Sources\Physics\SpecificCollision\CollisionOrientedBox.h" />
-    <ClInclude Include="..\..\Sources\Physics\SpecificCollision\CollisionPoint.h" />
     <ClInclude Include="..\..\Sources\Physics\SpecificCollision\CollisionSegment.h" />
     <ClInclude Include="..\..\Sources\Physics\SpecificCollision\CollisionSphere.h" />
     <ClInclude Include="..\..\Sources\Physics\SpecificCollision\CollisionTriangle.h" />
@@ -329,7 +329,6 @@
     <ClInclude Include="..\..\Sources\Physics\SpecificIntersection\IntersectionCapsule.h" />
     <ClInclude Include="..\..\Sources\Physics\SpecificIntersection\IntersectionContact.h" />
     <ClInclude Include="..\..\Sources\Physics\SpecificIntersection\IntersectionOrientedBox.h" />
-    <ClInclude Include="..\..\Sources\Physics\SpecificIntersection\IntersectionPoint.h" />
     <ClInclude Include="..\..\Sources\Physics\SpecificIntersection\IntersectionSegment.h" />
     <ClInclude Include="..\..\Sources\Physics\SpecificIntersection\IntersectionSphere.h" />
     <ClInclude Include="..\..\Sources\Physics\SpecificIntersection\IntersectionTriangle.h" />
@@ -375,6 +374,7 @@
     <ClInclude Include="..\..\Sources\Utiles\DirectoryWatcher.h" />
     <ClInclude Include="..\..\Sources\Utiles\FileWatcher.h" />
     <ClInclude Include="..\..\Sources\Utiles\GiftWrapping.h" />
+    <ClInclude Include="..\..\Sources\Utiles\ImguiConfig.h" />
     <ClInclude Include="..\..\Sources\Utiles\IncrementalHull.h" />
     <ClInclude Include="..\..\Sources\Utiles\Mutex.h" />
     <ClInclude Include="..\..\Sources\Utiles\OpenSaveFileDialog.h" />
@@ -390,6 +390,11 @@
     <ClInclude Include="..\..\Sources\World\WorldComponents\EntityFactory.h" />
     <ClInclude Include="..\..\Sources\World\WorldComponents\EntityManager.h" />
     <ClInclude Include="..\..\Sources\World\WorldComponents\Map.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ImGui\ImGui.vcxproj">
+      <Project>{fca02728-867e-406d-b00a-f59aba1fc350}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

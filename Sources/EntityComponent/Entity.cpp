@@ -6,7 +6,7 @@
 
 
 //	Default
-Entity::Entity() : m_refCount(0), m_parentWorld(nullptr), m_localBoundingShape(nullptr), m_globalBoundingShape(nullptr), swept(nullptr)
+Entity::Entity() : m_refCount(0), name("unknown"), m_parentWorld(nullptr), m_localBoundingShape(nullptr), m_globalBoundingShape(nullptr), swept(nullptr)
 {}
 //
 
@@ -46,6 +46,7 @@ void Entity::setTransformation(const glm::vec3& position, const glm::vec3& scale
 	m_transform = glm::translate(glm::mat4(1.0), position);
 	m_transform = m_transform * glm::toMat4(orientation);
 	m_transform = glm::scale(m_transform, scale);
+	m_inverseTransform = glm::inverse(m_transform);
 
 	if (m_globalBoundingShape)
 	{
@@ -67,10 +68,12 @@ void Entity::setShape(Shape* Shape)
 	m_globalBoundingShape = m_localBoundingShape->duplicate();
 	m_globalBoundingShape->transform(glm::vec3(m_transform[3]), getScale(), getOrientation());
 }
+void Entity::setName(const std::string& _name) { name = _name; }
 
 
 uint64_t Entity::getId() const { return reinterpret_cast<uintptr_t>(this); }
-const glm::mat4& Entity::getMatrix() const { return m_transform; }
+const glm::mat4& Entity::getTransformMatrix() const { return m_transform; }
+const glm::mat4& Entity::getInverseTransformMatrix() const { return m_inverseTransform; }
 glm::vec3 Entity::getPosition() const
 {
 	return glm::vec3(m_transform[3]);
@@ -94,6 +97,7 @@ glm::fquat Entity::getOrientation() const
 	return glm::quat_cast(glm::mat3(m00, m01, m02, m10, m11, m12, m20, m21, m22));
 }
 World* Entity::getParentWorld() const { return m_parentWorld; }
+std::string Entity::getName() const { return name; }
 
 const Shape* Entity::getLocalBoundingShape() const
 {
@@ -104,4 +108,6 @@ const Shape* Entity::getGlobalBoundingShape() const
 {
 	return m_globalBoundingShape;
 }
+
+
 //

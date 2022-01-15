@@ -1,8 +1,5 @@
 Default
-{
-	vertex :   "default.vs";
-	fragment : "default.fs";
-	
+{	
 	uniform :
 	{
 		model : "mat4";
@@ -11,4 +8,7 @@ Default
 		
 		overrideColor : "vec3";
 	};
-}
+	
+	vertex : "default.vs";
+	fragment : "default.fs";
+} 

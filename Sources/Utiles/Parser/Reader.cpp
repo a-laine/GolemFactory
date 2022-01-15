@@ -26,7 +26,7 @@ void Reader::parseString(Variant &result, std::string text)
 
 
 //******************************** Constructors *******************************//
-Reader::Reader(std::istream* input) : nbErrors(0), charBuf(' ')
+Reader::Reader(std::istream* input) : codeBlocksKeys(nullptr), nbErrors(0), charBuf(' ')
 {
     comment = '\0';
     ifs = 0;
@@ -67,14 +67,14 @@ void Reader::parse(Variant &result)
 
 
 //****************************** Private functions *******************************//
-char Reader::nextChar()
+char Reader::nextChar(const bool& removeSpaces)
 {
     charBuf = ifs->get();
     if(ifs->eof())
     {
         charBuf = ' ';
     }
-    else if(std::isspace(charBuf))
+    else if(removeSpaces && std::isspace(charBuf))
     {
         *ifs >> std::ws;
         charBuf = ' ';
@@ -119,9 +119,15 @@ void Reader::readMap(Variant* vmap)
     Variant* v = 0;
     nextChar();
     vmap->createMap();
+    bool isCodeBlock;
+
     do
     {
         readKey(key);
+        isCodeBlock = false;
+        if (codeBlocksKeys)
+            isCodeBlock = std::find(codeBlocksKeys->begin(), codeBlocksKeys->end(), key) != codeBlocksKeys->end();
+
         if(charBuf=='}' || ifs->eof())
         {
             nextChar();
@@ -134,7 +140,7 @@ void Reader::readMap(Variant* vmap)
             continue;
         }
         v = &(vmap->insert(key,0));
-    } while(readValue(v)); // on sort avec le caractere apres : ]}
+    } while(readValue(v, isCodeBlock)); // on sort avec le caractere apres : ]}
 }
 
 void Reader::readArray(Variant* varray)
@@ -172,7 +178,7 @@ void Reader::readKey(std::string& key)
         key = "";
 }
 
-bool Reader::readValue(Variant* exp)
+bool Reader::readValue(Variant* exp, bool isCodeBlock)
 {
     if(exp==0)
         return true;
@@ -192,7 +198,8 @@ bool Reader::readValue(Variant* exp)
                 str.append(readString(charBuf,charBuf=='\"'));
                 break;
             case '{':
-                readMap(exp);
+                if (isCodeBlock) readCodeBlock(exp);
+                else readMap(exp);
                 return true;
             case '[':
                 readArray(exp);
@@ -230,6 +237,7 @@ bool Reader::readValue(Variant* exp)
         return true;
     }
 }
+
 
 std::string utf8Convert(unsigned int hex)
 {
@@ -377,3 +385,23 @@ void Reader::readNumber(Variant* num, std::string& str) const
     }
 }
 
+void Reader::readCodeBlock(Variant* exp)
+{
+    int delimiterCount = 1;
+    std::string source;
+    for (; delimiterCount != 0 &&  !ifs->eof(); nextChar(false))
+    {
+        if (charBuf == '}')
+            delimiterCount--;
+        else if (charBuf == '{' && !source.empty())
+            delimiterCount++;
+
+        if (charBuf != '\r' && charBuf != '\t')
+            source += charBuf;
+    }
+
+
+
+    source.pop_back();
+    exp->setAsCodeBlock(source);
+}

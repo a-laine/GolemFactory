@@ -1,30 +1,42 @@
-#include "CollisionSegment.h"
-#include "CollisionPoint.h"
+#include <Physics/Collision.h>
 #include "CollisionUtils.h"
 
+
+
 //	Specialized functions : segment
-bool Collision::collide_SegmentvsSegment(const glm::vec3& segment1a, const glm::vec3& segment1b, const glm::vec3& segment2a, const glm::vec3& segment2b)
+bool Collision::collide_SegmentvsSegment(const glm::vec3& segment1a, const glm::vec3& segment1b, const glm::vec3& segment2a, const glm::vec3& segment2b, CollisionReport* report)
 {
-	if(segment1a == segment1b) return collide_PointvsSegment(segment1a, segment2a, segment2b);
-	else if (segment2a == segment2b) return collide_PointvsSegment(segment2a, segment1a, segment1b);
+	if (segment1a == segment1b)
+		return collide_PointvsSegment(segment1a, segment2a, segment2b, report);
+	else if (segment2a == segment2b)
+		return collide_PointvsSegment(segment2a, segment1a, segment1b, report);
 
 	glm::vec3 s1 = segment1b - segment1a;
 	glm::vec3 s2 = segment2b - segment2a;
 	glm::vec3 n = glm::cross(s1, s2);
 
 	if (n == glm::vec3(0.f))	// parallel
-	{
-		glm::vec3 u1 = glm::normalize(s1);
-		glm::vec3 u3 = segment1a - segment2a;
-		return glm::length2(u3 - u1 * std::abs(glm::dot(u3, u1))) <= COLLISION_EPSILON*COLLISION_EPSILON;
-	}
+		return false;
 	else
 	{
-		std::pair<glm::vec3, glm::vec3> p = getSegmentsClosestSegment(segment1a, segment1b, segment2a, segment2b);
-		return glm::length2(p.first - p.second) <= COLLISION_EPSILON*COLLISION_EPSILON;
+		std::pair<glm::vec3, glm::vec3> p = CollisionUtils::getSegmentsClosestSegment(segment1a, segment1b, segment2a, segment2b);
+		if (glm::length2(p.first - p.second) > COLLISION_EPSILON * COLLISION_EPSILON)
+			return false;
+		else
+		{
+			if (report)
+			{
+				report->collision = true;
+				report->points.push_back(p.first);
+				report->depths.push_back(0.f);
+				report->normal = n;
+			}
+			return true;
+		}
 	}
 }
-bool Collision::collide_SegmentvsTriangle(const glm::vec3& segment1, const glm::vec3& segment2, const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, glm::vec3* intersection)
+
+bool Collision::collide_SegmentvsTriangle(const glm::vec3& segment1, const glm::vec3& segment2, const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, CollisionReport* report)
 {
 	//	begin and eliminate special cases
 	glm::vec3 v1 = triangle2 - triangle1;
@@ -38,127 +50,213 @@ bool Collision::collide_SegmentvsTriangle(const glm::vec3& segment1, const glm::
 		float d2 = glm::dot(v2, v2);
 		float d3 = glm::dot(v3, v3);
 
-		if (d1 >= d2 && d1 >= d3) return collide_SegmentvsSegment(segment1, segment2, triangle1, triangle2);
-		else if (d2 >= d1 && d2 >= d3) return collide_SegmentvsSegment(segment1, segment2, triangle1, triangle3);
-		else return collide_SegmentvsSegment(segment1, segment2, triangle3, triangle2);
+		if (d1 >= d2 && d1 >= d3)
+			return collide_SegmentvsSegment(segment1, segment2, triangle1, triangle2, report);
+		else if (d2 >= d1 && d2 >= d3)
+			return collide_SegmentvsSegment(segment1, segment2, triangle1, triangle3, report);
+		else
+			return collide_SegmentvsSegment(segment1, segment2, triangle3, triangle2, report);
 	}
 
 	//	compute intersection point between ray and plane
-	glm::vec3 s = segment2 - segment1;
-	if (s == glm::vec3(0.f)) return collide_PointvsTriangle(segment1, triangle1, triangle2, triangle3);
+	if (segment2 == segment1)
+		return collide_PointvsTriangle(segment1, triangle1, triangle2, triangle3, report);
 
-	glm::normalize(n);
-	if (glm::dot(n, s) == 0.f) return false; // segment parallel to triangle plane
+	glm::vec3 s = segment2 - segment1;
+	float dot = glm::dot(n, s);
+	if (std::abs(dot) < COLLISION_EPSILON)
+		return false; // segment parallel to triangle plane
+
 	glm::vec3 u = glm::normalize(s);
-	if (glm::dot(n, s) > 0.f) n *= -1.f;
+	n = glm::normalize(dot > 0.f ? n : -n);
 
 	float depth = glm::dot(n, triangle1 - segment1) / glm::dot(n, u);
-	if (depth > glm::length(s) || depth < 0.f) return false; // too far or beind
+	if (depth * depth > glm::length2(s) || depth < 0.f)
+		return false; // too far or beind
 
-	glm::vec3 dummy;
-	if (!intersection)
-		intersection = &dummy;
-	*intersection = segment1 + depth*u - triangle1;
+	glm::vec3 intersection = segment1 + depth*u - triangle1;
 
 	//	checking barycentric coordinates
-	glm::vec2 bary = getBarycentricCoordinates(v1, v2, *intersection);
-	return !(bary.x < 0.f || bary.y < 0.f || bary.x + bary.y > 1.f);
-}
-bool Collision::collide_SegmentvsOrientedBox(const glm::vec3& segment1, const glm::vec3& segment2, const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax)
-{
-	//http://www.opengl-tutorial.org/fr/miscellaneous/clicking-on-objects/picking-with-custom-ray-obb-function/
+	glm::vec2 bary = CollisionUtils::getBarycentricCoordinates(v1, v2, intersection);
 
-	if (segment2 == segment1) return collide_PointvsOrientedBox(segment1, boxTranform, boxMin, boxMax);
-	glm::vec3 u = glm::normalize(segment2 - segment1);
-	glm::vec3 delta = glm::vec3(boxTranform[3]) - segment1;
-
-	float tmin = 0.f;
-	float tmax = std::numeric_limits<float>::max();
-
-	//	test on the two axis of local x
-	glm::vec3 bx = glm::vec3(boxTranform[0]);
-	glm::normalize(bx);
-	float e = glm::dot(bx, delta);
-	if (glm::dot(bx, u) == 0.f) // segment parallel to selected plane
-	{
-		if (-e + boxMin.x > 0.0f || -e + boxMax.x < 0.0f) return false;
-	}
+	if (bary.x < 0.f || bary.y < 0.f || bary.x + bary.y > 1.f)
+		return false;
 	else
 	{
-		float t1 = (e + boxMin.x) / glm::dot(bx, u); // Intersection with the "left" plane
-		float t2 = (e + boxMax.x) / glm::dot(bx, u); // Intersection with the "right" plane
-		if (t1 > t2) std::swap(t1, t2);
+		if (report)
+		{
+			report->collision = true;
+			report->points.push_back(intersection);
 
-		if (t2 < tmax) tmax = t2;
-		if (t1 > tmin) tmin = t1;
-		if (tmax < tmin) return false;
+			float d1 = glm::dot(intersection - segment1, n);
+			float d2 = glm::dot(intersection - segment2, n);
+			if (std::abs(d1) < std::abs(d2))
+			{
+				report->depths.push_back(std::abs(d1));
+				report->normal = d1 > 0.f ? -n : n;
+			}
+			else
+			{
+				report->depths.push_back(std::abs(d2));
+				report->normal = d2 > 0.f ? -n : n;
+			}
+		}
+		return true;
 	}
+}
+bool Collision::collide_TrianglevsSegment(const glm::vec3& segment1, const glm::vec3& segment2, const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, CollisionReport* report)
+{
+	return collide_SegmentvsTriangle(segment1, segment2, triangle1, triangle2, triangle3, report);
+}
 
-	//	test on the two axis of local y
-	glm::vec3 by = glm::vec3(boxTranform[1]);
-	glm::normalize(by);
-	e = glm::dot(by, delta);
-	if (glm::dot(by, u) == 0.f) // segment parallel to selected plane
-	{
-		if (-e + boxMin.y > 0.0f || -e + boxMax.y < 0.0f) return false;
-	}
+bool Collision::collide_SegmentvsSphere(const glm::vec3& segment1, const glm::vec3& segment2, const glm::vec3& sphereCenter, const float& sphereRadius, CollisionReport* report)
+{
+	if (segment2 == segment1) 
+		return collide_PointvsSphere(segment1, sphereCenter, sphereRadius, report);
+
+	glm::vec3 p = CollisionUtils::getSegmentClosestPoint(segment1, segment2, sphereCenter);
+	glm::vec3 v = p - sphereCenter;
+	float vv = glm::length2(v);
+
+	if (vv > sphereRadius * sphereRadius)
+		return false;
 	else
 	{
-		float t1 = (e + boxMin.y) / glm::dot(by, u); // Intersection with the "left" plane
-		float t2 = (e + boxMax.y) / glm::dot(by, u); // Intersection with the "right" plane
-		if (t1 > t2) std::swap(t1, t2);
+		if (report)
+		{
+			float distance = glm::sqrt(vv);
+			report->collision = true;
+			report->points.push_back(p);
+			report->depths.push_back(sphereRadius - distance);
 
-		if (t2 < tmax) tmax = t2;
-		if (t1 > tmin) tmin = t1;
-		if (tmax < tmin) return false;
+			if (vv > COLLISION_EPSILON)
+				report->normal = v / distance;
+			else
+			{
+				glm::vec3 s = segment1 - segment2;
+				report->normal = abs(s.x) > abs(s.z) ? glm::vec3(-s.y, s.x, 0.0) : glm::vec3(0.0, -s.z, s.y);
+				report->normal = glm::normalize(report->normal);
+			}
+		}
+		return true;
 	}
+}
+bool Collision::collide_SpherevsSegment(const glm::vec3& segment1, const glm::vec3& segment2, const glm::vec3& sphereCenter, const float& sphereRadius, CollisionReport* report)
+{
+	if (segment2 == segment1)
+		return collide_SpherevsPoint(segment1, sphereCenter, sphereRadius, report);
 
-	//	test on the two axis of local z
-	glm::vec3 bz = glm::vec3(boxTranform[2]);
-	glm::normalize(bz);
-	e = glm::dot(bz, delta);
-	if (glm::dot(bz, u) == 0.f) // segment parallel to selected plane
-	{
-		if (-e + boxMin.z > 0.0f || -e + boxMax.z < 0.0f) return false;
-	}
+	glm::vec3 p = CollisionUtils::getSegmentClosestPoint(segment1, segment2, sphereCenter);
+	glm::vec3 v = sphereCenter - p;
+	float vv = glm::length2(v);
+
+	if (vv > sphereRadius * sphereRadius)
+		return false;
 	else
 	{
-		float t1 = (e + boxMin.z) / glm::dot(bz, u); // Intersection with the "left" plane
-		float t2 = (e + boxMax.z) / glm::dot(bz, u); // Intersection with the "right" plane
-		if (t1 > t2) std::swap(t1, t2);
+		if (report)
+		{
+			float distance = glm::sqrt(vv);
+			report->collision = true;
+			report->depths.push_back(sphereRadius - distance);
 
-		if (t2 < tmax) tmax = t2;
-		if (t1 > tmin) tmin = t1;
-		if (tmax < tmin) return false;
+			if (vv > COLLISION_EPSILON)
+				report->normal = v / distance;
+			else
+			{
+				glm::vec3 s = segment1 - segment2;
+				report->normal = abs(s.x) > abs(s.z) ? glm::vec3(-s.y, s.x, 0.0) : glm::vec3(0.0, -s.z, s.y);
+				report->normal = glm::normalize(report->normal);
+			}
+
+			report->points.push_back(sphereCenter + sphereRadius * report->normal);
+		}
+		return true;
 	}
-	return tmin <= glm::length(segment2 - segment1);
 }
-bool Collision::collide_SegmentvsAxisAlignedBox(const glm::vec3& segment1, const glm::vec3& segment2, const glm::vec3& boxMin, const glm::vec3& boxMax)
-{
-	if (segment2 == segment1) return collide_PointvsAxisAlignedBox(segment1, boxMin, boxMax);
 
-	glm::vec3 s = segment2 - segment1;
-	glm::vec3 u = glm::normalize(s);
-	glm::vec3 t1 = (boxMin - segment1) / u;
-	glm::vec3 t2 = (boxMax - segment1) / u;
-	float tnear = glm::compMax(glm::min(t1, t2));
-	float tfar = glm::compMin(glm::max(t1, t2));
-	if (tfar >= tnear && tfar >= 0 && tnear <= glm::length(s)) return true;
-	else return false;
-}
-bool Collision::collide_SegmentvsSphere(const glm::vec3& segment1, const glm::vec3& segment2, const glm::vec3& sphereCenter, const float& sphereRadius)
+bool Collision::collide_SegmentvsCapsule(const glm::vec3& segment1, const glm::vec3& segment2, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius, CollisionReport* report)
 {
-	if (segment2 == segment1) return collide_PointvsSphere(segment1, sphereCenter, sphereRadius);
-	glm::vec3 p = getSegmentClosestPoint(segment1, segment2, sphereCenter);
-	return glm::length2(p - sphereCenter) < sphereRadius * sphereRadius + COLLISION_EPSILON;
-}
-bool Collision::collide_SegmentvsCapsule(const glm::vec3& segment1, const glm::vec3& segment2, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius)
-{
-	if (segment1 == segment2) return collide_PointvsSegment(segment1, capsule1, capsule2);
-	else if (capsule1 == capsule2) return collide_SegmentvsSphere(segment1, segment2, capsule1, capsuleRadius);
+	if (segment1 == segment2)
+		return collide_PointvsCapsule(segment1, capsule1, capsule2, capsuleRadius, report);
+	else if (capsule1 == capsule2)
+		return collide_SegmentvsSphere(segment1, segment2, capsule1, capsuleRadius, report);
 
-	std::pair<glm::vec3, glm::vec3> p = getSegmentsClosestSegment(segment1, segment2, capsule1, capsule2);
-	return glm::length2(p.first - p.second) < capsuleRadius * capsuleRadius + COLLISION_EPSILON;
+	std::pair<glm::vec3, glm::vec3> p = CollisionUtils::getSegmentsClosestSegment(segment1, segment2, capsule1, capsule2);
+	glm::vec3 v = p.first - p.second;
+	float vv = glm::length2(v);
+
+	if (vv > capsuleRadius * capsuleRadius)
+		return false;
+	else
+	{
+		if (report)
+		{
+			float distance = glm::sqrt(vv);
+			report->collision = true;
+			report->points.push_back(p.first);
+			report->depths.push_back(capsuleRadius - distance);
+
+			if (vv > COLLISION_EPSILON)
+				report->normal = v / distance;
+			else
+			{
+				glm::vec3 s1 = segment1 - segment2;
+				glm::vec3 s2 = capsule1 - capsule2;
+				glm::vec3 n = glm::cross(s1, s2);
+
+				if (glm::length2(n) < COLLISION_EPSILON)
+					report->normal = abs(s1.x) > abs(s1.z) ? glm::vec3(-s1.y, s1.x, 0.0) : glm::vec3(0.0, -s1.z, s1.y);
+				else
+					report->normal = n;
+
+				report->normal = glm::normalize(report->normal);
+			}
+		}
+		return true;
+	}
+}
+bool Collision::collide_CapsulevsSegment(const glm::vec3& segment1, const glm::vec3& segment2, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius, CollisionReport* report)
+{
+	if (segment1 == segment2)
+		return collide_CapsulevsPoint(segment1, capsule1, capsule2, capsuleRadius, report);
+	else if (capsule1 == capsule2)
+		return collide_SpherevsSegment(segment1, segment2, capsule1, capsuleRadius, report);
+
+	std::pair<glm::vec3, glm::vec3> p = CollisionUtils::getSegmentsClosestSegment(segment1, segment2, capsule1, capsule2);
+	glm::vec3 v = p.second - p.first;
+	float vv = glm::length2(v);
+
+	if (vv > capsuleRadius * capsuleRadius)
+		return false;
+	else
+	{
+		if (report)
+		{
+			float distance = glm::sqrt(vv);
+			report->collision = true;
+			report->depths.push_back(capsuleRadius - distance);
+
+			if (vv > COLLISION_EPSILON)
+				report->normal = v / distance;
+			else
+			{
+				glm::vec3 s1 = segment1 - segment2;
+				glm::vec3 s2 = capsule1 - capsule2;
+				glm::vec3 n = glm::cross(s1, s2);
+
+				if (glm::length2(n) < COLLISION_EPSILON)
+					report->normal = abs(s1.x) > abs(s1.z) ? glm::vec3(-s1.y, s1.x, 0.0) : glm::vec3(0.0, -s1.z, s1.y);
+				else
+					report->normal = n;
+
+				report->normal = glm::normalize(report->normal);
+			}
+
+			report->points.push_back(p.second + capsuleRadius * report->normal);
+		}
+		return true;
+	}
 }
 //
 
