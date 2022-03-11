@@ -6,7 +6,7 @@ class AxisAlignedBox : public Shape
 {
 	public:
 		//	Default
-		AxisAlignedBox(const glm::vec3& cornerMin = glm::vec3(0.f), const glm::vec3& cornerMax = glm::vec3(0.f));
+		AxisAlignedBox(const glm::vec4& cornerMin = glm::vec4(0.f), const glm::vec4& cornerMax = glm::vec4(0.f));
 		//
 
 		//	Override
@@ -17,10 +17,10 @@ class AxisAlignedBox : public Shape
 
 		virtual glm::mat3 computeInertiaMatrix() const override;
 
-		virtual void transform(const glm::vec3& position, const glm::vec3& scale, const glm::fquat& orientation) override;
+		virtual void transform(const glm::vec4& position, const glm::vec3& scale, const glm::fquat& orientation) override;
 
-		virtual glm::vec3 support(const glm::vec3& direction) const override;
-		virtual void getFacingFace(const glm::vec3& direction, std::vector<glm::vec3>& points) const override;
+		virtual glm::vec4 support(const glm::vec4& direction) const override;
+		virtual void getFacingFace(const glm::vec4& direction, std::vector<glm::vec4>& points) const override;
 		//
 
 		//	AABB specific
@@ -28,6 +28,6 @@ class AxisAlignedBox : public Shape
 		//
 
 		//	Attributes
-		glm::vec3 min, max;
+		glm::vec4 min, max;
 		//
 };

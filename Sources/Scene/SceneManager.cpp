@@ -4,7 +4,6 @@
 
 #include "SceneManager.h"
 #include <Utiles/Assert.hpp>
-#include <Physics/Swept.h>
 #include <Utiles/Debug.h>
 
 
@@ -35,7 +34,7 @@ SceneManager& SceneManager::operator=(SceneManager&& other)
 }
 
 
-void SceneManager::init(const glm::vec3& bbMin, const glm::vec3& bbMax, const glm::ivec3& nodeDivision, unsigned int depth)
+void SceneManager::init(const glm::vec4& bbMin, const glm::vec4& bbMax, const glm::ivec3& nodeDivision, unsigned int depth)
 {
 	GF_ASSERT(world.empty());
 	NodeVirtual* n = new NodeVirtual();
@@ -125,11 +124,6 @@ std::vector<Entity*> SceneManager::getAllObjects()
 	VirtualEntityCollector result;
 
 	return std::vector<Entity*>(result.getResult());
-
-	/*if(!world.empty())
-	{
-		getObjects(world[0], result, [](NodeVirtual*) -> CollisionType { return OVERLAP; });
-	}*/
 }
 
 std::vector<Entity*> SceneManager::getObjectsOnRay(const glm::vec3& position, const glm::vec3& direction, float maxDistance)
@@ -160,7 +154,6 @@ void SceneManager::getSceneNodes(VirtualSceneQuerry* collisionTest)
 	CollisionType collision = (CollisionType)(*collisionTest)(node);
 	if (collision == NONE)
 		return;
-	//node->getObjectList(result);
 
 	//	init path and iterate on tree
 	std::vector<NodeVirtual::NodeRange> path;
@@ -202,28 +195,8 @@ void SceneManager::getEntities(VirtualSceneQuerry* collisionTest, VirtualEntityC
 
 glm::vec3 SceneManager::getObjectSize(const Entity* entity) const
 {
-	if (entity->swept)
-		return entity->swept->getSize();
-	else
-	{
-		const Shape* Shape = entity->getGlobalBoundingShape();
-		if (Shape->type == Shape::ShapeType::ORIENTED_BOX)
-		{
-			const OrientedBox& box = *static_cast<const OrientedBox*>(Shape);
-			return box.max - box.min;
-		}
-		else if (Shape->type == Shape::ShapeType::AXIS_ALIGNED_BOX)
-		{
-			const AxisAlignedBox& box = *static_cast<const AxisAlignedBox*>(Shape);
-			return box.max - box.min;
-		}
-		else
-		{
-			const AxisAlignedBox box = Shape->toAxisAlignedBox();
-			return box.max - box.min;
-		}
-	}
-
+	const AxisAlignedBox& box = entity->m_worldBoundingBox;
+	return (glm::vec3)(box.max - box.min);
 }
 
 
@@ -239,20 +212,3 @@ void SceneManager::draw()
 			node->draw();
 	}
 }
-
-//	Physics engine related
-/*NodeVirtual* SceneManager::addSwept(Swept* object)
-{
-	if (world.empty())
-		return nullptr;
-	NodeVirtual* node = world[0];
-	if (!node->isInside(object->getPosition()))
-		return false;
-	const glm::vec3 s = object->getSize();
-	while (!node->isLeaf() && node->isTooSmall(s))
-		node = node->getChildAt(object->getPosition());
-
-	node->addSwept(object);
-	return node;
-}*/
-//

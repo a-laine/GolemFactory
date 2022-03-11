@@ -54,7 +54,7 @@ bool Collision::collide_OrientedBoxvsAxisAlignedBox(const glm::mat4& box1Tranfor
 {
 	return collide_OrientedBoxvsOrientedBox(box1Tranform, box1Min, box1Max, glm::mat4(1.f), box2Min, box2Max);
 }*/
-bool Collision2::collide_OrientedBoxvsSphere(const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax, const glm::vec3& sphereCenter, const float& sphereRadius)
+/*bool Collision2::collide_OrientedBoxvsSphere(const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax, const glm::vec3& sphereCenter, const float& sphereRadius)
 {
 	//	for help read https://github.com/gszauer/GamePhysicsCookbook/blob/master/Code/Geometry3D.cpp
 	//	line 165
@@ -117,6 +117,6 @@ bool Collision2::collide_OrientedBoxvsCapsule(const glm::mat4& boxTranform, cons
 	closestSegmentPoint = CollisionUtils::getSegmentClosestPoint(capsule1, capsule2, closestBoxPoint);
 
 	return glm::length(closestBoxPoint - closestSegmentPoint) <= capsuleRadius;
-}
+}*/
 //
 

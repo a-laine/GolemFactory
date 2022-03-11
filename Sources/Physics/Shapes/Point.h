@@ -6,7 +6,7 @@ class Point : public Shape
 {
 	public:
 		//	Default
-		Point(const glm::vec3& position = glm::vec3(0.f));
+		Point(const glm::vec4& position = glm::vec4(0.f));
 		//
 
 		//	Public functions
@@ -17,14 +17,14 @@ class Point : public Shape
 
 		//virtual glm::mat3 computeInertiaMatrix() const override;
 
-		virtual void transform(const glm::vec3& position, const glm::vec3& scale, const glm::fquat& orientation) override;
+		virtual void transform(const glm::vec4& position, const glm::vec3& scale, const glm::fquat& orientation) override;
 
-		virtual glm::vec3 support(const glm::vec3& direction) const override;
-		virtual void getFacingFace(const glm::vec3& direction, std::vector<glm::vec3>& points) const override;
+		virtual glm::vec4 support(const glm::vec4& direction) const override;
+		virtual void getFacingFace(const glm::vec4& direction, std::vector<glm::vec4>& points) const override;
 		//
 
 		//	Attributes
-		glm::vec3 p;
+		glm::vec4 p;
 		//
 };
 

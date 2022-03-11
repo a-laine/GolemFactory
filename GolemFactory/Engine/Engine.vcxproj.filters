@@ -414,9 +414,6 @@
     <ClCompile Include="..\..\Sources\Physics\SpecificIntersection\IntersectionTriangle.cpp">
       <Filter>Fichiers sources\Physics\SpecificIntersection</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Sources\Physics\Collision.cpp">
-      <Filter>Fichiers sources\Physics</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\Sources\Physics\CollisionReport.cpp">
       <Filter>Fichiers sources\Physics</Filter>
     </ClCompile>
@@ -427,9 +424,6 @@
       <Filter>Fichiers sources\Physics</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Sources\Physics\RigidBody.cpp">
-      <Filter>Fichiers sources\Physics</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\Physics\Swept.cpp">
       <Filter>Fichiers sources\Physics</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Sources\HUD\Loader\WidgetLoader.cpp">
@@ -448,6 +442,15 @@
       <Filter>Fichiers sources\Physics\SpecificCollision</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Sources\Physics\Constraint.cpp">
+      <Filter>Fichiers sources\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Sources\Physics\Shapes\Collider.cpp">
+      <Filter>Fichiers sources\Physics\Shapes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Sources\Physics\Shapes\ShapeCacheContainer.cpp">
+      <Filter>Fichiers sources\Physics\Shapes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Sources\Physics\Collision.cpp">
       <Filter>Fichiers sources\Physics</Filter>
     </ClCompile>
   </ItemGroup>
@@ -776,9 +779,6 @@
     <ClInclude Include="..\..\Sources\Physics\RigidBody.h">
       <Filter>Fichiers d%27en-tête\Physics</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Sources\Physics\Swept.h">
-      <Filter>Fichiers d%27en-tête\Physics</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Sources\HUD\Loader\WidgetLoader.h">
       <Filter>Fichiers d%27en-tête\HUD\Loader</Filter>
     </ClInclude>
@@ -791,14 +791,17 @@
     <ClInclude Include="..\..\Sources\Utiles\OpenSaveFileDialog.h">
       <Filter>Fichiers d%27en-tête\Utiles</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Sources\Physics\Collision.hpp">
-      <Filter>Fichiers d%27en-tête\Physics</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Sources\Physics\Constraint.h">
       <Filter>Fichiers d%27en-tête\Physics</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Sources\Utiles\ImguiConfig.h">
       <Filter>Fichiers d%27en-tête\Utiles</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Physics\Shapes\Collider.h">
+      <Filter>Fichiers d%27en-tête\Physics\Shapes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Physics\Shapes\ShapeCacheContainer.h">
+      <Filter>Fichiers d%27en-tête\Physics\Shapes</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

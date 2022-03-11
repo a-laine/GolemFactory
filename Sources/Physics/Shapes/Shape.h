@@ -36,10 +36,10 @@ class Shape
 
 		virtual glm::mat3 computeInertiaMatrix() const;
 
-		virtual void transform(const glm::vec3& position, const glm::vec3& scale, const glm::fquat& orientation);
+		virtual void transform(const glm::vec4& position, const glm::vec3& scale, const glm::fquat& orientation);
 
-		virtual glm::vec3 support(const glm::vec3& direction) const;
-		virtual void getFacingFace(const glm::vec3& direction, std::vector<glm::vec3>& points) const;
+		virtual glm::vec4 support(const glm::vec4& direction) const;
+		virtual void getFacingFace(const glm::vec4& direction, std::vector<glm::vec4>& points) const;
 		//
 
 		//	Attributes

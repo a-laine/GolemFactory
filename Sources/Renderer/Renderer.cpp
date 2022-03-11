@@ -158,7 +158,7 @@ void Renderer::render(CameraComponent* renderCam)
 
 	//	get instance list
 	float camFovVert = camera->getVerticalFieldOfView(context->getViewportRatio());
-	glm::vec3 camPos, camFwd, camUp, camRight;
+	glm::vec4 camPos, camFwd, camUp, camRight;
 	camera->getFrustrum(camPos, camFwd, camUp, camRight);
 	//std::vector<Entity*> instanceList;
 	FrustrumSceneQuerry sceneTest(camPos, camFwd, camUp, -camRight, camFovVert / 1.6f, camFovVert / 1.6f);

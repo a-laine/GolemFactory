@@ -47,6 +47,7 @@
 
 #include "Physics/Physics.h"
 #include "Physics/RigidBody.h"
+#include "Physics/Shapes/Collider.h"
 
 #include "Resources/Loader/MeshSaver.h"
 #include "Scene/RayEntityCollector.h"
@@ -75,12 +76,12 @@ double completeTime = 16.;
 double averageCompleteTime = 16.;
 
 float avatarZeroHeight;
-glm::vec3 avatarspeed(0.f);
+glm::vec4 avatarspeed(0.f);
 
 CameraComponent* currentCamera = nullptr;
 struct {
 	float radius = 2.f;
-	glm::vec3 target;
+	glm::vec4 target;
 } cameraInfos;
 //
 
@@ -127,7 +128,7 @@ int main()
 	//	Test scene
 		Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("wired"));
 		//initializeForestScene(false);
-		initializePhysicsScene(1);
+		initializePhysicsScene(0);
 		Renderer::getInstance()->setGridVisible(true);
 		/*if (world.getMap().loadFromHeightmap(ResourceManager::getInstance()->getRepository() + "/Textures/", "mountains512.png"))
 		{
@@ -160,10 +161,16 @@ int main()
 		freeflyCamera = world.getEntityFactory().createObject([](Entity* object)
 			{
 				object->setName("FreeFlyCam");
-				object->setPosition(glm::vec3(10, 10, 5));
-				object->setShape(new Sphere());
+				object->setPosition(glm::vec4(10, 10, 5, 1));
+
+
+				Collider* collider = new Collider(new Sphere(glm::vec4(0.f), 0.1f));
+				object->addComponent(collider);
+				object->recomputeBoundingBox();
+
+				//object->setShape(new Sphere());
 				CameraComponent* ffCam = new CameraComponent(true);
-				ffCam->lookAt(glm::vec3(0, 1, 0));
+				ffCam->lookAt(glm::vec4(0, 0, 0, 1));
 				object->addComponent(ffCam);
 			
 				currentCamera = ffCam;
@@ -172,10 +179,17 @@ int main()
 		frustrumCamera = world.getEntityFactory().createObject([](Entity* object)
 			{
 				object->setName("FrustrumCam");
-				object->setShape(new Sphere());
+
+				Collider* collider = new Collider(new Sphere(glm::vec4(0.f), 0.01f));
+				object->addComponent(collider);
+				object->recomputeBoundingBox();
+
+				//object->setShape(new Sphere());
 				CameraComponent* cam = new CameraComponent(true);
 				object->addComponent(cam);
 				Renderer::getInstance()->setCamera(cam);
+				cam->setOrientation(currentCamera->getOrientation());
+				cam->setPosition(currentCamera->getGlobalPosition());
 			});
 
 		WidgetManager::getInstance()->setBoolean("BBpicking", false);
@@ -348,7 +362,7 @@ void initializeForestScene(bool emptyPlace)
 		{
 			for (unsigned int i = 0; i < N; i++)
 			{
-				glm::vec3 p = glm::vec3(5.f * cos((float)i / N * 2.f * glm::pi<float>()), 5.f * sin((float)i / N * 2.f * glm::pi<float>()), 2.f*(j + 1));
+				glm::vec4 p = glm::vec4(5.f * cos((float)i / N * 2.f * glm::pi<float>()), 5.f * sin((float)i / N * 2.f * glm::pi<float>()), 2.f*(j + 1), 1);
 				p += N2 * 0.5f * glm::normalize(p);
 				world.getEntityFactory().createObject("sphere", [&p, &j](Entity* object)
 					{
@@ -406,7 +420,7 @@ void initializeForestScene(bool emptyPlace)
 					int seed = rand();
 					hg.getHouse(house, seed, 20, 30);
 					house->setName("House_" + std::to_string(seed));
-					glm::vec3 p = glm::vec3(radius * cos(angle), radius * sin(angle), house->getGlobalBoundingShape()->toSphere().radius);
+					glm::vec3 p = glm::vec3(radius * cos(angle), radius * sin(angle), house->getBoundingBox().toSphere().radius);
 					for (unsigned int k = 0; k < houseCircle.size(); k++)
 					{
 						float delta = glm::length(glm::vec3(houseCircle[k].x - p.x, houseCircle[k].y - p.y, 0.f));
@@ -418,7 +432,7 @@ void initializeForestScene(bool emptyPlace)
 					}
 
 					houseCircle.push_back(p);
-					house->setPosition(glm::vec3(p.x, p.y, 0.f));
+					house->setPosition(glm::vec4(p.x, p.y, 0, 1));
 					house->setOrientation(glm::toQuat(glm::rotate(glm::mat4(1.0), 1.57f + angle, glm::vec3(0, 0, 1))));
 				});
 		}
@@ -429,9 +443,9 @@ void initializeForestScene(bool emptyPlace)
 	for (int i = 0; i < GRID_SIZE; i++)
 		for (int j = 0; j < GRID_SIZE; j++)
 		{
-			glm::vec3 p(GRID_ELEMENT_SIZE*i - (GRID_SIZE * GRID_ELEMENT_SIZE) / 2 + GRID_ELEMENT_SIZE * ((rand() % 10) / 20.f - 0.25f),
+			glm::vec4 p(GRID_ELEMENT_SIZE*i - (GRID_SIZE * GRID_ELEMENT_SIZE) / 2 + GRID_ELEMENT_SIZE * ((rand() % 10) / 20.f - 0.25f),
 				GRID_ELEMENT_SIZE*j - (GRID_SIZE * GRID_ELEMENT_SIZE) / 2 + GRID_ELEMENT_SIZE * ((rand() % 10) / 20.f - 0.25f),
-				0);
+				0, 1);
 
 			if(glm::length(p) < villageRadius[2] + 5.f * GRID_ELEMENT_SIZE)
 				continue;
@@ -467,69 +481,53 @@ void initializeForestScene(bool emptyPlace)
 void initializePhysicsScene(int testCase)
 {
 	glClearColor(0.6f, 0.85f, 0.91f, 0.f);
-	Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("greenGrass"));
+	Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("wired"));
 
 	if (testCase == 0)
 	{
-		unsigned int N = 20;
-		for (unsigned int i = 0; i < N; i++)
-		{
-			for (unsigned int j = 0; j < N; j++)
-			{
-				float r = 1.f;// 0.02f *(rand() % 100) + 0.3f;
-				glm::vec3 p = glm::vec3(5.f * (i - N / 2.f), 5.f * (j - N / 2.f), 5.f);
-				world.getEntityFactory().createObject("sphere", [&p, &r](Entity* object)
-					{
-						object->setName("PhysicsSphere");
-						object->setTransformation(p, glm::vec3(r), glm::fquat(0, 0, 0, 1));
-						RigidBody* rb = new RigidBody(RigidBody::DYNAMIC);
-						rb->setMass(3.f * r);
-						rb->setBouncyness(0.1f);
-						rb->setFriction(1.f);
-						rb->setGravityFactor(1.f);
-						rb->setLinearVelocity(glm::vec3(0.1f *((rand() % 200) - 100), 0.1f *((rand() % 200) - 100), 0));
-						object->addComponent(rb);
-					});
-			}
-		}
+		unsigned int N = 40;
+		for (unsigned int k = 0; k < 1; k++)
+			for (unsigned int i = 0; i < N; i++)
+				for (unsigned int j = 0; j < N; j++)
+				{
+					float r =  0.01f *(rand() % 100) + 0.5f;
+					glm::vec4 p = glm::vec4(10.f * (i - N / 2.f), 10.f * (j - N / 2.f), 3.2f * k + 2.f, 1);
+					world.getEntityFactory().createObject("sphere", [&p, &r](Entity* object)
+						{
+							object->setName("PhysicsSphere");
+							object->setTransformation(p, glm::vec3(r), glm::normalize(glm::fquat(1.f, 0.f, 0.5f * ((rand() % 200) - 100), 0.5f * ((rand() % 200) - 100))));
+							RigidBody* rb = new RigidBody(RigidBody::DYNAMIC);
+							rb->setMass(r * r * r);
+							rb->setBouncyness(0.05f);
+							rb->setFriction(0.2f);
+							rb->setDamping(0.001f);
+							rb->setGravityFactor(1.f);
+							rb->setLinearVelocity(glm::vec4(0.1f *((rand() % 200) - 100), 0.1f *((rand() % 200) - 100), 0, 0));
+							rb->setAngularVelocity(glm::vec4(0.1f * ((rand() % 200) - 100), 0.1f * ((rand() % 200) - 100), 0.1f * ((rand() % 200) - 100), 0));
+							object->addComponent(rb);
+						});
+				}
 	}
 	else if (testCase == 1)
 	{
 		float r = 1.f;
+		glm::vec4 p = glm::vec4(0, 0, r + 5.5f, 1);
 
-		/*for (int i = 0; i < 10; i++)
-		{
-			world.getEntityFactory().createObject("cube", [&](Entity* object)
-				{
-					object->setName("PhysicsCube 1");
-					//object->setTransformation(p, glm::vec3(r), glm::normalize(glm::fquat(glm::fquat(0.2f * ((rand() % 200) - 100), 0.5f * ((rand() % 200) - 100), 0, 1))));
-					object->setTransformation(glm::vec3(0, 0, 2.2 * i * r + r), glm::vec3(r), glm::normalize(glm::fquat(0, 0, 0, 1)));
-					RigidBody* rb = new RigidBody(RigidBody::DYNAMIC);
-					rb->setMass(1.f);
-					rb->setBouncyness(0.1f);
-					rb->setFriction(0.f);
-					rb->setGravityFactor(1);
-					//rb->setLinearVelocity(glm::vec3(0.1f * ((rand() % 200) - 100), 0.1f * ((rand() % 200) - 100), 0));
-					object->addComponent(rb);
-				});
-		}*/
-
-		glm::vec3 p = glm::vec3(0, 0, r + 5.5f);
 		world.getEntityFactory().createObject("cube", [&p, &r](Entity* object)
 			{
 				object->setName("PhysicsCube 1");
-				//object->setTransformation(p, glm::vec3(r), glm::normalize(glm::fquat(glm::fquat(0.2f * ((rand() % 200) - 100), 0.5f * ((rand() % 200) - 100), 0, 1))));
+				object->setTransformation(p, glm::vec3(r), glm::normalize(glm::fquat(glm::fquat(0.2f * ((rand() % 200) - 100), 0.5f * ((rand() % 200) - 100), 0, 1))));
 				object->setTransformation(p, glm::vec3(r), glm::normalize(glm::fquat(0, 0, 0, 1)));
 				RigidBody* rb = new RigidBody(RigidBody::DYNAMIC);
-				rb->setMass(2.f);
-				rb->setBouncyness(0.1f);
-				rb->setFriction(1.f);
-				rb->setGravityFactor(1);
-				//rb->setLinearVelocity(glm::vec3(0.1f * ((rand() % 200) - 100), 0.1f * ((rand() % 200) - 100), 0));
+				rb->setMass(5.f);
+				rb->setBouncyness(0.f);
+				rb->setFriction(0.2f);
+				rb->setDamping(0.001f);
+				rb->setGravityFactor(1.f);
 				object->addComponent(rb);
 			});
 
-		p = glm::vec3(0, 0, r + 2.f);
+		p = glm::vec4(0, 0, r + 2.f, 1);
 		world.getEntityFactory().createObject("cube", [&p, &r](Entity* object)
 			{
 				object->setName("PhysicsCube 2");
@@ -543,17 +541,18 @@ void initializePhysicsScene(int testCase)
 				object->addComponent(rb);
 			});
 
-		p = glm::vec3(0, 3, r + 2.f);
+		p = glm::vec4(0, 3, r + 2.f, 1);
 		world.getEntityFactory().createObject("sphere", [&p, &r](Entity* object)
 			{
 				object->setName("PhysicsSphere");
 				object->setTransformation(p, glm::vec3(r), glm::normalize(glm::fquat(0, 0, 0, 1)));//0.5f * ((rand() % 200) - 100), 0.5f * ((rand() % 200) - 100)
 				RigidBody* rb = new RigidBody(RigidBody::DYNAMIC);
 				rb->setMass(5.f);
-				rb->setBouncyness(0.1f);
-				rb->setFriction(1.f);
-				rb->setGravityFactor(1);
-				rb->setAngularVelocity(glm::vec3(-10.f, 0.f, 0.f));
+				rb->setBouncyness(0.f);
+				rb->setFriction(0.2f);
+				rb->setDamping(0.001f);
+				rb->setGravityFactor(1.f);
+				rb->setAngularVelocity(glm::vec4(-10.f, 0.f, 0.f, 0.f));
 				object->addComponent(rb);
 			});
 	}
@@ -605,18 +604,57 @@ void initManagers()
     ResourceManager::getInstance()->addNewResourceLoader(".texture", new TextureLoader());
 
 	// Init world
-	const glm::vec3 worldHalfSize = glm::vec3(GRID_SIZE * GRID_ELEMENT_SIZE, GRID_SIZE * GRID_ELEMENT_SIZE, 128) * 0.5f;
-	const glm::vec3 worldPos = glm::vec3(0, 0, worldHalfSize.z - 32);
+	const glm::vec4 worldHalfSize = glm::vec4(GRID_SIZE * GRID_ELEMENT_SIZE, GRID_SIZE * GRID_ELEMENT_SIZE, 128, 0) * 0.5f;
+	const glm::vec4 worldPos = glm::vec4(0, 0, worldHalfSize.z - 32, 1);
 	NodeVirtual::debugWorld = &world;
 	world.getSceneManager().init(worldPos - worldHalfSize, worldPos + worldHalfSize, glm::ivec3(4, 4, 1), 2);
 	world.setMaxObjectCount(4000000);
-	world.getEntityFactory().createObject([](Entity* object)
-		{
-			object->setName("Ground");
-			glm::vec3 s = glm::vec3(0.5f*GRID_SIZE*GRID_ELEMENT_SIZE, 0.5f*GRID_SIZE*GRID_ELEMENT_SIZE, 10.f);
-			object->setShape(new AxisAlignedBox(-s, s));
-			object->setPosition(glm::vec3(0.f, 0.f, -10.f));
-		});
+	{
+		world.getEntityFactory().createObject([](Entity* object)
+			{
+				object->setName("Ground");
+				glm::vec4 s = glm::vec4(0.5f*GRID_SIZE*GRID_ELEMENT_SIZE, 0.5f*GRID_SIZE*GRID_ELEMENT_SIZE, 10.f, 0.f);
+
+				Collider* collider = new Collider(new AxisAlignedBox(-s, s));
+				object->addComponent(collider);
+				object->recomputeBoundingBox();
+
+				object->setPosition(glm::vec4(0.f, 0.f, -10.f, 1));
+			});
+		world.getEntityFactory().createObject("cube", [](Entity* object)
+			{
+				object->setName("WallX");
+				object->setTransformation(
+					glm::vec4(0.5f * GRID_SIZE * GRID_ELEMENT_SIZE, 0.f, 3.f, 1), 
+					glm::vec3(3.f, 0.5f * GRID_SIZE * GRID_ELEMENT_SIZE + 3.f, 6.f), 
+					glm::fquat());
+			});
+		world.getEntityFactory().createObject("cube", [](Entity* object)
+			{
+				object->setName("WallX");
+				object->setTransformation(
+					glm::vec4(-0.5f * GRID_SIZE * GRID_ELEMENT_SIZE, 0.f, 3.f, 1),
+					glm::vec3(3.f, 0.5f * GRID_SIZE * GRID_ELEMENT_SIZE + 3.f, 6.f),
+					glm::fquat());
+			});
+		world.getEntityFactory().createObject("cube", [](Entity* object)
+			{
+				object->setName("WallY");
+				object->setTransformation(
+					glm::vec4(0.f, 0.5f * GRID_SIZE * GRID_ELEMENT_SIZE, 3.f, 1),
+					glm::vec3(0.5f * GRID_SIZE * GRID_ELEMENT_SIZE + 3.f, 3.f, 6.f), 
+					glm::fquat());
+			});
+		world.getEntityFactory().createObject("cube", [](Entity* object)
+			{
+				object->setName("WallY");
+				object->setTransformation(
+					glm::vec4(0.f, -0.5f * GRID_SIZE * GRID_ELEMENT_SIZE, 3.f, 1),
+					glm::vec3(0.5f * GRID_SIZE * GRID_ELEMENT_SIZE + 3.f, 3.f, 6.f),
+					glm::fquat());
+			});
+	}
+
 	world.getMap().setShader(ResourceManager::getInstance()->getResource<Shader>("map"));
 
 	//	Renderer
@@ -642,8 +680,8 @@ void initManagers()
 }
 void picking()
 {
-	glm::vec3 cameraPos = currentCamera->getGlobalPosition();
-	glm::vec3 cameraForward = currentCamera->getForward(); // no rotations
+	glm::vec4 cameraPos = currentCamera->getGlobalPosition();
+	glm::vec4 cameraForward = currentCamera->getForward(); // no rotations
 
 	RaySceneQuerry test(cameraPos, cameraForward, 10000);
 	RayEntityCollector collector(cameraPos, cameraForward, 10000);
@@ -663,7 +701,7 @@ void picking()
 		if(compAnim)       type = "animatable";
 		else if(compDraw)  type = "drawable";
 		else               type = "empty entity";
-		glm::vec3 p = cameraPos + distance * cameraForward;
+		glm::vec4 p = cameraPos + distance * cameraForward;
 		
 		WidgetManager::getInstance()->setString("interaction", "Distance : " + ToolBox::to_string_with_precision(distance, 5) +
 			" m\nPosition : (" + ToolBox::to_string_with_precision(p.x, 5) + " , " + ToolBox::to_string_with_precision(p.y, 5) + " , " + ToolBox::to_string_with_precision(p.z, 5) +
@@ -818,15 +856,15 @@ void updates(float elapseTime)
 	if (avatar && currentCamera->getParentEntity() == avatar)
 	{
 		//	compute direction and speed
-		glm::vec3 direction = glm::vec3(0.f);
+		glm::vec4 direction = glm::vec4(0.f);
 		if (EventHandler::getInstance()->isActivated(FORWARD))
-			direction += glm::normalize(glm::vec3(currentCamera->getForward().x, currentCamera->getForward().y, 0.f));
+			direction += glm::normalize(glm::vec4(currentCamera->getForward().x, currentCamera->getForward().y, 0, 0));
 		else if (EventHandler::getInstance()->isActivated(BACKWARD))
-			direction -= glm::normalize(glm::vec3(currentCamera->getForward().x, currentCamera->getForward().y, 0.f));
+			direction -= glm::normalize(glm::vec4(currentCamera->getForward().x, currentCamera->getForward().y, 0, 0));
 		if (EventHandler::getInstance()->isActivated(LEFT))
-			direction -= glm::normalize(glm::vec3(currentCamera->getRight().x, currentCamera->getRight().y, 0.f));
+			direction -= glm::normalize(glm::vec4(currentCamera->getRight().x, currentCamera->getRight().y, 0, 0));
 		else if (EventHandler::getInstance()->isActivated(RIGHT))
-			direction += glm::normalize(glm::vec3(currentCamera->getRight().x, currentCamera->getRight().y, 0.f));
+			direction += glm::normalize(glm::vec4(currentCamera->getRight().x, currentCamera->getRight().y, 0, 0));
 		if(direction.x != 0.f && direction.y != 0.f)
 			direction = glm::normalize(direction);
 
@@ -837,8 +875,8 @@ void updates(float elapseTime)
 			speed = 0.025f;
 
 		//	physics
-		Capsule avatarCollider(*static_cast<const Capsule*>(avatar->getGlobalBoundingShape()));
-		avatarCollider.transform(speed * direction, glm::vec3(1.f), glm::fquat());
+		/*Capsule avatarCollider(*static_cast<const Capsule*>(avatar->getGlobalBoundingShape()));
+		avatarCollider.transform(speed * direction, glm::vec3(1.f), glm::fquat());*/
 
 		/*if (DEBUG)
 		{
@@ -997,9 +1035,9 @@ void updates(float elapseTime)
 		}
 
 		// Translation
-		glm::vec3 direction(0., 0., 0.);
-		glm::vec3 forward = ffCam->getForward(); // global because free rotations
-		glm::vec3 right = ffCam->getRight(); // global because free rotations
+		glm::vec4 direction(0., 0., 0., 0.);
+		glm::vec4 forward = ffCam->getForward(); // global because free rotations
+		glm::vec4 right = ffCam->getRight(); // global because free rotations
 
 		float speed = 0.003f;
 		if (EventHandler::getInstance()->isActivated(FORWARD)) direction += forward;
@@ -1033,7 +1071,7 @@ void updates(float elapseTime)
 	}
 
 	// Map streaming
-	world.getMapPtr()->update(freeflyCamera->getPosition());
+	world.getMapPtr()->update((glm::vec3)freeflyCamera->getPosition());
 }
 void ImGuiMenuBar()
 {
@@ -1062,7 +1100,7 @@ void ImGuiSystemDraw()
 
 	if (PhysicDebugWindowEnable)
 	{
-		world.getPhysics().drawImGui();
+		world.getPhysics().drawImGui(world);
 		world.getPhysics().debugDraw();
 	}
 #endif

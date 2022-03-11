@@ -9,6 +9,7 @@
 #include <Renderer/DrawableComponent.h>
 #include <Animation/SkeletonComponent.h>
 #include <Animation/AnimationComponent.h>
+#include <Physics/Shapes/Collider.cpp>
 
 
 
@@ -16,7 +17,7 @@ EntityFactory::EntityFactory(World* parentWorld)
 	: world(parentWorld)
 {}
 
-Entity* EntityFactory::createObject(const std::string& type, const glm::vec3& position, const glm::vec3& scale, const glm::quat& orientation, const std::string& name)
+Entity* EntityFactory::createObject(const std::string& type, const glm::vec4& position, const glm::vec3& scale, const glm::quat& orientation, const std::string& name)
 {
 	Entity* object = createByType(type);
 	if(object)
@@ -28,7 +29,7 @@ Entity* EntityFactory::createObject(const std::string& type, const glm::vec3& po
 	return object;
 }
 
-Entity* EntityFactory::createObject(const std::vector<Component*>& components, const glm::vec3& position, const glm::vec3& scale, const glm::quat& orientation, const std::string& name)
+Entity* EntityFactory::createObject(const std::vector<Component*>& components, const glm::vec4& position, const glm::vec3& scale, const glm::quat& orientation, const std::string& name)
 {
 	Entity* object = createEntity();
 	addComponents(object, components);
@@ -49,18 +50,27 @@ Entity* EntityFactory::createByType(const std::string& type)
 	if(type == "peasant")
 	{
 		createAnimatable(object, "peasant", "human", "simple_peasant", "skinning");
-		object->setShape(new Capsule(glm::vec3(0.f, 0.f, -3.f), glm::vec3(0.f, 0.f, 2.4f), 1.7f));
+
+		Collider* collider = new Collider(new Capsule(glm::vec4(0.f, 0.f, -3.f, 1), glm::vec4(0.f, 0.f, 2.4f, 1), 1.7f));
+		object->addComponent(collider);
+		object->recomputeBoundingBox();
 	}
 	else if(type == "sphere")
 	{
 		createDrawable(object, "icosphere.obj", "default", false);
-		object->setShape(new Sphere(glm::vec3(0.f), 1.f));
+
+		Collider* collider = new Collider(new Sphere(glm::vec4(0.f), 1.f));
+		object->addComponent(collider);
+		object->recomputeBoundingBox();
 	}
 	else if (type == "cube")
 	{
 		createDrawable(object, "cube2.obj", "default", false);
 		DrawableComponent* drawable = object->getComponent<DrawableComponent>();
-		object->setShape(new OrientedBox(glm::mat4(1.f), drawable->getMeshBBMin(), drawable->getMeshBBMax()));
+
+		Collider* collider = new Collider(new OrientedBox(glm::mat4(1.f), glm::vec4(drawable->getMeshBBMin(), 1), glm::vec4(drawable->getMeshBBMax(), 1)));
+		object->addComponent(collider);
+		object->recomputeBoundingBox();
 	}
 	else if(type == "tree")
 		createDrawable(object, "firTree1.obj", "default", true);
@@ -96,13 +106,21 @@ void EntityFactory::createDrawable(Entity* object, const std::string& meshName, 
 		Mesh* m = ResourceManager::getInstance()->findResource<Mesh>(hullname);
 		if (m)
 		{
-			object->setShape(new Hull(m));
+			Collider* collider = new Collider(new Hull(m));
+			object->addComponent(collider);
+			object->recomputeBoundingBox();
+
+			//object->setShape(new Hull(m));
 		}
 		else if (ResourceManager::getInstance()->loadableResource<Mesh>(hullname))
 		{
 			m = ResourceManager::getInstance()->getResource<Mesh>(hullname);
 			ToolBox::optimizeHullMesh(m);
-			object->setShape(new Hull(m));
+
+			Collider* collider = new Collider(new Hull(m));
+			object->addComponent(collider);
+			object->recomputeBoundingBox();
+			//object->setShape(new Hull(m));
 		}
 		else
 		{
@@ -114,7 +132,12 @@ void EntityFactory::createDrawable(Entity* object, const std::string& meshName, 
 
 			ToolBox::optimizeHullMesh(m);
 			ResourceManager::getInstance()->addResource(m);
-			object->setShape(new Hull(m));
+
+			Collider* collider = new Collider(new Hull(m));
+			object->addComponent(collider);
+			object->recomputeBoundingBox();
+
+			//object->setShape(new Hull(m));
 		}
 		ResourceManager::getInstance()->release(m);
 	}
@@ -134,7 +157,12 @@ void EntityFactory::createAnimatable(Entity* object, const std::string& meshName
 	object->addComponent(drawable);
 	object->addComponent(skeleton);
 	object->addComponent(animation);
-	object->setShape(new Sphere(glm::vec3(0.f), 0.5f * glm::length(drawable->getMeshBBMax() - drawable->getMeshBBMin())));
+	
+	Collider* collider = new Collider(new Sphere(glm::vec4(0.f), 0.5f * glm::length(drawable->getMeshBBMax() - drawable->getMeshBBMin())));
+	object->addComponent(collider);
+	object->recomputeBoundingBox();
+
+	//object->setShape(new Sphere(glm::vec3(0.f), 0.5f * glm::length(drawable->getMeshBBMax() - drawable->getMeshBBMin())));
 }
 
 void EntityFactory::addComponents(Entity* object, const std::vector<Component*>& components)

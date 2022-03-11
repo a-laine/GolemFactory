@@ -2,7 +2,7 @@
 #include "IntersectionPoint.h"
 #include <Physics/SpecificCollision/CollisionUtils.h>
 
-Intersection::Contact Intersection::intersect_SpherevsSphere(const glm::vec3& sphere1Center, const float& sphere1Radius, const glm::vec3& sphere2Center, const float& sphere2Radius)
+/*Intersection::Contact Intersection::intersect_SpherevsSphere(const glm::vec3& sphere1Center, const float& sphere1Radius, const glm::vec3& sphere2Center, const float& sphere2Radius)
 {
 	glm::vec3 n = glm::normalize(sphere2Center - sphere1Center);
 	return Intersection::Contact(sphere1Center + sphere1Radius * n, sphere2Center - sphere2Radius * n, n, -n);
@@ -35,4 +35,4 @@ Intersection::Contact Intersection::intersect_SpherevsHull(const glm::vec3& sphe
 	Contact contact = intersect_PointvsHull(sphereCenter, hullPoints, hullNormals, hullFaces, hullBase);
 	contact.contactPointA = contact.contactPointA + contact.normalA * sphereRadius;
 	return contact;
-}
+}*/

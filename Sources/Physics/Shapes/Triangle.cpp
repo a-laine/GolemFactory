@@ -5,12 +5,12 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/quaternion.hpp>
 
-Triangle::Triangle(const glm::vec3& a, const glm::vec3& b, const glm::vec3& c) : Shape(ShapeType::TRIANGLE), p1(a), p2(b), p3(c) {}
+Triangle::Triangle(const glm::vec4& a, const glm::vec4& b, const glm::vec4& c) : Shape(ShapeType::TRIANGLE), p1(a), p2(b), p3(c) {}
 Sphere Triangle::toSphere() const
 {
-	glm::vec3 u1 = p2 - p1;
-	glm::vec3 u2 = p3 - p1;
-	glm::vec3 n = glm::cross(u1, u2);
+	glm::vec4 u1 = p2 - p1;
+	glm::vec4 u2 = p3 - p1;
+	glm::vec4 n = glm::vec4(glm::cross((glm::vec3)u1, (glm::vec3)u2), 0);
 	float nmag = glm::length(n);
 
 	if (nmag == 0.f) // flat triangle
@@ -18,14 +18,15 @@ Sphere Triangle::toSphere() const
 		float d1 = glm::length(p2 - p1);
 		float d2 = glm::length(p3 - p1);
 		float d3 = glm::length(p2 - p3);
-		if (d1 > d2 && d1 > d3) return Sphere(0.5f*(p1 + p2), 0.5f*d1);
-		else if (d2 > d1 && d2 > d3) return Sphere(0.5f*(p1 + p3), 0.5f*d2);
-		else return Sphere(0.5f*(p3 + p2), 0.5f*d3);
+		if (d1 > d2 && d1 > d3) return Sphere(0.5f * (p1 + p2), 0.5f * d1);
+		else if (d2 > d1 && d2 > d3) return Sphere(0.5f * (p1 + p3), 0.5f * d2);
+		else return Sphere(0.5f * (p3 + p2), 0.5f * d3);
 	}
 	else
 	{
 		float radius = glm::length(u1)*glm::length(u2)*glm::length(u1 - u2) / nmag;
-		glm::vec3 center = p1 + glm::cross((glm::dot(u1, u1)*u2 - glm::dot(u2, u2)*u1), n) / (2.f*nmag*nmag);
+		glm::vec4 cross = glm::vec4(glm::cross((glm::vec3)(glm::dot(u1, u1) * u2 - glm::dot(u2, u2) * u1), (glm::vec3)n), 0);
+		glm::vec4 center = p1 + cross / (2.f * nmag * nmag);
 		return Sphere(center, radius);
 	}
 }
@@ -44,17 +45,17 @@ Shape& Triangle::operator=(const Shape& s)
 	}
 	return *this;
 }
-void Triangle::transform(const glm::vec3& position, const glm::vec3& scale, const glm::fquat& orientation)
+void Triangle::transform(const glm::vec4& position, const glm::vec3& scale, const glm::fquat& orientation)
 {
-	glm::mat4 m = glm::translate(glm::mat4(1.0), position);
+	glm::mat4 m = glm::translate(glm::mat4(1.0), (glm::vec3)position);
 	m = m * glm::toMat4(orientation);
 	m = glm::scale(m, scale);
-	p1 = glm::vec3(m * glm::vec4(p1, 1.f));
-	p2 = glm::vec3(m * glm::vec4(p2, 1.f));
-	p3 = glm::vec3(m * glm::vec4(p3, 1.f));
+	p1 = m * p1;
+	p2 = m * p2;
+	p3 = m * p3;
 }
 Shape* Triangle::duplicate() const { return new Triangle(*this); }
-glm::vec3 Triangle::support(const glm::vec3& direction) const
+glm::vec4 Triangle::support(const glm::vec4& direction) const
 {
 	float a = glm::dot(p1, direction);
 	float b = glm::dot(p2, direction);
@@ -64,7 +65,7 @@ glm::vec3 Triangle::support(const glm::vec3& direction) const
 	else if (b > a && b > c) return p2;
 	else return p3;
 }
-void Triangle::getFacingFace(const glm::vec3& direction, std::vector<glm::vec3>& points) const
+void Triangle::getFacingFace(const glm::vec4& direction, std::vector<glm::vec4>& points) const
 {
 	points.push_back(p1);
 	points.push_back(p2);

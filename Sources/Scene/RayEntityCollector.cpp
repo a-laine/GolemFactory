@@ -5,10 +5,14 @@
 #include <Resources/Mesh.h>
 
 #include <glm/gtx/component_wise.hpp>
+#include <Physics/Shapes/Collider.h>
 
 
-RayEntityCollector::RayEntityCollector(const glm::vec3& pos, const glm::vec3& dir, float maxDist) : position(pos), direction(dir), distance(maxDist)
-{}
+RayEntityCollector::RayEntityCollector(const glm::vec4& pos, const glm::vec4& dir, float maxDist) : position(pos), direction(dir), distance(maxDist)
+{
+	position.w = 1.f;
+	direction.w = 0.f;
+}
 bool RayEntityCollector::operator() (Entity* entity)
 {
 	DrawableComponent* drawableComp = entity->getComponent<DrawableComponent>();
@@ -30,8 +34,8 @@ bool RayEntityCollector::operator() (Entity* entity)
 		bool collision = false;
 		for (unsigned int i = 0; i < segments.size(); i++)
 		{
-			glm::vec3 a(model * pose[(const int)segments[i].x][3]);
-			glm::vec3 b(model * pose[(const int)segments[i].y][3]);
+			glm::vec4 a = model * pose[(const int)segments[i].x][3];
+			glm::vec4 b = model * pose[(const int)segments[i].y][3];
 			if (Collision::collide_SegmentvsCapsule(position, position + distance * direction, a, b, scale*radius[i]))
 			{
 				collision = true;
@@ -42,8 +46,10 @@ bool RayEntityCollector::operator() (Entity* entity)
 	}
 	else
 	{
+		bool collision = false;
 		Segment ray(position, position + distance * direction);
-		if (!Collision::collide(&ray, entity->getGlobalBoundingShape()))
+		AxisAlignedBox box = entity->getBoundingBox();
+		if (!Collision::collide(&ray, &box))
 			return false;
 	}
 
@@ -82,14 +88,14 @@ bool RayEntityCollector::operator() (Entity* entity)
 			}
 
 			//	compute triangle position
-			glm::vec3 p1 = glm::vec3(model * m1 * glm::vec4(vertices[faces[i]], 1.f));
-			glm::vec3 p2 = glm::vec3(model * m2 * glm::vec4(vertices[faces[i + 1]], 1.f));
-			glm::vec3 p3 = glm::vec3(model * m3 * glm::vec4(vertices[faces[i + 2]], 1.f));
+			glm::vec4 p1 = model * m1 * glm::vec4(vertices[faces[i]], 1.f);
+			glm::vec4 p2 = model * m2 * glm::vec4(vertices[faces[i + 1]], 1.f);
+			glm::vec4 p3 = model * m3 * glm::vec4(vertices[faces[i + 2]], 1.f);
 
 			//	collision detection
 			if (Collision::collide_SegmentvsTriangle(position, position + distance*direction, p1, p2, p3))
 			{
-				glm::vec3 normal = glm::cross(p2 - p1, p3 - p1);
+				glm::vec4 normal = glm::cross(p2 - p1, p3 - p1);
 				glm::normalize(normal);
 				collisionDistance = std::min(collisionDistance, glm::dot(normal, p1 - position) / glm::dot(normal, direction));
 			}
@@ -100,13 +106,13 @@ bool RayEntityCollector::operator() (Entity* entity)
 	{
 		for (unsigned int i = 0; i < faces.size(); i += 3)
 		{
-			glm::vec3 p1 = glm::vec3(model * glm::vec4(vertices[faces[i]], 1.f));
-			glm::vec3 p2 = glm::vec3(model * glm::vec4(vertices[faces[i + 1]], 1.f));
-			glm::vec3 p3 = glm::vec3(model * glm::vec4(vertices[faces[i + 2]], 1.f));
+			glm::vec4 p1 = model * glm::vec4(vertices[faces[i]], 1.f);
+			glm::vec4 p2 = model * glm::vec4(vertices[faces[i + 1]], 1.f);
+			glm::vec4 p3 = model * glm::vec4(vertices[faces[i + 2]], 1.f);
 
 			if (Collision::collide_SegmentvsTriangle(position, position + distance*direction, p1, p2, p3))
 			{
-				glm::vec3 normal = glm::cross(p2 - p1, p3 - p1);
+				glm::vec4 normal = glm::cross(p2 - p1, p3 - p1);
 				glm::normalize(normal);
 				collisionDistance = std::min(collisionDistance, glm::dot(normal, p1 - position) / glm::dot(normal, direction));
 			}

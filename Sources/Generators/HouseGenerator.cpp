@@ -8,10 +8,11 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 
-#include <EntityComponent/Entity.hpp>
-#include <Renderer/DrawableComponent.h>
-#include <Resources/Mesh.h>
-#include <Utiles/ToolBox.h>
+#include "EntityComponent/Entity.hpp"
+#include "Renderer/DrawableComponent.h"
+#include "Resources/Mesh.h"
+#include "Utiles/ToolBox.h"
+#include "Physics/Shapes/Collider.h"
 
 
 //  Attributes
@@ -124,7 +125,11 @@ void HouseGenerator::getHouse(Entity* house, unsigned int seed, int d, int p)
 
 	DrawableComponent* drawable = new DrawableComponent(houseName);
 	house->addComponent(drawable);
-	house->setShape(new OrientedBox(glm::mat4(1.f), drawable->getMeshBBMin(), drawable->getMeshBBMax()));
+
+	Collider* collider = new Collider(new OrientedBox(glm::mat4(1.f), glm::vec4(drawable->getMeshBBMin(), 1), glm::vec4(drawable->getMeshBBMax(), 1)));
+	house->addComponent(collider);
+
+	house->recomputeBoundingBox();
 
 	ResourceManager::getInstance()->release(mesh);				//	House generator release mesh pointer
 }

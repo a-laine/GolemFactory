@@ -17,13 +17,13 @@ class EntityFactory
 
 		template<typename Callback>
 		Entity* createObject(const std::string& type, Callback cb);
-		Entity* createObject(const std::string& type, const glm::vec3& position, const glm::vec3& scale = glm::vec3(1.f), const glm::quat& orientation = glm::quat(), const std::string& name = "unknown");
+		Entity* createObject(const std::string& type, const glm::vec4& position, const glm::vec3& scale = glm::vec3(1.f), const glm::quat& orientation = glm::quat(), const std::string& name = "unknown");
 
 		template<typename Callback>
 		Entity* createObject(Callback cb);
 		template<typename Callback>
 		Entity* createObject(const std::vector<Component*>& components, Callback cb);
-		Entity* createObject(const std::vector<Component*>& components, const glm::vec3& position, const glm::vec3& scale = glm::vec3(1.f), const glm::quat& orientation = glm::quat(), const std::string& name = "unknown");
+		Entity* createObject(const std::vector<Component*>& components, const glm::vec4& position, const glm::vec3& scale = glm::vec3(1.f), const glm::quat& orientation = glm::quat(), const std::string& name = "unknown");
 
 	private:
 		Entity* createEntity();

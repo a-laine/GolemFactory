@@ -27,6 +27,13 @@ class EntityBase
 		template<typename T> const T* getComponent() const { return static_cast<const T*>(getComponent(T::getStaticClassID())); }
 		template<typename T> void getAllComponents(std::vector<Component*>& components) { return getAllComponents(T::getStaticClassID(), components); }
 
+		template<class Visitor> void componentsVisitor(ClassID type, Visitor& visitor)
+		{
+			for (Element& elem : m_components)
+				if (elem.type == type && visitor(elem.comp))
+					break;
+		}
+
 	protected:
 		void addComponent(Component* component, ClassID type);
 		template<typename T> void addComponent(T* component) { addComponent(component, T::getStaticClassID()); }

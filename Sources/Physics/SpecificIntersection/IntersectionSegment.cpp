@@ -1,4 +1,5 @@
 #include "IntersectionSegment.h"
+#include "../Collision.h"
 
 //#include "IntersectionPoint.h"
 #include <Physics/SpecificCollision/CollisionUtils.h>
@@ -13,10 +14,10 @@
 
 
 
-Intersection::Contact Intersection::intersect_SegmentvsSegment(const glm::vec3& segment1a, const glm::vec3& segment1b, const glm::vec3& segment2a, const glm::vec3& segment2b)
+/*Intersection::Contact Intersection::intersect_SegmentvsSegment(const glm::vec3& segment1a, const glm::vec3& segment1b, const glm::vec3& segment2a, const glm::vec3& segment2b)
 {
-	/*if (segment1a == segment1b) return intersect_PointvsSegment(segment1a, segment2a, segment2b);
-	else if (segment2a == segment2b) return intersect_PointvsSegment(segment2a, segment1a, segment2b).swap();*/
+	if (segment1a == segment1b) return intersect_PointvsSegment(segment1a, segment2a, segment2b);
+	else if (segment2a == segment2b) return intersect_PointvsSegment(segment2a, segment1a, segment2b).swap();
 
 	Contact contact;
 	std::pair<glm::vec3, glm::vec3> p = CollisionUtils::getSegmentsClosestSegment(segment1a, segment1b, segment2a, segment2b);
@@ -25,8 +26,8 @@ Intersection::Contact Intersection::intersect_SegmentvsSegment(const glm::vec3& 
 	contact.normalA = glm::normalize(contact.contactPointB - contact.contactPointA);
 	contact.normalB = -contact.normalA;
 	return contact;
-}
-Intersection::Contact Intersection::intersect_SegmentvsTriangle(const glm::vec3& segment1, const glm::vec3& segment2, const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3)
+}*/
+/*Intersection::Contact Intersection::intersect_SegmentvsTriangle(const glm::vec3& segment1, const glm::vec3& segment2, const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3)
 {
 	//	begin and eliminate special cases
 	//if (segment1 == segment2) return intersect_PointvsTriangle(segment1, triangle1, triangle2, triangle3);
@@ -67,7 +68,7 @@ Intersection::Contact Intersection::intersect_SegmentvsTriangle(const glm::vec3&
 	}
 			
 	// compute all segments of each edge with test segment
-	/*CollisionReport dummyReport;
+	CollisionReport dummyReport;
 	Contact c1 = Collision::collide_PointvsTriangle(segment1, triangle1, triangle2, triangle3);
 	Contact c2 = Collision::collide_PointvsTriangle(segment2, triangle1, triangle2, triangle3);*/
 
@@ -78,10 +79,10 @@ Intersection::Contact Intersection::intersect_SegmentvsTriangle(const glm::vec3&
 	float d2 = glm::length2(s2.first - s2.second);
 	float d3 = glm::length2(s3.first - s3.second);
 	float d4 = glm::length2(segment1 - c1.contactPointB);
-	float d5 = glm::length2(segment2 - c2.contactPointB);*/
+	float d5 = glm::length2(segment2 - c2.contactPointB);
 
 	// choose closest point set
-	Contact contact;
+	Contact contact;*/
 	/*if (d4 <= d5 && d4 <= d1 && d4 <= d2 && d4 <= d3)
 		return c1;
 	else if (d5 <= d4 && d5 <= d1 && d5 <= d2 && d5 <= d3)
@@ -104,10 +105,10 @@ Intersection::Contact Intersection::intersect_SegmentvsTriangle(const glm::vec3&
 
 	// end and return
 	contact.normalA = glm::normalize(contact.contactPointB - contact.contactPointA);
-	contact.normalB = -contact.normalA;*/
+	contact.normalB = -contact.normalA;
 	return contact;
-}
-Intersection::Contact Intersection::intersect_SegmentvsOrientedBox(const glm::vec3& segment1, const glm::vec3& segment2, const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax)
+}*/
+/*Intersection::Contact Intersection::intersect_SegmentvsOrientedBox(const glm::vec3& segment1, const glm::vec3& segment2, const glm::mat4& boxTranform, const glm::vec3& boxMin, const glm::vec3& boxMax)
 {
 	// init
 	glm::vec3 s1 = glm::vec3(glm::inverse(boxTranform) * glm::vec4(segment1, 1.f));
@@ -217,10 +218,10 @@ Intersection::Contact Intersection::intersect_SegmentvsAxisAlignedBox(const glm:
 			}
 		}
 		return candidates[k];
-	}*/
+	}
 	return Intersection::Contact();
-}
-Intersection::Contact Intersection::intersect_SegmentvsSphere(const glm::vec3& segment1, const glm::vec3& segment2, const glm::vec3& sphereCenter, const float& sphereRadius)
+}*/
+/*Intersection::Contact Intersection::intersect_SegmentvsSphere(const glm::vec3& segment1, const glm::vec3& segment2, const glm::vec3& sphereCenter, const float& sphereRadius)
 {
 	//if (segment2 == segment1) return intersect_PointvsSphere(segment1, sphereCenter, sphereRadius);
 
@@ -236,4 +237,4 @@ Intersection::Contact Intersection::intersect_SegmentvsCapsule(const glm::vec3& 
 	Contact contact = intersect_SegmentvsSegment(segment1, segment2, capsule1, capsule2);
 	contact.contactPointB = contact.contactPointB + capsuleRadius * contact.normalB;
 	return contact;
-}
+}*/

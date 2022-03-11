@@ -58,6 +58,7 @@ enum EventEnum
 };
 
 #include <Utiles/DirectoryWatcher.h>
+#include <Physics/Shapes/Collider.h>
 
 
 
@@ -120,7 +121,7 @@ int main()
 	//	Collision test
 	world.getEntityFactory().createObject("cube", [](Entity* object) // ground collider
 		{
-			object->setTransformation(glm::vec3(0.f, 0.f, -10.f), glm::vec3(1000, 1000, 10), glm::fquat());
+			object->setTransformation(glm::vec4(0.f, 0.f, -10.f, 1.f), glm::vec3(1000, 1000, 10), glm::fquat());
 			object->removeComponent(object->getComponent<DrawableComponent>());
 		});
 
@@ -133,9 +134,13 @@ int main()
 
 	freeflyCamera = world.getEntityFactory().createObject([](Entity* object)
 		{
-			glm::vec3 p(-5, -3, 3);
+			glm::vec4 p(-5, -3, 3, 1);
 			object->setPosition(p);
-			object->setShape(new Sphere());
+
+			Collider* collider = new Collider(new Sphere(glm::vec4(0.f), 0.1f));
+			object->addComponent(collider);
+			object->recomputeBoundingBox();
+
 			CameraComponent* ffCam = new CameraComponent(true);
 			ffCam->lookAt(-p);
 			object->addComponent(ffCam);
@@ -240,16 +245,19 @@ void initManagers()
 	ResourceManager::getInstance()->addNewResourceLoader(".texture", new TextureLoader());
 
 	// Init world
-	const glm::vec3 worldHalfSize = glm::vec3(GRID_SIZE * GRID_ELEMENT_SIZE, GRID_SIZE * GRID_ELEMENT_SIZE, 64) * 0.5f;
-	const glm::vec3 worldPos = glm::vec3(0, 0, worldHalfSize.z - 5);
+	const glm::vec4 worldHalfSize = glm::vec4(GRID_SIZE * GRID_ELEMENT_SIZE, GRID_SIZE * GRID_ELEMENT_SIZE, 64, 0) * 0.5f;
+	const glm::vec4 worldPos = glm::vec4(0, 0, worldHalfSize.z - 5, 1.f);
 	NodeVirtual::debugWorld = &world;
 	world.getSceneManager().init(worldPos - worldHalfSize, worldPos + worldHalfSize, glm::ivec3(4, 4, 1), 3);
 	world.setMaxObjectCount(4000000);
 	world.getEntityFactory().createObject([](Entity* object)
 		{
-			glm::vec3 s = glm::vec3(0.5f * GRID_SIZE * GRID_ELEMENT_SIZE, 0.5f * GRID_SIZE * GRID_ELEMENT_SIZE, 1.f);
-			object->setShape(new AxisAlignedBox(-s, s));
-			object->setPosition(glm::vec3(0.f, 0.f, -1.f));
+			glm::vec4 s = glm::vec4(0.5f * GRID_SIZE * GRID_ELEMENT_SIZE, 0.5f * GRID_SIZE * GRID_ELEMENT_SIZE, 1.f, 0.f);
+
+			Collider* collider = new Collider(new AxisAlignedBox(-s, s));
+			object->addComponent(collider);
+			object->recomputeBoundingBox();
+			object->setPosition(glm::vec4(0.f, 0.f, -1.f, 1.f));
 		});
 
 	//	Renderer
@@ -277,8 +285,8 @@ void initManagers()
 }
 void picking()
 {
-	glm::vec3 cameraPos = currentCamera->getGlobalPosition();
-	glm::vec3 cameraForward = currentCamera->getForward(); // no rotations
+	glm::vec4 cameraPos = currentCamera->getGlobalPosition();
+	glm::vec4 cameraForward = currentCamera->getForward(); // no rotations
 
 	RaySceneQuerry test(cameraPos, cameraForward, 10000);
 	RayEntityCollector collector(cameraPos, cameraForward, 10000);
@@ -298,7 +306,7 @@ void picking()
 		if (compAnim)       type = "animatable";
 		else if (compDraw)  type = "drawable";
 		else               type = "empty entity";
-		glm::vec3 p = cameraPos + distance * cameraForward;
+		glm::vec4 p = cameraPos + distance * cameraForward;
 
 		WidgetManager::getInstance()->setString("interaction", "Distance : " + ToolBox::to_string_with_precision(distance, 5) +
 			" m\nPosition : (" + ToolBox::to_string_with_precision(p.x, 5) + " , " + ToolBox::to_string_with_precision(p.y, 5) + " , " + ToolBox::to_string_with_precision(p.z, 5) +
@@ -419,7 +427,7 @@ void updates(float elapseTime)
 		}
 
 		// Translation
-		glm::vec3 direction(0., 0., 0.);
+		glm::vec4 direction(0., 0., 0., 0.);
 		float speed = ffCam->getFieldOfView();
 		if (EventHandler::getInstance()->isActivated(CLICK_MIDDLE))
 		{

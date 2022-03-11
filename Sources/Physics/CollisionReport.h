@@ -29,10 +29,10 @@ class CollisionReport
 		Entity *entity1, *entity2;
 		Shape *shape1, *shape2;
 
-		glm::vec3 normal;
-		std::vector<glm::vec3> points;
+		glm::vec4 normal;
+		std::vector<glm::vec4> points;
 		std::vector<float> depths;
 
-		std::vector<glm::vec3> shape1face;
-		std::vector<glm::vec3> shape2face;
+		std::vector<glm::vec4> shape1face;
+		std::vector<glm::vec4> shape2face;
 };

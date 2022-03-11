@@ -13,13 +13,23 @@ glm::vec3 CollisionUtils::getSegmentClosestPoint(const glm::vec3& segment1, cons
 
 	return segment1 + glm::clamp(glm::dot(point - segment1, s) / ss, 0.f, 1.f) * s;
 }
+glm::vec4 CollisionUtils::getSegmentClosestPoint(const glm::vec4& segment1, const glm::vec4& segment2, const glm::vec4& point)
+{
+	if (segment2 == segment1)
+		return segment1;
 
-std::pair<glm::vec3, glm::vec3> CollisionUtils::getSegmentsClosestSegment(const glm::vec3& segment1a, const glm::vec3& segment1b, const glm::vec3& segment2a, const glm::vec3& segment2b)
+	const glm::vec4 s = segment2 - segment1;
+	const float ss = glm::length2(s);
+
+	return segment1 + glm::clamp(glm::dot(point - segment1, s) / ss, 0.f, 1.f) * s;
+}
+
+std::pair<glm::vec4, glm::vec4> CollisionUtils::getSegmentsClosestSegment(const glm::vec4& segment1a, const glm::vec4& segment1b, const glm::vec4& segment2a, const glm::vec4& segment2b)
 {
 	//http://geomalgorithms.com/a07-_distance.html
-	glm::vec3 u = segment1b - segment1a;
-	glm::vec3 v = segment2b - segment2a;
-	glm::vec3 w = segment1a - segment2a;
+	glm::vec4 u = segment1b - segment1a; u.w = 0.f;
+	glm::vec4 v = segment2b - segment2a; v.w = 0.f;
+	glm::vec4 w = segment1a - segment2a; w.w = 0.f;
 
 	float a = glm::length2(u);
 	float b = glm::dot(u, v);
@@ -87,15 +97,33 @@ std::pair<glm::vec3, glm::vec3> CollisionUtils::getSegmentsClosestSegment(const 
 		}
 	}
 
-	return std::pair<glm::vec3, glm::vec3>(segment1a + u * t1, segment2a + v * t2);
+	return std::pair<glm::vec4, glm::vec4>(segment1a + u * t1, segment2a + v * t2);
 }
 
-glm::vec3 CollisionUtils::getTriangleClosestPoint(const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, const glm::vec3& point)
+/*glm::vec3 CollisionUtils::getTriangleClosestPoint(const glm::vec3& triangle1, const glm::vec3& triangle2, const glm::vec3& triangle3, const glm::vec3& point)
 {
 	return point;
-}
+}*/
 
 glm::vec2 CollisionUtils::getBarycentricCoordinates(const glm::vec3& v1, const glm::vec3& v2, const glm::vec3& point, const bool& clamped)
+{
+	float crossDot = glm::dot(v1, v2);
+	float magnitute = glm::dot(v1, v1) * glm::dot(v2, v2) - crossDot * crossDot;
+	glm::vec2 barry;
+
+	barry.x = (glm::dot(v2, v2) * glm::dot(point, v1) - crossDot * glm::dot(point, v2)) / magnitute;
+	barry.y = (glm::dot(v1, v1) * glm::dot(point, v2) - crossDot * glm::dot(point, v1)) / magnitute;
+
+	if (!clamped)
+		return barry;
+
+	glm::clamp(barry, glm::vec2(0.f), glm::vec2(1.f));
+	float length = barry.x + barry.y;
+	if (length > 1.f)
+		barry /= length;
+	return barry;
+}
+glm::vec2 CollisionUtils::getBarycentricCoordinates(const glm::vec4& v1, const glm::vec4& v2, const glm::vec4& point, const bool& clamped)
 {
 	float crossDot = glm::dot(v1, v2);
 	float magnitute = glm::dot(v1, v1) * glm::dot(v2, v2) - crossDot * crossDot;

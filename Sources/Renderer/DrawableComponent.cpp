@@ -67,11 +67,11 @@ bool DrawableComponent::hasSkeleton() const
 glm::vec3 DrawableComponent::getMeshBBMax() const
 {
     GF_ASSERT(isValid());
-	return m_mesh->getBoundingBox().max;
+	return (glm::vec3)m_mesh->getBoundingBox().max;
 }
 
 glm::vec3 DrawableComponent::getMeshBBMin() const
 {
     GF_ASSERT(isValid());
-	return m_mesh->getBoundingBox().min;
+	return (glm::vec3)m_mesh->getBoundingBox().min;
 }

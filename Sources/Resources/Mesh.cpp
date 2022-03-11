@@ -14,7 +14,7 @@ std::string Mesh::defaultName;
 //  Default
 Mesh::Mesh(const std::string& meshName)
     : ResourceVirtual(meshName)
-    , boundingBox(glm::vec3(0.f), glm::vec3(0.f))
+    , boundingBox(glm::vec4(0.f), glm::vec4(0.f))
     , vao(0), verticesBuffer(0), colorsBuffer(0), normalsBuffer(0), facesBuffer(0)
     , BBoxVao(0), vBBoxBuffer(0), fBBoxBuffer(0)
     , weightsBuffer(0), bonesBuffer(0)
@@ -86,24 +86,24 @@ void Mesh::initialize(std::vector<glm::vec3>&& verticesArray, std::vector<glm::v
 
 void Mesh::computeBoundingBox()
 {
-	boundingBox.min = glm::vec3(std::numeric_limits<float>::max());
-	boundingBox.max = glm::vec3(std::numeric_limits<float>::min());
+	boundingBox.min = glm::vec4(std::numeric_limits<float>::max());
+	boundingBox.max = glm::vec4(std::numeric_limits<float>::min());
 
 	for (unsigned int i = 0; i < vertices.size(); i++)
 	{
-		boundingBox.min = glm::min(boundingBox.min, vertices[i]);
-		boundingBox.max = glm::max(boundingBox.max, vertices[i]);
+		boundingBox.min = glm::min(boundingBox.min, glm::vec4(vertices[i], 1.f));
+		boundingBox.max = glm::max(boundingBox.max, glm::vec4(vertices[i], 1.f));
 	}
 
 	//	bbox vertex array
-	vBBox.push_back(boundingBox.min);
+	vBBox.push_back((glm::vec3)boundingBox.min);
 	vBBox.push_back(glm::vec3(boundingBox.min.x, boundingBox.min.y, boundingBox.max.z));
 	vBBox.push_back(glm::vec3(boundingBox.min.x, boundingBox.max.y, boundingBox.min.z));
 	vBBox.push_back(glm::vec3(boundingBox.min.x, boundingBox.max.y, boundingBox.max.z));
 	vBBox.push_back(glm::vec3(boundingBox.max.x, boundingBox.min.y, boundingBox.min.z));//4
 	vBBox.push_back(glm::vec3(boundingBox.max.x, boundingBox.min.y, boundingBox.max.z));
 	vBBox.push_back(glm::vec3(boundingBox.max.x, boundingBox.max.y, boundingBox.min.z));
-	vBBox.push_back(boundingBox.max);
+	vBBox.push_back((glm::vec3)boundingBox.max);
 
 	//	bbox faces array (please don't change order it's important)
 	fBBox.push_back(4); fBBox.push_back(0); fBBox.push_back(6);

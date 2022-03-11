@@ -199,11 +199,13 @@
     <ClCompile Include="..\..\Sources\Physics\RigidBody.cpp" />
     <ClCompile Include="..\..\Sources\Physics\Shapes\AxisAlignedBox.cpp" />
     <ClCompile Include="..\..\Sources\Physics\Shapes\Capsule.cpp" />
+    <ClCompile Include="..\..\Sources\Physics\Shapes\Collider.cpp" />
     <ClCompile Include="..\..\Sources\Physics\Shapes\Hull.cpp" />
     <ClCompile Include="..\..\Sources\Physics\Shapes\OrientedBox.cpp" />
     <ClCompile Include="..\..\Sources\Physics\Shapes\Point.cpp" />
     <ClCompile Include="..\..\Sources\Physics\Shapes\Segment.cpp" />
     <ClCompile Include="..\..\Sources\Physics\Shapes\Shape.cpp" />
+    <ClCompile Include="..\..\Sources\Physics\Shapes\ShapeCacheContainer.cpp" />
     <ClCompile Include="..\..\Sources\Physics\Shapes\Sphere.cpp" />
     <ClCompile Include="..\..\Sources\Physics\Shapes\Triangle.cpp" />
     <ClCompile Include="..\..\Sources\Physics\SpecificCollision\CollisionAxisAlignedBox.cpp" />
@@ -221,7 +223,6 @@
     <ClCompile Include="..\..\Sources\Physics\SpecificIntersection\IntersectionSegment.cpp" />
     <ClCompile Include="..\..\Sources\Physics\SpecificIntersection\IntersectionSphere.cpp" />
     <ClCompile Include="..\..\Sources\Physics\SpecificIntersection\IntersectionTriangle.cpp" />
-    <ClCompile Include="..\..\Sources\Physics\Swept.cpp" />
     <ClCompile Include="..\..\Sources\Renderer\CameraComponent.cpp" />
     <ClCompile Include="..\..\Sources\Renderer\DrawableComponent.cpp" />
     <ClCompile Include="..\..\Sources\Renderer\Renderer.cpp" />
@@ -303,7 +304,6 @@
     <ClInclude Include="..\..\Sources\HUD\WidgetVirtual.h" />
     <ClInclude Include="..\..\Sources\Physics\BoundingVolume.h" />
     <ClInclude Include="..\..\Sources\Physics\Collision.h" />
-    <ClInclude Include="..\..\Sources\Physics\Collision.hpp" />
     <ClInclude Include="..\..\Sources\Physics\CollisionReport.h" />
     <ClInclude Include="..\..\Sources\Physics\Constraint.h" />
     <ClInclude Include="..\..\Sources\Physics\GJK.h" />
@@ -311,11 +311,13 @@
     <ClInclude Include="..\..\Sources\Physics\RigidBody.h" />
     <ClInclude Include="..\..\Sources\Physics\Shapes\AxisAlignedBox.h" />
     <ClInclude Include="..\..\Sources\Physics\Shapes\Capsule.h" />
+    <ClInclude Include="..\..\Sources\Physics\Shapes\Collider.h" />
     <ClInclude Include="..\..\Sources\Physics\Shapes\Hull.h" />
     <ClInclude Include="..\..\Sources\Physics\Shapes\OrientedBox.h" />
     <ClInclude Include="..\..\Sources\Physics\Shapes\Point.h" />
     <ClInclude Include="..\..\Sources\Physics\Shapes\Segment.h" />
     <ClInclude Include="..\..\Sources\Physics\Shapes\Shape.h" />
+    <ClInclude Include="..\..\Sources\Physics\Shapes\ShapeCacheContainer.h" />
     <ClInclude Include="..\..\Sources\Physics\Shapes\Sphere.h" />
     <ClInclude Include="..\..\Sources\Physics\Shapes\Triangle.h" />
     <ClInclude Include="..\..\Sources\Physics\SpecificCollision\CollisionAxisAlignedBox.h" />
@@ -332,7 +334,6 @@
     <ClInclude Include="..\..\Sources\Physics\SpecificIntersection\IntersectionSegment.h" />
     <ClInclude Include="..\..\Sources\Physics\SpecificIntersection\IntersectionSphere.h" />
     <ClInclude Include="..\..\Sources\Physics\SpecificIntersection\IntersectionTriangle.h" />
-    <ClInclude Include="..\..\Sources\Physics\Swept.h" />
     <ClInclude Include="..\..\Sources\Renderer\CameraComponent.h" />
     <ClInclude Include="..\..\Sources\Renderer\DrawableComponent.h" />
     <ClInclude Include="..\..\Sources\Renderer\Renderer.h" />

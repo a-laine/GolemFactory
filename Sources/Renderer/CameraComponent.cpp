@@ -8,7 +8,7 @@
 
 CameraComponent::CameraComponent(bool freeRotations)
 	: m_orientation(1.f, 0.f, 0.f, 0.f)
-	, m_position(0.f)
+	, m_position(0.f, 0.f, 0.f, 1.f)
 	, m_fov(90)
 	, m_freeRotations(freeRotations)
 {
@@ -19,18 +19,18 @@ glm::mat4 CameraComponent::getViewMatrix() const
 	glm::mat4 m;
 	glm::quat rot = glm::inverse(m_orientation);
 	m = glm::toMat4(rot);
-	m[3] = glm::rotate(rot, glm::vec4(-m_position, 1.f));
+	m[3] = glm::rotate(rot, -m_position);
 	return m;
 }
 
 glm::mat4 CameraComponent::getGlobalViewMatrix() const
 {
 	glm::mat4 m = glm::toMat4(m_orientation);
-	m[3] = glm::vec4(m_position, 1.f);
+	m[3] = m_position;
 	if (m_freeRotations)
 	{
 		m[3] *= glm::vec4(getParentEntity()->getScale(), 1.f);
-		m[3] += glm::vec4(getParentEntity()->getPosition(), 0.f);
+		m[3] += glm::vec4((glm::vec3)(getParentEntity()->getPosition()), 0.f);
 	}
 	else
 	{
@@ -42,50 +42,50 @@ glm::mat4 CameraComponent::getGlobalViewMatrix() const
 glm::mat4 CameraComponent::getModelMatrix() const
 {
 	glm::mat4 m = glm::toMat4(m_orientation);
-	m[3] = glm::vec4(m_position, 1.f);
+	m[3] = m_position;
 	return m;
 }
 
-glm::vec3 CameraComponent::getForward() const
+glm::vec4 CameraComponent::getForward() const
 {
-	return glm::rotate(m_orientation, glm::vec3(0, 0, -1));
+	return glm::rotate(m_orientation, glm::vec4(0, 0, -1, 0));
 }
 
-glm::vec3 CameraComponent::getRight() const
+glm::vec4 CameraComponent::getRight() const
 {
-	return glm::rotate(m_orientation, glm::vec3(1, 0, 0));
+	return glm::rotate(m_orientation, glm::vec4(1, 0, 0, 0));
 }
 
-glm::vec3 CameraComponent::getUp() const
+glm::vec4 CameraComponent::getUp() const
 {
-	return glm::rotate(m_orientation, glm::vec3(0, 1, 0));
+	return glm::rotate(m_orientation, glm::vec4(0, 1, 0, 0));
 }
 
-glm::vec3 CameraComponent::getPosition() const
+glm::vec4 CameraComponent::getPosition() const
 {
 	return m_position;
 }
 
-glm::vec3 CameraComponent::getGlobalPosition() const
+glm::vec4 CameraComponent::getGlobalPosition() const
 {
-	return m_position * getParentEntity()->getScale() + getParentEntity()->getPosition();
+	return m_position * glm::vec4(getParentEntity()->getScale(), 1.f) + getParentEntity()->getPosition();
 }
 
-void CameraComponent::getFrustrum(glm::vec3& position, glm::vec3& forward, glm::vec3& right, glm::vec3& up) const
+void CameraComponent::getFrustrum(glm::vec4& position, glm::vec4& forward, glm::vec4& right, glm::vec4& up) const
 {
 	if (m_freeRotations)
 	{
-		position = m_position * getParentEntity()->getScale() + getParentEntity()->getPosition();
-		forward = glm::rotate(m_orientation, glm::vec3(0, 0, -1));
-		right = glm::rotate(m_orientation, glm::vec3(1, 0, 0));
-		up = glm::rotate(m_orientation, glm::vec3(0, 1, 0));
+		position = getGlobalPosition();
+		forward = getForward();
+		right = getRight();
+		up = getUp();
 	}
 	else
 	{
-		position = glm::vec3(getParentEntity()->getTransformMatrix() * glm::vec4(m_position, 1.f));
-		forward = glm::vec3(getParentEntity()->getTransformMatrix() * glm::rotate(m_orientation, glm::vec4(0, 0, -1, 0)));
-		right = glm::vec3(getParentEntity()->getTransformMatrix() * glm::rotate(m_orientation, glm::vec4(1, 0, 0, 0)));
-		up = glm::vec3(getParentEntity()->getTransformMatrix() * glm::rotate(m_orientation, glm::vec4(0, 1, 0, 0)));
+		position = getParentEntity()->getTransformMatrix() * getGlobalPosition();
+		forward = getParentEntity()->getTransformMatrix() * getForward();
+		right = getParentEntity()->getTransformMatrix() * getRight();
+		up = getParentEntity()->getTransformMatrix() * getUp();
 	}
 }
 
@@ -109,7 +109,7 @@ bool CameraComponent::getFreeRotations() const
 	return m_freeRotations;
 }
 
-void CameraComponent::setPosition(const glm::vec3& position)
+void CameraComponent::setPosition(const glm::vec4& position)
 {
 	m_position = position;
 }
@@ -129,7 +129,7 @@ void CameraComponent::setFreeRotations(bool freeRotations)
 	m_freeRotations = freeRotations;
 }
 
-void CameraComponent::setDirection(const glm::vec3& direction)
+void CameraComponent::setDirection(const glm::vec4& direction)
 {
 	glm::vec3 euler = glm::eulerAngles(m_orientation);
 
@@ -142,7 +142,7 @@ void CameraComponent::setDirection(const glm::vec3& direction)
 	m_orientation = glm::quat(euler);
 }
 
-void CameraComponent::translate(const glm::vec3& direction)
+void CameraComponent::translate(const glm::vec4& direction)
 {
 	m_position += direction;
 }
@@ -167,7 +167,7 @@ void CameraComponent::rotate(float pitch, float yaw)
 	m_orientation = glm::quat(euler);
 }
 
-void CameraComponent::rotateAround(const glm::vec3& target, float pitch, float yaw)
+void CameraComponent::rotateAround(const glm::vec4& target, float pitch, float yaw)
 {
 	rotate(pitch, yaw);
 
@@ -175,18 +175,18 @@ void CameraComponent::rotateAround(const glm::vec3& target, float pitch, float y
 	m_position = target - d * getForward();
 }
 
-void CameraComponent::rotateAround(const glm::vec3& target, float pitch, float yaw, float distance)
+void CameraComponent::rotateAround(const glm::vec4& target, float pitch, float yaw, float distance)
 {
 	rotate(pitch, yaw);
 	m_position = target - distance * getForward();
 }
 
-void CameraComponent::lookAt(const glm::vec3& target)
+void CameraComponent::lookAt(const glm::vec4& target)
 {
 	setDirection(target - m_position);
 }
 
-void CameraComponent::lookAt(const glm::vec3& target, float distance)
+void CameraComponent::lookAt(const glm::vec4& target, float distance)
 {
 	setDirection(target - m_position);
 	m_position = target - distance * getForward();

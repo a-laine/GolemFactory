@@ -1,12 +1,13 @@
 #include "Entity.hpp"
-#include <Renderer/DrawableComponent.h>
-#include <Utiles/Assert.hpp>
+#include "Renderer/DrawableComponent.h"
+#include "Utiles/Assert.hpp"
+#include "Physics/Shapes/Collider.h"
 
 //#include <glm/gtc/quaternion.hpp>
 
 
 //	Default
-Entity::Entity() : m_refCount(0), name("unknown"), m_parentWorld(nullptr), m_localBoundingShape(nullptr), m_globalBoundingShape(nullptr), swept(nullptr)
+Entity::Entity() : m_refCount(0), m_name("unknown"), m_parentWorld(nullptr)
 {}
 //
 
@@ -29,7 +30,7 @@ void Entity::removeComponent(Component* component)
 
 
 //	Set/Get functions
-void Entity::setPosition(const glm::vec3& position)
+void Entity::setPosition(const glm::vec4& position)
 {
 	setTransformation(position, getScale(), getOrientation());
 }
@@ -41,42 +42,52 @@ void Entity::setOrientation(const glm::quat& orientation)
 {
 	setTransformation(getPosition(), getScale(), orientation);
 }
-void Entity::setTransformation(const glm::vec3& position, const glm::vec3& scale, const glm::fquat& orientation)
+void Entity::setTransformation(const glm::vec4& position, const glm::vec3& scale, const glm::fquat& orientation)
 {
-	m_transform = glm::translate(glm::mat4(1.0), position);
+	m_transform = glm::translate(glm::mat4(1.0), (glm::vec3)position);
 	m_transform = m_transform * glm::toMat4(orientation);
 	m_transform = glm::scale(m_transform, scale);
 	m_inverseTransform = glm::inverse(m_transform);
 
-	if (m_globalBoundingShape)
-	{
-		*m_globalBoundingShape = *m_localBoundingShape;
-		m_globalBoundingShape->transform(position, scale, orientation);
-	}
+	m_worldBoundingBox = m_localBoundingBox;
+	m_worldBoundingBox.transform(position, scale, orientation);
 }
 void Entity::setParentWorld(World* parentWorld)
 {
 	m_parentWorld = parentWorld;
 }
-void Entity::setShape(Shape* Shape)
+void Entity::recomputeBoundingBox()
 {
-	if (m_localBoundingShape)
-		delete m_localBoundingShape;
-	m_localBoundingShape = Shape;
-	if (m_globalBoundingShape)
-		delete m_globalBoundingShape;
-	m_globalBoundingShape = m_localBoundingShape->duplicate();
-	m_globalBoundingShape->transform(glm::vec3(m_transform[3]), getScale(), getOrientation());
+	bool firstshape = false;
+	auto colliderVisitor = [&](Component* componentCollider)
+	{
+		const Collider* collider = static_cast<const Collider*>(componentCollider);
+		if (collider)
+		{
+			if (firstshape)
+			{
+				m_localBoundingBox = collider->m_shape->toAxisAlignedBox();
+				firstshape = false;
+			}
+			else
+				m_localBoundingBox.add(collider->m_shape->toAxisAlignedBox());
+		}
+		return false;
+	};
+	componentsVisitor(Collider::getStaticClassID(), colliderVisitor);
+
+	m_worldBoundingBox = m_localBoundingBox;
+	m_worldBoundingBox.transform(getPosition(), getScale(), getOrientation());
 }
-void Entity::setName(const std::string& _name) { name = _name; }
+void Entity::setName(const std::string& _name) { m_name = _name; }
 
 
 uint64_t Entity::getId() const { return reinterpret_cast<uintptr_t>(this); }
 const glm::mat4& Entity::getTransformMatrix() const { return m_transform; }
 const glm::mat4& Entity::getInverseTransformMatrix() const { return m_inverseTransform; }
-glm::vec3 Entity::getPosition() const
+glm::vec4 Entity::getPosition() const
 {
-	return glm::vec3(m_transform[3]);
+	return m_transform[3];
 }
 glm::vec3 Entity::getScale() const
 {
@@ -97,17 +108,6 @@ glm::fquat Entity::getOrientation() const
 	return glm::quat_cast(glm::mat3(m00, m01, m02, m10, m11, m12, m20, m21, m22));
 }
 World* Entity::getParentWorld() const { return m_parentWorld; }
-std::string Entity::getName() const { return name; }
-
-const Shape* Entity::getLocalBoundingShape() const
-{
-	return m_localBoundingShape;
-}
-
-const Shape* Entity::getGlobalBoundingShape() const
-{
-	return m_globalBoundingShape;
-}
-
-
+std::string Entity::getName() const { return m_name; }
+AxisAlignedBox Entity::getBoundingBox() const { return m_worldBoundingBox; }
 //

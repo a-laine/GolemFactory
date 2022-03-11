@@ -12,7 +12,7 @@ class Constraint
 		//
 
 		//
-		glm::vec3 computeClosingVelocity() const;
+		glm::vec4 computeClosingVelocity() const;
 
 		void createFromReport(CollisionReport& report, const int& pointIndex, const float& deltaTime);
 		//
@@ -21,24 +21,24 @@ class Constraint
 		// Attributes
 		RigidBody *body1, *body2;
 		Entity* entity1, *entity2;
-		glm::vec3 worldPoint;
+		glm::vec4 worldPoint;
 		float depth;
-		glm::vec3 localPoint1, localPoint2;
+		glm::vec4 localPoint1, localPoint2;
 		
 		int axisCount;
-		glm::vec3 targetLinearVelocity;
+		glm::vec4 targetLinearVelocity;
 		//glm::vec3 targetAngularVelocity;
-		glm::vec3 accumulationLinear;
+		glm::vec4 accumulationLinear;
 
 		bool frictionLimit;
 		float friction;
-		glm::vec3 accumulationLinearMin;
-		glm::vec3 accumulationLinearMax;
-		glm::vec3 velocityChangePerAxis;
+		glm::vec4 accumulationLinearMin;
+		glm::vec4 accumulationLinearMax;
+		glm::vec4 velocityChangePerAxis;
 
-		glm::vec3 axis[3];
-		glm::vec3 rotationPerUnitImpulse1[3];
-		glm::vec3 rotationPerUnitImpulse2[3];
+		glm::vec4 axis[3];
+		glm::vec4 rotationPerUnitImpulse1[3];
+		glm::vec4 rotationPerUnitImpulse2[3];
 		//
 };
 

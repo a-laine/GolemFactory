@@ -2,7 +2,7 @@
 
 #include <unordered_map>
 
-#include "Collision.h"
+//#include "Collision.h"
 #include "Constraint.h"
 #include "Utiles/Singleton.h"
 #include "Resources/Mesh.h"
@@ -11,6 +11,7 @@
 #include "RigidBody.h"
 
 #include <set>
+#include <Physics/Shapes/ShapeCacheContainer.h>
 
 class Physics
 {
@@ -30,14 +31,14 @@ class Physics
 		void stepSimulation(const float& elapsedTime, SceneManager* scene);
 
 		void debugDraw();
-		void drawImGui();
+		void drawImGui(World& world);
 		//
 
 		//	Set / get ...
-		void setGravity(const glm::vec3& g);
+		void setGravity(const glm::vec4& g);
 		void setDefaultFriction(const float& f);
 
-		glm::vec3 getGravity() const;
+		glm::vec4 getGravity() const;
 		float getDefaultFriction() const;
 
 		void addMovingEntity(Entity* e);
@@ -61,8 +62,7 @@ class Physics
 		class Cluster
 		{
 			public:
-				std::vector<Entity*> dynamicEntities;
-				std::vector<RigidBody*> bodies;
+				std::vector<RigidBody*> dynamicEntities;
 				std::vector<Entity*> staticEntities;
 				std::vector<Constraint> constraints;
 		};
@@ -71,7 +71,7 @@ class Physics
 		//	Pipeline steps
 		void predictTransform(const float& elapsedTime);
 		void computeBoundingShapesAndDetectPairs(const float& elapsedTime, SceneManager* scene);
-		void computeClusters();
+		void computeDynamicClusters();
 		void createConstraint(const unsigned int& clusterIndex, const float& deltaTime);
 		void clearTempoaryStruct(SceneManager* scene);
 		//
@@ -82,18 +82,16 @@ class Physics
 
 		//	Usefull functions
 		RigidBody::SolverType getSolverType(const std::vector<Entity*>& cluster);
-		//void createReportConstraints(Cluster& cluster, CollisionReport& report);
 		//
 
 		//	Attributes
-		glm::vec3 gravity;
+		glm::vec4 gravity;
 		float defaultFriction;
 		std::set<Entity*> movingEntity;
 
 			/// Broad phase
 			BoxSceneQuerry proximityTest;
 			VirtualEntityCollector proximityList;
-			std::vector<Swept*> sweptList;
 
 			/// Second broad phase and cluster computing
 			std::set<std::pair<Entity*, Entity*> > dynamicPairs;
@@ -101,6 +99,8 @@ class Physics
 			std::map<Entity*, std::vector<Entity*> > staticCollisions;
 			std::vector<Cluster> clusters;
 			EntityGraph clusterFinder;
+
+			/// narrow phase
 
 		//
 };

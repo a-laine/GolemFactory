@@ -5,7 +5,6 @@
 
 #include <EntityComponent/Entity.hpp>
 #include <Scene/VirtualEntityCollector.h>
-#include <Physics/Swept.h>
 
 class World;
 
@@ -41,7 +40,7 @@ class NodeVirtual
 		virtual ~NodeVirtual();
 
 		//	Public fonctions
-		void init(const glm::vec3 bbMin, const glm::vec3 bbMax, const glm::ivec3& nodeDivision, unsigned int depth);
+		void init(const glm::vec4 bbMin, const glm::vec4 bbMax, const glm::ivec3& nodeDivision, unsigned int depth);
 		void clearChildren();
 		void split(unsigned int newDepth);
 		void merge(unsigned int newDepth);
@@ -49,26 +48,26 @@ class NodeVirtual
 
 		//	Set / get functions
 		bool isLeaf() const;
-		glm::vec3 getCenter() const;
+		glm::vec4 getCenter() const;
 		glm::vec3 getSize() const;
-		glm::vec3 getBBMax() const;
-		glm::vec3 getBBMin() const;
+		glm::vec4 getBBMax() const;
+		glm::vec4 getBBMin() const;
 		int getChildrenCount() const;
-		bool isInside(const glm::vec3& point) const;
+		bool isInside(const glm::vec4& point) const;
 		bool isTooSmall(const glm::vec3& size) const;
 		bool isTooBig(const glm::vec3& size) const;
-		glm::vec3 getPosition() const;
+		glm::vec4 getPosition() const;
 		const float& getAllowanceSize() const;
 		//
 		
 		//	Hierarchy related function
 		void addNode(NodeVirtual* node);
 		bool removeNode(NodeVirtual* node);
-		NodeVirtual* getChildAt(const glm::vec3& pos);
+		NodeVirtual* getChildAt(const glm::vec4& pos);
 		void getChildren(std::vector<NodeVirtual*>& result);
 		void getChildren(std::vector<NodeRange>& result);
-		void getChildrenInBox(std::vector<NodeVirtual*>& result, const glm::vec3& boxMin, const glm::vec3& boxMax);
-		void getChildrenInBox(std::vector<NodeRange>& result, const glm::vec3& boxMin, const glm::vec3& boxMax);
+		void getChildrenInBox(std::vector<NodeVirtual*>& result, const glm::vec4& boxMin, const glm::vec4& boxMax);
+		void getChildrenInBox(std::vector<NodeRange>& result, const glm::vec4& boxMin, const glm::vec4& boxMax);
 		//
 
 		//	Entities / objects related
@@ -76,13 +75,6 @@ class NodeVirtual
 		bool removeObject(Entity* object);
 		unsigned int  getObjectCount() const;
 		const std::vector<Entity*>& getEntitiesList() const;
-		//
-
-		//	Physics engine related
-		/*NodeVirtual* addSwept(Swept* object);
-		bool removeSwept(Swept* object);
-		void clearSwept();
-		void getPhysicsArtefactsList(std::vector<PhysicsArtefacts>& collector);*/
 		//
 
 		//	Debug
@@ -97,8 +89,8 @@ class NodeVirtual
 	private:
 		//	Attributes
 		float allowanceSize;
-		glm::vec3 position;							//!< Node position in scene coordinate
-		glm::vec3 halfSize;							//!< Half of node size
+		glm::vec4 position;							//!< Node position in scene coordinate
+		glm::vec4 halfSize;							//!< Half of node size
 		glm::ivec3 division;
 
 		std::vector<NodeVirtual> children;			//!< Subdivision children container (empty if leaf)

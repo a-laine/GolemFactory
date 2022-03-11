@@ -5,14 +5,14 @@
 
 #define FRUSTRUM_COEFF	2.f
 
-FrustrumSceneQuerry::FrustrumSceneQuerry(const glm::vec3& position, const glm::vec3& direction, const glm::vec3& verticalDir, const glm::vec3& leftDir, float verticalAngle, float horizontalAngle) :
+FrustrumSceneQuerry::FrustrumSceneQuerry(const glm::vec4& position, const glm::vec4& direction, const glm::vec4& verticalDir, const glm::vec4& leftDir, float verticalAngle, float horizontalAngle) :
 	cameraPosition(position), cameraDirection(direction), cameraVerticalAxis(verticalDir), cameraLeftAxis(leftDir), cameraVerticalAngle(verticalAngle), cameraHorizontalAngle(horizontalAngle)
 {}
 
 VirtualSceneQuerry::CollisionType FrustrumSceneQuerry::operator() (const NodeVirtual* node)
 {
 	//	test if in front of camera
-	const glm::vec3 p = node->getCenter() - cameraPosition;
+	const glm::vec4 p = node->getCenter() - cameraPosition;
 	const glm::vec3 size = node->getSize();
 	float forwardFloat = glm::dot(p, cameraDirection) + FRUSTRUM_COEFF * (abs(size.x * cameraDirection.x) + abs(size.y * cameraDirection.y) + abs(size.z * cameraDirection.z));
 	if (forwardFloat < 0.f)

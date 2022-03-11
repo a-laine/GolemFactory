@@ -16,35 +16,35 @@ public:
 
 	glm::mat4 getViewMatrix() const;
 	glm::mat4 getModelMatrix() const;
-	glm::vec3 getForward() const;
-	glm::vec3 getRight() const;
-	glm::vec3 getUp() const;
-	glm::vec3 getPosition() const;
+	glm::vec4 getForward() const;
+	glm::vec4 getRight() const;
+	glm::vec4 getUp() const;
+	glm::vec4 getPosition() const;
 	glm::quat getOrientation() const;
 	glm::mat4 getGlobalViewMatrix() const;
-	glm::vec3 getGlobalPosition() const;
+	glm::vec4 getGlobalPosition() const;
 	float getFieldOfView() const;
 	float getVerticalFieldOfView(float aspectRatio) const;
 	bool getFreeRotations() const;
-	void getFrustrum(glm::vec3& position, glm::vec3& forward, glm::vec3& right, glm::vec3& up) const;
+	void getFrustrum(glm::vec4& position, glm::vec4& forward, glm::vec4& right, glm::vec4& up) const;
 
-	void setPosition(const glm::vec3& position);
+	void setPosition(const glm::vec4& position);
 	void setOrientation(const glm::quat& orientation);
 	void setFieldOfView(float fov);
 	void setFreeRotations(bool freeRotations);
-	void setDirection(const glm::vec3& direction);
+	void setDirection(const glm::vec4& direction);
 
-	void translate(const glm::vec3& direction);
+	void translate(const glm::vec4& direction);
 	void rotate(const glm::quat& rotation);
 	void rotate(float pitch, float yaw);
-	void rotateAround(const glm::vec3& target, float pitch, float yaw);
-	void rotateAround(const glm::vec3& target, float pitch, float yaw, float distance);
-	void lookAt(const glm::vec3& target);
-	void lookAt(const glm::vec3& target, float distance);
+	void rotateAround(const glm::vec4& target, float pitch, float yaw);
+	void rotateAround(const glm::vec4& target, float pitch, float yaw, float distance);
+	void lookAt(const glm::vec4& target);
+	void lookAt(const glm::vec4& target, float distance);
 
 private:
 	glm::quat m_orientation;
-	glm::vec3 m_position;
+	glm::vec4 m_position;
 	float m_fov;
 	bool m_freeRotations;
 };

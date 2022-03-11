@@ -30,7 +30,7 @@ class SceneManager
 		//
 
 		//	Public functions
-		void init(const glm::vec3& bbMin, const glm::vec3& bbMax, const glm::ivec3& nodeDivision, unsigned int depth);
+		void init(const glm::vec4& bbMin, const glm::vec4& bbMax, const glm::ivec3& nodeDivision, unsigned int depth);
 		void clear();
 		void reserveInstanceTrack(const unsigned int& count);
 		unsigned int getObjectCount() const;
@@ -57,7 +57,7 @@ class SceneManager
 		//	Miscellaneous
 		struct InstanceTrack
 		{
-			glm::vec3 position;
+			glm::vec4 position;
 			NodeVirtual* owner;
 		};
 

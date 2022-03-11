@@ -29,26 +29,26 @@ class Entity : public EntityBase
 		template<typename T> void addComponent(T* component) { addComponent(component, T::getStaticClassID()); }
 		void removeComponent(Component* component);
 
+		void recomputeBoundingBox();
+
 		//	Set/Get functions
-		void setPosition(const glm::vec3& position);
+		void setPosition(const glm::vec4& position);
 		void setScale(const glm::vec3& scale);
 		void setOrientation(const glm::quat& orientation);
-		void setTransformation(const glm::vec3& position, const glm::vec3& scale, const glm::fquat& orientation);
+		void setTransformation(const glm::vec4& position, const glm::vec3& scale, const glm::fquat& orientation);
 		void setParentWorld(World* parentWorld);
-        void setShape(Shape* Shape);
 		void setName(const std::string& _name);
 
 
         uint64_t getId() const;
 		const glm::mat4& getTransformMatrix() const;
 		const glm::mat4& getInverseTransformMatrix() const;
-		glm::vec3 getPosition() const;
+		glm::vec4 getPosition() const;
 		glm::vec3 getScale() const;
 		glm::fquat getOrientation() const;
 		World* getParentWorld() const;
-		const Shape* getLocalBoundingShape() const;
-		const Shape* getGlobalBoundingShape() const;
 		std::string getName() const;
+		AxisAlignedBox getBoundingBox() const;
 		//
 
 	private:
@@ -57,11 +57,10 @@ class Entity : public EntityBase
 		std::atomic<uint32_t> m_refCount;
 		glm::mat4 m_transform;
 		glm::mat4 m_inverseTransform;
-		std::string name;
-        Shape* m_localBoundingShape;
-		Shape* m_globalBoundingShape;
+		std::string m_name;
 
-		Swept* swept;
+		AxisAlignedBox m_localBoundingBox;
+		AxisAlignedBox m_worldBoundingBox;
 		//
 };
 

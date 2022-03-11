@@ -5,12 +5,12 @@
 class RaySceneQuerry : public VirtualSceneQuerry
 {
 	public:
-		RaySceneQuerry(const glm::vec3& pos, const glm::vec3& dir, float maxDist);
+		RaySceneQuerry(const glm::vec4& pos, const glm::vec4& dir, float maxDist);
 
 		VirtualSceneQuerry::CollisionType operator() (const NodeVirtual* node) override;
 
 	private:
-		glm::vec3 position;
-		glm::vec3 direction;
+		glm::vec4 position;
+		glm::vec4 direction;
 		float distance;
 };

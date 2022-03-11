@@ -8,13 +8,13 @@
 #include <vector>
 
 
-OrientedBox::OrientedBox(const glm::mat4& transformationMatrix, const glm::vec3& localMin, const glm::vec3& localMax)
+OrientedBox::OrientedBox(const glm::mat4& transformationMatrix, const glm::vec4& localMin, const glm::vec4& localMax)
 	: Shape(ShapeType::ORIENTED_BOX), base(transformationMatrix), min(localMin), max(localMax) {}
 Sphere OrientedBox::toSphere() const
 {
-	glm::vec3 p1 = glm::vec3(base*glm::vec4(min, 1.f));
-	glm::vec3 p2 = glm::vec3(base*glm::vec4(max, 1.f));
-	return Sphere(0.5f*(p1 + p2), 0.5f*glm::length(p2 - p1));
+	glm::vec4 p1 = base * min;
+	glm::vec4 p2 = base * max;
+	return Sphere(0.5f * (p1 + p2), 0.5f * glm::length(p2 - p1));
 }
 AxisAlignedBox OrientedBox::toAxisAlignedBox() const
 {
@@ -26,8 +26,8 @@ AxisAlignedBox OrientedBox::toAxisAlignedBox() const
 		return r;
 	};
 
-	glm::vec3 center = glm::vec3(base * glm::vec4(0.5f * (max + min), 1.f));
-	glm::vec3 size =  glm::vec3(absMat4(base) * glm::vec4(0.5f * (max - min), 0.f));
+	glm::vec4 center = base * (0.5f * (max + min));
+	glm::vec4 size =  absMat4(base) * (0.5f * (max - min));
 	return AxisAlignedBox(center - size, center + size);
 }
 Shape& OrientedBox::operator=(const Shape& s)
@@ -41,41 +41,41 @@ Shape& OrientedBox::operator=(const Shape& s)
 	}
 	return *this;
 }
-void OrientedBox::transform(const glm::vec3& position, const glm::vec3& scale, const glm::fquat& orientation)
+void OrientedBox::transform(const glm::vec4& position, const glm::vec3& scale, const glm::fquat& orientation)
 {
-	glm::mat4 m = glm::translate(glm::mat4(1.f), position);
+	glm::mat4 m = glm::translate(glm::mat4(1.f), (glm::vec3)position);
 	m = m * glm::toMat4(orientation);
 
 	base = m * base;
 
-	min = min * scale;
-	max = max * scale;
+	min = min * glm::vec4(scale, 1.f);
+	max = max * glm::vec4(scale, 1.f);
 }
 Shape* OrientedBox::duplicate() const { return new OrientedBox(*this); }
-glm::vec3 OrientedBox::support(const glm::vec3& direction) const
+glm::vec4 OrientedBox::support(const glm::vec4& direction) const
 {
-	glm::vec3 size = 0.5f * (max - min);
-	glm::vec3 x = glm::vec3(base[0]);
-	glm::vec3 y = glm::vec3(base[1]);
-	glm::vec3 z = glm::vec3(base[2]);
+	glm::vec4 size = 0.5f * (max - min);
+	glm::vec4 x = base[0];
+	glm::vec4 y = base[1];
+	glm::vec4 z = base[2];
 
-	glm::vec3 result = glm::vec3(base * glm::vec4(0.5f * (max + min), 1.f));
+	glm::vec4 result = base * (0.5f * (max + min));
 	result += glm::dot(x, direction) > 0.f ? size.x * x : -(size.x) * x;
 	result += glm::dot(y, direction) > 0.f ? size.y * y : -(size.y) * y;
 	result += glm::dot(z, direction) > 0.f ? size.z * z : -(size.z) * z;
 
 	return result;
 }
-void OrientedBox::getFacingFace(const glm::vec3& direction, std::vector<glm::vec3>& points) const
+void OrientedBox::getFacingFace(const glm::vec4& direction, std::vector<glm::vec4>& points) const
 {
-	glm::vec3 center = glm::vec3(base * glm::vec4(0.5f * (max + min), 1.f));
-	glm::vec3 size = 0.5f * (max - min);
-	glm::vec3 x = glm::vec3(base[0]);  float dotx = glm::dot(x, direction);
-	glm::vec3 y = glm::vec3(base[1]);  float doty = glm::dot(y, direction);
-	glm::vec3 z = glm::vec3(base[2]);  float dotz = glm::dot(z, direction);
-	glm::vec3 u = glm::abs(glm::vec3(dotx, doty, dotz));
+	glm::vec4 center = base * (0.5f * (max + min));
+	glm::vec4 size = 0.5f * (max - min);
+	glm::vec4 x = base[0];  float dotx = glm::dot(x, direction);
+	glm::vec4 y = base[1];  float doty = glm::dot(y, direction);
+	glm::vec4 z = base[2];  float dotz = glm::dot(z, direction);
+	glm::vec4 u = glm::abs(glm::vec4(dotx, doty, dotz, 0));
 
-	glm::vec3 a2, a3;
+	glm::vec4 a2, a3;
 	if (u.x > u.y && u.x > u.z)
 	{
 		center += dotx > 0.f ? size.x * x : -size.x * x;
@@ -102,7 +102,7 @@ void OrientedBox::getFacingFace(const glm::vec3& direction, std::vector<glm::vec
 }
 glm::mat3 OrientedBox::computeInertiaMatrix() const
 {
-	glm::vec3 size = 0.5f * (max - min);
+	glm::vec4 size = 0.5f * (max - min);
 	glm::mat3 M(0.f);
 	M[0][0] = 1.f / 12.f * (size.y * size.y + size.z * size.z);
 	M[1][1] = 1.f / 12.f * (size.x * size.x + size.z * size.z);

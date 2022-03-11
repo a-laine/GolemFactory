@@ -7,9 +7,9 @@
 //#include <glm/gtx/component_wise.hpp>
 
 //	Specialized functions : sphere
-bool Collision::collide_SpherevsSphere(const glm::vec3& sphere1Center, const float& sphere1Radius, const glm::vec3& sphere2Center, const float& sphere2Radius, CollisionReport* report)
+bool Collision::collide_SpherevsSphere(const glm::vec4& sphere1Center, const float& sphere1Radius, const glm::vec4& sphere2Center, const float& sphere2Radius, CollisionReport* report)
 {
-	glm::vec3 v = sphere2Center - sphere1Center;
+	glm::vec4 v = sphere2Center - sphere1Center;
 	float radiusSum = sphere1Radius + sphere2Radius;
 	float vv = glm::length2(v);
 
@@ -26,7 +26,7 @@ bool Collision::collide_SpherevsSphere(const glm::vec3& sphere1Center, const flo
 			if (length > COLLISION_EPSILON)
 				report->normal = v / length;
 			else
-				report->normal = glm::vec3(0, 1, 0);
+				report->normal = glm::vec4(0, 1, 0, 0);
 
 			report->points.push_back(sphere1Center + sphere1Radius * report->normal);
 		}
@@ -34,11 +34,11 @@ bool Collision::collide_SpherevsSphere(const glm::vec3& sphere1Center, const flo
 	}
 }
 
-bool Collision::collide_SpherevsCapsule(const glm::vec3& sphereCenter, const float& sphereRadius, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius, CollisionReport* report)
+bool Collision::collide_SpherevsCapsule(const glm::vec4& sphereCenter, const float& sphereRadius, const glm::vec4& capsule1, const glm::vec4& capsule2, const float& capsuleRadius, CollisionReport* report)
 {
-	glm::vec3 closest = CollisionUtils::getSegmentClosestPoint(capsule1, capsule2, sphereCenter);
+	glm::vec4 closest = CollisionUtils::getSegmentClosestPoint(capsule1, capsule2, sphereCenter);
 	float radiusSum = sphereRadius + capsuleRadius;
-	glm::vec3 v = closest - sphereCenter;
+	glm::vec4 v = closest - sphereCenter; v.w = 0.f;
 	float vv = glm::length2(v);
 
 	if (vv > radiusSum * radiusSum)
@@ -55,8 +55,8 @@ bool Collision::collide_SpherevsCapsule(const glm::vec3& sphereCenter, const flo
 				report->normal = v / length;
 			else
 			{
-				glm::vec3 s = capsule1 - capsule2;
-				report->normal = abs(s.x) > abs(s.z) ? glm::vec3(-s.y, s.x, 0.0) : glm::vec3(0.0, -s.z, s.y);
+				glm::vec4 s = capsule1 - capsule2;
+				report->normal = abs(s.x) > abs(s.z) ? glm::vec4(-s.y, s.x, 0.f, 0.f) : glm::vec4(0.f, -s.z, s.y, 0.f);
 				report->normal = glm::normalize(report->normal);
 			}
 			report->points.push_back(sphereCenter + sphereRadius * report->normal);
@@ -64,11 +64,11 @@ bool Collision::collide_SpherevsCapsule(const glm::vec3& sphereCenter, const flo
 		return true;
 	}
 }
-bool Collision::collide_CapsulevsSphere(const glm::vec3& sphereCenter, const float& sphereRadius, const glm::vec3& capsule1, const glm::vec3& capsule2, const float& capsuleRadius, CollisionReport* report)
+bool Collision::collide_CapsulevsSphere(const glm::vec4& sphereCenter, const float& sphereRadius, const glm::vec4& capsule1, const glm::vec4& capsule2, const float& capsuleRadius, CollisionReport* report)
 {
-	glm::vec3 closest = CollisionUtils::getSegmentClosestPoint(capsule1, capsule2, sphereCenter);
+	glm::vec4 closest = CollisionUtils::getSegmentClosestPoint(capsule1, capsule2, sphereCenter);
 	float radiusSum = sphereRadius + capsuleRadius;
-	glm::vec3 v = sphereCenter - closest;
+	glm::vec4 v = sphereCenter - closest;
 	float vv = glm::length2(v);
 
 	if (vv > radiusSum * radiusSum)
@@ -85,8 +85,8 @@ bool Collision::collide_CapsulevsSphere(const glm::vec3& sphereCenter, const flo
 				report->normal = v / length;
 			else
 			{
-				glm::vec3 s = capsule1 - capsule2;
-				report->normal = abs(s.x) > abs(s.z) ? glm::vec3(-s.y, s.x, 0.0) : glm::vec3(0.0, -s.z, s.y);
+				glm::vec4 s = capsule1 - capsule2;
+				report->normal = abs(s.x) > abs(s.z) ? glm::vec4(-s.y, s.x, 0.f, 0.f) : glm::vec4(0.f, -s.z, s.y, 0.f);
 				report->normal = glm::normalize(report->normal);
 			}
 			report->points.push_back(closest + capsuleRadius * report->normal);
@@ -95,7 +95,7 @@ bool Collision::collide_CapsulevsSphere(const glm::vec3& sphereCenter, const flo
 	}
 }
 
-bool Collision::collide_AxisAlignedBoxvsSphere(const glm::vec3& boxMin, const glm::vec3& boxMax, const glm::vec3& sphereCenter, const float& sphereRadius, CollisionReport* report)
+bool Collision::collide_AxisAlignedBoxvsSphere(const glm::vec4& boxMin, const glm::vec4& boxMax, const glm::vec4& sphereCenter, const float& sphereRadius, CollisionReport* report)
 {
 	if (Collision::collide_AxisAlignedBoxvsPoint(sphereCenter, boxMin, boxMax, report))
 	{
@@ -104,11 +104,11 @@ bool Collision::collide_AxisAlignedBoxvsSphere(const glm::vec3& boxMin, const gl
 		return true;
 	}
 
-	glm::vec3 center = 0.5f * (boxMax + boxMin);
-	glm::vec3 size = 0.5f * glm::abs(boxMax - boxMin);
-	glm::vec3 p = sphereCenter - center;
-	glm::vec3 closest = center + glm::clamp(p, -size, size);
-	glm::vec3 v = sphereCenter - closest;
+	glm::vec4 center = 0.5f * (boxMax + boxMin);
+	glm::vec4 size = 0.5f * glm::abs(boxMax - boxMin);
+	glm::vec4 p = sphereCenter - center;
+	glm::vec4 closest = center + glm::clamp(p, -size, size);
+	glm::vec4 v = sphereCenter - closest;
 	float vv = glm::length2(v);
 
 	if (vv > sphereRadius * sphereRadius)
@@ -130,7 +130,7 @@ bool Collision::collide_AxisAlignedBoxvsSphere(const glm::vec3& boxMin, const gl
 		return true;
 	}
 }
-bool Collision::collide_SpherevsAxisAlignedBox(const glm::vec3& boxMin, const glm::vec3& boxMax, const glm::vec3& sphereCenter, const float& sphereRadius, CollisionReport* report)
+bool Collision::collide_SpherevsAxisAlignedBox(const glm::vec4& boxMin, const glm::vec4& boxMax, const glm::vec4& sphereCenter, const float& sphereRadius, CollisionReport* report)
 {
 	if (Collision::collide_PointvsAxisAlignedBox(sphereCenter, boxMin, boxMax, report))
 	{
@@ -139,11 +139,11 @@ bool Collision::collide_SpherevsAxisAlignedBox(const glm::vec3& boxMin, const gl
 		return true;
 	}
 
-	glm::vec3 center = 0.5f * (boxMax + boxMin);
-	glm::vec3 size = 0.5f * glm::abs(boxMax - boxMin);
-	glm::vec3 p = sphereCenter - center;
-	glm::vec3 closest = center + glm::clamp(p, -size, size);
-	glm::vec3 v = closest - sphereCenter;
+	glm::vec4 center = 0.5f * (boxMax + boxMin);
+	glm::vec4 size = 0.5f * glm::abs(boxMax - boxMin);
+	glm::vec4 p = sphereCenter - center;
+	glm::vec4 closest = center + glm::clamp(p, -size, size);
+	glm::vec4 v = closest - sphereCenter;
 	float vv = glm::length2(v);
 
 	if (vv > sphereRadius * sphereRadius)
@@ -160,7 +160,7 @@ bool Collision::collide_SpherevsAxisAlignedBox(const glm::vec3& boxMin, const gl
 				report->normal = v / length;
 			else
 				report->normal = glm::normalize(center - closest);
-			report->points.push_back(sphereCenter + report->depths.back() * report->normal);
+			report->points.push_back(sphereCenter + sphereRadius * report->normal);
 		}
 		return true;
 	}

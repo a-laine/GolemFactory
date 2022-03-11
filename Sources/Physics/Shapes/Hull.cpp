@@ -38,8 +38,9 @@ AxisAlignedBox Hull::toAxisAlignedBox() const
 		if (vertices[i].y < min.y) min.y = vertices[i].y;
 		if (vertices[i].z < min.z) min.z = vertices[i].z;
 	}
-	glm::vec3 p1 = glm::vec3(base*glm::vec4(min, 1.f));
-	glm::vec3 p2 = glm::vec3(base*glm::vec4(max, 1.f));
+
+	glm::vec4 p1 = base * glm::vec4(min, 1.f);
+	glm::vec4 p2 = base * glm::vec4(max, 1.f);
 	return AxisAlignedBox(glm::min(p1, p2), glm::max(p1, p2));
 }
 Shape& Hull::operator=(const Shape& s)
@@ -53,9 +54,9 @@ Shape& Hull::operator=(const Shape& s)
 	}
 	return *this;
 }
-void Hull::transform(const glm::vec3& position, const glm::vec3& scale, const glm::fquat& orientation)
+void Hull::transform(const glm::vec4& position, const glm::vec3& scale, const glm::fquat& orientation)
 {
-	glm::mat4 m = glm::translate(glm::mat4(1.0), position);
+	glm::mat4 m = glm::translate(glm::mat4(1.0), (glm::vec3)position);
 	m = m * glm::toMat4(orientation);
 	m = glm::scale(m, scale);
 	base = m * base;
@@ -65,26 +66,26 @@ Shape* Hull::duplicate() const
 	ResourceManager::getInstance()->getResource(mesh);
 	return new Hull(mesh, base);
 }
-glm::vec3 Hull::support(const glm::vec3& direction) const
+glm::vec4 Hull::support(const glm::vec4& direction) const
 {
-	glm::vec3 u = glm::vec3(glm::inverse(base) * glm::vec4(direction, 0.f));
+	glm::vec4 u = glm::inverse(base) * direction;
 	float d = std::numeric_limits<float>::min();
-	glm::vec3 v = glm::vec3(0.f);
+	glm::vec4 v = glm::vec4(0.f);
 	const std::vector<glm::vec3>& vertices = *mesh->getVertices();
 	for (unsigned int i = 0; i < vertices.size(); i++)
 	{
-		float a = glm::dot(vertices[i], u);
+		float a = glm::dot(vertices[i], (glm::vec3)u);
 		if (a > d)
 		{
 			d = a;
-			v = vertices[i];
+			v = glm::vec4(vertices[i], 1);
 		}
 	}
-	return glm::vec3(base * glm::vec4(v, 1.f));
+	return base * v;
 }
-void Hull::getFacingFace(const glm::vec3& direction, std::vector<glm::vec3>& points) const
+void Hull::getFacingFace(const glm::vec4& direction, std::vector<glm::vec4>& points) const
 {
-	glm::vec3 localDirection = glm::vec3(glm::inverse(base) * glm::vec4(direction, 0.f));
+	glm::vec4 localDirection = glm::inverse(base) * direction;
 	const std::vector<glm::vec3>& vertices = *mesh->getVertices();
 	const std::vector<unsigned short>& faces = *mesh->getFaces();
 	const std::vector<glm::vec3>& normals = *mesh->getNormals();
@@ -93,7 +94,7 @@ void Hull::getFacingFace(const glm::vec3& direction, std::vector<glm::vec3>& poi
 	unsigned int mostFace = 0;
 	for (unsigned int i = 0; i < faces.size(); i += 3)
 	{
-		float dot = glm::dot(normals[i], direction);
+		float dot = glm::dot(normals[i], (glm::vec3)localDirection);
 		if (dot > dotMax)
 		{
 			dotMax = dot;
@@ -101,8 +102,8 @@ void Hull::getFacingFace(const glm::vec3& direction, std::vector<glm::vec3>& poi
 		}
 	}
 
-	points.push_back(glm::vec3(base * glm::vec4(vertices[mostFace], 1.f)));
-	points.push_back(glm::vec3(base * glm::vec4(vertices[mostFace + 1], 1.f)));
-	points.push_back(glm::vec3(base * glm::vec4(vertices[mostFace + 2], 1.f)));
+	points.push_back(base * glm::vec4(vertices[mostFace], 1.f));
+	points.push_back(base * glm::vec4(vertices[mostFace + 1], 1.f));
+	points.push_back(base * glm::vec4(vertices[mostFace + 2], 1.f));
 }
 //

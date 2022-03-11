@@ -141,6 +141,18 @@ namespace detail
 			x.x * y.y - y.x * x.y);
 	}
 
+	template <typename T, precision P>
+	GLM_FUNC_QUALIFIER tvec4<T, P> cross(tvec4<T, P> const& x, tvec4<T, P> const& y)
+	{
+		GLM_STATIC_ASSERT(std::numeric_limits<T>::is_iec559, "'cross' only accept floating-point inputs");
+
+		return tvec4<T, P>(
+			x.y * y.z - y.y * x.z,
+			x.z * y.x - y.z * x.x,
+			x.x * y.y - y.x * x.y, 
+			0.f);
+	}
+
 	// normalize
 	template <typename genType>
 	GLM_FUNC_QUALIFIER genType normalize(genType const & x)
