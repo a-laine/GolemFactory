@@ -30,15 +30,7 @@ typedef Tvec4<bool>			vec4b;
 #ifdef _DEBUG
 	#undef USE_SIMD
 
-#elif defined(__AVX2__)
-	#include <xmmintrin.h>
-	#include <emmintrin.h>
-	#include <immintrin.h>
-
-	#define USE_SIMD   //GLM_ARCH_AVX2 | GLM_ARCH_AVX | GLM_ARCH_SSE4 | GLM_ARCH_SSE3 | GLM_ARCH_SSE2
-	#define USE_AVX2
-
-#elif defined(__AVX__)
+#elif defined(__AVX2__) || defined(__AVX__)
 	#include <xmmintrin.h>
 	#include <emmintrin.h>
 	#include <immintrin.h>
@@ -47,7 +39,7 @@ typedef Tvec4<bool>			vec4b;
 	#define USE_SIMD   //GLM_ARCH_AVX | GLM_ARCH_SSE4 | GLM_ARCH_SSE3 | GLM_ARCH_SSE2
 	#define USE_AVX
 
-#elif _M_IX86_FP == 2
+#elif (_M_IX86_FP == 2) || defined(_M_X64) || defined (_M_AMD64)
 	#include <xmmintrin.h>
 	#include <emmintrin.h>
 	#include <immintrin.h>
