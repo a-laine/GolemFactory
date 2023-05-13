@@ -241,5 +241,6 @@ void SkeletonComponent::computePose(std::vector<mat4f>& result, const std::vecto
 
 void SkeletonComponent::onAddToEntity(Entity* entity)
 {
+	Component::onAddToEntity(entity);
 	entity->setFlags((uint64_t)Entity::Flags::Fl_Drawable | (uint64_t)Entity::Flags::Fl_Skinned);
 }

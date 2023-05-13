@@ -348,9 +348,11 @@ bool Entity::drawImGui(World& world)
 			setWorldPosition(m_worldPosition);
 		if (ImGui::DragFloat("World scale", &m_worldScale, 0.1f, epsilon, floatMax, "%.3f"))
 			setWorldScale(m_worldScale);
-		vec3f euler = (float)RAD2DEG * glm::eulerAngles(m_worldOrientation);
-		if (ImGui::DragFloat3("World orientation", &euler[0], 0.1f, -180.f, 180.f, "%.3f"))
-		setWorldOrientation(quatf((float)DEG2RAD * euler));
+		/*vec3f euler = (float)RAD2DEG * glm::eulerAngles(m_worldOrientation);
+		if (ImGui::DragFloat3("World orientation", &euler[0], 0.1f, -360.f, 360.f, "%.3f"))
+		setWorldOrientation(quatf((float)DEG2RAD * euler));*/
+		if (ImGui::DragFloat4("World orientation", &m_worldOrientation[0], 0.1f, -1.f, 1.f, "%.3f"))
+			setLocalOrientation(m_worldOrientation);
 
 		if (m_parentEntity)
 		{
@@ -360,9 +362,11 @@ bool Entity::drawImGui(World& world)
 				setLocalPosition(m_localPosition);
 			if (ImGui::DragFloat("Local scale", &m_localScale, 0.1f, epsilon, floatMax, "%.3f"))
 				setLocalScale(m_localScale);
-			euler = (float)RAD2DEG * glm::eulerAngles(m_localOrientation);
-			if (ImGui::DragFloat3("Local orientation", &euler[0], 0.1f, -180.f, 180.f, "%.3f"))
-				setLocalOrientation(quatf((float)DEG2RAD * euler));
+			/*euler = (float)RAD2DEG * glm::eulerAngles(m_localOrientation);
+			if (ImGui::DragFloat3("Local orientation", &euler[0], 0.1f, -360.f, 360.f, "%.3f"))
+				setLocalOrientation(quatf((float)DEG2RAD * euler));*/
+			if (ImGui::DragFloat4("Local orientation", &m_localOrientation[0], 0.1f, -1.f, 1.f, "%.3f"))
+				setLocalOrientation(m_localOrientation);
 		}
 
 		ImGui::Spacing();

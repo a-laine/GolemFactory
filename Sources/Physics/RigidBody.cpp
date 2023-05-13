@@ -169,6 +169,7 @@ vec4f RigidBody::computeWorldDirection(vec4f localDirection)
 
 void RigidBody::onAddToEntity(Entity* entity)
 {
+	Component::onAddToEntity(entity);
 	entity->setFlags((uint64_t)Entity::Flags::Fl_Physics);
 }
 void RigidBody::onDrawImGui()

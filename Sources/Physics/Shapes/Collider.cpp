@@ -20,6 +20,7 @@ Collider::~Collider()
 
 void Collider::onAddToEntity(Entity* entity)
 {
+	Component::onAddToEntity(entity);
 	entity->setFlags((uint64_t)Entity::Flags::Fl_Collision);
 }
 

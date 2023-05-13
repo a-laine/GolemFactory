@@ -542,8 +542,8 @@ void initializeSyntyScene()
 						bool loaded = world.getEntityFactory().loadPrefab(repository, packageName, prefabName);
 						if (!contain && loaded)
 						{
-							std::cout << ConsoleColor::getColorString(ConsoleColor::Color::GREEN) << prefabName << " loaded" << std::flush;
-							std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
+							//std::cout << ConsoleColor::getColorString(ConsoleColor::Color::GREEN) << prefabName << " loaded" << std::flush;
+							//std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
 						}
 						else if(!loaded)
 						{
@@ -581,6 +581,14 @@ void initializeSyntyScene()
 
 					if (!prefabName.empty())
 						scale *= newObject->getWorldScale();
+
+					if (scale < 0.f)
+					{
+						std::cout << ConsoleColor::getColorString(ConsoleColor::Color::MAGENTA) << "WARNING : object " << newObject->getName() << " has a negative scaling" << std::flush;
+						std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
+
+						scale = -scale;
+					}
 
 					// set parent and local transform
 					if (parent)
@@ -647,8 +655,8 @@ void initManagers()
 	EventHandler::getInstance()->loadKeyMapping("RPG Key mapping", "");
 	EventHandler::getInstance()->setCursorMode(false);
 	EventHandler::getInstance()->addResizeCallback(WidgetManager::resizeCallback);
-	EventHandler::getInstance()->addTextInputCallback([](GLFWwindow* window, unsigned int c) { ImGui::GetIO().AddInputCharacter(c); });
-	EventHandler::getInstance()->addScollingCallback([](GLFWwindow* window, double xoffset, double yoffset) { ImGui_ImplGlfw_ScrollCallback(window, xoffset, yoffset); });
+	//EventHandler::getInstance()->addTextInputCallback([](GLFWwindow* window, unsigned int c) { ImGui::GetIO().AddInputCharacter(c); });
+	//EventHandler::getInstance()->addScollingCallback([](GLFWwindow* window, double xoffset, double yoffset) { ImGui_ImplGlfw_ScrollCallback(window, xoffset, yoffset); });
 
 	// Init Resources manager
 	ResourceVirtual::logVerboseLevel = ResourceVirtual::VerboseLevel::ALL;

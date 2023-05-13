@@ -14029,7 +14029,7 @@
             "position": [
                 25.0,
                 0.0,
-                -35.0
+                -30.0
             ],
             "rotation": [
                 0.0,
@@ -14037,7 +14037,7 @@
                 0.0,
                 0.7071066498756409
             ],
-            "scale": -1.0,
+            "scale": 1.0,
             "prefabName": "SM_Env_Stairs_02",
             "drawableComponent": {
                 "meshName": "SM_Env_Stairs_02",
@@ -15909,7 +15909,7 @@
             "scale": 1.0,
             "prefabName": "SM_Prop_Tech_Chamber_Skeleton_01",
             "drawableComponent": {
-                "meshName": "SM_Prop_Skeleton_Cage_01",
+                "meshName": "SM_Prop_Tech_Chamber_Skeleton_01",
                 "shaderName": "defaultTextured"
             }
         },
@@ -16173,7 +16173,7 @@
             "position": [
                 30.0,
                 22.5,
-                -20.0
+                -15.0
             ],
             "rotation": [
                 0.0,
@@ -16181,7 +16181,7 @@
                 0.0,
                 -0.7071038484573364
             ],
-            "scale": -1.0,
+            "scale": 1.0,
             "prefabName": "SM_Env_Ceiling_Stone_Stairs_01",
             "drawableComponent": {
                 "meshName": "SM_Env_Ceiling_Stone_Stairs_01",
@@ -16194,7 +16194,7 @@
             "position": [
                 35.0,
                 20.0,
-                -20.0
+                -15.0
             ],
             "rotation": [
                 0.0,
@@ -16202,7 +16202,7 @@
                 0.0,
                 -0.7071038484573364
             ],
-            "scale": -1.0,
+            "scale": 1.0,
             "prefabName": "SM_Env_Ceiling_Stone_Stairs_01",
             "drawableComponent": {
                 "meshName": "SM_Env_Ceiling_Stone_Stairs_01",
@@ -17223,7 +17223,7 @@
             "position": [
                 35.0,
                 15.0,
-                -20.0
+                -15.0
             ],
             "rotation": [
                 0.0,
@@ -17231,7 +17231,7 @@
                 0.0,
                 -0.7071093320846558
             ],
-            "scale": -1.0,
+            "scale": 1.0,
             "prefabName": "SM_Env_Stairs_02",
             "drawableComponent": {
                 "meshName": "SM_Env_Stairs_02",
@@ -17746,7 +17746,7 @@
             "name": "SM_Env_Stairs_19",
             "id": 805,
             "position": [
-                20.0,
+                25.0,
                 20.0,
                 -15.0
             ],
@@ -17756,7 +17756,7 @@
                 0.0,
                 -0.0000046193595153454229
             ],
-            "scale": -1.0,
+            "scale": 1.0,
             "prefabName": "SM_Env_Stairs_02",
             "drawableComponent": {
                 "meshName": "SM_Env_Stairs_02",
@@ -17998,7 +17998,7 @@
             "name": "SM_Env_Stairs_08",
             "id": 817,
             "position": [
-                40.0,
+                35.0,
                 10.0,
                 -5.0
             ],
@@ -18008,7 +18008,7 @@
                 0.0,
                 -1.0
             ],
-            "scale": -1.0,
+            "scale": 1.0,
             "prefabName": "SM_Env_Stairs_02",
             "drawableComponent": {
                 "meshName": "SM_Env_Stairs_02",
@@ -18231,7 +18231,7 @@
             "position": [
                 25.0,
                 5.0,
-                0.0
+                -5.0
             ],
             "rotation": [
                 0.0,
@@ -18239,7 +18239,7 @@
                 0.0,
                 -0.7071053385734558
             ],
-            "scale": -1.0,
+            "scale": 1.0,
             "prefabName": "SM_Env_Stairs_02",
             "drawableComponent": {
                 "meshName": "SM_Env_Stairs_02",
@@ -21369,9 +21369,9 @@
             "name": "SM_Env_Bone_Tail_01",
             "id": 960,
             "position": [
-                -47.57013702392578,
-                -8.532617568969727,
-                33.52189254760742
+                -48.93,
+                -5.44,
+                30.31
             ],
             "rotation": [
                 0.04532444849610329,
@@ -21379,7 +21379,7 @@
                 0.19191665947437287,
                 0.7328125238418579
             ],
-            "scale": -1.0,
+            "scale": 1.0,
             "prefabName": "SM_Env_Bone_Tail_01",
             "drawableComponent": {
                 "meshName": "SM_Env_Bone_Tail_01",
@@ -26041,7 +26041,7 @@
                 0.04804493114352226,
                 0.7908793687820435
             ],
-            "scale": -1.0,
+            "scale": 1.0,
             "prefabName": "SM_Env_Vine_Spikes_03",
             "drawableComponent": {
                 "meshName": "SM_Env_Vine_Spikes_03",
@@ -32242,7 +32242,7 @@
                 0.0,
                 0.7071076035499573
             ],
-            "scale": -1.0,
+            "scale": 1.0,
             "prefabName": "SM_Prop_Bed_01",
             "drawableComponent": {
                 "meshName": "SM_Prop_Bed_01",
@@ -36552,7 +36552,7 @@
             "position": [
                 15.0,
                 -5.0,
-                30.0
+                31.4
             ],
             "rotation": [
                 0.0,
@@ -36560,7 +36560,7 @@
                 0.0,
                 0.7071069478988648
             ],
-            "scale": -0.25659188628196719,
+            "scale": 1.0,
             "prefabName": "SM_Env_Wall_Trim_Edge_01",
             "drawableComponent": {
                 "meshName": "SM_Env_Wall_Trim_Edge_01",
@@ -38421,7 +38421,7 @@
             "position": [
                 -10.0,
                 10.0,
-                65.0
+                60.0
             ],
             "rotation": [
                 0.0,
@@ -38429,7 +38429,7 @@
                 0.0,
                 0.7071076035499573
             ],
-            "scale": -1.0,
+            "scale": 1.0,
             "prefabName": "SM_Env_Ceiling_Stone_Curved_02",
             "drawableComponent": {
                 "meshName": "SM_Env_Ceiling_Stone_Curved_02",
@@ -38463,7 +38463,7 @@
             "position": [
                 15.0,
                 10.0,
-                30.0
+                35.0
             ],
             "rotation": [
                 0.0,
@@ -38471,7 +38471,7 @@
                 0.0,
                 0.7071076035499573
             ],
-            "scale": -1.0,
+            "scale": 1.0,
             "prefabName": "SM_Env_Ceiling_Stone_Curved_01",
             "drawableComponent": {
                 "meshName": "SM_Env_Ceiling_Stone_Curved_01",
@@ -38589,7 +38589,7 @@
             "position": [
                 15.0,
                 10.0,
-                70.0
+                75.0
             ],
             "rotation": [
                 0.0,
@@ -38597,7 +38597,7 @@
                 0.0,
                 0.7071076035499573
             ],
-            "scale": -1.0,
+            "scale": 1.0,
             "prefabName": "SM_Env_Ceiling_Stone_Curved_02",
             "drawableComponent": {
                 "meshName": "SM_Env_Ceiling_Stone_Curved_02",
@@ -38652,7 +38652,7 @@
             "position": [
                 15.0,
                 10.0,
-                60.0
+                70.0
             ],
             "rotation": [
                 0.0,
@@ -38660,7 +38660,7 @@
                 0.0,
                 -0.7071044445037842
             ],
-            "scale": -1.0,
+            "scale": 1.0,
             "prefabName": "SM_Env_Ceiling_Stone_Curved_01",
             "drawableComponent": {
                 "meshName": "SM_Env_Ceiling_Stone_Curved_01",
@@ -38862,7 +38862,7 @@
             "position": [
                 -10.0,
                 10.0,
-                70.0
+                65.0
             ],
             "rotation": [
                 0.0,
@@ -38870,7 +38870,7 @@
                 0.0,
                 0.7071075439453125
             ],
-            "scale": -1.0,
+            "scale": 1.0,
             "prefabName": "SM_Env_Ceiling_Stone_Curved_01",
             "drawableComponent": {
                 "meshName": "SM_Env_Ceiling_Stone_Curved_01",
@@ -38912,7 +38912,7 @@
                 0.0,
                 -0.7071044445037842
             ],
-            "scale": -1.0,
+            "scale": 1.0,
             "prefabName": "SM_Env_Ceiling_Stone_Curved_01",
             "drawableComponent": {
                 "meshName": "SM_Env_Ceiling_Stone_Curved_01",
@@ -38925,7 +38925,7 @@
             "position": [
                 -10.0,
                 10.0,
-                45.0
+                40.0
             ],
             "rotation": [
                 0.0,
@@ -38933,7 +38933,7 @@
                 0.0,
                 0.7071075439453125
             ],
-            "scale": -1.0,
+            "scale": 1.0,
             "prefabName": "SM_Env_Ceiling_Stone_Curved_01",
             "drawableComponent": {
                 "meshName": "SM_Env_Ceiling_Stone_Curved_01",
@@ -38946,7 +38946,7 @@
             "position": [
                 -10.0,
                 10.0,
-                35.0
+                30.0
             ],
             "rotation": [
                 0.0,
@@ -38954,7 +38954,7 @@
                 0.0,
                 0.7071075439453125
             ],
-            "scale": -1.0,
+            "scale": 1.0,
             "prefabName": "SM_Env_Ceiling_Stone_Curved_01",
             "drawableComponent": {
                 "meshName": "SM_Env_Ceiling_Stone_Curved_01",
@@ -39072,7 +39072,7 @@
             "position": [
                 15.0,
                 10.0,
-                40.0
+                45.0
             ],
             "rotation": [
                 0.0,
@@ -39080,7 +39080,7 @@
                 0.0,
                 0.7071076035499573
             ],
-            "scale": -1.0,
+            "scale": 1.0,
             "prefabName": "SM_Env_Ceiling_Stone_Curved_01",
             "drawableComponent": {
                 "meshName": "SM_Env_Ceiling_Stone_Curved_01",
@@ -39175,7 +39175,7 @@
             "name": "SM_Env_Ceiling_Stone_Curved_22",
             "id": 1758,
             "position": [
-                -5.0,
+                0.0,
                 10.0,
                 15.0
             ],
@@ -39185,7 +39185,7 @@
                 0.0,
                 1.0
             ],
-            "scale": -1.0,
+            "scale": 1.0,
             "prefabName": "SM_Env_Ceiling_Stone_Curved_01",
             "drawableComponent": {
                 "meshName": "SM_Env_Ceiling_Stone_Curved_01",
@@ -39580,11 +39580,11 @@
             ],
             "rotation": [
                 0.0,
-                0.7071059942245483,
+                -0.7071059942245483,
                 0.0,
                 0.7071076035499573
             ],
-            "scale": -1.0,
+            "scale": 1.0,
             "prefabName": "SM_Env_Wall_Broken_Edge_02",
             "drawableComponent": {
                 "meshName": "SM_Env_Wall_Broken_Edge_02",
@@ -47323,7 +47323,7 @@
             "name": "SM_Env_Wall_Window_08",
             "id": 2146,
             "position": [
-                10.0,
+                15.0,
                 5.0,
                 15.0
             ],
@@ -47333,7 +47333,7 @@
                 0.0,
                 -1.0
             ],
-            "scale": -1.0,
+            "scale": 1.0,
             "prefabName": "SM_Env_Wall_Window_01",
             "drawableComponent": {
                 "meshName": "SM_Env_Wall_Window_01",
@@ -48520,7 +48520,7 @@
             "name": "SM_Env_Wall_Window_06",
             "id": 2203,
             "position": [
-                -10.0,
+                -5.0,
                 5.0,
                 15.0
             ],
@@ -48530,7 +48530,7 @@
                 0.0,
                 -1.0
             ],
-            "scale": -1.0,
+            "scale": 1.0,
             "prefabName": "SM_Env_Wall_Window_01",
             "drawableComponent": {
                 "meshName": "SM_Env_Wall_Window_01",
@@ -55462,11 +55462,11 @@
             ],
             "rotation": [
                 0.0,
+                1.0,
                 0.0,
-                0.0,
-                1.0
+                0.0
             ],
-            "scale": -1.0,
+            "scale": 1.0,
             "prefabName": "SM_Env_Ceiling_Stone_Curved_End_01",
             "drawableComponent": {
                 "meshName": "SM_Env_Ceiling_Stone_Curved_End_01",
@@ -56071,11 +56071,11 @@
             ],
             "rotation": [
                 0.0,
-                2.9802322387695315e-8,
                 0.0,
-                1.0
+                -0.97,
+                0.23
             ],
-            "scale": -1.0,
+            "scale": 1.0,
             "prefabName": "SM_Env_Stairs_Wall_01",
             "drawableComponent": {
                 "meshName": "SM_Env_Stairs_Wall_01",
@@ -56823,7 +56823,7 @@
             "position": [
                 20.0,
                 15.0,
-                0.0
+                5.0
             ],
             "rotation": [
                 0.0,
@@ -56831,7 +56831,7 @@
                 0.0,
                 0.7071076035499573
             ],
-            "scale": -1.0,
+            "scale": 1.0,
             "prefabName": "SM_Env_Ceiling_Stone_Curved_01",
             "drawableComponent": {
                 "meshName": "SM_Env_Ceiling_Stone_Curved_01",
@@ -57083,7 +57083,7 @@
                 0.0,
                 1.0
             ],
-            "scale": -1.0,
+            "scale": 1.0,
             "prefabName": "SM_Env_Ceiling_Stone_Curved_02",
             "drawableComponent": {
                 "meshName": "SM_Env_Ceiling_Stone_Curved_02",
@@ -57493,7 +57493,7 @@
             "name": "SM_Env_Ceiling_Stone_Curved_21",
             "id": 2598,
             "position": [
-                -5.0,
+                -10.0,
                 15.0,
                 15.0
             ],
@@ -57503,7 +57503,7 @@
                 0.0,
                 0.000002324580918866559
             ],
-            "scale": -1.0,
+            "scale": 1.0,
             "prefabName": "SM_Env_Ceiling_Stone_Curved_01",
             "drawableComponent": {
                 "meshName": "SM_Env_Ceiling_Stone_Curved_01",
@@ -57535,7 +57535,7 @@
             "name": "SM_Env_Ceiling_Stone_Curved_18",
             "id": 2600,
             "position": [
-                10.0,
+                5.0,
                 15.0,
                 15.0
             ],
@@ -57545,7 +57545,7 @@
                 0.0,
                 0.000002324580918866559
             ],
-            "scale": -1.0,
+            "scale": 1.0,
             "prefabName": "SM_Env_Ceiling_Stone_Curved_01",
             "drawableComponent": {
                 "meshName": "SM_Env_Ceiling_Stone_Curved_01",
@@ -57663,7 +57663,7 @@
             "position": [
                 -15.0,
                 15.0,
-                0.0
+                -5.0
             ],
             "rotation": [
                 0.0,
@@ -57671,7 +57671,7 @@
                 0.0,
                 0.7071075439453125
             ],
-            "scale": -1.0,
+            "scale": 1.0,
             "prefabName": "SM_Env_Ceiling_Stone_Curved_01",
             "drawableComponent": {
                 "meshName": "SM_Env_Ceiling_Stone_Curved_01",
@@ -57703,7 +57703,7 @@
             "name": "SM_Env_Ceiling_Stone_Curved_06",
             "id": 2608,
             "position": [
-                -10.0,
+                5.0,
                 15.0,
                 -20.0
             ],
@@ -57713,7 +57713,7 @@
                 0.0,
                 1.0
             ],
-            "scale": -1.0,
+            "scale": 1.0,
             "prefabName": "SM_Env_Ceiling_Stone_Curved_01",
             "drawableComponent": {
                 "meshName": "SM_Env_Ceiling_Stone_Curved_01",
@@ -57734,7 +57734,7 @@
                 0.0,
                 1.0
             ],
-            "scale": -1.0,
+            "scale": 1.0,
             "prefabName": "SM_Env_Ceiling_Stone_Curved_01",
             "drawableComponent": {
                 "meshName": "SM_Env_Ceiling_Stone_Curved_01",
@@ -65931,7 +65931,7 @@
                 0.0,
                 1.0
             ],
-            "scale": -0.25659188628196719,
+            "scale": 1.0,
             "prefabName": "SM_Env_Wall_Trim_Edge_01",
             "drawableComponent": {
                 "meshName": "SM_Env_Wall_Trim_Edge_01",

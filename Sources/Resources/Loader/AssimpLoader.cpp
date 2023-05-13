@@ -82,7 +82,7 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
         aiMesh* mesh = scene->mMeshes[i];
         for (unsigned int j = 0; j < mesh->mNumFaces; j++)
         {
-            if (mesh->mFaces->mNumIndices != 3)
+            if (mesh->mFaces[j].mNumIndices != 3)
             {
                 if (!hasPrintedNotTriangle)
                     PrintWarning(fileName.c_str(), "has not triangle faces (discarded)");
@@ -100,7 +100,7 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
         for(unsigned int j = 0; j < mesh->mNumVertices; j++)
         {
             aiVector3D pos = mesh->mVertices[j];
-            vertices.push_back(vec4f(pos.x, pos.y, pos.z, 1.f));
+            vertices.push_back(vec4f(-pos.x, pos.y, pos.z, 1.f));
             if (std::abs(pos.x) > 10000.f || std::abs(pos.y) > 10000.f || std::abs(pos.z) > 10000.f)
             {
                 if (!hasPrintedMeshTooLarge)
@@ -115,24 +115,24 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
             uvs.push_back(vec4f(uv.x, 1 - uv.y, uv.z, 0.f));
         }
 
-        //  check that every faces are ok
-        if (faces.empty())
-        {
-            PrintError(fileName.c_str(), "has no valid triangle");
-            return false;
-        }
-        for (int i = 0; i < faces.size(); i++);
-        {
-            if (faces[i] < 0 || faces[i] >= vertices.size())
-            {
-                if (!hasPrintedFaceIndexOutOfBound)
-                    PrintWarning(fileName.c_str(), "face index out of bound");
-                hasPrintedFaceIndexOutOfBound = true;
-            }
-        }
-
         //	demande a second pass to parse bone and skeleton
         if(mesh->HasBones()) hasSkeleton = true;
+    }
+
+    if (faces.empty())
+    {
+        PrintError(fileName.c_str(), "has no valid triangle");
+        return false;
+    }
+    //  check that every faces are ok
+    for (int i = 0; i < faces.size(); i++)
+    {
+        if (faces[i] < 0 || faces[i] >= vertices.size())
+        {
+            if (!hasPrintedFaceIndexOutOfBound)
+                PrintWarning(fileName.c_str(), "face index out of bound");
+            hasPrintedFaceIndexOutOfBound = true;
+        }
     }
 
     //	Load skeleton

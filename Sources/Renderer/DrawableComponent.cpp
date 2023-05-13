@@ -85,6 +85,7 @@ vec4f DrawableComponent::getMeshBBMin() const
 
 void DrawableComponent::onAddToEntity(Entity* entity)
 {
+	Component::onAddToEntity(entity);
 	entity->setFlags((uint64_t)Entity::Flags::Fl_Drawable);
 }
 
