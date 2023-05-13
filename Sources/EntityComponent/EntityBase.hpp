@@ -9,6 +9,13 @@
 class EntityBase
 {
 	public:
+		//	Miscellaneous
+		struct Element
+		{
+			Component* comp;
+			ClassID type;
+		};
+		//
 		//  Default
 		EntityBase();
 		~EntityBase();
@@ -33,6 +40,12 @@ class EntityBase
 				if (elem.type == type && visitor(elem.comp))
 					break;
 		}
+		template<class Visitor> void allComponentsVisitor(Visitor& visitor)
+		{
+			for (Element& elem : m_components)
+				if (visitor(elem))
+					break;
+		}
 
 	protected:
 		void addComponent(Component* component, ClassID type);
@@ -40,14 +53,6 @@ class EntityBase
 		void removeComponent(Component* component);
 
 	private:
-		//	Miscellaneous
-		struct Element
-		{
-			Component* comp;
-			ClassID type;
-		};
-		//
-
 		// Attributes
 		std::vector<Element> m_components;
 		//

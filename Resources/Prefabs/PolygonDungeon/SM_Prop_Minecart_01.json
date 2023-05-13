@@ -1,0 +1,52 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Prop_Minecart_01",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": [
+        {
+            "name": "SM_Prop_Minecart_Wheel_01",
+            "id": 0,
+            "position": [
+                0.0,
+                0.21125859022140504,
+                -0.33371978998184206
+            ],
+            "rotation": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+            ],
+            "scale": 1.0,
+            "prefabName": "",
+            "childs": [],
+            "drawableComponent": {
+                "meshName": "SM_Prop_Minecart_Wheel_01",
+                "shaderName": "defaultTextured"
+            }
+        },
+        {
+            "name": "SM_Prop_Minecart_Wheel_02",
+            "id": 1,
+            "position": [
+                0.0,
+                0.21125859022140504,
+                0.33974286913871767
+            ],
+            "rotation": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+            ],
+            "scale": 1.0,
+            "prefabName": "",
+            "childs": [],
+            "drawableComponent": {
+                "meshName": "SM_Prop_Minecart_Wheel_02",
+                "shaderName": "defaultTextured"
+            }
+        }
+    ]
+}

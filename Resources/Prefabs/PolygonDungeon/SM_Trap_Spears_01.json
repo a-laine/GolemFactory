@@ -1,0 +1,7 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Trap_Spears_01",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": []
+}

@@ -5,7 +5,7 @@
 #include <list>
 
 #include <GL/glew.h>
-#include <glm/glm.hpp>
+//#include <glm/glm.hpp>
 
 #include <Utiles/Mutex.h>
 #include <Utiles/Singleton.h>
@@ -30,7 +30,7 @@ class WidgetManager : public Singleton<WidgetManager>
 
 	public:
 		//	Callback
-		static void resizeCallback(int w, int h);
+		static void resizeCallback(GLFWwindow* window, int w, int h);
 		//
 
 		//	Public functions
@@ -55,7 +55,7 @@ class WidgetManager : public Singleton<WidgetManager>
 		//	Set / get functions
 		void setInitialViewportRatio(float viewportRatio);
 		void setActiveHUD(const std::string& s);
-		void setPickingParameters(const glm::mat4& base, const glm::vec3& ray);// , const glm::vec3& origin);
+		void setPickingParameters(const mat4f& base, const vec4f& ray);// , const glm::vec3& origin);
 
 		std::string getActiveHUD() const;
 		unsigned int getNbDrawnWidgets() const;
@@ -87,8 +87,8 @@ class WidgetManager : public Singleton<WidgetManager>
 
 		unsigned int widgetDrawn, trianglesDrawn;
 
-		glm::vec3 pickingRay;
-		glm::mat4 pickingBase;
+		vec4f pickingRay;
+		mat4f pickingBase;
 		std::set<WidgetVirtual*> hoverWidgetList;
 		std::set<WidgetVirtual*> activeWidgetList;
 		std::map<WidgetVirtual*, Layer*> activeWidgetParentList;

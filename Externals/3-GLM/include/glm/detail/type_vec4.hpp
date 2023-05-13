@@ -347,7 +347,35 @@ namespace detail
 		GLM_FUNC_DECL tvec4<T, P> & operator>>=(tvec1<U, P> const & v);
 		template <typename U>
 		GLM_FUNC_DECL tvec4<T, P> & operator>>=(tvec4<U, P> const & v);
+
+		// personal extension
+		T getNorm() const;
+		T getNorm2() const;
+		tvec4<T, P> getNormal() const;
+		void normalize();
+
+		static T dot(const tvec4<T, P>& a, const tvec4<T, P>& b);
+		static tvec4<T, P> cross(const tvec4<T, P>& a, const tvec4<T, P>& b);
+		static tvec4<T, P> lerp(const tvec4<T, P>& a, const tvec4<T, P>& b, const T& t);
+		static tvec4<T, P> min(const tvec4<T, P>& a, const tvec4<T, P>& b);
+		static tvec4<T, P> max(const tvec4<T, P>& a, const tvec4<T, P>& b);
+		static tvec4<T, P> abs(const tvec4<T, P>& a);
+		static tvec4<T, P> maskSelect(const tvec4<bool, P>& mask, const tvec4<T, P>& a, const tvec4<T, P>& b);
+		static tvec4<bool, P> lessThan(const tvec4<T, P>& a, const tvec4<T, P>& b);
+		static tvec4<bool, P> greaterThan(const tvec4<T, P>& a, const tvec4<T, P>& b);
+		static bool any(const tvec4<T, P>& b);
+		static tvec4<T, P> clamp(const tvec4<T, P>& a, const tvec4<T, P>& min, const tvec4<T, P>& max);
+
+		static tvec4<T, P> zero;
+		static tvec4<T, P> one;
 	};
+
+
+	template <typename T, precision P>
+	tvec4<T, P> tvec4<T, P>::zero = tvec4<T, P>(T(0));
+
+	template <typename T, precision P>
+	tvec4<T, P> tvec4<T, P>::one = tvec4<T, P>(T(1));
 
 	// -- Unary operators --
 

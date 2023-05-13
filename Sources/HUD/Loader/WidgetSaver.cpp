@@ -23,39 +23,39 @@ Variant WidgetSaver::serialize(WidgetVirtual* w, std::map<std::string, WidgetVir
 	rootVariant.insert("config", Variant((int)w->configuration));
 
 	//	write sizes
-	const glm::vec2& s = w->sizes[WidgetVirtual::State::DEFAULT];
+	const vec2f& s = w->sizes[WidgetVirtual::State::DEFAULT];
 	if (s == w->sizes[WidgetVirtual::State::HOVER] && s == w->sizes[WidgetVirtual::State::ACTIVE] && s == w->sizes[WidgetVirtual::State::CURRENT])
-		rootVariant.insert("sizeAll", ToolBox::getFromVec2(s));
+		rootVariant.insert("sizeAll", ToolBox::getFromVec2f(s));
 	else
 	{
-		rootVariant.insert("sizeDefault", ToolBox::getFromVec2(s));
-		rootVariant.insert("sizeHover", ToolBox::getFromVec2(w->sizes[WidgetVirtual::State::HOVER]));
-		rootVariant.insert("sizeActive", ToolBox::getFromVec2(w->sizes[WidgetVirtual::State::ACTIVE]));
-		rootVariant.insert("sizeCurrent", ToolBox::getFromVec2(w->sizes[WidgetVirtual::State::CURRENT]));
+		rootVariant.insert("sizeDefault", ToolBox::getFromVec2f(s));
+		rootVariant.insert("sizeHover", ToolBox::getFromVec2f(w->sizes[WidgetVirtual::State::HOVER]));
+		rootVariant.insert("sizeActive", ToolBox::getFromVec2f(w->sizes[WidgetVirtual::State::ACTIVE]));
+		rootVariant.insert("sizeCurrent", ToolBox::getFromVec2f(w->sizes[WidgetVirtual::State::CURRENT]));
 	}
 
 	//	write positions
-	const glm::vec3& p = w->positions[WidgetVirtual::State::DEFAULT];
+	const vec4f& p = w->positions[WidgetVirtual::State::DEFAULT];
 	if (p == w->positions[WidgetVirtual::State::HOVER] && p == w->positions[WidgetVirtual::State::ACTIVE] && p == w->positions[WidgetVirtual::State::CURRENT])
-		rootVariant.insert("positionAll", ToolBox::getFromVec3(p));
+		rootVariant.insert("positionAll", ToolBox::getFromVec4f(p));
 	else
 	{
-		rootVariant.insert("positionDefault", ToolBox::getFromVec3(p));
-		rootVariant.insert("positionHover", ToolBox::getFromVec3(w->positions[WidgetVirtual::State::HOVER]));
-		rootVariant.insert("positionActive", ToolBox::getFromVec3(w->positions[WidgetVirtual::State::ACTIVE]));
-		rootVariant.insert("positionCurrent", ToolBox::getFromVec3(w->positions[WidgetVirtual::State::CURRENT]));
+		rootVariant.insert("positionDefault", ToolBox::getFromVec4f(p));
+		rootVariant.insert("positionHover", ToolBox::getFromVec4f(w->positions[WidgetVirtual::State::HOVER]));
+		rootVariant.insert("positionActive", ToolBox::getFromVec4f(w->positions[WidgetVirtual::State::ACTIVE]));
+		rootVariant.insert("positionCurrent", ToolBox::getFromVec4f(w->positions[WidgetVirtual::State::CURRENT]));
 	}
 
 	//	write colors
-	const glm::vec4& c = w->colors[WidgetVirtual::State::DEFAULT];
+	const vec4f& c = w->colors[WidgetVirtual::State::DEFAULT];
 	if (c == w->colors[WidgetVirtual::State::HOVER] && c == w->colors[WidgetVirtual::State::ACTIVE] && c == w->colors[WidgetVirtual::State::CURRENT])
-		rootVariant.insert("colorAll", ToolBox::getFromVec4(c));
+		rootVariant.insert("colorAll", ToolBox::getFromVec4f(c));
 	else
 	{
-		rootVariant.insert("colorDefault", ToolBox::getFromVec4(c));
-		rootVariant.insert("colorHover", ToolBox::getFromVec4(w->colors[WidgetVirtual::State::HOVER]));
-		rootVariant.insert("colorActive", ToolBox::getFromVec4(w->colors[WidgetVirtual::State::ACTIVE]));
-		rootVariant.insert("colorCurrent", ToolBox::getFromVec4(w->colors[WidgetVirtual::State::CURRENT]));
+		rootVariant.insert("colorDefault", ToolBox::getFromVec4f(c));
+		rootVariant.insert("colorHover", ToolBox::getFromVec4f(w->colors[WidgetVirtual::State::HOVER]));
+		rootVariant.insert("colorActive", ToolBox::getFromVec4f(w->colors[WidgetVirtual::State::ACTIVE]));
+		rootVariant.insert("colorCurrent", ToolBox::getFromVec4f(w->colors[WidgetVirtual::State::CURRENT]));
 	}
 
 	//	write shader and texture name
@@ -114,9 +114,9 @@ Variant WidgetSaver::serialize(Layer* l, std::map<std::string, WidgetVirtual*>& 
 
 	//	write configuration
 	rootVariant.insert("config", Variant((int)l->configuration));
-	rootVariant.insert("screenPosition", ToolBox::getFromVec3(l->screenPosition));
-	rootVariant.insert("targetPosition", ToolBox::getFromVec3(l->targetPosition));
-	rootVariant.insert("eulerAngle", ToolBox::getFromVec3(l->eulerAngle));
+	rootVariant.insert("screenPosition", ToolBox::getFromVec4f(l->screenPosition));
+	rootVariant.insert("targetPosition", ToolBox::getFromVec4f(l->targetPosition));
+	rootVariant.insert("eulerAngle", ToolBox::getFromVec3f(l->eulerAngle));
 	rootVariant.insert("size", Variant(l->size));
 
 	//	children

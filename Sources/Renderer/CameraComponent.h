@@ -1,10 +1,11 @@
 #pragma once
 
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/quaternion.hpp>
+//#include <glm/glm.hpp>
+//#include <glm/gtc/matrix_transform.hpp>
+//#include <glm/gtx/quaternion.hpp>
 
 #include <EntityComponent/Component.hpp>
+#include "Math/TMath.h"
 
 
 class CameraComponent : public Component
@@ -14,37 +15,40 @@ class CameraComponent : public Component
 public:
 	explicit CameraComponent(bool freeRotations);
 
-	glm::mat4 getViewMatrix() const;
-	glm::mat4 getModelMatrix() const;
-	glm::vec4 getForward() const;
-	glm::vec4 getRight() const;
-	glm::vec4 getUp() const;
-	glm::vec4 getPosition() const;
-	glm::quat getOrientation() const;
-	glm::mat4 getGlobalViewMatrix() const;
-	glm::vec4 getGlobalPosition() const;
-	float getFieldOfView() const;
-	float getVerticalFieldOfView(float aspectRatio) const;
-	bool getFreeRotations() const;
-	void getFrustrum(glm::vec4& position, glm::vec4& forward, glm::vec4& right, glm::vec4& up) const;
+	void onAddToEntity(Entity* entity) override;
 
-	void setPosition(const glm::vec4& position);
-	void setOrientation(const glm::quat& orientation);
-	void setFieldOfView(float fov);
-	void setFreeRotations(bool freeRotations);
-	void setDirection(const glm::vec4& direction);
+	mat4f getViewMatrix() const;
+	mat4f getModelMatrix() const;
+	vec4f getForward() const;
+	vec4f getRight() const;
+	vec4f getUp() const;
+	vec4f getPosition() const;
+	quatf getOrientation() const;
+	//float getFieldOfView() const;
+	float getVerticalFieldOfView() const;
+	void getFrustrum(vec4f& position, vec4f& forward, vec4f& right, vec4f& up) const;
 
-	void translate(const glm::vec4& direction);
-	void rotate(const glm::quat& rotation);
+	void setPosition(const vec4f& position);
+	void setOrientation(const quatf& orientation);
+	void setVerticalFieldOfView(float fov);
+	void setDirection(vec4f direction);
+
+	void translate(const vec4f& direction);
+	void rotate(const quatf& rotation);
 	void rotate(float pitch, float yaw);
-	void rotateAround(const glm::vec4& target, float pitch, float yaw);
-	void rotateAround(const glm::vec4& target, float pitch, float yaw, float distance);
-	void lookAt(const glm::vec4& target);
-	void lookAt(const glm::vec4& target, float distance);
+	void rotateAround(const vec4f& target, float pitch, float yaw);
+	void rotateAround(const vec4f& target, float pitch, float yaw, float distance);
+	void lookAt(const vec4f& target);
+	void lookAt(const vec4f& target, float distance);
+
+	void onDrawImGui() override;
+	void drawDebug(float viewportRatio, float farDistance = 10.f, float nearDistance = 1.f, vec4f color = vec4f(1.f)) const;
 
 private:
-	glm::quat m_orientation;
-	glm::vec4 m_position;
-	float m_fov;
-	bool m_freeRotations;
+	float m_verticalFov;
+
+#ifdef USE_IMGUI
+	bool  m_drawFrustrum = false;
+	vec2f m_nearFarDistance = vec2f(1, 10);
+#endif
 };

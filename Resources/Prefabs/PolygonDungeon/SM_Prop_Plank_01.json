@@ -1,0 +1,7 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Prop_Plank_01",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": []
+}

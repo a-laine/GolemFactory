@@ -6,11 +6,11 @@ Triangle
 		view : "mat4";
 		projection : "mat4";
 		
-		vector1 : "vec3";
-		vector2 : "vec3";
+		vector1 : "vec4";
+		vector2 : "vec4";
 		
 		wired : "int";
-		overrideColor : "vec3";
+		overrideColor : "vec4";
 	};
 	
 	vertex :   "Shapes/point.vs";
@@ -26,8 +26,8 @@ Triangle
 		uniform mat4 view; 		// view matrix
 		uniform mat4 projection;// projection matrix
 
-		uniform vec3 vector1 = vec3(0.0 , 0.0 , 0.0);
-		uniform vec3 vector2 = vec3(0.0 , 0.0 , 0.0);
+		uniform vec4 vector1 = vec3(0.0 , 0.0 , 0.0 , 0.0);
+		uniform vec4 vector2 = vec3(0.0 , 0.0 , 0.0 , 0.0);
 
 		// output
 		out vec3 barycentricCoord;
@@ -37,9 +37,9 @@ Triangle
 		void main()
 		{
 			//	create alias
-			vec3 p1 = (model * gl_in[0].gl_Position).xyz;
-			vec3 p2 = p1 + vector1;
-			vec3 p3 = p1 + vector2;
+			vec4 p1 = model * gl_in[0].gl_Position;
+			vec4 p2 = p1 + vector1;
+			vec4 p3 = p1 + vector2;
 			
 			//	draw segment
 			gl_Position = projection * view * vec4(p1 , 1.0);
@@ -61,10 +61,10 @@ Triangle
 
 		// input
 		in vec3 barycentricCoord;
-		in vec3 fragmentColor;
+		in vec4 fragmentColor;
 
 		uniform int wired = 0;
-		uniform vec3 overrideColor = vec3(-1.0 , 0.0 , 0.0);
+		uniform vec4 overrideColor = vec4(-1.0 , 0.0 , 0.0 , 0.0);
 
 		// output
 		layout (location = 0) out vec3 fragColor;
@@ -80,7 +80,7 @@ Triangle
 
 		void main()
 		{
-			vec3 color = fragmentColor;
+			vec4 color = fragmentColor;
 			if (overrideColor.x >= 0.0)
 				color = overrideColor;
 			if(wired != 0)

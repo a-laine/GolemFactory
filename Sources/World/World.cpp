@@ -1,8 +1,7 @@
 #include "World.h"
 
-
 //	Default
-World::World() : entityFactory(this)
+World::World() : entityFactory(this), m_mainCamera(nullptr)
 {}
 
 World::~World()
@@ -66,5 +65,15 @@ bool World::addToScene(Entity* object)
 {
 	physics.addMovingEntity(object);
 	return sceneManager.addObject(object);
+}
+
+
+void World::setMainCamera(CameraComponent* _camera)
+{
+	m_mainCamera = _camera;
+}
+CameraComponent* World::getMainCamera() const
+{
+	return m_mainCamera;
 }
 //

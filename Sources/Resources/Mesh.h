@@ -2,10 +2,11 @@
 
 #include <vector>
 #include <GL/glew.h>
-#include <glm/glm.hpp>
+//#include <glm/glm.hpp>
 
 #include "ResourceVirtual.h"
-#include <Physics/BoundingVolume.h>
+#include "Physics/BoundingVolume.h"
+#include "Math/TMath.h"
 
 
 class Mesh : public ResourceVirtual
@@ -32,12 +33,12 @@ class Mesh : public ResourceVirtual
 		//	Public functions
 		void computeBoundingBox();
 
-        void initialize(const std::vector<glm::vec3>& verticesArray, const std::vector<glm::vec3>& normalsArray,
-            const std::vector<glm::vec3>& colorArray, const std::vector<unsigned short>& facesArray,
-            const std::vector<glm::ivec3>& bonesArray, const std::vector<glm::vec3>& weightsArray);
-        void initialize(std::vector<glm::vec3>&& verticesArray, std::vector<glm::vec3>&& normalsArray,
-            std::vector<glm::vec3>&& colorArray, std::vector<unsigned short>&& facesArray,
-            std::vector<glm::ivec3>&& bonesArray, std::vector<glm::vec3>&& weightsArray);
+        void initialize(const std::vector<vec4f>& verticesArray, const std::vector<vec4f>& normalsArray,
+            const std::vector<vec4f>& uvArray, const std::vector<unsigned short>& facesArray,
+            const std::vector<vec4i>& bonesArray, const std::vector<vec4f>& weightsArray);
+        void initialize(std::vector<vec4f>* verticesArray, std::vector<vec4f>* normalsArray,
+            std::vector<vec4f>* uvArray, std::vector<unsigned short>* facesArray,
+            std::vector<vec4i>* bonesArray, std::vector<vec4f>* weightsArray);
 		virtual void initializeVBO();
 		virtual void initializeVAO();
 
@@ -55,13 +56,14 @@ class Mesh : public ResourceVirtual
         unsigned int getNumberVertices() const;
         unsigned int getNumberFaces() const;
 
-		const std::vector<glm::vec3>* getBBoxVertices() const;
+		const std::vector<vec4f>* getBBoxVertices() const;
 		const std::vector<unsigned short>* getBBoxFaces() const;
-		const std::vector<glm::vec3>* getVertices() const;
-		const std::vector<glm::vec3>* getNormals() const;
+		const std::vector<vec4f>* getVertices() const;
+		const std::vector<vec4f>* getNormals() const;
+		const std::vector<vec4f>* getUVs() const;
 		const std::vector<unsigned short>* getFaces() const;
-		const std::vector<glm::ivec3>* getBones() const;
-		const std::vector<glm::vec3>* getWeights() const;
+		const std::vector<vec4i>* getBones() const;
+		const std::vector<vec4f>* getWeights() const;
 		const AxisAlignedBox& getBoundingBox() const;
 
 		const GLuint getVAO() const;
@@ -84,26 +86,26 @@ class Mesh : public ResourceVirtual
 
 		GLuint  vao,
 				verticesBuffer,
-				colorsBuffer,
+				uvsBuffer,
 				normalsBuffer,
 				facesBuffer;
 
-        std::vector<glm::vec3> vertices;
-		std::vector<glm::vec3> normals;
-		std::vector<glm::vec3> colors;
+        std::vector<vec4f> vertices;
+		std::vector<vec4f> normals;
+		std::vector<vec4f> uvs;
         std::vector<unsigned short> faces;
 
 		GLuint  BBoxVao, vBBoxBuffer, fBBoxBuffer;
-		std::vector<glm::vec3> vBBox;
+		std::vector<vec4f> vBBox;
 		std::vector<unsigned short> fBBox;
 
         // Animated
         GLuint weightsBuffer, bonesBuffer;
-        std::vector<glm::ivec3> bones;
-        std::vector<glm::vec3> weights;
+        std::vector<vec4i> bones;
+        std::vector<vec4f> weights;
 
         GLuint wBBoxBuffer, bBBoxBuffer;
-        std::vector<glm::ivec3> bBBox;
-        std::vector<glm::vec3> wBBox;
+        std::vector<vec4i> bBBox;
+        std::vector<vec4f> wBBox;
         //
 };

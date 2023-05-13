@@ -1,0 +1,7 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Env_Wall_Rock_Blocked_01",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": []
+}

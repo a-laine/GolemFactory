@@ -4,12 +4,11 @@
 
 class VirtualEntityCollector
 {
-	friend class Physics;
-
 	public:
 		virtual bool operator() (Entity* entity);
 		virtual std::vector<Entity*>& getResult();
 
-	protected:
+		uint64_t m_flags = ~0;
+		uint64_t m_exclusionFlags = 0;
 		std::vector<Entity*> result;
 };

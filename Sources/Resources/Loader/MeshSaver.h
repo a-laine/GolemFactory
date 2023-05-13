@@ -3,7 +3,7 @@
 #include <set>
 #include <fstream>
 
-#include <glm/glm.hpp>
+//#include <glm/glm.hpp>
 
 #include <Resources/Mesh.h>
 
@@ -12,51 +12,46 @@ class MeshSaver
 {
 	public:
 		//	Public functions
-		static void save(Mesh* mesh, const std::string& resourcesPath, std::string fileName = "", glm::vec3 scaleModifier = glm::vec3(1.f));
+		static void save(Mesh* mesh, const std::string& resourcesPath, std::string fileName = "", vec4f scaleModifier = vec4f(1.f));
 		//
 
 	protected:
 		//	Temp structures
-		struct vec3
+		struct vec4
 		{
-			explicit vec3(glm::vec3 a) : x(a.x), y(a.y), z(a.z) {};
-			bool operator<(const vec3& r) const
+			explicit vec4(vec4f a) : x(a.x), y(a.y), z(a.z), w(a.w) {};
+			bool operator<(const vec4& r) const
 			{
 				if (x > r.x) return false;
 				else if (x == r.x && y > r.y) return false;
 				else if (x == r.x && y == r.y && z > r.z) return false;
-				else if (x == r.x && y == r.y && z == r.z) return false;
+				else if (x == r.x && y == r.y && z == r.z && w > r.w) return false;
+				else if (x == r.x && y == r.y && z == r.z && w == r.w) return false;
 				else return true;
 			};
-			glm::vec3 toGlm() const { return glm::vec3(x, y, z); }
-			float x, y, z;
+			vec4f toVec4f() const { return vec4f(x, y, z, w); }
+			float x, y, z, w;
 		};
-		struct ivec3
+		struct ivec4
 		{
-			explicit ivec3(glm::ivec3 a) : x(a.x), y(a.y), z(a.z) {};
-			bool operator<(const ivec3& r) const
+			explicit ivec4(vec4i a) : x(a.x), y(a.y), z(a.z), w(a.w) {};
+			bool operator<(const ivec4& r) const
 			{
 				if (x > r.x) return false;
 				else if (x == r.x && y > r.y) return false;
 				else if (x == r.x && y == r.y && z > r.z) return false;
-				else if (x == r.x && y == r.y && z == r.z) return false;
+				else if (x == r.x && y == r.y && z == r.z && w > r.w) return false;
+				else if (x == r.x && y == r.y && z == r.z && w == r.w) return false;
 				else return true;
 			};
-			glm::ivec3 toGlm() { return glm::ivec3(x, y, z); }
-			int x, y, z;
+			vec4i toVec4i() { return vec4i(x, y, z, w); }
+			int x, y, z, w;
 		};
-
-		//struct vertex { int position, normal, color; };
-		//struct face { vertex vertex1, vertex2, vertex3; };
-		
-		//struct extendedVertex { int position, normal, color, weights, bones; };
-		//struct extendedFace { extendedVertex vertex1, vertex2, vertex3; };
-		//
 
 		//	Protected functions
-		static void saveStatic(Mesh* mesh, std::ofstream& file, glm::vec3 scaleModifier);
-		static void saveAnimated(Mesh* mesh, std::ofstream& file, glm::vec3 scaleModifier);
+		static void saveStatic(Mesh* mesh, std::ofstream& file, vec4f scaleModifier);
+		static void saveAnimated(Mesh* mesh, std::ofstream& file, vec4f scaleModifier);
 
-		static glm::vec3 getTruncatedAlias(glm::vec3 original, const float& truncature);
+		static vec4f getTruncatedAlias(vec4f original, const float& truncature);
 		//
 };

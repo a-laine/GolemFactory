@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Tvec.h"
+#include "Ttypes.h"
 
 // __m128d vec2d
 
@@ -19,13 +19,13 @@ class Tvec2
 		Tvec2() : x(T(0)), y(T(0)) {}
 
 		template <typename A, typename B>
-		Tvec2(A _x, B _y) : x(_x), y(_y) {}
+		Tvec2(A _x, B _y) : x(T(_x)), y(T(_y)) {}
 
 		template<typename T2>
-		Tvec2(T2 v = T2(0)) : x(v), y(v) {}
+		Tvec2(T2 v = T2(0)) : x(T(v)), y(T(v)) {}
 
 		template<typename T2>
-		Tvec2(const Tvec2<T2>& v) : x(v.x), y(v.y) {}
+		Tvec2(const Tvec2<T2>& v) : x(T(v.x)), y(T(v.y)) {}
 
 		// component access
 		T& operator[](int i) { return (&x)[i]; }
@@ -51,6 +51,9 @@ class Tvec2
 		//constants
 		static const Tvec2 zero;
 		static const Tvec2 one;
+
+		//math
+		static Tvec2 clamp(const Tvec2& a, const Tvec2& min, const Tvec2& max);
 };
 
 #include "Tvec2.hpp"

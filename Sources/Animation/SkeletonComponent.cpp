@@ -3,6 +3,7 @@
 #include <Resources/ResourceManager.h>
 #include <Resources/Skeleton.h>
 #include <Resources/Mesh.h>
+#include <EntityComponent/Entity.hpp>
 
 
 
@@ -56,18 +57,18 @@ unsigned int SkeletonComponent::getNbJoints() const
 	return (unsigned int) m_skeleton->joints.size();
 }
 
-const std::vector<glm::mat4>& SkeletonComponent::getPose() const
+const std::vector<mat4f>& SkeletonComponent::getPose() const
 {
 	return pose;
 }
 
-std::vector<glm::mat4x4> SkeletonComponent::getInverseBindPose() const
+std::vector<mat4f> SkeletonComponent::getInverseBindPose() const
 {
     GF_ASSERT(isValid());
     return m_skeleton->getInverseBindPose();
 }
 
-glm::vec3 SkeletonComponent::getJointPosition(const std::string& jointName)
+vec4f SkeletonComponent::getJointPosition(const std::string& jointName)
 {
     GF_ASSERT(isValid());
 
@@ -76,7 +77,7 @@ glm::vec3 SkeletonComponent::getJointPosition(const std::string& jointName)
 	locker.lock();
 
 	if(emptyPose)
-		return glm::vec3(0.f);
+		return vec4f::zero;
 	int index = -1;
 	for(unsigned int i = 0; i < m_skeleton->joints.size(); i++)
 	{
@@ -87,10 +88,10 @@ glm::vec3 SkeletonComponent::getJointPosition(const std::string& jointName)
 		}
 	}
 	if(index < 0)
-		return glm::vec3(0.f);
+		return vec4f::zero;
 
 	locker.lock();
-	glm::vec3 p = glm::vec3(pose[index][3][0], pose[index][3][1], pose[index][3][2]);
+	vec4f p = vec4f(pose[index][3][0], pose[index][3][1], pose[index][3][2], 1.f);
 	locker.lock();
 	return p;
 }
@@ -100,7 +101,7 @@ glm::vec3 SkeletonComponent::getJointPosition(const std::string& jointName)
 	return capsules;
 }*/
 
-const std::vector<glm::ivec2>& SkeletonComponent::getSegmentsIndex() const
+const std::vector<vec2i>& SkeletonComponent::getSegmentsIndex() const
 {
 	return segmentIndex;
 }
@@ -126,9 +127,9 @@ void SkeletonComponent::initToBindPose()
 void SkeletonComponent::computePose(const std::vector<JointPose>& input)
 {
     GF_ASSERT(isValid());
-	std::vector<glm::mat4> blendMatrix(input.size(), glm::mat4(1.f));
+	std::vector<mat4f> blendMatrix(input.size(), mat4f::identity);
 	for(unsigned int i = 0; i < m_skeleton->roots.size(); i++)
-		computePose(blendMatrix, input, glm::mat4(1.f), m_skeleton->roots[i]);
+		computePose(blendMatrix, input, mat4f::identity, m_skeleton->roots[i]);
 
 	locker.lock();
 	pose = blendMatrix;
@@ -143,10 +144,10 @@ void SkeletonComponent::computeCapsules(Mesh* mesh)
 		return;
 
 	//	get all lists
-	std::vector<glm::mat4> ibind = m_skeleton->getInverseBindPose();
-	const std::vector<glm::vec3>& vertices = *mesh->getVertices();
-	const std::vector<glm::ivec3>* bones = mesh->getBones();
-	const std::vector<glm::vec3>* weights = mesh->getWeights();
+	std::vector<mat4f> ibind = m_skeleton->getInverseBindPose();
+	const std::vector<vec4f>& vertices = *mesh->getVertices();
+	const std::vector<vec4i>* bones = mesh->getBones();
+	const std::vector<vec4f>* weights = mesh->getWeights();
 	std::vector<Joint> joints = m_skeleton->getJoints();
 	if(ibind.empty() || pose.empty() || !bones || !weights || joints.empty())
 		return;
@@ -159,16 +160,16 @@ void SkeletonComponent::computeCapsules(Mesh* mesh)
 		for(int j = 0; j < 3; j++)
 		{
 			int bone = (*bones)[i][j];
-			glm::vec3 v = glm::vec3(ibind[bone] * glm::vec4(vertices[i], 1.f));
+			vec4f v = ibind[bone] * vertices[i];
 			if(joints[bone].sons.size() == 1)
 			{
-				glm::vec3 end = glm::vec3(joints[joints[bone].sons[0]].relativeBindTransform[3]);
-				float d = glm::dot(v, end) / glm::length(end);
-				if(d < 0.f) maxDistance += (*weights)[i][j] * glm::length(v);
-				else if(d > 1.f) maxDistance += (*weights)[i][j] * glm::length(v - end);
-				else maxDistance += (*weights)[i][j] * glm::length(v - d * glm::normalize(end));
+				vec4f end = joints[joints[bone].sons[0]].relativeBindTransform[3];
+				float d = vec4f::dot(v, end) / end.getNorm();
+				if(d < 0.f) maxDistance += (*weights)[i][j] * v.getNorm();
+				else if(d > 1.f) maxDistance += (*weights)[i][j] * (v - end).getNorm();
+				else maxDistance += (*weights)[i][j] * (v - d * end.getNormal()).getNorm();
 			}
-			else maxDistance += (*weights)[i][j] * glm::length(v);
+			else maxDistance += (*weights)[i][j] * v.getNorm();
 		}
 		for(int j = 0; j < 3; j++)
 			capsules[(*bones)[i][j]] = std::max(capsules[(*bones)[i][j]], maxDistance);
@@ -179,14 +180,14 @@ void SkeletonComponent::computeCapsules(Mesh* mesh)
 	{
 		if(joints[i].sons.empty())
 		{
-			segmentIndex.push_back(glm::ivec2(i, i));
+			segmentIndex.push_back(vec2i(i, i));
 			segmentRadius.push_back(capsules[i]);
 		}
 		else
 		{
 			for(unsigned int j = 0; j < joints[i].sons.size(); j++)
 			{
-				segmentIndex.push_back(glm::ivec2(i, joints[i].sons[j]));
+				segmentIndex.push_back(vec2i(i, joints[i].sons[j]));
 				segmentRadius.push_back(capsules[i]);
 			}
 		}
@@ -200,7 +201,7 @@ void SkeletonComponent::initializeVBOVAO()
 	//	generate vbo
 	glGenBuffers(1, &segIndexBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, segIndexBuffer);
-	glBufferData(GL_ARRAY_BUFFER, segmentIndex.size() * sizeof(glm::ivec2), segmentIndex.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, segmentIndex.size() * sizeof(vec2i), segmentIndex.data(), GL_STATIC_DRAW);
 
 	glGenBuffers(1, &segRadiusBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, segRadiusBuffer);
@@ -230,11 +231,15 @@ void SkeletonComponent::drawBB()
 
 const GLuint SkeletonComponent::getCapsuleVAO() const { return vao; }
 
-void SkeletonComponent::computePose(std::vector<glm::mat4>& result, const std::vector<JointPose>& input, const glm::mat4& parentPose, unsigned int joint)
+void SkeletonComponent::computePose(std::vector<mat4f>& result, const std::vector<JointPose>& input, const mat4f& parentPose, unsigned int joint)
 {
     GF_ASSERT(isValid());
-	result[joint] = parentPose * glm::translate(input[joint].position) * glm::toMat4(input[joint].rotation) * glm::scale(input[joint].scale);
+	result[joint] = parentPose * mat4f::translate(mat4f::identity, input[joint].position) * mat4f(input[joint].rotation) * mat4f::scale(mat4f::identity, input[joint].scale);
 	for(unsigned int i = 0; i < m_skeleton->joints[joint].sons.size(); i++)
 		computePose(result, input, result[joint], m_skeleton->joints[joint].sons[i]);
 }
 
+void SkeletonComponent::onAddToEntity(Entity* entity)
+{
+	entity->setFlags((uint64_t)Entity::Flags::Fl_Drawable | (uint64_t)Entity::Flags::Fl_Skinned);
+}

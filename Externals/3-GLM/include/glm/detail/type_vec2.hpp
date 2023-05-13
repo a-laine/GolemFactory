@@ -226,7 +226,32 @@ namespace glm
 		GLM_FUNC_DECL tvec2<T, P> & operator>>=(tvec1<U, P> const & v);
 		template <typename U> 
 		GLM_FUNC_DECL tvec2<T, P> & operator>>=(tvec2<U, P> const & v);
+
+		// personal extension
+		T getNorm() const;
+		T getNorm2() const;
+		tvec2<T, P> getNormal() const;
+		void normalize();
+
+		static T dot(const tvec2<T, P>& a, const tvec2<T, P>& b);
+		static tvec2<T, P> lerp(const tvec2<T, P>& a, const tvec2<T, P>& b, const T& t);
+		static tvec2<T, P> min(const tvec2<T, P>& a, const tvec2<T, P>& b);
+		static tvec2<T, P> max(const tvec2<T, P>& a, const tvec2<T, P>& b);
+		static tvec2<T, P> abs(const tvec2<T, P>& a);
+		static tvec2<bool, P> lessThan(const tvec2<T, P>& a, const tvec2<T, P>& b);
+		static tvec2<bool, P> greaterThan(const tvec2<T, P>& a, const tvec2<T, P>& b);
+		static bool any(const tvec2<T, P>& b);
+		static tvec2<T, P> clamp(const tvec2<T, P>& a, const tvec2<T, P>& min, const tvec2<T, P>& max);
+
+		static tvec2<T, P> zero;
+		static tvec2<T, P> one;
 	};
+
+	template <typename T, precision P>
+	tvec2<T, P> tvec2<T, P>::zero = tvec2<T, P>(T(0));
+	template <typename T, precision P>
+	tvec2<T, P> tvec2<T, P>::one = tvec2<T, P>(T(1));
+
 
 	// -- Unary operators --
 

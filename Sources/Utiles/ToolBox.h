@@ -5,8 +5,9 @@
 #include <sstream>
 #include <iomanip>
 
-#include <glm/glm.hpp>
-#include <glm/gtc/quaternion.hpp>
+/*#include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>*/
+#include "Math/TMath.h"
 
 #include "Parser/Variant.h"
 
@@ -28,16 +29,16 @@ class ToolBox
 		}
 
 		//	vector and matrix serialization
-		static Variant getFromVec2(const glm::vec2& vec);
-		static Variant getFromVec3(const glm::vec3& vec);
-		static Variant getFromVec4(const glm::vec4& vec);
-		static Variant getFromQuat(const glm::fquat& quat);
-		static Variant getFromMat4(const glm::mat4& mat);
+		static Variant getFromVec2f(const vec2f& vec);
+		static Variant getFromVec3f(const vec3f& vec);
+		static Variant getFromVec4f(const vec4f& vec);
+		static Variant getFromQuatf(const quatf& quat);
+		static Variant getFromMat4f(const mat4f& mat);
 
 		//	mesh cleaner
-		static void optimizeStaticMesh( std::vector<glm::vec3>& verticesArray,
-									    std::vector<glm::vec3>& normalesArray,
-										std::vector<glm::vec3>& colorArray,
+		static void optimizeStaticMesh( std::vector<vec4f>& verticesArray,
+									    std::vector<vec4f>& normalesArray,
+										std::vector<vec4f>& colorArray,
 										std::vector<unsigned short>&facesArray );
 
 		//	hull mesh optimazer

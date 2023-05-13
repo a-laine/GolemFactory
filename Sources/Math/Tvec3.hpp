@@ -141,5 +141,30 @@ Tvec3<T> operator/(const Tvec3<T>& a, const T2& scalar)
 	return Tvec3<T>(a.x / scalar, a.y / scalar, a.z / scalar);
 }
 
-template<typename T> const Tvec3<T> Tvec3<T>::zero = Tvec3<T>(0);
-template<typename T> const Tvec3<T> Tvec3<T>::one = Tvec3<T>(1);
+template<typename T> const Tvec3<T> Tvec3<T>::zero = Tvec3<T>(T(0));
+template<typename T> const Tvec3<T> Tvec3<T>::one = Tvec3<T>(T(1));
+
+
+
+
+
+
+
+/// Math function
+template<typename T>
+T Tvec3<T>::dot(const Tvec3<T>& a, const Tvec3<T>& b)
+{
+	return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
+template<typename T>
+Tvec3<T> Tvec3<T>::cross(const Tvec3<T>& a, const Tvec3<T>& b)
+{
+	return Tvec3<T>(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
+}
+
+template<typename T>
+Tvec3<T> Tvec3<T>::lerp(const Tvec3<T>& a, const Tvec3<T>& b, const T& t)
+{
+	return a + t * (b - a);
+}

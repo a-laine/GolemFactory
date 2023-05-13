@@ -1,193 +1,259 @@
 #include "CameraComponent.h"
-
-#include <glm/gtx/euler_angles.hpp>
-#include <glm/gtc/constants.hpp>
-
-#include <EntityComponent/Entity.hpp>
+#include "EntityComponent/Entity.hpp"
+#include "Utiles/Assert.hpp"
+#include <Utiles/Debug.h>
 
 
-CameraComponent::CameraComponent(bool freeRotations)
-	: m_orientation(1.f, 0.f, 0.f, 0.f)
-	, m_position(0.f, 0.f, 0.f, 1.f)
-	, m_fov(90)
-	, m_freeRotations(freeRotations)
+CameraComponent::CameraComponent(bool freeRotations) : m_verticalFov(0.88)
 {
 }
 
-glm::mat4 CameraComponent::getViewMatrix() const
+void CameraComponent::onAddToEntity(Entity* entity)
 {
-	glm::mat4 m;
-	glm::quat rot = glm::inverse(m_orientation);
-	m = glm::toMat4(rot);
-	m[3] = glm::rotate(rot, -m_position);
-	return m;
+	Component::onAddToEntity(entity);
+	setDirection(vec4f(0, 0, 1, 0));
 }
 
-glm::mat4 CameraComponent::getGlobalViewMatrix() const
+mat4f CameraComponent::getViewMatrix() const
 {
-	glm::mat4 m = glm::toMat4(m_orientation);
-	m[3] = m_position;
-	if (m_freeRotations)
-	{
-		m[3] *= glm::vec4(getParentEntity()->getScale(), 1.f);
-		m[3] += glm::vec4((glm::vec3)(getParentEntity()->getPosition()), 0.f);
-	}
-	else
-	{
-		m = m * getParentEntity()->getTransformMatrix();
-	}
-	return glm::inverse(m);
+	return getParentEntity()->getInverseWorldTransformMatrix();
 }
 
-glm::mat4 CameraComponent::getModelMatrix() const
+
+mat4f CameraComponent::getModelMatrix() const
 {
-	glm::mat4 m = glm::toMat4(m_orientation);
-	m[3] = m_position;
-	return m;
+	return getParentEntity()->getWorldTransformMatrix();
 }
 
-glm::vec4 CameraComponent::getForward() const
+vec4f CameraComponent::getRight() const
 {
-	return glm::rotate(m_orientation, glm::vec4(0, 0, -1, 0));
+	return getParentEntity()->getWorldOrientation() * vec4f(1, 0, 0, 0);
 }
 
-glm::vec4 CameraComponent::getRight() const
+vec4f CameraComponent::getUp() const
 {
-	return glm::rotate(m_orientation, glm::vec4(1, 0, 0, 0));
+	return getParentEntity()->getWorldOrientation() * vec4f(0, 1, 0, 0);
 }
 
-glm::vec4 CameraComponent::getUp() const
+vec4f CameraComponent::getForward() const
 {
-	return glm::rotate(m_orientation, glm::vec4(0, 1, 0, 0));
+	return getParentEntity()->getWorldOrientation() * vec4f(0, 0, -1, 0);
 }
 
-glm::vec4 CameraComponent::getPosition() const
+vec4f CameraComponent::getPosition() const
 {
-	return m_position;
+	return getParentEntity()->getWorldPosition();
 }
 
-glm::vec4 CameraComponent::getGlobalPosition() const
+void CameraComponent::getFrustrum(vec4f& position, vec4f& forward, vec4f& right, vec4f& up) const
 {
-	return m_position * glm::vec4(getParentEntity()->getScale(), 1.f) + getParentEntity()->getPosition();
+	position = getPosition();
+	forward = getForward();
+	right = getRight();
+	up = getUp();
 }
 
-void CameraComponent::getFrustrum(glm::vec4& position, glm::vec4& forward, glm::vec4& right, glm::vec4& up) const
+quatf CameraComponent::getOrientation() const
 {
-	if (m_freeRotations)
-	{
-		position = getGlobalPosition();
-		forward = getForward();
-		right = getRight();
-		up = getUp();
-	}
-	else
-	{
-		position = getParentEntity()->getTransformMatrix() * getGlobalPosition();
-		forward = getParentEntity()->getTransformMatrix() * getForward();
-		right = getParentEntity()->getTransformMatrix() * getRight();
-		up = getParentEntity()->getTransformMatrix() * getUp();
-	}
+	return getParentEntity()->getWorldOrientation();
 }
 
-glm::quat CameraComponent::getOrientation() const
-{
-	return m_orientation;
-}
-
-float CameraComponent::getFieldOfView() const
+/*float CameraComponent::getFieldOfView() const
 {
 	return m_fov;
-}
+}*/
 
-float CameraComponent::getVerticalFieldOfView(float aspectRatio) const
+float CameraComponent::getVerticalFieldOfView() const
 {
-	return m_fov / aspectRatio;
+	return m_verticalFov;
 }
 
-bool CameraComponent::getFreeRotations() const
+
+void CameraComponent::setPosition(const vec4f& position)
 {
-	return m_freeRotations;
+	getParentEntity()->setWorldPosition(position);
 }
 
-void CameraComponent::setPosition(const glm::vec4& position)
+void CameraComponent::setOrientation(const quatf& orientation)
 {
-	m_position = position;
+	getParentEntity()->setWorldOrientation(orientation);
 }
 
-void CameraComponent::setOrientation(const glm::quat& orientation)
+void CameraComponent::setVerticalFieldOfView(float fov)
 {
-	m_orientation = orientation;
+	m_verticalFov = fov;
 }
 
-void CameraComponent::setFieldOfView(float fov)
+void CameraComponent::setDirection(vec4f direction)
 {
-	m_fov = fov;
+	direction.w = 0.f;
+	if (direction.getNorm2() < EPSILON)
+		direction = vec4f(0, 0, 1, 0);
+
+	direction.normalize();
+	
+	GF_ASSERT((std::abs(direction.y) < 1.f - (float)EPSILON), "direction too close to vertical !");
+
+	vec4f right = vec4f::cross(direction, vec4f(0, 1, 0, 0)).getNormal();
+	vec4f up = vec4f::cross(right, direction);
+
+	mat4f view(direction, up, right, vec4f(0, 0, 0, 1));
+	quatf q = quatf(view);
+	q.normalize();
+	getParentEntity()->setWorldTransformation(getParentEntity()->getWorldPosition(), getParentEntity()->getWorldScale(), q);
 }
 
-void CameraComponent::setFreeRotations(bool freeRotations)
+void CameraComponent::translate(const vec4f& direction)
 {
-	m_freeRotations = freeRotations;
+	getParentEntity()->setWorldPosition(getParentEntity()->getWorldPosition() + direction);
 }
 
-void CameraComponent::setDirection(const glm::vec4& direction)
+void CameraComponent::rotate(const quatf& rotation)
 {
-	glm::vec3 euler = glm::eulerAngles(m_orientation);
-
-	if (!(direction.x == 0 && direction.y == 0 && direction.z == 0))
-		euler.x = atan2(sqrt(direction.x*direction.x + direction.y*direction.y), -direction.z);
-
-	if (direction.x != 0 || direction.y != 0)
-		euler.z = -atan2(direction.x, direction.y);
-
-	m_orientation = glm::quat(euler);
+	getParentEntity()->setWorldOrientation(rotation * getParentEntity()->getWorldOrientation());
 }
 
-void CameraComponent::translate(const glm::vec4& direction)
+void CameraComponent::rotate(float verticalDelta, float horizontalDelta)
 {
-	m_position += direction;
+	quatf orientation = getParentEntity()->getWorldOrientation();
+	vec4f front = orientation * vec4f(0, 0, 1, 0);
+	vec4f up = orientation * vec4f(0, 1, 0, 0);
+	vec4f right = orientation * vec4f(1, 0, 0, 0);
+
+	front = front + horizontalDelta * right;
+	vec4f newfront = front - verticalDelta * up;
+	if (std::abs(newfront.y) < 0.97f)
+		front = newfront;
+
+	front.normalize();
+	right = vec4f::cross(vec4f(0, 1, 0, 0), front).getNormal();
+	up = vec4f::cross(front, right);
+
+	mat4f view(right, up, front, vec4f(0, 0, 0, 1));
+	quatf q = quatf(view);
+	q.normalize();
+	getParentEntity()->setWorldTransformation(getParentEntity()->getWorldPosition(), getParentEntity()->getWorldScale(), q);
 }
 
-void CameraComponent::rotate(const glm::quat& rotation)
-{
-	m_orientation *= rotation;
-}
-
-void CameraComponent::rotate(float pitch, float yaw)
-{
-	glm::vec3 euler = glm::eulerAngles(m_orientation) + glm::vec3(pitch, 0.f, yaw);
-
-	float _Pi = glm::pi<float>();
-	float twoPi = 2.f*glm::pi<float>();
-
-	if (euler.x > _Pi - 0.01f) euler.x = _Pi - 0.01f;
-	else if (euler.x < 0.01f) euler.x = 0.01f;
-	if (euler.z > _Pi) euler.z -= twoPi;
-	else if (euler.z < -_Pi) euler.z += twoPi;
-
-	m_orientation = glm::quat(euler);
-}
-
-void CameraComponent::rotateAround(const glm::vec4& target, float pitch, float yaw)
-{
-	rotate(pitch, yaw);
-
-	float d = glm::distance(m_position, target);
-	m_position = target - d * getForward();
-}
-
-void CameraComponent::rotateAround(const glm::vec4& target, float pitch, float yaw, float distance)
+void CameraComponent::rotateAround(const vec4f& target, float pitch, float yaw)
 {
 	rotate(pitch, yaw);
-	m_position = target - distance * getForward();
+	float d =(getParentEntity()->getWorldPosition() - target).getNorm();
+	getParentEntity()->setWorldPosition(target - d * getForward());
 }
 
-void CameraComponent::lookAt(const glm::vec4& target)
+void CameraComponent::rotateAround(const vec4f& target, float pitch, float yaw, float distance)
 {
-	setDirection(target - m_position);
+	rotate(pitch, yaw);
+	getParentEntity()->getWorldPosition() = target - distance * getForward();
 }
 
-void CameraComponent::lookAt(const glm::vec4& target, float distance)
+void CameraComponent::lookAt(const vec4f& target)
 {
-	setDirection(target - m_position);
-	m_position = target - distance * getForward();
+	setDirection(target - getParentEntity()->getWorldPosition());
+}
+
+void CameraComponent::lookAt(const vec4f& target, float distance)
+{
+	setDirection(target - getParentEntity()->getWorldPosition());
+	getParentEntity()->setWorldPosition(target - distance * getForward());
+}
+
+void CameraComponent::onDrawImGui()
+{
+#ifdef USE_IMGUI
+	const ImVec4 componentColor = ImVec4(0.5, 0.5, 0.7, 1);
+	std::ostringstream unicName;
+	unicName << "Camera component##" << (uintptr_t)this;
+	if (ImGui::TreeNodeEx(unicName.str().c_str(), ImGuiTreeNodeFlags_DefaultOpen))
+	{
+		ImGui::TextColored(componentColor, "Parameters");
+		ImGui::Indent();
+		constexpr float rangeMin = (float)RAD2DEG * 0.05f;
+		constexpr float rangeMax = (float)RAD2DEG * 1.5f;
+		float fov = (float)RAD2DEG * m_verticalFov;
+		if (ImGui::SliderFloat("Vertical Fov", &fov, rangeMin, rangeMax, "%.3frad"))
+			m_verticalFov = (float)RAD2DEG * fov;
+		ImGui::Unindent();
+
+		ImGui::Spacing();
+		ImGui::TextColored(componentColor, "Gizmos");
+		ImGui::Indent();
+		ImGui::Checkbox("Draw frustrum shape", &m_drawFrustrum);
+		ImGui::DragFloat2("Debug range", &m_nearFarDistance[0], 0.1f, 0.f, 1000.f, "%.3f");
+		ImGui::Unindent();
+
+		ImGui::TreePop();
+	}
+
+	if (m_drawFrustrum)
+	{
+		drawDebug(Debug::viewportRatio, m_nearFarDistance.x, m_nearFarDistance.y, 
+			vec4f(componentColor.x, componentColor.y, componentColor.z, componentColor.w));
+	}
+#endif // USE_IMGUI
+}
+
+void CameraComponent::drawDebug(float viewportRatio, float farDistance, float nearDistance, vec4f color) const
+{
+	// aliases
+	vec4f p = getPosition();
+	vec4f dir = getForward();
+	vec4f left = -getRight();
+	vec4f up = getUp();
+	float a1 = 0.5f * m_verticalFov;
+	float ca1 = cos(a1);
+	float sa1 = sin(a1);
+	float sa2 = viewportRatio * sa1;
+	vec4f tdir = ca1 * dir;
+	vec4f u1 = tdir + sa2 * left + sa1 * up;
+	vec4f u2 = tdir - sa2 * left + sa1 * up;
+	vec4f u3 = tdir + sa2 * left - sa1 * up;
+	vec4f u4 = tdir - sa2 * left - sa1 * up;
+
+	// boundaries
+	Debug::color = color;
+	Debug::drawLine(p + nearDistance * u1, p + farDistance * u1);
+	Debug::drawLine(p + nearDistance * u2, p + farDistance * u2);
+	Debug::drawLine(p + nearDistance * u3, p + farDistance * u3);
+	Debug::drawLine(p + nearDistance * u4, p + farDistance * u4);
+
+	Debug::drawLine(p + nearDistance * u1, p + nearDistance * u2);
+	Debug::drawLine(p + nearDistance * u3, p + nearDistance * u4);
+	Debug::drawLine(p + nearDistance * u1, p + nearDistance * u3);
+	Debug::drawLine(p + nearDistance * u2, p + nearDistance * u4);
+
+	Debug::drawLine(p + farDistance * u1, p + farDistance * u2);
+	Debug::drawLine(p + farDistance * u3, p + farDistance * u4);
+	Debug::drawLine(p + farDistance * u1, p + farDistance * u3);
+	Debug::drawLine(p + farDistance * u2, p + farDistance * u4);
+
+	// plane normals
+	float d = (0.25f * (farDistance + nearDistance));
+	vec4f nup = ca1 * up - sa1 * dir;
+	vec4f cup = p + d * (u1 + u2);
+	Debug::drawPoint(cup);
+	Debug::drawLine(cup, cup + nup);
+
+	vec4f ndown = -ca1 * up - sa1 * dir;
+	vec4f cdown = p + d * (u3 + u4);
+	Debug::drawPoint(cdown);
+	Debug::drawLine(cdown, cdown + ndown);
+
+	vec4f nleft = ca1 * left - sa2 * dir;
+	vec4f cleft = p + d * (u1 + u3);
+	Debug::drawPoint(cleft);
+	Debug::drawLine(cleft, cleft + nleft);
+
+	vec4f nright = -ca1 * left - sa2 * dir;
+	vec4f cright = p + d * (u2 + u4);
+	Debug::drawPoint(cright);
+	Debug::drawLine(cright, cright + nright);
+
+	vec4f cfar = p + farDistance * tdir;
+	vec4f cnear = p + nearDistance * tdir;
+	Debug::drawPoint(cfar);
+	Debug::drawLine(cfar, cfar + dir);
+	Debug::drawPoint(cnear);
+	Debug::drawLine(cnear, cnear - dir);
 }

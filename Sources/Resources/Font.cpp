@@ -19,7 +19,7 @@ Font::~Font()
 //
 
 //  Public functions
-void Font::initialize(uint8_t* image, const glm::vec2& imageSize, unsigned short beginC, unsigned short endC, unsigned short defaultC, const std::vector<Patch>& table)
+void Font::initialize(uint8_t* image, const vec2f& imageSize, unsigned short beginC, unsigned short endC, unsigned short defaultC, const std::vector<Patch>& table)
 {
     GF_ASSERT(state == INVALID);
     state = LOADING;
@@ -40,7 +40,7 @@ void Font::initialize(uint8_t* image, const glm::vec2& imageSize, unsigned short
     state = VALID;
 }
 
-void Font::initialize(uint8_t* image, const glm::vec2& imageSize, unsigned short beginC, unsigned short endC, unsigned short defaultC, std::vector<Patch>&& table)
+void Font::initialize(uint8_t* image, const vec2f& imageSize, unsigned short beginC, unsigned short endC, unsigned short defaultC, std::vector<Patch>&& table)
 {
     GF_ASSERT(state == INVALID);
     state = LOADING;

@@ -1,0 +1,7 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Env_Basement_WallPanel_01",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": []
+}

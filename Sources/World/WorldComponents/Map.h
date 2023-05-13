@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 #include <GL/glew.h>
-#include <glm/glm.hpp>
+//#include <glm/glm.hpp>
 
 #include <Terrain/Chunk.h>
 #include <Resources/Shader.h>
@@ -20,7 +20,7 @@ class Map
 		//	Public functions
 		bool loadFromHeightmap(const std::string& resourceDirectory, const std::string& fileName);
 
-		void update(const glm::vec3& playerPosition);
+		void update(const vec4f& playerPosition);
 		//
 
 		//	Set / Get
@@ -29,15 +29,15 @@ class Map
 		unsigned int getFacesCount() const;
 		GLuint getVAO() const;
 		Chunk* getChunk(const int& h, const  int& w);
-		std::vector<glm::ivec2> getDrawableChunks();
-		glm::mat4 getModelMatrix() const;
-		glm::vec3 getScale() const;
+		std::vector<vec2i> getDrawableChunks();
+		mat4f getModelMatrix() const;
+		vec4f getScale() const;
 		Shader* getShader();
 
-		glm::ivec2 worldToChunk(glm::vec3 p) const;
+		vec2i worldToChunk(vec4f p) const;
 		bool inBound(const int& x, const int& y) const;
 
-		glm::ivec4 getExclusionZone() const;
+		vec4i getExclusionZone() const;
 		//
 
 		//	Attributes
@@ -45,7 +45,7 @@ class Map
 		Chunk*** chunks;
 		unsigned int** seeds;
 		float amplitude;
-		glm::vec3 scale;
+		vec4f scale;
 		float lodRadius[6];
 		//
 
@@ -54,10 +54,10 @@ class Map
 		struct gfvertex
 		{
 			gfvertex(const float& x, const float& y) : v(x, y) {};
-			gfvertex(const glm::vec3& u) : v(u.x, u.y) {};
-			gfvertex(const glm::vec2& u) : v(u) {};
+			gfvertex(const vec4f& u) : v(u.x, u.y) {};
+			gfvertex(const vec2f& u) : v(u) {};
 
-			glm::vec2 v;
+			vec2f v;
 			bool operator<(const gfvertex& o) const
 			{
 				if (v.x != o.v.x)
@@ -68,8 +68,8 @@ class Map
 		//
 
 		// Privates functions
-		glm::vec3 getVertex(const int& x, const int& y);
-		glm::vec3 getNormal(const int& x, const int& y);
+		vec4f getVertex(const int& x, const int& y);
+		vec4f getNormal(const int& x, const int& y);
 		int getLod(float d);
 		//
 
@@ -80,10 +80,10 @@ class Map
 			colorsBuffer,
 			facesBuffer;
 		unsigned int facesCount;
-		std::vector<glm::ivec2> drawableChunks;
-		glm::ivec4 exclusionZone;
-		glm::ivec2 lastPlayerCell;
-		std::vector<glm::ivec4> jobList;
+		std::vector<vec2i> drawableChunks;
+		vec4i exclusionZone;
+		vec2i lastPlayerCell;
+		std::vector<vec4i> jobList;
 
 		Shader* shader;
 		//

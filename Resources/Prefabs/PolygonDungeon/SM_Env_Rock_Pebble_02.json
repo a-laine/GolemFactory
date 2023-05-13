@@ -1,0 +1,7 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Env_Rock_Pebble_02",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": []
+}

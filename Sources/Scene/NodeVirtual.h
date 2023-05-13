@@ -1,8 +1,9 @@
 #pragma once
 
 #include <GL/glew.h>
-#include <glm/glm.hpp>
+//#include <glm/glm.hpp>
 
+#include "Math/TMath.h"
 #include <EntityComponent/Entity.hpp>
 #include <Scene/VirtualEntityCollector.h>
 
@@ -16,6 +17,7 @@ class World;
  */
 class NodeVirtual
 {
+	friend class SceneManager;
 	public:
 		class NodeRange
 		{
@@ -40,7 +42,7 @@ class NodeVirtual
 		virtual ~NodeVirtual();
 
 		//	Public fonctions
-		void init(const glm::vec4 bbMin, const glm::vec4 bbMax, const glm::ivec3& nodeDivision, unsigned int depth);
+		void init(const vec4f bbMin, const vec4f bbMax, const vec3i& nodeDivision, unsigned int depth);
 		void clearChildren();
 		void split(unsigned int newDepth);
 		void merge(unsigned int newDepth);
@@ -48,26 +50,29 @@ class NodeVirtual
 
 		//	Set / get functions
 		bool isLeaf() const;
-		glm::vec4 getCenter() const;
-		glm::vec3 getSize() const;
-		glm::vec4 getBBMax() const;
-		glm::vec4 getBBMin() const;
+		vec4f getCenter() const;
+		vec4f getSize() const;
+		vec4f getHalfSize() const;
+		vec4f getInflatedHalfSize() const;
+		vec4f getBBMax() const;
+		vec4f getBBMin() const;
 		int getChildrenCount() const;
-		bool isInside(const glm::vec4& point) const;
-		bool isTooSmall(const glm::vec3& size) const;
-		bool isTooBig(const glm::vec3& size) const;
-		glm::vec4 getPosition() const;
+		bool isInside(const vec4f& point) const;
+		bool isTooSmall(const vec4f& size) const;
+		bool isTooBig(const vec4f& size) const;
+		vec4f getPosition() const;
 		const float& getAllowanceSize() const;
+		vec3i getDivision() const;
 		//
 		
 		//	Hierarchy related function
 		void addNode(NodeVirtual* node);
 		bool removeNode(NodeVirtual* node);
-		NodeVirtual* getChildAt(const glm::vec4& pos);
+		NodeVirtual* getChildAt(const vec4f& pos);
 		void getChildren(std::vector<NodeVirtual*>& result);
 		void getChildren(std::vector<NodeRange>& result);
-		void getChildrenInBox(std::vector<NodeVirtual*>& result, const glm::vec4& boxMin, const glm::vec4& boxMax);
-		void getChildrenInBox(std::vector<NodeRange>& result, const glm::vec4& boxMin, const glm::vec4& boxMax);
+		void getChildrenInBox(std::vector<NodeVirtual*>& result, const vec4f& boxMin, const vec4f& boxMax);
+		void getChildrenInBox(std::vector<NodeRange>& result, const vec4f& boxMin, const vec4f& boxMax);
 		//
 
 		//	Entities / objects related
@@ -89,9 +94,10 @@ class NodeVirtual
 	private:
 		//	Attributes
 		float allowanceSize;
-		glm::vec4 position;							//!< Node position in scene coordinate
-		glm::vec4 halfSize;							//!< Half of node size
-		glm::ivec3 division;
+		vec4f position;							//!< Node position in scene coordinate
+		vec4f halfSize;							//!< Half of node size
+		vec4f inflatedHalfSize;
+		vec3i division;
 
 		std::vector<NodeVirtual> children;			//!< Subdivision children container (empty if leaf)
 		std::vector<NodeVirtual*> adoptedChildren;	//!< Children added to, for special tree

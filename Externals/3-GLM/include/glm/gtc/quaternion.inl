@@ -169,7 +169,7 @@ namespace detail
 		T Dot = detail::compute_dot<tvec3, T, P>::call(u, v);
 		tquat<T, P> q(T(1) + Dot, LocalW.x, LocalW.y, LocalW.z);
 
-		*this = normalize(q);
+		*this = glm::normalize(q);
 	}
 
 	template <typename T, precision P>

@@ -4,14 +4,14 @@ layout(triangles) in;
 layout(triangle_strip, max_vertices = 3) out;
 
 // input
-in vec3 lightDirectionCameraSpace_gs[];
-in vec3 fragmentNormal_gs[];
-in vec3 fragmentColor_gs[];
+in vec4 lightDirectionCameraSpace_gs[];
+in vec4 fragmentNormal_gs[];
+in vec4 fragmentColor_gs[];
 
 // output
-out vec3 lightDirectionCameraSpace_fs;
-out vec3 fragmentNormal_fs;
-out vec3 fragmentColor_fs;
+out vec4 lightDirectionCameraSpace_fs;
+out vec4 fragmentNormal_fs;
+out vec4 fragmentColor_fs;
 out vec3 barycentricCoord;
 
 void main()

@@ -4,6 +4,7 @@
 
 #include <Utiles/Parser/Reader.h>
 #include <Utiles/Parser/Writer.h>
+#include <Resources/ResourceManager.h>
 
 
 ShaderLoader::ShaderLoader() : vertexShader(0), fragmentShader(0), geometricShader(0), tessControlShader(0), tessEvalShader(0), program(0)
@@ -107,14 +108,34 @@ bool ShaderLoader::load(const std::string& resourceDirectory, const std::string&
 
     try
     {
-        size_t textureCount = shaderMap["textures"].size();
-        textures.resize(textureCount);
-        for(int i = 0; i < textureCount; i++)
+        if (shaderMap["textures"].getType() == Variant::ARRAY)
         {
-            textures[i] = shaderMap["textures"][i].toString();
+            size_t textureCount = shaderMap["textures"].getArray().size();
+            int i = 0;
+            for (auto it2 = shaderMap["textures"].getArray().begin(); it2 != shaderMap["textures"].getArray().end(); it2++, i++)
+            {
+                if (it2->getType() == Variant::MAP)
+                {
+                    textureNames.push_back((*it2)["name"].toString());
+                    std::string fileName = (*it2)["resource"].toString();
+                    textureResources.push_back(ResourceManager::getInstance()->getResource<Texture>(fileName,
+                        (uint8_t)Texture::TextureConfiguration::TEXTURE_2D | (uint8_t)Texture::TextureConfiguration::USE_MIPMAP |
+                        (uint8_t)Texture::TextureConfiguration::WRAP_REPEAT));
+                }
+            }
         }
     }
-    catch(std::exception&) { textures.clear(); }
+    catch (std::exception&) 
+    { 
+        if (textureNames.size() > 0)
+        {
+            if (ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::WARNINGS)
+                std::cerr << "WARNING : loading shader : " << fileName << " : fail to load textures" << std::endl;
+        }
+
+        textureNames.clear(); 
+        textureResources.clear();
+    }
 
     return true;
 }
@@ -122,7 +143,10 @@ bool ShaderLoader::load(const std::string& resourceDirectory, const std::string&
 void ShaderLoader::initialize(ResourceVirtual* resource)
 {
     Shader* shader = static_cast<Shader*>(resource);
-    shader->initialize(vertexShader, fragmentShader, geometricShader, tessControlShader, tessEvalShader, program, attributesType, textures);
+    shader->initialize(vertexShader, fragmentShader, geometricShader, tessControlShader, tessEvalShader, program, attributesType, textureNames);
+
+    for (int i = 0; i < textureResources.size(); i++)
+        shader->pushTexture(textureResources[i]);
 }
 
 void ShaderLoader::getResourcesToRegister(std::vector<ResourceVirtual*>& resourceList)
@@ -149,7 +173,8 @@ void ShaderLoader::clear()
     program = 0;
 
     attributesType.clear();
-    textures.clear();
+    textureNames.clear();
+    textureResources.clear();
 }
 
 bool ShaderLoader::tryCompile(Variant& shaderMap, Shader::ShaderType shaderType, const std::string& key, GLuint& shader, const std::string& resourceDirectory, const std::string& filename)
@@ -220,7 +245,7 @@ bool ShaderLoader::loadShader(Shader::ShaderType shaderType, std::string fileNam
     }
     else
     {
-        gravityIssue = "WARRNING";
+        gravityIssue = "WARNING";
         errorLevel = ResourceVirtual::VerboseLevel::WARNINGS;
     }
 

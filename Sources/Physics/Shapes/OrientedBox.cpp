@@ -1,34 +1,47 @@
 #include "OrientedBox.h"
 #include "Sphere.h"
 #include "AxisAlignedBox.h"
-//#include <Physics/SpecificCollision/CollisionUtils.h>
 
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/quaternion.hpp>
 #include <vector>
 
 
-OrientedBox::OrientedBox(const glm::mat4& transformationMatrix, const glm::vec4& localMin, const glm::vec4& localMax)
+OrientedBox::OrientedBox(const mat4f& transformationMatrix, const vec4f& localMin, const vec4f& localMax)
 	: Shape(ShapeType::ORIENTED_BOX), base(transformationMatrix), min(localMin), max(localMax) {}
 Sphere OrientedBox::toSphere() const
 {
-	glm::vec4 p1 = base * min;
-	glm::vec4 p2 = base * max;
-	return Sphere(0.5f * (p1 + p2), 0.5f * glm::length(p2 - p1));
+	vec4f p1 = base * min;
+	vec4f p2 = base * max;
+	return Sphere(0.5f * (p1 + p2), 0.5f * (p2 - p1).getNorm());
 }
 AxisAlignedBox OrientedBox::toAxisAlignedBox() const
 {
-	auto absMat4 = [](const glm::mat4 & _m) // make abs for each element of the rotation part
-	{
-		glm::mat4 r;
-		for (int i = 0; i < 3; i++)
-			r[i] = glm::abs(_m[i]);
-		return r;
-	};
+	vec4f s = 0.5f * (max - min);
+	vec4f sx = s.x * base[0];
+	vec4f sy = s.y * base[1];
+	vec4f sz = s.z * base[2];
+	vec4f c[8];
+	c[0] =  sx + sy + sz;
+	c[1] =  sx + sy - sz;
+	c[2] =  sx - sy + sz;
+	c[3] =  sx - sy - sz;
+	c[4] = -sx + sy + sz;
+	c[5] = -sx + sy - sz;
+	c[6] = -sx - sy + sz;
+	c[7] = -sx - sy - sz;
 
-	glm::vec4 center = base * (0.5f * (max + min));
-	glm::vec4 size =  absMat4(base) * (0.5f * (max - min));
-	return AxisAlignedBox(center - size, center + size);
+	AxisAlignedBox box;
+	box.min = c[0];
+	box.max = c[0];
+	for (int i = 1; i < 8; i++)
+	{
+		box.min = vec4f::min(box.min, c[i]);
+		box.max = vec4f::max(box.max, c[i]);
+	}
+
+	vec4f center = base * (0.5f * (max + min));
+	box.min += center;
+	box.max += center;
+	return box;
 }
 Shape& OrientedBox::operator=(const Shape& s)
 {
@@ -41,41 +54,38 @@ Shape& OrientedBox::operator=(const Shape& s)
 	}
 	return *this;
 }
-void OrientedBox::transform(const glm::vec4& position, const glm::vec3& scale, const glm::fquat& orientation)
+void OrientedBox::transform(const vec4f& position, const vec4f& scale, const quatf& orientation)
 {
-	glm::mat4 m = glm::translate(glm::mat4(1.f), (glm::vec3)position);
-	m = m * glm::toMat4(orientation);
-
+	mat4f m = mat4f::TRS(position, orientation, scale);
 	base = m * base;
-
-	min = min * glm::vec4(scale, 1.f);
-	max = max * glm::vec4(scale, 1.f);
+	min = min;
+	max = max;
 }
 Shape* OrientedBox::duplicate() const { return new OrientedBox(*this); }
-glm::vec4 OrientedBox::support(const glm::vec4& direction) const
+vec4f OrientedBox::support(const vec4f& direction) const
 {
-	glm::vec4 size = 0.5f * (max - min);
-	glm::vec4 x = base[0];
-	glm::vec4 y = base[1];
-	glm::vec4 z = base[2];
+	vec4f size = 0.5f * (max - min);
+	vec4f x = base[0];
+	vec4f y = base[1];
+	vec4f z = base[2];
 
-	glm::vec4 result = base * (0.5f * (max + min));
-	result += glm::dot(x, direction) > 0.f ? size.x * x : -(size.x) * x;
-	result += glm::dot(y, direction) > 0.f ? size.y * y : -(size.y) * y;
-	result += glm::dot(z, direction) > 0.f ? size.z * z : -(size.z) * z;
+	vec4f result = base * (0.5f * (max + min));
+	result += vec4f::dot(x, direction) > 0.f ? size.x * x : -(size.x) * x;
+	result += vec4f::dot(y, direction) > 0.f ? size.y * y : -(size.y) * y;
+	result += vec4f::dot(z, direction) > 0.f ? size.z * z : -(size.z) * z;
 
 	return result;
 }
-void OrientedBox::getFacingFace(const glm::vec4& direction, std::vector<glm::vec4>& points) const
+void OrientedBox::getFacingFace(const vec4f& direction, std::vector<vec4f>& points) const
 {
-	glm::vec4 center = base * (0.5f * (max + min));
-	glm::vec4 size = 0.5f * (max - min);
-	glm::vec4 x = base[0];  float dotx = glm::dot(x, direction);
-	glm::vec4 y = base[1];  float doty = glm::dot(y, direction);
-	glm::vec4 z = base[2];  float dotz = glm::dot(z, direction);
-	glm::vec4 u = glm::abs(glm::vec4(dotx, doty, dotz, 0));
+	vec4f center = base * (0.5f * (max + min));
+	vec4f size = 0.5f * (max - min);
+	vec4f x = base[0];  float dotx = vec4f::dot(x, direction);
+	vec4f y = base[1];  float doty = vec4f::dot(y, direction);
+	vec4f z = base[2];  float dotz = vec4f::dot(z, direction);
+	vec4f u = vec4f::abs(vec4f(dotx, doty, dotz, 0));
 
-	glm::vec4 a2, a3;
+	vec4f a2, a3;
 	if (u.x > u.y && u.x > u.z)
 	{
 		center += dotx > 0.f ? size.x * x : -size.x * x;
@@ -100,12 +110,13 @@ void OrientedBox::getFacingFace(const glm::vec4& direction, std::vector<glm::vec
 	points.push_back(center - a2 - a3);
 	points.push_back(center - a2 + a3);
 }
-glm::mat3 OrientedBox::computeInertiaMatrix() const
+mat4f OrientedBox::computeInertiaMatrix() const
 {
-	glm::vec4 size = 0.5f * (max - min);
-	glm::mat3 M(0.f);
+	vec4f size = 0.5f * (max - min);
+	mat4f M(0.f);
 	M[0][0] = 1.f / 12.f * (size.y * size.y + size.z * size.z);
 	M[1][1] = 1.f / 12.f * (size.x * size.x + size.z * size.z);
 	M[2][2] = 1.f / 12.f * (size.x * size.x + size.y * size.y);
+	M[3][3] = 1.f;
 	return M;
 }

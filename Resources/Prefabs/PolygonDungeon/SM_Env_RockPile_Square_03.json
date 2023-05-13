@@ -1,0 +1,7 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Env_RockPile_Square_03",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": []
+}

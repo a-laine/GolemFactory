@@ -6,11 +6,12 @@
 #include <tuple>
 #include <string>
 
-#include <glm/glm.hpp>
+//#include <glm/glm.hpp>
+#include "Math/TMath.h"
 #include <assimp/scene.h>
 
-#include <Resources/Joint.h>
-#include <Resources/IResourceLoader.h>
+#include "Resources/Joint.h"
+#include "Resources/IResourceLoader.h"
 
 
 class AssimpLoader : public IResourceLoader
@@ -40,8 +41,8 @@ class AssimpLoader : public IResourceLoader
 
     private:
         //	Temporary loading structures
-        typedef std::tuple<float, std::string, glm::vec3>  tupleVec3;
-        typedef std::tuple<float, std::string, glm::fquat> tupleQuat;
+        typedef std::tuple<float, std::string, vec4f>  tupleVec3;
+        typedef std::tuple<float, std::string, quatf> tupleQuat;
         typedef std::list<tupleVec3> BidirectionnalVectorMap;
         typedef std::list<tupleQuat> BidirectionnalQuaternionMap;
         //
@@ -62,16 +63,16 @@ class AssimpLoader : public IResourceLoader
         ResourceType firstResource;
 
 
-        std::vector<glm::vec3> vertices;
-        std::vector<glm::vec3> normales;
-        std::vector<glm::vec3> colors;
-        std::vector<glm::ivec3> bones;
-        std::vector<glm::vec3> weights;
+        std::vector<vec4f> vertices;
+        std::vector<vec4f> normales;
+        std::vector<vec4f> uvs;
+        std::vector<vec4i> bones;
+        std::vector<vec4f> weights;
         std::vector<unsigned short> faces;
 
         std::map<std::string, int> boneMap;
 
-        glm::mat4 globalMatrix;
+        mat4f globalMatrix;
         std::vector<unsigned int> roots;
         std::vector<Joint> joints;
 

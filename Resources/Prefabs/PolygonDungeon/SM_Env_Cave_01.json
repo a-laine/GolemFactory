@@ -1,0 +1,7 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Env_Cave_01",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": []
+}

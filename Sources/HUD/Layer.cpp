@@ -10,20 +10,20 @@ Layer::~Layer() {}
 //	Public functions
 void Layer::update(const float& elapseTime)
 {
-	glm::vec3 direction = targetPosition - position;
-	if (glm::length(direction) > SPEED)
-		position += SPEED * glm::normalize(direction);
+	vec4f direction = targetPosition - position;
+	if (direction.getNorm() > SPEED)
+		position += SPEED * direction.getNormal();
 	else position = targetPosition;
 
-	if (glm::length(position - targetPosition) < SPEED && targetPosition != screenPosition)
+	if ((position - targetPosition).getNorm() < SPEED && targetPosition != screenPosition)
 		configuration &= ~VISIBLE;
 }
 //
 
 //  Set/get functions
-void Layer::setPosition(const glm::vec3& p) { position = p; }
-void Layer::setScreenPosition(const glm::vec3& p) { screenPosition = p; }
-void Layer::setTargetPosition(const glm::vec3& p) { targetPosition = p; }
+void Layer::setPosition(const vec4f& p) { position = p; }
+void Layer::setScreenPosition(const vec4f& p) { screenPosition = p; }
+void Layer::setTargetPosition(const vec4f& p) { targetPosition = p; }
 void Layer::setSize(const float& s) { size = s; }
 void Layer::setOrientation(const float& yaw, const float& pitch, const float& roll)
 {
@@ -51,17 +51,17 @@ void Layer::setConfiguration(const uint8_t& config)
 bool Layer::isVisible() const { return (configuration & VISIBLE) != 0; }
 bool Layer::isResponsive() const { return (configuration & RESPONSIVE) != 0; }
 float Layer::getSize() const { return size; }
-glm::mat4 Layer::getModelMatrix() const
+mat4f Layer::getModelMatrix() const
 {
-	glm::mat4 model = glm::rotate(glm::pi<float>(), glm::vec3(0, 0, 1));			//	begin to rotate 180 degres to have x axis in good direction (left to right)
-	model = glm::translate(model, position);										//	go to position
-	model = model * glm::eulerAngleYXZ(eulerAngle.y, eulerAngle.x, eulerAngle.z);	//	add orientation
-	model = glm::scale(model, glm::vec3(size, size, size));				//	change scale
+	mat4f model = mat4f::rotate(mat4f::identity, vec3f(0, 0, PI));			//	begin to rotate 180 degres to have x axis in good direction (left to right)
+	model = mat4f::translate(model, position);										//	go to position
+	model = mat4f::rotate(model, eulerAngle);	//	add orientation
+	model = mat4f::scale(model, vec4f(size, size, size, 1.f));				//	change scale
 	return model;
 }
-glm::vec3 Layer::getPosition() const { return position; }
-glm::vec3 Layer::getScreenPosition() const { return screenPosition; }
-glm::vec3 Layer::getTargetPosition() const { return targetPosition; }
+vec4f Layer::getPosition() const { return position; }
+vec4f Layer::getScreenPosition() const { return screenPosition; }
+vec4f Layer::getTargetPosition() const { return targetPosition; }
 std::vector<WidgetVirtual*>& Layer::getChildrenList() { return children; }
 //
 

@@ -32,7 +32,8 @@ class ShaderLoader : public IResourceLoader
                 tessEvalShader,
                 program;
         std::map<std::string, std::string> attributesType;
-        std::vector<std::string> textures;
+        std::vector<std::string> textureNames;
+        std::vector<Texture*> textureResources;
         //
 
     private:

@@ -38,8 +38,11 @@
 #include <limits>
 #include <cstddef>
 
+
 namespace glm
 {
+	//template <typename T, precision P> class tquat<T, P>;
+
 	template <typename T, precision P = defaultp>
 	struct tmat4x4
 	{
@@ -164,7 +167,30 @@ namespace glm
 		GLM_FUNC_DECL tmat4x4<T, P> & operator--();
 		GLM_FUNC_DECL tmat4x4<T, P> operator++(int);
 		GLM_FUNC_DECL tmat4x4<T, P> operator--(int);
+
+		// personal extension
+		GLM_FUNC_DECL explicit tmat4x4(tquat<T, P> const& q);
+
+		T det() const;
+		tquat<T, P> extractRotation() const;
+
+		static tmat4x4<T, P> translate(const tmat4x4<T, P>& m, const tvec4<T, P>& t);
+		static tmat4x4<T, P> scale(const tmat4x4<T, P>& m, const tvec4<T, P>& s);
+		static tmat4x4<T, P> rotate(const tmat4x4<T, P>& m, const tquat<T, P>& q);
+		static tmat4x4<T, P> rotate(const tmat4x4<T, P>& m, const tvec3<T, P> euler);
+		static tmat4x4<T, P> TRS(const tvec4<T, P>& t, const tquat<T, P>& q, const tvec4<T, P>& s);
+		static tmat4x4<T, P> fromTo(const tvec4<T, P>& from, const tvec4<T, P>& to);
+		static tmat4x4<T, P> lookAt(const tvec4<T, P>& forward, tvec4<T, P> up = tvec4<T, P>(0, 1, 0, 0));
+		static tmat4x4<T, P> inverse(const tmat4x4<T, P>& m);
+		static tmat4x4<T, P> transpose(const tmat4x4<T, P>& m);
+		static tmat4x4<T, P> perspective(T fovy, T aspect, T zNear, T zFar);
+		static tmat4x4<T, P> eulerAngleZX(T z, T x);
+
+		static tmat4x4<T, P> identity;
 	};
+
+	template <typename T, precision P>
+	tmat4x4<T, P> tmat4x4<T, P>::identity = tmat4x4<T, P>(T(1));
 
 	// -- Unary operators --
 

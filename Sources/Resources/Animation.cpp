@@ -72,11 +72,11 @@ void Animation::clear()
     }
 }
 
-std::vector<glm::mat4> Animation::getKeyPose(const unsigned int& keyFrame, const std::vector<unsigned int>& roots, const std::vector<Joint>& hierarchy) const
+std::vector<mat4f> Animation::getKeyPose(const unsigned int& keyFrame, const std::vector<unsigned int>& roots, const std::vector<Joint>& hierarchy) const
 {
-	std::vector<glm::mat4> pose(timeLine[0].poses.size(), glm::mat4(1.f));
+	std::vector<mat4f> pose(timeLine[0].poses.size(), mat4f(1.f));
 	for (unsigned int i = 0; i < roots.size() && keyFrame < timeLine.size(); i++)
-		computePose(keyFrame, pose, glm::mat4(1.f), roots[i], hierarchy);
+		computePose(keyFrame, pose, mat4f(1.f), roots[i], hierarchy);
 	return pose;
 }
 std::pair<int, int> Animation::getBoundingKeyFrameIndex(float time) const
@@ -117,13 +117,13 @@ void Animation::setDefaultName(const std::string& name) { defaultName = name; }
 //
 
 //	Protected functions
-void Animation::computePose(const unsigned int& keyFrame, std::vector<glm::mat4>& pose, const glm::mat4& parentPose, unsigned int joint, const std::vector<Joint>& hierarchy) const
+void Animation::computePose(const unsigned int& keyFrame, std::vector<mat4f>& pose, const mat4f& parentPose, unsigned int joint, const std::vector<Joint>& hierarchy) const
 {
-	glm::mat4 t = glm::translate(timeLine[keyFrame].poses[joint].position);
-	glm::mat4 r = glm::toMat4(timeLine[keyFrame].poses[joint].rotation);
-	glm::mat4 s = glm::scale(timeLine[keyFrame].poses[joint].scale);
+	mat4f t = mat4f::translate(mat4f::identity, timeLine[keyFrame].poses[joint].position);
+    mat4f r = mat4f(timeLine[keyFrame].poses[joint].rotation);
+    mat4f s = mat4f::scale(mat4f::identity, timeLine[keyFrame].poses[joint].scale);
 
-	pose[joint] = parentPose *t * r * s;
+	pose[joint] = parentPose * t * r * s;
 	for (unsigned int i = 0; i < hierarchy[joint].sons.size(); i++)
 		computePose(keyFrame, pose, pose[joint], hierarchy[joint].sons[i], hierarchy);
 }

@@ -1,0 +1,52 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Prop_Toture_IronMaiden_01",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": [
+        {
+            "name": "SM_Prop_Toture_IronMaiden_Door_L",
+            "id": 0,
+            "position": [
+                -0.4990708827972412,
+                0.8047383427619934,
+                -0.0022498369216918947
+            ],
+            "rotation": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+            ],
+            "scale": 1.0,
+            "prefabName": "",
+            "childs": [],
+            "drawableComponent": {
+                "meshName": "SM_Prop_Toture_IronMaiden_Door_L",
+                "shaderName": "defaultTextured"
+            }
+        },
+        {
+            "name": "SM_Prop_Toture_IronMaiden_Door_R",
+            "id": 1,
+            "position": [
+                0.5705177783966065,
+                0.8047383427619934,
+                -0.0022498369216918947
+            ],
+            "rotation": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+            ],
+            "scale": 1.0,
+            "prefabName": "",
+            "childs": [],
+            "drawableComponent": {
+                "meshName": "SM_Prop_Toture_IronMaiden_Door_R",
+                "shaderName": "defaultTextured"
+            }
+        }
+    ]
+}

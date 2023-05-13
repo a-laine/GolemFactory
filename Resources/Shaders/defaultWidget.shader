@@ -15,7 +15,7 @@ DefaultWidget
 		#version 330
 
 		// input
-		layout(location = 0) in vec3 position;
+		layout(location = 0) in vec4 position;
 		layout(location = 1) in vec2 textures;
 
 		//	uniform
@@ -29,7 +29,7 @@ DefaultWidget
 		// program
 		void main()
 		{
-			gl_Position = projection * view * model * vec4(position, 1.0);
+			gl_Position = projection * view * model * position;
 			textureCoord0 = textures;
 		}
 	};

@@ -133,6 +133,9 @@
     <Filter Include="Fichiers d%27en-tête\Physics\SpecificIntersection">
       <UniqueIdentifier>{bed551a6-8807-422a-b14a-3cf31b1c20d1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Fichiers d%27en-tête\Math">
+      <UniqueIdentifier>{abbcb74b-fb51-4b33-8210-4d9072c4f174}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\Sources\Animation\AnimationComponent.cpp">
@@ -802,6 +805,51 @@
     </ClInclude>
     <ClInclude Include="..\..\Sources\Physics\Shapes\ShapeCacheContainer.h">
       <Filter>Fichiers d%27en-tête\Physics\Shapes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Math\TMath.h">
+      <Filter>Fichiers d%27en-tête\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Math\Tmat3.h">
+      <Filter>Fichiers d%27en-tête\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Math\Tmat3.hpp">
+      <Filter>Fichiers d%27en-tête\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Math\Ttypes.h">
+      <Filter>Fichiers d%27en-tête\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Math\Tvec2.h">
+      <Filter>Fichiers d%27en-tête\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Math\Tvec2.hpp">
+      <Filter>Fichiers d%27en-tête\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Math\Tvec3.h">
+      <Filter>Fichiers d%27en-tête\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Math\Tvec3.hpp">
+      <Filter>Fichiers d%27en-tête\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Math\Tvec4.h">
+      <Filter>Fichiers d%27en-tête\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Math\Tvec4.hpp">
+      <Filter>Fichiers d%27en-tête\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Math\Tmat4.h">
+      <Filter>Fichiers d%27en-tête\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Math\Tmat4.hpp">
+      <Filter>Fichiers d%27en-tête\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Math\Tquat.h">
+      <Filter>Fichiers d%27en-tête\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Math\Tquat.hpp">
+      <Filter>Fichiers d%27en-tête\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\EntityComponent\EntityFlags.h">
+      <Filter>Fichiers d%27en-tête\EntityComponent</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

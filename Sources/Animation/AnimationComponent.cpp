@@ -121,9 +121,9 @@ void AnimationComponent::blendAnimations(std::vector<JointPose>& result)
 		//	interpolate between the two highest priority animation track or just get the highest one
 		if(ph - (int) ph > 0.f && pl > 0.f && ph - pl < 1.f)
 		{
-			result[i].position = glm::mix(pl_it->pose[i].position, ph_it->pose[i].position, ph - pl);
-			result[i].rotation = glm::slerp(pl_it->pose[i].rotation, ph_it->pose[i].rotation, ph - pl);
-			result[i].scale = glm::mix(pl_it->pose[i].scale, ph_it->pose[i].scale, ph - pl);
+			result[i].position = vec4f::lerp(pl_it->pose[i].position, ph_it->pose[i].position, ph - pl);
+			result[i].rotation = quatf::slerp(pl_it->pose[i].rotation, ph_it->pose[i].rotation, ph - pl);
+			result[i].scale = vec4f::lerp(pl_it->pose[i].scale, ph_it->pose[i].scale, ph - pl);
 			pl_it->jointCounter++;
 			ph_it->jointCounter++;
 			pl_it->uselessTime = 0.f;
@@ -193,10 +193,10 @@ bool AnimationComponent::AnimationTrack::animate(const float& step, const Animat
 	float t = time / (animationSet[next].time - animationSet[previous].time);
 	for(unsigned int i = 0; i < pose.size(); i++)
 	{
-		pose[i].priority = glm::mix(animationSet[previous].poses[i].priority, animationSet[next].poses[i].priority, t);
-		pose[i].position = glm::mix(animationSet[previous].poses[i].position, animationSet[next].poses[i].position, t);
-		pose[i].rotation = glm::slerp(animationSet[previous].poses[i].rotation, animationSet[next].poses[i].rotation, t);
-		pose[i].scale = glm::mix(animationSet[previous].poses[i].scale, animationSet[next].poses[i].scale, t);
+		pose[i].priority = lerp(animationSet[previous].poses[i].priority, animationSet[next].poses[i].priority, t);
+		pose[i].position = vec4f::lerp(animationSet[previous].poses[i].position, animationSet[next].poses[i].position, t);
+		pose[i].rotation = quatf::slerp(animationSet[previous].poses[i].rotation, animationSet[next].poses[i].rotation, t);
+		pose[i].scale = vec4f::lerp(animationSet[previous].poses[i].scale, animationSet[next].poses[i].scale, t);
 	}
 	return false;
 }

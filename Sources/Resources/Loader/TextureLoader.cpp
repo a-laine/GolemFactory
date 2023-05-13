@@ -89,7 +89,7 @@ bool TextureLoader::load(const std::string& resourceDirectory, const std::string
             if (!textureData) throw std::runtime_error("fail loading 2D texture");
             isImage = true;
 
-            size = glm::vec3((float)x, (float)y, 0.f);
+            size = vec3f((float)x, (float)y, 0.f);
         }
         else if (textureInfo["texture"].getType() == Variant::ARRAY && textureInfo["texture"][0].getType() == Variant::STRING)//texture=["a.png","b.png"];
         {
@@ -186,7 +186,8 @@ std::string TextureLoader::getFileName(const std::string& resourceDirectory, con
     std::string str = resourceDirectory;
     str += Texture::directory;
     str += fileName;
-    str += Texture::extension;
+    if (fileName.find('.') == std::string::npos)
+        str += Texture::extension;
     return str;
 }
 

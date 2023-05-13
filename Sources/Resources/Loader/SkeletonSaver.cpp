@@ -42,7 +42,7 @@ void SkeletonSaver::save(Skeleton* skeleton, const std::string& resourcesPath, s
 			jointVariant["sons"].getArray().push_back(Variant(jointList[jointList[i].sons[j]].name));
 
 		//	create bind matrix array
-		jointVariant.insert("relativeBindTransform", ToolBox::getFromMat4(jointList[i].relativeBindTransform));
+		jointVariant.insert("relativeBindTransform", ToolBox::getFromMat4f(jointList[i].relativeBindTransform));
 	}
 
 	//	save into file

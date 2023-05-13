@@ -15,11 +15,11 @@ Skinning
 		#define MAX_SKELETON_BONE 32
 
 		// input
-		layout(location = 0) in vec3 position;
-		layout(location = 1) in vec3 normal;
-		layout(location = 2) in vec3 vertexcolor;
-		layout(location = 3) in ivec3 boneIDs;
-		layout(location = 4) in vec3 weights;
+		layout(location = 0) in vec4 position;
+		layout(location = 1) in vec4 normal;
+		layout(location = 2) in vec4 vertexcolor;
+		layout(location = 3) in ivec4 boneIDs;
+		layout(location = 4) in vec4 weights;
 
 		uniform mat4 model;			// model matrix (has to be present at this location)
 		uniform mat4 view;			// view matrix
@@ -29,9 +29,9 @@ Skinning
 		uniform mat4 inverseBindPose[MAX_SKELETON_BONE]; 		// vertex to bone transformation matrix
 
 		// output
-		out vec3 lightDirectionCameraSpace;
-		out vec3 fragmentNormal;
-		out vec3 fragmentColor;
+		out vec4 lightDirectionCameraSpace;
+		out vec4 fragmentNormal;
+		out vec4 fragmentColor;
 
 		vec4 lightPositionWorldSpace = vec4(1000,200,1500,1);
 
@@ -42,16 +42,17 @@ Skinning
 			mat4 boneTransform  = skeletonPose[boneIDs.x] * inverseBindPose[boneIDs.x] * weights.x;
 			boneTransform += skeletonPose[boneIDs.y] * inverseBindPose[boneIDs.y] * weights.y;
 			boneTransform += skeletonPose[boneIDs.z] * inverseBindPose[boneIDs.z] * weights.z;
-			vec4 transformPosition = boneTransform * vec4(position, 1.0);
+			boneTransform += skeletonPose[boneIDs.w] * inverseBindPose[boneIDs.w] * weights.w;
+			vec4 transformPosition = boneTransform * position;
 			
 			// end
 			gl_Position = projection * view * model * transformPosition;
-			fragmentNormal = (view * model * boneTransform * vec4(normal,0.0)).xyz;
+			fragmentNormal = view * model * boneTransform * normal;
 			normalize(fragmentNormal);
 			fragmentColor = vertexcolor;
 			
-			vec3 eyeDirectionCameraSpace = - ( view * model * transformPosition).xyz;
-			vec3 lightPositionCameraSpace = (view * lightPositionWorldSpace).xyz;
+			vec4 eyeDirectionCameraSpace = -(view * model * transformPosition);
+			vec4 lightPositionCameraSpace = view * lightPositionWorldSpace;
 			lightDirectionCameraSpace = lightPositionCameraSpace + eyeDirectionCameraSpace;
 		}
 	};
@@ -60,12 +61,12 @@ Skinning
 		#version 330
 
 		// input
-		in vec3 lightDirectionCameraSpace;
-		in vec3 fragmentNormal;
-		in vec3 fragmentColor;
+		in vec4 lightDirectionCameraSpace;
+		in vec4 fragmentNormal;
+		in vec4 fragmentColor;
 
 		// output
-		layout (location = 0) out vec3 fragColor;
+		layout (location = 0) out vec4 fragColor;
 
 
 		// program
@@ -73,6 +74,7 @@ Skinning
 		{
 			float costeta = clamp( dot(normalize(fragmentNormal), normalize(lightDirectionCameraSpace)), 0,1 );
 			fragColor = fragmentColor * (0.5*costeta +0.9);
+			fragColor.w = 1.0;
 		}
 	};
 }

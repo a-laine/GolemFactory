@@ -1,0 +1,7 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Prop_Cauldron_01",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": []
+}

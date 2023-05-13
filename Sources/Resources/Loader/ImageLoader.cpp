@@ -38,7 +38,7 @@ bool ImageLoader::load(const std::string& resourceDirectory, const std::string& 
         return false;
     }
 
-    size = glm::vec3((float) x, (float) y, 0.f);
+    size = vec3f((float) x, (float) y, 0.f);
 	return true;
 }
 

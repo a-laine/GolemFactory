@@ -145,7 +145,22 @@ namespace glm
 		GLM_FUNC_DECL tquat<T, P> & operator*=(U s);
 		template <typename U>
 		GLM_FUNC_DECL tquat<T, P> & operator/=(U s);
+
+
+		// personal extension
+		void normalize();
+		tvec3<T, P> xyz() const;
+		tvec4<T, P> xyzw() const;
+
+		static tquat<T, P> lookAt(const tvec4<T, P>& forward, tvec4<T, P> up = tvec4<T, P>(0, 1, 0, 0));
+		static tquat<T, P> slerp(const tquat<T, P>& a, const tquat<T, P>& b, const T& t);
+
+		static tquat<T, P> identity;
 	};
+
+
+	template <typename T, precision P>
+	tquat<T, P> tquat<T, P>::identity = tquat<T, P>(1, 0, 0, 0);
 
 	// -- Unary bit operators --
 

@@ -1,0 +1,7 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Env_Wall_Curved_Roof_01",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": []
+}

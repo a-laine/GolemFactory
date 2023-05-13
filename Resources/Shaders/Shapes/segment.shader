@@ -6,9 +6,9 @@ Segment
 		view : "mat4";
 		projection : "mat4";
 		
-		vector : "vec3";
+		vector : "vec4";
 		
-		overrideColor : "vec3";
+		overrideColor : "vec4";
 	};
 	
 	vertex :   "Shapes/point.vs";
@@ -25,17 +25,17 @@ Segment
 		uniform mat4 view; 		// view matrix
 		uniform mat4 projection;// projection matrix
 
-		uniform vec3 vector = vec3(0.0 , 0.0 , 0.0);
+		uniform vec4 vector = vec4(0.0 , 0.0 , 0.0 , 0.0);
 
-		in vec3 fragmentColor[];
-		out vec3 fragmentColor1;
+		in vec4 fragmentColor[];
+		out vec4 fragmentColor1;
 
 		//	program
 		void main()
 		{
 			//	create alias
 			vec3 p1 = (model * gl_in[0].gl_Position).xyz;
-			vec3 p2 = p1 + vector;
+			vec3 p2 = p1 + vector.xyz;
 			
 			//	draw segment
 			gl_Position = projection * view * vec4(p1 , 1.0);

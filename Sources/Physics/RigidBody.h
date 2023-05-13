@@ -45,14 +45,14 @@ class RigidBody : public Component
 		void setMass(const float& m);
 		void setGravityFactor(const float& f);
 
-		void setExternalForces(const glm::vec4& f);
-		void setExternalTorques(const glm::vec4& t);
-		void setLinearAcceleration(const glm::vec4& a);
-		void setAngularAcceleration(const glm::vec4& a);
-		void setLinearVelocity(const glm::vec4& v);
-		void setAngularVelocity(const glm::vec4& v);
-		void setPosition(const glm::vec4& p);
-		void setOrientation(const glm::fquat& q);
+		void setExternalForces(const vec4f& f);
+		void setExternalTorques(const vec4f& t);
+		void setLinearAcceleration(const vec4f& a);
+		void setAngularAcceleration(const vec4f& a);
+		void setLinearVelocity(const vec4f& v);
+		void setAngularVelocity(const vec4f& v);
+		void setPosition(const vec4f& p);
+		void setOrientation(const quatf& q);
 
 		void setBouncyness(const float& b);
 		void setFriction(const float& f);
@@ -63,28 +63,32 @@ class RigidBody : public Component
 		RigidBodyType getType() const;
 		float getMass() const;
 		float getInverseMass() const;
-		const glm::mat3& getInertia() const;
-		const glm::mat3& getInverseInertia() const;
+		const mat4f& getInertia() const;
+		const mat4f& getInverseInertia() const;
 		float getGravityFactor() const;
 		float getFriction() const;
 		float getDamping() const;
 
-		glm::vec4 getExternalForces() const;
-		glm::vec4 getExternalTorques() const;
-		glm::vec4 getLinearAcceleration() const;
-		glm::vec4 getAngularAcceleration() const;
-		glm::vec4 getLinearVelocity() const;
-		glm::vec4 getAngularVelocity() const;
-		glm::vec4 getPosition() const;
-		glm::fquat getOrientation() const;
+		vec4f getExternalForces() const;
+		vec4f getExternalTorques() const;
+		vec4f getLinearAcceleration() const;
+		vec4f getAngularAcceleration() const;
+		vec4f getLinearVelocity() const;
+		vec4f getAngularVelocity() const;
+		vec4f getPosition() const;
+		quatf getOrientation() const;
 		//
 
 		//
 		bool isResting() const;
-		glm::vec4 computeLocalPoint(glm::vec4 worldPoint) const;
-		glm::vec4 computeLocalDirection(glm::vec4 worldDirection) const;
-		glm::vec4 computeWorldDirection(glm::vec4 localDirection) const;
+		vec4f computeLocalPoint(vec4f worldPoint);
+		vec4f computeLocalDirection(vec4f worldDirection);
+		vec4f computeWorldDirection(vec4f localDirection);
 		//
+
+		void onDrawImGui() override;
+		void onAddToEntity(Entity* entity) override;
+		void drawColliders(vec4f color) const;
 
 	protected:
 		//	Attributes
@@ -98,23 +102,27 @@ class RigidBody : public Component
 		float damping;
 
 		float mass;
-		glm::mat3 inertia;
-		glm::mat3 inverseInertia;
+		mat4f inertia;
+		mat4f inverseInertia;
 
-		glm::vec4 externalForces;
-		glm::vec4 externalTorques;
-		glm::vec4 linearAcceleration;
-		glm::vec4 angularAcceleration;
-		glm::vec4 linearVelocity;
-		glm::vec4 angularVelocity;
+		vec4f externalForces;
+		vec4f externalTorques;
+		vec4f linearAcceleration;
+		vec4f angularAcceleration;
+		vec4f linearVelocity;
+		vec4f angularVelocity;
 		//
 
 	private:
 		//	Internal (used by Physics engine)
 		AxisAlignedBox sweptBox;
-		glm::vec4 previousPosition;
-		glm::fquat previousOrientation;
+		vec4f previousPosition;
+		quatf previousOrientation;
 
 		std::vector<Component*> colliders;
 		std::vector<Shape*> worldShapes;
+
+#ifdef USE_IMGUI
+		bool m_drawColliders = false;
+#endif
 };

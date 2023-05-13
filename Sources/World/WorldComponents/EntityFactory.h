@@ -2,8 +2,11 @@
 
 #include <string>
 #include <vector>
-#include <glm/glm.hpp>
-#include <glm/gtc/quaternion.hpp>
+#include <map>
+//#include <glm/glm.hpp>
+//#include <glm/gtc/quaternion.hpp>
+#include "Math/TMath.h"
+#include <Utiles/Parser/Reader.h>
 
 
 class World;
@@ -15,18 +18,27 @@ class EntityFactory
 	public:
 		explicit EntityFactory(World* parentWorld);
 
+		Entity* createEntity();
+
 		template<typename Callback>
 		Entity* createObject(const std::string& type, Callback cb);
-		Entity* createObject(const std::string& type, const glm::vec4& position, const glm::vec3& scale = glm::vec3(1.f), const glm::quat& orientation = glm::quat(), const std::string& name = "unknown");
+		Entity* createObject(const std::string& type, const vec4f& position, const float& scale = 1.f, const quatf& orientation = quatf::identity, const std::string& name = "unknown");
 
 		template<typename Callback>
 		Entity* createObject(Callback cb);
 		template<typename Callback>
 		Entity* createObject(const std::vector<Component*>& components, Callback cb);
-		Entity* createObject(const std::vector<Component*>& components, const glm::vec4& position, const glm::vec3& scale = glm::vec3(1.f), const glm::quat& orientation = glm::quat(), const std::string& name = "unknown");
+		Entity* createObject(const std::vector<Component*>& components, const vec4f& position, const float& scale = 1.f, const quatf& orientation = quatf::identity, const std::string& name = "unknown");
+
+		bool addPrefab(std::string prefabName, Entity* prefabObject);
+		bool removePrefab(std::string prefabName);
+		bool containPrefab(std::string prefabName);
+		bool loadPrefab(const std::string& resourceDirectory, const std::string& assetPackName, const std::string& fileName);
+		Entity* instantiatePrefab(std::string prefabName, bool _addToScene = false);
+
+		void tryLoadComponents(Entity* object, Variant* variant, const std::string& assetPackName);
 
 	private:
-		Entity* createEntity();
 		Entity* createByType(const std::string& type);
 
 		void addToScene(Entity* object);
@@ -36,7 +48,9 @@ class EntityFactory
 		
 		void addComponents(Entity* object, const std::vector<Component*>& components);
 
+
 		World* world;
+		std::map<std::string, Entity*> prefabs;
 };
 
 

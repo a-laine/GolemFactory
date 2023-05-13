@@ -1,0 +1,30 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Prop_Chest_Wood_01",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": [
+        {
+            "name": "SM_Prop_Chest_Wood_Lid",
+            "id": 0,
+            "position": [
+                0.01178000122308731,
+                0.41633424162864687,
+                -0.38168811798095705
+            ],
+            "rotation": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+            ],
+            "scale": 1.0,
+            "prefabName": "",
+            "childs": [],
+            "drawableComponent": {
+                "meshName": "SM_Prop_Chest_Wood_Lid",
+                "shaderName": "defaultTextured"
+            }
+        }
+    ]
+}

@@ -99,11 +99,11 @@ void WidgetManager::loadHud(const std::string& hudName)
 				}
 				else
 				{
-					glm::vec3 direction = layer->getScreenPosition();
-					if (direction == glm::vec3(0.f)) 
-						direction = glm::vec3(0.f, 0.f, 1.f);
+					vec4f direction = layer->getScreenPosition();
+					if (direction == vec4f::zero)
+						direction = vec4f(0.f, 0.f, 1.f, 0.f);
 					else
-						direction = glm::normalize(direction);
+						direction.normalize();
 					layer->setTargetPosition(layer->getScreenPosition() + 0.1f * direction);
 					layer->setPosition(layer->getScreenPosition() + 0.1f * direction);
 				}
@@ -129,11 +129,11 @@ void WidgetManager::loadHud(const std::string& hudName)
 			continue;
 		for (unsigned int i = 0; i < it->second.size(); i++)
 		{
-			glm::vec3 direction = it->second[i]->getScreenPosition();
-			if (direction == glm::vec3(0.f)) 
-				direction = glm::vec3(0.f, 0.f, 1.f);
+			vec4f direction = it->second[i]->getScreenPosition();
+			if (direction == vec4f::zero)
+				direction = vec4f(0.f, 0.f, 1.f, 0.f);
 			else
-				direction = glm::normalize(direction);
+				direction.normalize();
 			it->second[i]->setTargetPosition(it->second[i]->getScreenPosition() + 0.1f * direction);
 			it->second[i]->setPosition(it->second[i]->getScreenPosition() + 0.1f * direction);
 		}
@@ -167,20 +167,20 @@ void WidgetManager::update(const float& elapsedTime, const bool& clickButtonPres
 	//	picking
 	std::map<WidgetVirtual*, Layer*> tmpParentList;
 	std::set<WidgetVirtual*> tmpWidgetList;
-	if (pickingRay != glm::vec3(0.f))
+	if (pickingRay != vec4f::zero)
 	{
 		//	draw all widget in hudList
 		for (std::map<std::string, std::vector<Layer*> >::iterator it = hudList.begin(); it != hudList.end(); ++it)
 			for (unsigned int i = 0; i < it->second.size(); i++)
 				if (it->second[i]->isVisible())		// layer visible
 				{
-					glm::mat4 model = pickingBase * it->second[i]->getModelMatrix();
+					mat4f model = pickingBase * it->second[i]->getModelMatrix();
 					std::vector<WidgetVirtual*>& list = it->second[i]->getChildrenList();
 					for (std::vector<WidgetVirtual*>::iterator it2 = list.begin(); it2 != list.end(); ++it2)
 					{
 						if ((*it2)->isVisible())	// widget visible
 						{
-							if ((*it2)->intersect(glm::translate(model, (*it2)->getPosition()), pickingRay))
+							if ((*it2)->intersect(mat4f::translate(model, (*it2)->getPosition()), pickingRay))
 							{
 								tmpWidgetList.insert(*it2);
 								tmpParentList[*it2] = it->second[i];
@@ -210,8 +210,8 @@ void WidgetManager::update(const float& elapsedTime, const bool& clickButtonPres
 	if (clickButtonPressed)
 		for (std::set<WidgetVirtual*>::iterator it = hoverWidgetList.begin(); it != hoverWidgetList.end(); ++it)
 		{
-			glm::mat4 model = pickingBase * tmpParentList[*it]->getModelMatrix();
-			if((*it)->mouseEvent(glm::translate(model, (*it)->getPosition()), pickingRay, tmpParentList[*it]->getSize(), clickButtonPressed))
+			mat4f model = pickingBase * tmpParentList[*it]->getModelMatrix();
+			if((*it)->mouseEvent(mat4f::translate(model, (*it)->getPosition()), pickingRay, tmpParentList[*it]->getSize(), clickButtonPressed))
 			{
 				activeWidgetList.insert(*it);
 				activeWidgetParentList[*it] = tmpParentList[*it];
@@ -222,7 +222,7 @@ void WidgetManager::update(const float& elapsedTime, const bool& clickButtonPres
 	std::set<WidgetVirtual*> inactiveWidgetList;
 	for (std::set<WidgetVirtual*>::iterator it = activeWidgetList.begin(); it != activeWidgetList.end(); ++it)
 	{
-		if(!(*it)->mouseEvent(glm::translate(pickingBase * activeWidgetParentList[*it]->getModelMatrix(), 
+		if(!(*it)->mouseEvent(mat4f::translate(pickingBase * activeWidgetParentList[*it]->getModelMatrix(),
 			(*it)->getPosition()), pickingRay, activeWidgetParentList[*it]->getSize(), clickButtonPressed))
 		{
 			if (hoverWidgetList.find(*it) == hoverWidgetList.end())
@@ -380,17 +380,19 @@ void WidgetManager::setActiveHUD(const std::string& name)
 	{
 		for (unsigned int i = 0; i < it->second.size(); i++)
 		{
-			glm::vec3 direction = it->second[i]->getScreenPosition();
-			if (direction == glm::vec3(0.f))
-				direction = glm::vec3(0.f, 0.f, 1.f);
-			it->second[i]->setTargetPosition(it->second[i]->getScreenPosition() + 0.1f * glm::normalize(direction));
+			vec4f direction = it->second[i]->getScreenPosition();
+			if (direction == vec4f::zero)
+				direction = vec4f(0.f, 0.f, 1.f, 0.f);
+			else
+				direction.normalize();
+			it->second[i]->setTargetPosition(it->second[i]->getScreenPosition() + 0.1f * direction);
 		}
 	}
 
 	//	swap
 	activeHud = name;
 }
-void WidgetManager::setPickingParameters(const glm::mat4& base, const glm::vec3& ray)
+void WidgetManager::setPickingParameters(const mat4f& base, const vec4f& ray)
 {
 	pickingRay = ray;
 	pickingBase = base;
@@ -413,7 +415,7 @@ const std::vector<std::string>* WidgetManager::getWidgetAssociations(WidgetVirtu
 
 
 //	Callbacks functions
-void WidgetManager::resizeCallback(int w, int h)
+void WidgetManager::resizeCallback(GLFWwindow* window, int w, int h)
 {
 	float viewportRatio = (float) w / h;
 	std::map<std::string, std::vector<Layer*> >& hudList = WidgetManager::getInstance()->hudList;
@@ -422,38 +424,41 @@ void WidgetManager::resizeCallback(int w, int h)
 		for (unsigned int i = 0; i < it->second.size(); i++)
 		{
 			Layer* l = it->second[i];
+			vec4f p = l->getPosition();
+			vec4f tp = l->getTargetPosition();
+			vec4f sp = l->getScreenPosition();
+
 			if (l->isResponsive())		// layer responsive
 			{
 				//	change position but keep ratio screen position (just on x)
 				float ratio = (float) viewportRatio / WidgetManager::getInstance()->lastViewportRatio;
-				l->setPosition(glm::vec3(l->getPosition().x * ratio, l->getPosition().y, l->getPosition().z));
-				l->setTargetPosition(glm::vec3(l->getTargetPosition().x * ratio, l->getTargetPosition().y, l->getTargetPosition().z));
-				l->setScreenPosition(glm::vec3(l->getScreenPosition().x * ratio, l->getScreenPosition().y, l->getScreenPosition().z));
+				l->setPosition(vec4f(p.x * ratio, p.y, p.z, 1.f));
+				l->setTargetPosition(vec4f(tp.x * ratio, tp.y, tp.z, 1.f));
+				l->setScreenPosition(vec4f(sp.x * ratio, sp.y, sp.z, 1.f));
 			}
 			else
 			{
 				//	change Layer position to be kept at this position relative to the border of screen
-
-				float zscale = tan(glm::radians(ANGLE_VERTICAL_HUD_PROJECTION / 2.f)) * (l->getPosition().y + DISTANCE_HUD_CAMERA);													//	compute relative scale on vertical axis (base because always 45 degres of view angle)
-				float xscale = zscale * viewportRatio;																									//	compute relative scale of x axis
+				float zscale = (float)tan(DEG2RAD * ANGLE_VERTICAL_HUD_PROJECTION * 0.5) * (p.y + DISTANCE_HUD_CAMERA);	//	compute relative scale on vertical axis (base because always 45 degres of view angle)
+				float xscale = zscale * viewportRatio;														//	compute relative scale of x axis
 				float lxscale = zscale * WidgetManager::getInstance()->lastViewportRatio;					//	compute previous relative scale of x axis
-				if (l->getPosition().x > 0)																										//	discriminate left or right border relative
-					l->setPosition(glm::vec3(xscale - std::abs(l->getPosition().x - lxscale), l->getPosition().y, l->getPosition().z));			//	change position = border position -+ delta from border (delta = actual position - former scale)
-				else l->setPosition(glm::vec3(-xscale + std::abs(-l->getPosition().x - lxscale), l->getPosition().y, l->getPosition().z));		//	change position 
+				if (p.x > 0)																				//	discriminate left or right border relative
+					l->setPosition(vec4f(xscale - std::abs(p.x - lxscale), p.y, p.z, 1.f));					//	change position = border position -+ delta from border (delta = actual position - former scale)
+				else l->setPosition(vec4f(-xscale + std::abs(-p.x - lxscale), p.y, p.z, 1.f));				//	change position 
 
-				zscale = tan(glm::radians(ANGLE_VERTICAL_HUD_PROJECTION / 2.f)) * (l->getTargetPosition().y + DISTANCE_HUD_CAMERA);
+				zscale = (float)tan(DEG2RAD * ANGLE_VERTICAL_HUD_PROJECTION * 0.5) * (tp.y + DISTANCE_HUD_CAMERA);
 				xscale = zscale * viewportRatio;
 				lxscale = zscale * WidgetManager::getInstance()->lastViewportRatio;
-				if (l->getTargetPosition().x > 0)
-					l->setTargetPosition(glm::vec3(xscale - std::abs(l->getTargetPosition().x - lxscale), l->getTargetPosition().y, l->getTargetPosition().z));
-				else l->setTargetPosition(glm::vec3(-xscale + std::abs(-l->getTargetPosition().x - lxscale), l->getTargetPosition().y, l->getTargetPosition().z));
+				if (tp.x > 0)
+					l->setTargetPosition(vec4f(xscale - std::abs(tp.x - lxscale), tp.y, tp.z, 1.f));
+				else l->setTargetPosition(vec4f(-xscale + std::abs(-tp.x - lxscale), tp.y, tp.z, 1.f));
 
-				zscale = tan(glm::radians(ANGLE_VERTICAL_HUD_PROJECTION / 2.f)) * (l->getScreenPosition().y + DISTANCE_HUD_CAMERA);
+				zscale = (float)tan(DEG2RAD * ANGLE_VERTICAL_HUD_PROJECTION * 0.5) * (l->getScreenPosition().y + DISTANCE_HUD_CAMERA);
 				xscale = zscale * viewportRatio;
 				lxscale = zscale * WidgetManager::getInstance()->lastViewportRatio;
-				if (l->getScreenPosition().x > 0)
-					l->setScreenPosition(glm::vec3(xscale - std::abs(l->getScreenPosition().x - lxscale), l->getScreenPosition().y, l->getScreenPosition().z));
-				else l->setScreenPosition(glm::vec3(-xscale + std::abs(-l->getScreenPosition().x - lxscale), l->getScreenPosition().y, l->getScreenPosition().z));
+				if (sp.x > 0)
+					l->setScreenPosition(vec4f(xscale - std::abs(sp.x - lxscale), sp.y, sp.z, 1.f));
+				else l->setScreenPosition(vec4f(-xscale + std::abs(-sp.x - lxscale), sp.y, sp.z, 1.f));
 			}
 
 			//	check all widgets attach to it
@@ -462,11 +467,16 @@ void WidgetManager::resizeCallback(int w, int h)
 			{
 				if ((*it2)->isResponsive())		// widget responsive
 				{
+					vec2f ds = (*it2)->getSize(WidgetVirtual::State::DEFAULT);
+					vec2f as = (*it2)->getSize(WidgetVirtual::State::ACTIVE);
+					vec2f hs = (*it2)->getSize(WidgetVirtual::State::HOVER);
+					vec2f s = (*it2)->getSize(WidgetVirtual::State::CURRENT);
+
 					float ratio = (float)viewportRatio / WidgetManager::getInstance()->lastViewportRatio;
-					(*it2)->setSize(glm::vec2((*it2)->getSize(WidgetVirtual::State::DEFAULT).x * ratio, (*it2)->getSize(WidgetVirtual::State::DEFAULT).y), WidgetVirtual::State::DEFAULT);
-					(*it2)->setSize(glm::vec2((*it2)->getSize(WidgetVirtual::State::ACTIVE).x * ratio,  (*it2)->getSize(WidgetVirtual::State::ACTIVE).y),  WidgetVirtual::State::ACTIVE);
-					(*it2)->setSize(glm::vec2((*it2)->getSize(WidgetVirtual::State::HOVER).x * ratio,   (*it2)->getSize(WidgetVirtual::State::HOVER).y),   WidgetVirtual::State::HOVER);
-					(*it2)->setSize(glm::vec2((*it2)->getSize(WidgetVirtual::State::CURRENT).x * ratio, (*it2)->getSize(WidgetVirtual::State::CURRENT).y), WidgetVirtual::State::CURRENT);
+					(*it2)->setSize(vec2f(ds.x * ratio, ds.y), WidgetVirtual::State::DEFAULT);
+					(*it2)->setSize(vec2f(as.x * ratio, as.y),  WidgetVirtual::State::ACTIVE);
+					(*it2)->setSize(vec2f(hs.x * ratio, hs.y),   WidgetVirtual::State::HOVER);
+					(*it2)->setSize(vec2f(s.x * ratio, s.y), WidgetVirtual::State::CURRENT);
 				}
 			}
 		}
@@ -483,22 +493,22 @@ void WidgetManager::generateDebugHud()
 
 	//	top title
 	WidgetBoard* board1 = new WidgetBoard(visibleResponsive);
-		board1->setPosition(glm::vec3(0.f, 0.01f, 0.f), WidgetVirtual::State::ALL);
-		board1->setSize(glm::vec2(2.4f, 0.3f), WidgetVirtual::State::ALL);
+		board1->setPosition(vec4f(0.f, 0.01f, 0.f, 1.f), WidgetVirtual::State::ALL);
+		board1->setSize(vec2f(2.4f, 0.3f), WidgetVirtual::State::ALL);
 		board1->initialize(0.02f, 0.1f, WidgetBoard::BOTTOM_LEFT | WidgetBoard::BOTTOM_RIGHT);
-		board1->setColor(glm::vec4(0.5f, 0.f, 0.2f, 1.f), WidgetVirtual::State::ALL);
-		board1->setColor(glm::vec4(0.5f, 0.5f, 0.5f, 1.f), WidgetVirtual::State::HOVER);
+		board1->setColor(vec4f(0.5f, 0.f, 0.2f, 1.f), WidgetVirtual::State::ALL);
+		board1->setColor(vec4f(0.5f, 0.5f, 0.5f, 1.f), WidgetVirtual::State::HOVER);
 		widgetList.insert(board1);
 	WidgetLabel* label1 = new WidgetLabel(visibleResponsive);
-		label1->setPosition(glm::vec3(0.f, 0.f, 0.f), WidgetVirtual::State::ALL);
+		label1->setPosition(vec4f(0.f, 0.f, 0.f, 1.f), WidgetVirtual::State::ALL);
 		label1->setSizeChar(0.15f);
-		label1->setSize(glm::vec2(2.3f, 0.2f), WidgetVirtual::State::ALL);
+		label1->setSize(vec2f(2.3f, 0.2f), WidgetVirtual::State::ALL);
 		label1->setFont("Data Control");
 		label1->initialize("Debug Hud", WidgetLabel::CLIPPING);
 		widgetList.insert(label1);
 	Layer* layer1 = new Layer();
 		layer1->setSize(0.05f);
-		layer1->setScreenPosition(glm::vec3(0.f, 0.003f, 0.054f));
+		layer1->setScreenPosition(vec4f(0.f, 0.003f, 0.054f, 1.f));
 		layer1->setPosition(layer1->getScreenPosition());
 		layer1->setTargetPosition(layer1->getScreenPosition());
 		layer1->addChild(board1);
@@ -507,23 +517,23 @@ void WidgetManager::generateDebugHud()
 
 	//	runtime speed
 	WidgetBoard* board2 = new WidgetBoard();
-		board2->setPosition(glm::vec3(0.f, 0.01f, 0.f), WidgetVirtual::State::ALL);
-		board2->setSize(glm::vec2(0.8f, 0.5f), WidgetVirtual::State::ALL);
+		board2->setPosition(vec4f(0.f, 0.01f, 0.f, 1.f), WidgetVirtual::State::ALL);
+		board2->setSize(vec2f(0.8f, 0.5f), WidgetVirtual::State::ALL);
 		board2->initialize(0.02f, 0.15f, WidgetBoard::BOTTOM_RIGHT);
-		board2->setColor(glm::vec4(0.f, 0.f, 0.5f, 1.f), WidgetVirtual::State::ALL);
-		board2->setColor(glm::vec4(0.5f, 0.5f, 0.5f, 1.f), WidgetVirtual::State::HOVER);
+		board2->setColor(vec4f(0.f, 0.f, 0.5f, 1.f), WidgetVirtual::State::ALL);
+		board2->setColor(vec4f(0.5f, 0.5f, 0.5f, 1.f), WidgetVirtual::State::HOVER);
 		widgetList.insert(board2);
 	WidgetLabel* label2 = new WidgetLabel();
-		label2->setPosition(glm::vec3(0.f, 0.f, 0.f), WidgetVirtual::State::ALL);
+		label2->setPosition(vec4f(0.f, 0.f, 0.f, 1.f), WidgetVirtual::State::ALL);
 		label2->setSizeChar(0.07f);
-		label2->setSize(glm::vec2(0.7f, 0.5f), WidgetVirtual::State::ALL);
+		label2->setSize(vec2f(0.7f, 0.5f), WidgetVirtual::State::ALL);
 		label2->setFont("Data Control");
 		label2->initialize("FPS : na\n Avg : na\n\nTime : na ms\n Avg : na ms", WidgetLabel::LEFT | WidgetLabel::CLIPPING);
 		widgetList.insert(label2);
 		addAssociation(label2, "runtime speed");
 	Layer* layer2 = new Layer(Layer::VISIBLE);
 		layer2->setSize(0.05f);
-		layer2->setScreenPosition(glm::vec3(-0.091f, 0.f, 0.049f));
+		layer2->setScreenPosition(vec4f(-0.091f, 0.f, 0.049f, 1.f));
 		layer2->setPosition(layer2->getScreenPosition());
 		layer2->setTargetPosition(layer2->getScreenPosition());
 		layer2->addChild(board2);
@@ -532,23 +542,23 @@ void WidgetManager::generateDebugHud()
 
 	//	Draw calls
 	WidgetBoard* board3 = new WidgetBoard();
-		board3->setPosition(glm::vec3(0.f, 0.01f, 0.f), WidgetVirtual::State::ALL);
-		board3->setSize(glm::vec2(0.8f, 0.5f), WidgetVirtual::State::ALL);
+		board3->setPosition(vec4f(0.f, 0.01f, 0.f, 1.f), WidgetVirtual::State::ALL);
+		board3->setSize(vec2f(0.8f, 0.5f), WidgetVirtual::State::ALL);
 		board3->initialize(0.02f, 0.15f, WidgetBoard::BOTTOM_LEFT);
-		board3->setColor(glm::vec4(0.8f, 0.f, 0.f, 1.f), WidgetVirtual::State::ALL);
-		board3->setColor(glm::vec4(0.5f, 0.5f, 0.5f, 1.f), WidgetVirtual::State::HOVER);
+		board3->setColor(vec4f(0.8f, 0.f, 0.f, 1.f), WidgetVirtual::State::ALL);
+		board3->setColor(vec4f(0.5f, 0.5f, 0.5f, 1.f), WidgetVirtual::State::HOVER);
 		widgetList.insert(board3);
 	WidgetLabel* label3 = new WidgetLabel();
-		label3->setPosition(glm::vec3(0.f, 0.f, 0.f), WidgetVirtual::State::ALL);
+		label3->setPosition(vec4f(0.f, 0.f, 0.f, 1.f), WidgetVirtual::State::ALL);
 		label3->setSizeChar(0.07f);
-		label3->setSize(glm::vec2(0.7f, 0.5f), WidgetVirtual::State::ALL);
+		label3->setSize(vec2f(0.7f, 0.5f), WidgetVirtual::State::ALL);
 		label3->setFont("Data Control");
 		label3->initialize("Instances :\n0\n\nTriangles :\n0", WidgetLabel::LEFT | WidgetLabel::CLIPPING);
 		addAssociation(label3, "drawcalls");
 		widgetList.insert(label3);
 	Layer* layer3 = new Layer(Layer::VISIBLE);
 		layer3->setSize(0.05f);
-		layer3->setScreenPosition(glm::vec3(0.091f, 0.f, 0.049f));
+		layer3->setScreenPosition(vec4f(0.091f, 0.f, 0.049f, 1.f));
 		layer3->setPosition(layer3->getScreenPosition());
 		layer3->setTargetPosition(layer3->getScreenPosition());
 		layer3->addChild(board3);
@@ -557,19 +567,19 @@ void WidgetManager::generateDebugHud()
 
 	//	console
 	WidgetConsole* console = new WidgetConsole(visibleResponsive);
-		console->setPosition(glm::vec3(0.f, 0.01f, 0.f), WidgetVirtual::State::ALL);
-		console->setSize(glm::vec2(2.1f, 0.5f), WidgetVirtual::State::ALL);
+		console->setPosition(vec4f(0.f, 0.01f, 0.f, 1.f), WidgetVirtual::State::ALL);
+		console->setSize(vec2f(2.1f, 0.5f), WidgetVirtual::State::ALL);
 		console->setSizeChar(0.07f);
 		console->setFont("Data Control");
 		console->initialize(0.02f, 0.15f, WidgetBoard::TOP_RIGHT);
-		console->setColor(glm::vec4(0.5f, 0.5f, 0.f, 1.f), WidgetVirtual::State::ALL);
-		console->setColor(glm::vec4(0.5f, 0.5f, 0.5f, 1.f), WidgetVirtual::State::HOVER);
-		console->setColor(glm::vec4(0.2f, 0.2f, 0.2f, 1.f), WidgetVirtual::State::ACTIVE);
+		console->setColor(vec4f(0.5f, 0.5f, 0.f, 1.f), WidgetVirtual::State::ALL);
+		console->setColor(vec4f(0.5f, 0.5f, 0.5f, 1.f), WidgetVirtual::State::HOVER);
+		console->setColor(vec4f(0.2f, 0.2f, 0.2f, 1.f), WidgetVirtual::State::ACTIVE);
 		addAssociation(console, "console");
 		widgetList.insert(console);
 	Layer* layer4 = new Layer();
 		layer4->setSize(0.05f);
-		layer4->setScreenPosition(glm::vec3(-0.055f, 0.f, -0.049f));
+		layer4->setScreenPosition(vec4f(-0.055f, 0.f, -0.049f, 1.f));
 		layer4->setPosition(layer4->getScreenPosition());
 		layer4->setTargetPosition(layer4->getScreenPosition());
 		layer4->addChild(console);
@@ -577,23 +587,23 @@ void WidgetManager::generateDebugHud()
 
 	//	picking
 	WidgetBoard* board5 = new WidgetBoard(visibleResponsive);
-		board5->setPosition(glm::vec3(0.f, 0.01f, 0.f), WidgetVirtual::State::ALL);
-		board5->setSize(glm::vec2(2.1f, 0.5f), WidgetVirtual::State::ALL);
+		board5->setPosition(vec4f(0.f, 0.01f, 0.f, 1.f), WidgetVirtual::State::ALL);
+		board5->setSize(vec2f(2.1f, 0.5f), WidgetVirtual::State::ALL);
 		board5->initialize(0.02f, 0.15f, WidgetBoard::TOP_LEFT);
-		board5->setColor(glm::vec4(0.f, 0.5f, 0.f, 1.f), WidgetVirtual::State::ALL);
-		board5->setColor(glm::vec4(0.5f, 0.5f, 0.5f, 1.f), WidgetVirtual::State::HOVER);
+		board5->setColor(vec4f(0.f, 0.5f, 0.f, 1.f), WidgetVirtual::State::ALL);
+		board5->setColor(vec4f(0.5f, 0.5f, 0.5f, 1.f), WidgetVirtual::State::HOVER);
 		widgetList.insert(board5);
 	WidgetLabel* label5 = new WidgetLabel(visibleResponsive);
-		label5->setPosition(glm::vec3(0.01f, 0.f, -0.01f), WidgetVirtual::State::ALL);
+		label5->setPosition(vec4f(0.01f, 0.f, -0.01f, 1.f), WidgetVirtual::State::ALL);
 		label5->setSizeChar(0.07f);
-		label5->setSize(glm::vec2(2.f, 0.35f), WidgetVirtual::State::ALL);
+		label5->setSize(vec2f(2.f, 0.35f), WidgetVirtual::State::ALL);
 		label5->setFont("Data Control");
 		label5->initialize("Distance : 50.06 m\nPosition : (923.1 , 584.6 , 1.2)\nInstance on ray : 5\nFirst instance pointed id : 23681\n  type : animated", WidgetLabel::LEFT | WidgetLabel::CLIPPING);
 		addAssociation(label5, "interaction");
 		widgetList.insert(label5);
 	Layer* layer5 = new Layer();
 		layer5->setSize(0.05f);
-		layer5->setScreenPosition(glm::vec3(0.055f, 0.f, -0.049f));
+		layer5->setScreenPosition(vec4f(0.055f, 0.f, -0.049f, 1.f));
 		layer5->setPosition(layer5->getScreenPosition());
 		layer5->setTargetPosition(layer5->getScreenPosition());
 		layer5->addChild(board5);
@@ -602,13 +612,13 @@ void WidgetManager::generateDebugHud()
 		
 	//	hit cross
 	WidgetImage* image = new WidgetImage("hitcross.png");
-		image->setPosition(glm::vec3(0.f, 0.2f, 0.f), WidgetVirtual::State::ALL);
-		image->setSize(glm::vec2(0.1f, 0.1f), WidgetVirtual::State::ALL);
+		image->setPosition(vec4f(0.f, 0.2f, 0.f, 1.f), WidgetVirtual::State::ALL);
+		image->setSize(vec2f(0.1f, 0.1f), WidgetVirtual::State::ALL);
 		image->initialize();
 		widgetList.insert(image);
 	Layer* layer6 = new Layer(Layer::VISIBLE | Layer::RESPONSIVE);
 		layer6->setSize(0.05f);
-		layer6->setScreenPosition(glm::vec3(0.f, 0.f, 0.f));
+		layer6->setScreenPosition(vec4f(0.f, 0.f, 0.f, 1.f));
 		layer6->setPosition(layer6->getScreenPosition());
 		layer6->setTargetPosition(layer6->getScreenPosition());
 		layer6->addChild(image);
@@ -621,24 +631,6 @@ void WidgetManager::generateDebugHud()
 	hudList["debug"].push_back(layer4);
 	hudList["debug"].push_back(layer5);
 	hudList["debug"].push_back(layer6);
-
-	/*return;
-
-	//	save into file
-	std::ofstream file(ResourceManager::getInstance()->getRepository() + "GUI/debug.gui", std::ofstream::out);
-	Writer writer(&file);
-	file << std::fixed;
-	file.precision(5);
-	writer.setInlineArray(true);
-	int startingUnknownIndex = 0;
-	Variant hud; hud.createMap();
-
-	for (unsigned int i = 0; i < hudList["debug"].size(); ++i)
-	{
-		Variant tmp = WidgetSaver::serialize(hudList["debug"][i], associations, startingUnknownIndex);
-		hud.insert("layer_" + std::to_string(i + 1), tmp);
-	}
-	writer.write(hud);*/
 }
 void WidgetManager::generateHelpHud()
 {
@@ -646,22 +638,22 @@ void WidgetManager::generateHelpHud()
 
 	//	top title
 	WidgetBoard* board1 = new WidgetBoard(visibleResponsive);
-		board1->setPosition(glm::vec3(0.f, 0.01f, 0.f), WidgetVirtual::State::ALL);
-		board1->setSize(glm::vec2(2.4f, 0.3f), WidgetVirtual::State::ALL);
+		board1->setPosition(vec4f(0.f, 0.01f, 0.f, 1.f), WidgetVirtual::State::ALL);
+		board1->setSize(vec2f(2.4f, 0.3f), WidgetVirtual::State::ALL);
 		board1->initialize(0.02f, 0.1f, WidgetBoard::BOTTOM_LEFT | WidgetBoard::BOTTOM_RIGHT);
-		board1->setColor(glm::vec4(0.5f, 0.f, 0.2f, 1.f), WidgetVirtual::State::ALL);
-		board1->setColor(glm::vec4(0.5f, 0.5f, 0.5f, 1.f), WidgetVirtual::State::HOVER);
+		board1->setColor(vec4f(0.5f, 0.f, 0.2f, 1.f), WidgetVirtual::State::ALL);
+		board1->setColor(vec4f(0.5f, 0.5f, 0.5f, 1.f), WidgetVirtual::State::HOVER);
 		widgetList.insert(board1);
 	WidgetLabel* label1 = new WidgetLabel(visibleResponsive);
-		label1->setPosition(glm::vec3(0.f, 0.f, 0.f), WidgetVirtual::State::ALL);
+		label1->setPosition(vec4f(0.f, 0.f, 0.f, 1.f), WidgetVirtual::State::ALL);
 		label1->setSizeChar(0.15f);
-		label1->setSize(glm::vec2(2.3f, 0.2f), WidgetVirtual::State::ALL);
+		label1->setSize(vec2f(2.3f, 0.2f), WidgetVirtual::State::ALL);
 		label1->setFont("Data Control");
 		label1->initialize("Help / command", WidgetLabel::CLIPPING);
 		widgetList.insert(label1);
 	Layer* layer1 = new Layer();
 		layer1->setSize(0.05f);
-		layer1->setScreenPosition(glm::vec3(0.f, 0.003f, 0.054f));
+		layer1->setScreenPosition(vec4f(0.f, 0.003f, 0.054f, 1.f));
 		layer1->setPosition(layer1->getScreenPosition());
 		layer1->setTargetPosition(layer1->getScreenPosition());
 		layer1->addChild(board1);
@@ -670,19 +662,19 @@ void WidgetManager::generateHelpHud()
 
 	//	central panel
 	WidgetConsole* console = new WidgetConsole(visibleResponsive);
-		console->setPosition(glm::vec3(0.f, 0.01f, 0.f), WidgetVirtual::State::ALL);
-		console->setSize(glm::vec2(2.6f, 2.f), WidgetVirtual::State::ALL);
+		console->setPosition(vec4f(0.f, 0.01f, 0.f, 1.f), WidgetVirtual::State::ALL);
+		console->setSize(vec2f(2.6f, 2.f), WidgetVirtual::State::ALL);
 		console->setSizeChar(0.07f);
 		console->setMargin(0.15f);
 		console->setFont("Data Control");
 		console->initialize(0.02f, 0.15f, WidgetBoard::TOP_RIGHT | WidgetBoard::TOP_LEFT | WidgetBoard::BOTTOM_RIGHT | WidgetBoard::BOTTOM_LEFT);
-		console->setColor(glm::vec4(0.f,  0.5f,  0.f, 1.f), WidgetVirtual::State::ALL);
-		console->setColor(glm::vec4(0.5f, 0.5f, 0.5f, 1.f), WidgetVirtual::State::HOVER);
-		console->setColor(glm::vec4(0.2f, 0.2f, 0.2f, 1.f), WidgetVirtual::State::ACTIVE);
+		console->setColor(vec4f(0.f,  0.5f,  0.f, 1.f), WidgetVirtual::State::ALL);
+		console->setColor(vec4f(0.5f, 0.5f, 0.5f, 1.f), WidgetVirtual::State::HOVER);
+		console->setColor(vec4f(0.2f, 0.2f, 0.2f, 1.f), WidgetVirtual::State::ACTIVE);
 		widgetList.insert(console);
 	Layer* layer2 = new Layer(Layer::VISIBLE | Layer::RESPONSIVE);
 		layer2->setSize(0.05f);
-		layer2->setScreenPosition(glm::vec3(0.f, 0.f, -0.01f));
+		layer2->setScreenPosition(vec4f(0.f, 0.f, -0.01f, 1.f));
 		layer2->setPosition(layer2->getScreenPosition());
 		layer2->setTargetPosition(layer2->getScreenPosition());
 		layer2->addChild(console);
@@ -691,58 +683,6 @@ void WidgetManager::generateHelpHud()
 	//	push on HUD
 	hudList["help"].push_back(layer1);
 	hudList["help"].push_back(layer2);
-
-	/*return;
-	//	push text
-	console->append(" ");
-	console->append("Special :");
-	console->append(" View mouse\t\t\tF2");
-	console->append("Quit\t\t\tESCAPE");
-	console->append(" ");
-
-	console->append("Commands :");
-	console->append(" move forward\t\t\tz");
-	console->append(" move backward\t\ts");
-	console->append(" move left\t\t\tq");
-	console->append(" move right\t\t\td");
-	console->append(" run\t\t\tSHIFT");
-	console->append(" sneaky\t\t\tCTRL_LEFT");
-	console->append(" ");
-
-	console->append("Avatar action :");
-	console->append(" hello\t\t\t1");
-	console->append(" yes\t\t\t2");
-	console->append(" no\t\t\t3");
-	console->append(" ");
-
-	console->append("HUD :");
-	console->append(" Help\t\t\tF1");
-	console->append(" Debug\t\t\tF9");
-	console->append(" Rendering option\t\tF10");
-	console->append(" ");
-
-	console->append(" ");
-	console->append(" ");
-	console->append(" ");
-	console->append(" ");
-	console->append(" ");
-
-
-	//	save into file
-	std::ofstream file(ResourceManager::getInstance()->getRepository() + "GUI/help.gui", std::ofstream::out);
-	Writer writer(&file);
-	file << std::fixed;
-	file.precision(5);
-	writer.setInlineArray(true);
-	int startingUnknownIndex = 0;
-	Variant hud; hud.createMap();
-
-	for (unsigned int i = 0; i < hudList["help"].size(); ++i)
-	{
-		Variant tmp = WidgetSaver::serialize(hudList["help"][i], associations, startingUnknownIndex);
-		hud.insert("layer_" + std::to_string(i + 1), tmp);
-	}
-	writer.write(hud);*/
 }
 void WidgetManager::generateRenderingHud()
 {
@@ -750,22 +690,22 @@ void WidgetManager::generateRenderingHud()
 
 	//	top title
 	WidgetBoard* board1 = new WidgetBoard(visibleResponsive);
-		board1->setPosition(glm::vec3(0.f, 0.01f, 0.f), WidgetVirtual::State::ALL);
-		board1->setSize(glm::vec2(2.4f, 0.3f), WidgetVirtual::State::ALL);
+		board1->setPosition(vec4f(0.f, 0.01f, 0.f, 1.f), WidgetVirtual::State::ALL);
+		board1->setSize(vec2f(2.4f, 0.3f), WidgetVirtual::State::ALL);
 		board1->initialize(0.02f, 0.1f, WidgetBoard::BOTTOM_LEFT | WidgetBoard::BOTTOM_RIGHT);
-		board1->setColor(glm::vec4(0.5f, 0.f, 0.2f, 1.f), WidgetVirtual::State::ALL);
-		board1->setColor(glm::vec4(0.5f, 0.5f, 0.5f, 1.f), WidgetVirtual::State::HOVER);
+		board1->setColor(vec4f(0.5f, 0.f, 0.2f, 1.f), WidgetVirtual::State::ALL);
+		board1->setColor(vec4f(0.5f, 0.5f, 0.5f, 1.f), WidgetVirtual::State::HOVER);
 		widgetList.insert(board1);
 	WidgetLabel* label1 = new WidgetLabel(visibleResponsive);
-		label1->setPosition(glm::vec3(0.f, 0.f, 0.f), WidgetVirtual::State::ALL);
+		label1->setPosition(vec4f(0.f, 0.f, 0.f, 1.f), WidgetVirtual::State::ALL);
 		label1->setSizeChar(0.15f);
-		label1->setSize(glm::vec2(2.3f, 0.2f), WidgetVirtual::State::ALL);
+		label1->setSize(vec2f(2.3f, 0.2f), WidgetVirtual::State::ALL);
 		label1->setFont("Data Control");
 		label1->initialize("Rendering options", WidgetLabel::CLIPPING);
 		widgetList.insert(label1);
 	Layer* layer1 = new Layer();
 		layer1->setSize(0.05f);
-		layer1->setScreenPosition(glm::vec3(0.f, 0.003f, 0.054f));
+		layer1->setScreenPosition(vec4f(0.f, 0.003f, 0.054f, 1.f));
 		layer1->setPosition(layer1->getScreenPosition());
 		layer1->setTargetPosition(layer1->getScreenPosition());
 		layer1->addChild(board1);
@@ -776,64 +716,64 @@ void WidgetManager::generateRenderingHud()
 	Layer* layer2;
 	{
 		WidgetBoard* board2 = new WidgetBoard(visibleResponsive);
-			board2->setPosition(glm::vec3(0.f, 0.01f, 0.f), WidgetVirtual::State::ALL);
-			board2->setSize(glm::vec2(2.1f, 1.8f), WidgetVirtual::State::ALL);
+			board2->setPosition(vec4f(0.f, 0.01f, 0.f, 1.f), WidgetVirtual::State::ALL);
+			board2->setSize(vec2f(2.1f, 1.8f), WidgetVirtual::State::ALL);
 			board2->initialize(0.02f, 0.15f, WidgetBoard::TOP_LEFT | WidgetBoard::BOTTOM_LEFT);
-			board2->setColor(glm::vec4(0.f, 0.f, 0.5f, 1.f), WidgetVirtual::State::ALL);
-			board2->setColor(glm::vec4(0.4f, 0.4f, 0.4f, 1.f), WidgetVirtual::State::HOVER);
-			board2->setColor(glm::vec4(0.2f, 0.2f, 0.2f, 1.f), WidgetVirtual::State::ACTIVE);
+			board2->setColor(vec4f(0.f, 0.f, 0.5f, 1.f), WidgetVirtual::State::ALL);
+			board2->setColor(vec4f(0.4f, 0.4f, 0.4f, 1.f), WidgetVirtual::State::HOVER);
+			board2->setColor(vec4f(0.2f, 0.2f, 0.2f, 1.f), WidgetVirtual::State::ACTIVE);
 			widgetList.insert(board2);
 
 		WidgetRadioButton* button1 = new WidgetRadioButton(visibleResponsive);
-			button1->setPosition(glm::vec3(0.f, 0.f, 0.7f), WidgetVirtual::State::ALL);
+			button1->setPosition(vec4f(0.f, 0.f, 0.7f, 1.f), WidgetVirtual::State::ALL);
 			button1->setSizeChar(0.07f);
-			button1->setSize(glm::vec2(2.f, 0.07f), WidgetVirtual::State::ALL);
+			button1->setSize(vec2f(2.f, 0.07f), WidgetVirtual::State::ALL);
 			button1->setFont("Data Control");
 			button1->setTextureOn("checkbox_checked.png");
 			button1->setTextureOff("checkbox_unchecked.png");
-			button1->setColor(glm::vec4(0.8f, 0.3f, 0.3f, 1.f), WidgetVirtual::State::HOVER);
-			button1->setColor(glm::vec4(0.8f, 0.3f, 0.3f, 1.f), WidgetVirtual::State::ACTIVE);
+			button1->setColor(vec4f(0.8f, 0.3f, 0.3f, 1.f), WidgetVirtual::State::HOVER);
+			button1->setColor(vec4f(0.8f, 0.3f, 0.3f, 1.f), WidgetVirtual::State::ACTIVE);
 			button1->initialize("bounding box rendering", WidgetLabel::CLIPPING | WidgetLabel::LEFT);
 			addAssociation(button1, "BBrendering");
 			widgetList.insert(button1);
 
 		WidgetRadioButton* button2 = new WidgetRadioButton(visibleResponsive);
-			button2->setPosition(glm::vec3(0.f, 0.f, 0.62f), WidgetVirtual::State::ALL);
+			button2->setPosition(vec4f(0.f, 0.f, 0.62f, 1.f), WidgetVirtual::State::ALL);
 			button2->setSizeChar(0.07f);
-			button2->setSize(glm::vec2(2.f, 0.07f), WidgetVirtual::State::ALL);
+			button2->setSize(vec2f(2.f, 0.07f), WidgetVirtual::State::ALL);
 			button2->setFont("Data Control");
 			button2->setTextureOn("checkbox_checked.png");
 			button2->setTextureOff("checkbox_unchecked.png");
-			button2->setColor(glm::vec4(0.8f, 0.3f, 0.3f, 1.f), WidgetVirtual::State::HOVER);
-			button2->setColor(glm::vec4(0.8f, 0.3f, 0.3f, 1.f), WidgetVirtual::State::ACTIVE);
+			button2->setColor(vec4f(0.8f, 0.3f, 0.3f, 1.f), WidgetVirtual::State::HOVER);
+			button2->setColor(vec4f(0.8f, 0.3f, 0.3f, 1.f), WidgetVirtual::State::ACTIVE);
 			button2->setBoolean(true);
 			button2->initialize("draw bounding box on picked instance", WidgetLabel::CLIPPING | WidgetLabel::LEFT);
 			addAssociation(button2, "BBpicking");
 			widgetList.insert(button2);
 
 		WidgetRadioButton* button3 = new WidgetRadioButton(visibleResponsive);
-			button3->setPosition(glm::vec3(0.f, 0.f, 0.54f), WidgetVirtual::State::ALL);
+			button3->setPosition(vec4f(0.f, 0.f, 0.54f, 1.f), WidgetVirtual::State::ALL);
 			button3->setSizeChar(0.07f);
-			button3->setSize(glm::vec2(2.f, 0.07f), WidgetVirtual::State::ALL);
+			button3->setSize(vec2f(2.f, 0.07f), WidgetVirtual::State::ALL);
 			button3->setFont("Data Control");
 			button3->setTextureOn("checkbox_checked.png");
 			button3->setTextureOff("checkbox_unchecked.png");
-			button3->setColor(glm::vec4(0.8f, 0.3f, 0.3f, 1.f), WidgetVirtual::State::HOVER);
-			button3->setColor(glm::vec4(0.8f, 0.3f, 0.3f, 1.f), WidgetVirtual::State::ACTIVE);
+			button3->setColor(vec4f(0.8f, 0.3f, 0.3f, 1.f), WidgetVirtual::State::HOVER);
+			button3->setColor(vec4f(0.8f, 0.3f, 0.3f, 1.f), WidgetVirtual::State::ACTIVE);
 			button3->setBoolean(true);
 			button3->initialize("synchronize render camera", WidgetLabel::CLIPPING | WidgetLabel::LEFT);
 			addAssociation(button3, "syncCamera");
 			widgetList.insert(button3);
 
 		WidgetRadioButton* button4 = new WidgetRadioButton(visibleResponsive);
-			button4->setPosition(glm::vec3(0.f, 0.f, 0.46f), WidgetVirtual::State::ALL);
+			button4->setPosition(vec4f(0.f, 0.f, 0.46f, 1.f), WidgetVirtual::State::ALL);
 			button4->setSizeChar(0.07f);
-			button4->setSize(glm::vec2(2.f, 0.07f), WidgetVirtual::State::ALL);
+			button4->setSize(vec2f(2.f, 0.07f), WidgetVirtual::State::ALL);
 			button4->setFont("Data Control");
 			button4->setTextureOn("checkbox_checked.png");
 			button4->setTextureOff("checkbox_unchecked.png");
-			button4->setColor(glm::vec4(0.8f, 0.3f, 0.3f, 1.f), WidgetVirtual::State::HOVER);
-			button4->setColor(glm::vec4(0.8f, 0.3f, 0.3f, 1.f), WidgetVirtual::State::ACTIVE);
+			button4->setColor(vec4f(0.8f, 0.3f, 0.3f, 1.f), WidgetVirtual::State::HOVER);
+			button4->setColor(vec4f(0.8f, 0.3f, 0.3f, 1.f), WidgetVirtual::State::ACTIVE);
 			button4->setBoolean(false);
 			button4->initialize("render in wire frame mode", WidgetLabel::CLIPPING | WidgetLabel::LEFT);
 			addAssociation(button4, "wireframe");
@@ -841,7 +781,7 @@ void WidgetManager::generateRenderingHud()
 
 		layer2 = new Layer();
 			layer2->setSize(0.05f);
-			layer2->setScreenPosition(glm::vec3(-0.055f, 0.f, -0.01f));
+			layer2->setScreenPosition(vec4f(-0.055f, 0.f, -0.01f, 1.f));
 			layer2->setPosition(layer2->getScreenPosition());
 			layer2->setTargetPosition(layer2->getScreenPosition());
 			layer2->addChild(board2);
@@ -856,16 +796,16 @@ void WidgetManager::generateRenderingHud()
 	Layer* layer3;
 	{
 		WidgetBoard* board2 = new WidgetBoard((uint8_t)WidgetVirtual::OrphanFlags::VISIBLE | (uint8_t)WidgetVirtual::OrphanFlags::RESPONSIVE);
-			board2->setPosition(glm::vec3(0.f, 0.01f, 0.f), WidgetVirtual::State::ALL);
-			board2->setSize(glm::vec2(2.1f, 1.8f), WidgetVirtual::State::ALL);
+			board2->setPosition(vec4f(0.f, 0.01f, 0.f, 1.f), WidgetVirtual::State::ALL);
+			board2->setSize(vec2f(2.1f, 1.8f), WidgetVirtual::State::ALL);
 			board2->initialize(0.02f, 0.15f, WidgetBoard::TOP_RIGHT | WidgetBoard::BOTTOM_RIGHT);
-			board2->setColor(glm::vec4(0.f, 0.f, 0.5f, 1.f), WidgetVirtual::State::ALL);
-			board2->setColor(glm::vec4(0.4f, 0.4f, 0.4f, 1.f), WidgetVirtual::State::HOVER);
-			board2->setColor(glm::vec4(0.2f, 0.2f, 0.2f, 1.f), WidgetVirtual::State::ACTIVE);
+			board2->setColor(vec4f(0.f, 0.f, 0.5f, 1.f), WidgetVirtual::State::ALL);
+			board2->setColor(vec4f(0.4f, 0.4f, 0.4f, 1.f), WidgetVirtual::State::HOVER);
+			board2->setColor(vec4f(0.2f, 0.2f, 0.2f, 1.f), WidgetVirtual::State::ACTIVE);
 			widgetList.insert(board2);
 		layer3 = new Layer();
 			layer3->setSize(0.05f);
-			layer3->setScreenPosition(glm::vec3(0.055f, 0.f, -0.01f));
+			layer3->setScreenPosition(vec4f(0.055f, 0.f, -0.01f, 1.f));
 			layer3->setPosition(layer3->getScreenPosition());
 			layer3->setTargetPosition(layer3->getScreenPosition());
 			layer3->addChild(board2);

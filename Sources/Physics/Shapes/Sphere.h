@@ -6,7 +6,7 @@ class Sphere : public Shape
 {
 	public:
 		//	Default
-		Sphere(const glm::vec4& position = glm::vec4(0.f), const float& r = 0.f);
+		Sphere(const vec4f& position = vec4f(0.f), const float& r = 0.f);
 		//
 
 		//	Public functions
@@ -15,16 +15,16 @@ class Sphere : public Shape
 		Shape& operator=(const Shape& s) override;
 		virtual Shape* duplicate() const override;
 
-		virtual glm::mat3 computeInertiaMatrix() const override;
+		virtual mat4f computeInertiaMatrix() const override;
 
-		virtual void transform(const glm::vec4& position, const glm::vec3& scale, const glm::fquat& orientation) override;
+		virtual void transform(const vec4f& position, const vec4f& scale, const quatf& orientation) override;
 
-		virtual glm::vec4 support(const glm::vec4& direction) const override;
-		virtual void getFacingFace(const glm::vec4& direction, std::vector<glm::vec4>& points) const override;
+		virtual vec4f support(const vec4f& direction) const override;
+		virtual void getFacingFace(const vec4f& direction, std::vector<vec4f>& points) const override;
 		//
 
 		//	Attributes
-		glm::vec4 center;
+		vec4f center;
 		float radius;
 		//
 };

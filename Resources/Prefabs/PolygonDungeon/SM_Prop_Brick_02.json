@@ -1,0 +1,7 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Prop_Brick_02",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": []
+}

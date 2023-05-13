@@ -42,23 +42,23 @@ void Renderer::drawObject(Entity* object, const float* view, const float* projec
 	else if (renderOption == RenderOption::WIREFRAME) 
 		shaderToUse = defaultShader[shaderWire];
 	else 
-		shaderToUse = defaultShader[shaderType];
-	if (!shaderToUse) 
 		shaderToUse = drawableComp->getShader();
+	if (!shaderToUse) 
+		shaderToUse = defaultShader[shaderType];
 
-	loadMVPMatrix(shaderToUse, &object->getTransformMatrix()[0][0], view, projection);
+	loadMVPMatrix(shaderToUse, &object->getWorldTransformMatrix()[0][0], view, projection);
 	if (!shaderToUse) 
 		return;
 
 	if (shaderType == INSTANCE_ANIMATABLE)
 	{
 		//	Load skeleton pose matrix list for vertex skinning calculation
-		std::vector<glm::mat4> pose = skeletonComp->getPose();
+		std::vector<mat4f> pose = skeletonComp->getPose();
 		int loc = shaderToUse->getUniformLocation("skeletonPose");
 		if (loc >= 0) glUniformMatrix4fv(loc, (int)pose.size(), FALSE, (float*)pose.data());
 
 		//	Load inverse bind pose matrix list for vertex skinning calculation
-		std::vector<glm::mat4> bind;
+		std::vector<mat4f> bind;
 		bind = skeletonComp->getInverseBindPose();
 		loc = shaderToUse->getUniformLocation("inverseBindPose");
 		if (loc >= 0) glUniformMatrix4fv(loc, (int)bind.size(), FALSE, (float*)bind.data());
@@ -83,7 +83,7 @@ void Renderer::drawObject(Entity* object, const float* view, const float* projec
 	instanceDrawn++;
 	trianglesDrawn += drawableComp->getMesh()->getNumberFaces();
 }
-void Renderer::drawInstancedObject(Shader* s, Mesh* m, std::vector<glm::mat4>& models, const float* view, const float* projection)
+void Renderer::drawInstancedObject(Shader* s, Mesh* m, std::vector<mat4f>& models, const float* view, const float* projection)
 {
 	//	Get shader and prepare matrix
 	Shader* shaderToUse;
@@ -117,12 +117,12 @@ void Renderer::drawInstancedObject(Shader* s, Mesh* m, std::vector<glm::mat4>& m
 }
 void Renderer::drawMap(Map* map, const float* view, const float* projection, Shader* s)
 {
-	glm::mat4 scale = glm::scale(glm::mat4(1.f), map->getScale());
-	glm::mat4 model = scale * map->getModelMatrix();
+	mat4f scale = mat4f::scale(mat4f::identity, map->getScale());
+	mat4f model = scale * map->getModelMatrix();
 
 	// raw
 	loadMVPMatrix(map->getShader(), &model[0][0], view, projection);
-	glm::ivec4 exclusion = map->getExclusionZone();
+	vec4i exclusion = map->getExclusionZone();
 	int loc = map->getShader()->getUniformLocation("exclusion");
 	if (loc >= 0) glUniform4iv(loc, 1, (int*)&exclusion);
 	
@@ -132,22 +132,20 @@ void Renderer::drawMap(Map* map, const float* view, const float* projection, Sha
 	trianglesDrawn += map->getFacesCount() / 6;
 
 	// chunks
-	exclusion = glm::ivec4(-1, 0, 0, 0);
+	exclusion = vec4i(-1, 0, 0, 0);
 	if (loc >= 0) glUniform4iv(loc, 1, (int*)&exclusion);
 	loc = map->getShader()->getUniformLocation("overrideColor");
-	glm::vec3 color;
+	vec4f color;
 
-	std::vector<glm::ivec2> chunksIndexes = map->getDrawableChunks();
+	std::vector<vec2i> chunksIndexes = map->getDrawableChunks();
 	for (int i = 0; i < chunksIndexes.size(); i++)
 	{
-		glm::ivec2 v = chunksIndexes[i];
+		vec2i v = chunksIndexes[i];
 		Chunk* chunk = map->getChunk(v.x, v.y);
 		if (chunk->isInitialized())
 		{
 			model = scale * chunk->getModelMatrix();
 			loadMVPMatrix(map->getShader(), &model[0][0], view, projection);
-			//color = 0.25f * glm::vec3(lod % 3, (lod / 3) % 3, (lod / 9) % 3) + glm::vec3(0.25f);
-			//if (loc >= 0) glUniform3fv(loc, 1, (float*)&color);
 			loadVAO(chunk->getVAO());
 
 			int lod = chunk->getLod();
@@ -156,12 +154,10 @@ void Renderer::drawMap(Map* map, const float* view, const float* projection, Sha
 			int lodUp    = map->inBound(v.x, v.y + 1) ? map->getChunk(v.x, v.y + 1)->getLod() : lod;
 			int lodDown  = map->inBound(v.x, v.y - 1) ? map->getChunk(v.x, v.y - 1)->getLod() : lod;
 
-			//color = glm::vec3(1, 1, 1); if (loc >= 0) glUniform3fv(loc, 1, (float*)&color);
 			glDrawElements(GL_TRIANGLES, chunk->getCenterFacesCount(), GL_UNSIGNED_INT, NULL);
 			trianglesDrawn += chunk->getCenterFacesCount() / 6;
 			
 			unsigned int offset;
-			//color = glm::vec3(1, 0, 0); if (loc >= 0) glUniform3fv(loc, 1, (float*)&color);
 			if (lod > lodUp)
 			{
 				offset = chunk->getCenterFacesCount() + 4 * chunk->getBorderFacesCount();
@@ -175,7 +171,6 @@ void Renderer::drawMap(Map* map, const float* view, const float* projection, Sha
 				trianglesDrawn += chunk->getBorderFacesCount() / 6;
 			}
 
-			//color = glm::vec3(0, 1, 0); if (loc >= 0) glUniform3fv(loc, 1, (float*)&color);
 			if (lod > lodDown) 
 			{
 				offset = chunk->getCenterFacesCount() + 4 * chunk->getBorderFacesCount() + chunk->getSeamlessBorderFacesCount();
@@ -189,7 +184,6 @@ void Renderer::drawMap(Map* map, const float* view, const float* projection, Sha
 				trianglesDrawn += chunk->getBorderFacesCount() / 6;
 			}
 
-			//color = glm::vec3(0, 0, 1); if (loc >= 0) glUniform3fv(loc, 1, (float*)&color);
 			if (lod > lodLeft)
 			{
 				offset = chunk->getCenterFacesCount() + 4 * chunk->getBorderFacesCount() + 2 * chunk->getSeamlessBorderFacesCount();
@@ -203,7 +197,6 @@ void Renderer::drawMap(Map* map, const float* view, const float* projection, Sha
 				trianglesDrawn += chunk->getBorderFacesCount() / 6;
 			}
 
-			//color = glm::vec3(1, 1, 0); if (loc >= 0) glUniform3fv(loc, 1, (float*)&color);
 			if (lod > lodRight)
 			{
 				offset = chunk->getCenterFacesCount() + 4 * chunk->getBorderFacesCount() + 3 * chunk->getSeamlessBorderFacesCount();
@@ -220,7 +213,7 @@ void Renderer::drawMap(Map* map, const float* view, const float* projection, Sha
 			instanceDrawn++;
 		}
 	}
-	color = glm::vec3(-1.0, 0.0, 0.0);
+	color = vec4f(-1.f, 0.f, 0.f, 1.f);
 	if (loc >= 0) glUniform3fv(loc, 1, (float*)&color);
 }
 //

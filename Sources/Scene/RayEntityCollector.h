@@ -5,13 +5,13 @@
 class RayEntityCollector : public VirtualEntityCollector
 {
 	public:
-		RayEntityCollector(const glm::vec4& pos, const glm::vec4& dir, float maxDist);
+		RayEntityCollector(const vec4f& pos, const vec4f& dir, float maxDist);
 		bool operator() (Entity* entity) override;
 		std::vector<std::pair<float, unsigned int> >& getSortedResult();
 
 	private:
-		glm::vec4 position;
-		glm::vec4 direction;
+		vec4f position;
+		vec4f direction;
 		float distance;
 		std::vector<std::pair<float, unsigned int> > sortedIndicies;
 };

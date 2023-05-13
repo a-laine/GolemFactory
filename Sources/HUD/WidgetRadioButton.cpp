@@ -75,7 +75,7 @@ void WidgetRadioButton::initialize(const std::string& txt, uint8_t textConfig)
 	initVBOtext();
 	initializeVAOs();
 }
-void WidgetRadioButton::draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model)
+void WidgetRadioButton::draw(Shader* s, uint8_t& stencilMask, const mat4f& model)
 {
 	//	clipping zone (batch 1)
 	if (textConfiguration & CLIPPING)
@@ -119,37 +119,37 @@ void WidgetRadioButton::draw(Shader* s, uint8_t& stencilMask, const glm::mat4& m
 	}
 
 	//	draw checked or not sprite
-	glm::vec4 white(1.f);
+	vec4f white = vec4f::one;
 	loc = s->getUniformLocation("color");
 	if (loc >= 0) glUniform4fv(loc, 1, &white.x);
 	glBindVertexArray(batchList[BATCH_INDEX_CHECKBOX].vao);
 	glDrawElements(GL_TRIANGLES, (int)batchList[BATCH_INDEX_CHECKBOX].faces.size(), GL_UNSIGNED_SHORT, NULL);
 }
-bool WidgetRadioButton::intersect(const glm::mat4& base, const glm::vec3& ray)
+bool WidgetRadioButton::intersect(const mat4f& base, const vec4f& ray)
 {
 	for (unsigned int j = 0; j < batchList[BATCH_INDEX_CLIPPING].faces.size(); j += 3)
 	{
 		//	compute triangles vertices in eyes space
-		glm::vec4 p1 = base * glm::vec4(batchList[BATCH_INDEX_CLIPPING].vertices[batchList[BATCH_INDEX_CLIPPING].faces[j]], 1.f);
-		glm::vec4 p2 = base * glm::vec4(batchList[BATCH_INDEX_CLIPPING].vertices[batchList[BATCH_INDEX_CLIPPING].faces[j + 1]], 1.f);
-		glm::vec4 p3 = base * glm::vec4(batchList[BATCH_INDEX_CLIPPING].vertices[batchList[BATCH_INDEX_CLIPPING].faces[j + 2]], 1.f);
+		vec4f p1 = base * batchList[BATCH_INDEX_CLIPPING].vertices[batchList[BATCH_INDEX_CLIPPING].faces[j]];
+		vec4f p2 = base * batchList[BATCH_INDEX_CLIPPING].vertices[batchList[BATCH_INDEX_CLIPPING].faces[j + 1]];
+		vec4f p3 = base * batchList[BATCH_INDEX_CLIPPING].vertices[batchList[BATCH_INDEX_CLIPPING].faces[j + 2]];
 
-		if (Collision::collide_SegmentvsTriangle(glm::vec4(0, 0, 0, 1), glm::vec4(10.f * ray, 1), p1, p2, p3))
+		if (Collision::collide_SegmentvsTriangle(vec4f::zero, 10.f * ray, p1, p2, p3))
 			return true;
 	}
 	for (unsigned int j = 0; j < batchList[BATCH_INDEX_CHECKBOX].faces.size(); j += 3)
 	{
 		//	compute triangles vertices in eyes space
-		glm::vec4 p1 = base * glm::vec4(batchList[BATCH_INDEX_CHECKBOX].vertices[batchList[BATCH_INDEX_CHECKBOX].faces[j]], 1.f);
-		glm::vec4 p2 = base * glm::vec4(batchList[BATCH_INDEX_CHECKBOX].vertices[batchList[BATCH_INDEX_CHECKBOX].faces[j + 1]], 1.f);
-		glm::vec4 p3 = base * glm::vec4(batchList[BATCH_INDEX_CHECKBOX].vertices[batchList[BATCH_INDEX_CHECKBOX].faces[j + 2]], 1.f);
+		vec4f p1 = base * batchList[BATCH_INDEX_CHECKBOX].vertices[batchList[BATCH_INDEX_CHECKBOX].faces[j]];
+		vec4f p2 = base * batchList[BATCH_INDEX_CHECKBOX].vertices[batchList[BATCH_INDEX_CHECKBOX].faces[j + 1]];
+		vec4f p3 = base * batchList[BATCH_INDEX_CHECKBOX].vertices[batchList[BATCH_INDEX_CHECKBOX].faces[j + 2]];
 
-		if (Collision::collide_SegmentvsTriangle(glm::vec4(0, 0, 0, 1), glm::vec4(10.f * ray, 1), p1, p2, p3))
+		if (Collision::collide_SegmentvsTriangle(vec4f::zero, 10.f * ray, p1, p2, p3))
 			return true;
 	}
 	return false;
 }
-bool WidgetRadioButton::mouseEvent(const glm::mat4& base, const glm::vec3& ray, const float& parentscale, const bool& clicked)
+bool WidgetRadioButton::mouseEvent(const mat4f& base, const vec4f& ray, const float& parentscale, const bool& clicked)
 {
 	if (clicked && !lastEventState)
 	{
@@ -190,7 +190,7 @@ void WidgetRadioButton::updateBuffers()
 	for (unsigned int i = 0; i < text.size(); i++)
 	{
 		//	init parameters
-		glm::vec2 o = getLineOrigin(line, textConfiguration);
+		vec2f o = getLineOrigin(line, textConfiguration);
 		Font::Patch patch = font->getPatch(text[i]);
 		float charLength = std::abs((patch.corner2.x - patch.corner1.x) / (patch.corner2.y - patch.corner1.y));
 
@@ -208,15 +208,15 @@ void WidgetRadioButton::updateBuffers()
 			break;
 
 		default:
-			batch.vertices.push_back(glm::vec3(o.x + x, 0.f, o.y));
-			batch.vertices.push_back(glm::vec3(o.x + x + italic*sizeChar, 0.f, o.y + sizeChar));
-			batch.vertices.push_back(glm::vec3(o.x + x + (charLength + italic)*sizeChar, 0.f, o.y + sizeChar));
-			batch.vertices.push_back(glm::vec3(o.x + x + charLength*sizeChar, 0.f, o.y));
+			batch.vertices.push_back(vec4f(o.x + x, 0.f, o.y, 1.f));
+			batch.vertices.push_back(vec4f(o.x + x + italic*sizeChar, 0.f, o.y + sizeChar, 1.f));
+			batch.vertices.push_back(vec4f(o.x + x + (charLength + italic)*sizeChar, 0.f, o.y + sizeChar, 1.f));
+			batch.vertices.push_back(vec4f(o.x + x + charLength*sizeChar, 0.f, o.y, 1.f));
 
-			batch.textures.push_back(glm::vec2(patch.corner1.x + TEX_OFFSET, patch.corner2.y - TEX_OFFSET));
-			batch.textures.push_back(glm::vec2(patch.corner1.x + TEX_OFFSET, patch.corner1.y + TEX_OFFSET));
-			batch.textures.push_back(glm::vec2(patch.corner2.x - TEX_OFFSET, patch.corner1.y + TEX_OFFSET));
-			batch.textures.push_back(glm::vec2(patch.corner2.x - TEX_OFFSET, patch.corner2.y - TEX_OFFSET));
+			batch.textures.push_back(vec2f(patch.corner1.x + TEX_OFFSET, patch.corner2.y - TEX_OFFSET));
+			batch.textures.push_back(vec2f(patch.corner1.x + TEX_OFFSET, patch.corner1.y + TEX_OFFSET));
+			batch.textures.push_back(vec2f(patch.corner2.x - TEX_OFFSET, patch.corner1.y + TEX_OFFSET));
+			batch.textures.push_back(vec2f(patch.corner2.x - TEX_OFFSET, patch.corner2.y - TEX_OFFSET));
 
 
 			batch.faces.push_back((unsigned short)(batch.vertices.size() - 4));
@@ -237,15 +237,15 @@ void WidgetRadioButton::updateBuffers()
 
 	//	clipping rectangle
 	DrawBatch quad;
-		quad.vertices.push_back(glm::vec3(-0.5f * sizes[State::CURRENT].x, 0.f, -0.5f * sizes[State::CURRENT].y));
-		quad.vertices.push_back(glm::vec3(-0.5f * sizes[State::CURRENT].x, 0.f,  0.5f * sizes[State::CURRENT].y));
-		quad.vertices.push_back(glm::vec3( 0.5f * sizes[State::CURRENT].x - sizes[State::CURRENT].y, 0.f,  0.5f * sizes[State::CURRENT].y));
-		quad.vertices.push_back(glm::vec3( 0.5f * sizes[State::CURRENT].x - sizes[State::CURRENT].y, 0.f, -0.5f * sizes[State::CURRENT].y));
+		quad.vertices.push_back(vec4f(-0.5f * sizes[State::CURRENT].x, 0.f, -0.5f * sizes[State::CURRENT].y, 1.f));
+		quad.vertices.push_back(vec4f(-0.5f * sizes[State::CURRENT].x, 0.f,  0.5f * sizes[State::CURRENT].y, 1.f));
+		quad.vertices.push_back(vec4f( 0.5f * sizes[State::CURRENT].x - sizes[State::CURRENT].y, 0.f,  0.5f * sizes[State::CURRENT].y, 1.f));
+		quad.vertices.push_back(vec4f( 0.5f * sizes[State::CURRENT].x - sizes[State::CURRENT].y, 0.f, -0.5f * sizes[State::CURRENT].y, 1.f));
 
-		quad.textures.push_back(glm::vec2(0.f, 1.f));
-		quad.textures.push_back(glm::vec2(0.f, 0.f));
-		quad.textures.push_back(glm::vec2(1.f, 0.f));
-		quad.textures.push_back(glm::vec2(1.f, 1.f));
+		quad.textures.push_back(vec2f(0.f, 1.f));
+		quad.textures.push_back(vec2f(0.f, 0.f));
+		quad.textures.push_back(vec2f(1.f, 0.f));
+		quad.textures.push_back(vec2f(1.f, 1.f));
 
 		quad.faces.push_back(0); quad.faces.push_back(1); quad.faces.push_back(2);
 		quad.faces.push_back(0); quad.faces.push_back(2); quad.faces.push_back(3);
@@ -256,15 +256,15 @@ void WidgetRadioButton::updateBuffers()
 
 	//	clipping rectangle
 	DrawBatch checkbox;
-		checkbox.vertices.push_back(glm::vec3(0.5f * sizes[State::CURRENT].x - sizes[State::CURRENT].y, 0.f, -0.5f * sizes[State::CURRENT].y));
-		checkbox.vertices.push_back(glm::vec3(0.5f * sizes[State::CURRENT].x - sizes[State::CURRENT].y, 0.f,  0.5f * sizes[State::CURRENT].y));
-		checkbox.vertices.push_back(glm::vec3(0.5f * sizes[State::CURRENT].x, 0.f,  0.5f * sizes[State::CURRENT].y));
-		checkbox.vertices.push_back(glm::vec3(0.5f * sizes[State::CURRENT].x, 0.f, -0.5f * sizes[State::CURRENT].y));
+		checkbox.vertices.push_back(vec4f(0.5f * sizes[State::CURRENT].x - sizes[State::CURRENT].y, 0.f, -0.5f * sizes[State::CURRENT].y, 1.f));
+		checkbox.vertices.push_back(vec4f(0.5f * sizes[State::CURRENT].x - sizes[State::CURRENT].y, 0.f,  0.5f * sizes[State::CURRENT].y, 1.f));
+		checkbox.vertices.push_back(vec4f(0.5f * sizes[State::CURRENT].x, 0.f,  0.5f * sizes[State::CURRENT].y, 1.f));
+		checkbox.vertices.push_back(vec4f(0.5f * sizes[State::CURRENT].x, 0.f, -0.5f * sizes[State::CURRENT].y, 1.f));
 
-		checkbox.textures.push_back(glm::vec2(0.f, 1.f));
-		checkbox.textures.push_back(glm::vec2(0.f, 0.f));
-		checkbox.textures.push_back(glm::vec2(1.f, 0.f));
-		checkbox.textures.push_back(glm::vec2(1.f, 1.f));
+		checkbox.textures.push_back(vec2f(0.f, 1.f));
+		checkbox.textures.push_back(vec2f(0.f, 0.f));
+		checkbox.textures.push_back(vec2f(1.f, 0.f));
+		checkbox.textures.push_back(vec2f(1.f, 1.f));
 
 		checkbox.faces.push_back(0); checkbox.faces.push_back(1); checkbox.faces.push_back(2);
 		checkbox.faces.push_back(0); checkbox.faces.push_back(2); checkbox.faces.push_back(3);

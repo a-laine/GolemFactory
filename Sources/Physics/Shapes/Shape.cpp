@@ -5,14 +5,31 @@
 
 
 Shape::Shape(const ShapeType& ShapeType) : type(ShapeType) {}
-Sphere Shape::toSphere() const { return Sphere(glm::vec4(0.f), 0.f); }
-AxisAlignedBox Shape::toAxisAlignedBox() const { return AxisAlignedBox(glm::vec4(0, 0, 0, 1), glm::vec4(0, 0, 0, 1)); }
+Sphere Shape::toSphere() const { return Sphere(vec4f(0.f), 0.f); }
+AxisAlignedBox Shape::toAxisAlignedBox() const { return AxisAlignedBox(vec4f(0, 0, 0, 1), vec4f(0, 0, 0, 1)); }
 Shape& Shape::operator=(const Shape& s) { type = s.type; return *this; }
 Shape* Shape::duplicate() const { return new Shape(type); }
 
-glm::mat3 Shape::computeInertiaMatrix() const { return glm::mat3(1.f); }
+mat4f Shape::computeInertiaMatrix() const { return mat4f::identity; }
 
-void Shape::transform(const glm::vec4& position, const glm::vec3& scale, const glm::fquat& orientation) {}
+void Shape::transform(const vec4f& position, const vec4f& scale, const quatf& orientation) {}
 
-glm::vec4 Shape::support(const glm::vec4& direction) const { return glm::vec4(0, 0, 0, 1); }
-void Shape::getFacingFace(const glm::vec4& direction, std::vector<glm::vec4>& points) const {}
+vec4f Shape::support(const vec4f& direction) const { return vec4f(0, 0, 0, 1); }
+void Shape::getFacingFace(const vec4f& direction, std::vector<vec4f>& points) const {}
+
+const char* Shape::getTypeStr() const
+{
+	switch (type)
+	{
+		case Shape::ShapeType::NONE:			return "Unknown";
+		case Shape::ShapeType::POINT:			return "Point";
+		case Shape::ShapeType::SEGMENT:			return "Segment";
+		case Shape::ShapeType::TRIANGLE:		return "Triangle";
+		case Shape::ShapeType::SPHERE:			return "Sphere";
+		case Shape::ShapeType::AXIS_ALIGNED_BOX:return "AxisAlignedBox";
+		case Shape::ShapeType::ORIENTED_BOX:	return "OrientedBox";
+		case Shape::ShapeType::CAPSULE:			return "Capsule";
+		case Shape::ShapeType::HULL:			return "ConvexHull";
+		default: return "unknown";
+	}
+}

@@ -3,6 +3,8 @@
 #include <EntityComponent/Entity.hpp>
 
 #include <iostream>
+#include <sstream>
+#include <Utiles/Debug.h>
 
 //	Default
 RigidBody::RigidBody(const RigidBodyType& type, const SolverType& solver) : 
@@ -26,19 +28,19 @@ void RigidBody::initialize(const float& _mass)
 
 	if (!colliders.empty())
 	{
-		inertia = glm::mat3(0.f);
+		inertia = mat4f(0.f);
 		for (int i = 0; i < colliders.size(); i++)
 		{
 			Collider* collider = static_cast<Collider*>(colliders[i]);
 			inertia += collider->m_shape->computeInertiaMatrix();
 		}
 		inertia *= mass;
-		inverseInertia = glm::inverse(inertia);
+		inverseInertia = mat4f::inverse(inertia);
 	}
 	else
 	{
-		inertia = glm::mat3(mass);
-		inverseInertia = glm::mat3(inverseMass);
+		inertia = mat4f(mass);
+		inverseInertia = mat4f(inverseMass);
 	}
 }
 void RigidBody::computeWorldShapes()
@@ -47,9 +49,9 @@ void RigidBody::computeWorldShapes()
 		delete shape;
 	worldShapes.clear();
 
-	glm::vec4 position = getPosition();
-	glm::vec3 scale = getParentEntity()->getScale();
-	glm::quat orientation = getOrientation();
+	vec4f position = getPosition();
+	vec4f scale(getParentEntity()->getWorldScale());
+	quatf orientation = getOrientation();
 
 	for (Component* colliderComponent : colliders)
 	{
@@ -74,56 +76,56 @@ void RigidBody::setBouncyness(const float& b) { bouncyness = b; }
 void RigidBody::setFriction(const float& f) { friction = f; }
 void RigidBody::setDamping(const float& f) { damping = f; }
 
-void RigidBody::setExternalForces(const glm::vec4& f) { externalForces = f; }
-void RigidBody::setExternalTorques(const glm::vec4& t) { externalTorques = t; }
-void RigidBody::setLinearAcceleration(const glm::vec4& a) { linearAcceleration = a; }
-void RigidBody::setAngularAcceleration(const glm::vec4& a) { angularAcceleration = a; }
-void RigidBody::setLinearVelocity(const glm::vec4& v) { linearVelocity = v; }
-void RigidBody::setAngularVelocity(const glm::vec4& v) { angularVelocity = v; }
-void RigidBody::setPosition(const glm::vec4& p)
+void RigidBody::setExternalForces(const vec4f& f) { externalForces = f; }
+void RigidBody::setExternalTorques(const vec4f& t) { externalTorques = t; }
+void RigidBody::setLinearAcceleration(const vec4f& a) { linearAcceleration = a; }
+void RigidBody::setAngularAcceleration(const vec4f& a) { angularAcceleration = a; }
+void RigidBody::setLinearVelocity(const vec4f& v) { linearVelocity = v; }
+void RigidBody::setAngularVelocity(const vec4f& v) { angularVelocity = v; }
+void RigidBody::setPosition(const vec4f& p)
 {
 	Entity* parent = getParentEntity();
 	if (parent)
-		parent->setPosition(p);
+		parent->setWorldPosition(p);
 }
-void RigidBody::setOrientation(const glm::fquat& q)
+void RigidBody::setOrientation(const quatf& q)
 {
 	Entity* parent = getParentEntity();
 	if (parent)
-		parent->setOrientation(q);
+		parent->setWorldOrientation(q);
 }
 
 
 RigidBody::RigidBodyType RigidBody::getType() const { return type; }
 float RigidBody::getMass() const { return mass; }
 float RigidBody::getInverseMass() const { return inverseMass; }
-const glm::mat3& RigidBody::getInertia() const { return inertia; }
-const glm::mat3& RigidBody::getInverseInertia() const { return inverseInertia; }
+const mat4f& RigidBody::getInertia() const { return inertia; }
+const mat4f& RigidBody::getInverseInertia() const { return inverseInertia; }
 float RigidBody::getGravityFactor() const { return gravityFactor; }
 float RigidBody::getFriction() const { return friction; }
 float RigidBody::getDamping() const { return damping; }
 
-glm::vec4 RigidBody::getExternalForces() const { return externalForces; }
-glm::vec4 RigidBody::getExternalTorques() const { return externalTorques; }
-glm::vec4 RigidBody::getLinearAcceleration() const { return linearAcceleration; }
-glm::vec4 RigidBody::getAngularAcceleration() const { return angularAcceleration; }
-glm::vec4 RigidBody::getLinearVelocity() const { return linearVelocity; }
-glm::vec4 RigidBody::getAngularVelocity() const { return angularVelocity; }
-glm::vec4 RigidBody::getPosition() const
+vec4f RigidBody::getExternalForces() const { return externalForces; }
+vec4f RigidBody::getExternalTorques() const { return externalTorques; }
+vec4f RigidBody::getLinearAcceleration() const { return linearAcceleration; }
+vec4f RigidBody::getAngularAcceleration() const { return angularAcceleration; }
+vec4f RigidBody::getLinearVelocity() const { return linearVelocity; }
+vec4f RigidBody::getAngularVelocity() const { return angularVelocity; }
+vec4f RigidBody::getPosition() const
 {
 	Entity* parent = getParentEntity();
 	if (parent)
-		return parent->getPosition();
+		return parent->getWorldPosition();
 	else
-		return glm::vec4(0.f);
+		return vec4f(0.f);
 }
-glm::fquat RigidBody::getOrientation() const
+quatf RigidBody::getOrientation() const
 {
 	Entity* parent = getParentEntity();
 	if (parent)
-		return parent->getOrientation();
+		return parent->getWorldOrientation();
 	else
-		return glm::fquat(0, 0, 0, 1);
+		return quatf::identity;
 }
 
 
@@ -150,16 +152,53 @@ bool RigidBody::isResting() const
 		angularAcceleration == glm::vec3(0.f);*/
 	return false;
 }
-glm::vec4 RigidBody::computeLocalPoint(glm::vec4 worldPoint) const
+vec4f RigidBody::computeLocalPoint(vec4f worldPoint)
 {
-	return getParentEntity()->getInverseTransformMatrix() * worldPoint;
+	return getParentEntity()->getInverseWorldTransformMatrix() * worldPoint;
 }
-glm::vec4 RigidBody::computeLocalDirection(glm::vec4 worldDirection) const
+vec4f RigidBody::computeLocalDirection(vec4f worldDirection)
 {
-	return getParentEntity()->getInverseTransformMatrix() * worldDirection;
+	return getParentEntity()->getInverseWorldTransformMatrix() * worldDirection;
 }
-glm::vec4 RigidBody::computeWorldDirection(glm::vec4 localDirection) const
+vec4f RigidBody::computeWorldDirection(vec4f localDirection)
 {
-	return getParentEntity()->getTransformMatrix() * localDirection;
+	return getParentEntity()->getWorldTransformMatrix() * localDirection;
 }
 //
+
+
+void RigidBody::onAddToEntity(Entity* entity)
+{
+	entity->setFlags((uint64_t)Entity::Flags::Fl_Physics);
+}
+void RigidBody::onDrawImGui()
+{
+#ifdef USE_IMGUI
+	const ImVec4 componentColor = ImVec4(0, 1, 0, 1);
+	std::ostringstream unicName;
+	unicName << "RigidBody component##" << (uintptr_t)this;
+	if (ImGui::TreeNodeEx(unicName.str().c_str(), ImGuiTreeNodeFlags_DefaultOpen))
+	{
+		ImGui::Spacing();
+		ImGui::TextColored(componentColor, "Gizmos");
+		ImGui::Indent();
+		ImGui::Checkbox("Draw colliders", &m_drawColliders);
+		ImGui::Unindent();
+
+		ImGui::TreePop();
+	}
+
+	if (m_drawColliders)
+	{
+		drawColliders(vec4f(componentColor.x, componentColor.y, componentColor.z, componentColor.w));
+	}
+#endif // USE_IMGUI
+}
+void RigidBody::drawColliders(vec4f color) const
+{
+	for (const Component* comp : colliders)
+	{
+		const Collider* collider = static_cast<const Collider*>(comp);
+		collider->drawDebug(color);
+	}
+}

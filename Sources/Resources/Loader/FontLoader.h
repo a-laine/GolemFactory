@@ -1,7 +1,8 @@
 #pragma once
 
 #include <map>
-#include <glm/glm.hpp>
+//#include <glm/glm.hpp>
+#include "Math/TMath.h"
 
 #include <Resources/IResourceLoader.h>
 #include <Resources/Font.h>
@@ -19,7 +20,7 @@ class FontLoader : public IResourceLoader
     private:
         std::string getFileName(const std::string& resourceDirectory, const std::string& fileName) const;
 
-        glm::vec2 size;
+        vec2f size;
         uint8_t* image;
         unsigned short int begin, end, defaultChar;
         std::vector<Font::Patch> charTable;

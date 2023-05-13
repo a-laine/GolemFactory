@@ -8,7 +8,7 @@ class VirtualSceneQuerry
 {
 	public:
 		//	Miscellaneous
-		enum CollisionType
+		enum class CollisionType
 		{
 			NONE = 0, //!< No collision
 			INSIDE,   //!< Object fully inside
@@ -18,6 +18,7 @@ class VirtualSceneQuerry
 
 		virtual VirtualSceneQuerry::CollisionType operator() (const NodeVirtual* node);
 		std::vector<const NodeVirtual*>& getResult();
+		void addNodeToResult(const NodeVirtual* _node);
 
 	protected:
 		std::vector<const NodeVirtual*> result;

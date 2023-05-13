@@ -1,0 +1,7 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Prop_Door_Metal_02",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": []
+}

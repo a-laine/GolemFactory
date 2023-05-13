@@ -1,0 +1,7 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Prop_Barrel_Large_01",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": []
+}

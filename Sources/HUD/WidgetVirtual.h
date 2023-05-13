@@ -3,14 +3,17 @@
 #include <iostream>
 
 #include <GL/glew.h>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/transform.hpp>
 
-#include <Resources/ResourceManager.h>
-#include <Resources/Mesh.h>
-#include <Resources/Texture.h>
-#include <Resources/Shader.h>
+#include <glm/glm.hpp>
+#include <glm/gtx/euler_angles.hpp>
+#include <glm/gtx/transform.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+#include "Math/TMath.h"
+#include "Resources/ResourceManager.h"
+#include "Resources/Mesh.h"
+#include "Resources/Texture.h"
+#include "Resources/Shader.h"
 
 
 class WidgetVirtual
@@ -52,8 +55,8 @@ class WidgetVirtual
 			GLuint texturesBuffer = 0;
 			GLuint facesBuffer = 0;
 
-			std::vector<glm::vec3> vertices;
-			std::vector<glm::vec2> textures;
+			std::vector<vec4f> vertices;
+			std::vector<vec2f> textures;
 			std::vector<unsigned short> faces;
 		};
 		//
@@ -64,10 +67,10 @@ class WidgetVirtual
 		//
 
 		//	Public functions
-		virtual void draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model);
+		virtual void draw(Shader* s, uint8_t& stencilMask, const mat4f& model);
 		virtual void update(const float& elapseTime);
-		virtual bool intersect(const glm::mat4& base, const glm::vec3& ray);
-		virtual bool mouseEvent(const glm::mat4& base, const glm::vec3& ray, const float& parentscale, const bool& clicked);
+		virtual bool intersect(const mat4f& base, const vec4f& ray);
+		virtual bool mouseEvent(const mat4f& base, const vec4f& ray, const float& parentscale, const bool& clicked);
 
 		virtual void setBoolean(const bool& b);
 		virtual void setString(const std::string& s);
@@ -78,9 +81,9 @@ class WidgetVirtual
 
 		//  Set/get functions
 		virtual void setState(State state);
-		virtual void setSize(const glm::vec2& s, const State& state = State::CURRENT);
-		virtual void setPosition(const glm::vec3& p, const State& state = State::CURRENT);
-		virtual void setColor(const glm::vec4& c, const State& state = State::CURRENT);
+		virtual void setSize(const vec2f& s, const State& state = State::CURRENT);
+		virtual void setPosition(const vec4f& p, const State& state = State::CURRENT);
+		virtual void setColor(const vec4f& c, const State& state = State::CURRENT);
 		void setVisibility(const bool& visible);
 		void setResponsive(const bool& responsive);
 		void setTexture(const std::string& textureName);
@@ -90,9 +93,9 @@ class WidgetVirtual
 
 		WidgetType getType() const;
 		State getState() const;
-		glm::vec2 getSize(State state = State::CURRENT);
-		glm::vec3 getPosition(State state = State::CURRENT);
-		glm::vec4 getColor(const unsigned int& index, State state = State::CURRENT);
+		vec2f getSize(State state = State::CURRENT);
+		vec4f getPosition(State state = State::CURRENT);
+		vec4f getColor(const unsigned int& index, State state = State::CURRENT);
 		Shader* getShader() const;
 		Texture* getTexture() const;
 		bool isVisible() const;
@@ -118,9 +121,9 @@ class WidgetVirtual
 		//  Attributes
 		WidgetType type;
 		uint8_t configuration;
-		std::map<State, glm::vec2> sizes;
-		std::map<State, glm::vec3> positions;
-		std::map<State, glm::vec4> colors;
+		std::map<State, vec2f> sizes;
+		std::map<State, vec4f> positions;
+		std::map<State, vec4f> colors;
 
 		std::vector<DrawBatch> batchList;
 		std::vector<WidgetVirtual*> children;

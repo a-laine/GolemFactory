@@ -1,0 +1,7 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Env_Bone_Spine_02",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": []
+}

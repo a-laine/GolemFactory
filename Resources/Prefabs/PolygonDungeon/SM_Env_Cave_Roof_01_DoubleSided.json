@@ -1,0 +1,7 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Env_Cave_Roof_01_DoubleSided",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": []
+}

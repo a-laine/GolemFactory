@@ -12,8 +12,9 @@
 #include <fstream>
 
 
-#include <glm/glm.hpp>
+//#include <glm/glm.hpp>
 #include <GLFW/glfw3.h>
+#include "Math/TMath.h"
 
 #include <Utiles/Mutex.h>
 #include <Utiles/Singleton.h>
@@ -35,7 +36,15 @@ class EventHandlerImpl
 {
     public:
         //  Miscellaneous
-        typedef void(*ResizeCallback)(int,int);			//!< The resize callback type definition (for user utilisation)
+        typedef void(*ResizeCallback)(GLFWwindow* ,int,int);
+        typedef void(*TextInputCallback)(GLFWwindow*, unsigned int);
+		typedef void(*ScrollingCallback)(GLFWwindow*, double, double);
+		typedef void(*KeyCallback)(GLFWwindow*, int, int, int, int);
+		typedef void(*CursorPositionCallback)(GLFWwindow*, double, double);
+		typedef void(*CursorEnterCallback)(GLFWwindow*, int);
+		typedef void(*MouseButtonCallback)(GLFWwindow*, int, int, int);
+		typedef void(*DropCallback)(GLFWwindow*, int, const char**);
+		typedef void(*WindowFocusCallback)(GLFWwindow*, int);
         //
 
         //  Public functions
@@ -106,14 +115,16 @@ class EventHandlerImpl
 		*/
         void setChordPriority(bool highPriority);
 
-		/*!
-		*	\brief Attach a user callback for all resize event on a window
-		*
-		*	Permit to specify a callback to call. Usefull for GUI update on this event for example.
-		*
-		*	\param cb : callback to attach
-		*/
-        void setResizeCallback(ResizeCallback cb);
+
+        void addResizeCallback(ResizeCallback cb);
+        void addTextInputCallback(TextInputCallback cb);
+        void addScollingCallback(ScrollingCallback cb);
+        void addKeyCallback(KeyCallback cb);
+        void addCursorPositionCallback(CursorPositionCallback cb);
+        void addCursorEnterCallback(CursorEnterCallback cb);
+        void addMouseButtonCallback(MouseButtonCallback cb);
+        void addDropCallback(DropCallback cb);
+        void addWindowFocusCallback(WindowFocusCallback cb);
 
 		/*!
 		*	\brief Return true if repeat mode is activated
@@ -143,25 +154,25 @@ class EventHandlerImpl
 		*	\brief Return cursor displacement from last update
 		*	\return cursor displacement from last update.
 		*/
-        glm::vec2 getCursorPositionRelative();
+        vec2f getCursorPositionRelative();
 
 		/*!
 		*	\brief Return cursor position in window coordinates
 		*	\return cursor position
 		*/
-		glm::vec2 getCursorPositionAbsolute();
+		vec2f getCursorPositionAbsolute();
 
 		/*!
 		*	\brief Return cursor position in viewport coordinates
 		*	\return cursor position in viewport coordinates ([-1, 1] for each coordinates)
 		*/
-		glm::vec2 getCursorNormalizedPosition();
+		vec2f getCursorNormalizedPosition();
 
 		/*!
 		*	\brief Return scrolling displacement from last update
 		*	\return scrolling displacement from last update.
 		*/
-		glm::vec2 getScrollingRelative();
+		vec2f getScrollingRelative();
 
 		/*!
 		*	\brief Change the directory of where to find event file configuration for key mapping loading
@@ -316,11 +327,36 @@ class EventHandlerImpl
         GLFWwindow* focusedWindow;												//!< A pointer on the window which have focus or nullptr if none have focus
 
         Mutex mutex;															//!< A mutex for thread safe use
-		glm::vec2 cursorPositionRelative,cursorPositionRelativeBuffer;			//!< A double buffered vector for relative cursor position
-		glm::vec2 cursorPositionAbsolute,cursorPositionAbsoluteBuffer;			//!< A double buffered vector for absolute cursor position
-		glm::vec2 scrollingRelative,scrollingRelativeBuffer;					//!< A double buffered vector for relative scrolling position
+		vec2f cursorPositionRelative,cursorPositionRelativeBuffer;				//!< A double buffered vector for relative cursor position
+		vec2f cursorPositionAbsolute,cursorPositionAbsoluteBuffer;				//!< A double buffered vector for absolute cursor position
+		vec2f scrollingRelative,scrollingRelativeBuffer;						//!< A double buffered vector for relative scrolling position
 
-        ResizeCallback resizeCallback;											//!< The callback for resize on a window
+        //ResizeCallback resizeCallback;											//!< The callback for resize on a window
+		//TextInputCallback textInputCallback;
+		//ScrollingCallback scrolligCallback;
+
+
+		typedef void(*ResizeCallback)(GLFWwindow*, int, int);
+		typedef void(*TextInputCallback)(GLFWwindow*, unsigned int);
+		typedef void(*ScrollingCallback)(GLFWwindow*, double, double);
+		typedef void(*KeyCallback)(GLFWwindow*, int, int, int, int);
+		typedef void(*CursorPositionCallback)(GLFWwindow*, double, double);
+		typedef void(*CursorEnterCallback)(GLFWwindow*, int);
+		typedef void(*MouseButtonCallback)(GLFWwindow*, int, int, int);
+		typedef void(*DropCallback)(GLFWwindow*, int, const char**);
+		typedef void(*WindowFocusCallback)(GLFWwindow*, int);
+
+		std::vector<ResizeCallback> m_resizeCallbacks;
+		std::vector<TextInputCallback> m_textInputCallbacks;
+		std::vector<ScrollingCallback> m_scrollingCallbacks;
+		std::vector<KeyCallback> m_keyCallbacks;
+		std::vector<CursorPositionCallback> m_cursorPositionCallbacks;
+		std::vector<CursorEnterCallback> m_cursorEnterCallbacks;
+		std::vector<MouseButtonCallback> m_mouseButtonCallbacks;
+		std::vector<DropCallback> m_dropCallbacks;
+		std::vector<WindowFocusCallback> m_windowFocusCallbacks;
+
+
 
         static EventHandlerImpl* This;											//!< Needed for have access to attributes in static function (typicaly all callbacks)
         //

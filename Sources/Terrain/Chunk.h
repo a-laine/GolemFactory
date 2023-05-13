@@ -3,14 +3,14 @@
 #include <vector>
 #include <map>
 #include <GL/glew.h>
-#include <glm/glm.hpp>
-
+//#include <glm/glm.hpp>
+#include "Math/TMath.h"
 
 class Chunk
 {
 	public:
 		//	Default
-		Chunk(unsigned int seed, glm::mat4 model, const float& cornerHeight);
+		Chunk(unsigned int seed, mat4f model, const float& cornerHeight);
 		~Chunk();
 		//
 
@@ -28,15 +28,13 @@ class Chunk
 		//	Set / Get
 		bool isInitialized() const;
 
-		void setModelMatrix(glm::mat4 model);
+		void setModelMatrix(mat4f model);
 
-		glm::mat4 getModelMatrix() const;
+		mat4f getModelMatrix() const;
 		float* getModelMatrixPtr();
 		uint8_t getLod() const;
 		float getCorner();
 		unsigned int getSeed();
-		//std::vector<float> getLeftBorder(const uint8_t& targetLod);
-		//std::vector<float> getBottomBorder(const uint8_t& targetLod);
 		bool getNeedVBOUpdate() const;
 		unsigned int getCenterFacesCount() const;
 		unsigned int getBorderFacesCount() const;
@@ -56,12 +54,11 @@ class Chunk
 		
 		float randf(const float& min = -1.f, const float& max = 1.f, const unsigned int& quantum = 32768);
 		unsigned int randi();
-		//void randJump(const unsigned int& jumpCount);
 		void initRandomNumberGenerator(const unsigned int& offset, const unsigned int& newseed);
 
-		unsigned int instantiateVertex(const glm::vec3& v, const float&  amplitude);
+		unsigned int instantiateVertex(const vec4f& v, const float&  amplitude);
 		unsigned int instantiateVertex(const float& x, const float& y, const float& z, const float&  amplitude);
-		unsigned int instantiateVertexSmooth(const glm::vec3& v, const float& step, const float&  amplitude);
+		unsigned int instantiateVertexSmooth(const vec4f& v, const float& step, const float&  amplitude);
 
 		void smoothNormals(const float& step);
 		void splitCenter(const float& step, const float& amplitude);
@@ -75,10 +72,10 @@ class Chunk
 		struct gfvertex
 		{  
 			gfvertex(const float& x, const float& y) : v(x, y) {};
-			gfvertex(const glm::vec3& u) : v(u.x, u.y) {};
-			gfvertex(const glm::vec2& u) : v(u) {};
+			gfvertex(const vec4f& u) : v(u.x, u.y) {};
+			gfvertex(const vec2f& u) : v(u) {};
 
-			glm::vec2 v;
+			vec2f v;
 			bool operator<(const gfvertex& o) const
 			{
 				if (v.x != o.v.x)
@@ -95,12 +92,12 @@ class Chunk
 		uint8_t lod;
 		unsigned int seed;
 		unsigned long int next;
-		glm::mat4 modelMatrix;
+		mat4f modelMatrix;
 		float corner;
 
-		std::vector<glm::vec3> vertices;
-		std::vector<glm::vec3> normals;
-		std::vector<glm::vec3> colors;
+		std::vector<vec4f> vertices;
+		std::vector<vec4f> normals;
+		std::vector<vec4f> colors;
 		std::vector<unsigned int> faces;
 		unsigned int facesCenter;
 		unsigned int facesBorder;

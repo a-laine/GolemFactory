@@ -17,26 +17,26 @@ class Debug : public Singleton<Debug>
 		//
 
 		//  Draw functions
-		static void drawPoint(const glm::vec3& p) { Debug::point(p, This->pointShader); };
-		static void drawCube(const glm::mat4& transform, const glm::vec3& size) { Debug::mesh(This->cubeMesh, glm::scale(transform, size), This->defaultShader); };
-		static void drawSphere(const glm::vec3& center, const float& radius) { Debug::mesh(This->sphereMesh, glm::scale(glm::translate(glm::mat4(1.f), center), glm::vec3(radius)), This->defaultShader); };
-		static void drawLine(const glm::vec3& point1, const glm::vec3& point2) { Debug::line(point1, point2, This->segmentShader); };
-		static void drawCapsule(const glm::vec3& point1, const glm::vec3& point2, const float& radius) { Debug::capsule(point1, point2, radius, This->wiredShader); };
-		static void drawMesh(const Mesh* const mesh, const glm::mat4& transform) { Debug::mesh(mesh, transform, This->wiredShader); };
+		static void drawPoint(const vec4f& p) { Debug::point(p, This->pointShader); };
+		static void drawCube(const mat4f& transform, const vec4f& size) { Debug::mesh(This->cubeMesh, mat4f::scale(transform, size), This->defaultShader); };
+		static void drawSphere(const vec4f& center, const float& radius) { Debug::mesh(This->sphereMesh, mat4f::scale(mat4f::translate(mat4f::identity, center), vec4f(radius)), This->defaultShader); };
+		static void drawLine(const vec4f& point1, const vec4f& point2) { Debug::line(point1, point2, This->segmentShader); };
+		static void drawCapsule(const vec4f& point1, const vec4f& point2, const float& radius) { Debug::capsule(point1, point2, radius, This->wiredShader); };
+		static void drawMesh(const Mesh* const mesh, const mat4f& transform) { Debug::mesh(mesh, transform, This->wiredShader); };
 
-		static void drawWiredCube(const glm::mat4& transform, const glm::vec3& size) { Debug::mesh(This->cubeMesh, glm::scale(transform, size), This->wiredShader); };
-		static void drawWiredCube(const glm::mat4& transform, const glm::vec3& min, const glm::vec3& max)
+		static void drawWiredCube(const mat4f& transform, const vec4f& size) { Debug::mesh(This->cubeMesh, mat4f::scale(transform, size), This->wiredShader); };
+		static void drawWiredCube(const mat4f& transform, const vec4f& min, const vec4f& max)
 		{
-			Debug::mesh(This->cubeMesh, glm::scale(glm::translate(glm::mat4(1.f), 0.5f * (max + min)) * transform, 0.5f * (max - min)), This->wiredShader);
+			Debug::mesh(This->cubeMesh, mat4f::scale(mat4f::translate(mat4f::identity, 0.5f * (max + min)) * transform, 0.5f * (max - min)), This->wiredShader);
 		};
-		static void drawWiredSphere(const glm::vec3& center, const float& radius) { Debug::mesh(This->sphereMesh, glm::scale(glm::translate(glm::mat4(1.f), center), glm::vec3(radius)), This->wiredShader); };
-		static void drawWiredCapsule(const glm::vec3& point1, const glm::vec3& point2, const float& radius) { Debug::capsule(point1, point2, radius, This->wiredShader); };
-		static void drawWiredMesh(const Mesh* const mesh, const glm::mat4& transform) { Debug::mesh(mesh, transform, This->wiredShader); };
+		static void drawWiredSphere(const vec4f& center, const float& radius) { Debug::mesh(This->sphereMesh, mat4f::scale(mat4f::translate(mat4f::identity, center), vec4f(radius)), This->wiredShader); };
+		static void drawWiredCapsule(const vec4f& point1, const vec4f& point2, const float& radius) { Debug::capsule(point1, point2, radius, This->wiredShader); };
+		static void drawWiredMesh(const Mesh* const mesh, const mat4f& transform) { Debug::mesh(mesh, transform, This->wiredShader); };
 
-		static void drawLineCube(const glm::mat4& transform, const glm::vec3& size);
-		static void drawLineCube(const glm::mat4& transform, const glm::vec3& min, const glm::vec3& max)
+		static void drawLineCube(const mat4f& transform, const vec4f& size);
+		static void drawLineCube(const mat4f& transform, const vec4f& min, const vec4f& max)
 		{
-			Debug::drawLineCube(glm::translate(glm::mat4(1.f), 0.5f * (max + min)) * transform, 0.5f * (max - min));
+			Debug::drawLineCube(transform * mat4f::translate(mat4f::identity, 0.5f * (max + min)), 0.5f * (max - min));
 		}
 		//
 
@@ -47,22 +47,23 @@ class Debug : public Singleton<Debug>
 		//
 
 		// Attributes
-		static glm::vec3 color;
-		static glm::mat4 view;
-		static glm::mat4 projection;
+		static vec4f color;
+		static mat4f view;
+		static mat4f projection;
+		static float viewportRatio;
 
-		static const glm::vec3 black;
-		static const glm::vec3 white;
-		static const glm::vec3 magenta;
-		static const glm::vec3 orange;
-		static const glm::vec3 grey;
-		static const glm::vec3 red;
-		static const glm::vec3 green;
-		static const glm::vec3 blue;
-		static const glm::vec3 yellow;
+		static const vec4f black;
+		static const vec4f white;
+		static const vec4f magenta;
+		static const vec4f orange;
+		static const vec4f grey;
+		static const vec4f red;
+		static const vec4f green;
+		static const vec4f blue;
+		static const vec4f yellow;
 
-		static const glm::vec3 darkBlue;
-		static const glm::vec3 darkGreen;
+		static const vec4f darkBlue;
+		static const vec4f darkGreen;
 		//
 
 	private:
@@ -72,10 +73,10 @@ class Debug : public Singleton<Debug>
 		//
 
 		// real draw functions
-		static void point(const glm::vec3& p, Shader* shader);
-		static void line(const glm::vec3& point1, const glm::vec3& point2, Shader* shader);
-		static void capsule(const glm::vec3& point1, const glm::vec3& point2, const float& radius, Shader* shader);
-		static void mesh(const Mesh* const mesh, const glm::mat4& transform, Shader* shader);
+		static void point(const vec4f& p, Shader* shader);
+		static void line(const vec4f& point1, const vec4f& point2, Shader* shader);
+		static void capsule(const vec4f& point1, const vec4f& point2, const float& radius, Shader* shader);
+		static void mesh(const Mesh* const mesh, const mat4f& transform, Shader* shader);
 		//
 
 		// Attributes

@@ -1,0 +1,7 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Env_Stairs_Large_02",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": []
+}

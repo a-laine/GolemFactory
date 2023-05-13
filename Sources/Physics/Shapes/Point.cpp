@@ -2,10 +2,10 @@
 #include "Sphere.h"
 #include "AxisAlignedBox.h"
 
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/quaternion.hpp>
+/*#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/quaternion.hpp>*/
 
-Point::Point(const glm::vec4& position) : Shape(ShapeType::POINT), p(position) {}
+Point::Point(const vec4f& position) : Shape(ShapeType::POINT), p(position) {}
 Sphere Point::toSphere() const { return Sphere(p, 0.f); }
 AxisAlignedBox Point::toAxisAlignedBox() const { return AxisAlignedBox(p, p); }
 Shape& Point::operator=(const Shape& s)
@@ -17,16 +17,14 @@ Shape& Point::operator=(const Shape& s)
 	}
 	return *this;
 };
-void Point::transform(const glm::vec4& position, const glm::vec3& scale, const glm::fquat& orientation)
+void Point::transform(const vec4f& position, const vec4f& scale, const quatf& orientation)
 {
-	glm::mat4 m = glm::translate(glm::mat4(1.f), (glm::vec3)position);
-	m = m * glm::toMat4(orientation);
-	m = glm::scale(m, scale);
+	mat4f m = mat4f::TRS(position, orientation, scale);
 	p = m * p;
 }
 Shape* Point::duplicate() const { return new Point(*this); }
-glm::vec4 Point::support(const glm::vec4& direction) const { return p; }
-void Point::getFacingFace(const glm::vec4& direction, std::vector<glm::vec4>& points) const
+vec4f Point::support(const vec4f& direction) const { return p; }
+void Point::getFacingFace(const vec4f& direction, std::vector<vec4f>& points) const
 {
 	points.push_back(p);
 }

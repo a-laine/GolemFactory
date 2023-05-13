@@ -5,7 +5,7 @@ Wired
 		model : "mat4";
 		view : "mat4";
 		projection : "mat4";
-		overrideColor : "vec3";
+		overrideColor : "vec4";
 	};
 	
 	vertex :
@@ -13,30 +13,30 @@ Wired
 		#version 330
 
 		// input
-		layout(location = 0) in vec3 position;
-		layout(location = 1) in vec3 normal;
-		layout(location = 2) in vec3 vertexcolor;
+		layout(location = 0) in vec4 position;
+		layout(location = 1) in vec4 normal;
+		layout(location = 2) in vec4 vertexcolor;
 
 		uniform mat4 model; 	// model matrix (has to be present at this location)
 		uniform mat4 view; 		// view matrix
 		uniform mat4 projection;// projection matrix
 
 		// output
-		out vec3 lightDirectionCameraSpace_gs;
-		out vec3 fragmentNormal_gs;
-		out vec3 fragmentColor_gs;
+		out vec4 lightDirectionCameraSpace_gs;
+		out vec4 fragmentNormal_gs;
+		out vec4 fragmentColor_gs;
 
 		vec4 lightCoordinateWorldSpace = vec4(1000,200,1500,1);
 
 		// program
 		void main()
 		{
-			gl_Position = projection * view * model * vec4(position, 1.0);
-			fragmentNormal_gs = (view * model * vec4(normal, 0.0)).xyz;
-			fragmentColor_gs = 1.0 * vertexcolor;
+			gl_Position = projection * view * model * position;
+			fragmentNormal_gs = view * model * normal;
+			fragmentColor_gs = vertexcolor;
 			
-			vec3 eyeDirectionCameraSpace = - ( view * model * vec4(position, 1.0)).xyz;
-			vec3 lightPositionCameraSpace = (view * lightCoordinateWorldSpace).xyz;
+			vec4 eyeDirectionCameraSpace = - (view * model * position);
+			vec4 lightPositionCameraSpace = view * lightCoordinateWorldSpace;
 			lightDirectionCameraSpace_gs = lightPositionCameraSpace + eyeDirectionCameraSpace;
 		}
 	};

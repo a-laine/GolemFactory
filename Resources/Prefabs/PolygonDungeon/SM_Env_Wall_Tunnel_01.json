@@ -1,0 +1,7 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Env_Wall_Tunnel_01",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": []
+}

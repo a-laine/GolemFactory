@@ -2,7 +2,7 @@
 
 #include <fstream>
 
-#include <glm/glm.hpp>
+//#include <glm/glm.hpp>
 
 #include <Resources/Skeleton.h>
 #include <Utiles/Parser/Variant.h>

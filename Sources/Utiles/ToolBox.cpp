@@ -146,35 +146,35 @@ bool ToolBox::isPathExist(const std::string& fileName)
 }
 
 
-Variant ToolBox::getFromVec2(const glm::vec2& vec)
+Variant ToolBox::getFromVec2f(const vec2f& vec)
 {
 	Variant v = Variant(Variant::ArrayType());
 	for (int i = 0; i < 2; i++)
 		v.getArray().push_back(Variant(vec[i]));
 	return v;
 }
-Variant ToolBox::getFromVec3(const glm::vec3& vec)
+Variant ToolBox::getFromVec3f(const vec3f& vec)
 {
 	Variant v = Variant(Variant::ArrayType());
 	for (int i = 0; i < 3; i++)
 		v.getArray().push_back(Variant(vec[i]));
 	return v;
 }
-Variant ToolBox::getFromVec4(const glm::vec4& vec)
+Variant ToolBox::getFromVec4f(const vec4f& vec)
 {
 	Variant v = Variant(Variant::ArrayType());
 	for (int i = 0; i < 4; i++)
 		v.getArray().push_back(Variant(vec[i]));
 	return v;
 }
-Variant ToolBox::getFromQuat(const glm::fquat& quat)
+Variant ToolBox::getFromQuatf(const quatf& quat)
 {
 	Variant v = Variant(Variant::ArrayType());
 	for (int i = 0; i < 4; i++)
 		v.getArray().push_back(Variant(quat[i]));
 	return v;
 }
-Variant ToolBox::getFromMat4(const glm::mat4& mat)
+Variant ToolBox::getFromMat4f(const mat4f& mat)
 {
 	Variant v = Variant(Variant::ArrayType());
 	for (int i = 0; i < 4; i++)
@@ -184,24 +184,24 @@ Variant ToolBox::getFromMat4(const glm::mat4& mat)
 }
 
 
-void ToolBox::optimizeStaticMesh(std::vector<glm::vec3>& verticesArray,
-	std::vector<glm::vec3>& normalesArray,
-	std::vector<glm::vec3>& colorArray,
+void ToolBox::optimizeStaticMesh(std::vector<vec4f>& verticesArray,
+	std::vector<vec4f>& normalesArray,
+	std::vector<vec4f>& colorArray,
 	std::vector<unsigned short>&facesArray)
 {
-	std::vector<glm::vec3> verticesBuffer;
-	std::vector<glm::vec3> normalesBuffer;
-	std::vector<glm::vec3> colorBuffer;
+	std::vector<vec4f> verticesBuffer;
+	std::vector<vec4f> normalesBuffer;
+	std::vector<vec4f> colorBuffer;
 	std::vector<unsigned short> facesBuffer;
 
 	//	an ordered vertex data (position, normal and color)
 	struct OrderedVertex
 	{
-		glm::vec3 position;
-		glm::vec3 normal;
-		glm::vec3 color;
+		vec4f position;
+		vec4f normal;
+		vec4f color;
 
-		int inf(const glm::vec3& l, const glm::vec3& r) const
+		int inf(const vec4f& l, const vec4f& r) const
 		{
 			//	return 1 if equals, 2 if l < r and 3 if l > r
 			if (l.x != r.x) return (l.x < r.x ? 2 : 3);
@@ -256,20 +256,20 @@ void ToolBox::optimizeStaticMesh(std::vector<glm::vec3>& verticesArray,
 void ToolBox::optimizeHullMesh(Mesh* mesh)
 {
 	//	copy current array of mesh
-	const std::vector<glm::vec3>& verticesArray = *mesh->getVertices();
-	const std::vector<glm::vec3>& normalesArray = *mesh->getNormals();
+	const std::vector<vec4f>& verticesArray = *mesh->getVertices();
+	const std::vector<vec4f>& normalesArray = *mesh->getNormals();
 	const std::vector<unsigned short>& facesArray = *mesh->getFaces();
 
 	// create result output
-	std::vector<glm::vec3> verticesBuffer;
-	std::vector<glm::vec3> normalBuffer;
+	std::vector<vec4f> verticesBuffer;
+	std::vector<vec4f> normalBuffer;
 	std::vector<unsigned short> facesBuffer;
 
 	//	struct to be able to sort vertices
 	struct OrderedVertex
 	{
-		glm::vec3 position;
-		int inf(const glm::vec3& l, const glm::vec3& r) const
+		vec4f position;
+		int inf(const vec4f& l, const vec4f& r) const
 		{
 			//	return 1 if equals, 2 if l < r and 3 if l > r
 			if (l.x != r.x) return (l.x < r.x ? 2 : 3);
@@ -308,7 +308,7 @@ void ToolBox::optimizeHullMesh(Mesh* mesh)
 	}
 
 	//	replace mesh arrays
-	mesh->colors.clear();
+	mesh->uvs.clear();
 	mesh->vertices = verticesBuffer;
 	mesh->normals = normalBuffer;
 	mesh->faces = facesBuffer;

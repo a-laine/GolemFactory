@@ -8,10 +8,10 @@
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
+/*#include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/rotate_vector.hpp>
-#include <glm/gtc/quaternion.hpp>
+#include <glm/gtc/quaternion.hpp>*/
 
 #include "Utiles/ToolBox.h"
 #include "HUD/WidgetManager.h"
@@ -80,12 +80,12 @@ double completeTime = 16.;
 double averageCompleteTime = 16.;
 
 float avatarZeroHeight;
-glm::vec3 avatarspeed(0.f);
+vec4f avatarspeed(0.f);
 
 CameraComponent* currentCamera = nullptr;
 struct {
 	float radius = 2.f;
-	glm::vec3 target;
+	vec4f target;
 } cameraInfos;
 //
 
@@ -121,7 +121,7 @@ int main()
 	//	Collision test
 	world.getEntityFactory().createObject("cube", [](Entity* object) // ground collider
 		{
-			object->setTransformation(glm::vec4(0.f, 0.f, -10.f, 1.f), glm::vec3(1000, 1000, 10), glm::fquat());
+			object->setWorldTransformation(vec4f(0.f, 0.f, -10.f, 1.f), 1.f, quatf()); // vec4f(1000, 1000, 10, 1)
 			object->removeComponent(object->getComponent<DrawableComponent>());
 		});
 
@@ -134,10 +134,10 @@ int main()
 
 	freeflyCamera = world.getEntityFactory().createObject([](Entity* object)
 		{
-			glm::vec4 p(-5, -3, 3, 1);
-			object->setPosition(p);
+			vec4f p(-5, -3, 3, 1);
+			object->setWorldPosition(p);
 
-			Collider* collider = new Collider(new Sphere(glm::vec4(0.f), 0.1f));
+			Collider* collider = new Collider(new Sphere(vec4f(0.f), 0.1f));
 			object->addComponent(collider);
 			object->recomputeBoundingBox();
 
@@ -224,7 +224,7 @@ void initManagers()
 	EventHandler::getInstance()->setRepository(resourceRepository);
 	EventHandler::getInstance()->loadKeyMapping("ModelImporter", "ModelImporterEventEnum");
 	EventHandler::getInstance()->setCursorMode(true);
-	EventHandler::getInstance()->setResizeCallback(WidgetManager::resizeCallback);
+	EventHandler::getInstance()->addResizeCallback(WidgetManager::resizeCallback);
 
 	// Init Resources manager
 	ResourceVirtual::logVerboseLevel = ResourceVirtual::VerboseLevel::ALL;
@@ -245,25 +245,25 @@ void initManagers()
 	ResourceManager::getInstance()->addNewResourceLoader(".texture", new TextureLoader());
 
 	// Init world
-	const glm::vec4 worldHalfSize = glm::vec4(GRID_SIZE * GRID_ELEMENT_SIZE, GRID_SIZE * GRID_ELEMENT_SIZE, 64, 0) * 0.5f;
-	const glm::vec4 worldPos = glm::vec4(0, 0, worldHalfSize.z - 5, 1.f);
+	const vec4f worldHalfSize = vec4f(GRID_SIZE * GRID_ELEMENT_SIZE, GRID_SIZE * GRID_ELEMENT_SIZE, 64, 0) * 0.5f;
+	const vec4f worldPos = vec4f(0, 0, worldHalfSize.z - 5, 1.f);
 	NodeVirtual::debugWorld = &world;
-	world.getSceneManager().init(worldPos - worldHalfSize, worldPos + worldHalfSize, glm::ivec3(4, 4, 1), 3);
+	world.getSceneManager().init(worldPos - worldHalfSize, worldPos + worldHalfSize, vec3i(4, 4, 1), 3);
 	world.setMaxObjectCount(4000000);
 	world.getEntityFactory().createObject([](Entity* object)
 		{
-			glm::vec4 s = glm::vec4(0.5f * GRID_SIZE * GRID_ELEMENT_SIZE, 0.5f * GRID_SIZE * GRID_ELEMENT_SIZE, 1.f, 0.f);
+			vec4f s = vec4f(0.5f * GRID_SIZE * GRID_ELEMENT_SIZE, 0.5f * GRID_SIZE * GRID_ELEMENT_SIZE, 1.f, 0.f);
 
 			Collider* collider = new Collider(new AxisAlignedBox(-s, s));
 			object->addComponent(collider);
 			object->recomputeBoundingBox();
-			object->setPosition(glm::vec4(0.f, 0.f, -1.f, 1.f));
+			object->setWorldPosition(vec4f(0.f, 0.f, -1.f, 1.f));
 		});
 
 	//	Renderer
 	Renderer::getInstance()->setContext(context);
 	Renderer::getInstance()->setWorld(&world);
-	Renderer::getInstance()->initializeGrid(GRID_SIZE, GRID_ELEMENT_SIZE, glm::vec3(24 / 255.f, 202 / 255.f, 230 / 255.f));	// blue tron
+	Renderer::getInstance()->initializeGrid(GRID_SIZE, GRID_ELEMENT_SIZE, vec4f(24 / 255.f, 202 / 255.f, 230 / 255.f, 1.f));	// blue tron
 	Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("greenGrass"));
 	Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE, ResourceManager::getInstance()->getResource<Shader>("default"));
 	Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE_BB, ResourceManager::getInstance()->getResource<Shader>("wired"));
@@ -285,8 +285,8 @@ void initManagers()
 }
 void picking()
 {
-	glm::vec4 cameraPos = currentCamera->getGlobalPosition();
-	glm::vec4 cameraForward = currentCamera->getForward(); // no rotations
+	vec4f cameraPos = currentCamera->getPosition();
+	vec4f cameraForward = currentCamera->getForward(); // no rotations
 
 	RaySceneQuerry test(cameraPos, cameraForward, 10000);
 	RayEntityCollector collector(cameraPos, cameraForward, 10000);
@@ -306,7 +306,7 @@ void picking()
 		if (compAnim)       type = "animatable";
 		else if (compDraw)  type = "drawable";
 		else               type = "empty entity";
-		glm::vec4 p = cameraPos + distance * cameraForward;
+		vec4f p = cameraPos + distance * cameraForward;
 
 		WidgetManager::getInstance()->setString("interaction", "Distance : " + ToolBox::to_string_with_precision(distance, 5) +
 			" m\nPosition : (" + ToolBox::to_string_with_precision(p.x, 5) + " , " + ToolBox::to_string_with_precision(p.y, 5) + " , " + ToolBox::to_string_with_precision(p.z, 5) +
@@ -318,8 +318,8 @@ void picking()
 		{
 			Renderer::RenderOption option = Renderer::getInstance()->getRenderOption();
 			Renderer::getInstance()->setRenderOption(option == Renderer::RenderOption::DEFAULT ? Renderer::RenderOption::BOUNDING_BOX : Renderer::RenderOption::DEFAULT);
-			glm::mat4 view = currentCamera->getGlobalViewMatrix();
-			glm::mat4 projection = glm::perspective(glm::radians(currentCamera->getVerticalFieldOfView(context->getViewportRatio())), context->getViewportRatio(), 0.1f, 1500.f);
+			mat4f view = currentCamera->getViewMatrix();
+			mat4f projection = mat4f::perspective(currentCamera->getVerticalFieldOfView(), context->getViewportRatio(), 0.1f, 1500.f);
 
 			for (auto it = collector.getResult().begin(); it != collector.getResult().end(); ++it)
 				Renderer::getInstance()->drawObject((*it), &view[0][0], &projection[0][0]);
@@ -391,16 +391,15 @@ void updates(float elapseTime)
 	//	Compute HUD picking parameters
 	if (EventHandler::getInstance()->getCursorMode())
 	{
-		glm::vec2 cursor = EventHandler::getInstance()->getCursorNormalizedPosition();
-		glm::mat4 projection = glm::perspective(glm::radians(ANGLE_VERTICAL_HUD_PROJECTION), context->getViewportRatio(), 0.1f, 1500.f);
-		glm::vec4 ray_eye = glm::inverse(projection) * glm::vec4(cursor.x, cursor.y, -1.f, 1.f);
+		vec2f cursor = EventHandler::getInstance()->getCursorNormalizedPosition();
+		mat4f projection = mat4f::perspective((float)DEG2RAD * ANGLE_VERTICAL_HUD_PROJECTION, context->getViewportRatio(), 0.1f, 1500.f);
+		vec4f ray_eye = mat4f::inverse(projection) * vec4f(cursor.x, cursor.y, -1.f, 0.f);
 		WidgetManager::getInstance()->setPickingParameters(
-			glm::translate(glm::mat4(1.f), glm::vec3(0.f, 0.f, -DISTANCE_HUD_CAMERA)) * glm::eulerAngleZX(glm::pi<float>(), glm::pi<float>() * 0.5f),
-			glm::normalize(glm::vec3(ray_eye.x, ray_eye.y, ray_eye.z)));
+			mat4f::translate(mat4f::identity, vec4f(0.f, 0.f, -DISTANCE_HUD_CAMERA, 1.f)) * mat4f::eulerAngleZX((float)PI, (float)PI * 0.5f), ray_eye);
 	}
 	else
 	{
-		WidgetManager::getInstance()->setPickingParameters(glm::mat4(1.f), glm::vec3(0.f));
+		WidgetManager::getInstance()->setPickingParameters(mat4f::identity, vec4f::zero);
 	}
 
 	//	Update widgets
@@ -421,17 +420,17 @@ void updates(float elapseTime)
 		if (EventHandler::getInstance()->isActivated(CLICK_RIGHT))
 		{
 			float sensitivity = 0.2f;
-			float yaw = glm::radians(-sensitivity * EventHandler::getInstance()->getCursorPositionRelative().x);
-			float pitch = glm::radians(-sensitivity * EventHandler::getInstance()->getCursorPositionRelative().y);
+			float yaw = (float)DEG2RAD * -sensitivity * EventHandler::getInstance()->getCursorPositionRelative().x;
+			float pitch = (float)DEG2RAD * -sensitivity * EventHandler::getInstance()->getCursorPositionRelative().y;
 			ffCam->rotate(pitch, yaw);
 		}
 
 		// Translation
-		glm::vec4 direction(0., 0., 0., 0.);
-		float speed = ffCam->getFieldOfView();
+		vec4f direction(0., 0., 0., 0.);
+		float speed = ffCam->getVerticalFieldOfView();
 		if (EventHandler::getInstance()->isActivated(CLICK_MIDDLE))
 		{
-			glm::vec2 delta = EventHandler::getInstance()->getCursorPositionRelative();
+			vec2f delta = EventHandler::getInstance()->getCursorPositionRelative();
 
 			float sensitivity = 0.00001f;
 			direction = ffCam->getUp() * delta.y - ffCam->getRight()* delta.x;
@@ -440,16 +439,16 @@ void updates(float elapseTime)
 
 		if (direction.x || direction.y || direction.z)
 		{
-			freeflyCamera->setPosition(freeflyCamera->getPosition() + direction * (elapseTime * speed));
+			freeflyCamera->setWorldPosition(freeflyCamera->getWorldPosition() + direction * (elapseTime * speed));
 			world.updateObject(freeflyCamera);
 		}
 
 		// FOV
-		float angle = ffCam->getFieldOfView() - 2.f * EventHandler::getInstance()->getScrollingRelative().y;
-		if (angle > 160.f) angle = 160.f;
-		else if (angle < 3.f) angle = 3.f;
+		float angle = ffCam->getVerticalFieldOfView() + (float)DEG2RAD * EventHandler::getInstance()->getScrollingRelative().y;
+		if (angle > 1.5f) angle = 1.5f;
+		else if (angle < 0.05f) angle = 0.05f;
 
-		ffCam->setFieldOfView(angle);
+		ffCam->setVerticalFieldOfView(angle);
 	}
 
 }

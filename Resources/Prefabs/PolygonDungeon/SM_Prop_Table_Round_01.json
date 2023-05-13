@@ -1,0 +1,7 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Prop_Table_Round_01",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": []
+}

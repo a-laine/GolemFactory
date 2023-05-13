@@ -1,0 +1,7 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Env_Bone_Skull_Jaw_01",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": []
+}

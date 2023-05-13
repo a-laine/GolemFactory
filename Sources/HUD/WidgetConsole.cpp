@@ -91,7 +91,7 @@ void WidgetConsole::initialize(const float& bThickness, const float& bWidth, con
 	initVBOtext();
 	initializeVAOs();
 }
-void WidgetConsole::draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model)
+void WidgetConsole::draw(Shader* s, uint8_t& stencilMask, const mat4f& model)
 {
 	//	draw board part
 	if (texture) glBindTexture(GL_TEXTURE_2D, texture->getTextureId());
@@ -106,7 +106,8 @@ void WidgetConsole::draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model
 		glDrawElements(GL_TRIANGLES, (int)batchList[BATCH_INDEX_BORDER].faces.size(), GL_UNSIGNED_SHORT, NULL);
 
 		//	draw center at different alpha
-		glm::vec4 color = glm::vec4(colors[State::CURRENT].x, colors[State::CURRENT].y, colors[State::CURRENT].z, 0.5f * colors[State::CURRENT].w);
+		vec4f color = colors[State::CURRENT]; color.w *= 0.5f;
+
 		loc = s->getUniformLocation("color");
 		if (loc >= 0) glUniform4fv(loc, 1, &color.x);
 		glBindVertexArray(batchList[BATCH_INDEX_CENTER].vao);
@@ -119,19 +120,21 @@ void WidgetConsole::draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model
 		drawClippingShape(BATCH_INDEX_CLIPPING_ELEVATOR, true, s, stencilMask);
 
 			//	draw elevator
-			color = glm::vec4(0.7f * colors[State::CURRENT].x, 0.7f * colors[State::CURRENT].y, 0.7f * colors[State::CURRENT].z, colors[State::CURRENT].w);
+			vec4f color = 0.7f * colors[State::CURRENT]; 
+			color.w = colors[State::CURRENT].w;
+
 			loc = s->getUniformLocation("color");
 			if (loc >= 0) glUniform4fv(loc, 1, &color.x);
 			float selectionPart = (elevator - 0.5f) * elevatorRange;
 			loc = s->getUniformLocation("model");
-			if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, &glm::translate(model, positions[State::CURRENT] + glm::vec3(0.f, 0.f, selectionPart))[0][0]);
+			if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, &mat4f::translate(model, positions[State::CURRENT] + vec4f(0.f, 0.f, selectionPart, 0.f))[0][0]);
 
 			glBindVertexArray(batchList[BATCH_INDEX_ELEVATOR].vao);
 			glDrawElements(GL_TRIANGLES, (int)batchList[BATCH_INDEX_ELEVATOR].faces.size(), GL_UNSIGNED_SHORT, NULL);
 
 			//	reset model matrix on shader
 			loc = s->getUniformLocation("model");
-			if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, &glm::translate(model, positions[State::CURRENT])[0][0]);
+			if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, &mat4f::translate(model, positions[State::CURRENT])[0][0]);
 
 		//	unclip
 		drawClippingShape(BATCH_INDEX_CLIPPING_ELEVATOR, false, s, stencilMask);
@@ -150,23 +153,23 @@ void WidgetConsole::draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model
 
 		//	go to elevator selection part
 		loc = s->getUniformLocation("model");
-		if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, &glm::translate(model, positions[State::CURRENT] + glm::vec3(0.f, 0.f, -elevator * selection))[0][0]);
+		if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, &mat4f::translate(model, positions[State::CURRENT] + vec4f(0.f, 0.f, -elevator * selection, 0.f))[0][0]);
 
 		//	draw text
 		loc = s->getUniformLocation("color");
-		if (loc >= 0) glUniform4fv(loc, 1, &glm::vec4(1.f)[0]);
+		if (loc >= 0) glUniform4fv(loc, 1, &vec4f::one[0]);
 
 		glBindVertexArray(batchList[BATCH_INDEX_TEXT].vao);
 		glDrawElements(GL_TRIANGLES, (int)batchList[BATCH_INDEX_TEXT].faces.size(), GL_UNSIGNED_SHORT, NULL);
 
 		//	reset model matrix on shader
 		loc = s->getUniformLocation("model");
-		if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, &glm::translate(model, positions[State::CURRENT])[0][0]);
+		if (loc >= 0) glUniformMatrix4fv(loc, 1, GL_FALSE, &mat4f::translate(model, positions[State::CURRENT])[0][0]);
 
 	//	unclip zone
 	drawClippingShape(BATCH_INDEX_CLIPPING, false, s, stencilMask);
 }
-bool WidgetConsole::intersect(const glm::mat4& base, const glm::vec3& ray)
+bool WidgetConsole::intersect(const mat4f& base, const vec4f& ray)
 {
 	//	compute intersect just with border and center
 	for (unsigned int i = 0; i < BATCH_INDEX_CLIPPING; i++)
@@ -174,36 +177,37 @@ bool WidgetConsole::intersect(const glm::mat4& base, const glm::vec3& ray)
 		for (unsigned int j = 0; j < batchList[i].faces.size(); j += 3)
 		{
 			//	compute triangles vertices in eyes space
-			glm::vec4 p1 = base * glm::vec4(batchList[i].vertices[batchList[i].faces[j]], 1.f);
-			glm::vec4 p2 = base * glm::vec4(batchList[i].vertices[batchList[i].faces[j + 1]], 1.f);
-			glm::vec4 p3 = base * glm::vec4(batchList[i].vertices[batchList[i].faces[j + 2]], 1.f);
+			vec4f p1 = base * batchList[i].vertices[batchList[i].faces[j]];
+			vec4f p2 = base * batchList[i].vertices[batchList[i].faces[j + 1]];
+			vec4f p3 = base * batchList[i].vertices[batchList[i].faces[j + 2]];
 			
-			if (Collision::collide_SegmentvsTriangle(glm::vec4(0, 0, 0, 1), glm::vec4(10.f * ray, 1), p1, p2, p3))
+			if (Collision::collide_SegmentvsTriangle(vec4f::zero, 10.f * ray, p1, p2, p3))
 				return true;
 		}
 	}
 	return false;
 }
-bool WidgetConsole::mouseEvent(const glm::mat4& base, const glm::vec3& ray, const float& parentscale, const bool& clicked)
+bool WidgetConsole::mouseEvent(const mat4f& base, const vec4f& ray, const float& parentscale, const bool& clicked)
 {
 	if (clicked)
 	{
 		//	compute plane attribute
-		glm::vec3 p1 = glm::vec3(base * glm::vec4(batchList[BATCH_INDEX_CENTER].vertices[batchList[BATCH_INDEX_CENTER].faces[0]], 1.f));	 //	p1 is actualy the origin of board Shape (see center construction, vertex 0)
-		glm::vec3 p2 = glm::vec3(base * glm::vec4(batchList[BATCH_INDEX_CENTER].vertices[batchList[BATCH_INDEX_CENTER].faces[0 + 1]], 1.f));
-		glm::vec3 p3 = glm::vec3(base * glm::vec4(batchList[BATCH_INDEX_CENTER].vertices[batchList[BATCH_INDEX_CENTER].faces[0 + 2]], 1.f));
-		glm::vec3 normal = glm::cross(p2 - p1, p3 - p1);
-		if (normal != glm::vec3(0.f)) glm::normalize(normal);
+		vec4f p1 = base * batchList[BATCH_INDEX_CENTER].vertices[batchList[BATCH_INDEX_CENTER].faces[0]];	 //	p1 is actualy the origin of board Shape (see center construction, vertex 0)
+		vec4f p2 = base * batchList[BATCH_INDEX_CENTER].vertices[batchList[BATCH_INDEX_CENTER].faces[0 + 1]];
+		vec4f p3 = base * batchList[BATCH_INDEX_CENTER].vertices[batchList[BATCH_INDEX_CENTER].faces[0 + 2]];
+		vec4f normal = vec4f::cross(p2 - p1, p3 - p1);
+		if (normal != vec4f::zero)
+			normal.normalize();
 
 		//	compute relative cursor y (0 = at bottom, 1 = at top)
-		float depth = glm::dot(normal, p1) / glm::dot(normal, ray);
-		glm::vec3 intersection = depth * ray - p1;
+		float depth = vec4f::dot(normal, p1) / vec4f::dot(normal, ray);
+		vec4f intersection = depth * ray - p1;
 		float cursory = (intersection.y / parentscale + sizes[State::CURRENT].y/2 - elevatorLength) / elevatorRange;
 
 		if ((configuration & (uint8_t)State::STATE_MASK) != (uint8_t)State::ACTIVE)
 			firstCursory = cursory - elevator;
 
-		elevator = glm::clamp(cursory - firstCursory, 0.f, 1.f);
+		elevator = clamp(cursory - firstCursory, 0.f, 1.f);
 		setState(State::ACTIVE);
 		return true;
 	}
@@ -251,13 +255,13 @@ void WidgetConsole::initVBOtext()
 {
 	glGenBuffers(1, &batchList[BATCH_INDEX_TEXT].verticesBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, batchList[BATCH_INDEX_TEXT].verticesBuffer);
-	glBufferData(GL_ARRAY_BUFFER, TEXT_MAX_CHAR * 4 * sizeof(glm::vec3), nullptr, GL_DYNAMIC_DRAW);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, batchList[BATCH_INDEX_TEXT].vertices.size() * sizeof(glm::vec3), batchList[BATCH_INDEX_TEXT].vertices.data());
+	glBufferData(GL_ARRAY_BUFFER, TEXT_MAX_CHAR * 4 * sizeof(vec4f), nullptr, GL_DYNAMIC_DRAW);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, batchList[BATCH_INDEX_TEXT].vertices.size() * sizeof(vec4f), batchList[BATCH_INDEX_TEXT].vertices.data());
 
 	glGenBuffers(1, &batchList[BATCH_INDEX_TEXT].texturesBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, batchList[BATCH_INDEX_TEXT].texturesBuffer);
-	glBufferData(GL_ARRAY_BUFFER, TEXT_MAX_CHAR * 4 * sizeof(glm::vec2), nullptr, GL_DYNAMIC_DRAW);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, batchList[BATCH_INDEX_TEXT].textures.size() * sizeof(glm::vec2), batchList[BATCH_INDEX_TEXT].textures.data());
+	glBufferData(GL_ARRAY_BUFFER, TEXT_MAX_CHAR * 4 * sizeof(vec2f), nullptr, GL_DYNAMIC_DRAW);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, batchList[BATCH_INDEX_TEXT].textures.size() * sizeof(vec2f), batchList[BATCH_INDEX_TEXT].textures.data());
 
 	glGenBuffers(1, &batchList[BATCH_INDEX_TEXT].facesBuffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, batchList[BATCH_INDEX_TEXT].facesBuffer);
@@ -271,85 +275,85 @@ void WidgetConsole::updateBuffers(const bool& firstInit)
 
 	//	text clipping Shape (like center but a little smaller)
 	DrawBatch clippingShape;
-	glm::vec3 dimension = glm::vec3(0.5f * sizes[State::CURRENT].x - borderThickness, 0.f, 0.5f * sizes[State::CURRENT].y - borderThickness);
-	glm::vec3 elevatorMax, elevatorMin;
+	vec4f dimension = vec4f(0.5f * sizes[State::CURRENT].x - borderThickness, 0.f, 0.5f * sizes[State::CURRENT].y - borderThickness, 1.f);
+	vec4f elevatorMax, elevatorMin;
 
-	clippingShape.vertices.push_back(glm::vec3(0.f, 0.f, 0.f));
+	clippingShape.vertices.push_back(vec4f::zero);
 	clippingShape.faces.push_back(0);
 	if (cornerConfiguration & TOP_LEFT)
 	{
-		clippingShape.vertices.push_back(glm::vec3(-dimension.x + borderWidth, TEXT_DEPTH_OFFSET, dimension.z));
+		clippingShape.vertices.push_back(vec4f(-dimension.x + borderWidth, TEXT_DEPTH_OFFSET, dimension.z, 1.f));
 		clippingShape.faces.push_back(1);
 	}
 	else
 	{
-		clippingShape.vertices.push_back(glm::vec3(-dimension.x, TEXT_DEPTH_OFFSET, dimension.z));
+		clippingShape.vertices.push_back(vec4f(-dimension.x, TEXT_DEPTH_OFFSET, dimension.z, 1.f));
 		clippingShape.faces.push_back(1);
 	}
 	if (cornerConfiguration & TOP_RIGHT)
 	{
-		clippingShape.vertices.push_back(glm::vec3(dimension.x - borderWidth, TEXT_DEPTH_OFFSET, dimension.z));
+		clippingShape.vertices.push_back(vec4f(dimension.x - borderWidth, TEXT_DEPTH_OFFSET, dimension.z, 1.f));
 		clippingShape.faces.push_back(2);
 
-		clippingShape.vertices.push_back(glm::vec3(dimension.x - ELEVATOR_MARGIN_FACTOR * borderWidth, TEXT_DEPTH_OFFSET, dimension.z - borderWidth + ELEVATOR_MARGIN_FACTOR * borderWidth));
+		clippingShape.vertices.push_back(vec4f(dimension.x - ELEVATOR_MARGIN_FACTOR * borderWidth, TEXT_DEPTH_OFFSET, dimension.z - borderWidth + ELEVATOR_MARGIN_FACTOR * borderWidth, 1.f));
 		clippingShape.faces.push_back(0); clippingShape.faces.push_back(2); clippingShape.faces.push_back(3);
 
-		elevatorMax = glm::vec3(dimension.x - 0.5f * ELEVATOR_MARGIN_FACTOR * borderWidth, TEXT_DEPTH_OFFSET, dimension.z - borderWidth + 0.5f * ELEVATOR_MARGIN_FACTOR * borderWidth);
+		elevatorMax = vec4f(dimension.x - 0.5f * ELEVATOR_MARGIN_FACTOR * borderWidth, TEXT_DEPTH_OFFSET, dimension.z - borderWidth + 0.5f * ELEVATOR_MARGIN_FACTOR * borderWidth, 1.f);
 	}
 	else
 	{
-		clippingShape.vertices.push_back(glm::vec3(dimension.x - ELEVATOR_MARGIN_FACTOR * borderWidth, TEXT_DEPTH_OFFSET, dimension.z));
+		clippingShape.vertices.push_back(vec4f(dimension.x - ELEVATOR_MARGIN_FACTOR * borderWidth, TEXT_DEPTH_OFFSET, dimension.z, 1.f));
 		clippingShape.faces.push_back(2);
 
-		elevatorMax = glm::vec3(dimension.x - 0.5f * ELEVATOR_MARGIN_FACTOR * borderWidth, TEXT_DEPTH_OFFSET, dimension.z);
+		elevatorMax = vec4f(dimension.x - 0.5f * ELEVATOR_MARGIN_FACTOR * borderWidth, TEXT_DEPTH_OFFSET, dimension.z, 1.f);
 	}
 	if (cornerConfiguration & BOTTOM_RIGHT)
 	{
 		unsigned int index = (int)clippingShape.vertices.size() - 1;
-		clippingShape.vertices.push_back(glm::vec3(dimension.x - ELEVATOR_MARGIN_FACTOR * borderWidth, TEXT_DEPTH_OFFSET, -dimension.z + ELEVATOR_MARGIN_FACTOR * borderWidth));
+		clippingShape.vertices.push_back(vec4f(dimension.x - ELEVATOR_MARGIN_FACTOR * borderWidth, TEXT_DEPTH_OFFSET, -dimension.z + ELEVATOR_MARGIN_FACTOR * borderWidth, 1.f));
 		clippingShape.faces.push_back(0); clippingShape.faces.push_back(index); clippingShape.faces.push_back(index + 1);
 
-		clippingShape.vertices.push_back(glm::vec3(dimension.x - borderWidth, TEXT_DEPTH_OFFSET, -dimension.z));
+		clippingShape.vertices.push_back(vec4f(dimension.x - borderWidth, TEXT_DEPTH_OFFSET, -dimension.z, 1.f));
 		clippingShape.faces.push_back(0); clippingShape.faces.push_back(index + 1); clippingShape.faces.push_back(index + 2);
 
-		elevatorMin = glm::vec3(dimension.x - 0.5f * ELEVATOR_MARGIN_FACTOR * borderWidth, TEXT_DEPTH_OFFSET, -dimension.z + borderWidth - 0.5f * ELEVATOR_MARGIN_FACTOR * borderWidth);
+		elevatorMin = vec4f(dimension.x - 0.5f * ELEVATOR_MARGIN_FACTOR * borderWidth, TEXT_DEPTH_OFFSET, -dimension.z + borderWidth - 0.5f * ELEVATOR_MARGIN_FACTOR * borderWidth, 1.f);
 	}
 	else
 	{
 		unsigned int index = (int)clippingShape.vertices.size() - 1;
-		clippingShape.vertices.push_back(glm::vec3(dimension.x - ELEVATOR_MARGIN_FACTOR * borderWidth, TEXT_DEPTH_OFFSET, -dimension.z));
+		clippingShape.vertices.push_back(vec4f(dimension.x - ELEVATOR_MARGIN_FACTOR * borderWidth, TEXT_DEPTH_OFFSET, -dimension.z, 1.f));
 		clippingShape.faces.push_back(0); clippingShape.faces.push_back(index); clippingShape.faces.push_back(index + 1);
 
-		elevatorMin = glm::vec3(dimension.x - 0.5f * ELEVATOR_MARGIN_FACTOR * borderWidth, TEXT_DEPTH_OFFSET, -dimension.z);
+		elevatorMin = vec4f(dimension.x - 0.5f * ELEVATOR_MARGIN_FACTOR * borderWidth, TEXT_DEPTH_OFFSET, -dimension.z, 1.f);
 	}
 	if (cornerConfiguration & BOTTOM_LEFT)
 	{
 		unsigned int index = (int)clippingShape.vertices.size() - 1;
-		clippingShape.vertices.push_back(glm::vec3(-dimension.x + borderWidth, TEXT_DEPTH_OFFSET, -dimension.z));
+		clippingShape.vertices.push_back(vec4f(-dimension.x + borderWidth, TEXT_DEPTH_OFFSET, -dimension.z, 1.f));
 		clippingShape.faces.push_back(0); clippingShape.faces.push_back(index); clippingShape.faces.push_back(index + 1);
 
-		clippingShape.vertices.push_back(glm::vec3(-dimension.x, TEXT_DEPTH_OFFSET, -dimension.z + borderWidth));
+		clippingShape.vertices.push_back(vec4f(-dimension.x, TEXT_DEPTH_OFFSET, -dimension.z + borderWidth, 1.f));
 		clippingShape.faces.push_back(0); clippingShape.faces.push_back(index + 1); clippingShape.faces.push_back(index + 2);
 	}
 	else
 	{
 		unsigned int index = (int)clippingShape.vertices.size() - 1;
-		clippingShape.vertices.push_back(glm::vec3(-dimension.x, TEXT_DEPTH_OFFSET, -dimension.z));
+		clippingShape.vertices.push_back(vec4f(-dimension.x, TEXT_DEPTH_OFFSET, -dimension.z, 1.f));
 		clippingShape.faces.push_back(0); clippingShape.faces.push_back(index); clippingShape.faces.push_back(index + 1);
 	}
 	if (cornerConfiguration & TOP_LEFT)
 	{
 		unsigned int index = (int)clippingShape.vertices.size() - 1;
-		clippingShape.vertices.push_back(glm::vec3(-dimension.x, TEXT_DEPTH_OFFSET, dimension.z - borderWidth));
+		clippingShape.vertices.push_back(vec4f(-dimension.x, TEXT_DEPTH_OFFSET, dimension.z - borderWidth, 1.f));
 		clippingShape.faces.push_back(0); clippingShape.faces.push_back(index); clippingShape.faces.push_back(index + 1);
 
-		clippingShape.vertices.push_back(glm::vec3(-dimension.x + borderWidth, TEXT_DEPTH_OFFSET, dimension.z));
+		clippingShape.vertices.push_back(vec4f(-dimension.x + borderWidth, TEXT_DEPTH_OFFSET, dimension.z, 1.f));
 		clippingShape.faces.push_back(0); clippingShape.faces.push_back(index + 1); clippingShape.faces.push_back(index + 2);
 	}
 	else
 	{
 		unsigned int index = (int)clippingShape.vertices.size() - 1;
-		clippingShape.vertices.push_back(glm::vec3(-dimension.x, TEXT_DEPTH_OFFSET, dimension.z));
+		clippingShape.vertices.push_back(vec4f(-dimension.x, TEXT_DEPTH_OFFSET, dimension.z, 1.f));
 		clippingShape.faces.push_back(0); clippingShape.faces.push_back(index); clippingShape.faces.push_back(index + 1);
 	}
 
@@ -357,7 +361,7 @@ void WidgetConsole::updateBuffers(const bool& firstInit)
 	if (firstInit)
 	{
 		for (unsigned int i = 0; i < clippingShape.vertices.size(); i++)
-			clippingShape.textures.push_back(glm::vec2(0.f, 0.f));
+			clippingShape.textures.push_back(vec2f(0.f, 0.f));
 		batchList[BATCH_INDEX_CLIPPING].textures.swap(clippingShape.textures);
 	}
 	batchList[BATCH_INDEX_CLIPPING].vertices.swap(clippingShape.vertices);
@@ -367,17 +371,19 @@ void WidgetConsole::updateBuffers(const bool& firstInit)
 	elevatorLength = ELEVATOR_LENGTH_FACTOR * borderThickness;
 	elevatorRange = elevatorMax.z - elevatorMin.z - 2.f * elevatorLength;
 	float s = elevatorMax.z - elevatorMin.z - elevatorLength;
-	glm::vec2 p(0.5f * (elevatorMax + elevatorMin).x, 0.5f * (elevatorMax + elevatorMin).z);
+	vec2f p(0.5f * (elevatorMax + elevatorMin).x, 0.5f * (elevatorMax + elevatorMin).z);
 
 	//	elevator clipping quad init
 	DrawBatch elevatorClipping;
-		elevatorClipping.vertices.push_back(glm::vec3(p.x - 0.5f * ELEVATOR_MARGIN_FACTOR * borderWidth, TEXT_DEPTH_OFFSET, p.y - 0.5f * s));
-		elevatorClipping.vertices.push_back(glm::vec3(p.x - 0.5f * ELEVATOR_MARGIN_FACTOR * borderWidth, TEXT_DEPTH_OFFSET, p.y + 0.5f * s));
-		elevatorClipping.vertices.push_back(glm::vec3(p.x + 0.5f * ELEVATOR_MARGIN_FACTOR * borderWidth, TEXT_DEPTH_OFFSET, p.y + 0.5f * s));
-		elevatorClipping.vertices.push_back(glm::vec3(p.x + 0.5f * ELEVATOR_MARGIN_FACTOR * borderWidth, TEXT_DEPTH_OFFSET, p.y - 0.5f * s));
+		elevatorClipping.vertices.push_back(vec4f(p.x - 0.5f * ELEVATOR_MARGIN_FACTOR * borderWidth, TEXT_DEPTH_OFFSET, p.y - 0.5f * s, 1.f));
+		elevatorClipping.vertices.push_back(vec4f(p.x - 0.5f * ELEVATOR_MARGIN_FACTOR * borderWidth, TEXT_DEPTH_OFFSET, p.y + 0.5f * s, 1.f));
+		elevatorClipping.vertices.push_back(vec4f(p.x + 0.5f * ELEVATOR_MARGIN_FACTOR * borderWidth, TEXT_DEPTH_OFFSET, p.y + 0.5f * s, 1.f));
+		elevatorClipping.vertices.push_back(vec4f(p.x + 0.5f * ELEVATOR_MARGIN_FACTOR * borderWidth, TEXT_DEPTH_OFFSET, p.y - 0.5f * s, 1.f));
 
-		elevatorClipping.textures.push_back(glm::vec2(0.f)); elevatorClipping.textures.push_back(glm::vec2(0.f));
-		elevatorClipping.textures.push_back(glm::vec2(0.f)); elevatorClipping.textures.push_back(glm::vec2(0.f));
+		elevatorClipping.textures.push_back(vec2f::zero);
+		elevatorClipping.textures.push_back(vec2f::zero);
+		elevatorClipping.textures.push_back(vec2f::zero);
+		elevatorClipping.textures.push_back(vec2f::zero);
 
 		elevatorClipping.faces.push_back(0); elevatorClipping.faces.push_back(1); elevatorClipping.faces.push_back(2);
 		elevatorClipping.faces.push_back(0); elevatorClipping.faces.push_back(2); elevatorClipping.faces.push_back(3);
@@ -387,28 +393,30 @@ void WidgetConsole::updateBuffers(const bool& firstInit)
 	batchList[BATCH_INDEX_CLIPPING_ELEVATOR].faces.swap(elevatorClipping.faces);
 
 	//	elevator
-	const float pi = glm::pi<float>();
+	const float pi = (float)PI;
 	DrawBatch elevator;
-		elevator.vertices.push_back(glm::vec3(p.x - 0.3f * borderThickness, TEXT_DEPTH_OFFSET, p.y - (elevatorMax.z - elevatorMin.z)));
-		elevator.vertices.push_back(glm::vec3(p.x - 0.3f * borderThickness, TEXT_DEPTH_OFFSET, p.y + (elevatorMax.z - elevatorMin.z)));
-		elevator.vertices.push_back(glm::vec3(p.x + 0.3f * borderThickness, TEXT_DEPTH_OFFSET, p.y + (elevatorMax.z - elevatorMin.z)));
-		elevator.vertices.push_back(glm::vec3(p.x + 0.3f * borderThickness, TEXT_DEPTH_OFFSET, p.y - (elevatorMax.z - elevatorMin.z)));
+		elevator.vertices.push_back(vec4f(p.x - 0.3f * borderThickness, TEXT_DEPTH_OFFSET, p.y - (elevatorMax.z - elevatorMin.z), 1.f));
+		elevator.vertices.push_back(vec4f(p.x - 0.3f * borderThickness, TEXT_DEPTH_OFFSET, p.y + (elevatorMax.z - elevatorMin.z), 1.f));
+		elevator.vertices.push_back(vec4f(p.x + 0.3f * borderThickness, TEXT_DEPTH_OFFSET, p.y + (elevatorMax.z - elevatorMin.z), 1.f));
+		elevator.vertices.push_back(vec4f(p.x + 0.3f * borderThickness, TEXT_DEPTH_OFFSET, p.y - (elevatorMax.z - elevatorMin.z), 1.f));
 
-		elevator.textures.push_back(glm::vec2(0.f)); elevator.textures.push_back(glm::vec2(0.f));
-		elevator.textures.push_back(glm::vec2(0.f)); elevator.textures.push_back(glm::vec2(0.f));
+		elevator.textures.push_back(vec2f::zero);
+		elevator.textures.push_back(vec2f::zero);
+		elevator.textures.push_back(vec2f::zero);
+		elevator.textures.push_back(vec2f::zero);
 
 		elevator.faces.push_back(0); elevator.faces.push_back(1); elevator.faces.push_back(2);
 		elevator.faces.push_back(0); elevator.faces.push_back(2); elevator.faces.push_back(3);
 
 		//	circle
-		elevator.vertices.push_back(glm::vec3(p.x, TEXT_DEPTH_OFFSET, p.y));
-		elevator.textures.push_back(glm::vec2(0.f));
+		elevator.vertices.push_back(vec4f(p.x, TEXT_DEPTH_OFFSET, p.y, 1.f));
+		elevator.textures.push_back(vec2f::zero);
 		for (int i = 0; i < 16; i++)
 		{
-			elevator.vertices.push_back(glm::vec3(p.x + 0.4f * ELEVATOR_MARGIN_FACTOR * borderWidth * cos(i * pi / 8.f),
+			elevator.vertices.push_back(vec4f(p.x + 0.4f * ELEVATOR_MARGIN_FACTOR * borderWidth * cos(i * pi / 8.f),
 												  TEXT_DEPTH_OFFSET,
-												  p.y + 0.4f * ELEVATOR_MARGIN_FACTOR * borderWidth * sin(i * pi / 8.f)));
-			elevator.textures.push_back(glm::vec2(0.f));
+												  p.y + 0.4f * ELEVATOR_MARGIN_FACTOR * borderWidth * sin(i * pi / 8.f), 1.f));
+			elevator.textures.push_back(vec2f::zero);
 
 			if (i != 0)
 			{
@@ -436,7 +444,7 @@ void WidgetConsole::updateTextBuffer()
 	for (unsigned int i = 0; i < text.size(); i++)
 	{
 		//	init parameters
-		glm::vec2 o(positions[State::CURRENT].x - 0.5f * sizes[State::CURRENT].x - borderThickness + margin,
+		vec2f o(positions[State::CURRENT].x - 0.5f * sizes[State::CURRENT].x - borderThickness + margin,
 			positions[State::CURRENT].z + borderThickness - 0.5f * sizes[State::CURRENT].y + sizeChar * (linesLength.size() - 1 - line));
 		Font::Patch patch = font->getPatch(text[i]);
 		float charLength = std::abs((patch.corner2.x - patch.corner1.x) / (patch.corner2.y - patch.corner1.y));
@@ -454,15 +462,15 @@ void WidgetConsole::updateTextBuffer()
 				break;
 
 			default:
-				textBatch.vertices.push_back(glm::vec3(o.x + x, TEXT_DEPTH_OFFSET, o.y));
-				textBatch.vertices.push_back(glm::vec3(o.x + x, TEXT_DEPTH_OFFSET, o.y + sizeChar));
-				textBatch.vertices.push_back(glm::vec3(o.x + x + charLength*sizeChar, TEXT_DEPTH_OFFSET, o.y + sizeChar));
-				textBatch.vertices.push_back(glm::vec3(o.x + x + charLength*sizeChar, TEXT_DEPTH_OFFSET, o.y));
+				textBatch.vertices.push_back(vec4f(o.x + x, TEXT_DEPTH_OFFSET, o.y, 1.f));
+				textBatch.vertices.push_back(vec4f(o.x + x, TEXT_DEPTH_OFFSET, o.y + sizeChar, 1.f));
+				textBatch.vertices.push_back(vec4f(o.x + x + charLength*sizeChar, TEXT_DEPTH_OFFSET, o.y + sizeChar, 1.f));
+				textBatch.vertices.push_back(vec4f(o.x + x + charLength*sizeChar, TEXT_DEPTH_OFFSET, o.y, 1.f));
 
-				textBatch.textures.push_back(glm::vec2(patch.corner1.x + TEXTURE_OFFSET, patch.corner2.y - TEXTURE_OFFSET));
-				textBatch.textures.push_back(glm::vec2(patch.corner1.x + TEXTURE_OFFSET, patch.corner1.y + TEXTURE_OFFSET));
-				textBatch.textures.push_back(glm::vec2(patch.corner2.x - TEXTURE_OFFSET, patch.corner1.y + TEXTURE_OFFSET));
-				textBatch.textures.push_back(glm::vec2(patch.corner2.x - TEXTURE_OFFSET, patch.corner2.y - TEXTURE_OFFSET));
+				textBatch.textures.push_back(vec2f(patch.corner1.x + TEXTURE_OFFSET, patch.corner2.y - TEXTURE_OFFSET));
+				textBatch.textures.push_back(vec2f(patch.corner1.x + TEXTURE_OFFSET, patch.corner1.y + TEXTURE_OFFSET));
+				textBatch.textures.push_back(vec2f(patch.corner2.x - TEXTURE_OFFSET, patch.corner1.y + TEXTURE_OFFSET));
+				textBatch.textures.push_back(vec2f(patch.corner2.x - TEXTURE_OFFSET, patch.corner2.y - TEXTURE_OFFSET));
 
 				textBatch.faces.push_back((unsigned short)(textBatch.vertices.size() - 4));
 				textBatch.faces.push_back((unsigned short)(textBatch.vertices.size() - 3));

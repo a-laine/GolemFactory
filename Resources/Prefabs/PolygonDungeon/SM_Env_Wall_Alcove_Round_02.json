@@ -1,0 +1,7 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Env_Wall_Alcove_Round_02",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": []
+}

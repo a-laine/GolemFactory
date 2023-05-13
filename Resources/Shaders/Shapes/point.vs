@@ -1,17 +1,17 @@
 #version 330
 
 // input
-layout(location = 0) in vec3 position;
-layout(location = 1) in vec3 normal;
-layout(location = 2) in vec3 vertexcolor;
+layout(location = 0) in vec4 position;
+layout(location = 1) in vec4 normal;
+layout(location = 2) in vec4 vertexcolor;
 
 // output
-out vec3 fragmentColor;
+out vec4 fragmentColor;
 
 
 // program
 void main()
 {
-	gl_Position = vec4(position, 1.0);
+	gl_Position = position;
 	fragmentColor = vertexcolor;
 }

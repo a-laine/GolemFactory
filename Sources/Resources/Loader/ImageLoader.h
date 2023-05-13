@@ -2,9 +2,10 @@
 
 #include <string>
 #include <cstdint>
-#include <glm/glm.hpp>
+//#include <glm/glm.hpp>
 
-#include <Resources/IResourceLoader.h>
+#include "Math/TMath.h"
+#include "Resources/IResourceLoader.h"
 
 
 class ImageLoader : public IResourceLoader
@@ -32,7 +33,7 @@ class ImageLoader : public IResourceLoader
     private:
         std::string getFileName(const std::string& resourceDirectory, const std::string& fileName) const;
 
-        glm::vec3 size;
+        vec3f size;
         uint8_t* textureData;
         uint8_t configuration;
 };

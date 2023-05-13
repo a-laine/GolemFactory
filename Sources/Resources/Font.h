@@ -8,7 +8,8 @@
 
 #include <vector>
 #include <GL/glew.h>
-#include <glm/glm.hpp>
+//#include <glm/glm.hpp>
+#include "Math/TMath.h"
 
 #include "ResourceVirtual.h"
 
@@ -37,8 +38,8 @@ class Font : public ResourceVirtual
         struct Patch
 		{
 			Patch();
-            glm::vec2 corner1;			//!< Upper left char corner coordinates.
-			glm::vec2 corner2;			//!< Bottom right char corner coordinates.
+            vec2f corner1;			//!< Upper left char corner coordinates.
+			vec2f corner2;			//!< Bottom right char corner coordinates.
         };
         //
 
@@ -72,14 +73,14 @@ class Font : public ResourceVirtual
         //
 
         //  Public functions
-        void initialize(uint8_t* image, const glm::vec2& imageSize, unsigned short beginC, unsigned short endC, unsigned short defaultC, const std::vector<Patch>& table);
-        void initialize(uint8_t* image, const glm::vec2& imageSize, unsigned short beginC, unsigned short endC, unsigned short defaultC, std::vector<Patch>&& table);
+        void initialize(uint8_t* image, const vec2f& imageSize, unsigned short beginC, unsigned short endC, unsigned short defaultC, const std::vector<Patch>& table);
+        void initialize(uint8_t* image, const vec2f& imageSize, unsigned short beginC, unsigned short endC, unsigned short defaultC, std::vector<Patch>&& table);
         Patch getPatch(char c) const;
         //
 
         //  Attributes
         GLuint texture;                 //!< Texture Id
-		glm::vec2 size;					//!< Texture size
+        vec2f size;					    //!< Texture size
         //
 
     private:

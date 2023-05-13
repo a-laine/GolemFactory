@@ -1,0 +1,7 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Env_Wall_Pillar_Large_Round_01_Base",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": []
+}

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <Utiles/ImguiConfig.h>
 
 
 typedef intptr_t ClassID;
@@ -23,7 +24,6 @@ typedef intptr_t ClassID;
 
 
 class Entity;
-
 
 /* Exemple :
  * class MyComponent : public Component
@@ -60,6 +60,8 @@ class Component
 		Entity* getParentEntity() const { return m_parent; }
 		virtual void onAddToEntity(Entity* entity) { m_parent = entity; }
 		virtual void onRemoveFromEntity(Entity* entity) { m_parent = nullptr; }
+
+		virtual void onDrawImGui() {};
 
 	protected:
 		Component() : m_parent(nullptr) {};

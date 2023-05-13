@@ -3,9 +3,11 @@
 #include <iostream>
 #include <vector>
 
-#include <glm/glm.hpp>
+
+/*#include <glm/glm.hpp>
 #include <glm/gtx/euler_angles.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/transform.hpp>
+#include <glm/gtc/matrix_transform.hpp>*/
 
 #include "WidgetVirtual.h"
 
@@ -32,9 +34,9 @@ class Layer
 		//
 
 		//  Set/get functions
-		void setPosition(const glm::vec3& p);
-		void setScreenPosition(const glm::vec3& p);
-		void setTargetPosition(const glm::vec3& p);
+		void setPosition(const vec4f& p);
+		void setScreenPosition(const vec4f& p);
+		void setTargetPosition(const vec4f& p);
 		void setSize(const float& s);
 		void setOrientation(const float& yaw, const float& pitch, const float& roll);
 		void setVisibility(const bool& visible);
@@ -44,10 +46,10 @@ class Layer
 		bool isVisible() const;
 		bool isResponsive() const;
 		float getSize() const;
-		glm::mat4 getModelMatrix() const;
-		glm::vec3 getPosition() const;
-		glm::vec3 getScreenPosition() const;
-		glm::vec3 getTargetPosition() const;
+		mat4f getModelMatrix() const;
+		vec4f getPosition() const;
+		vec4f getScreenPosition() const;
+		vec4f getTargetPosition() const;
 		std::vector<WidgetVirtual*>& getChildrenList();
 		//
 
@@ -59,11 +61,11 @@ class Layer
 	protected:
 		//  Attributes
 		uint8_t configuration;
-		glm::vec3 position;
-		glm::vec3 screenPosition;
-		glm::vec3 targetPosition;
+		vec4f position;
+		vec4f screenPosition;
+		vec4f targetPosition;
 		float size;
-		glm::vec3 eulerAngle;
+		vec3f eulerAngle;
 		std::vector<WidgetVirtual*> children;
 		//
 };

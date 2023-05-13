@@ -1,0 +1,7 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Prop_Skeleton_Slave_Lying_01",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": []
+}

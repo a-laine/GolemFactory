@@ -100,7 +100,7 @@ bool FontLoader::load(const std::string& resourceDirectory, const std::string& f
 
     //  Load coordinate array
     std::string line;
-    glm::u16vec2 c1, c2;
+    vec2i c1, c2;
     bool errorOccured = false;
     unsigned int index = 0;
     unsigned int lineCount = 0;

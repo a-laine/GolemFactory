@@ -17,7 +17,7 @@ Texture::~Texture()
 	glDeleteTextures(1, &texture);
 }
 
-void Texture::initialize(const glm::vec3& imageSize, const uint8_t* data, uint8_t config)
+void Texture::initialize(const vec3f& imageSize, const uint8_t* data, uint8_t config)
 {
     GF_ASSERT(state == INVALID);
     state = LOADING;

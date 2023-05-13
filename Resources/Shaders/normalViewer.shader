@@ -5,7 +5,7 @@ NormalViewer{
 		view : "mat4";
 		projection : "mat4";
 		
-		overrideColor : "vec3";
+		overrideColor : "vec4";
 	};
 	
 	vertex : 
@@ -13,9 +13,9 @@ NormalViewer{
 			#version 330
 
 			// input
-			layout(location = 0) in vec3 position;
-			layout(location = 1) in vec3 normal;
-			layout(location = 2) in vec3 vertexcolor;
+			layout(location = 0) in vec4 position;
+			layout(location = 1) in vec4 normal;
+			layout(location = 2) in vec4 vertexcolor;
 
 			uniform mat4 model; 	// model matrix (has to be present at this location)
 			uniform mat4 view; 		// view matrix
@@ -27,8 +27,8 @@ NormalViewer{
 			// program
 			void main()
 			{
-				gl_Position = projection * view * model * vec4(position, 1.0);
-				delta_gs = projection * view * model * vec4(position + 0.1 * normal, 1.0);
+				gl_Position = projection * view * model * position;
+				delta_gs = projection * view * model * (position + 0.1 * normal);
 			}
 	};
 	
@@ -43,10 +43,10 @@ NormalViewer{
 		in vec4 delta_gs[];
 
 		// output
-		out vec3 fragmentColor_fs;
+		out vec4 fragmentColor_fs;
 		out vec3 barycentricCoord;
 
-		vec3 normalColor = vec3(1.0,1.0,1.0);
+		vec4 normalColor = vec4(1.0,1.0,1.0,1.0);
 
 
 		void drawNormal(int p1, int p2)
@@ -103,13 +103,13 @@ NormalViewer{
 		#version 330
 
 		// input
-		in vec3 fragmentColor_fs;
+		in vec4 fragmentColor_fs;
 		in vec3 barycentricCoord;
 		 
-		uniform vec3 overrideColor = vec3(-1.0 , 0.0 , 0.0);
+		uniform vec4 overrideColor = vec4(-1.0 , 0.0 , 0.0 , 0.0);
 
 		// output
-		layout (location = 0) out vec3 fragColor;
+		layout (location = 0) out vec4 fragColor;
 
 
 		// program
@@ -122,7 +122,7 @@ NormalViewer{
 
 		void main()
 		{
-			vec3 color = fragmentColor_fs;
+			vec4 color = fragmentColor_fs;
 			if (overrideColor.x >= 0.0)
 				color = overrideColor;
 				

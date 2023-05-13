@@ -1,0 +1,7 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Env_Tiles_06",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": []
+}

@@ -6,7 +6,7 @@
 #include <Scene/SceneManager.h>
 #include <Physics/Physics.h>
 
-
+class CameraComponent;
 class World
 {
 	public:
@@ -40,6 +40,9 @@ class World
 		Map* getMapPtr();
 
 		bool addToScene(Entity* object);
+
+		void setMainCamera(CameraComponent* _camera);
+		CameraComponent* getMainCamera() const;
 		//
 
 		//	Public functions
@@ -55,5 +58,6 @@ class World
 		EntityFactory entityFactory;
 		EntityManager entityManager;
 		Map map;
+		CameraComponent* m_mainCamera;
 };
 

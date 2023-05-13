@@ -1,0 +1,30 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Prop_Tech_Chamber_Broken_01",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": [
+        {
+            "name": "SM_Prop_Tech_Chamber_Broken_Glass",
+            "id": 0,
+            "position": [
+                0.0,
+                0.10092928260564804,
+                -2.3489890565997485e-7
+            ],
+            "rotation": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+            ],
+            "scale": 1.0,
+            "prefabName": "",
+            "childs": [],
+            "drawableComponent": {
+                "meshName": "SM_Prop_Tech_Chamber_Broken_Glass",
+                "shaderName": "defaultTextured"
+            }
+        }
+    ]
+}

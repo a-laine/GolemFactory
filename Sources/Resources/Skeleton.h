@@ -26,8 +26,8 @@ class Skeleton : public ResourceVirtual
 
         void initialize(const std::vector<unsigned int>& rootsList, const std::vector<Joint>& jointsList);
         void initialize(std::vector<unsigned int>&& rootsList, std::vector<Joint>&& jointsList);
-		const std::vector<glm::mat4x4>& getInverseBindPose() const;
-		const std::vector<glm::mat4x4>& getBindPose() const;
+		const std::vector<mat4f>& getInverseBindPose() const;
+		const std::vector<mat4f>& getBindPose() const;
 		const std::vector<Joint>& getJoints() const;
         std::string getIdentifier() const override;
         std::string getLoaderId(const std::string& resourceName) const;
@@ -37,14 +37,14 @@ class Skeleton : public ResourceVirtual
         static std::string defaultName;
 
 		//	Protected functions
-		void computeBindPose(const glm::mat4& parentPose, unsigned int joint);
+		void computeBindPose(const mat4f& parentPose, unsigned int joint);
 		//
 
 		//	Attributes
 		std::vector<unsigned int> roots;
 		std::vector<Joint> joints;
 
-		std::vector<glm::mat4> inverseBindPose;
-		std::vector<glm::mat4> bindPose;
+		std::vector<mat4f> inverseBindPose;
+		std::vector<mat4f> bindPose;
 		//
 };

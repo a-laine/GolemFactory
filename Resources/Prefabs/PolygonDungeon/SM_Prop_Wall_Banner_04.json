@@ -1,0 +1,7 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Prop_Wall_Banner_04",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": []
+}

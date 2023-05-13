@@ -1,0 +1,7 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Prop_Lantern_02",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": []
+}

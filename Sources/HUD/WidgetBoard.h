@@ -32,9 +32,9 @@ class WidgetBoard : public WidgetVirtual
 
 		//  Public functions
 		virtual void initialize(const float& bThickness, const float& bWidth, const uint8_t& corner = 0x00);
-		virtual void draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model) override;
+		virtual void draw(Shader* s, uint8_t& stencilMask, const mat4f& model) override;
 		virtual void update(const float& elapseTime) override;
-		virtual bool mouseEvent(const glm::mat4& base, const glm::vec3& ray, const float& parentscale, const bool& clicked) override;
+		virtual bool mouseEvent(const mat4f& base, const vec4f& ray, const float& parentscale, const bool& clicked) override;
 		//
 
 	protected:

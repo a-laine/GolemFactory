@@ -1,19 +1,19 @@
 #version 330
 
 // input
-in vec3 lightDirectionCameraSpace;
-in vec3 fragmentNormal;
-in vec3 fragmentColor;
+in vec4 lightDirectionCameraSpace;
+in vec4 fragmentNormal;
+in vec4 fragmentColor;
 
-uniform vec3 overrideColor = vec3(-1.0 , 0.0 , 0.0);
+uniform vec4 overrideColor = vec4(-1.0 , 0.0 , 0.0 , 0.0);
 
 // output
-layout (location = 0) out vec3 fragColor;
+layout (location = 0) out vec4 fragColor;
 
 // program
 void main()
 {
-	vec3 color = fragmentColor;
+	vec4 color = fragmentColor;
 	if (overrideColor.x >= 0.0)
 		color = overrideColor;
 

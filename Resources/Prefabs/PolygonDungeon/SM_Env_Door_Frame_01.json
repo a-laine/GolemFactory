@@ -1,0 +1,7 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Env_Door_Frame_01",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": []
+}

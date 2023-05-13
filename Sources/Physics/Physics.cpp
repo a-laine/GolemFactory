@@ -15,7 +15,7 @@
 #include <Physics/Shapes/Collider.h>
 
 #define APPROXIMATION_FACTOR 10.f
-#define EPSILON 0.000001f
+//#define EPSILON 0.000001f
 #define SUPERSAMPLING_DELTA 0.01f
 
 #define SOLVER_MAX_ITERATIONS 5000
@@ -40,7 +40,7 @@ bool Physics::drawClustersAABB = false;
 
 
 //  Default
-Physics::Physics() : gravity(0.f, 0.f, -9.81f, 0.f), proximityTest(glm::vec4(0), glm::vec4(0)), defaultFriction(0.7f)
+Physics::Physics() : gravity(0.f, 0.f, -9.81f, 0.f), proximityTest(vec4f(0), vec4f(0)), defaultFriction(0.7f)
 {
 	Collision::DispatchMatrixInit();
 }
@@ -49,10 +49,10 @@ Physics::~Physics()
 //
 
 //	Set / get functions
-void Physics::setGravity(const glm::vec4& g) { gravity = g; }
+void Physics::setGravity(const vec4f& g) { gravity = g; }
 void Physics::setDefaultFriction(const float& f) { defaultFriction = f; };
 
-glm::vec4 Physics::getGravity() const { return gravity; }
+vec4f Physics::getGravity() const { return gravity; }
 float Physics::getDefaultFriction() const { return defaultFriction; }
 
 void Physics::addMovingEntity(Entity* e)
@@ -92,8 +92,8 @@ void Physics::stepSimulation(const float& elapsedTime, SceneManager* scene)
 			//glm::fquat dq = glm::fquat(0.f, rigidbody->angularVelocity.x, rigidbody->angularVelocity.y, rigidbody->angularVelocity.z);
 			//glm::fquat q = rigidbody->getOrientation() + 0.5f * elapsedTime * dq * rigidbody->getOrientation();
 			//rigidbody->setOrientation(glm::normalize(q));
-			rigidbody->setExternalForces(glm::vec4(0.f));
-			rigidbody->setExternalTorques(glm::vec4(0.f));
+			rigidbody->setExternalForces(vec4f(0.f));
+			rigidbody->setExternalTorques(vec4f(0.f));
 
 			rigidbody->linearVelocity *= 1.f - rigidbody->damping;
 			rigidbody->angularVelocity *= 1.f - rigidbody->damping;
@@ -110,8 +110,8 @@ void Physics::debugDraw()
 	if (!PhysicDebugWindowEnable)
 		return;
 
-	const glm::vec4 clustersOffset = glm::vec4(0.004f);
-	const glm::vec4 sweptOffset = glm::vec4(0.004f);
+	const vec4f clustersOffset = vec4f(0.004f);
+	const vec4f sweptOffset = vec4f(0.004f);
 	const float pointRadius = 0.01f;
 	const float depthLength = 10.f;
 	const float tangentLength = 0.3f;
@@ -122,19 +122,19 @@ void Physics::debugDraw()
 
 		if (drawClustersAABB)
 		{
-			Debug::getInstance()->color = Debug::magenta;
+			Debug::color = Debug::magenta;
 			AxisAlignedBox box = cluster.dynamicEntities[0]->getParentEntity()->m_worldBoundingBox;
 			for (int j = 1; j < cluster.dynamicEntities.size(); j++)
 				box.add(cluster.dynamicEntities[j]->getParentEntity()->m_worldBoundingBox);
-			Debug::getInstance()->drawLineCube(glm::mat4(1.f), (glm::vec3)(box.min - clustersOffset), (glm::vec3)(box.max + clustersOffset));
+			Debug::drawLineCube(mat4f::identity, box.min - clustersOffset, box.max + clustersOffset);
 		}
 
 		if (drawSweptBoxes)
 		{
 			for (const RigidBody* dynamicBody : cluster.dynamicEntities)
 			{
-				Debug::getInstance()->color = Debug::yellow;
-				Debug::getInstance()->drawLineCube(glm::mat4(1.f), (glm::vec3)(dynamicBody->sweptBox.min - sweptOffset), (glm::vec3)(dynamicBody->sweptBox.max + sweptOffset));
+				Debug::color = Debug::yellow;
+				Debug::drawLineCube(mat4f::identity, dynamicBody->sweptBox.min - sweptOffset, dynamicBody->sweptBox.max + sweptOffset);
 			}
 		}
 
@@ -144,23 +144,23 @@ void Physics::debugDraw()
 			{
 				// point and collision frame
 				Debug::color = Debug::red;
-				Debug::drawSphere((glm::vec3)constraint.worldPoint, pointRadius);
-				Debug::drawLine((glm::vec3)constraint.worldPoint, (glm::vec3)(constraint.worldPoint - (constraint.depth * depthLength) * constraint.axis[0]));
+				Debug::drawSphere(constraint.worldPoint, pointRadius);
+				Debug::drawLine(constraint.worldPoint, constraint.worldPoint - (constraint.depth * depthLength) * constraint.axis[0]);
 				Debug::color = Debug::green;
-				Debug::drawLine((glm::vec3)constraint.worldPoint, (glm::vec3)(constraint.worldPoint + tangentLength * constraint.axis[1]));
+				Debug::drawLine(constraint.worldPoint, constraint.worldPoint + tangentLength * constraint.axis[1]);
 				Debug::color = Debug::blue;
-				Debug::drawLine((glm::vec3)constraint.worldPoint, (glm::vec3)(constraint.worldPoint + tangentLength * constraint.axis[2]));
+				Debug::drawLine(constraint.worldPoint, constraint.worldPoint + tangentLength * constraint.axis[2]);
 
 				// closing velocity
 				Debug::color = Debug::orange;
-				Debug::drawLine((glm::vec3)constraint.worldPoint, (glm::vec3)(constraint.worldPoint + constraint.computeClosingVelocity()));
+				Debug::drawLine(constraint.worldPoint, constraint.worldPoint + constraint.computeClosingVelocity());
 
 				// computed impulse
 				Debug::color = Debug::yellow;
-				glm::vec4 impulse = glm::vec4(0.f);
+				vec4f impulse = vec4f(0.f);
 				for (int k = 0; k < constraint.axisCount; k++)
 					impulse += constraint.accumulationLinear[k] * constraint.axis[k];
-				Debug::drawLine((glm::vec3)constraint.worldPoint, (glm::vec3)(constraint.worldPoint + impulse));
+				Debug::drawLine(constraint.worldPoint, constraint.worldPoint + impulse);
 			}
 		}
 	}
@@ -206,33 +206,22 @@ void Physics::predictTransform(const float& elapsedTime)
 
 			rigidbody->linearAcceleration = gravity * rigidbody->gravityFactor;							// gravity
 			rigidbody->linearAcceleration += rigidbody->inverseMass * rigidbody->externalForces;		// other forces
-			rigidbody->angularAcceleration = glm::vec4(rigidbody->inverseInertia * (glm::vec3)rigidbody->externalTorques, 0.f);	// other torques
+			rigidbody->angularAcceleration = rigidbody->inverseInertia * rigidbody->externalTorques;	// other torques
 
 			rigidbody->linearVelocity += elapsedTime * rigidbody->linearAcceleration;
 			rigidbody->angularVelocity += elapsedTime * rigidbody->angularAcceleration;
 
-			glm::vec4 newPosition = rigidbody->previousPosition + elapsedTime * rigidbody->linearVelocity;
-			glm::fquat dq = glm::fquat(0.f, rigidbody->angularVelocity.x, rigidbody->angularVelocity.y, rigidbody->angularVelocity.z);
-			glm::quat newOrientation = glm::normalize(rigidbody->getOrientation() + 0.5f * elapsedTime * dq * rigidbody->getOrientation());
-
-			/*rigidbody->setPosition(newPosition);
-			rigidbody->setOrientation(newOrientation);*/
-
-			/*rigidbody->predictedPosition = rigidbody->getPosition() + elapsedTime * rigidbody->linearVelocity;
-			glm::fquat dq = glm::fquat(0.f, rigidbody->angularVelocity.x, rigidbody->angularVelocity.y, rigidbody->angularVelocity.z);
-			rigidbody->predictedOrientation = rigidbody->getOrientation() + 0.5f * elapsedTime * dq * rigidbody->getOrientation();
-			rigidbody->predictedOrientation = glm::normalize(rigidbody->predictedOrientation);*/
-
-			/*entity->m_worldBoundingBox = entity->m_localBoundingBox;
-			entity->m_worldBoundingBox.transform(rigidbody->previousPosition, entity->getScale(), rigidbody->previousOrientation);*/
+			vec4f newPosition = rigidbody->previousPosition + elapsedTime * rigidbody->linearVelocity;
+			quatf dq = quatf(0.f, rigidbody->angularVelocity.x, rigidbody->angularVelocity.y, rigidbody->angularVelocity.z);
+			quatf newOrientation = rigidbody->getOrientation() + (0.5f * elapsedTime) * dq * rigidbody->getOrientation();
+			newOrientation.normalize();
 
 			rigidbody->sweptBox = entity->m_worldBoundingBox;
-			//rigidbody->sweptBox.transform(rigidbody->previousPosition, entity->getScale(), rigidbody->previousOrientation);
 			AxisAlignedBox end = entity->m_localBoundingBox;
-			end.transform(newPosition, entity->getScale(), newOrientation);
+			end.transform(newPosition, vec4f(entity->getWorldScale()), newOrientation);
 			rigidbody->sweptBox.add(end);
 
-			entity->setTransformation(newPosition, entity->getScale(), newOrientation);
+			entity->setWorldTransformation(newPosition, entity->getWorldScale(), newOrientation);
 
 			++it;
 		}
@@ -408,7 +397,7 @@ void Physics::createConstraint(const unsigned int& clusterIndex, const float& de
 				if (collider)
 				{
 					Shape* tmp = collider->m_shape->duplicate();
-					tmp->transform(entity2->getPosition(), entity2->getScale(), entity2->getOrientation());
+					tmp->transform(entity2->getWorldPosition(), vec4f(entity2->getWorldScale()), entity2->getWorldOrientation());
 
 					for (unsigned int k = 0; k < body1->worldShapes.size(); k++)
 						if (Collision::collide(body1->worldShapes[k], tmp, &report))
@@ -456,14 +445,14 @@ void Physics::solveConstraint(const unsigned int& clusterIndex, const float& del
 		for (unsigned int j = 0; j < cluster->constraints.size(); j++)
 		{
 			Constraint& constraint = cluster->constraints[j];
-			glm::vec4 velocity = constraint.computeClosingVelocity();
-			float error = constraint.targetLinearVelocity[0] - glm::dot(velocity, constraint.axis[0]);
+			vec4f velocity = constraint.computeClosingVelocity();
+			float error = constraint.targetLinearVelocity[0] - vec4f::dot(velocity, constraint.axis[0]);
 
 			if (std::abs(error) > SOLVER_ITERATION_THRESHOLD)
 			{
 				float impulseLength = SOLVER_ITERATION_NORMAL_GAIN * error / constraint.velocityChangePerAxis[0];
 				float totalImpulse = constraint.accumulationLinear[0] + impulseLength;
-				totalImpulse = glm::clamp(totalImpulse, constraint.accumulationLinearMin[0], constraint.accumulationLinearMax[0]);
+				totalImpulse = clamp(totalImpulse, constraint.accumulationLinearMin[0], constraint.accumulationLinearMax[0]);
 				impulseLength = totalImpulse - constraint.accumulationLinear[0];
 				constraint.accumulationLinear[0] = totalImpulse;
 
@@ -478,10 +467,10 @@ void Physics::solveConstraint(const unsigned int& clusterIndex, const float& del
 				maxImpulseCorrection = std::max(maxImpulseCorrection, std::abs(impulseLength));
 			}
 
-			error = constraint.targetLinearVelocity[1] - glm::dot(velocity, constraint.axis[1]);
+			error = constraint.targetLinearVelocity[1] - vec4f::dot(velocity, constraint.axis[1]);
 			float impulseLength1 = SOLVER_ITERATION_TANGENT_GAIN * error / constraint.velocityChangePerAxis[1];
 
-			error = constraint.targetLinearVelocity[2] - glm::dot(velocity, constraint.axis[2]);
+			error = constraint.targetLinearVelocity[2] - vec4f::dot(velocity, constraint.axis[2]);
 			float impulseLength2 = SOLVER_ITERATION_TANGENT_GAIN * error / constraint.velocityChangePerAxis[2];
 
 			if (constraint.frictionLimit)
@@ -506,12 +495,12 @@ void Physics::solveConstraint(const unsigned int& clusterIndex, const float& del
 			else
 			{
 				float totalImpulse1 = constraint.accumulationLinear[1] + impulseLength1;
-				totalImpulse1 = glm::clamp(totalImpulse1, constraint.accumulationLinearMin[1], constraint.accumulationLinearMax[1]);
+				totalImpulse1 = clamp(totalImpulse1, constraint.accumulationLinearMin[1], constraint.accumulationLinearMax[1]);
 				impulseLength1 = totalImpulse1 - constraint.accumulationLinear[1];
 				constraint.accumulationLinear[1] = totalImpulse1;
 
 				float totalImpulse2 = constraint.accumulationLinear[2] + impulseLength2;
-				totalImpulse2 = glm::clamp(totalImpulse2, constraint.accumulationLinearMin[2], constraint.accumulationLinearMax[2]);
+				totalImpulse2 = clamp(totalImpulse2, constraint.accumulationLinearMin[2], constraint.accumulationLinearMax[2]);
 				impulseLength2 = totalImpulse2 - constraint.accumulationLinear[2];
 				constraint.accumulationLinear[2] = totalImpulse2;
 			}

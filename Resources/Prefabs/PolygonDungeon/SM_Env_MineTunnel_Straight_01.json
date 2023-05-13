@@ -1,0 +1,7 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Env_MineTunnel_Straight_01",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": []
+}

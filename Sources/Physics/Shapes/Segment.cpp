@@ -2,15 +2,15 @@
 #include "Sphere.h"
 #include "AxisAlignedBox.h"
 
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/quaternion.hpp>
+/*#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/quaternion.hpp>*/
 
 
-Segment::Segment(const glm::vec4& a, const glm::vec4& b) : Shape(ShapeType::SEGMENT), p1(a), p2(b) {}
-Sphere Segment::toSphere() const { return Sphere(0.5f*(p1 + p2), 0.5f*glm::length(p1 - p2)); }
+Segment::Segment(const vec4f& a, const vec4f& b) : Shape(ShapeType::SEGMENT), p1(a), p2(b) {}
+Sphere Segment::toSphere() const { return Sphere(0.5f * (p1 + p2), 0.5f * (p1 - p2).getNorm()); }
 AxisAlignedBox Segment::toAxisAlignedBox() const
 {
-	return AxisAlignedBox(glm::min(p1, p2), glm::max(p1, p2));
+	return AxisAlignedBox(vec4f::min(p1, p2), vec4f::max(p1, p2));
 }
 Shape& Segment::operator=(const Shape& s)
 {
@@ -22,22 +22,20 @@ Shape& Segment::operator=(const Shape& s)
 	}
 	return *this;
 }
-void Segment::transform(const glm::vec4& position, const glm::vec3& scale, const glm::fquat& orientation)
+void Segment::transform(const vec4f& position, const vec4f& scale, const quatf& orientation)
 {
-	glm::mat4 m = glm::translate(glm::mat4(1.0), (glm::vec3)position);
-	m = m * glm::toMat4(orientation);
-	m = glm::scale(m, scale);
+	mat4f m = mat4f::TRS(position, orientation, scale);
 	p1 = m * p1;
 	p2 = m * p2;
 }
 Shape* Segment::duplicate() const { return new Segment(*this); }
-glm::vec4 Segment::support(const glm::vec4& direction) const
+vec4f Segment::support(const vec4f& direction) const
 {
-	if (glm::dot(p1, direction) > glm::dot(p2, direction))
+	if (vec4f::dot(p1, direction) > vec4f::dot(p2, direction))
 		return p1;
 	else return p2;
 }
-void Segment::getFacingFace(const glm::vec4& direction, std::vector<glm::vec4>& points) const
+void Segment::getFacingFace(const vec4f& direction, std::vector<vec4f>& points) const
 {
 	points.push_back(p1);
 	points.push_back(p2);

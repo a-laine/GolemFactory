@@ -1,8 +1,9 @@
 #pragma once
 
 #include <vector>
-#include <glm/glm.hpp>
+//#include <glm/glm.hpp>
 
+#include "Math/TMath.h"
 #include <Resources/IResourceLoader.h>
 #include <Resources/Joint.h>
 
@@ -21,14 +22,14 @@ class MeshLoader : public IResourceLoader
         bool loadFromFile_animated(const std::string& resourceDirectory, const std::string& fileName);
 
 
-        struct gfvertex { int v, vn, c; };
-        struct gfvertex_extended { int v, vn, c, w, b; };
+        struct gfvertex { int v, vn, uv; };
+        struct gfvertex_extended { int v, vn, uv, w, b; };
 
-        std::vector<glm::vec3> vertices;
-        std::vector<glm::vec3> normals;
-        std::vector<glm::vec3> colors;
+        std::vector<vec4f> vertices;
+        std::vector<vec4f> normals;
+        std::vector<vec4f> uvs;
         std::vector<unsigned short> faces;
-        std::vector<glm::ivec3> bones;
-        std::vector<glm::vec3> weights;
+        std::vector<vec4i> bones;
+        std::vector<vec4f> weights;
 };
 

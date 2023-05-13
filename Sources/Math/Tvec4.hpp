@@ -261,6 +261,12 @@ Tvec4<T>& Tvec4<T>::operator=(const Tvec4& b)
 }
 
 template<typename T>
+T Tvec4<T>::getNorm2() const
+{
+	return x * x + y * y + z * z + w * w;
+}
+
+template<typename T>
 T Tvec4<T>::getNorm() const
 {
 	return sqrt(x * x + y * y + z * z + w * w);
@@ -332,5 +338,94 @@ Tvec4<T> operator/(const Tvec4<T>& a, const T2& scalar)
 }
 
 
-template<typename T> const Tvec4<T> Tvec4<T>::zero = Tvec4<T>(0);
-template<typename T> const Tvec4<T> Tvec4<T>::one = Tvec4<T>(1);
+template<typename T> const Tvec4<T> Tvec4<T>::zero = Tvec4<T>(T(0));
+template<typename T> const Tvec4<T> Tvec4<T>::one = Tvec4<T>(T(1));
+
+
+
+
+
+/// Math function
+template<typename T>
+T Tvec4<T>::dot(const Tvec4<T>& a, const Tvec4<T>& b)
+{
+	return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
+}
+
+template<typename T>
+Tvec4<T> Tvec4<T>::dot4(const Tvec4<T>& a, const Tvec4<T>& b)
+{
+	return Tvec4<T>(dot(a, b));
+}
+
+template<typename T>
+Tvec4<T> Tvec4<T>::cross(const Tvec4<T>& a, const Tvec4<T>& b)
+{
+	return Tvec4<T>(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x, 0);
+}
+
+template<typename T>
+Tvec4<T> Tvec4<T>::lerp(const Tvec4<T>& a, const Tvec4<T>& b, const T& t)
+{
+	return (T(1) - t) * a + t * b;
+}
+
+template<typename T>
+Tvec4<T> Tvec4<T>::min(const Tvec4<T>& a, const Tvec4<T>& b)
+{
+	Tvec4<T> result;
+	for (int i = 0; i < 4; ++i)
+		result[i] = std::min(a[i], b[i]);
+	return result;
+}
+
+template<typename T>
+Tvec4<T> Tvec4<T>::abs(const Tvec4<T>& a)
+{
+	Tvec4<T> result;
+	for (int i = 0; i < 4; ++i)
+		result[i] = std::abs(a[i]);
+	return result;
+}
+
+template<typename T>
+Tvec4<T> Tvec4<T>::clamp(const Tvec4& a, const Tvec4& min, const Tvec4& max)
+{
+	Tvec4<T> result;
+	for (int i = 0; i < 4; ++i)
+		result[i] = a[i] < min[i] ? min[i] : (a[i] > max[i] ? max[i] : a[i]);
+	return result;
+}
+
+template<typename T>
+Tvec4<T> Tvec4<T>::max(const Tvec4<T>& a, const Tvec4<T>& b)
+{
+	Tvec4<T> result;
+	for (int i = 0; i < 4; ++i)
+		result[i] = std::max(a[i], b[i]);
+	return result;
+}
+
+template<typename T>
+Tvec4<bool> Tvec4<T>::lessThan(const Tvec4<T>& a, const Tvec4<T>& b)
+{
+	Tvec4<bool> result;
+	for (int i = 0; i < 4; ++i)
+		result[i] = a[i] < b[i];
+	return result;
+}
+
+template<typename T>
+Tvec4<bool> Tvec4<T>::greaterThan(const Tvec4<T>& a, const Tvec4<T>& b)
+{
+	Tvec4<bool> result;
+	for (int i = 0; i < 4; ++i)
+		result[i] = a[i] > b[i];
+	return result;
+}
+
+template<typename T>
+bool Tvec4<T>::any(const Tvec4<T>& b)
+{
+	return b[0] || b[1] || b[2] || b[3];
+}

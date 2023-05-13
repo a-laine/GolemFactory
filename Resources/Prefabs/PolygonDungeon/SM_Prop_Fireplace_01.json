@@ -1,0 +1,7 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Prop_Fireplace_01",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": []
+}

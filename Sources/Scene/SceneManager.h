@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <set>
 #include <unordered_map>
 #include <glm/glm.hpp>
 
@@ -10,15 +11,6 @@
 class SceneManager
 {
 	public:
-		//	Miscellaneous
-		enum CollisionType
-		{
-			NONE = 0, //!< No collision
-			INSIDE,   //!< Object fully inside
-			OVERLAP   //!< Shapes are overlapping
-		};
-		//
-
 		//	Default
 		SceneManager();
 		SceneManager(const SceneManager& other) = delete;
@@ -30,7 +22,7 @@ class SceneManager
 		//
 
 		//	Public functions
-		void init(const glm::vec4& bbMin, const glm::vec4& bbMax, const glm::ivec3& nodeDivision, unsigned int depth);
+		void init(const vec4f& bbMin, const vec4f& bbMax, const vec3i& nodeDivision, unsigned int depth);
 		void clear();
 		void reserveInstanceTrack(const unsigned int& count);
 		unsigned int getObjectCount() const;
@@ -40,33 +32,60 @@ class SceneManager
 		bool addObject(Entity* object);
 		bool removeObject(Entity* object);
 		bool updateObject(Entity* object);
+		void addToRootList(Entity* object);
 
 		std::vector<Entity*> getAllObjects();
-		std::vector<Entity*> getObjectsOnRay(const glm::vec3& position, const glm::vec3& direction, float maxDistance);
-		std::vector<Entity*> getObjectsInBox(const glm::vec3& bbMin, const glm::vec3& bbMax);
+		std::vector<Entity*> getObjectsOnRay(const vec4f& position, const vec4f& direction, float maxDistance);
+		std::vector<Entity*> getObjectsInBox(const vec4f& bbMin, const vec4f& bbMax);
 
 		void getSceneNodes(VirtualSceneQuerry* collisionTest);
 		void getEntities(VirtualSceneQuerry* collisionTest, VirtualEntityCollector* entityCollector);
 		//
 
 		//	Debug
-		void draw();
+		void drawImGuiHierarchy(World& world);
+		void drawImGuiSpatialPartitioning(World& world);
+		void drawSceneNodes();
+		void selectEntity(World& world, Entity* entity);
 		//
 
 	private:
 		//	Miscellaneous
 		struct InstanceTrack
 		{
-			glm::vec4 position;
+			vec4f position;
 			NodeVirtual* owner;
 		};
 
 		//	Protected functions
-		glm::vec3 getObjectSize(const Entity* entity) const;
+		//vec4f getObjectSize(const Entity* entity) const;
 		//
 
 		//  Attributes
 		std::vector<NodeVirtual*> world;
 		std::unordered_map<Entity*, InstanceTrack> instanceTracking;
+		std::vector<Entity*> roots;
+		//
+
+		//	Debug
+#ifdef USE_IMGUI
+		void drawRecursiveImGuiEntity(World& world, Entity* entity, int depth);
+		void drawRecursiveImGuiSceneNode(World& world, std::map<const NodeVirtual*, VirtualSceneQuerry::CollisionType>& collisionResults, NodeVirtual* node, vec3i nodeIndex, int depth);
+		bool isEmptyNode(const NodeVirtual& _node);
+
+		ImGuiTextFilter m_nameFilter;
+		std::set<Entity*> m_selectedEntities;
+		NodeVirtual* m_selectedSceneNode = nullptr;
+
+		bool m_showEmptyNodes = true;
+		bool m_showFailTestNodes = true;
+		bool m_printEntities = false;
+		bool m_printEmptyNodes = true;
+		bool m_showfrustrum = false;
+		bool m_openAll = false;
+		vec4f m_emptyNodeColor = vec4f(0,0,0,1);
+		vec4f m_defaultNodeColor = vec4f(1,0,0,1);
+		vec4f m_testBoxNodeColor = vec4f(1,1,1,1);
+#endif // USE_IMGUI
 		//
 };

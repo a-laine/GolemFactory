@@ -1,0 +1,7 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Prop_Crate_Metal_02",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": []
+}

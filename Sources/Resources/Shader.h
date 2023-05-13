@@ -6,6 +6,7 @@
 #include <GL/glew.h>
 
 #include "ResourceVirtual.h"
+#include "Texture.h"
 
 class Shader : public ResourceVirtual
 {
@@ -56,6 +57,10 @@ class Shader : public ResourceVirtual
 
         std::string getIdentifier() const override;
         std::string getLoaderId(const std::string& resourceName) const;
+        void pushTexture(Texture* texture);
+
+        const std::vector<Texture*>& getTextures() const { return textures; }
+        const std::map<std::string, std::string>& getUniforms() const {return attributesType; }
         //
 
     private:
@@ -69,8 +74,9 @@ class Shader : public ResourceVirtual
                 tessEvalShader,								//!< Tesselation evaluation shader opengl id
                 program;									//!< Program opengl id
         uint8_t textureCount;								//!< The number of texture use by the program
-        std::map<std::string,GLint> attributesLocation;	//!< The shader attribute map with their opengl location
+        std::map<std::string, GLint> attributesLocation;	//!< The shader attribute map with their opengl location
 		std::map<std::string, std::string> attributesType;
+        std::vector<Texture*> textures;
 		Shader* instanciable;
         //
 };

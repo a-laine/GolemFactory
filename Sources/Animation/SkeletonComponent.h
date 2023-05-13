@@ -2,7 +2,6 @@
 
 #include <string>
 #include <vector>
-#include <glm/glm.hpp>
 #include <GL/glew.h>
 
 #include <EntityComponent/Component.hpp>
@@ -25,11 +24,11 @@ class SkeletonComponent : public Component
 
 		Skeleton* getSkeleton() const;
 		unsigned int getNbJoints() const;
-		const std::vector<glm::mat4>& getPose() const;
-        std::vector<glm::mat4x4> getInverseBindPose() const;
-		glm::vec3 getJointPosition(const std::string& jointName);
+		const std::vector<mat4f>& getPose() const;
+        std::vector<mat4f> getInverseBindPose() const;
+		vec4f getJointPosition(const std::string& jointName);
 		//const std::vector<float>& getCapsules() const;
-		const std::vector<glm::ivec2>& getSegmentsIndex() const;
+		const std::vector<vec2i>& getSegmentsIndex() const;
 		const std::vector<float>& getSegmentsRadius() const;
 
         bool isValid() const;
@@ -42,16 +41,19 @@ class SkeletonComponent : public Component
 		void drawBB();
 		const GLuint getCapsuleVAO() const;
 
+
+		void onAddToEntity(Entity* entity) override;
+
 	private:
-		void computePose(std::vector<glm::mat4>& result, const std::vector<JointPose>& input, const glm::mat4& parentPose, unsigned int joint);
+		void computePose(std::vector<mat4f>& result, const std::vector<JointPose>& input, const mat4f& parentPose, unsigned int joint);
 
 		Skeleton* m_skeleton;
 
 		Mutex locker;
-		std::vector<glm::mat4> pose;
+		std::vector<mat4f> pose;
 		std::vector<float> capsules;
 
-		std::vector<glm::ivec2> segmentIndex;
+		std::vector<vec2i> segmentIndex;
 		std::vector<float> segmentRadius;
 		GLuint  vao, segIndexBuffer, segRadiusBuffer;
 };

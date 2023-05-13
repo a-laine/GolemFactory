@@ -1,0 +1,7 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Env_Stone_Vessel_01",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": []
+}

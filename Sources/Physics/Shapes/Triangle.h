@@ -7,7 +7,7 @@ class Triangle : public Shape
 {
 	public:
 		//	Default
-		Triangle(const glm::vec4& a = glm::vec4(0.f), const glm::vec4& b = glm::vec4(0.f), const glm::vec4& c = glm::vec4(0.f));
+		Triangle(const vec4f& a = vec4f(0.f), const vec4f& b = vec4f(0.f), const vec4f& c = vec4f(0.f));
 		//
 
 		//	Public functions
@@ -18,13 +18,13 @@ class Triangle : public Shape
 
 		//virtual glm::mat3 computeInertiaMatrix() const override;
 
-		virtual void transform(const glm::vec4& position, const glm::vec3& scale, const glm::fquat& orientation) override;
+		virtual void transform(const vec4f& position, const vec4f& scale, const quatf& orientation) override;
 
-		virtual glm::vec4 support(const glm::vec4& direction) const override;
-		virtual void getFacingFace(const glm::vec4& direction, std::vector<glm::vec4>& points) const override;
+		virtual vec4f support(const vec4f& direction) const override;
+		virtual void getFacingFace(const vec4f& direction, std::vector<vec4f>& points) const override;
 		//
 
 		//	Attributes
-		glm::vec4 p1, p2, p3;
+		vec4f p1, p2, p3;
 		//
 };

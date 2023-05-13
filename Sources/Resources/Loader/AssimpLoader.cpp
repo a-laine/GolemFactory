@@ -12,8 +12,18 @@
 #include <Resources/Mesh.h>
 #include <Resources/Skeleton.h>
 #include <Resources/Animation.h>
+#include <Utiles/ConsoleColor.h>
 
-
+void PrintError(const char* filename, const char* msg)
+{
+    std::cout << ConsoleColor::getColorString(ConsoleColor::Color::RED) <<    "ERROR   : AssimpLoader : " << filename << " : " << msg << std::flush;
+    std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
+}
+void PrintWarning(const char* filename, const char* msg)
+{
+    std::cout << ConsoleColor::getColorString(ConsoleColor::Color::YELLOW) << "WARNING : AssimpLoader : " << filename << " : " << msg << std::flush;
+    std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
+}
 
 //  Default
 AssimpLoader::AssimpLoader(ResourceType resourceToLoad)
@@ -33,8 +43,9 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
     const aiScene* scene = importer.ReadFile(file.c_str(), aiProcessPreset_TargetRealtime_MaxQuality);
     if(!scene)
     {
-        if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
-            std::cerr << "ERROR : AssimpLoader : " << fileName << " : could not open file" << std::endl;
+        if (ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
+            PrintError(fileName.c_str(), "could not open file");
+            //std::cerr << "ERROR : AssimpLoader : " << fileName << " : could not open file" << std::endl;
         return false;
     }
 
@@ -42,7 +53,7 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
     for(int i = 0; i < 4; i++)
         for(int j = 0; j < 4; j++)
             globalMatrix[i][j] = mat[j][i];
-    globalMatrix = glm::mat4(1.f);
+    globalMatrix = mat4f(1.f);
 
     //
     unsigned int totalVertices = 0;
@@ -50,43 +61,38 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
         totalVertices += scene->mMeshes[i]->mNumVertices;
     if(totalVertices > std::numeric_limits<unsigned short>::max())
     {
-        std::cerr << "ERROR : AssimpLoader : " << fileName << " : too much vertex in file (not supported by engine)" << std::endl;
+        PrintError(fileName.c_str(), "too much vertex in file (not supported by engine)");
         return false;
     }
 
 
     //	usefull parameters for next
     unsigned int facesOffset = 0;
-    glm::vec3 meshColor;
+    vec4f meshColor;
     bool hasSkeleton = false;
     std::vector<int> meshVertexOffset;
+    bool hasPrintedNotTriangle = false;
+    bool hasPrintedMeshTooLarge = false;
+    bool hasPrintedFaceIndexOutOfBound = false;
 
     //	Load mesh
     for(unsigned int i = 0; i < scene->mNumMeshes; i++)
     {
-        //	import material and pack into vertex color
-        aiMesh* mesh = scene->mMeshes[i];
-        if(scene->HasMaterials())
-        {
-            aiMaterial* m = scene->mMaterials[mesh->mMaterialIndex];
-            aiString nameStr;
-            m->Get(AI_MATKEY_NAME, nameStr);
-            std::string name(nameStr.C_Str());
-            if(name.find("JoinedMaterial") != std::string::npos)
-                meshColor = glm::vec3(0.5f, 0.5f, 0.5f);
-            else
-            {
-                aiColor3D color(0.f, 0.f, 0.f);
-                m->Get(AI_MATKEY_COLOR_DIFFUSE, color);
-                meshColor = glm::vec3(color.r, color.g, color.b);
-            }
-        }
-        else meshColor = glm::vec3(0.5f, 0.5f, 0.5f);
-
         //	import faces index
-        for(unsigned int j = 0; j < mesh->mNumFaces; j++)
+        aiMesh* mesh = scene->mMeshes[i];
+        for (unsigned int j = 0; j < mesh->mNumFaces; j++)
+        {
+            if (mesh->mFaces->mNumIndices != 3)
+            {
+                if (!hasPrintedNotTriangle)
+                    PrintWarning(fileName.c_str(), "has not triangle faces (discarded)");
+                hasPrintedNotTriangle = true;
+                continue;
+            }
+
             for(int k = 0; k < 3; k++)
                 faces.push_back(mesh->mFaces[j].mIndices[k] + facesOffset);
+        }
         facesOffset += mesh->mNumVertices;
 
         //	import vertex attributes
@@ -94,12 +100,35 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
         for(unsigned int j = 0; j < mesh->mNumVertices; j++)
         {
             aiVector3D pos = mesh->mVertices[j];
-            vertices.push_back(glm::vec3(pos.x, pos.y, pos.z));
+            vertices.push_back(vec4f(pos.x, pos.y, pos.z, 1.f));
+            if (std::abs(pos.x) > 10000.f || std::abs(pos.y) > 10000.f || std::abs(pos.z) > 10000.f)
+            {
+                if (!hasPrintedMeshTooLarge)
+                    PrintWarning(fileName.c_str(), "at least one vertice is VERY large");
+                hasPrintedMeshTooLarge = true;
+            }
 
             aiVector3D normal = (mesh->HasNormals() ? mesh->mNormals[j] : aiVector3D(0.0f, 0.0f, 0.0f));
-            normales.push_back(glm::vec3(normal.x, normal.y, normal.z));
+            normales.push_back(vec4f(normal.x, normal.y, normal.z, 0.f));
 
-            colors.push_back(meshColor);
+            aiVector3D uv = (mesh->HasTextureCoords(0) ? mesh->mTextureCoords[0][j] : aiVector3D(0.0f, 0.0f, 0.0f));
+            uvs.push_back(vec4f(uv.x, 1 - uv.y, uv.z, 0.f));
+        }
+
+        //  check that every faces are ok
+        if (faces.empty())
+        {
+            PrintError(fileName.c_str(), "has no valid triangle");
+            return false;
+        }
+        for (int i = 0; i < faces.size(); i++);
+        {
+            if (faces[i] < 0 || faces[i] >= vertices.size())
+            {
+                if (!hasPrintedFaceIndexOutOfBound)
+                    PrintWarning(fileName.c_str(), "face index out of bound");
+                hasPrintedFaceIndexOutOfBound = true;
+            }
         }
 
         //	demande a second pass to parse bone and skeleton
@@ -122,8 +151,8 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
             }
 
         //	import bone index & weight for each vertex
-        bones.assign(vertices.size(), glm::ivec3(-1, -1, -1));
-        weights.assign(vertices.size(), glm::vec3(0.f, 0.f, 0.f));
+        bones.assign(vertices.size(), vec4i(-1, -1, -1, -1));
+        weights.assign(vertices.size(), vec4f(0.f, 0.f, 0.f, 1.f));
         for(unsigned int i = 0; i < scene->mNumMeshes; i++)
         {
             aiMesh* mesh = scene->mMeshes[i];
@@ -180,8 +209,8 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
         BidirectionnalVectorMap positionBM;
         BidirectionnalVectorMap scaleBM;
         BidirectionnalQuaternionMap rotationBM;
-        glm::vec3 position, scale;
-        glm::fquat rotation;
+        vec4f position, scale;
+        quatf rotation;
 
         // extract array from assimp
         for(unsigned int j = 0; j < scene->mAnimations[i]->mNumChannels; j++)
@@ -192,16 +221,16 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
             // import translation vector
             for(unsigned int k = 0; k < scene->mAnimations[i]->mChannels[j]->mNumPositionKeys; k++)
             {
-                position = glm::vec3(scene->mAnimations[i]->mChannels[j]->mPositionKeys[k].mValue.x,
+                position = vec4f(scene->mAnimations[i]->mChannels[j]->mPositionKeys[k].mValue.x,
                     scene->mAnimations[i]->mChannels[j]->mPositionKeys[k].mValue.y,
-                    scene->mAnimations[i]->mChannels[j]->mPositionKeys[k].mValue.z);
+                    scene->mAnimations[i]->mChannels[j]->mPositionKeys[k].mValue.z, 1.f);
                 positionBM.push_back(std::make_tuple((float) currentChannel->mPositionKeys[k].mTime, channelName, position));
             }
 
             // import rotation quaternion
             for(unsigned int k = 0; k < scene->mAnimations[i]->mChannels[j]->mNumRotationKeys; k++)
             {
-                rotation = glm::fquat(scene->mAnimations[i]->mChannels[j]->mRotationKeys[k].mValue.w,
+                rotation = quatf(scene->mAnimations[i]->mChannels[j]->mRotationKeys[k].mValue.w,
                     scene->mAnimations[i]->mChannels[j]->mRotationKeys[k].mValue.x,
                     scene->mAnimations[i]->mChannels[j]->mRotationKeys[k].mValue.y,
                     scene->mAnimations[i]->mChannels[j]->mRotationKeys[k].mValue.z);
@@ -211,9 +240,9 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
             // import scaling vector
             for(unsigned int k = 0; k < scene->mAnimations[i]->mChannels[j]->mNumScalingKeys; k++)
             {
-                scale = glm::vec3(scene->mAnimations[i]->mChannels[j]->mScalingKeys[k].mValue.x,
+                scale = vec4f(scene->mAnimations[i]->mChannels[j]->mScalingKeys[k].mValue.x,
                     scene->mAnimations[i]->mChannels[j]->mScalingKeys[k].mValue.y,
-                    scene->mAnimations[i]->mChannels[j]->mScalingKeys[k].mValue.z);
+                    scene->mAnimations[i]->mChannels[j]->mScalingKeys[k].mValue.z, 1.f);
                 scaleBM.push_back(std::make_tuple((float) currentChannel->mScalingKeys[k].mTime, channelName, scale));
             }
         }
@@ -239,7 +268,7 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
             // update current keyframe pose for skeleton (here position)
             if(itPos != positionBM.end() && std::get<float>(*itPos) <= currentKeyFrame.time)
             {
-                currentKeyFrame.poses[boneMap[std::get<std::string>(*itPos)]].position = std::get<glm::vec3>(*itPos);
+                currentKeyFrame.poses[boneMap[std::get<std::string>(*itPos)]].position = std::get<vec4f>(*itPos);
                 ++itPos;
             }
             else increment++;
@@ -247,7 +276,8 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
             // update current keyframe pose for skeleton (here rotation)
             if(itRot != rotationBM.end() && std::get<float>(*itRot) <= currentKeyFrame.time)
             {
-                currentKeyFrame.poses[boneMap[std::get<std::string>(*itRot)]].rotation = std::get<glm::fquat>(*itRot);
+                currentKeyFrame.poses[boneMap[std::get<std::string>(*itRot)]].rotation = std::get<quatf>(*itRot);
+
                 ++itRot;
             }
             else increment++;
@@ -255,7 +285,7 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
             // update current keyframe pose for skeleton (here scaling)
             if(itSca != scaleBM.end() && std::get<float>(*itSca) <= currentKeyFrame.time)
             {
-                currentKeyFrame.poses[boneMap[std::get<std::string>(*itSca)]].scale = std::get<glm::vec3>(*itSca);
+                currentKeyFrame.poses[boneMap[std::get<std::string>(*itSca)]].scale = std::get<vec4f>(*itSca);
                 ++itSca;
             }
             else increment++;
@@ -292,7 +322,7 @@ void AssimpLoader::initialize(ResourceVirtual* resource)
         case ResourceType::MESH:
         {
             Mesh* mesh = static_cast<Mesh*>(resource);
-            mesh->initialize(vertices, normales, colors, faces, bones, weights);
+            mesh->initialize(vertices, normales, uvs, faces, bones, weights);
             break;
         }
         case ResourceType::SKELETON:
@@ -318,7 +348,7 @@ void AssimpLoader::getResourcesToRegister(std::vector<ResourceVirtual*>& resourc
     if(firstResource != ResourceType::MESH)
     {
         Mesh* mesh = new Mesh(resourceName);
-        mesh->initialize(vertices, normales, colors, faces, bones, weights);
+        mesh->initialize(vertices, normales, uvs, faces, bones, weights);
         resourceList.push_back(mesh);
     }
     if(firstResource != ResourceType::SKELETON)
@@ -355,7 +385,7 @@ void AssimpLoader::clear()
 {
     vertices.clear();
     normales.clear();
-    colors.clear();
+    uvs.clear();
     bones.clear();
     weights.clear();
     faces.clear();

@@ -21,15 +21,15 @@ void WidgetImage::initialize()
 
 	//	fill batch
 	DrawBatch quad;
-		quad.vertices.push_back(glm::vec3(-0.5f * sizes[State::CURRENT].x, 0.f, -0.5f * sizes[State::CURRENT].y));
-		quad.vertices.push_back(glm::vec3(-0.5f * sizes[State::CURRENT].x, 0.f,  0.5f * sizes[State::CURRENT].y));
-		quad.vertices.push_back(glm::vec3( 0.5f * sizes[State::CURRENT].x, 0.f,  0.5f * sizes[State::CURRENT].y));
-		quad.vertices.push_back(glm::vec3( 0.5f * sizes[State::CURRENT].x, 0.f, -0.5f * sizes[State::CURRENT].y));
+		quad.vertices.push_back(vec4f(-0.5f * sizes[State::CURRENT].x, 0.f, -0.5f * sizes[State::CURRENT].y, 1.f));
+		quad.vertices.push_back(vec4f(-0.5f * sizes[State::CURRENT].x, 0.f,  0.5f * sizes[State::CURRENT].y, 1.f));
+		quad.vertices.push_back(vec4f( 0.5f * sizes[State::CURRENT].x, 0.f,  0.5f * sizes[State::CURRENT].y, 1.f));
+		quad.vertices.push_back(vec4f( 0.5f * sizes[State::CURRENT].x, 0.f, -0.5f * sizes[State::CURRENT].y, 1.f));
 
-		quad.textures.push_back(glm::vec2(0.f, 1.f));
-		quad.textures.push_back(glm::vec2(0.f, 0.f));
-		quad.textures.push_back(glm::vec2(1.f, 0.f));
-		quad.textures.push_back(glm::vec2(1.f, 1.f));
+		quad.textures.push_back(vec2f(0.f, 1.f));
+		quad.textures.push_back(vec2f(0.f, 0.f));
+		quad.textures.push_back(vec2f(1.f, 0.f));
+		quad.textures.push_back(vec2f(1.f, 1.f));
 
 		quad.faces.push_back(0); quad.faces.push_back(1); quad.faces.push_back(2);
 		quad.faces.push_back(0); quad.faces.push_back(2); quad.faces.push_back(3);

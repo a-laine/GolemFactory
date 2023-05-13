@@ -1,7 +1,9 @@
 #pragma once
 
-#include <glm/glm.hpp>
+//#include <glm/glm.hpp>
 #include <vector>
+
+#include "Math/TMath.h"
 
 
 class AxisAlignedBox;
@@ -34,12 +36,16 @@ class Shape
 		virtual Shape& operator=(const Shape& s);
 		virtual Shape* duplicate() const;
 
-		virtual glm::mat3 computeInertiaMatrix() const;
+		virtual mat4f computeInertiaMatrix() const;
 
-		virtual void transform(const glm::vec4& position, const glm::vec3& scale, const glm::fquat& orientation);
+		virtual void transform(const vec4f& position, const vec4f& scale, const quatf& orientation);
 
-		virtual glm::vec4 support(const glm::vec4& direction) const;
-		virtual void getFacingFace(const glm::vec4& direction, std::vector<glm::vec4>& points) const;
+		virtual vec4f support(const vec4f& direction) const;
+		virtual void getFacingFace(const vec4f& direction, std::vector<vec4f>& points) const;
+		//
+
+		// debug
+		const char* getTypeStr() const;
 		//
 
 		//	Attributes

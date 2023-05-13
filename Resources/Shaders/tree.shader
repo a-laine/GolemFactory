@@ -13,9 +13,9 @@ Tree
 		#version 330
 
 		// input
-		layout(location = 0) in vec3 position;
-		layout(location = 1) in vec3 normal;
-		layout(location = 2) in vec3 vertexcolor;
+		layout(location = 0) in vec4 position;
+		layout(location = 1) in vec4 normal;
+		layout(location = 2) in vec4 vertexcolor;
 
 		//in vec2 texture;
 		//in vec3 weight;
@@ -27,23 +27,23 @@ Tree
 		uniform vec4 wind;
 
 		// output
-		out vec3 lightDirectionCameraSpace;
-		out vec3 fragmentNormal;
-		out vec3 fragmentColor;
+		out vec4 lightDirectionCameraSpace;
+		out vec4 fragmentNormal;
+		out vec4 fragmentColor;
 
 		vec4 lightCoordinateWorldSpace = vec4(1000,200,1500,1);
 
 		// program
 		void main()
 		{
-			vec4 tmp = model * vec4(position, 1.0) ;
+			vec4 tmp = model * position;
 			
 			gl_Position = projection * view * (tmp + position.z * wind);
-			fragmentNormal = (view * model * vec4(normal,0.0)).xyz;
+			fragmentNormal = view * model * normal;
 			fragmentColor = 2.0 * vertexcolor;
 			
-			vec3 eyeDirectionCameraSpace = - ( view * tmp).xyz;
-			vec3 lightPositionCameraSpace = (view * lightCoordinateWorldSpace).xyz;
+			vec4 eyeDirectionCameraSpace = - (view * tmp);
+			vec4 lightPositionCameraSpace = view * lightCoordinateWorldSpace;
 			lightDirectionCameraSpace = lightPositionCameraSpace + eyeDirectionCameraSpace;
 		}
 	};
@@ -53,9 +53,9 @@ Tree
 		#version 330
 
 		// input
-		in vec3 lightDirectionCameraSpace;
-		in vec3 fragmentNormal;
-		in vec3 fragmentColor;
+		in vec4 lightDirectionCameraSpace;
+		in vec4 fragmentNormal;
+		in vec4 fragmentColor;
 
 		// output
 		layout (location = 0) out vec3 fragColor;

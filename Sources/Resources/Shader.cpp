@@ -3,6 +3,7 @@
 
 #include <Utiles/Parser/Reader.h>
 #include <Utiles/Assert.hpp>
+#include <Resources/ResourceManager.h>
 
 //  Static attributes
 char const * const Shader::directory = "Shaders/";
@@ -20,6 +21,9 @@ Shader::Shader(const std::string& shaderName)
 Shader::~Shader()
 {
     glDeleteProgram(program);
+
+    for (int i = 0; i < textures.size(); i++)
+        ResourceManager::getInstance()->release(textures[i]);
 }
 //
 
@@ -82,7 +86,16 @@ void Shader::initialize(GLuint  vertexSh, GLuint fragSh, GLuint geomShr, GLuint 
         state = INVALID;
 }
 
-void Shader::enable() { glUseProgram(program); }
+void Shader::enable()
+{
+    glUseProgram(program);
+
+    for (int i = 0; i < textures.size(); i++)
+    {
+        glActiveTexture(GL_TEXTURE0 + i);
+        glBindTexture(GL_TEXTURE_2D, textures[i]->getTextureId());
+    }
+}
 void Shader::setInstanciable(Shader* instaciedVersion) { instanciable = instaciedVersion; }
 GLuint Shader::getProgram() const { return program; }
 int Shader::getTextureCount() const { return textureCount; }
@@ -143,6 +156,11 @@ Shader* Shader::getInstanciable() const { return instanciable; }
 
 const std::string& Shader::getDefaultName() { return defaultName; }
 void Shader::setDefaultName(const std::string& name) { defaultName = name; }
+
+void Shader::pushTexture(Texture* texture)
+{
+    textures.push_back(texture);
+}
 //
 
 

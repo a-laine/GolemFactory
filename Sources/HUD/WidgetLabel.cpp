@@ -74,7 +74,7 @@ void WidgetLabel::update(const float& elapseTime)
 		updateVBOs();
 	}
 }
-void WidgetLabel::draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model)
+void WidgetLabel::draw(Shader* s, uint8_t& stencilMask, const mat4f& model)
 {
 	//	clipping zone (batch 1)
 	if(textConfiguration & CLIPPING)
@@ -97,18 +97,18 @@ void WidgetLabel::draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model)
 	if (textConfiguration & CLIPPING)
 		drawClippingShape(BATCH_INDEX_CLIPPING, false, s, stencilMask);
 }
-bool WidgetLabel::intersect(const glm::mat4& base, const glm::vec3& ray)
+bool WidgetLabel::intersect(const mat4f& base, const vec4f& ray)
 {
 	if (textConfiguration & CLIPPING)
 	{
 		for (unsigned int j = 0; j < batchList[BATCH_INDEX_CLIPPING].faces.size(); j += 3)
 		{
 			//	compute triangles vertices in eyes space
-			glm::vec4 p1 = base * glm::vec4(batchList[BATCH_INDEX_CLIPPING].vertices[batchList[BATCH_INDEX_CLIPPING].faces[j]], 1.f);
-			glm::vec4 p2 = base * glm::vec4(batchList[BATCH_INDEX_CLIPPING].vertices[batchList[BATCH_INDEX_CLIPPING].faces[j + 1]], 1.f);
-			glm::vec4 p3 = base * glm::vec4(batchList[BATCH_INDEX_CLIPPING].vertices[batchList[BATCH_INDEX_CLIPPING].faces[j + 2]], 1.f);
+			vec4f p1 = base * batchList[BATCH_INDEX_CLIPPING].vertices[batchList[BATCH_INDEX_CLIPPING].faces[j]];
+			vec4f p2 = base * batchList[BATCH_INDEX_CLIPPING].vertices[batchList[BATCH_INDEX_CLIPPING].faces[j + 1]];
+			vec4f p3 = base * batchList[BATCH_INDEX_CLIPPING].vertices[batchList[BATCH_INDEX_CLIPPING].faces[j + 2]];
 
-			if (Collision::collide_SegmentvsTriangle(glm::vec4(0, 0, 0, 1), glm::vec4(10.f * ray, 1), p1, p2, p3))
+			if (Collision::collide_SegmentvsTriangle(vec4f::zero, 10.f * ray, p1, p2, p3))
 				return true;
 		}
 		return false;
@@ -118,11 +118,11 @@ bool WidgetLabel::intersect(const glm::mat4& base, const glm::vec3& ray)
 		for (unsigned int j = 0; j < batchList[BATCH_INDEX_TEXT].faces.size(); j += 3)
 		{
 			//	compute triangles vertices in eyes space
-			glm::vec4 p1 = base * glm::vec4(batchList[BATCH_INDEX_TEXT].vertices[batchList[BATCH_INDEX_TEXT].faces[j]], 1.f);
-			glm::vec4 p2 = base * glm::vec4(batchList[BATCH_INDEX_TEXT].vertices[batchList[BATCH_INDEX_TEXT].faces[j + 1]], 1.f);
-			glm::vec4 p3 = base * glm::vec4(batchList[BATCH_INDEX_TEXT].vertices[batchList[BATCH_INDEX_TEXT].faces[j + 2]], 1.f);
+			vec4f p1 = base * batchList[BATCH_INDEX_TEXT].vertices[batchList[BATCH_INDEX_TEXT].faces[j]];
+			vec4f p2 = base * batchList[BATCH_INDEX_TEXT].vertices[batchList[BATCH_INDEX_TEXT].faces[j + 1]];
+			vec4f p3 = base * batchList[BATCH_INDEX_TEXT].vertices[batchList[BATCH_INDEX_TEXT].faces[j + 2]];
 
-			if (Collision::collide_SegmentvsTriangle(glm::vec4(0, 0, 0, 1), glm::vec4(10.f * ray, 1), p1, p2, p3))
+			if (Collision::collide_SegmentvsTriangle(vec4f::zero, 10.f * ray, p1, p2, p3))
 				return true;
 		}
 		return false;
@@ -175,13 +175,13 @@ void WidgetLabel::initVBOtext()
 {
 	glGenBuffers(1, &batchList[BATCH_INDEX_TEXT].verticesBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, batchList[BATCH_INDEX_TEXT].verticesBuffer);
-	glBufferData(GL_ARRAY_BUFFER, TEXT_MAX_CHAR * 4 * sizeof(glm::vec3), nullptr, GL_DYNAMIC_DRAW);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, batchList[BATCH_INDEX_TEXT].vertices.size() * sizeof(glm::vec3), batchList[BATCH_INDEX_TEXT].vertices.data());
+	glBufferData(GL_ARRAY_BUFFER, TEXT_MAX_CHAR * 4 * sizeof(vec4f), nullptr, GL_DYNAMIC_DRAW);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, batchList[BATCH_INDEX_TEXT].vertices.size() * sizeof(vec4f), batchList[BATCH_INDEX_TEXT].vertices.data());
 
 	glGenBuffers(1, &batchList[BATCH_INDEX_TEXT].texturesBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, batchList[BATCH_INDEX_TEXT].texturesBuffer);
-	glBufferData(GL_ARRAY_BUFFER, TEXT_MAX_CHAR * 4 * sizeof(glm::vec2), nullptr, GL_DYNAMIC_DRAW);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, batchList[BATCH_INDEX_TEXT].textures.size() * sizeof(glm::vec2), batchList[BATCH_INDEX_TEXT].textures.data());
+	glBufferData(GL_ARRAY_BUFFER, TEXT_MAX_CHAR * 4 * sizeof(vec2f), nullptr, GL_DYNAMIC_DRAW);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, batchList[BATCH_INDEX_TEXT].textures.size() * sizeof(vec2f), batchList[BATCH_INDEX_TEXT].textures.data());
 
 	glGenBuffers(1, &batchList[BATCH_INDEX_TEXT].facesBuffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, batchList[BATCH_INDEX_TEXT].facesBuffer);
@@ -198,7 +198,7 @@ void WidgetLabel::updateBuffers()
 	for (unsigned int i = 0; i < text.size(); i++)
 	{
 		//	init parameters
-		glm::vec2 o = getLineOrigin(line, textConfiguration);
+		vec2f o = getLineOrigin(line, textConfiguration);
 		Font::Patch patch = font->getPatch(text[i]);
 		float charLength = std::abs((patch.corner2.x - patch.corner1.x) / (patch.corner2.y - patch.corner1.y));
 
@@ -216,15 +216,15 @@ void WidgetLabel::updateBuffers()
 				break;
 
 			default:
-				batch.vertices.push_back(glm::vec3(o.x + x, 0.f, o.y));
-				batch.vertices.push_back(glm::vec3(o.x + x + italic*sizeChar, 0.f, o.y + sizeChar));
-				batch.vertices.push_back(glm::vec3(o.x + x + (charLength + italic)*sizeChar, 0.f, o.y + sizeChar));
-				batch.vertices.push_back(glm::vec3(o.x + x + charLength*sizeChar, 0.f, o.y));
+				batch.vertices.push_back(vec4f(o.x + x, 0.f, o.y, 1.f));
+				batch.vertices.push_back(vec4f(o.x + x + italic*sizeChar, 0.f, o.y + sizeChar, 1.f));
+				batch.vertices.push_back(vec4f(o.x + x + (charLength + italic)*sizeChar, 0.f, o.y + sizeChar, 1.f));
+				batch.vertices.push_back(vec4f(o.x + x + charLength*sizeChar, 0.f, o.y, 1.f));
 
-				batch.textures.push_back(glm::vec2(patch.corner1.x + TEX_OFFSET, patch.corner2.y - TEX_OFFSET));
-				batch.textures.push_back(glm::vec2(patch.corner1.x + TEX_OFFSET, patch.corner1.y + TEX_OFFSET));
-				batch.textures.push_back(glm::vec2(patch.corner2.x - TEX_OFFSET, patch.corner1.y + TEX_OFFSET));
-				batch.textures.push_back(glm::vec2(patch.corner2.x - TEX_OFFSET, patch.corner2.y - TEX_OFFSET));
+				batch.textures.push_back(vec2f(patch.corner1.x + TEX_OFFSET, patch.corner2.y - TEX_OFFSET));
+				batch.textures.push_back(vec2f(patch.corner1.x + TEX_OFFSET, patch.corner1.y + TEX_OFFSET));
+				batch.textures.push_back(vec2f(patch.corner2.x - TEX_OFFSET, patch.corner1.y + TEX_OFFSET));
+				batch.textures.push_back(vec2f(patch.corner2.x - TEX_OFFSET, patch.corner2.y - TEX_OFFSET));
 
 
 				batch.faces.push_back((unsigned short)(batch.vertices.size() - 4));
@@ -245,15 +245,15 @@ void WidgetLabel::updateBuffers()
 
 	//	clipping rectangle
 	DrawBatch quad;
-		quad.vertices.push_back(glm::vec3(-0.5f * sizes[State::CURRENT].x, 0.f, -0.5f * sizes[State::CURRENT].y));
-		quad.vertices.push_back(glm::vec3(-0.5f * sizes[State::CURRENT].x, 0.f,  0.5f * sizes[State::CURRENT].y));
-		quad.vertices.push_back(glm::vec3( 0.5f * sizes[State::CURRENT].x, 0.f,  0.5f * sizes[State::CURRENT].y));
-		quad.vertices.push_back(glm::vec3( 0.5f * sizes[State::CURRENT].x, 0.f, -0.5f * sizes[State::CURRENT].y));
+		quad.vertices.push_back(vec4f(-0.5f * sizes[State::CURRENT].x, 0.f, -0.5f * sizes[State::CURRENT].y, 1.f));
+		quad.vertices.push_back(vec4f(-0.5f * sizes[State::CURRENT].x, 0.f,  0.5f * sizes[State::CURRENT].y, 1.f));
+		quad.vertices.push_back(vec4f( 0.5f * sizes[State::CURRENT].x, 0.f,  0.5f * sizes[State::CURRENT].y, 1.f));
+		quad.vertices.push_back(vec4f( 0.5f * sizes[State::CURRENT].x, 0.f, -0.5f * sizes[State::CURRENT].y, 1.f));
 
-		quad.textures.push_back(glm::vec2(0.f, 1.f));
-		quad.textures.push_back(glm::vec2(0.f, 0.f));
-		quad.textures.push_back(glm::vec2(1.f, 0.f));
-		quad.textures.push_back(glm::vec2(1.f, 1.f));
+		quad.textures.push_back(vec2f(0.f, 1.f));
+		quad.textures.push_back(vec2f(0.f, 0.f));
+		quad.textures.push_back(vec2f(1.f, 0.f));
+		quad.textures.push_back(vec2f(1.f, 1.f));
 
 		quad.faces.push_back(0); quad.faces.push_back(1); quad.faces.push_back(2);
 		quad.faces.push_back(0); quad.faces.push_back(2); quad.faces.push_back(3);
@@ -269,10 +269,10 @@ void WidgetLabel::updateVBOs()
 		glBindVertexArray(0);
 
 		glBindBuffer(GL_ARRAY_BUFFER, batchList[i].verticesBuffer);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, batchList[i].vertices.size() * sizeof(glm::vec3), batchList[i].vertices.data());
+		glBufferSubData(GL_ARRAY_BUFFER, 0, batchList[i].vertices.size() * sizeof(vec4f), batchList[i].vertices.data());
 
 		glBindBuffer(GL_ARRAY_BUFFER, batchList[i].texturesBuffer);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, batchList[i].textures.size() * sizeof(glm::vec2), batchList[i].textures.data());
+		glBufferSubData(GL_ARRAY_BUFFER, 0, batchList[i].textures.size() * sizeof(vec2f), batchList[i].textures.data());
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, batchList[i].facesBuffer);
 		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, batchList[i].faces.size() * sizeof(unsigned short), batchList[i].faces.data());
@@ -307,10 +307,10 @@ void WidgetLabel::parseText()
 	if (!text.empty())
 		linesLength.push_back(length);
 }
-glm::vec2 WidgetLabel::getLineOrigin(const unsigned int& lineIndex, const uint8_t& textConfiguration)
+vec2f WidgetLabel::getLineOrigin(const unsigned int& lineIndex, const uint8_t& textConfiguration)
 {
-	glm::vec2 origin(0.f, 0.f);
-	glm::vec2 size(sizes[State::CURRENT]);
+	vec2f origin = vec2f::zero;
+	vec2f size = sizes[State::CURRENT];
 	switch (textConfiguration & (HORIZONTAL_MASK | VERTICAL_MASK))
 	{
 		case CENTER:
@@ -354,17 +354,17 @@ glm::vec2 WidgetLabel::getLineOrigin(const unsigned int& lineIndex, const uint8_
 		default: break;
 	}
 
-	glm::vec2 margin;
+	vec2f margin;
 	switch (textConfiguration & HORIZONTAL_MASK)
 	{
 		case LEFT:
-			margin = glm::vec2(sizeChar * SIDE_LINE_MARGIN, 0.f);
+			margin = vec2f(sizeChar * SIDE_LINE_MARGIN, 0.f);
 			break;
 		case RIGHT:
-			margin = -glm::vec2(sizeChar * SIDE_LINE_MARGIN, 0.f);;
+			margin = -vec2f(sizeChar * SIDE_LINE_MARGIN, 0.f);;
 			break;
 		default:
-			margin = glm::vec2(0.f);
+			margin = vec2f(0.f);
 			break;
 	}
 

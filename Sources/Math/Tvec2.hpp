@@ -75,7 +75,7 @@ Tvec2<T>& Tvec2<T>::operator=(const Tvec2<T>& b)
 template<typename T>
 T Tvec2<T>::getNorm() const
 {
-	return sqrt(x * x + y * y);
+	return (T)sqrt(x * x + y * y);
 }
 
 template<typename T>
@@ -135,5 +135,23 @@ Tvec2<T> operator/(const Tvec2<T>& a, const T2& scalar)
 	return Tvec2<T>(a.x / scalar, a.y / scalar);
 }
 
-template<typename T> const Tvec2<T> Tvec2<T>::zero = Tvec2<T>(0);
-template<typename T> const Tvec2<T> Tvec2<T>::one = Tvec2<T>(1);
+template<typename T> const Tvec2<T> Tvec2<T>::zero = Tvec2<T>(T(0));
+template<typename T> const Tvec2<T> Tvec2<T>::one = Tvec2<T>(T(1));
+
+
+
+
+
+/// Math function
+template<typename T, typename T2>
+T dot(const Tvec2<T>& a, const Tvec2<T2>& b)
+{
+	return a.x * b.x + a.y * b.y;
+}
+
+template<typename T>
+Tvec2<T> Tvec2<T>::clamp(const Tvec2<T>& a, const Tvec2<T>& min, const Tvec2<T>& max)
+{
+	return Tvec2<T>(a.x < min.x ? min.x : (a.x > max.x ? max.x : a.x),
+		a.y < min.y ? min.y : (a.y > max.y ? max.y : a.y));
+}

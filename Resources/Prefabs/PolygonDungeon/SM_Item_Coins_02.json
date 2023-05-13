@@ -1,0 +1,7 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Item_Coins_02",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": []
+}

@@ -1,0 +1,7 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Prop_Candle_Stand_01",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": []
+}

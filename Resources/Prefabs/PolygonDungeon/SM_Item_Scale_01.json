@@ -1,0 +1,7 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Item_Scale_01",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": []
+}

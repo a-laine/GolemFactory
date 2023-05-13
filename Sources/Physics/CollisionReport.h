@@ -1,7 +1,7 @@
 #pragma once
 
-#include <glm/glm.hpp>
-#include <glm/gtx/quaternion.hpp>
+//#include <glm/glm.hpp>
+//#include <glm/gtx/quaternion.hpp>
 
 #include <vector>
 
@@ -29,10 +29,10 @@ class CollisionReport
 		Entity *entity1, *entity2;
 		Shape *shape1, *shape2;
 
-		glm::vec4 normal;
-		std::vector<glm::vec4> points;
+		vec4f normal;
+		std::vector<vec4f> points;
 		std::vector<float> depths;
 
-		std::vector<glm::vec4> shape1face;
-		std::vector<glm::vec4> shape2face;
+		std::vector<vec4f> shape1face;
+		std::vector<vec4f> shape2face;
 };

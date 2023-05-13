@@ -84,7 +84,7 @@ Layer* WidgetLoader::deserialize(const Variant& variant, const std::string& vari
 		printError(variantName, "has invalid or none int field \"config\"", errorHeader, errorIndent);
 	}
 
-	glm::vec3 vector;
+	vec4f vector = vec4f::zero;
 	std::string error;
 	try // layer.screenPosition
 	{
@@ -601,7 +601,7 @@ WidgetRadioButton* WidgetLoader::deserializeRadioButton(const Variant& variant, 
 
 void WidgetLoader::tryLoadSizes(WidgetVirtual* w, const Variant& variant, const std::string& variantName, std::string& errorHeader, const std::string& errorIndent, int& errorCount)
 {
-	glm::vec2 size;
+	vec2f size = vec2f::zero;
 	std::string error;
 	bool oneLoaded = false;
 
@@ -688,7 +688,7 @@ void WidgetLoader::tryLoadSizes(WidgetVirtual* w, const Variant& variant, const 
 }
 void WidgetLoader::tryLoadPositions(WidgetVirtual* w, const Variant& variant, const std::string& variantName, std::string& errorHeader, const std::string& errorIndent, int& errorCount)
 {
-	glm::vec3 position;
+	vec4f position = vec4f::zero;
 	std::string error;
 	bool oneLoaded = false;
 
@@ -778,7 +778,7 @@ void WidgetLoader::tryLoadPositions(WidgetVirtual* w, const Variant& variant, co
 }
 void WidgetLoader::tryLoadColors(WidgetVirtual* w, const Variant& variant, const std::string& variantName, std::string& errorHeader, const std::string& errorIndent, int& errorCount)
 {
-	glm::vec4 color;
+	vec4f color = vec4f::zero;
 	std::string error;
 	bool oneLoaded = false;
 

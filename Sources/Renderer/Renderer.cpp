@@ -3,6 +3,8 @@
 #include <iostream>
 #include <sstream>
 
+//#include <glm/gtx/euler_angles.hpp>
+
 #include <EntityComponent/Entity.hpp>
 #include <HUD/WidgetManager.h>
 #include <Scene/FrustrumSceneQuerry.h>
@@ -47,7 +49,7 @@ Renderer::~Renderer()
 
 
 //  Public functions
-void Renderer::initializeGrid(const unsigned int& gridSize,const float& elementSize, const glm::vec3& color)
+void Renderer::initializeGrid(const unsigned int& gridSize,const float& elementSize, const vec4f& color)
 {
 	if (glIsVertexArray(gridVAO)) return;
 
@@ -61,12 +63,12 @@ void Renderer::initializeGrid(const unsigned int& gridSize,const float& elementS
 		for (unsigned int j = 0; j < gridSize + 1; j++)
 		{
 			vertexBufferGrid[3 * (i*(gridSize + 1) + j) + 0] = elementSize*i - (gridSize * elementSize) / 2;
-			vertexBufferGrid[3 * (i*(gridSize + 1) + j) + 1] = elementSize*j - (gridSize * elementSize) / 2;
-			vertexBufferGrid[3 * (i*(gridSize + 1) + j) + 2] = 0;
+			vertexBufferGrid[3 * (i*(gridSize + 1) + j) + 1] = 0;
+			vertexBufferGrid[3 * (i*(gridSize + 1) + j) + 2] = elementSize*j - (gridSize * elementSize) / 2;
 
 			normalBufferGrid[3 * (i*(gridSize + 1) + j) + 0] = 0.f;
-			normalBufferGrid[3 * (i*(gridSize + 1) + j) + 1] = 0.f;
-			normalBufferGrid[3 * (i*(gridSize + 1) + j) + 2] = 1.f;
+			normalBufferGrid[3 * (i*(gridSize + 1) + j) + 1] = 1.f;
+			normalBufferGrid[3 * (i*(gridSize + 1) + j) + 2] = 0.f;
 
 			colorBufferGrid[3 * (i*(gridSize + 1) + j) + 0] = color.x;
 			colorBufferGrid[3 * (i*(gridSize + 1) + j) + 1] = color.y;
@@ -140,8 +142,8 @@ void Renderer::render(CameraComponent* renderCam)
 	if (!context || !camera || !world || !renderCam) return;
 	
 	//	bind matrix
-	glm::mat4 view = renderCam->getGlobalViewMatrix();
-	glm::mat4 projection = glm::perspective(glm::radians(renderCam->getVerticalFieldOfView(context->getViewportRatio())), context->getViewportRatio(), 0.1f, 1500.f);
+	mat4f view = renderCam->getViewMatrix();
+	mat4f projection = mat4f::perspective(renderCam->getVerticalFieldOfView(), context->getViewportRatio(), 0.1f, 1500.f);
 	
 	//	opengl state
 	glEnable(GL_DEPTH_TEST);
@@ -151,18 +153,19 @@ void Renderer::render(CameraComponent* renderCam)
 	if (drawGrid && shader && glIsVertexArray(gridVAO))
 	{
 		shader->enable();
-		loadMVPMatrix(shader, &glm::mat4(1.0)[0][0], &view[0][0], &projection[0][0]);
+		loadMVPMatrix(shader, &mat4f::identity[0][0], &view[0][0], &projection[0][0]);
 		glBindVertexArray(gridVAO);
 		glDrawElements(GL_TRIANGLES, vboGridSize, GL_UNSIGNED_INT, NULL);
 	}
 
 	//	get instance list
-	float camFovVert = camera->getVerticalFieldOfView(context->getViewportRatio());
-	glm::vec4 camPos, camFwd, camUp, camRight;
-	camera->getFrustrum(camPos, camFwd, camUp, camRight);
-	//std::vector<Entity*> instanceList;
-	FrustrumSceneQuerry sceneTest(camPos, camFwd, camUp, -camRight, camFovVert / 1.6f, camFovVert / 1.6f);
+	float camFovVert = camera->getVerticalFieldOfView();
+	vec4f camPos, camFwd, camUp, camRight;
+	camera->getFrustrum(camPos, camFwd, camRight, camUp);
+	FrustrumSceneQuerry sceneTest(camPos, camFwd, camUp, -camRight, camFovVert, context->getViewportRatio());
 	VirtualEntityCollector collector;
+	collector.m_flags = (uint64_t)Entity::Flags::Fl_Drawable;
+	collector.m_exclusionFlags = (uint64_t)Entity::Flags::Fl_Hide;
 	world->getSceneManager().getEntities(&sceneTest, &collector);
 
 	EntityCompareDistance compare(camPos);
@@ -174,13 +177,17 @@ void Renderer::render(CameraComponent* renderCam)
 		DrawableComponent* comp = object->getComponent<DrawableComponent>();
 		if(!comp || !comp->isValid()) continue;
 
+#ifdef USE_IMGUI
+		if (!comp->visible()) continue;
+#endif
+
 		//	try to do dynamic batching
 		if (GLEW_VERSION_1_3 && comp->getShader()->getInstanciable())
 		{
 			shader = comp->getShader()->getInstanciable();
 			Mesh* m = comp->getMesh();
-			std::vector<glm::mat4>& batch = groupBatches[shader][m];
-			batch.push_back(object->getTransformMatrix());
+			std::vector<mat4f>& batch = groupBatches[shader][m];
+			batch.push_back(object->getWorldTransformMatrix());
 			if (batch.size() >= BATCH_SIZE)
 			{
 				drawInstancedObject(shader, m, batch, &view[0][0], &projection[0][0]);
@@ -225,9 +232,10 @@ void Renderer::renderHUD()
 	if (!context) return;
 
 	// bind matrix
-	glm::mat4 view = glm::eulerAngleZX(glm::pi<float>(), glm::pi<float>()*0.5f);
-	view[3] = glm::vec4(0.f, 0.f, -DISTANCE_HUD_CAMERA, 1.f);
-	glm::mat4 projection = glm::perspective(glm::radians(ANGLE_VERTICAL_HUD_PROJECTION), context->getViewportRatio(), 0.1f, 1500.f);
+	const float pi = (float)PI;
+	mat4f view = mat4f::eulerAngleZX(pi, pi *0.5f);
+	view[3] = vec4f(0.f, 0.f, -DISTANCE_HUD_CAMERA, 1.f);
+	mat4f projection = mat4f::perspective((float)DEG2RAD * ANGLE_VERTICAL_HUD_PROJECTION, context->getViewportRatio(), 0.1f, 1500.f);
 
 	//	change opengl states
 	glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -246,7 +254,7 @@ void Renderer::renderHUD()
 		{
 			if (it->second[i]->isVisible())		// layer visible
 			{
-				glm::mat4 model = it->second[i]->getModelMatrix();
+				mat4f model = it->second[i]->getModelMatrix();
 				std::vector<WidgetVirtual*>& list = it->second[i]->getChildrenList();
 				for (std::vector<WidgetVirtual*>::iterator it2 = list.begin(); it2 != list.end(); ++it2)
 				{
@@ -255,7 +263,7 @@ void Renderer::renderHUD()
 						//	Get shader and prepare matrix
 						Shader* shader = nullptr;
 						if (!defaultShader[HUD]) shader = (*it2)->getShader();
-						loadMVPMatrix(shader, &glm::translate(model, (*it2)->getPosition())[0][0], &view[0][0], &projection[0][0]);
+						loadMVPMatrix(shader, &mat4f::translate(model, (*it2)->getPosition())[0][0], &view[0][0], &projection[0][0]);
 						if (!shader) continue;
 
 						//	Draw

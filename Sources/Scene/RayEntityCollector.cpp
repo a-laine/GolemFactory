@@ -4,11 +4,11 @@
 #include <Animation/SkeletonComponent.h>
 #include <Resources/Mesh.h>
 
-#include <glm/gtx/component_wise.hpp>
+//#include <glm/gtx/component_wise.hpp>
 #include <Physics/Shapes/Collider.h>
 
 
-RayEntityCollector::RayEntityCollector(const glm::vec4& pos, const glm::vec4& dir, float maxDist) : position(pos), direction(dir), distance(maxDist)
+RayEntityCollector::RayEntityCollector(const vec4f& pos, const vec4f& dir, float maxDist) : position(pos), direction(dir), distance(maxDist)
 {
 	position.w = 1.f;
 	direction.w = 0.f;
@@ -25,18 +25,19 @@ bool RayEntityCollector::operator() (Entity* entity)
 	//	first pass test -> test ray vs object OBB or capsules
 	if (animatable)
 	{
-		glm::mat4 model = entity->getTransformMatrix();
-		float scale = glm::compMax(entity->getScale());
-		const std::vector<glm::mat4> pose = entity->getComponent<SkeletonComponent>()->getPose();
-		const std::vector<glm::ivec2>& segments = entity->getComponent<SkeletonComponent>()->getSegmentsIndex();
+		mat4f model = entity->getWorldTransformMatrix();
+		vec4f scale(entity->getWorldScale());
+		float smax = std::max(scale.x, std::max(scale.y, scale.z));
+		const std::vector<mat4f> pose = entity->getComponent<SkeletonComponent>()->getPose();
+		const std::vector<vec2i>& segments = entity->getComponent<SkeletonComponent>()->getSegmentsIndex();
 		const std::vector<float>& radius = entity->getComponent<SkeletonComponent>()->getSegmentsRadius();
 
 		bool collision = false;
 		for (unsigned int i = 0; i < segments.size(); i++)
 		{
-			glm::vec4 a = model * pose[(const int)segments[i].x][3];
-			glm::vec4 b = model * pose[(const int)segments[i].y][3];
-			if (Collision::collide_SegmentvsCapsule(position, position + distance * direction, a, b, scale*radius[i]))
+			vec4f a = model * pose[(const int)segments[i].x][3];
+			vec4f b = model * pose[(const int)segments[i].y][3];
+			if (Collision::collide_SegmentvsCapsule(position, position + distance * direction, a, b, smax * radius[i]))
 			{
 				collision = true;
 				break;
@@ -54,23 +55,25 @@ bool RayEntityCollector::operator() (Entity* entity)
 	}
 
 	//	second test -> test ray vs all object triangles
-	const std::vector<glm::vec3>& vertices = *mesh->getVertices();
+	const std::vector<vec4f>& vertices = *mesh->getVertices();
 	const std::vector<unsigned short>& faces = *mesh->getFaces();
-	glm::mat4 model = entity->getTransformMatrix();
+	mat4f model = entity->getWorldTransformMatrix();
 	float collisionDistance = std::numeric_limits<float>::max();
 
 	if (animatable)
 	{
-		const std::vector<glm::mat4> ibind = skeletonComp->getInverseBindPose();
-		const std::vector<glm::mat4> pose = entity->getComponent<SkeletonComponent>()->getPose();
-		const std::vector<glm::ivec3>* bones = mesh->getBones();
-		const std::vector<glm::vec3>* weights = mesh->getWeights();
+		const std::vector<mat4f> ibind = skeletonComp->getInverseBindPose();
+		const std::vector<mat4f> pose = entity->getComponent<SkeletonComponent>()->getPose();
+		const std::vector<vec4i>* bones = mesh->getBones();
+		const std::vector<vec4f>* weights = mesh->getWeights();
 		if (ibind.empty() || pose.empty() || !bones || !weights) return false;
 
 		for (unsigned int i = 0; i < faces.size(); i += 3)
 		{
 			//	compute pose bones contribution matrix
-			glm::mat4 m1(0.f); glm::mat4 m2(0.f); glm::mat4 m3(0.f);
+			mat4f m1(0.f);
+			mat4f m2(0.f);
+			mat4f m3(0.f);
 			for (int j = 0; j < 3; j++)
 			{
 				/*
@@ -88,16 +91,16 @@ bool RayEntityCollector::operator() (Entity* entity)
 			}
 
 			//	compute triangle position
-			glm::vec4 p1 = model * m1 * glm::vec4(vertices[faces[i]], 1.f);
-			glm::vec4 p2 = model * m2 * glm::vec4(vertices[faces[i + 1]], 1.f);
-			glm::vec4 p3 = model * m3 * glm::vec4(vertices[faces[i + 2]], 1.f);
+			vec4f p1 = model * m1 * vertices[faces[i]];
+			vec4f p2 = model * m2 * vertices[faces[i + 1]];
+			vec4f p3 = model * m3 * vertices[faces[i + 2]];
 
 			//	collision detection
 			if (Collision::collide_SegmentvsTriangle(position, position + distance*direction, p1, p2, p3))
 			{
-				glm::vec4 normal = glm::cross(p2 - p1, p3 - p1);
-				glm::normalize(normal);
-				collisionDistance = std::min(collisionDistance, glm::dot(normal, p1 - position) / glm::dot(normal, direction));
+				vec4f normal = vec4f::cross(p2 - p1, p3 - p1);
+				normal.normalize();
+				collisionDistance = std::min(collisionDistance, vec4f::dot(normal, p1 - position) / vec4f::dot(normal, direction));
 			}
 		}
 		if (collisionDistance == std::numeric_limits<float>::max()) return false;
@@ -106,15 +109,15 @@ bool RayEntityCollector::operator() (Entity* entity)
 	{
 		for (unsigned int i = 0; i < faces.size(); i += 3)
 		{
-			glm::vec4 p1 = model * glm::vec4(vertices[faces[i]], 1.f);
-			glm::vec4 p2 = model * glm::vec4(vertices[faces[i + 1]], 1.f);
-			glm::vec4 p3 = model * glm::vec4(vertices[faces[i + 2]], 1.f);
+			vec4f p1 = model * vertices[faces[i]];
+			vec4f p2 = model * vertices[faces[i + 1]];
+			vec4f p3 = model * vertices[faces[i + 2]];
 
 			if (Collision::collide_SegmentvsTriangle(position, position + distance*direction, p1, p2, p3))
 			{
-				glm::vec4 normal = glm::cross(p2 - p1, p3 - p1);
-				glm::normalize(normal);
-				collisionDistance = std::min(collisionDistance, glm::dot(normal, p1 - position) / glm::dot(normal, direction));
+				vec4f normal = vec4f::cross(p2 - p1, p3 - p1);
+				normal.normalize();
+				collisionDistance = std::min(collisionDistance, vec4f::dot(normal, p1 - position) / vec4f::dot(normal, direction));
 			}
 		}
 		if (collisionDistance == std::numeric_limits<float>::max()) return false;

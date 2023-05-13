@@ -1,0 +1,7 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Prop_Tech_Turbine_01",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": []
+}

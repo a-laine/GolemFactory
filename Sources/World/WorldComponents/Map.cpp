@@ -4,7 +4,7 @@
 
 #include <iostream>
 #include <set>
-#include <glm/gtc/matrix_transform.hpp>
+//#include <glm/gtc/matrix_transform.hpp>
 
 
 //	Default
@@ -64,17 +64,17 @@ bool Map::loadFromHeightmap(const std::string& resourceDirectory, const std::str
 		for (int h = 0; h < height; h++)
 		{
 			float z0 = amplitude * ((int)data[h * width + w] - offset) * 0.00390625f; // = 1/256
-			glm::vec3 chunkPos = glm::vec3(w - 0.5f * width, h - 0.5f * height, 0);
-			glm::mat4 m = glm::translate(glm::mat4(1.f), chunkPos); // glm::scale(glm::mat4(1.f), chunkSize)
+			vec4f chunkPos = vec4f(w - 0.5f * width, h - 0.5f * height, 0, 1.f);
+			mat4f m = mat4f::translate(mat4f(1.f), chunkPos); // glm::scale(mat4f(1.f), chunkSize)
 			chunks[w][h] = new Chunk(rand(), m, z0);
 		}
 
 	//	create mesh data
-	std::vector<glm::vec3> vertices;
-	std::vector<glm::vec3> normals;
-	std::vector<glm::vec3> colors;
+	std::vector<vec4f> vertices;
+	std::vector<vec4f> normals;
+	std::vector<vec4f> colors;
 	std::vector<unsigned int> faces;
-	glm::vec3 color = glm::vec3(1.f, 1.f, 1.f);
+	vec4f color = vec4f(1.f, 1.f, 1.f, 1.f);
 	
 	for (int w = 0; w < width; w++)
 		for (int h = 0; h < height; h++)
@@ -98,15 +98,15 @@ bool Map::loadFromHeightmap(const std::string& resourceDirectory, const std::str
 
 	glGenBuffers(1, &verticesBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, verticesBuffer);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), vertices.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(vec4f), vertices.data(), GL_STATIC_DRAW);
 
 	glGenBuffers(1, &normalsBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, normalsBuffer);
-	glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), normals.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(vec4f), normals.data(), GL_STATIC_DRAW);
 
 	glGenBuffers(1, &colorsBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, colorsBuffer);
-	glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(glm::vec3), colors.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(vec4f), colors.data(), GL_STATIC_DRAW);
 
 	glGenBuffers(1, &facesBuffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, facesBuffer);
@@ -117,15 +117,15 @@ bool Map::loadFromHeightmap(const std::string& resourceDirectory, const std::str
 
 	glEnableVertexAttribArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, verticesBuffer);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, NULL);
 
 	glEnableVertexAttribArray(1);
 	glBindBuffer(GL_ARRAY_BUFFER, normalsBuffer);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, NULL);
 
 	glEnableVertexAttribArray(2);
 	glBindBuffer(GL_ARRAY_BUFFER, colorsBuffer);
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, NULL);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, facesBuffer);
 	glBindVertexArray(0);
@@ -138,12 +138,12 @@ bool Map::loadFromHeightmap(const std::string& resourceDirectory, const std::str
 }
 
 
-void Map::update(const glm::vec3& playerPosition)
+void Map::update(const vec4f& playerPosition)
 {
 	bool detailsEnable = true;
 	float externalRadius = 10.5f;
 
-	glm::ivec2 playerCell = worldToChunk(playerPosition);
+	vec2i playerCell = worldToChunk(playerPosition);
 	if (lastPlayerCell != playerCell)
 	{
 		lastPlayerCell = playerCell;
@@ -155,11 +155,11 @@ void Map::update(const glm::vec3& playerPosition)
 		for (int i = -checkingSquareRadius - 2; i < checkingSquareRadius + 3; i++)
 			for (int j = -checkingSquareRadius - 2; j < checkingSquareRadius + 3; j++)
 			{
-				glm::ivec2 v = glm::ivec2(playerCell.x + i, playerCell.y + j);
+				vec2i v = vec2i(playerCell.x + i, playerCell.y + j);
 				if (v.x < width && v.y < height && v.x >= 0 && v.y >= 0)
 				{
 					Chunk* chunk = chunks[v.x][v.y];
-					float d = glm::length(glm::vec2(i, j));
+					float d = vec2f(i, j).getNorm();
 					if (i >= -checkingSquareRadius && j >= -checkingSquareRadius && i < checkingSquareRadius + 1 && j < checkingSquareRadius + 1) // radius (in chunk)
 					{
 						drawableChunks.push_back(v);
@@ -184,7 +184,7 @@ void Map::update(const glm::vec3& playerPosition)
 
 						int lod = getLod(d);
 						if(chunk->getLod() != lod)
-							jobList.push_back(glm::ivec4(v.x, v.y, lod, 0));
+							jobList.push_back(vec4i(v.x, v.y, lod, 0));
 					}
 					else
 					{
@@ -205,7 +205,7 @@ void Map::update(const glm::vec3& playerPosition)
 	// do defered jobs
 	if(!jobList.empty() && detailsEnable)
 	{
-		glm::ivec2 v = glm::ivec2(jobList.back().x, jobList.back().y);
+		vec2i v = vec2i(jobList.back().x, jobList.back().y);
 		Chunk* chunk = chunks[v.x][v.y];
 		int lod = jobList.back().z;
 
@@ -237,17 +237,17 @@ void Map::setShader(Shader* s) { shader = s; }
 unsigned int Map::getFacesCount() const { return facesCount; }
 GLuint Map::getVAO() const { return vao; }
 Chunk* Map::getChunk(const int& w, const int& h) { return chunks[w][h]; }
-std::vector<glm::ivec2> Map::getDrawableChunks() { return drawableChunks; }
-glm::mat4 Map::getModelMatrix() const { return glm::scale(glm::mat4(1.f), glm::vec3(height - 1, width - 1, 1.f)); }
-glm::vec3 Map::getScale() const { return scale; }
+std::vector<vec2i> Map::getDrawableChunks() { return drawableChunks; }
+mat4f Map::getModelMatrix() const { return mat4f::scale(mat4f::identity, vec4f(height - 1, width - 1, 1.f, 1.f)); }
+vec4f Map::getScale() const { return scale; }
 Shader* Map::getShader() { return shader; }
 
 
-glm::ivec2 Map::worldToChunk(glm::vec3 p) const
+vec2i Map::worldToChunk(vec4f p) const
 {
-	glm::vec2 firstChunkPos = glm::vec2(-0.5f * width - 0.5f, -0.5f * height - 0.5f);
-	glm::vec2 v = glm::vec2(p.x / scale.x, p.y / scale.y) - firstChunkPos;
-	return glm::ivec2((int)v.x, (int)v.y);
+	vec2f firstChunkPos = vec2f(-0.5f * width - 0.5f, -0.5f * height - 0.5f);
+	vec2f v = vec2f(p.x / scale.x, p.y / scale.y) - firstChunkPos;
+	return vec2i((int)v.x, (int)v.y);
 }
 bool Map::inBound(const int& x, const int& y) const
 {
@@ -257,41 +257,41 @@ bool Map::inBound(const int& x, const int& y) const
 		return false;
 	else return true;
 }
-glm::ivec4 Map::getExclusionZone() const { return exclusionZone; }
+vec4i Map::getExclusionZone() const { return exclusionZone; }
 //
 
 
 // Privates functions
-glm::vec3 Map::getVertex(const int& x, const int& y)
+vec4f Map::getVertex(const int& x, const int& y)
 {
-	return glm::vec3((float)x / (width - 1) - 0.5f, (float)y / (height - 1) - 0.5f, chunks[x][y]->getCorner());
+	return vec4f((float)x / (width - 1) - 0.5f, (float)y / (height - 1) - 0.5f, chunks[x][y]->getCorner(), 1.f);
 }
-glm::vec3 Map::getNormal(const int& x, const int& y)
+vec4f Map::getNormal(const int& x, const int& y)
 {
 	float h0 = chunks[x][y]->getCorner();
 
-	glm::vec3 n = glm::vec3(0.f);
+	vec4f n = vec4f(0.f);
 	int count = 0;
 
 	if (inBound(x + 1, y))
 	{
 		count++;
-		n += glm::normalize(glm::vec3(h0 - chunks[x + 1][y]->getCorner(), 0.f, 1.f));
+		n += vec4f(h0 - chunks[x + 1][y]->getCorner(), 0.f, 1.f, 0.f).getNormal();
 	}
 	if (inBound(x - 1, y))
 	{
 		count++;
-		n += glm::normalize(glm::vec3(chunks[x - 1][y]->getCorner() - h0, 0.f, 1.f));
+		n += vec4f(chunks[x - 1][y]->getCorner() - h0, 0.f, 1.f, 0.f).getNormal();
 	}
 	if (inBound(x, y + 1))
 	{
 		count++;
-		n += glm::normalize(glm::vec3(0.f, h0 - chunks[x][y + 1]->getCorner(), 1.f));
+		n += vec4f(0.f, h0 - chunks[x][y + 1]->getCorner(), 1.f, 0.f).getNormal();
 	}
 	if (inBound(x, y - 1))
 	{
 		count++;
-		n += glm::normalize(glm::vec3(0.f, chunks[x][y - 1]->getCorner() - h0, 1.f));
+		n += vec4f(0.f, chunks[x][y - 1]->getCorner() - h0, 1.f, 0.f).getNormal();
 	}
 
 	return (1.f / count) * n;

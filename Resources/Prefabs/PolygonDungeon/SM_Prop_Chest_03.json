@@ -1,0 +1,30 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Prop_Chest_03",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": [
+        {
+            "name": "SM_Prop_Chest_03_Lid",
+            "id": 0,
+            "position": [
+                0.002651229267939925,
+                0.4108944535255432,
+                -0.3037307560443878
+            ],
+            "rotation": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+            ],
+            "scale": 1.0,
+            "prefabName": "",
+            "childs": [],
+            "drawableComponent": {
+                "meshName": "SM_Prop_Chest_03_Lid",
+                "shaderName": "defaultTextured"
+            }
+        }
+    ]
+}

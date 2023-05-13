@@ -14,8 +14,17 @@ class Collider : public Component
 		virtual ~Collider();
 		//
 
+		void onDrawImGui() override;
+		void onAddToEntity(Entity* entity) override;
+		void drawDebug(vec4f color) const;
+
 		//	Attributes
 		Shape* m_shape;
 		//
+
+	protected:
+	#ifdef USE_IMGUI
+		bool m_drawShape = false;
+	#endif
 };
 

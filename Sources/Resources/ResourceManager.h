@@ -3,9 +3,9 @@
 #include <Utiles/Singleton.h>
 #include <Utiles/Mutex.h>
 #include <Utiles/Assert.hpp>
+#include <Utiles/ToolBox.h>
 #include "ResourceVirtual.h"
 #include "IResourceLoader.h"
-#include <Utiles/ToolBox.h>
 
 #include <vector>
 #include <map>

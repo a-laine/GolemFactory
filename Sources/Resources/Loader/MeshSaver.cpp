@@ -2,7 +2,7 @@
 
 
 //	Public functions
-void MeshSaver::save(Mesh* mesh, const std::string& resourcesPath, std::string fileName, glm::vec3 scaleModifier)
+void MeshSaver::save(Mesh* mesh, const std::string& resourcesPath, std::string fileName, vec4f scaleModifier)
 {
 	//	initialize fileName
 	if (fileName.empty())
@@ -24,47 +24,46 @@ void MeshSaver::save(Mesh* mesh, const std::string& resourcesPath, std::string f
 //
 
 //	Protected functions
-void MeshSaver::saveStatic(Mesh* mesh, std::ofstream& file, glm::vec3 scaleModifier)
+void MeshSaver::saveStatic(Mesh* mesh, std::ofstream& file, vec4f scaleModifier)
 {
 	//	initialize buffers
-	std::set<vec3> vertices;
-	std::set<vec3> normales;
-	std::set<vec3> colors;
+	std::set<vec4> vertices;
+	std::set<vec4> normales;
+	std::set<vec4> uvs;
 	float truncature = 0.001f;
-	glm::vec3 u;
 
 	//	compression
 	for (unsigned int i = 0; i < mesh->vertices.size(); i++)
-		vertices.insert(vec3(getTruncatedAlias(mesh->vertices[i] * scaleModifier, truncature)));
+		vertices.insert(vec4(getTruncatedAlias(mesh->vertices[i] * scaleModifier, truncature)));
 	for (unsigned int i = 0; i < mesh->normals.size(); i++)
-		normales.insert(vec3(getTruncatedAlias(mesh->normals[i] * scaleModifier, truncature)));
-	for (unsigned int i = 0; i < mesh->colors.size(); i++)
-		colors.insert(vec3(getTruncatedAlias(mesh->colors[i] * scaleModifier, truncature)));
+		normales.insert(vec4(getTruncatedAlias(mesh->normals[i], truncature)));
+	for (unsigned int i = 0; i < mesh->uvs.size(); i++)
+		uvs.insert(vec4(getTruncatedAlias(mesh->uvs[i], truncature)));
 
 	//	finish header
 	file << "# Vertex count : " << vertices.size() << std::endl;
 	file << "# Normals count : " << normales.size() << std::endl;
-	file << "# Colors count : " << colors.size() << std::endl;
+	file << "# Uvs count : " << uvs.size() << std::endl;
 	file << "# Faces count : " << mesh->faces.size() << std::endl;
 	file << "# Static mesh" << std::endl << std::endl << std::endl;
 
 
 	//	vertices
 	file << "#  positions" << std::endl;
-	for (std::set<vec3>::iterator it = vertices.begin(); it != vertices.end(); ++it)
+	for (std::set<vec4>::iterator it = vertices.begin(); it != vertices.end(); ++it)
 		file << "v " << it->x << ' ' << it->y << ' ' << it->z << std::endl;
 	file << std::endl;
 
 	//	normales
 	file << "#  normales" << std::endl;
-	for (std::set<vec3>::iterator it = normales.begin(); it != normales.end(); ++it)
+	for (std::set<vec4>::iterator it = normales.begin(); it != normales.end(); ++it)
 		file << "vn " << it->x << ' ' << it->y << ' ' << it->z << std::endl;
 	file << std::endl;
 
 	//	colors
-	file << "#  colors" << std::endl;
-	for (std::set<vec3>::iterator it = colors.begin(); it != colors.end(); ++it)
-		file << "c " << it->x << ' ' << it->y << ' ' << it->z << std::endl;
+	file << "#  uvs" << std::endl;
+	for (std::set<vec4>::iterator it = uvs.begin(); it != uvs.end(); ++it)
+		file << "uv " << it->x << ' ' << it->y << ' ' << it->z << std::endl;
 	file << std::endl;
 
 	//	faces
@@ -75,25 +74,25 @@ void MeshSaver::saveStatic(Mesh* mesh, std::ofstream& file, glm::vec3 scaleModif
 		for (int j = 0; j < 3; j++)
 		{
 			//	get attributes proxy
-			glm::vec3 v = getTruncatedAlias(mesh->vertices[mesh->faces[i + j]], truncature);
-			glm::vec3 vn = getTruncatedAlias(mesh->normals[mesh->faces[i + j]], truncature);
-			glm::vec3 c = getTruncatedAlias(mesh->colors[mesh->faces[i + j]], truncature);
+			vec4f v = getTruncatedAlias(mesh->vertices[mesh->faces[i + j]], truncature);
+			vec4f vn = getTruncatedAlias(mesh->normals[mesh->faces[i + j]], truncature);
+			vec4f c = getTruncatedAlias(mesh->uvs[mesh->faces[i + j]], truncature);
 
 			//	search vertex index
 			int index = 0;
-			for (std::set<vec3>::iterator it = vertices.begin(); it != vertices.end(); ++it, index++)
+			for (std::set<vec4>::iterator it = vertices.begin(); it != vertices.end(); ++it, index++)
 				if (it->x == v.x && it->y == v.y && it->z == v.z) break;
 			file << index << "//"; // double because of texture not yet supported
 
 			// search normal index
 			index = 0;
-			for (std::set<vec3>::iterator it = normales.begin(); it != normales.end(); ++it, index++)
+			for (std::set<vec4>::iterator it = normales.begin(); it != normales.end(); ++it, index++)
 				if (it->x == vn.x && it->y == vn.y && it->z == vn.z) break;
 			file << index << '/';
 
 			// search color index
 			index = 0;
-			for (std::set<vec3>::iterator it = colors.begin(); it != colors.end(); ++it, index++)
+			for (std::set<vec4>::iterator it = uvs.begin(); it != uvs.end(); ++it, index++)
 				if (it->x == c.x && it->y == c.y && it->z == c.z) break;
 			file << index << ' ';
 		}
@@ -101,33 +100,33 @@ void MeshSaver::saveStatic(Mesh* mesh, std::ofstream& file, glm::vec3 scaleModif
 	}
 	file << std::endl;
 }
-void MeshSaver::saveAnimated(Mesh* mesh, std::ofstream& file, glm::vec3 scaleModifier)
+void MeshSaver::saveAnimated(Mesh* mesh, std::ofstream& file, vec4f scaleModifier)
 {
 	//	initialize buffers
-	std::set<vec3> vertices;
-	std::set<vec3> normales;
-	std::set<vec3> colors;
-	std::set<vec3> weights;
-	std::set<ivec3> bones;
+	std::set<vec4> vertices;
+	std::set<vec4> normales;
+	std::set<vec4> uvs;
+	std::set<vec4> weights;
+	std::set<ivec4> bones;
 	float truncature = 0.001f;
-	glm::vec3 u;
+	//glm::vec3 u;
 
 	//	compression
 	for (unsigned int i = 0; i < mesh->vertices.size(); i++)
-		vertices.insert(vec3(getTruncatedAlias(mesh->vertices[i] * scaleModifier, truncature)));
+		vertices.insert(vec4(getTruncatedAlias(mesh->vertices[i] * scaleModifier, truncature)));
 	for (unsigned int i = 0; i < mesh->normals.size(); i++)
-		normales.insert(vec3(getTruncatedAlias(mesh->normals[i] * scaleModifier, truncature)));
-	for (unsigned int i = 0; i < mesh->colors.size(); i++)
-		colors.insert(vec3(getTruncatedAlias(mesh->colors[i] * scaleModifier, truncature)));
+		normales.insert(vec4(getTruncatedAlias(mesh->normals[i] * scaleModifier, truncature)));
+	for (unsigned int i = 0; i < mesh->uvs.size(); i++)
+		uvs.insert(vec4(getTruncatedAlias(mesh->uvs[i] * scaleModifier, truncature)));
 	for (unsigned int i = 0; i < mesh->weights.size(); i++)
-		weights.insert(vec3(getTruncatedAlias(mesh->weights[i] * scaleModifier, truncature)));
+		weights.insert(vec4(getTruncatedAlias(mesh->weights[i] * scaleModifier, truncature)));
 	for (unsigned int i = 0; i < mesh->bones.size(); i++)
-		bones.insert(ivec3(mesh->bones[i]));
+		bones.insert(ivec4(mesh->bones[i]));
 
 	//	finish header
 	file << "# Vertex count : " << vertices.size() << std::endl;
 	file << "# Normals count : " << normales.size() << std::endl;
-	file << "# Colors count : " << colors.size() << std::endl;
+	file << "# Uvs count : " << uvs.size() << std::endl;
 	file << "# Weights count : " << weights.size() << std::endl;
 	file << "# Bones count : " << bones.size() << std::endl;
 	file << "# Faces count : " << mesh->faces.size() << std::endl;
@@ -136,31 +135,31 @@ void MeshSaver::saveAnimated(Mesh* mesh, std::ofstream& file, glm::vec3 scaleMod
 
 	//	vertices
 	file << "#  positions" << std::endl;
-	for (std::set<vec3>::iterator it = vertices.begin(); it != vertices.end(); ++it)
+	for (std::set<vec4>::iterator it = vertices.begin(); it != vertices.end(); ++it)
 		file << "v " << it->x << ' ' << it->y << ' ' << it->z << std::endl;
 	file << std::endl;
 
 	//	normales
 	file << "#  normales" << std::endl;
-	for (std::set<vec3>::iterator it = normales.begin(); it != normales.end(); ++it)
+	for (std::set<vec4>::iterator it = normales.begin(); it != normales.end(); ++it)
 		file << "vn " << it->x << ' ' << it->y << ' ' << it->z << std::endl;
 	file << std::endl;
 
 	//	colors
-	file << "#  colors" << std::endl;
-	for (std::set<vec3>::iterator it = colors.begin(); it != colors.end(); ++it)
-		file << "c " << it->x << ' ' << it->y << ' ' << it->z << std::endl;
+	file << "#  uvs" << std::endl;
+	for (std::set<vec4>::iterator it = uvs.begin(); it != uvs.end(); ++it)
+		file << "uv " << it->x << ' ' << it->y << ' ' << it->z << std::endl;
 	file << std::endl;
 
 	//	weights
 	file << "#  weights" << std::endl;
-	for (std::set<vec3>::iterator it = weights.begin(); it != weights.end(); ++it)
+	for (std::set<vec4>::iterator it = weights.begin(); it != weights.end(); ++it)
 		file << "w " << it->x << ' ' << it->y << ' ' << it->z << std::endl;
 	file << std::endl;
 
 	//	bones
 	file << "#  bones" << std::endl;
-	for (std::set<ivec3>::iterator it = bones.begin(); it != bones.end(); ++it)
+	for (std::set<ivec4>::iterator it = bones.begin(); it != bones.end(); ++it)
 		file << "b " << it->x << ' ' << it->y << ' ' << it->z << std::endl;
 	file << std::endl;
 
@@ -172,39 +171,39 @@ void MeshSaver::saveAnimated(Mesh* mesh, std::ofstream& file, glm::vec3 scaleMod
 		for (int j = 0; j < 3; j++)
 		{
 			//	get attributes proxy
-			glm::vec3 v = getTruncatedAlias(mesh->vertices[mesh->faces[i + j]], truncature);
-			glm::vec3 vn = getTruncatedAlias(mesh->normals[mesh->faces[i + j]], truncature);
-			glm::vec3 c = getTruncatedAlias(mesh->colors[mesh->faces[i + j]], truncature);
-			glm::vec3 w = getTruncatedAlias(mesh->weights[mesh->faces[i + j]], truncature);
-			glm::ivec3 b = mesh->bones[mesh->faces[i + j]];
+			vec4f v = getTruncatedAlias(mesh->vertices[mesh->faces[i + j]], truncature);
+			vec4f vn = getTruncatedAlias(mesh->normals[mesh->faces[i + j]], truncature);
+			vec4f c = getTruncatedAlias(mesh->uvs[mesh->faces[i + j]], truncature);
+			vec4f w = getTruncatedAlias(mesh->weights[mesh->faces[i + j]], truncature);
+			vec4i b = mesh->bones[mesh->faces[i + j]];
 
 			//	search vertex index
 			int index = 0;
-			for (std::set<vec3>::iterator it = vertices.begin(); it != vertices.end(); ++it, index++)
+			for (std::set<vec4>::iterator it = vertices.begin(); it != vertices.end(); ++it, index++)
 				if (it->x == v.x && it->y == v.y && it->z == v.z) break;
 			file << index << "//"; // double because of texture not yet supported
 
 			// search normal index
 			index = 0;
-			for (std::set<vec3>::iterator it = normales.begin(); it != normales.end(); ++it, index++)
+			for (std::set<vec4>::iterator it = normales.begin(); it != normales.end(); ++it, index++)
 				if (it->x == vn.x && it->y == vn.y && it->z == vn.z) break;
 			file << index << '/';
 
 			// search color index
 			index = 0;
-			for (std::set<vec3>::iterator it = colors.begin(); it != colors.end(); ++it, index++)
+			for (std::set<vec4>::iterator it = uvs.begin(); it != uvs.end(); ++it, index++)
 				if (it->x == c.x && it->y == c.y && it->z == c.z) break;
 			file << index << '/';
 
 			// search weights index
 			index = 0;
-			for (std::set<vec3>::iterator it = weights.begin(); it != weights.end(); ++it, index++)
+			for (std::set<vec4>::iterator it = weights.begin(); it != weights.end(); ++it, index++)
 				if (it->x == w.x && it->y == w.y && it->z == w.z) break;
 			file << index << '/';
 
 			// search bones index
 			index = 0;
-			for (std::set<ivec3>::iterator it = bones.begin(); it != bones.end(); ++it, index++)
+			for (std::set<ivec4>::iterator it = bones.begin(); it != bones.end(); ++it, index++)
 				if (it->x == b.x && it->y == b.y && it->z == b.z) break;
 			file << index << ' ';
 		}
@@ -213,11 +212,13 @@ void MeshSaver::saveAnimated(Mesh* mesh, std::ofstream& file, glm::vec3 scaleMod
 	file << std::endl;
 }
 
-glm::vec3 MeshSaver::getTruncatedAlias(glm::vec3 original, const float& truncature)
+vec4f MeshSaver::getTruncatedAlias(vec4f original, const float& truncature)
 {
-	float x = (int)(original.x / truncature + truncature / 2) * truncature;
-	float y = (int)(original.y / truncature + truncature / 2) * truncature;
-	float z = (int)(original.z / truncature + truncature / 2) * truncature;
-	return glm::vec3(x, y, z);
+	const float invTroncature = 1.f / truncature;
+	float x = (int)(original.x * invTroncature + 0.5f * truncature) * truncature;
+	float y = (int)(original.y * invTroncature + 0.5f * truncature) * truncature;
+	float z = (int)(original.z * invTroncature + 0.5f * truncature) * truncature;
+	float w = (int)(original.w * invTroncature + 0.5f * truncature) * truncature;
+	return vec4f(x, y, z, w);
 }
 //

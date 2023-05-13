@@ -11,7 +11,7 @@ greenGrass {
 		#version 330
 
 		// input
-		layout(location = 0) in vec3 position;
+		layout(location = 0) in vec4 position;
 
 		uniform mat4 model; 	// model matrix (has to be present at this location)
 		uniform mat4 view; 		// view matrix
@@ -20,7 +20,7 @@ greenGrass {
 		// program
 		void main()
 		{
-			gl_Position = projection * view * model * vec4(position, 1.0);
+			gl_Position = projection * view * model * position;
 		}
 	};
 	

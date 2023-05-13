@@ -3,7 +3,7 @@
 #include <Utiles/Assert.hpp>
 #include <Utiles/Debug.h>
 
-#include <glm/gtx/component_wise.hpp>
+//#include <glm/gtx/component_wise.hpp>
 #include <algorithm>
 
 #define ALLOWANCE_SIZE_FACTOR 0.33f
@@ -29,12 +29,18 @@ NodeVirtual::~NodeVirtual()
 		delete adoptedChildren[i];
 }
 
-void NodeVirtual::init(const glm::vec4 bbMin, const glm::vec4 bbMax, const glm::ivec3& nodeDivision, unsigned int depth)
+void NodeVirtual::init(const vec4f bbMin, const vec4f bbMax, const vec3i& nodeDivision, unsigned int depth)
 {
 	GF_ASSERT(children.empty());
 	position = (bbMax + bbMin) * 0.5f;
-	halfSize = (bbMax - bbMin) * 0.5f;
-	allowanceSize = glm::compMin(bbMax - bbMin) * ALLOWANCE_SIZE_FACTOR;
+	position.w = 1.f;
+	vec4f delta = bbMax - bbMin;
+	halfSize = delta * 0.5f;
+	halfSize.w = 0.f;
+	float compMin = std::min(delta.x, std::min(delta.y, delta.z));
+	allowanceSize = compMin * ALLOWANCE_SIZE_FACTOR;
+	inflatedHalfSize = halfSize + vec4f(allowanceSize);
+	inflatedHalfSize.w = 0.f;
 
 	/*if(debugWorld)
 		debugCube = debugWorld->getEntityFactory().createObject("cube", position, halfSize, glm::quat(1, 0, 0, 0));*/
@@ -43,8 +49,8 @@ void NodeVirtual::init(const glm::vec4 bbMin, const glm::vec4 bbMax, const glm::
 	{
 		division = nodeDivision;
 		children.resize(nodeDivision.x * nodeDivision.y * nodeDivision.z);
-		glm::vec4 min;
-		glm::vec4 childSize = glm::vec4(getSize() / glm::vec3(nodeDivision), 0.f);
+		vec4f min;
+		vec4f childSize = getSize() / vec4f((vec3f)nodeDivision, 1.f);
 		unsigned int index = 0;
 		for(int x = 0; x < nodeDivision.x; x++)
 		{
@@ -98,34 +104,37 @@ void NodeVirtual::merge(unsigned int newDepth)
 }
 
 
-glm::vec4 NodeVirtual::getCenter() const { return position; }
-glm::vec3 NodeVirtual::getSize() const { return (glm::vec3)halfSize * 2.f; }
-glm::vec4 NodeVirtual::getBBMax() const { return position + halfSize; }
-glm::vec4 NodeVirtual::getBBMin() const { return position - halfSize; }
+vec4f NodeVirtual::getCenter() const { return position; }
+vec4f NodeVirtual::getSize() const { return halfSize * 2.f; }
+vec4f NodeVirtual::getHalfSize() const { return halfSize; }
+vec4f NodeVirtual::getInflatedHalfSize() const { return inflatedHalfSize; }
+vec4f NodeVirtual::getBBMax() const { return position + halfSize; }
+vec4f NodeVirtual::getBBMin() const { return position - halfSize; }
 int NodeVirtual::getChildrenCount() const { return (int)(children.size() + adoptedChildren.size()); }
 bool NodeVirtual::isLeaf() const { return children.empty(); }
 
-bool NodeVirtual::isInside(const glm::vec4& point) const
+bool NodeVirtual::isInside(const vec4f& point) const
 {
-	glm::vec4 p = point - getCenter();
-	glm::vec4 s = halfSize;
-	return glm::abs(p.x) <= s.x && glm::abs(p.y) <= s.y && glm::abs(p.z) <= s.z;
+	vec4f p = point - getCenter();
+	vec4f s = halfSize;
+	return std::abs(p.x) <= s.x && std::abs(p.y) <= s.y && std::abs(p.z) <= s.z;
 }
 
-bool NodeVirtual::isTooSmall(const glm::vec3& size) const
+bool NodeVirtual::isTooSmall(const vec4f& size) const
 {
-	return glm::dot(size, size) < allowanceSize * allowanceSize;
+	return vec4f::dot(size, size) < 4 * allowanceSize * allowanceSize;
 }
 
-bool NodeVirtual::isTooBig(const glm::vec3& size) const
+bool NodeVirtual::isTooBig(const vec4f& size) const
 {
-	return glm::dot(size, size) > 1.0f / ALLOWANCE_SIZE_FACTOR * allowanceSize * allowanceSize;
+	return vec4f::dot(size, size) > allowanceSize * allowanceSize;
 }
-glm::vec4 NodeVirtual::getPosition() const
+vec4f NodeVirtual::getPosition() const
 {
 	return position;
 }
 const float& NodeVirtual::getAllowanceSize() const { return allowanceSize; }
+vec3i NodeVirtual::getDivision() const { return division; }
 
 
 void NodeVirtual::addObject(Entity* object)
@@ -168,17 +177,20 @@ bool NodeVirtual::removeNode(NodeVirtual* node)
 }
 
 
-NodeVirtual* NodeVirtual::getChildAt(const glm::vec4& pos)
+NodeVirtual* NodeVirtual::getChildAt(const vec4f& pos)
 {
-	const glm::vec3 childSizeInv = glm::vec3(division) / getSize();
-	const glm::ivec3 result = (glm::vec3)(pos - getBBMin()) * childSizeInv;
+	const vec4f fdiv = vec4f(division.x, division.y, division.z, 1.f);
+	const vec4f childSizeInv = fdiv / getSize();
+	const vec4i result = (pos - getBBMin()) * childSizeInv;
 	int index = division.z * division.y * result.x + division.z * result.y + result.z;
 	return children.data() + index;
 }
 
 void NodeVirtual::getChildren(std::vector<NodeVirtual*>& result)
 {
-	std::transform(children.begin(), children.end(), result.end(), [](NodeVirtual& n) { return &n; });
+	for (auto& n : children)
+		result.push_back(&n);
+	//std::transform(children.begin(), children.end(), result.end(), [](NodeVirtual& n) { return &n; });
 }
 
 void NodeVirtual::getChildren(std::vector<NodeRange>& result)
@@ -186,16 +198,16 @@ void NodeVirtual::getChildren(std::vector<NodeRange>& result)
 	result.push_back(NodeRange(children));
 }
 
-void NodeVirtual::getChildrenInBox(std::vector<NodeVirtual*>& result, const glm::vec4& boxMin, const glm::vec4& boxMax)
+void NodeVirtual::getChildrenInBox(std::vector<NodeVirtual*>& result, const vec4f& boxMin, const vec4f& boxMax)
 {
-	const glm::vec3 childSizeInv = glm::vec3(division) / getSize();
-	glm::ivec3 childMin = (glm::vec3)(boxMin - getBBMin()) * childSizeInv;
-	glm::ivec3 childMax = (glm::vec3)(boxMax - getBBMin()) * childSizeInv;
+	const vec4f fdiv = vec4f(division.x, division.y, division.z, 1.f);
+	const vec4f childSizeInv = fdiv / getSize();
+	vec4i childMin = (boxMin - getBBMin()) * childSizeInv;
+	vec4i childMax = (boxMax - getBBMin()) * childSizeInv;
+	const vec4i clampMax = vec4i(division.x - 1, division.y - 1, division.z - 1, 1);
 
-	const glm::ivec3 clampMin = glm::ivec3(0);
-	const glm::ivec3 clampMax = division - glm::ivec3(1);
-	glm::clamp(childMin, clampMin, clampMax);
-	glm::clamp(childMax, clampMin, clampMax);
+	vec4i::clamp(childMin, vec4i::zero, clampMax);
+	vec4i::clamp(childMax, vec4i::zero, clampMax);
 
 	for(int x = childMin.x; x < childMax.x; x++)
 		for(int y = childMin.y; y < childMax.y; y++)
@@ -206,16 +218,16 @@ void NodeVirtual::getChildrenInBox(std::vector<NodeVirtual*>& result, const glm:
 			}
 }
 
-void NodeVirtual::getChildrenInBox(std::vector<NodeRange>& result, const glm::vec4& boxMin, const glm::vec4& boxMax)
+void NodeVirtual::getChildrenInBox(std::vector<NodeRange>& result, const vec4f& boxMin, const vec4f& boxMax)
 {
-	const glm::vec3 childSizeInv = glm::vec3(division) / getSize();
-	glm::ivec3 childMin = (glm::vec3)(boxMin - getBBMin()) * childSizeInv;
-	glm::ivec3 childMax = (glm::vec3)(boxMax - getBBMin()) * childSizeInv;
+	const vec4f fdiv = vec4f(division.x, division.y, division.z, 1.f);
+	const vec4f childSizeInv = fdiv / getSize();
+	vec4i childMin = (boxMin - getBBMin()) * childSizeInv;
+	vec4i childMax = (boxMax - getBBMin()) * childSizeInv;
+	const vec4i clampMax = vec4i(division.x - 1, division.y - 1, division.z - 1, 1);
 
-	const glm::ivec3 clampMin = glm::ivec3(0);
-	const glm::ivec3 clampMax = division - glm::ivec3(1);
-	glm::clamp(childMin, clampMin, clampMax);
-	glm::clamp(childMax, clampMin, clampMax);
+	vec4i::clamp(childMin, vec4i::zero, clampMax);
+	vec4i::clamp(childMax, vec4i::zero, clampMax);
 
 	for(int x = childMin.x; x < childMax.x; x++)
 	{
@@ -261,6 +273,7 @@ Entity* NodeVirtual::getDebugCube() { return debugCube; }
 
 void NodeVirtual::draw() const 
 {
-	Debug::getInstance()->color = objectList.empty() ? Debug::black : Debug::red;
-	Debug::getInstance()->drawWiredCube(glm::mat4(1.f), (glm::vec3)getBBMin(), (glm::vec3)getBBMax());
+	const vec4f shrink = vec4f(0.1f);
+	Debug::color = objectList.empty() ? Debug::black : Debug::red;
+	Debug::drawLineCube(mat4f::identity, getBBMin() + shrink, getBBMax() - shrink);
 }

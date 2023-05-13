@@ -1,12 +1,12 @@
 #version 330
 
 // input
-in vec3 fragmentColor1;
+in vec4 fragmentColor1;
 
-uniform vec3 overrideColor = vec3(-1.0 , 0.0 , 0.0);
+uniform vec4 overrideColor = vec4(-1.0 , 0.0 , 0.0 , 0.0);
 
 // output
-layout (location = 0) out vec3 fragColor;
+layout (location = 0) out vec4 fragColor;
 
 
 // program

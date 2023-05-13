@@ -17,9 +17,9 @@ class WidgetConsole : public WidgetBoard
 		//	Public functions
 		void update(const float& elapseTime) override;
 		void initialize(const float& borderThickness, const float& borderWidth, const uint8_t& corner = 0x00) override;
-		void draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model) override;
-		bool intersect(const glm::mat4& base, const glm::vec3& ray) override;
-		bool mouseEvent(const glm::mat4& base, const glm::vec3& ray, const float& parentscale, const bool& clicked) override;
+		void draw(Shader* s, uint8_t& stencilMask, const mat4f& model) override;
+		bool intersect(const mat4f& base, const vec4f& ray) override;
+		bool mouseEvent(const mat4f& base, const vec4f& ray, const float& parentscale, const bool& clicked) override;
 		//
 
 		//	Set / get functions

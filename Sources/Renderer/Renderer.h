@@ -45,7 +45,7 @@ class Renderer : public Singleton<Renderer>
 		//
 
 		//  Public functions
-		void initializeGrid(const unsigned int& gridSize, const float& elementSize = 1.f, const glm::vec3& color = glm::vec3(0.4f, 0.2f, 0.1f));
+		void initializeGrid(const unsigned int& gridSize, const float& elementSize = 1.f, const vec4f& color = vec4f(0.4f, 0.2f, 0.1f, 1.f));
 		//void initi
 		void render(CameraComponent* renderCam);
 		void renderHUD();
@@ -85,12 +85,12 @@ class Renderer : public Singleton<Renderer>
 		//	Miscellaneous
 		struct EntityCompareDistance
 		{
-			glm::vec4 p;
-			explicit EntityCompareDistance(const glm::vec4& cameraPosition) : p(cameraPosition) {};
+			vec4f p;
+			explicit EntityCompareDistance(const vec4f& cameraPosition) : p(cameraPosition) {};
 			bool operator()(Entity* a, Entity* b) const
 			{
-				const float d1 = glm::dot(a->getPosition() - p, a->getPosition() - p);
-				const float d2 = glm::dot(b->getPosition() - p, b->getPosition() - p);
+				const float d1 = vec4f::dot(a->getWorldPosition() - p, a->getWorldPosition() - p);
+				const float d2 = vec4f::dot(b->getWorldPosition() - p, b->getWorldPosition() - p);
 				return d1 < d2;
 			}
 		};
@@ -100,7 +100,7 @@ class Renderer : public Singleton<Renderer>
 		void loadMVPMatrix(Shader* shader, const float* model, const float* view, const float* projection, const int& modelSize = 1);
 		void loadVAO(const GLuint& vao);
 
-		void drawInstancedObject(Shader* s, Mesh* m, std::vector<glm::mat4>& models, const float* view, const float* projection);
+		void drawInstancedObject(Shader* s, Mesh* m, std::vector<mat4f>& models, const float* view, const float* projection);
 		//
 
 		//  Attributes
@@ -118,7 +118,7 @@ class Renderer : public Singleton<Renderer>
 		GLuint lastVAO;
 
 		std::map<Shader*, std::vector<Entity*> > simpleBatches;
-		std::map<Shader*, std::map<Mesh*, std::vector<glm::mat4> > > groupBatches;
+		std::map<Shader*, std::map<Mesh*, std::vector<mat4f> > > groupBatches;
 		//
 };
 

@@ -1,0 +1,7 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Env_Wall_01_Alt",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": []
+}

@@ -8,7 +8,7 @@ template<typename T>
 class Tvec4
 {
 	public:
-		union //alignas(16) 
+		union alignas(16) 
 		{
 			struct { T x, y, z, w; };
 			struct { T r, g, b, a; };
@@ -64,6 +64,7 @@ class Tvec4
 
 		// normalize
 		T getNorm() const;
+		T getNorm2() const;
 		Tvec4 getNorm4() const;
 		Tvec4 getNormal() const;
 		void normalize();
@@ -71,6 +72,19 @@ class Tvec4
 		//constants
 		static const Tvec4 zero;
 		static const Tvec4 one;
+
+		// math
+		static T dot(const Tvec4& a, const Tvec4& b);
+		static Tvec4 dot4(const Tvec4& a, const Tvec4& b);
+		static Tvec4 cross(const Tvec4& a, const Tvec4& b);
+		static Tvec4 lerp(const Tvec4& a, const Tvec4& b, const T& t);
+		static Tvec4 min(const Tvec4& a, const Tvec4& b);
+		static Tvec4 max(const Tvec4& a, const Tvec4& b);
+		static Tvec4 abs(const Tvec4& a);
+		static Tvec4<bool> lessThan(const Tvec4& a, const Tvec4& b);
+		static Tvec4<bool> greaterThan(const Tvec4& a, const Tvec4& b);
+		static bool any(const Tvec4& b);
+		static Tvec4 clamp(const Tvec4& a, const Tvec4& min, const Tvec4& max);
 };
 
 #include "Tvec4.hpp"

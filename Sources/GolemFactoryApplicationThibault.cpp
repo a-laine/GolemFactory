@@ -3,19 +3,20 @@
 
 
 
-#include <iostream>
-#include <list>
-#include <time.h>
-#include <sys/types.h>
 
 #include "Utiles/System.h"
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
+/*#include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/rotate_vector.hpp>
-#include <glm/gtc/quaternion.hpp>
+#include <glm/gtc/quaternion.hpp>*/
+
+#include <iostream>
+#include <list>
+#include <time.h>
+#include <sys/types.h>
 
 #include "Utiles/ToolBox.h"
 #include "HUD/WidgetManager.h"
@@ -55,8 +56,9 @@
 
 #include "Utiles/Debug.h"
 #include "Physics/GJK.h"
+#include <Utiles/ConsoleColor.h>
 
-#define GRID_SIZE 512
+#define GRID_SIZE 256
 #define GRID_ELEMENT_SIZE 1.f
 #define DEBUG_LEVEL 0
 
@@ -76,12 +78,12 @@ double completeTime = 16.;
 double averageCompleteTime = 16.;
 
 float avatarZeroHeight;
-glm::vec4 avatarspeed(0.f);
+vec4f avatarspeed(0.f);
 
 CameraComponent* currentCamera = nullptr;
 struct {
 	float radius = 2.f;
-	glm::vec4 target;
+	vec4f target;
 } cameraInfos;
 //
 
@@ -89,6 +91,7 @@ struct {
 // prototypes
 void initializeForestScene(bool emptyPlace = false);
 void initializePhysicsScene(int testCase = -1);
+void initializeSyntyScene();
 std::string checkResourcesDirectory();
 
 void initManagers();
@@ -117,70 +120,40 @@ int main()
 
 	//	Collision test
 		WidgetManager::getInstance()->setActiveHUD("debug");
-		/*world.getEntityFactory().createObject("cube", [](Entity* object) // ground collider
-			{
-				object->setName("FakeGround");
-				object->setTransformation(glm::vec3(0.f, 0.f, -3.8f), glm::vec3(60, 60, 4), glm::fquat());
-			});*/
-
 		normalShader = ResourceManager::getInstance()->getResource<Shader>("normalViewer");
 
 	//	Test scene
 		Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("wired"));
-		//initializeForestScene(false);
-		initializePhysicsScene(0);
+		//initializePhysicsScene(0);
+
+		EventHandler::getInstance()->setCursorMode(true);
+
+		initializeSyntyScene();
+
 		Renderer::getInstance()->setGridVisible(true);
-		/*if (world.getMap().loadFromHeightmap(ResourceManager::getInstance()->getRepository() + "/Textures/", "mountains512.png"))
-		{
-			std::cout << "Map loaded !" << std::endl;
-		}
-		else
-		{
-			std::cout << "ERROR in map loading" << std::endl;
-		}*/
-		/*avatar = world.getEntityFactory().createObject("peasant", [](Entity* object)
-		{
-            DrawableComponent* drawable = object->getComponent<DrawableComponent>();
-			float scale = 1.7f / (drawable->getMeshBBMax() - drawable->getMeshBBMin()).z;
-			glm::vec3 pos = glm::vec3(-10.f, 0.f, -scale * drawable->getMeshBBMin().z);
-			//drawable->setShader(nullptr);
-			object->setTransformation(pos, glm::vec3(scale), glm::toQuat(glm::rotate(glm::pi<float>() / 2.f + atan2(1.f, 0.f), glm::vec3(0.f, 0.f, 1.f))));
-
-			SkeletonComponent* skeletonComp = object->getComponent<SkeletonComponent>();
-			cameraInfos.target = skeletonComp->getJointPosition("Head");
-
-			CameraComponent* tbCam = new CameraComponent(true);
-			tbCam->setPosition(cameraInfos.target - glm::vec3(0, 1, 0));
-			tbCam->lookAt(cameraInfos.target, cameraInfos.radius / scale);
-			object->addComponent(tbCam);
-
-			//currentCamera = tbCam;
-			avatarZeroHeight = object->getPosition().z;
-		});*/
-
+		
 		freeflyCamera = world.getEntityFactory().createObject([](Entity* object)
 			{
 				object->setName("FreeFlyCam");
-				object->setPosition(glm::vec4(10, 10, 5, 1));
+				object->setWorldPosition(vec4f(10, 10, 5, 1));
 
 
-				Collider* collider = new Collider(new Sphere(glm::vec4(0.f), 0.1f));
+				Collider* collider = new Collider(new Sphere(vec4f(0.f), 0.1f));
 				object->addComponent(collider);
 				object->recomputeBoundingBox();
 
 				//object->setShape(new Sphere());
 				CameraComponent* ffCam = new CameraComponent(true);
-				ffCam->lookAt(glm::vec4(0, 0, 0, 1));
 				object->addComponent(ffCam);
+				ffCam->setDirection(vec4f(1, 0, 0, 0));
 			
 				currentCamera = ffCam;
 			});
-
-		frustrumCamera = world.getEntityFactory().createObject([](Entity* object)
+		frustrumCamera = world.getEntityFactory().createObject([&](Entity* object)
 			{
 				object->setName("FrustrumCam");
 
-				Collider* collider = new Collider(new Sphere(glm::vec4(0.f), 0.01f));
+				Collider* collider = new Collider(new Sphere(vec4f(0.f), 0.01f));
 				object->addComponent(collider);
 				object->recomputeBoundingBox();
 
@@ -189,15 +162,17 @@ int main()
 				object->addComponent(cam);
 				Renderer::getInstance()->setCamera(cam);
 				cam->setOrientation(currentCamera->getOrientation());
-				cam->setPosition(currentCamera->getGlobalPosition());
+				cam->setPosition(currentCamera->getPosition());
+				world.setMainCamera(cam);
 			});
+
+		world.getSceneManager().addToRootList(freeflyCamera);
+		world.getSceneManager().addToRootList(frustrumCamera);
 
 		WidgetManager::getInstance()->setBoolean("BBpicking", false);
 		WidgetManager::getInstance()->setBoolean("wireframe", false);
 		Renderer::getInstance()->normalViewer = ResourceManager::getInstance()->getResource<Shader>("normalViewer");
 
-		//Entity* testTree = world.getEntityFactory().createObject("tree", glm::vec3(5, 0, 0), glm::vec3(1), glm::rotate(glm::quat(), glm::radians((rand() % 3600) / 10.f), glm::vec3(0, 0, 1)));
-		//Collision::debugUnitaryTest(2, nullptr);
 		
 
 	// init loop time tracking
@@ -207,8 +182,7 @@ int main()
 	double dummy = 0;
 
 
-
-	
+	//WidgetManager::getInstance()->setBoolean("syncCamera", false);
 
 
 	//	game loop
@@ -221,31 +195,23 @@ int main()
 #ifdef USE_IMGUI
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
+		events();						// handle event before draw for text input and scrolling to work
 		ImGui::NewFrame();
 		ImGuiMenuBar();
 		ImGuiSystemDraw();
+#else 
+		events();
 #endif
 		
-		//  handle events
-		events();
 		updates((float)elapseTime);
 
-		Debug::view = currentCamera->getGlobalViewMatrix();
-		Debug::projection = glm::perspective(glm::radians(currentCamera->getVerticalFieldOfView(context->getViewportRatio())), context->getViewportRatio(), 0.1f, 30000.f);  //far = 1500.f
+
+		Debug::viewportRatio = context->getViewportRatio();
+		Debug::view = currentCamera->getViewMatrix();
+		Debug::projection = mat4f::perspective(currentCamera->getVerticalFieldOfView(), context->getViewportRatio(), 0.1f, 30000.f);  //far = 1500.f
 
 		//	physics
-		/*std::vector<UserEventType> v;
-		EventHandler::getInstance()->getFrameEvent(v);
-		for (unsigned int i = 0; i < v.size(); i++)
-		{
-			//	debug
-			if (v[i] == SLOT8)
-			{
-				world.getPhysics().stepSimulation(0.016, &world.getSceneManager());
-			}
-		}*/
 		world.getPhysics().stepSimulation(physicsTimeSpeed * 0.016f, &world.getSceneManager());
-		//world.getPhysics().debugDraw();
 
 		// Render scene & picking
 		if (WidgetManager::getInstance()->getBoolean("BBrendering"))
@@ -254,47 +220,9 @@ int main()
 			Renderer::getInstance()->setRenderOption(Renderer::RenderOption::WIREFRAME);
 		else Renderer::getInstance()->setRenderOption(Renderer::RenderOption::DEFAULT);
 		Renderer::getInstance()->render(currentCamera);
-		/*{
-			glm::mat4 view = currentCamera->getGlobalViewMatrix();
-			glm::mat4 projection = glm::perspective(glm::radians(currentCamera->getVerticalFieldOfView(context->getViewportRatio())), context->getViewportRatio(), 0.1f, 1500.f);
-		}*/
 		 
 		Renderer::getInstance()->drawMap(world.getMapPtr(), &Debug::view[0][0], &Debug::projection[0][0], normalShader);
-		//world.getSceneManager().draw();
-
-		/*Debug::color = Debug::black;
-		float o = 0.2f;
-		Debug::drawLine(glm::vec3(0), glm::vec3(1, 0, o)); Debug::drawLine(glm::vec3(1, 0, o), glm::vec3(0, 0, 2 * o));
-		Debug::drawLine(glm::vec3(0, 0, 2 * o), glm::vec3(0, 1, 3 * o)); Debug::drawLine(glm::vec3(0, 1, 3 * o), glm::vec3(0, 0, 4 * o));*/
-
-		//const Capsule* shape1 = static_cast<const Capsule*>(avatar->getGlobalBoundingShape());
 		
-		//const Hull* shape2 = static_cast<const Hull*>(testEntity->getGlobalBoundingShape());
-		//Hull shape1 = Hull(shape2->mesh, glm::scale(avatar->getMatrix(), glm::vec3(5.f)));
-
-		//Capsule s1(shape1->p1, shape1->p2 + 0.5f * currentCamera->getRight(), shape1->radius);
-		//auto u = shape2->toAxisAlignedBox();
-		//Capsule s2(u.min, u.max, 1.f);
-
-		/*if(Collision::collide(shape1, *shape2))
-			Debug::color = Debug::red;
-		else Debug::color = Debug::white;*/
-
-		/*Debug::drawWiredMesh(shape1.mesh, shape1.base);
-		Debug::drawWiredMesh(shape2->mesh, shape2->base);
-		//Debug::drawWiredCapsule(s1.p1, s1.p2, s1.radius);
-		//Debug::drawWiredCapsule(s2.p1, s2.p2, s2.radius);
-				
-		Debug::color = Debug::white;
-		Intersection::Contact contact = Intersection::intersect(shape1, *shape2);
-		Debug::color = Debug::red;
-		Debug::drawLine(contact.contactPointA, contact.contactPointB);
-
-		Debug::color = Debug::blue;
-		Debug::drawLine(contact.contactPointA, contact.contactPointA + 0.15f * contact.normalA);
-		Debug::drawLine(contact.contactPointB, contact.contactPointB + 0.15f * contact.normalB);*/
-		
-
 		// 
 		picking();
 		Renderer::getInstance()->renderHUD();
@@ -347,93 +275,75 @@ void initializeForestScene(bool emptyPlace)
 	float sDispersion;
 	float sOffset;
 	HouseGenerator hg;
-	srand(3);// (unsigned int)time(NULL));
+	srand(3);
 
 	//	center tree in place
 	if (!emptyPlace)
 	{
-		//world.getEntityFactory().createObject("tree", glm::vec3(0), glm::vec3(5.f, 5.f, 5.f));
-		//world.getEntityFactory().createObject("rock", glm::vec3(0), glm::vec3(50.f, 50.f, 50.f));
-		//world.getEntityFactory().createObject([&hg](Entity* house) { hg.getHouse(house, 0, 100, 100); });
-
 		unsigned int N = 7;
 		unsigned int N2 = 2;
+		const float pi2 = 2.f * (float)PI;
 		for (unsigned int j = 0; j < N2; j++)
 		{
 			for (unsigned int i = 0; i < N; i++)
 			{
-				glm::vec4 p = glm::vec4(5.f * cos((float)i / N * 2.f * glm::pi<float>()), 5.f * sin((float)i / N * 2.f * glm::pi<float>()), 2.f*(j + 1), 1);
-				p += N2 * 0.5f * glm::normalize(p);
+				vec4f p = vec4f(5.f * cos((float)i / N * pi2), 5.f * sin((float)i / N * pi2), 2.f*(j + 1), 1);
+				p += N2 * 0.5f * p.getNormal();
 				world.getEntityFactory().createObject("sphere", [&p, &j](Entity* object)
 					{
 						object->setName("PhysicSphere");
-						//auto q = glm::normalize(glm::fquat(0.01f *(rand() % 100), 0.01f *(rand() % 100), 0.01f *(rand() % 100), 0.01f *(rand() % 100)));
-						auto q = glm::fquat(0, 0, 0, 1);
-						object->setTransformation(p, glm::vec3(1.f), q);
+						quatf q = quatf::identity;
+						object->setWorldTransformation(p, 1.f, q);
 						RigidBody* rb = new RigidBody(RigidBody::DYNAMIC);
 						rb->setMass(1.f);
 						rb->setGravityFactor(1.f);
-						//rb->setAngularVelocity(glm::vec3(0,1,0));
 						object->addComponent(rb);
 					});
 			}
 		}
 		return;
-
-		/*testEntity = world.getEntityFactory().createObject("rock", [](Entity* object)
-		{
-			object->getComponent<DrawableComponent>()->setShader(ResourceManager::getInstance()->getResource<Shader>("default"));
-			object->setTransformation(glm::vec3(0.f, 0.f, 0.f), glm::vec3(5.f), glm::fquat(0,0,0,1));
-			RigidBody* rb = new RigidBody(RigidBody::DYNAMIC, RigidBody::CONTINUOUS);
-			rb->setMass(1.f);
-			rb->setGravityFactor(1.f);
-			rb->setAngularVelocity(glm::vec3(1.f, 0, 0));
-			
-			//object->addComponent(rb);
-			object->getComponent<DrawableComponent>()->setShader(nullptr);
-		});*/
 	}
 
 	// village
 	int vilageHouseCount = 0;
 	float villageRadius[] = {20.f, 35.f, 50.f};
-	std::vector<glm::vec3> houseCircle;
+	std::vector<vec4f> houseCircle;
 	for (int i = 0; i < 3; i++)
 	{
 		int houseCount = 5 + i * 7;
 		vilageHouseCount += houseCount;
-		float angleOffset = 6.28f * ((rand() % 100) / 100.f);
+		float angleOffset = 2 * (float)PI * ((rand() % 100) / 100.f);
 
 		for (int j = 0; j < houseCount; j++)
 		{
 			float radius = villageRadius[i] + 3.f * (((rand() % 100) / 50.f) - 1.f);
 			float angle = angleOffset + 6.28f * j / houseCount + ((((rand() % 100) / 50.f) - 1.f)) / houseCount;
 			
-			glm::mat4 a(1.0);
+			mat4f a = mat4f::identity;
 			if(rand() % 2)
-				a = glm::rotate(a, 3.14f + angle + 0.4f * ((((rand() % 100) / 50.f) - 1.f)), glm::vec3(0, 0, 1));
+				a = mat4f::rotate(a, quatf(3.14f + angle + 0.4f * ((((rand() % 100) / 50.f) - 1.f)), vec3f(0, 0, 1)));
 			else
-				a = glm::rotate(a, angle + 0.4f * ((((rand() % 100) / 50.f) - 1.f)), glm::vec3(0, 0, 1));
+				a = mat4f::rotate(a, quatf(angle + 0.4f * ((((rand() % 100) / 50.f) - 1.f)), vec3f(0, 0, 1)));
 			
 			world.getEntityFactory().createObject([radius, angle, &houseCircle, &hg](Entity* house)
 				{
 					int seed = rand();
 					hg.getHouse(house, seed, 20, 30);
 					house->setName("House_" + std::to_string(seed));
-					glm::vec3 p = glm::vec3(radius * cos(angle), radius * sin(angle), house->getBoundingBox().toSphere().radius);
+					vec4f p = vec4f(radius * cos(angle), radius * sin(angle), house->getBoundingBox().toSphere().radius, 1.f);
 					for (unsigned int k = 0; k < houseCircle.size(); k++)
 					{
-						float delta = glm::length(glm::vec3(houseCircle[k].x - p.x, houseCircle[k].y - p.y, 0.f));
+						float delta = vec4f(houseCircle[k].x - p.x, houseCircle[k].y - p.y, 0.f, 0.f).getNorm();
 						if (delta < houseCircle[k].z + p.z - 0.5f)
 						{
-							p += (1.f + houseCircle[k].z + p.z - delta) * glm::normalize(glm::vec3(p.x - houseCircle[k].x, p.y - houseCircle[k].y, 0.f));
+							p += (1.f + houseCircle[k].z + p.z - delta) * vec4f(p.x - houseCircle[k].x, p.y - houseCircle[k].y, 0.f, 0.f).getNormal();
 							k = 0;
 						}
 					}
 
 					houseCircle.push_back(p);
-					house->setPosition(glm::vec4(p.x, p.y, 0, 1));
-					house->setOrientation(glm::toQuat(glm::rotate(glm::mat4(1.0), 1.57f + angle, glm::vec3(0, 0, 1))));
+					house->setWorldPosition(vec4f(p.x, p.y, 0, 1));
+					house->setWorldOrientation(quatf(1.57f + angle, vec3f(0, 0, 1)));
 				});
 		}
 	}
@@ -443,11 +353,11 @@ void initializeForestScene(bool emptyPlace)
 	for (int i = 0; i < GRID_SIZE; i++)
 		for (int j = 0; j < GRID_SIZE; j++)
 		{
-			glm::vec4 p(GRID_ELEMENT_SIZE*i - (GRID_SIZE * GRID_ELEMENT_SIZE) / 2 + GRID_ELEMENT_SIZE * ((rand() % 10) / 20.f - 0.25f),
+			vec4f p(GRID_ELEMENT_SIZE*i - (GRID_SIZE * GRID_ELEMENT_SIZE) / 2 + GRID_ELEMENT_SIZE * ((rand() % 10) / 20.f - 0.25f),
 				GRID_ELEMENT_SIZE*j - (GRID_SIZE * GRID_ELEMENT_SIZE) / 2 + GRID_ELEMENT_SIZE * ((rand() % 10) / 20.f - 0.25f),
 				0, 1);
 
-			if(glm::length(p) < villageRadius[2] + 5.f * GRID_ELEMENT_SIZE)
+			if(p.getNorm() < villageRadius[2] + 5.f * GRID_ELEMENT_SIZE)
 				continue;
 
 			int r = rand() % 100;
@@ -466,9 +376,9 @@ void initializeForestScene(bool emptyPlace)
 			else continue;
 
 			float s = sOffset + sDispersion * ((rand() % 100) / 50.f - 1.f);
-			glm::quat a = glm::rotate(glm::quat(), glm::radians((rand() % 3600) / 10.f), glm::vec3(0, 0, 1));
+			quatf a = quatf((float)DEG2RAD *(rand() % 3600) * 0.1f, vec3f(0, 0, 1));
 
-			world.getEntityFactory().createObject(objectType, p, glm::vec3(s, s, s), a, "Firtree");
+			world.getEntityFactory().createObject(objectType, p, s, a, "Firtree");
 		}
 	
 	//	debug
@@ -491,19 +401,21 @@ void initializePhysicsScene(int testCase)
 				for (unsigned int j = 0; j < N; j++)
 				{
 					float r =  0.01f *(rand() % 100) + 0.5f;
-					glm::vec4 p = glm::vec4(10.f * (i - N / 2.f), 10.f * (j - N / 2.f), 3.2f * k + 2.f, 1);
+					vec4f p = vec4f(10.f * (i - N / 2.f), 10.f * (j - N / 2.f), 3.2f * k + 2.f, 1);
 					world.getEntityFactory().createObject("sphere", [&p, &r](Entity* object)
 						{
 							object->setName("PhysicsSphere");
-							object->setTransformation(p, glm::vec3(r), glm::normalize(glm::fquat(1.f, 0.f, 0.5f * ((rand() % 200) - 100), 0.5f * ((rand() % 200) - 100))));
+							quatf q = quatf(1.f, 0.f, 0.5f * ((rand() % 200) - 100), 0.5f * ((rand() % 200) - 100));
+							q.normalize();
+							object->setWorldTransformation(p, r, q);
 							RigidBody* rb = new RigidBody(RigidBody::DYNAMIC);
 							rb->setMass(r * r * r);
 							rb->setBouncyness(0.05f);
 							rb->setFriction(0.2f);
 							rb->setDamping(0.001f);
 							rb->setGravityFactor(1.f);
-							rb->setLinearVelocity(glm::vec4(0.1f *((rand() % 200) - 100), 0.1f *((rand() % 200) - 100), 0, 0));
-							rb->setAngularVelocity(glm::vec4(0.1f * ((rand() % 200) - 100), 0.1f * ((rand() % 200) - 100), 0.1f * ((rand() % 200) - 100), 0));
+							rb->setLinearVelocity(vec4f(0.1f *((rand() % 200) - 100), 0.1f *((rand() % 200) - 100), 0, 0));
+							rb->setAngularVelocity(vec4f(0.1f * ((rand() % 200) - 100), 0.1f * ((rand() % 200) - 100), 0.1f * ((rand() % 200) - 100), 0));
 							object->addComponent(rb);
 						});
 				}
@@ -511,13 +423,15 @@ void initializePhysicsScene(int testCase)
 	else if (testCase == 1)
 	{
 		float r = 1.f;
-		glm::vec4 p = glm::vec4(0, 0, r + 5.5f, 1);
+		vec4f p = vec4f(0, 0, r + 5.5f, 1);
 
 		world.getEntityFactory().createObject("cube", [&p, &r](Entity* object)
 			{
 				object->setName("PhysicsCube 1");
-				object->setTransformation(p, glm::vec3(r), glm::normalize(glm::fquat(glm::fquat(0.2f * ((rand() % 200) - 100), 0.5f * ((rand() % 200) - 100), 0, 1))));
-				object->setTransformation(p, glm::vec3(r), glm::normalize(glm::fquat(0, 0, 0, 1)));
+				quatf q = quatf(1.f, 0.f, 0.5f * ((rand() % 200) - 100), 0.5f * ((rand() % 200) - 100));
+				q.normalize();
+				object->setWorldTransformation(p, r, q);
+				object->setWorldTransformation(p, r, quatf::identity);
 				RigidBody* rb = new RigidBody(RigidBody::DYNAMIC);
 				rb->setMass(5.f);
 				rb->setBouncyness(0.f);
@@ -527,34 +441,171 @@ void initializePhysicsScene(int testCase)
 				object->addComponent(rb);
 			});
 
-		p = glm::vec4(0, 0, r + 2.f, 1);
+		p = vec4f(0, 0, r + 2.f, 1);
 		world.getEntityFactory().createObject("cube", [&p, &r](Entity* object)
 			{
 				object->setName("PhysicsCube 2");
-				object->setTransformation(p, glm::vec3(r), glm::normalize(glm::fquat(0, 0, 0, 1)));//0.5f * ((rand() % 200) - 100), 0.5f * ((rand() % 200) - 100)
+				object->setWorldTransformation(p, r, quatf::identity);
 				RigidBody* rb = new RigidBody(RigidBody::DYNAMIC);
 				rb->setMass(5.f);
 				rb->setBouncyness(0.1f);
 				rb->setFriction(1.f);
 				rb->setGravityFactor(1);
-				//rb->setLinearVelocity(glm::vec3(0.1f * ((rand() % 200) - 100), 0.1f * ((rand() % 200) - 100), 0));
 				object->addComponent(rb);
 			});
 
-		p = glm::vec4(0, 3, r + 2.f, 1);
+		p = vec4f(0, 3, r + 2.f, 1);
 		world.getEntityFactory().createObject("sphere", [&p, &r](Entity* object)
 			{
 				object->setName("PhysicsSphere");
-				object->setTransformation(p, glm::vec3(r), glm::normalize(glm::fquat(0, 0, 0, 1)));//0.5f * ((rand() % 200) - 100), 0.5f * ((rand() % 200) - 100)
+				object->setWorldTransformation(p, r, quatf::identity);
 				RigidBody* rb = new RigidBody(RigidBody::DYNAMIC);
 				rb->setMass(5.f);
 				rb->setBouncyness(0.f);
 				rb->setFriction(0.2f);
 				rb->setDamping(0.001f);
 				rb->setGravityFactor(1.f);
-				rb->setAngularVelocity(glm::vec4(-10.f, 0.f, 0.f, 0.f));
+				rb->setAngularVelocity(vec4f(-10.f, 0.f, 0.f, 0.f));
 				object->addComponent(rb);
 			});
+	}
+}
+void initializeSyntyScene()
+{
+	glClearColor(0.6f, 0.85f, 0.91f, 0.f);
+	Renderer::getInstance()->setShader(Renderer::GRID, nullptr);// ResourceManager::getInstance()->getResource<Shader>("wired"));
+
+	// load file and parse JSON
+	std::string repository = ResourceManager::getInstance()->getRepository();
+	std::string packageName = "PolygonDungeon";
+	std::string sceneName = "Overview";
+	std::string fullFileName = repository + "Scenes/" + packageName + "/" + sceneName + ".json";
+	Variant v; Variant* tmp = nullptr;
+	try
+	{
+		std::ifstream strm(fullFileName.c_str());
+		if (!strm.is_open())
+			throw std::invalid_argument("Reader::parseFile : Cannot opening file");
+
+		Reader reader(&strm);
+		reader.parse(v);
+		tmp = &(v.getMap().begin()->second);
+	}
+	catch (std::exception&)
+	{
+		if (ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
+			std::cerr << "ERROR : loading scene : " << sceneName << " : fail to open or parse file" << std::endl;
+		return;
+	}
+	Variant& sceneMap = *tmp;
+	if (sceneMap.getType() != Variant::MAP)
+	{
+		if (ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
+			std::cerr << "ERROR : loading scene : " << sceneName << " : wrong file formating" << std::endl;
+		return;
+	}
+
+	std::map<int, Entity*> sceneEntities;
+	std::vector<Entity*> parentStack;
+	try
+	{
+		if (sceneMap["sceneEntities"].getType() == Variant::ARRAY)
+		{
+			// load all prefabs and instanciate
+			for (auto it = sceneMap["sceneEntities"].getArray().begin(); it != sceneMap["sceneEntities"].getArray().end(); it++)
+			{
+				if (it->getType() == Variant::MAP)
+				{
+					// get id and name
+					int id = (*it)["id"].toInt();
+					std::string prefabName = "";
+					try
+					{
+						prefabName = (*it)["prefabName"].toString();
+					}
+					catch (std::exception&) {}
+
+					// pop parent now in case of loading error
+					Entity* newObject = nullptr;
+					Entity* parent = nullptr;
+					if (!parentStack.empty())
+					{
+						parent = parentStack.back();
+						parentStack.pop_back();
+					}
+
+					// load a new object
+					if (!prefabName.empty())
+					{
+						// load prefab
+						if (!world.getEntityFactory().containPrefab(prefabName) && world.getEntityFactory().loadPrefab(repository, packageName, prefabName))
+						{
+							//std::cout << ConsoleColor::getColorString(ConsoleColor::Color::GREEN) << prefabName << " loaded" << std::flush;
+							//std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
+						}
+						else
+						{
+							if (ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
+								std::cerr << "ERROR : loading scene : " << sceneName << " : fail loading prefab : " << prefabName << std::endl;
+							continue;
+						}
+						
+						// instantiate
+						newObject = world.getEntityFactory().instantiatePrefab(prefabName);
+						newObject->setName((*it)["name"].toString());
+					}
+					else
+					{
+						// create and set transform
+						newObject = world.getEntityFactory().createEntity();
+						newObject->setName((*it)["name"].toString());
+						world.getEntityFactory().tryLoadComponents(newObject, &(*it), packageName);
+					}
+					newObject->recomputeBoundingBox();
+
+					// transform load
+					vec4f position = vec4f(
+						(*it)["position"].getArray()[0].toDouble(),
+						(*it)["position"].getArray()[1].toDouble(),
+						(*it)["position"].getArray()[2].toDouble(),
+						1.f);
+					float scale = (*it)["scale"].toDouble();
+					quatf rotation = quatf(
+						(*it)["rotation"].getArray()[3].toDouble(),
+						(*it)["rotation"].getArray()[0].toDouble(),
+						(*it)["rotation"].getArray()[1].toDouble(),
+						(*it)["rotation"].getArray()[2].toDouble());
+					rotation.normalize();
+
+					// set parent and local transform
+					if (parent)
+					{
+						parent->addChild(newObject);
+						newObject->setLocalTransformation(position, scale, rotation);
+					}
+					else
+					{
+						newObject->setLocalTransformation(position, scale, rotation);
+						world.getSceneManager().addToRootList(newObject);
+					}
+					world.addToScene(newObject);
+					
+					// push to stack if newObject is a parent
+					try
+					{
+						for (auto it2 = (*it)["childs"].getArray().begin(); it2 != (*it)["childs"].getArray().end(); it2++)
+							parentStack.push_back(newObject);
+					}
+					catch (std::exception&) {}
+				}
+			}
+		}
+	}
+	catch (std::exception&)
+	{
+		if (ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
+			std::cerr << "ERROR : loading scene : " << sceneName << " : fail parsing file" << std::endl;
+		return;
 	}
 }
 std::string checkResourcesDirectory()
@@ -583,7 +634,9 @@ void initManagers()
 	EventHandler::getInstance()->setRepository(resourceRepository);
 	EventHandler::getInstance()->loadKeyMapping("RPG Key mapping", "");
 	EventHandler::getInstance()->setCursorMode(false);
-	EventHandler::getInstance()->setResizeCallback(WidgetManager::resizeCallback);
+	EventHandler::getInstance()->addResizeCallback(WidgetManager::resizeCallback);
+	EventHandler::getInstance()->addTextInputCallback([](GLFWwindow* window, unsigned int c) { ImGui::GetIO().AddInputCharacter(c); });
+	EventHandler::getInstance()->addScollingCallback([](GLFWwindow* window, double xoffset, double yoffset) { ImGui_ImplGlfw_ScrollCallback(window, xoffset, yoffset); });
 
 	// Init Resources manager
 	ResourceVirtual::logVerboseLevel = ResourceVirtual::VerboseLevel::ALL;
@@ -604,54 +657,65 @@ void initManagers()
     ResourceManager::getInstance()->addNewResourceLoader(".texture", new TextureLoader());
 
 	// Init world
-	const glm::vec4 worldHalfSize = glm::vec4(GRID_SIZE * GRID_ELEMENT_SIZE, GRID_SIZE * GRID_ELEMENT_SIZE, 128, 0) * 0.5f;
-	const glm::vec4 worldPos = glm::vec4(0, 0, worldHalfSize.z - 32, 1);
+	const vec4f worldHalfSize = vec4f(GRID_SIZE * GRID_ELEMENT_SIZE, 32.f, GRID_SIZE * GRID_ELEMENT_SIZE, 0) * 0.5f;
+	const vec4f worldPos = vec4f(0, 0.5f * worldHalfSize.y, 0, 1);
 	NodeVirtual::debugWorld = &world;
-	world.getSceneManager().init(worldPos - worldHalfSize, worldPos + worldHalfSize, glm::ivec3(4, 4, 1), 2);
-	world.setMaxObjectCount(4000000);
+	world.getSceneManager().init(worldPos - worldHalfSize, worldPos + worldHalfSize, vec3i(4, 1, 4), 2);
+	world.setMaxObjectCount(400000);
 	{
-		world.getEntityFactory().createObject([](Entity* object)
+		Entity* groundAndWalls = world.getEntityFactory().createObject([](Entity* object)
+			{
+				object->setName("GroundAndWalls");
+				object->setWorldPosition(vec4f(0.f, 0.f, -10.f, 1));
+			});
+		world.getSceneManager().addToRootList(groundAndWalls);
+
+		world.getEntityFactory().createObject([&](Entity* object)
 			{
 				object->setName("Ground");
-				glm::vec4 s = glm::vec4(0.5f*GRID_SIZE*GRID_ELEMENT_SIZE, 0.5f*GRID_SIZE*GRID_ELEMENT_SIZE, 10.f, 0.f);
+				vec4f s = vec4f(0.5f*GRID_SIZE*GRID_ELEMENT_SIZE, 10.f, 0.5f*GRID_SIZE*GRID_ELEMENT_SIZE, 0.f);
 
 				Collider* collider = new Collider(new AxisAlignedBox(-s, s));
 				object->addComponent(collider);
 				object->recomputeBoundingBox();
-
-				object->setPosition(glm::vec4(0.f, 0.f, -10.f, 1));
+				groundAndWalls->addChild(object);
+				object->setLocalPosition(vec4f(0.f, -s.y, 0.f, 1));
 			});
-		world.getEntityFactory().createObject("cube", [](Entity* object)
+		world.getEntityFactory().createObject("cube", [&](Entity* object)
 			{
 				object->setName("WallX");
-				object->setTransformation(
-					glm::vec4(0.5f * GRID_SIZE * GRID_ELEMENT_SIZE, 0.f, 3.f, 1), 
-					glm::vec3(3.f, 0.5f * GRID_SIZE * GRID_ELEMENT_SIZE + 3.f, 6.f), 
-					glm::fquat());
+				groundAndWalls->addChild(object);
+				object->setLocalTransformation(
+					vec4f(0.5f * GRID_SIZE * GRID_ELEMENT_SIZE, 0.f, 3.f, 1), 
+					1.f,//vec4f(3.f, 0.5f * GRID_SIZE * GRID_ELEMENT_SIZE + 3.f, 6.f, 1.f),
+					quatf::identity);
 			});
-		world.getEntityFactory().createObject("cube", [](Entity* object)
+		world.getEntityFactory().createObject("cube", [&](Entity* object)
 			{
 				object->setName("WallX");
-				object->setTransformation(
-					glm::vec4(-0.5f * GRID_SIZE * GRID_ELEMENT_SIZE, 0.f, 3.f, 1),
-					glm::vec3(3.f, 0.5f * GRID_SIZE * GRID_ELEMENT_SIZE + 3.f, 6.f),
-					glm::fquat());
+				groundAndWalls->addChild(object);
+				object->setLocalTransformation(
+					vec4f(-0.5f * GRID_SIZE * GRID_ELEMENT_SIZE, 0.f, 3.f, 1),
+					1.f, //vec4f(3.f, 0.5f * GRID_SIZE * GRID_ELEMENT_SIZE + 3.f, 6.f, 1.f),
+					quatf::identity);
 			});
-		world.getEntityFactory().createObject("cube", [](Entity* object)
+		world.getEntityFactory().createObject("cube", [&](Entity* object)
 			{
 				object->setName("WallY");
-				object->setTransformation(
-					glm::vec4(0.f, 0.5f * GRID_SIZE * GRID_ELEMENT_SIZE, 3.f, 1),
-					glm::vec3(0.5f * GRID_SIZE * GRID_ELEMENT_SIZE + 3.f, 3.f, 6.f), 
-					glm::fquat());
+				groundAndWalls->addChild(object);
+				object->setLocalTransformation(
+					vec4f(0.f, 3.f, 0.5f * GRID_SIZE * GRID_ELEMENT_SIZE, 1),
+					1.f, //vec4f(0.5f * GRID_SIZE * GRID_ELEMENT_SIZE + 3.f, 3.f, 6.f, 1.f),
+					quatf::identity);
 			});
-		world.getEntityFactory().createObject("cube", [](Entity* object)
+		world.getEntityFactory().createObject("cube", [&](Entity* object)
 			{
 				object->setName("WallY");
-				object->setTransformation(
-					glm::vec4(0.f, -0.5f * GRID_SIZE * GRID_ELEMENT_SIZE, 3.f, 1),
-					glm::vec3(0.5f * GRID_SIZE * GRID_ELEMENT_SIZE + 3.f, 3.f, 6.f),
-					glm::fquat());
+				groundAndWalls->addChild(object);
+				object->setLocalTransformation(
+					vec4f(0.f, 3.f,-0.5f * GRID_SIZE * GRID_ELEMENT_SIZE,  1),
+					1.f, //vec4f(0.5f * GRID_SIZE * GRID_ELEMENT_SIZE + 3.f, 3.f, 6.f, 1.f),
+					quatf::identity);
 			});
 	}
 
@@ -660,7 +724,7 @@ void initManagers()
 	//	Renderer
 	Renderer::getInstance()->setContext(context);
 	Renderer::getInstance()->setWorld(&world);
-	Renderer::getInstance()->initializeGrid(GRID_SIZE, GRID_ELEMENT_SIZE, glm::vec3(24 / 255.f, 202 / 255.f, 230 / 255.f));	// blue tron
+	Renderer::getInstance()->initializeGrid(GRID_SIZE, GRID_ELEMENT_SIZE, vec4f(24 / 255.f, 202 / 255.f, 230 / 255.f, 1.f));	// blue tron
 	Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("greenGrass"));
 	Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE, ResourceManager::getInstance()->getResource<Shader>("default"));
 	Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE_BB, ResourceManager::getInstance()->getResource<Shader>("wired"));
@@ -680,8 +744,8 @@ void initManagers()
 }
 void picking()
 {
-	glm::vec4 cameraPos = currentCamera->getGlobalPosition();
-	glm::vec4 cameraForward = currentCamera->getForward(); // no rotations
+	vec4f cameraPos = currentCamera->getPosition();
+	vec4f cameraForward = currentCamera->getForward(); // no rotations
 
 	RaySceneQuerry test(cameraPos, cameraForward, 10000);
 	RayEntityCollector collector(cameraPos, cameraForward, 10000);
@@ -701,7 +765,7 @@ void picking()
 		if(compAnim)       type = "animatable";
 		else if(compDraw)  type = "drawable";
 		else               type = "empty entity";
-		glm::vec4 p = cameraPos + distance * cameraForward;
+		vec4f p = cameraPos + distance * cameraForward;
 		
 		WidgetManager::getInstance()->setString("interaction", "Distance : " + ToolBox::to_string_with_precision(distance, 5) +
 			" m\nPosition : (" + ToolBox::to_string_with_precision(p.x, 5) + " , " + ToolBox::to_string_with_precision(p.y, 5) + " , " + ToolBox::to_string_with_precision(p.z, 5) +
@@ -713,8 +777,8 @@ void picking()
 		{
 			Renderer::RenderOption option = Renderer::getInstance()->getRenderOption();
 			Renderer::getInstance()->setRenderOption(option == Renderer::RenderOption::DEFAULT ? Renderer::RenderOption::BOUNDING_BOX : Renderer::RenderOption::DEFAULT);
-			glm::mat4 view = currentCamera->getGlobalViewMatrix();
-			glm::mat4 projection = glm::perspective(glm::radians(currentCamera->getVerticalFieldOfView(context->getViewportRatio())), context->getViewportRatio(), 0.1f, 1500.f);
+			mat4f view = currentCamera->getViewMatrix();
+			mat4f projection = mat4f::perspective(currentCamera->getVerticalFieldOfView(), context->getViewportRatio(), 0.1f, 1500.f);
 
 			for (auto it = collector.getResult().begin(); it != collector.getResult().end(); ++it)
 				Renderer::getInstance()->drawObject((*it), &view[0][0], &projection[0][0]);
@@ -742,14 +806,17 @@ void events()
 
 		//	micselenious
 		else */if (v[i] == QUIT) glfwSetWindowShouldClose(context->getParentWindow(), GL_TRUE);
-		else if (v[i] == CHANGE_CURSOR_MODE) EventHandler::getInstance()->setCursorMode(!EventHandler::getInstance()->getCursorMode());
+		else if (v[i] == CHANGE_CURSOR_MODE)
+		{
+			EventHandler::getInstance()->setCursorMode(!EventHandler::getInstance()->getCursorMode());
+		}
 		else if (v[i] == ACTION && avatar != nullptr)
 		{
 			if (isTrackBall)
 			{
 				CameraComponent* tbCam = avatar->getComponent<CameraComponent>();
 				CameraComponent* ffCam = freeflyCamera->getComponent<CameraComponent>();
-				freeflyCamera->setPosition(tbCam->getGlobalPosition());
+				freeflyCamera->setWorldPosition(tbCam->getPosition());
 				ffCam->setOrientation(tbCam->getOrientation()); // free rotations
 				currentCamera = ffCam;
 				world.updateObject(freeflyCamera);
@@ -811,6 +878,8 @@ void events()
 		else if (v[i] == F9)   WidgetManager::getInstance()->setActiveHUD((WidgetManager::getInstance()->getActiveHUD() == "debug" ? "" : "debug"));
 		else if (v[i] == F10)  WidgetManager::getInstance()->setActiveHUD((WidgetManager::getInstance()->getActiveHUD() == "rendering" ? "" : "rendering"));
 
+		else if (v[i] == F3)   WidgetManager::getInstance()->setBoolean("syncCamera", !WidgetManager::getInstance()->getBoolean("syncCamera"));
+
 
 		else if (v[i] == F4)   WidgetManager::getInstance()->setBoolean("wireframe", !WidgetManager::getInstance()->getBoolean("wireframe"));
 		else if (v[i] == F5)
@@ -829,17 +898,18 @@ void updates(float elapseTime)
 	//	Compute HUD picking parameters
 	if (EventHandler::getInstance()->getCursorMode())
 	{
-		glm::vec2 cursor = EventHandler::getInstance()->getCursorNormalizedPosition();
-		glm::mat4 projection = glm::perspective(glm::radians(ANGLE_VERTICAL_HUD_PROJECTION), context->getViewportRatio(), 0.1f, 1500.f);
-		glm::vec4 ray_eye = glm::inverse(projection) * glm::vec4(cursor.x, cursor.y, -1.f, 1.f);
+		vec2f cursor = EventHandler::getInstance()->getCursorNormalizedPosition();
+		mat4f projection = mat4f::perspective((float)DEG2RAD * ANGLE_VERTICAL_HUD_PROJECTION, context->getViewportRatio(), 0.1f, 1500.f);
+		vec4f ray_eye = mat4f::inverse(projection) * vec4f(cursor.x, cursor.y, -1.f, 1.f);
+		ray_eye.normalize();
 		WidgetManager::getInstance()->setPickingParameters(
-			glm::translate(glm::mat4(1.f), glm::vec3(0.f, 0.f, -DISTANCE_HUD_CAMERA)) * glm::eulerAngleZX(glm::pi<float>(), glm::pi<float>()*0.5f),
-			glm::normalize(glm::vec3(ray_eye.x, ray_eye.y, ray_eye.z)));// ,
+			mat4f::translate(mat4f::identity, vec4f(0.f, 0.f, -DISTANCE_HUD_CAMERA, 1.f)) * mat4f::eulerAngleZX((float)PI, (float)PI*0.5f),
+			ray_eye);// ,
 			//currentCamera->getGlobalPosition());
 	}
 	else
 	{
-		WidgetManager::getInstance()->setPickingParameters(glm::mat4(1.f), glm::vec3(0.f));// , currentCamera->getGlobalPosition());
+		WidgetManager::getInstance()->setPickingParameters(mat4f::identity, vec4f::zero);// , currentCamera->getGlobalPosition());
 	}
 
 	//	Update widgets
@@ -856,17 +926,17 @@ void updates(float elapseTime)
 	if (avatar && currentCamera->getParentEntity() == avatar)
 	{
 		//	compute direction and speed
-		glm::vec4 direction = glm::vec4(0.f);
+		vec4f direction = vec4f(0.f);
 		if (EventHandler::getInstance()->isActivated(FORWARD))
-			direction += glm::normalize(glm::vec4(currentCamera->getForward().x, currentCamera->getForward().y, 0, 0));
+			direction += vec4f(currentCamera->getForward().x, currentCamera->getForward().y, 0, 0).getNormal();
 		else if (EventHandler::getInstance()->isActivated(BACKWARD))
-			direction -= glm::normalize(glm::vec4(currentCamera->getForward().x, currentCamera->getForward().y, 0, 0));
+			direction -= vec4f(currentCamera->getForward().x, currentCamera->getForward().y, 0, 0).getNormal();
 		if (EventHandler::getInstance()->isActivated(LEFT))
-			direction -= glm::normalize(glm::vec4(currentCamera->getRight().x, currentCamera->getRight().y, 0, 0));
+			direction -= vec4f(currentCamera->getRight().x, currentCamera->getRight().y, 0, 0).getNormal();
 		else if (EventHandler::getInstance()->isActivated(RIGHT))
-			direction += glm::normalize(glm::vec4(currentCamera->getRight().x, currentCamera->getRight().y, 0, 0));
+			direction += vec4f(currentCamera->getRight().x, currentCamera->getRight().y, 0, 0).getNormal();
 		if(direction.x != 0.f && direction.y != 0.f)
-			direction = glm::normalize(direction);
+			direction.normalize();
 
 		float speed = 0.f;
 		if (Animator::getInstance()->isAnimationRunning(avatar, "run"))
@@ -874,129 +944,9 @@ void updates(float elapseTime)
 		else if (Animator::getInstance()->isAnimationRunning(avatar, "walk"))
 			speed = 0.025f;
 
-		//	physics
-		/*Capsule avatarCollider(*static_cast<const Capsule*>(avatar->getGlobalBoundingShape()));
-		avatarCollider.transform(speed * direction, glm::vec3(1.f), glm::fquat());*/
-
-		/*if (DEBUG)
-		{
-			debugShape->setPosition(speed * direction + avatarCollider.p1);
-			debugShape->setScale(glm::vec3(avatarCollider.radius));
-			world.updateObject(debugShape);
-			debugShape2->setPosition(speed * direction + avatarCollider.p2);
-			debugShape2->setScale(glm::vec3(avatarCollider.radius));
-			world.updateObject(debugShape2);
-		}*/
-
-		//Physics::getInstance()->moveEntity(avatar, elapseTime / 1000.f, speed * direction);
-		
-		/*
-		glm::vec3 s = glm::vec3(avatar->getGlobalBoundingShape()->toSphere().radius);
-		DefaultSceneManagerBoxTest sceneNodeTest(avatar->getPosition() + deltaPosition - s, avatar->getPosition() + deltaPosition + s);
-		DefaultBoxCollector collector;
-		world.getSceneManager().getObjects(collector, sceneNodeTest);
-		std::vector<Entity*>& entities = collector.getObjectInBox();
-		std::set<unsigned int> collisionIndex;
-		std::vector<glm::vec3> collisionNormal;
-
-		for (unsigned int k = 0; k < entities.size(); k++)
-		{
-			if (entities[k] == avatar) continue;
-			if (entities[k] == debugShape) continue;
-			if (entities[k] == debugShape2) continue;
-			Entity* e = entities[k];
-			glm::mat4 model2 = e->getMatrix();
-
-			// pass 1 : box vs avatar sphere
-			if(!Collision::collide(*e->getGlobalBoundingShape(), avatarCollider))
-				continue;
-			
-			// pass 2 : avatar capsule vs mesh
-			DrawableComponent* drawableComp = e->getComponent<DrawableComponent>();
-			if (drawableComp && drawableComp->isValid())
-			{
-				const std::vector<glm::vec3>& vertices = *drawableComp->getMesh()->getVertices();
-				const std::vector<unsigned short>& faces = *drawableComp->getMesh()->getFaces();
-				for (unsigned int j = 0; j < faces.size(); j += 3)
-				{
-					glm::vec3 p1 = glm::vec3(model2 * glm::vec4(vertices[faces[j]], 1.f));
-					glm::vec3 p2 = glm::vec3(model2 * glm::vec4(vertices[faces[j + 1]], 1.f));
-					glm::vec3 p3 = glm::vec3(model2 * glm::vec4(vertices[faces[j + 2]], 1.f));
-
-					if (Collision::collide(Triangle(p1, p2, p3), avatarCollider))
-					{
-						Intersection::Result result = Intersection::intersect(Triangle(p1, p2, p3), avatarCollider);
-						glm::vec3 n = -result.normal2;// glm::vec3(-result.normal2.x, -result.normal2.y, -result.normal2.z);
-						if(n != glm::vec3(0.f))
-							n = glm::normalize(n);
-						if (glm::dot(n, avatar->getPosition() - result.contact2) < 0.f)
-							n *= -1.f;
-
-						collisionNormal.push_back(n);
-						collisionIndex.insert(k);
-					}
-				}
-			}
-		}
-		
-
-		//	debug
-		if (false && DEBUG && !collisionNormal.empty())
-		{
-			Renderer::RenderOption option = Renderer::getInstance()->getRenderOption();
-			Renderer::getInstance()->setRenderOption(option == Renderer::DEFAULT ? Renderer::BOUNDING_BOX : Renderer::DEFAULT);
-			glm::mat4 view = currentCamera->getGlobalViewMatrix();
-			glm::mat4 projection = glm::perspective(glm::radians(currentCamera->getFrustrumAngleVertical()), (float)width / height, 0.1f, 1500.f);
-			Renderer::getInstance()->drawObject(avatar, &view[0][0], &projection[0][0]);
-			for (std::set<unsigned int>::iterator it = collisionIndex.begin(); it != collisionIndex.end(); ++it)
-				Renderer::getInstance()->drawObject(entities[*it], &view[0][0], &projection[0][0]);
-			Renderer::getInstance()->setRenderOption(option);
-		}
-
-		//	update
-		if (deltaPosition.x != 0.f && deltaPosition.y != 0.f)
-			avatar->setOrientation(glm::toQuat(glm::rotate(glm::pi<float>() / 2.f + atan2(deltaPosition.y, deltaPosition.x), glm::vec3(0.f, 0.f, 1.f))));
-		bool grounded = false;
-		if (!collisionNormal.empty())
-		{
-			for (unsigned int i = 0; i < collisionNormal.size(); i++)
-			{
-				if (collisionNormal[i].z > 0.5f)
-					grounded = true;
-				if (glm::dot(deltaPosition, collisionNormal[i]) < -0.01f)
-					deltaPosition -= glm::dot(deltaPosition, collisionNormal[i]) * collisionNormal[i];
-
-				//std::cout << collisionNormal[i].z << std::endl;
-			}
-		}
-
-
-		glm::vec3 p = avatar->getPosition() + deltaPosition;
-		if (p.z <= avatarZeroHeight)
-		{
-			grounded = true;
-			p.z = avatarZeroHeight;
-		}
-		avatarspeed.x = deltaPosition.x;
-		avatarspeed.y = deltaPosition.y;
-		if (grounded)
-		{
-			deltaPosition.z = 0.f;
-			avatarspeed.z = 0.f;
-		}
-		else 
-		{
-			avatarspeed.z -= elapseTime * 0.0005f;
-			deltaPosition.z = avatarspeed.z;
-			p.z += avatarspeed.z;
-		}
-		avatarspeed.z = glm::clamp(avatarspeed.z, -0.7f, 0.7f);
-		std::cout << (grounded ? "grounded " : ". ") << avatarspeed.z << std::endl;// << std::endl;
-*/
-
-		avatar->setPosition(avatar->getPosition() + speed * direction);
+		avatar->setWorldPosition(avatar->getWorldPosition() + speed * direction);
 		if (direction.x != 0.f && direction.y != 0.f)
-			avatar->setOrientation(glm::toQuat(glm::rotate(glm::pi<float>() / 2.f + atan2(direction.y, direction.x), glm::vec3(0.f, 0.f, 1.f))));
+			avatar->setWorldOrientation(quatf(atan2(direction.y, direction.x), vec3f(0.f, 0.f, 1.f)));
 		world.updateObject(avatar);
 	}
 
@@ -1008,36 +958,34 @@ void updates(float elapseTime)
 			SkeletonComponent* skeletonComp = avatar->getComponent<SkeletonComponent>();
 			if (skeletonComp && skeletonComp->isValid())
 			{
-
 				float sensitivity = 0.2f;
-				float yaw = glm::radians(-sensitivity * EventHandler::getInstance()->getCursorPositionRelative().x);
-				float pitch = glm::radians(-sensitivity * EventHandler::getInstance()->getCursorPositionRelative().y);
+				float yaw = -(float)DEG2RAD * sensitivity * EventHandler::getInstance()->getCursorPositionRelative().x;
+				float pitch = -(float)DEG2RAD * sensitivity * EventHandler::getInstance()->getCursorPositionRelative().y;
 				cameraInfos.radius = cameraInfos.radius - sensitivity * EventHandler::getInstance()->getScrollingRelative().y;
-				cameraInfos.radius = glm::clamp(cameraInfos.radius, 0.5f, 10.f);
+				cameraInfos.radius = clamp(cameraInfos.radius, 0.5f, 10.f);
 
 				CameraComponent* tbCam = avatar->getComponent<CameraComponent>();
-				tbCam->rotateAround(cameraInfos.target, pitch, yaw, cameraInfos.radius / avatar->getScale()[0]);
+				tbCam->rotateAround(cameraInfos.target, pitch, yaw, cameraInfos.radius / avatar->getWorldScale());
 			}
 		}
 	}
 	else
 	{
 		CameraComponent* ffCam = freeflyCamera->getComponent<CameraComponent>();
-		//CameraComponent* tbCam = avatar->getComponent<CameraComponent>();
 		
 		// Rotation
 		if (!EventHandler::getInstance()->getCursorMode())
 		{
 			float sensitivity = 0.2f;
-			float yaw = glm::radians(-sensitivity * EventHandler::getInstance()->getCursorPositionRelative().x);
-			float pitch = glm::radians(-sensitivity * EventHandler::getInstance()->getCursorPositionRelative().y);
+			float yaw = -(float)DEG2RAD * sensitivity * EventHandler::getInstance()->getCursorPositionRelative().x;
+			float pitch = -(float)DEG2RAD * sensitivity * EventHandler::getInstance()->getCursorPositionRelative().y;
 			ffCam->rotate(pitch, yaw);
 		}
 
 		// Translation
-		glm::vec4 direction(0., 0., 0., 0.);
-		glm::vec4 forward = ffCam->getForward(); // global because free rotations
-		glm::vec4 right = ffCam->getRight(); // global because free rotations
+		vec4f direction(0., 0., 0., 0.);
+		vec4f forward = ffCam->getForward();
+		vec4f right = ffCam->getRight();
 
 		float speed = 0.003f;
 		if (EventHandler::getInstance()->isActivated(FORWARD)) direction += forward;
@@ -1049,34 +997,37 @@ void updates(float elapseTime)
 
 		if (direction.x || direction.y || direction.z)
 		{
-			freeflyCamera->setPosition(freeflyCamera->getPosition() + glm::normalize(direction)*elapseTime*speed);
+			direction.normalize();
+			freeflyCamera->setWorldPosition(freeflyCamera->getWorldPosition() + direction*elapseTime*speed);
 			world.updateObject(freeflyCamera);
 		}
 
 		// FOV
-		float angle = ffCam->getFieldOfView() + EventHandler::getInstance()->getScrollingRelative().y;
-		if (angle > 160.f) angle = 160.f;
-		else if (angle < 3.f) angle = 3.f;
+		float angle = ffCam->getVerticalFieldOfView() + (float)DEG2RAD * EventHandler::getInstance()->getScrollingRelative().y;
+		if (angle > 1.5f) angle = 1.5f;
+		else if (angle < 0.05f) angle = 0.05f;
 
-		//tbCam->setFieldOfView(angle);
-		ffCam->setFieldOfView(angle);
+		ffCam->setVerticalFieldOfView(angle);
 	}
 
 	if (WidgetManager::getInstance()->getBoolean("syncCamera"))
 	{
 		CameraComponent* cam = frustrumCamera->getComponent<CameraComponent>();
 		cam->setOrientation(currentCamera->getOrientation());
-		frustrumCamera->setPosition(currentCamera->getGlobalPosition());
+		cam->setVerticalFieldOfView(currentCamera->getVerticalFieldOfView());
+		frustrumCamera->setWorldPosition(currentCamera->getPosition());
 		world.updateObject(frustrumCamera);
 	}
 
 	// Map streaming
-	world.getMapPtr()->update((glm::vec3)freeflyCamera->getPosition());
+	world.getMapPtr()->update(freeflyCamera->getWorldPosition());
 }
 void ImGuiMenuBar()
 {
 #ifdef USE_IMGUI
 	extern bool PhysicDebugWindowEnable;
+	extern bool HierarchyWindowEnable;
+	extern bool SpatialPartitionningWindowEnable;
 
 
 	if (EventHandler::getInstance()->isActivated(ALT))
@@ -1088,6 +1039,12 @@ void ImGuiMenuBar()
 				ImGui::MenuItem("Physics", NULL, &PhysicDebugWindowEnable);
 				ImGui::EndMenu();
 			}
+			if (ImGui::BeginMenu("Scene"))
+			{
+				ImGui::MenuItem("Hierarchy", NULL, &HierarchyWindowEnable);
+				ImGui::MenuItem("Spatial partitionning", NULL, &SpatialPartitionningWindowEnable);
+				ImGui::EndMenu();
+			}
 			ImGui::EndMainMenuBar();
 		}
 	}
@@ -1096,12 +1053,23 @@ void ImGuiMenuBar()
 void ImGuiSystemDraw()
 {
 #ifdef USE_IMGUI
-	extern bool PhysicDebugWindowEnable;
+	extern bool PhysicDebugWindowEnable; 
+	extern bool HierarchyWindowEnable;
+	extern bool SpatialPartitionningWindowEnable;
 
 	if (PhysicDebugWindowEnable)
 	{
 		world.getPhysics().drawImGui(world);
 		world.getPhysics().debugDraw();
+	}
+	if (HierarchyWindowEnable)
+	{
+		world.getSceneManager().drawImGuiHierarchy(world);
+	}
+	if (SpatialPartitionningWindowEnable)
+	{
+		world.getSceneManager().drawImGuiSpatialPartitioning(world);
+		//world.getSceneManager().drawSceneNodes();
 	}
 #endif
 }

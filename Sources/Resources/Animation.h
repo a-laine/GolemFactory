@@ -33,7 +33,7 @@ class Animation : public ResourceVirtual
 		//
 
 		//	Set/get functions
-		std::vector<glm::mat4x4> getKeyPose(const unsigned int& keyFramePose ,const std::vector<unsigned int>& roots, const std::vector<Joint>& hierarchy) const;
+		std::vector<mat4f> getKeyPose(const unsigned int& keyFramePose ,const std::vector<unsigned int>& roots, const std::vector<Joint>& hierarchy) const;
 		std::pair<int, int> getBoundingKeyFrameIndex(float time) const;
 		const std::vector<KeyFrame>& getTimeLine() const;
 		const std::map<std::string, KeyLabel>& getLabels() const;
@@ -45,7 +45,7 @@ class Animation : public ResourceVirtual
         static std::string defaultName;
 
 		//	Protected functions
-		void computePose(const unsigned int& keyFrame, std::vector<glm::mat4>& pose, const glm::mat4& parentPose, unsigned int joint, const std::vector<Joint>& hierarchy) const;
+		void computePose(const unsigned int& keyFrame, std::vector<mat4f>& pose, const mat4f& parentPose, unsigned int joint, const std::vector<Joint>& hierarchy) const;
 		//
 
         //	Attributes

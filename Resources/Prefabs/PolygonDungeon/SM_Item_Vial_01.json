@@ -1,0 +1,7 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Item_Vial_01",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": []
+}

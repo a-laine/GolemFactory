@@ -26,10 +26,10 @@ void Skeleton::initialize(const std::vector<unsigned int>& rootsList, const std:
         joints = jointsList;
 
         //	compute bind pose and inverse bind pose matrix lists
-        inverseBindPose.assign(joints.size(), glm::mat4(1.f));
-        bindPose.assign(joints.size(), glm::mat4(1.f));
+        inverseBindPose.assign(joints.size(), mat4f::identity);
+        bindPose.assign(joints.size(), mat4f::identity);
         for(unsigned int i = 0; i < roots.size(); i++)
-            computeBindPose(glm::mat4(1.f), roots[i]);
+            computeBindPose(mat4f::identity, roots[i]);
 
         state = VALID;
     }
@@ -46,10 +46,10 @@ void Skeleton::initialize(std::vector<unsigned int>&& rootsList, std::vector<Joi
         joints = std::move(jointsList);
 
         //	compute bind pose and inverse bind pose matrix lists
-        inverseBindPose.assign(joints.size(), glm::mat4(1.f));
-        bindPose.assign(joints.size(), glm::mat4(1.f));
+        inverseBindPose.assign(joints.size(), mat4f::identity);
+        bindPose.assign(joints.size(), mat4f::identity);
         for(unsigned int i = 0; i < roots.size(); i++)
-            computeBindPose(glm::mat4(1.f), roots[i]);
+            computeBindPose(mat4f::identity, roots[i]);
 
         state = VALID;
     }
@@ -72,16 +72,16 @@ std::string Skeleton::getLoaderId(const std::string& resourceName) const
 const std::string& Skeleton::getDefaultName() { return defaultName; }
 void Skeleton::setDefaultName(const std::string& name) { defaultName = name; }
 
-const std::vector<glm::mat4>& Skeleton::getInverseBindPose() const { return inverseBindPose; }
-const std::vector<glm::mat4>& Skeleton::getBindPose() const { return bindPose; }
+const std::vector<mat4f>& Skeleton::getInverseBindPose() const { return inverseBindPose; }
+const std::vector<mat4f>& Skeleton::getBindPose() const { return bindPose; }
 const std::vector<Joint>& Skeleton::getJoints() const { return joints; }
 //
 
 //	Private functions
-void Skeleton::computeBindPose(const glm::mat4& parentPose, unsigned int joint)
+void Skeleton::computeBindPose(const mat4f& parentPose, unsigned int joint)
 {
 	bindPose[joint] = parentPose * joints[joint].relativeBindTransform;
-	inverseBindPose[joint] = glm::inverse(bindPose[joint]);
+	inverseBindPose[joint] = mat4f::inverse(bindPose[joint]);
 	
 	for (unsigned int i = 0; i < joints[joint].sons.size(); i++)
 		computeBindPose(bindPose[joint], joints[joint].sons[i]);

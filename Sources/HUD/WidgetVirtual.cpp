@@ -5,20 +5,20 @@
 //  Default
 WidgetVirtual::WidgetVirtual(const WidgetType& t, const uint8_t& config, const std::string& shaderName) : type(t), configuration(config)
 {
-	sizes[State::DEFAULT] = glm::vec2(1.f);
-	sizes[State::HOVER] = glm::vec2(1.f);
-	sizes[State::ACTIVE] = glm::vec2(1.f);
-	sizes[State::CURRENT] = glm::vec2(1.f);
+	sizes[State::DEFAULT] = vec2f::one;
+	sizes[State::HOVER] = vec2f::one;
+	sizes[State::ACTIVE] = vec2f::one;
+	sizes[State::CURRENT] = vec2f::one;
 
-	positions[State::DEFAULT] = glm::vec3(0.f);
-	positions[State::HOVER] = glm::vec3(0.f);
-	positions[State::ACTIVE] = glm::vec3(0.f);
-	positions[State::CURRENT] = glm::vec3(0.f);
+	positions[State::DEFAULT] = vec4f::zero;
+	positions[State::HOVER] = vec4f::zero;
+	positions[State::ACTIVE] = vec4f::zero;
+	positions[State::CURRENT] = vec4f::zero;
 
-	colors[State::DEFAULT] = glm::vec4(1.f);
-	colors[State::HOVER] = glm::vec4(1.f);
-	colors[State::ACTIVE] = glm::vec4(1.f);
-	colors[State::CURRENT] = glm::vec4(1.f);
+	colors[State::DEFAULT] = vec4f::one;
+	colors[State::HOVER] = vec4f::one;
+	colors[State::ACTIVE] = vec4f::one;
+	colors[State::CURRENT] = vec4f::one;
 
 	shader = ResourceManager::getInstance()->getResource<Shader>(shaderName);
 	texture = nullptr;
@@ -51,7 +51,7 @@ WidgetVirtual::~WidgetVirtual()
 
 
 //	Public functions
-void WidgetVirtual::draw(Shader* s, uint8_t& stencilMask, const glm::mat4& model)
+void WidgetVirtual::draw(Shader* s, uint8_t& stencilMask, const mat4f& model)
 {
 	//	texture related stuff
 	if (texture) glBindTexture(GL_TEXTURE_2D, texture->getTextureId());
@@ -76,24 +76,24 @@ void WidgetVirtual::update(const float& elapseTime)
 	positions[State::CURRENT] = positions[s];
 	sizes[State::CURRENT] = sizes[s];
 }
-bool WidgetVirtual::intersect(const glm::mat4& base, const glm::vec3& ray)
+bool WidgetVirtual::intersect(const mat4f& base, const vec4f& ray)
 {
 	for (unsigned int i = 0; i < batchList.size(); i++)
 	{
 		for (unsigned int j = 0; j < batchList[i].faces.size(); j +=3 )
 		{
 			//	compute triangles vertices in eyes space
-			glm::vec4 p1 = base * glm::vec4(batchList[i].vertices[batchList[i].faces[j]], 1.f);
-			glm::vec4 p2 = base * glm::vec4(batchList[i].vertices[batchList[i].faces[j + 1]], 1.f);
-			glm::vec4 p3 = base * glm::vec4(batchList[i].vertices[batchList[i].faces[j + 2]], 1.f);
+			vec4f p1 = base * batchList[i].vertices[batchList[i].faces[j]];
+			vec4f p2 = base * batchList[i].vertices[batchList[i].faces[j + 1]];
+			vec4f p3 = base * batchList[i].vertices[batchList[i].faces[j + 2]];
 
-			if (Collision::collide_SegmentvsTriangle(glm::vec4(0, 0, 0, 1), glm::vec4(10.f * ray, 1), p1, p2, p3))
+			if (Collision::collide_SegmentvsTriangle(vec4f::zero, 10.f * ray, p1, p2, p3))
 				return true;
 		}
 	}
 	return false;
 }
-bool WidgetVirtual::mouseEvent(const glm::mat4& base, const glm::vec3& ray, const float& parentscale, const bool& clicked) { return false; }
+bool WidgetVirtual::mouseEvent(const mat4f& base, const vec4f& ray, const float& parentscale, const bool& clicked) { return false; }
 
 
 void WidgetVirtual::setBoolean(const bool& b) {}
@@ -110,7 +110,7 @@ void WidgetVirtual::setState(State state)
 	configuration &= ~(uint8_t)State::STATE_MASK;
 	configuration |= (uint8_t)state % (uint8_t)State::CURRENT;
 }
-void WidgetVirtual::setSize(const glm::vec2& s, const State& state)
+void WidgetVirtual::setSize(const vec2f& s, const State& state)
 {
 	if (state == State::ALL)
 	{
@@ -122,7 +122,7 @@ void WidgetVirtual::setSize(const glm::vec2& s, const State& state)
 	else sizes[state] = s;
 	if(configuration & (uint8_t)OrphanFlags::RESPONSIVE) configuration |= (uint8_t)OrphanFlags::NEED_UPDATE;
 }
-void WidgetVirtual::setPosition(const glm::vec3& p, const State& state)
+void WidgetVirtual::setPosition(const vec4f& p, const State& state)
 {
 	if (state == State::ALL)
 	{
@@ -133,7 +133,7 @@ void WidgetVirtual::setPosition(const glm::vec3& p, const State& state)
 	}
 	else positions[state] = p;
 }
-void WidgetVirtual::setColor(const glm::vec4& c, const State& state) 
+void WidgetVirtual::setColor(const vec4f& c, const State& state)
 {
 	if (state == State::ALL)
 	{
@@ -173,17 +173,17 @@ void WidgetVirtual::setConfiguration(const uint8_t& config)
 
 WidgetVirtual::WidgetType WidgetVirtual::getType() const { return type; }
 WidgetVirtual::State WidgetVirtual::getState() const { return (State)(configuration & (uint8_t)State::STATE_MASK); }
-glm::vec2 WidgetVirtual::getSize(State state)
+vec2f WidgetVirtual::getSize(State state)
 {
 	if (state == State::CURRENT) return sizes[(State)(configuration & (uint8_t)State::STATE_MASK)];
 	else return sizes[(State)((int)state % (uint8_t)State::CURRENT)];
 }
-glm::vec3 WidgetVirtual::getPosition(State state)
+vec4f WidgetVirtual::getPosition(State state)
 {
 	if (state == State::CURRENT) return positions[(State)(configuration & (uint8_t)State::STATE_MASK)];
 	else return positions[(State)((int)state % (uint8_t)State::CURRENT)];
 }
-glm::vec4 WidgetVirtual::getColor(const unsigned int& index, State state)
+vec4f WidgetVirtual::getColor(const unsigned int& index, State state)
 {
 	if (state == State::CURRENT) return colors[(State)(configuration & (uint8_t)State::STATE_MASK)];
 	else return colors[(State)((int)state % (uint8_t)State::CURRENT)];
@@ -235,7 +235,7 @@ void WidgetVirtual::drawClippingShape(const unsigned int& batchIndex, const bool
 	int loc = s->getUniformLocation("useTexture");
 	if (loc >= 0) glUniform1i(loc, 0);
 	loc = s->getUniformLocation("color");
-	if (loc >= 0) glUniform4fv(loc, 1, &glm::vec4(0.f)[0]);
+	if (loc >= 0) glUniform4fv(loc, 1, &vec4f::zero[0]);
 
 	glBindVertexArray(batchList[batchIndex].vao);
 	glDrawElements(GL_TRIANGLES, (int)batchList[batchIndex].faces.size(), GL_UNSIGNED_SHORT, NULL);
@@ -248,11 +248,11 @@ void WidgetVirtual::initializeVBO(const unsigned int& batchIndex, int VBOtype)
 {
 	glGenBuffers(1, &batchList[batchIndex].verticesBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, batchList[batchIndex].verticesBuffer);
-	glBufferData(GL_ARRAY_BUFFER, batchList[batchIndex].vertices.size() * sizeof(glm::vec3), batchList[batchIndex].vertices.data(), VBOtype);
+	glBufferData(GL_ARRAY_BUFFER, batchList[batchIndex].vertices.size() * sizeof(vec4f), batchList[batchIndex].vertices.data(), VBOtype);
 
 	glGenBuffers(1, &batchList[batchIndex].texturesBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, batchList[batchIndex].texturesBuffer);
-	glBufferData(GL_ARRAY_BUFFER, batchList[batchIndex].textures.size() * sizeof(glm::vec2), batchList[batchIndex].textures.data(), VBOtype);
+	glBufferData(GL_ARRAY_BUFFER, batchList[batchIndex].textures.size() * sizeof(vec2f), batchList[batchIndex].textures.data(), VBOtype);
 
 	glGenBuffers(1, &batchList[batchIndex].facesBuffer);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, batchList[batchIndex].facesBuffer);
@@ -267,7 +267,7 @@ void WidgetVirtual::initializeVAOs()
 
 		glEnableVertexAttribArray(0);
 		glBindBuffer(GL_ARRAY_BUFFER, batchList[i].verticesBuffer);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+		glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, NULL);
 
 		glEnableVertexAttribArray(1);
 		glBindBuffer(GL_ARRAY_BUFFER, batchList[i].texturesBuffer);

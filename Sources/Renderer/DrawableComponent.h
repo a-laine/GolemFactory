@@ -1,7 +1,8 @@
 #pragma once
 
 #include <string>
-#include <glm/glm.hpp>
+//#include <glm/glm.hpp>
+#include "Math/TMath.h"
 
 #include <EntityComponent\Component.hpp>
 
@@ -16,6 +17,7 @@ class DrawableComponent : public Component
 	public:
 		DrawableComponent(const std::string& meshName = "default", const std::string& shaderName = "default");
 		virtual ~DrawableComponent() override;
+		DrawableComponent(const DrawableComponent* other);
 
 		void setShader(const std::string& shaderName);
 		void setShader(Shader* shader);
@@ -28,11 +30,24 @@ class DrawableComponent : public Component
         bool isValid() const;
 
         bool hasSkeleton() const;
-		glm::vec3 getMeshBBMax() const;
-		glm::vec3 getMeshBBMin() const;
+		vec4f getMeshBBMax() const;
+		vec4f getMeshBBMin() const;
+
+		void onDrawImGui() override;
+		void onAddToEntity(Entity* entity) override;
+
+#ifdef USE_IMGUI
+		bool visible() const { return m_visible; };
+#endif
 
 	private:
 		Mesh* m_mesh;
 		Shader* m_shader;
+
+#ifdef USE_IMGUI
+		bool m_drawMeshBoundingBox = false;
+		bool m_visible = true;
+#endif
+
 };
 

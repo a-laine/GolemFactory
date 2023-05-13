@@ -1,0 +1,7 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Env_Rock_Flat_Platform_02",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": []
+}

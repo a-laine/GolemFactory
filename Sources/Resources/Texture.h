@@ -1,10 +1,12 @@
 #pragma once
 
 #include <GL/glew.h>
-#include <glm/glm.hpp>
+//#include <glm/glm.hpp>
 
+#include "Math/TMath.h"
 #include "ResourceVirtual.h"
 
+class Shader;
 class Texture : public ResourceVirtual
 {
     public:
@@ -39,7 +41,7 @@ class Texture : public ResourceVirtual
 		explicit Texture(const std::string& textureName, uint8_t conf = 0x0);
         ~Texture();
 
-        void initialize(const glm::vec3& imageSize, const uint8_t* data, uint8_t config = 0);
+        void initialize(const vec3f& imageSize, const uint8_t* data, uint8_t config = 0);
         //
 
         //  Set/get functions
@@ -53,7 +55,7 @@ class Texture : public ResourceVirtual
         //
 
         //  Attributes
-        glm::vec3 size;                //!< Texture size
+        vec3f size;                     //!< Texture size
         //
 
     private:

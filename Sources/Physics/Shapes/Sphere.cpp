@@ -1,19 +1,18 @@
 #include "Sphere.h"
 #include "AxisAlignedBox.h"
 
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/quaternion.hpp>
-#include <glm/gtx/component_wise.hpp>
+/*#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/quaternion.hpp>*/
 
 
-Sphere::Sphere(const glm::vec4& position, const float& r) : Shape(ShapeType::SPHERE), center(position), radius(r) 
+Sphere::Sphere(const vec4f& position, const float& r) : Shape(ShapeType::SPHERE), center(position), radius(r) 
 {
 	center.w = 1.f;
 }
 Sphere Sphere::toSphere() const { return *this; }
 AxisAlignedBox Sphere::toAxisAlignedBox() const
 {
-	glm::vec4 r = glm::vec4(radius, radius, radius, 0);
+	vec4f r = vec4f(radius, radius, radius, 0);
 	return AxisAlignedBox(center - r, center + r);
 }
 Shape& Sphere::operator=(const Shape& s)
@@ -26,21 +25,20 @@ Shape& Sphere::operator=(const Shape& s)
 	}
 	return *this;
 }
-void Sphere::transform(const glm::vec4& position, const glm::vec3& scale, const glm::fquat& orientation)
+void Sphere::transform(const vec4f& position, const vec4f& scale, const quatf& orientation)
 {
-	glm::mat4 m = glm::translate(glm::mat4(1.0), (glm::vec3)position);
-	m = m * glm::toMat4(orientation);
-	m = glm::scale(m, scale);
+	mat4f m = mat4f::TRS(position, orientation, scale);
 	center = m * center;
-	radius = radius * glm::compMax(scale);
+	float smax = std::max(scale.x, std::max(scale.y, scale.z));
+	radius = radius * smax;
 }
 Shape* Sphere::duplicate() const { return new Sphere(*this); }
-glm::vec4 Sphere::support(const glm::vec4& direction) const { return center + glm::normalize(direction) * radius; }
-glm::mat3 Sphere::computeInertiaMatrix() const
+vec4f Sphere::support(const vec4f& direction) const { return center + direction.getNormal() * radius; }
+mat4f Sphere::computeInertiaMatrix() const
 {
-	return glm::mat3(2.f / 5.f * radius * radius);
+	return mat4f(2.f / 5.f * radius * radius);
 }
-void Sphere::getFacingFace(const glm::vec4& direction, std::vector<glm::vec4>& points) const
+void Sphere::getFacingFace(const vec4f& direction, std::vector<vec4f>& points) const
 {
-	points.push_back(center + glm::normalize(direction) * radius);
+	points.push_back(center + direction.getNormal() * radius);
 }

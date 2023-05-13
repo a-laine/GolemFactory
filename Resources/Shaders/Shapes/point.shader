@@ -6,7 +6,7 @@ Point
 		view : "mat4";
 		projection : "mat4";
 		
-		overrideColor : "vec3";
+		overrideColor : "vec4";
 	};
 	
 	vertex :   "Shapes/point.vs";
@@ -23,8 +23,8 @@ Point
 		uniform mat4 view; 		// view matrix
 		uniform mat4 projection;// projection matrix
 
-		in vec3 fragmentColor[];
-		out vec3 fragmentColor1;
+		in vec4 fragmentColor[];
+		out vec4 fragmentColor1;
 
 		//	draw functions
 		void drawSegment(vec3 p1, vec3 p2)

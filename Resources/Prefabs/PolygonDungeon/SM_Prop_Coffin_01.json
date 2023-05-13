@@ -1,0 +1,30 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Prop_Coffin_01",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": [
+        {
+            "name": "SM_Prop_Coffin_Lid_01",
+            "id": 0,
+            "position": [
+                0.5144602060317993,
+                0.49147528409957888,
+                -0.5296303629875183
+            ],
+            "rotation": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+            ],
+            "scale": 1.0,
+            "prefabName": "",
+            "childs": [],
+            "drawableComponent": {
+                "meshName": "SM_Prop_Coffin_Lid_01",
+                "shaderName": "defaultTextured"
+            }
+        }
+    ]
+}

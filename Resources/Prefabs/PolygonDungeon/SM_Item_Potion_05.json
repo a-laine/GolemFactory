@@ -1,0 +1,7 @@
+{
+    "drawableComponent": {
+        "meshName": "SM_Item_Potion_05",
+        "shaderName": "defaultTextured"
+    },
+    "prefabEntities": []
+}

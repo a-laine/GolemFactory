@@ -4,9 +4,9 @@
 #include <utility>
 #include <string>
 #include <algorithm>
-#include <glm/glm.hpp>
+/*#include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/rotate_vector.hpp>
+#include <glm/gtx/rotate_vector.hpp>*/
 
 #include "EntityComponent/Entity.hpp"
 #include "Renderer/DrawableComponent.h"
@@ -16,7 +16,7 @@
 
 
 //  Attributes
-glm::vec3 HouseGenerator::stoneColor = glm::vec3(0.2f, 0.2f, 0.2f);
+vec4f HouseGenerator::stoneColor = vec4f(0.2f, 0.2f, 0.2f, 1.f);
 const int HouseGenerator::massiveRadius = 3;
 //
 
@@ -63,14 +63,14 @@ HouseGenerator::HouseGenerator()
 	assetLibrary["roofEndCorner"] = ResourceManager::getInstance()->getResource<Mesh>("House/HouseRoofEnd4.obj");
 
 	//	Elementary blocks
-	blockLibrary.push_back(glm::ivec3(8, 5, 3));	// 120 m�
-	blockLibrary.push_back(glm::ivec3(8, 5, 2));	// 80 m�
-	blockLibrary.push_back(glm::ivec3(6, 4, 3));	// 72 m�
-	blockLibrary.push_back(glm::ivec3(6, 4, 2));	// 48 m�
-	blockLibrary.push_back(glm::ivec3(6, 4, 1));	// 24 m�
-	blockLibrary.push_back(glm::ivec3(4, 3, 1));	// 12 m�
-	blockLibrary.push_back(glm::ivec3(3, 2, 1));	// 6 m�
-	blockLibrary.push_back(glm::ivec3(3, 1, 1));	// 3 m�
+	blockLibrary.push_back(vec3i(8, 5, 3));	// 120 m�
+	blockLibrary.push_back(vec3i(8, 5, 2));	// 80 m�
+	blockLibrary.push_back(vec3i(6, 4, 3));	// 72 m�
+	blockLibrary.push_back(vec3i(6, 4, 2));	// 48 m�
+	blockLibrary.push_back(vec3i(6, 4, 1));	// 24 m�
+	blockLibrary.push_back(vec3i(4, 3, 1));	// 12 m�
+	blockLibrary.push_back(vec3i(3, 2, 1));	// 6 m�
+	blockLibrary.push_back(vec3i(3, 1, 1));	// 3 m�
 }
 HouseGenerator::~HouseGenerator()
 {
@@ -112,21 +112,21 @@ void HouseGenerator::getHouse(Entity* house, unsigned int seed, int d, int p)
 	//	generate mesh
 	constructHouseMesh();
 	constructRoofMesh();
-	ToolBox::optimizeStaticMesh(verticesArray,normalesArray, colorArray,facesArray);
+	ToolBox::optimizeStaticMesh(verticesArray,normalesArray, uvArray,facesArray);
 	//optimizeMesh();
 
 
 	//	end
 	Mesh* mesh = new Mesh(houseName);
-    std::vector<glm::ivec3> bonesArray;
-    std::vector<glm::vec3> weightsArray;
-    mesh->initialize(verticesArray, normalesArray, colorArray, facesArray, bonesArray, weightsArray);
+    std::vector<vec4i> bonesArray;
+    std::vector<vec4f> weightsArray;
+    mesh->initialize(verticesArray, normalesArray, uvArray, facesArray, bonesArray, weightsArray);
 	ResourceManager::getInstance()->addResource(mesh);				//	add mesh to resources manager for instance creation
 
 	DrawableComponent* drawable = new DrawableComponent(houseName);
 	house->addComponent(drawable);
 
-	Collider* collider = new Collider(new OrientedBox(glm::mat4(1.f), glm::vec4(drawable->getMeshBBMin(), 1), glm::vec4(drawable->getMeshBBMax(), 1)));
+	Collider* collider = new Collider(new OrientedBox(mat4f::identity, drawable->getMeshBBMin(), drawable->getMeshBBMax()));
 	house->addComponent(collider);
 
 	house->recomputeBoundingBox();
@@ -141,7 +141,7 @@ void HouseGenerator::initHouseField(const int& newSize)
 	//	clear mesh attributes lists
 	verticesArray.clear();
 	normalesArray.clear();
-	colorArray.clear();
+	uvArray.clear();
 	facesArray.clear();
 
 	//	clear house construction lists
@@ -203,49 +203,49 @@ void HouseGenerator::createAndPlaceDebugHouseBlock(int config)
 {
 	if (config == 1)
 	{
-		addHouseBlocks(glm::ivec3(50, 50, 0), glm::ivec3(17, 7, houseFieldFloor - 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<glm::ivec3, glm::ivec3>(glm::ivec3(50, 50, 0), glm::ivec3(17, 7, houseFieldFloor - 1)));
-		addHouseBlocks(glm::ivec3(50, 57, 0), glm::ivec3(7,  3, houseFieldFloor - 1), HouseTypeBlock::House, 1); blockList.push_back(std::pair<glm::ivec3, glm::ivec3>(glm::ivec3(50, 57, 0), glm::ivec3(7, 3, houseFieldFloor - 1)));
-		addHouseBlocks(glm::ivec3(60, 57, 0), glm::ivec3(7,  3, houseFieldFloor - 1), HouseTypeBlock::House, 2); blockList.push_back(std::pair<glm::ivec3, glm::ivec3>(glm::ivec3(60, 57, 0), glm::ivec3(7, 3, houseFieldFloor - 1)));
-		addHouseBlocks(glm::ivec3(50, 60, 0), glm::ivec3(17, 7, houseFieldFloor - 1), HouseTypeBlock::House, 3); blockList.push_back(std::pair<glm::ivec3, glm::ivec3>(glm::ivec3(50, 60, 0), glm::ivec3(17, 7, houseFieldFloor - 1)));
+		addHouseBlocks(vec3i(50, 50, 0), vec3i(17, 7, houseFieldFloor - 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<vec3i, vec3i>(vec3i(50, 50, 0), vec3i(17, 7, houseFieldFloor - 1)));
+		addHouseBlocks(vec3i(50, 57, 0), vec3i(7,  3, houseFieldFloor - 1), HouseTypeBlock::House, 1); blockList.push_back(std::pair<vec3i, vec3i>(vec3i(50, 57, 0), vec3i(7, 3, houseFieldFloor - 1)));
+		addHouseBlocks(vec3i(60, 57, 0), vec3i(7,  3, houseFieldFloor - 1), HouseTypeBlock::House, 2); blockList.push_back(std::pair<vec3i, vec3i>(vec3i(60, 57, 0), vec3i(7, 3, houseFieldFloor - 1)));
+		addHouseBlocks(vec3i(50, 60, 0), vec3i(17, 7, houseFieldFloor - 1), HouseTypeBlock::House, 3); blockList.push_back(std::pair<vec3i, vec3i>(vec3i(50, 60, 0), vec3i(17, 7, houseFieldFloor - 1)));
 
-		addHouseBlocks(glm::ivec3(67, 57, 0), glm::ivec3(4, 3, houseFieldFloor - 1), HouseTypeBlock::House, 4);  blockList.push_back(std::pair<glm::ivec3, glm::ivec3>(glm::ivec3(67, 57, 0), glm::ivec3(4, 3, houseFieldFloor - 1)));
-		addHouseBlocks(glm::ivec3(57, 67, 0), glm::ivec3(3, 4, houseFieldFloor - 1), HouseTypeBlock::House, 5);  blockList.push_back(std::pair<glm::ivec3, glm::ivec3>(glm::ivec3(57, 67, 0), glm::ivec3(3, 4, houseFieldFloor - 1)));
-		addHouseBlocks(glm::ivec3(46, 57, 0), glm::ivec3(4, 3, houseFieldFloor - 1), HouseTypeBlock::House, 6);  blockList.push_back(std::pair<glm::ivec3, glm::ivec3>(glm::ivec3(46, 57, 0), glm::ivec3(4, 3, houseFieldFloor - 1)));
-		addHouseBlocks(glm::ivec3(57, 46, 0), glm::ivec3(3, 4, houseFieldFloor - 1), HouseTypeBlock::House, 7);  blockList.push_back(std::pair<glm::ivec3, glm::ivec3>(glm::ivec3(57, 46, 0), glm::ivec3(3, 4, houseFieldFloor - 1)));
+		addHouseBlocks(vec3i(67, 57, 0), vec3i(4, 3, houseFieldFloor - 1), HouseTypeBlock::House, 4);  blockList.push_back(std::pair<vec3i, vec3i>(vec3i(67, 57, 0), vec3i(4, 3, houseFieldFloor - 1)));
+		addHouseBlocks(vec3i(57, 67, 0), vec3i(3, 4, houseFieldFloor - 1), HouseTypeBlock::House, 5);  blockList.push_back(std::pair<vec3i, vec3i>(vec3i(57, 67, 0), vec3i(3, 4, houseFieldFloor - 1)));
+		addHouseBlocks(vec3i(46, 57, 0), vec3i(4, 3, houseFieldFloor - 1), HouseTypeBlock::House, 6);  blockList.push_back(std::pair<vec3i, vec3i>(vec3i(46, 57, 0), vec3i(4, 3, houseFieldFloor - 1)));
+		addHouseBlocks(vec3i(57, 46, 0), vec3i(3, 4, houseFieldFloor - 1), HouseTypeBlock::House, 7);  blockList.push_back(std::pair<vec3i, vec3i>(vec3i(57, 46, 0), vec3i(3, 4, houseFieldFloor - 1)));
 
-		addHouseBlocks(glm::ivec3(50, 43, 0), glm::ivec3(17, 3, houseFieldFloor - 1), HouseTypeBlock::House, 8); blockList.push_back(std::pair<glm::ivec3, glm::ivec3>(glm::ivec3(50, 43, 0), glm::ivec3(17, 3, houseFieldFloor - 1)));
-		addHouseBlocks(glm::ivec3(50, 70, 0), glm::ivec3(17, 3, houseFieldFloor - 1), HouseTypeBlock::House, 9); blockList.push_back(std::pair<glm::ivec3, glm::ivec3>(glm::ivec3(50, 70, 0), glm::ivec3(17, 3, houseFieldFloor - 1)));
-		addHouseBlocks(glm::ivec3(43, 50, 0), glm::ivec3(3, 17, houseFieldFloor - 1), HouseTypeBlock::House, 10); blockList.push_back(std::pair<glm::ivec3, glm::ivec3>(glm::ivec3(43, 50, 0), glm::ivec3(3, 17, houseFieldFloor - 1)));
-		addHouseBlocks(glm::ivec3(70, 50, 0), glm::ivec3(3, 17, houseFieldFloor - 1), HouseTypeBlock::House, 11); blockList.push_back(std::pair<glm::ivec3, glm::ivec3>(glm::ivec3(70, 50, 0), glm::ivec3(3, 17, houseFieldFloor - 1)));
+		addHouseBlocks(vec3i(50, 43, 0), vec3i(17, 3, houseFieldFloor - 1), HouseTypeBlock::House, 8); blockList.push_back(std::pair<vec3i, vec3i>(vec3i(50, 43, 0), vec3i(17, 3, houseFieldFloor - 1)));
+		addHouseBlocks(vec3i(50, 70, 0), vec3i(17, 3, houseFieldFloor - 1), HouseTypeBlock::House, 9); blockList.push_back(std::pair<vec3i, vec3i>(vec3i(50, 70, 0), vec3i(17, 3, houseFieldFloor - 1)));
+		addHouseBlocks(vec3i(43, 50, 0), vec3i(3, 17, houseFieldFloor - 1), HouseTypeBlock::House, 10); blockList.push_back(std::pair<vec3i, vec3i>(vec3i(43, 50, 0), vec3i(3, 17, houseFieldFloor - 1)));
+		addHouseBlocks(vec3i(70, 50, 0), vec3i(3, 17, houseFieldFloor - 1), HouseTypeBlock::House, 11); blockList.push_back(std::pair<vec3i, vec3i>(vec3i(70, 50, 0), vec3i(3, 17, houseFieldFloor - 1)));
 
 		superficy = 532 * (houseFieldFloor - 1);
 	}
 	else
 	{
-		addHouseBlocks(glm::ivec3(54, 54, 0), glm::ivec3(5, 5, 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<glm::ivec3, glm::ivec3>(glm::ivec3(54, 54, 0), glm::ivec3(5, 5, 1)));
-		addHouseBlocks(glm::ivec3(56, 52, 0), glm::ivec3(3, 2, 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<glm::ivec3, glm::ivec3>(glm::ivec3(56, 52, 0), glm::ivec3(3, 2, 1)));
-		addHouseBlocks(glm::ivec3(59, 56, 0), glm::ivec3(2, 3, 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<glm::ivec3, glm::ivec3>(glm::ivec3(59, 56, 0), glm::ivec3(2, 3, 1)));
-		addHouseBlocks(glm::ivec3(52, 56, 0), glm::ivec3(2, 3, 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<glm::ivec3, glm::ivec3>(glm::ivec3(52, 56, 0), glm::ivec3(2, 3, 1)));
-		addHouseBlocks(glm::ivec3(54, 59, 0), glm::ivec3(3, 2, 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<glm::ivec3, glm::ivec3>(glm::ivec3(54, 59, 0), glm::ivec3(3, 2, 1)));
+		addHouseBlocks(vec3i(54, 54, 0), vec3i(5, 5, 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<vec3i, vec3i>(vec3i(54, 54, 0), vec3i(5, 5, 1)));
+		addHouseBlocks(vec3i(56, 52, 0), vec3i(3, 2, 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<vec3i, vec3i>(vec3i(56, 52, 0), vec3i(3, 2, 1)));
+		addHouseBlocks(vec3i(59, 56, 0), vec3i(2, 3, 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<vec3i, vec3i>(vec3i(59, 56, 0), vec3i(2, 3, 1)));
+		addHouseBlocks(vec3i(52, 56, 0), vec3i(2, 3, 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<vec3i, vec3i>(vec3i(52, 56, 0), vec3i(2, 3, 1)));
+		addHouseBlocks(vec3i(54, 59, 0), vec3i(3, 2, 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<vec3i, vec3i>(vec3i(54, 59, 0), vec3i(3, 2, 1)));
 
-		addHouseBlocks(glm::ivec3(41, 54, 0), glm::ivec3(5, 5, 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<glm::ivec3, glm::ivec3>(glm::ivec3(41, 54, 0), glm::ivec3(5, 5, 1)));
-		addHouseBlocks(glm::ivec3(41, 52, 0), glm::ivec3(3, 2, 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<glm::ivec3, glm::ivec3>(glm::ivec3(41, 52, 0), glm::ivec3(3, 2, 1)));
-		addHouseBlocks(glm::ivec3(39, 56, 0), glm::ivec3(2, 3, 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<glm::ivec3, glm::ivec3>(glm::ivec3(39, 56, 0), glm::ivec3(2, 3, 1)));
-		addHouseBlocks(glm::ivec3(46, 56, 0), glm::ivec3(2, 3, 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<glm::ivec3, glm::ivec3>(glm::ivec3(46, 56, 0), glm::ivec3(2, 3, 1)));
-		addHouseBlocks(glm::ivec3(43, 59, 0), glm::ivec3(3, 2, 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<glm::ivec3, glm::ivec3>(glm::ivec3(43, 59, 0), glm::ivec3(3, 2, 1)));
+		addHouseBlocks(vec3i(41, 54, 0), vec3i(5, 5, 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<vec3i, vec3i>(vec3i(41, 54, 0), vec3i(5, 5, 1)));
+		addHouseBlocks(vec3i(41, 52, 0), vec3i(3, 2, 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<vec3i, vec3i>(vec3i(41, 52, 0), vec3i(3, 2, 1)));
+		addHouseBlocks(vec3i(39, 56, 0), vec3i(2, 3, 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<vec3i, vec3i>(vec3i(39, 56, 0), vec3i(2, 3, 1)));
+		addHouseBlocks(vec3i(46, 56, 0), vec3i(2, 3, 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<vec3i, vec3i>(vec3i(46, 56, 0), vec3i(2, 3, 1)));
+		addHouseBlocks(vec3i(43, 59, 0), vec3i(3, 2, 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<vec3i, vec3i>(vec3i(43, 59, 0), vec3i(3, 2, 1)));
 
 
-		addHouseBlocks(glm::ivec3(54, 41, 0), glm::ivec3(5, 5, 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<glm::ivec3, glm::ivec3>(glm::ivec3(54, 41, 0), glm::ivec3(5, 5, 1)));
-		addHouseBlocks(glm::ivec3(56, 46, 0), glm::ivec3(3, 2, 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<glm::ivec3, glm::ivec3>(glm::ivec3(54, 54, 0), glm::ivec3(3, 2, 1)));
-		addHouseBlocks(glm::ivec3(59, 41, 0), glm::ivec3(2, 3, 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<glm::ivec3, glm::ivec3>(glm::ivec3(59, 41, 0), glm::ivec3(2, 3, 1)));
-		addHouseBlocks(glm::ivec3(52, 41, 0), glm::ivec3(2, 3, 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<glm::ivec3, glm::ivec3>(glm::ivec3(52, 41, 0), glm::ivec3(2, 3, 1)));
-		addHouseBlocks(glm::ivec3(54, 39, 0), glm::ivec3(3, 2, 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<glm::ivec3, glm::ivec3>(glm::ivec3(54, 39, 0), glm::ivec3(3, 2, 1)));
+		addHouseBlocks(vec3i(54, 41, 0), vec3i(5, 5, 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<vec3i, vec3i>(vec3i(54, 41, 0), vec3i(5, 5, 1)));
+		addHouseBlocks(vec3i(56, 46, 0), vec3i(3, 2, 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<vec3i, vec3i>(vec3i(54, 54, 0), vec3i(3, 2, 1)));
+		addHouseBlocks(vec3i(59, 41, 0), vec3i(2, 3, 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<vec3i, vec3i>(vec3i(59, 41, 0), vec3i(2, 3, 1)));
+		addHouseBlocks(vec3i(52, 41, 0), vec3i(2, 3, 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<vec3i, vec3i>(vec3i(52, 41, 0), vec3i(2, 3, 1)));
+		addHouseBlocks(vec3i(54, 39, 0), vec3i(3, 2, 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<vec3i, vec3i>(vec3i(54, 39, 0), vec3i(3, 2, 1)));
 
-		addHouseBlocks(glm::ivec3(41, 41, 0), glm::ivec3(5, 5, 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<glm::ivec3, glm::ivec3>(glm::ivec3(41, 41, 0), glm::ivec3(5, 5, 1)));
-		addHouseBlocks(glm::ivec3(41, 46, 0), glm::ivec3(3, 2, 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<glm::ivec3, glm::ivec3>(glm::ivec3(41, 46, 0), glm::ivec3(3, 2, 1)));
-		addHouseBlocks(glm::ivec3(39, 41, 0), glm::ivec3(2, 3, 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<glm::ivec3, glm::ivec3>(glm::ivec3(39, 41, 0), glm::ivec3(2, 3, 1)));
-		addHouseBlocks(glm::ivec3(46, 41, 0), glm::ivec3(2, 3, 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<glm::ivec3, glm::ivec3>(glm::ivec3(46, 41, 0), glm::ivec3(2, 3, 1)));
-		addHouseBlocks(glm::ivec3(43, 39, 0), glm::ivec3(3, 2, 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<glm::ivec3, glm::ivec3>(glm::ivec3(43, 39, 0), glm::ivec3(3, 2, 1)));
+		addHouseBlocks(vec3i(41, 41, 0), vec3i(5, 5, 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<vec3i, vec3i>(vec3i(41, 41, 0), vec3i(5, 5, 1)));
+		addHouseBlocks(vec3i(41, 46, 0), vec3i(3, 2, 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<vec3i, vec3i>(vec3i(41, 46, 0), vec3i(3, 2, 1)));
+		addHouseBlocks(vec3i(39, 41, 0), vec3i(2, 3, 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<vec3i, vec3i>(vec3i(39, 41, 0), vec3i(2, 3, 1)));
+		addHouseBlocks(vec3i(46, 41, 0), vec3i(2, 3, 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<vec3i, vec3i>(vec3i(46, 41, 0), vec3i(2, 3, 1)));
+		addHouseBlocks(vec3i(43, 39, 0), vec3i(3, 2, 1), HouseTypeBlock::House, 0); blockList.push_back(std::pair<vec3i, vec3i>(vec3i(43, 39, 0), vec3i(3, 2, 1)));
 
 		superficy = 196;
 	}
@@ -275,13 +275,13 @@ void HouseGenerator::createAndPlaceHouseBlock()
 		for (auto it = availableBlockPosition.begin(); it != availableBlockPosition.end(); it++)
 		{
 			markAll(*it, blockList[i].second);
-			markAll(*it,  glm::ivec3(blockList[i].second.y, blockList[i].second.x, blockList[i].second.z));
-			markAll(*it - glm::ivec3(blockList[i].second.x - 1, 0, 0), blockList[i].second);
-			markAll(*it - glm::ivec3(blockList[i].second.y - 1, 0, 0), glm::ivec3(blockList[i].second.y, blockList[i].second.x, blockList[i].second.z));
-			markAll(*it - glm::ivec3(0, blockList[i].second.y - 1, 0), blockList[i].second);
-			markAll(*it - glm::ivec3(0, blockList[i].second.x - 1, 0), glm::ivec3(blockList[i].second.y, blockList[i].second.x, blockList[i].second.z));
-			markAll(*it - glm::ivec3(blockList[i].second.x - 1, blockList[i].second.y - 1, 0), blockList[i].second);
-			markAll(*it - glm::ivec3(blockList[i].second.y - 1, blockList[i].second.x - 1, 0), glm::ivec3(blockList[i].second.y, blockList[i].second.x, blockList[i].second.z));
+			markAll(*it,  vec3i(blockList[i].second.y, blockList[i].second.x, blockList[i].second.z));
+			markAll(*it - vec3i(blockList[i].second.x - 1, 0, 0), blockList[i].second);
+			markAll(*it - vec3i(blockList[i].second.y - 1, 0, 0), vec3i(blockList[i].second.y, blockList[i].second.x, blockList[i].second.z));
+			markAll(*it - vec3i(0, blockList[i].second.y - 1, 0), blockList[i].second);
+			markAll(*it - vec3i(0, blockList[i].second.x - 1, 0), vec3i(blockList[i].second.y, blockList[i].second.x, blockList[i].second.z));
+			markAll(*it - vec3i(blockList[i].second.x - 1, blockList[i].second.y - 1, 0), blockList[i].second);
+			markAll(*it - vec3i(blockList[i].second.y - 1, blockList[i].second.x - 1, 0), vec3i(blockList[i].second.y, blockList[i].second.x, blockList[i].second.z));
 		}
 
 		if (!benchmarkPosition.empty())
@@ -296,8 +296,8 @@ void HouseGenerator::createAndPlaceHouseBlock()
 	}
 
 	//	Compute house center
-	glm::ivec3 vmax(0, 0, 0);
-	glm::ivec3 vmin(houseFieldSize, houseFieldSize, houseFieldFloor);
+	vec3i vmax(0, 0, 0);
+	vec3i vmin(houseFieldSize, houseFieldSize, houseFieldFloor);
 	for (unsigned int i = 0; i < blockList.size(); i++)
 	{
 		vmax.x = std::max(vmax.x, blockList[i].first.x + blockList[i].second.x);
@@ -357,17 +357,17 @@ void HouseGenerator::createAndPlaceDecorationBlock()
 
 					if (k == 0 && doorCount && rand < 10 + 90.f * factor/superficy)
 					{
-						addHouseBlocks(glm::ivec3(i, j, k), glm::ivec3(1, 1, 1), HouseTypeBlock::Door, index++);
+						addHouseBlocks(vec3i(i, j, k), vec3i(1, 1, 1), HouseTypeBlock::Door, index++);
 						doorCount--;
 					}
 					else if (fireplaceCount && rand < 10 + 90.f * factor / superficy)
 					{
-						addHouseBlocks(glm::ivec3(i, j, k), glm::ivec3(1, 1, 1), HouseTypeBlock::Fireplace, index++);
+						addHouseBlocks(vec3i(i, j, k), vec3i(1, 1, 1), HouseTypeBlock::Fireplace, index++);
 						fireplaceCount--;
 					}
 					else if (rand < 40)
 					{
-						addHouseBlocks(glm::ivec3(i, j, k), glm::ivec3(1, 1, 1), HouseTypeBlock::Window, index++);
+						addHouseBlocks(vec3i(i, j, k), vec3i(1, 1, 1), HouseTypeBlock::Window, index++);
 					}
 				}
 	}
@@ -416,7 +416,7 @@ void HouseGenerator::constructHouseMesh()
 						case HouseTypeBlock::Fireplace: meshToPush = assetLibrary["fireplace"]; break;
 						default: meshToPush = nullptr; break;
 					}
-					pushMesh(meshToPush, glm::vec3(i + 1 - houseOrigin.x, j + 0.5f - houseOrigin.y, houseOrigin.z + 2.5f * k), glm::vec3(0.f, -1.f, 0.f));
+					pushMesh(meshToPush, vec4f(i + 1 - houseOrigin.x, j + 0.5f - houseOrigin.y, houseOrigin.z + 2.5f * k, 1.f), vec4f(0.f, -1.f, 0.f, 1.f));
 				}
 
 				//	left wall
@@ -430,7 +430,7 @@ void HouseGenerator::constructHouseMesh()
 						case HouseTypeBlock::Fireplace: meshToPush = assetLibrary["fireplace"]; break;
 						default: meshToPush = nullptr; break;
 					}
-					pushMesh(meshToPush, glm::vec3(i - houseOrigin.x, j + 0.5f - houseOrigin.y, houseOrigin.z + 2.5f*k), glm::vec3(0.f, 1.f, 0.f));
+					pushMesh(meshToPush, vec4f(i - houseOrigin.x, j + 0.5f - houseOrigin.y, houseOrigin.z + 2.5f * k, 1.f), vec4f(0.f, 1.f, 0.f, 1.f));
 				}
 
 				//	lower wall
@@ -444,7 +444,7 @@ void HouseGenerator::constructHouseMesh()
 						case HouseTypeBlock::Fireplace: meshToPush = assetLibrary["fireplace"]; break;
 						default: meshToPush = nullptr; break;
 					}
-					pushMesh(meshToPush, glm::vec3(i + 0.5f - houseOrigin.x, j + 1 - houseOrigin.y, houseOrigin.z + 2.5f*k), glm::vec3(1.f, 0.f, 0.f));
+					pushMesh(meshToPush, vec4f(i + 0.5f - houseOrigin.x, j + 1 - houseOrigin.y, houseOrigin.z + 2.5f * k, 1.f), vec4f(1.f, 0.f, 0.f, 1.f));
 				}
 
 				//	upper wall
@@ -458,18 +458,18 @@ void HouseGenerator::constructHouseMesh()
 						case HouseTypeBlock::Fireplace: meshToPush = assetLibrary["fireplace"]; break;
 						default: meshToPush = nullptr; break;
 					}
-					pushMesh(meshToPush, glm::vec3(i + 0.5f - houseOrigin.x, j - houseOrigin.y, houseOrigin.z + 2.5f*k), glm::vec3(-1.f, 0.f, 0.f));
+					pushMesh(meshToPush, vec4f(i + 0.5f - houseOrigin.x, j - houseOrigin.y, houseOrigin.z + 2.5f*k, 1.f), vec4f(-1.f, 0.f, 0.f, 1.f));
 				}
 
 				//	corners
 				if (houseField[k][i + 1][j].house == HouseTypeBlock::None && houseField[k][i][j + 1].house == HouseTypeBlock::None)
-					pushMesh(assetLibrary["corner"], glm::vec3(i + 1 - houseOrigin.x, j + 1 - houseOrigin.y, houseOrigin.z + 2.5f * k), glm::vec3(1.f, 0.f, 0.f));
+					pushMesh(assetLibrary["corner"], vec4f(i + 1 - houseOrigin.x, j + 1 - houseOrigin.y, houseOrigin.z + 2.5f * k, 1.f), vec4f(1.f, 0.f, 0.f, 1.f));
 				if (houseField[k][i - 1][j].house == HouseTypeBlock::None && houseField[k][i][j + 1].house == HouseTypeBlock::None)
-					pushMesh(assetLibrary["corner"], glm::vec3(i - houseOrigin.x, j + 1 - houseOrigin.y, houseOrigin.z + 2.5f * k), glm::vec3(0.f, 1.f, 0.f));
+					pushMesh(assetLibrary["corner"], vec4f(i - houseOrigin.x, j + 1 - houseOrigin.y, houseOrigin.z + 2.5f * k, 1.f), vec4f(0.f, 1.f, 0.f, 1.f));
 				if (houseField[k][i + 1][j].house == HouseTypeBlock::None && houseField[k][i][j - 1].house == HouseTypeBlock::None)
-					pushMesh(assetLibrary["corner"], glm::vec3(i + 1 - houseOrigin.x, j - houseOrigin.y, houseOrigin.z + 2.5f * k), glm::vec3(0.f, -1.f, 0.f));
+					pushMesh(assetLibrary["corner"], vec4f(i + 1 - houseOrigin.x, j - houseOrigin.y, houseOrigin.z + 2.5f * k, 1.f), vec4f(0.f, -1.f, 0.f, 1.f));
 				if (houseField[k][i - 1][j].house == HouseTypeBlock::None && houseField[k][i][j - 1].house == HouseTypeBlock::None)
-					pushMesh(assetLibrary["corner"], glm::vec3(i - houseOrigin.x, j - houseOrigin.y, houseOrigin.z + 2.5f * k), glm::vec3(-1.f, 0.f, 0.f));
+					pushMesh(assetLibrary["corner"], vec4f(i - houseOrigin.x, j - houseOrigin.y, houseOrigin.z + 2.5f * k, 1.f), vec4f(-1.f, 0.f, 0.f, 1.f));
 			}
 }
 void HouseGenerator::constructRoofMesh()
@@ -482,22 +482,22 @@ void HouseGenerator::constructRoofMesh()
 				if (houseField[k][i][j].roof < 0)
 				{
 					if (!freePlace(i - 1, j, k) && freePlace(i - 1, j, k + 1))
-						pushMesh(assetLibrary["roofEnd"], glm::vec3(i - houseOrigin.x, j + 0.5f - houseOrigin.y, houseOrigin.z + 2.5f * k), glm::vec3(0.f, -1.f, 0.f));
+						pushMesh(assetLibrary["roofEnd"], vec4f(i - houseOrigin.x, j + 0.5f - houseOrigin.y, houseOrigin.z + 2.5f * k, 1.f), vec4f(0.f, -1.f, 0.f, 1.f));
 					if (!freePlace(i + 1, j, k) && freePlace(i + 1, j, k + 1))
-						pushMesh(assetLibrary["roofEnd"], glm::vec3(i + 1 - houseOrigin.x, j + 0.5f - houseOrigin.y, houseOrigin.z + 2.5f * k), glm::vec3(0.f, 1.f, 0.f));
+						pushMesh(assetLibrary["roofEnd"], vec4f(i + 1 - houseOrigin.x, j + 0.5f - houseOrigin.y, houseOrigin.z + 2.5f * k, 1.f), vec4f(0.f, 1.f, 0.f, 1.f));
 					if (!freePlace(i, j - 1, k) && freePlace(i, j - 1, k + 1))
-						pushMesh(assetLibrary["roofEnd"], glm::vec3(i + 0.5f - houseOrigin.x, j - houseOrigin.y, houseOrigin.z + 2.5f * k), glm::vec3(1.f, 0.f, 0.f));
+						pushMesh(assetLibrary["roofEnd"], vec4f(i + 0.5f - houseOrigin.x, j - houseOrigin.y, houseOrigin.z + 2.5f * k, 1.f), vec4f(1.f, 0.f, 0.f, 1.f));
 					if (!freePlace(i, j + 1, k) && freePlace(i, j + 1, k + 1))
-						pushMesh(assetLibrary["roofEnd"], glm::vec3(i + 0.5f - houseOrigin.x, j + 1 - houseOrigin.y, houseOrigin.z + 2.5f * k), glm::vec3(-1.f, 0.f, 0.f));
+						pushMesh(assetLibrary["roofEnd"], vec4f(i + 0.5f - houseOrigin.x, j + 1 - houseOrigin.y, houseOrigin.z + 2.5f * k, 1.f), vec4f(-1.f, 0.f, 0.f, 1.f));
 				
 					if (!freePlace(i - 1, j - 1, k) && freePlace(i - 1, j - 1, k + 1) && freePlace(i - 1, j, k) && freePlace(i, j - 1, k))
-						pushMesh(assetLibrary["roofEndCorner"], glm::vec3(i - houseOrigin.x, j - houseOrigin.y, houseOrigin.z + 2.5f * k), glm::vec3(0.f, 1.f, 0.f));
+						pushMesh(assetLibrary["roofEndCorner"], vec4f(i - houseOrigin.x, j - houseOrigin.y, houseOrigin.z + 2.5f * k, 1.f), vec4f(0.f, 1.f, 0.f, 1.f));
 					if (!freePlace(i + 1, j + 1, k) && freePlace(i + 1, j + 1, k + 1) && freePlace(i + 1, j, k) && freePlace(i, j + 1, k))
-						pushMesh(assetLibrary["roofEndCorner"], glm::vec3(i + 1 - houseOrigin.x, j + 1 - houseOrigin.y, houseOrigin.z + 2.5f * k), glm::vec3(0.f, -1.f, 0.f));
+						pushMesh(assetLibrary["roofEndCorner"], vec4f(i + 1 - houseOrigin.x, j + 1 - houseOrigin.y, houseOrigin.z + 2.5f * k, 1.f), vec4f(0.f, -1.f, 0.f, 1.f));
 					if (!freePlace(i - 1, j + 1, k) && freePlace(i - 1, j + 1, k + 1) && freePlace(i - 1, j, k) && freePlace(i, j + 1, k))
-						pushMesh(assetLibrary["roofEndCorner"], glm::vec3(i - houseOrigin.x, j + 1 - houseOrigin.y, houseOrigin.z + 2.5f * k), glm::vec3(1.f, 0.f, 0.f));
+						pushMesh(assetLibrary["roofEndCorner"], vec4f(i - houseOrigin.x, j + 1 - houseOrigin.y, houseOrigin.z + 2.5f * k, 1.f), vec4f(1.f, 0.f, 0.f, 1.f));
 					if (!freePlace(i + 1, j - 1, k) && freePlace(i + 1, j - 1, k + 1) && freePlace(i + 1, j, k) && freePlace(i, j - 1, k))
-						pushMesh(assetLibrary["roofEndCorner"], glm::vec3(i + 1 - houseOrigin.x, j - houseOrigin.y, houseOrigin.z + 2.5f * k), glm::vec3(-1.f, 0.f, 0.f));
+						pushMesh(assetLibrary["roofEndCorner"], vec4f(i + 1 - houseOrigin.x, j - houseOrigin.y, houseOrigin.z + 2.5f * k, 1.f), vec4f(-1.f, 0.f, 0.f, 1.f));
 				}
 				else if (k + 1 < houseFieldFloor && houseField[k + 1][i][j].house == HouseTypeBlock::None)
 				{
@@ -512,127 +512,127 @@ void HouseGenerator::constructRoofMesh()
 					char northWest = getRelativePosRoof(houseField[k][i][j].roof, i + 1, j - 1, k);
 					char southWest = getRelativePosRoof(houseField[k][i][j].roof, i + 1, j + 1, k);
 
-					glm::vec3 p = glm::vec3(i + 0.5f - houseOrigin.x, j + 0.5f - houseOrigin.y, houseOrigin.z + 2.5f * k + houseField[k][i][j].roof);
+					vec4f p = vec4f(i + 0.5f - houseOrigin.x, j + 0.5f - houseOrigin.y, houseOrigin.z + 2.5f * k + houseField[k][i][j].roof, 1.f);
 
 					///	Pic
 					if (north == '-' && south == '-' && east == '-' && west == '-')
-						pushMesh(assetLibrary["pic"], glm::vec3(i + 0.5f - houseOrigin.x, j + 0.5f - houseOrigin.y, houseOrigin.z + 2.5f * k + houseField[k][i][j].roof), glm::vec3(1.f, 0.f, 0.f));
+						pushMesh(assetLibrary["pic"], vec4f(i + 0.5f - houseOrigin.x, j + 0.5f - houseOrigin.y, houseOrigin.z + 2.5f * k + houseField[k][i][j].roof, 1.f), vec4f(1.f, 0.f, 0.f, 1.f));
 					
 					///	Merge-part two top & two slope
 					else if (north == '0' && south == '0' && east == '0' && west == '0' && northEast == '-' && (northWest == '0' || northWest == '+') && southEast == '-' && southWest == '-')
-						pushMesh(assetLibrary["dualTopDualSlope"], p, glm::vec3(-1.f, 0.f, 0.f));
+						pushMesh(assetLibrary["dualTopDualSlope"], p, vec4f(-1.f, 0.f, 0.f, 1.f));
 					else if (north == '0' && south == '0' && east == '0' && west == '0' && (northEast == '0' || northEast == '+') && northWest == '-' && southEast == '-' && southWest == '-')
-						pushMesh(assetLibrary["dualTopDualSlope"], p, glm::vec3(0.f, 1.f, 0.f));
+						pushMesh(assetLibrary["dualTopDualSlope"], p, vec4f(0.f, 1.f, 0.f, 1.f));
 					else if (north == '0' && south == '0' && east == '0' && west == '0' && northEast == '-' && northWest == '-' && (southEast == '0' || southEast == '+') && southWest == '-')
-						pushMesh(assetLibrary["dualTopDualSlope"], p, glm::vec3(1.f, 0.f, 0.f));
+						pushMesh(assetLibrary["dualTopDualSlope"], p, vec4f(1.f, 0.f, 0.f, 1.f));
 					else if (north == '0' && south == '0' && east == '0' && west == '0' && northEast == '-' && northWest == '-' && southEast == '-' && (southWest == '0' || southWest == '+'))
-						pushMesh(assetLibrary["dualTopDualSlope"], p, glm::vec3(0.f, -1.f, 0.f));
+						pushMesh(assetLibrary["dualTopDualSlope"], p, vec4f(0.f, -1.f, 0.f, 1.f));
 					
 					///	Merge-part one top & two slope
 					else if (north == '0' && south == '0' && east == '-' && west == '0' && (northWest == '0' || northWest == '+') && southEast == '-' && southWest == '-')
-						pushMesh(assetLibrary["topDualSlope2"], p, glm::vec3(0.f, 1.f, 0.f));
+						pushMesh(assetLibrary["topDualSlope2"], p, vec4f(0.f, 1.f, 0.f, 1.f));
 					else if (north == '0' && south == '-' && east == '0' && west == '0' && (northEast == '0' || northEast == '+') && southWest == '-' && northWest == '-')
-						pushMesh(assetLibrary["topDualSlope2"], p, glm::vec3(1.f, 0.f, 0.f));
+						pushMesh(assetLibrary["topDualSlope2"], p, vec4f(1.f, 0.f, 0.f, 1.f));
 					else if (north == '0' && south == '0' && east == '0' && west == '-' && (southEast == '0' || southEast == '+') && northEast == '-' && northWest == '-')
-						pushMesh(assetLibrary["topDualSlope2"], p, glm::vec3(0.f, -1.f, 0.f));
+						pushMesh(assetLibrary["topDualSlope2"], p, vec4f(0.f, -1.f, 0.f, 1.f));
 					else if (north == '-' && south == '0' && east == '0' && west == '0' && (southWest == '0' || southWest == '+') && northEast == '-' && southEast == '-')
-						pushMesh(assetLibrary["topDualSlope2"], p, glm::vec3(-1.f, 0.f, 0.f));
+						pushMesh(assetLibrary["topDualSlope2"], p, vec4f(-1.f, 0.f, 0.f, 1.f));
 
 					else if (north == '0' && south == '0' && east == '0' && west == '-' && (northEast == '0' || northEast == '+') && southEast == '-' && southWest == '-')
-						pushMesh(assetLibrary["topDualSlope"], p, glm::vec3(0.f, 1.f, 0.f));
+						pushMesh(assetLibrary["topDualSlope"], p, vec4f(0.f, 1.f, 0.f, 1.f));
 					else if (north == '-' && south == '0' && east == '0' && west == '0' && (southEast == '0' || southEast == '+') && northWest == '-' && southWest == '-')
-						pushMesh(assetLibrary["topDualSlope"], p, glm::vec3(1.f, 0.f, 0.f));
+						pushMesh(assetLibrary["topDualSlope"], p, vec4f(1.f, 0.f, 0.f, 1.f));
 					else if (north == '0' && south == '0' && east == '-' && west == '0' && (southWest == '0' || southWest == '+') && northWest == '-' && northEast == '-')
-						pushMesh(assetLibrary["topDualSlope"], p, glm::vec3(0.f, -1.f, 0.f));
+						pushMesh(assetLibrary["topDualSlope"], p, vec4f(0.f, -1.f, 0.f, 1.f));
 					else if (north == '0' && south == '-' && east == '0' && west == '0' && (northWest == '0' || northWest == '+') && southEast == '-' && northEast == '-')
-						pushMesh(assetLibrary["topDualSlope"], p, glm::vec3(-1.f, 0.f, 0.f));
+						pushMesh(assetLibrary["topDualSlope"], p, vec4f(-1.f, 0.f, 0.f, 1.f));
 
 					///	Top tee
 					else if (north == '0' && south == '0' && east == '0' && west == '-' && southEast == '-' && northEast == '-')
-						pushMesh(assetLibrary["topTee"], p, glm::vec3(0.f, 1.f, 0.f));
+						pushMesh(assetLibrary["topTee"], p, vec4f(0.f, 1.f, 0.f, 1.f));
 					else if (north == '0' && south == '-' && east == '0' && west == '0' && northEast == '-' && northWest == '-')
-						pushMesh(assetLibrary["topTee"], p, glm::vec3(-1.f, 0.f, 0.f));
+						pushMesh(assetLibrary["topTee"], p, vec4f(-1.f, 0.f, 0.f, 1.f));
 					else if (north == '0' && south == '0' && east == '-' && west == '0' && northWest == '-' && southWest == '-')
-						pushMesh(assetLibrary["topTee"], p, glm::vec3(0.f, -1.f, 0.f));
+						pushMesh(assetLibrary["topTee"], p, vec4f(0.f, -1.f, 0.f, 1.f));
 					else if (north == '-' && south == '0' && east == '0' && west == '0' && southWest == '-' && southEast == '-')
-						pushMesh(assetLibrary["topTee"], p, glm::vec3(1.f, 0.f, 0.f));
+						pushMesh(assetLibrary["topTee"], p, vec4f(1.f, 0.f, 0.f, 1.f));
 
 					///	Merge-part top slope
 					else if ((north == '0' || north == '+') && south == '0' && east == '0' && west == '0' && southWest == '-' && southEast == '-')
-						pushMesh(assetLibrary["slopeTop"], p, glm::vec3(1.f, 0.f, 0.f));
+						pushMesh(assetLibrary["slopeTop"], p, vec4f(1.f, 0.f, 0.f, 1.f));
 					else if (north == '0' && south == '0' && (east == '0' || east == '+') && west == '0' && southWest == '-' && northWest == '-')
-						pushMesh(assetLibrary["slopeTop"], p, glm::vec3(0.f, -1.f, 0.f));
+						pushMesh(assetLibrary["slopeTop"], p, vec4f(0.f, -1.f, 0.f, 1.f));
 					else if (north == '0' && (south == '0' || south == '+') && east == '0' && west == '0' && northEast == '-' && northWest == '-')
-						pushMesh(assetLibrary["slopeTop"], p, glm::vec3(-1.f, 0.f, 0.f));
+						pushMesh(assetLibrary["slopeTop"], p, vec4f(-1.f, 0.f, 0.f, 1.f));
 					else if (north == '0' && south == '0' && east == '0' && (west == '0' || west == '+') && northEast == '-' && southEast == '-')
-						pushMesh(assetLibrary["slopeTop"], p, glm::vec3(0.f, 1.f, 0.f));
+						pushMesh(assetLibrary["slopeTop"], p, vec4f(0.f, 1.f, 0.f, 1.f));
 
 					///	Top angles
 					else if (north == '-' && south == '0' && east == '-' && west == '0' && northWest == '-' && southEast == '-' && southWest == '-')
-						pushMesh(assetLibrary["topAngle"], p, glm::vec3(0.f, -1.f, 0.f));
+						pushMesh(assetLibrary["topAngle"], p, vec4f(0.f, -1.f, 0.f, 1.f));
 					else if (north == '0' && south == '-' && east == '-' && west == '0' && northWest == '-' && northEast == '-' && southWest == '-')
-						pushMesh(assetLibrary["topAngle"], p, glm::vec3(-1.f, 0.f, 0.f));
+						pushMesh(assetLibrary["topAngle"], p, vec4f(-1.f, 0.f, 0.f, 1.f));
 					else if (north == '0' && south == '-' && east == '0' && west == '-' && northWest == '-' && northEast == '-' && southEast == '-')
-						pushMesh(assetLibrary["topAngle"], p, glm::vec3(0.f, 1.f, 0.f));
+						pushMesh(assetLibrary["topAngle"], p, vec4f(0.f, 1.f, 0.f, 1.f));
 					else if (north == '-' && south == '0' && east == '0' && west == '-' && northEast == '-' && southEast == '-' && southWest == '-')
-						pushMesh(assetLibrary["topAngle"], p, glm::vec3(1.f, 0.f, 0.f));
+						pushMesh(assetLibrary["topAngle"], p, vec4f(1.f, 0.f, 0.f, 1.f));
 
 					///	Top end
 					else if (north == '0' && (south == '-' || south == '1') && (east == '-' || east == '1') && (west == '-' || west == '1'))
-						pushMesh(assetLibrary["topEnd"], p, glm::vec3(0.f, -1.f, 0.f));
+						pushMesh(assetLibrary["topEnd"], p, vec4f(0.f, -1.f, 0.f, 1.f));
 					else if ((north == '-' || north == '1') && (south == '-' || south == '1') && east == '0' && (west == '-' || west == '1'))
-						pushMesh(assetLibrary["topEnd"], p, glm::vec3(-1.f, 0.f, 0.f));
+						pushMesh(assetLibrary["topEnd"], p, vec4f(-1.f, 0.f, 0.f, 1.f));
 					else if ((north == '-' || north == '1') && south == '0' && (east == '-' || east == '1') && (west == '-' || west == '1'))
-						pushMesh(assetLibrary["topEnd"], p, glm::vec3(0.f, 1.f, 0.f));
+						pushMesh(assetLibrary["topEnd"], p, vec4f(0.f, 1.f, 0.f, 1.f));
 					else if ((north == '-' || north == '1') && (south == '-' || south == '1') && (east == '-' || east == '1') && west == '0')
-						pushMesh(assetLibrary["topEnd"], p, glm::vec3(1.f, 0.f, 0.f));
+						pushMesh(assetLibrary["topEnd"], p, vec4f(1.f, 0.f, 0.f, 1.f));
 
 					///	Top
 					else if (north == '0' && south == '0' && east == '-' && west == '-')
-						pushMesh(assetLibrary["top"], p, glm::vec3(0.f, 1.f, 0.f));
+						pushMesh(assetLibrary["top"], p, vec4f(0.f, 1.f, 0.f, 1.f));
 					else if (north == '-' && south == '-' && east == '0' && west == '0')
-						pushMesh(assetLibrary["top"], p, glm::vec3(1.f, 0.f, 0.f));
+						pushMesh(assetLibrary["top"], p, vec4f(1.f, 0.f, 0.f, 1.f));
 
 					///	Dual slope outter
 					else if (north == '0' && (south == '-' || south == '1') && (east == '-' || east == '1') && west == '0' && (northWest == '0' || northWest == '+'))
-						pushMesh(assetLibrary["outter"], p, glm::vec3(1.f, 0.f, 0.f));
+						pushMesh(assetLibrary["outter"], p, vec4f(1.f, 0.f, 0.f, 1.f));
 					else if (north == '0' && (south == '-' || south == '1') && east == '0'  && (west == '-' || west == '1')&& (northEast == '0' || northEast == '+'))
-						pushMesh(assetLibrary["outter"], p, glm::vec3(0.f, -1.f, 0.f));
+						pushMesh(assetLibrary["outter"], p, vec4f(0.f, -1.f, 0.f, 1.f));
 					else if ((north == '-' || north == '1') && south == '0' && east == '0' && (west == '-' || west == '1') && (southEast == '0' || southEast == '+'))
-						pushMesh(assetLibrary["outter"], p, glm::vec3(-1.f, 0.f, 0.f));
+						pushMesh(assetLibrary["outter"], p, vec4f(-1.f, 0.f, 0.f, 1.f));
 					else if ((north == '-' || north == '1') && south == '0' && (east == '-' || east == '1') && west == '0' && (southWest == '0' || southWest == '+'))
-						pushMesh(assetLibrary["outter"], p, glm::vec3(0.f, 1.f, 0.f));
+						pushMesh(assetLibrary["outter"], p, vec4f(0.f, 1.f, 0.f, 1.f));
 
 					///	Dual slope inner
 					else if ((north == '+' || north == '0') && south == '0' && east == '0' && (west == '+' || west == '0') && (southEast == '-' || southEast == '1'))
-						pushMesh(assetLibrary["inner"], p, glm::vec3(1.f, 0.f, 0.f));
+						pushMesh(assetLibrary["inner"], p, vec4f(1.f, 0.f, 0.f, 1.f));
 					else if ((north == '+' || north == '0') && south == '0' && (east == '+' || east == '0') && west == '0'  && (southWest == '-' || southWest == '1'))
-						pushMesh(assetLibrary["inner"], p, glm::vec3(0.f, -1.f, 0.f));
+						pushMesh(assetLibrary["inner"], p, vec4f(0.f, -1.f, 0.f, 1.f));
 					else if (north == '0' && (south == '+' || south == '0') && (east == '+' || east == '0') && west == '0' && (northWest == '-' || northWest == '1'))
-						pushMesh(assetLibrary["inner"], p, glm::vec3(-1.f, 0.f, 0.f));
+						pushMesh(assetLibrary["inner"], p, vec4f(-1.f, 0.f, 0.f, 1.f));
 					else if (north == '0' && (south == '+' || south == '0') && east == '0' && (west == '+' || west == '0') && (northEast == '-' || northEast == '1'))
-						pushMesh(assetLibrary["inner"], p, glm::vec3(0.f, 1.f, 0.f));
+						pushMesh(assetLibrary["inner"], p, vec4f(0.f, 1.f, 0.f, 1.f));
 
 					///	Simple slope
 					else if ((north == '+' || north == '0') && (south == '-' || south == '1'))
-						pushMesh(assetLibrary["slope"], p, glm::vec3(1.f, 0.f, 0.f));
+						pushMesh(assetLibrary["slope"], p, vec4f(1.f, 0.f, 0.f, 1.f));
 					else if ((east == '-' || east == '1') && (west == '+' || west == '0'))
-						pushMesh(assetLibrary["slope"], p, glm::vec3(0.f, 1.f, 0.f));
+						pushMesh(assetLibrary["slope"], p, vec4f(0.f, 1.f, 0.f, 1.f));
 					else if ((north == '-' || north == '1') && (south == '+' || south == '0'))
-						pushMesh(assetLibrary["slope"], p, glm::vec3(-1.f, 0.f, 0.f));
+						pushMesh(assetLibrary["slope"], p, vec4f(-1.f, 0.f, 0.f, 1.f));
 					else if ((east == '+' || east == '0') && (west == '-' || west == '1'))
-						pushMesh(assetLibrary["slope"], p, glm::vec3(0.f, -1.f, 0.f));
+						pushMesh(assetLibrary["slope"], p, vec4f(0.f, -1.f, 0.f, 1.f));
 
 					///	Error
-					else pushMesh(assetLibrary["debug"], glm::vec3(i + 0.5f - houseOrigin.x, j + 0.5f - houseOrigin.y, houseOrigin.z + 0.5f + 2.5f * k + houseField[k][i][j].roof), glm::vec3(1.f, 0.f, 0.f), glm::vec3(0.3f, 0.3f, 0.3f));
+					else pushMesh(assetLibrary["debug"], vec4f(i + 0.5f - houseOrigin.x, j + 0.5f - houseOrigin.y, houseOrigin.z + 0.5f + 2.5f * k + houseField[k][i][j].roof, 1.f), vec4f(1.f, 0.f, 0.f, 1.f), vec4f(0.3f, 0.3f, 0.3f, 1.f));
 				}
 			}
 }
 /*void HouseGenerator::optimizeMesh()
 {
-	std::vector<glm::vec3> verticesBuffer;
-	std::vector<glm::vec3> normalesBuffer;
-	std::vector<glm::vec3> colorBuffer;
+	std::vector<vec4f> verticesBuffer;
+	std::vector<vec4f> normalesBuffer;
+	std::vector<vec4f> colorBuffer;
 	std::vector<unsigned short> facesBuffer;
 
 	std::map<OrderedVertex, unsigned short> vertexAlias;
@@ -673,12 +673,12 @@ bool HouseGenerator::searchBlockPartition(const int& superficy, const int& testI
 	if (s < 0) return false;
 	else if (s < 3)
 	{
-		blockList.push_back(std::pair<glm::ivec3, glm::ivec3>(glm::ivec3(0, 0, 0), blockLibrary[testIndex]));
+		blockList.push_back(std::pair<vec3i, vec3i>(vec3i(0, 0, 0), blockLibrary[testIndex]));
 		return true;
 	}
 	else
 	{
-		blockList.push_back(std::pair<glm::ivec3, glm::ivec3>(glm::ivec3(0, 0, 0), blockLibrary[testIndex]));
+		blockList.push_back(std::pair<vec3i, vec3i>(vec3i(0, 0, 0), blockLibrary[testIndex]));
 		for (unsigned int i = testIndex; i < blockLibrary.size(); i++)
 			if (searchBlockPartition(s, i)) return true;
 		return false;
@@ -753,15 +753,15 @@ bool HouseGenerator::markDecorative(const unsigned int& i, const unsigned int& j
 
 	return true;
 }
-glm::ivec3 HouseGenerator::getRandomPosition(const int& safeOffset, const int& maxZ)
+vec3i HouseGenerator::getRandomPosition(const int& safeOffset, const int& maxZ)
 {
-	return glm::ivec3(	(randomEngine() % (houseFieldSize - 2 * safeOffset)) + safeOffset,
+	return vec3i(	(randomEngine() % (houseFieldSize - 2 * safeOffset)) + safeOffset,
 						(randomEngine() % (houseFieldSize - 2 * safeOffset)) + safeOffset,
 						randomEngine() % (maxZ + 1) );
 }
 
 
-void HouseGenerator::markAll(const glm::ivec3& p, const glm::ivec3& s)
+void HouseGenerator::markAll(const vec3i& p, const vec3i& s)
 {
 	float mark = markFree(p, s);	if (mark <= 0.f) return;
 	mark *= markSupport(p, s);		if (mark <= 0.f) return;
@@ -770,7 +770,7 @@ void HouseGenerator::markAll(const glm::ivec3& p, const glm::ivec3& s)
 
 	benchmarkPosition.push_back(MarkedPosition(mark + (randomEngine() % std::max(s.x, s.y)), p, s));
 }
-float HouseGenerator::markFree(const glm::ivec3& p, const glm::ivec3& s) const
+float HouseGenerator::markFree(const vec3i& p, const vec3i& s) const
 {
 	//	Check out of range
 	if (p.x < 0 || p.y < 0 || p.z < 0)
@@ -785,7 +785,7 @@ float HouseGenerator::markFree(const glm::ivec3& p, const glm::ivec3& s) const
 				if (!freePlace(i, j, k)) return 0.f;
 	return 1.f;
 }
-float HouseGenerator::markSupport(const glm::ivec3& p, const glm::ivec3& s) const
+float HouseGenerator::markSupport(const vec3i& p, const vec3i& s) const
 {
 	if (p.z > 0)
 	{
@@ -801,7 +801,7 @@ float HouseGenerator::markSupport(const glm::ivec3& p, const glm::ivec3& s) cons
 	else if (p.z == 0) return s.x * s.y * (1.1f - density / 100.f);
 	else return 0.f;
 }
-float HouseGenerator::markAdjacent(const glm::ivec3& p, const glm::ivec3& s) const
+float HouseGenerator::markAdjacent(const vec3i& p, const vec3i& s) const
 {
 	if (!freeFloor(p.z))
 	{
@@ -822,7 +822,7 @@ float HouseGenerator::markAdjacent(const glm::ivec3& p, const glm::ivec3& s) con
 	else if (s.x * s.y < 12) return 0.f;
 	else return (float)(s.x * s.y);
 }
-float HouseGenerator::markMassive(const glm::ivec3& p, const glm::ivec3& s) const
+float HouseGenerator::markMassive(const vec3i& p, const vec3i& s) const
 {
 	bool reachOut;
 	for (int i = 0; i < houseFieldSize; i++)
@@ -850,7 +850,7 @@ float HouseGenerator::markMassive(const glm::ivec3& p, const glm::ivec3& s) cons
 }
 
 
-void HouseGenerator::addHouseBlocks(const glm::ivec3& p, const glm::ivec3& s, const int& houseType, const unsigned int& blockReference)
+void HouseGenerator::addHouseBlocks(const vec3i& p, const vec3i& s, const int& houseType, const unsigned int& blockReference)
 {
 	for (int k = p.z; k < p.z + s.z; k++)
 		for (int i = p.x; i < p.x + s.x; i++)
@@ -860,19 +860,19 @@ void HouseGenerator::addHouseBlocks(const glm::ivec3& p, const glm::ivec3& s, co
 				houseField[k][i][j].blockReference = blockReference;
 			}
 }
-void HouseGenerator::updateAvailableBlockPosition(const glm::ivec3& p, const glm::ivec3& s)
+void HouseGenerator::updateAvailableBlockPosition(const vec3i& p, const vec3i& s)
 {
 	//	adjacent block
 	for (int k = p.z; k < p.z + s.z; k++)
 	{
 		for (int i = p.x; i < p.x + s.x; i++)
-			availableBlockPosition.push_back(glm::ivec3(i, p.y - 1,   k));
+			availableBlockPosition.push_back(vec3i(i, p.y - 1,   k));
 		for (int i = p.x; i < p.x + s.x; i++)
-			availableBlockPosition.push_back(glm::ivec3(i, p.y + s.y, k));
+			availableBlockPosition.push_back(vec3i(i, p.y + s.y, k));
 		for (int i = p.y; i < p.y + s.y; i++)
-			availableBlockPosition.push_back(glm::ivec3(p.x - 1,   i, k));
+			availableBlockPosition.push_back(vec3i(p.x - 1,   i, k));
 		for (int i = p.y; i < p.y + s.y; i++)
-			availableBlockPosition.push_back(glm::ivec3(p.x + s.x, i, k));
+			availableBlockPosition.push_back(vec3i(p.x + s.x, i, k));
 	}
 
 	//	top
@@ -880,7 +880,7 @@ void HouseGenerator::updateAvailableBlockPosition(const glm::ivec3& p, const glm
 	{
 		for (int i = p.x - 1; i <= p.x + s.x; i++)
 			for (int j = p.y - 1; j <= p.y + s.y; j++)
-				availableBlockPosition.push_back(glm::ivec3(i, j, p.z + s.z));
+				availableBlockPosition.push_back(vec3i(i, j, p.z + s.z));
 	}
 
 	//	clear pass
@@ -908,51 +908,43 @@ char HouseGenerator::getRelativePosRoof(const int& ref, const unsigned int& i, c
 }
 
 
-void HouseGenerator::pushMesh(Mesh* m, const glm::vec3& p, const glm::vec3& o, const glm::vec3& s)
+void HouseGenerator::pushMesh(Mesh* m, const vec4f& p, const vec4f& o, const vec4f& s)
 {
 	if (!m) return;
 	unsigned int facesStart = (unsigned int)verticesArray.size();
 
 	//	Compute orientation matrix
-	glm::mat4 orientation(1.f);
-	if (glm::dot(o, glm::vec3(0.f, 1.f, 0.f)) == -1.f)
-		orientation = glm::rotate(glm::mat4(1.f), glm::pi<float>(), glm::vec3(0.f, 0.f, 1.f));
+	mat4f orientation = mat4f::identity;
+	if (vec4f::dot(o, vec4f(0.f, 1.f, 0.f, 0)) == -1.f)
+		orientation = mat4f::rotate(mat4f::identity, vec3f(0.f, 0.f, PI));
 	else
-		orientation = glm::orientation(o, glm::vec3(0.f, 1.f, 0.f));
+		orientation = mat4f::lookAt(o, vec4f(0.f, 1.f, 0.f, 0.f));
 
 	//	Compute mesh model matrix
-	glm::mat4 model = glm::translate(glm::mat4(1.f), p);
-	model = glm::scale(model, s);
+	mat4f model = mat4f::translate(mat4f::identity, p);
+	model = mat4f::scale(model, s);
 	model = model * orientation;
 
 	//	push modified data
 	for (unsigned int i = 0; i < m->vertices.size(); i++)
-	{
-		glm::vec4 v = model * glm::vec4(m->vertices[i], 1.f);
-		verticesArray.push_back(glm::vec3(v.x, v.y, v.z));
-	}
+		verticesArray.push_back(model * m->vertices[i]);
 	for (unsigned int i = 0; i < m->normals.size(); i++)
-	{
-		glm::vec4 v = orientation * glm::vec4(m->normals[i], 1.f);
-		normalesArray.push_back(glm::vec3(v.x, v.y, v.z));
-	}
-	for (unsigned int i = 0; i < m->colors.size(); i++)
-		colorArray.push_back(m->colors[i]);
-
+		normalesArray.push_back(orientation * m->normals[i]);
+	for (unsigned int i = 0; i < m->uvs.size(); i++)
+		uvArray.push_back(m->uvs[i]);
 	for (unsigned int i = 0; i < m->faces.size(); i++)
 		facesArray.push_back(facesStart + m->faces[i]);
 }
-void HouseGenerator::pushGround(float px1, float py1, float pz1, float px2, float py2, float pz2, glm::vec3 color)
+void HouseGenerator::pushGround(float px1, float py1, float pz1, float px2, float py2, float pz2, vec4f color)
 {
-	verticesArray.push_back(glm::vec3(px1, py1, pz1));
-	verticesArray.push_back(glm::vec3(px2, py1, (pz1 + pz2) / 2.f));
-	verticesArray.push_back(glm::vec3(px2, py2, pz2));
-	verticesArray.push_back(glm::vec3(px1, py2, (pz1 + pz2) / 2.f));
+	verticesArray.push_back(vec4f(px1, py1, pz1, 1.f));
+	verticesArray.push_back(vec4f(px2, py1, (pz1 + pz2) / 2.f, 1.f));
+	verticesArray.push_back(vec4f(px2, py2, pz2, 1.f));
+	verticesArray.push_back(vec4f(px1, py2, (pz1 + pz2) / 2.f, 1.f));
 
-	glm::vec3 n = glm::cross(glm::normalize(glm::vec3(px2 - px1, py2 - py1, pz2 - pz1)),
-							 glm::normalize(glm::vec3(0.f, py2 - py1, (pz1 + pz2) / 2.f)));
+	vec4f n = vec4f::cross(vec4f(px2 - px1, py2 - py1, pz2 - pz1, 0).getNormal(), vec4f(0.f, py2 - py1, (pz1 + pz2) / 2.f, 0).getNormal());
 	normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);  normalesArray.push_back(n);
-	colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color); colorArray.push_back(color);
+	uvArray.push_back(color);    uvArray.push_back(color);	  uvArray.push_back(color);    uvArray.push_back(color);
 	facesArray.push_back((unsigned short)verticesArray.size() - 4);
 	facesArray.push_back((unsigned short)verticesArray.size() - 3);
 	facesArray.push_back((unsigned short)verticesArray.size() - 2);

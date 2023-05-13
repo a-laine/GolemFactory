@@ -1,20 +1,17 @@
 #pragma once
 
 #include "VirtualSceneQuerry.h"
+#include <Physics/Shapes/Hull.h>
 
 class FrustrumSceneQuerry : public VirtualSceneQuerry
 {
 	public:
-		FrustrumSceneQuerry(const glm::vec4& position, const glm::vec4& direction, const glm::vec4& verticalDir, const glm::vec4& leftDir, float verticalAngle, float horizontalAngle);
+		FrustrumSceneQuerry(const vec4f& position, const vec4f& direction, const vec4f& verticalDir, const vec4f& leftDir, float verticalAngle, float contextRatio);
 
 		VirtualSceneQuerry::CollisionType operator() (const NodeVirtual* node) override;
 		std::vector<const NodeVirtual*>& getResult();
 
 	private:
-		glm::vec4 cameraPosition;
-		glm::vec4 cameraDirection;
-		glm::vec4 cameraVerticalAxis;
-		glm::vec4 cameraLeftAxis;
-		float cameraVerticalAngle;
-		float cameraHorizontalAngle;
+		vec4f frustrumPlaneNormals[6];
+		vec4f frustrumCorners[5];
 };

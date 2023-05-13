@@ -7,14 +7,14 @@ Mesh* QuickHull::getConvexHull(Mesh* m)
 {
 	// initialization
 	std::cout << "Hull creation from mesh : " << m->name << std::endl;
-	const std::vector<glm::vec3>& pointCloud = *m->getVertices();
+	const std::vector<vec4f>& pointCloud = *m->getVertices();
 	initializeHull(pointCloud);
 	std::set<Face*> faceStack;
 	for (unsigned int i = 0; i < pointCloud.size(); i++)
 	{
 		for (auto it = hullFaces.begin(); it != hullFaces.end(); it++)
 		{
-			if (glm::dot(it->n, pointCloud[i] - it->p1) > 0)
+			if (vec4f::dot(it->n, pointCloud[i] - it->p1) > 0)
 			{
 				it->outter.push_back(pointCloud[i]);
 				faceStack.insert(&(*it));
@@ -39,11 +39,11 @@ Mesh* QuickHull::getConvexHull(Mesh* m)
 		}
 
 		// compute farest point
-		glm::vec3 eye = f->outter[0];
+		vec4f eye = f->outter[0];
 		float maxd = std::numeric_limits<float>::min();
 		for (unsigned int i = 0; i < f->outter.size(); i++)
 		{
-			float d = glm::dot(f->n, f->outter[i] - f->p1);
+			float d = vec4f::dot(f->n, f->outter[i] - f->p1);
 			if (d > maxd)
 			{
 				maxd = d;
@@ -53,7 +53,7 @@ Mesh* QuickHull::getConvexHull(Mesh* m)
 
 		//	compute horizon
 		std::list<Edge*> horizon;
-		std::vector<glm::vec3> unclaimedPoints;
+		std::vector<vec4f> unclaimedPoints;
 		computeHorizon(eye, nullptr, f, horizon, unclaimedPoints);
 
 		if (horizon.empty())
@@ -71,8 +71,8 @@ Mesh* QuickHull::getConvexHull(Mesh* m)
 			std::cout << "    [" << (*it)->p1.x << ' ' << (*it)->p1.y << ' ' << (*it)->p1.z << "], [" << (*it)->p2.x << ' ' << (*it)->p2.y << ' ' << (*it)->p2.z << ']' << std::endl;
 
 			//  create tmp face
-			Face tmp((*it)->p1, (*it)->p2, eye, glm::cross((*it)->p2 - (*it)->p1, eye - (*it)->p1));
-			if (glm::dot(tmp.n, f->n) < 0) tmp.n *= -1.f;
+			Face tmp((*it)->p1, (*it)->p2, eye, vec4f::cross((*it)->p2 - (*it)->p1, eye - (*it)->p1));
+			if (vec4f::dot(tmp.n, f->n) < 0) tmp.n *= -1.f;
 
 			Face* otherFace = nullptr;
 			if ((*it)->f1->onHull) otherFace = (*it)->f1;
@@ -81,7 +81,7 @@ Mesh* QuickHull::getConvexHull(Mesh* m)
 			if (!otherFace) continue;
 
 			//  detect weird case
-			if (glm::cross(otherFace->n, tmp.n) == glm::vec3(0.f))
+			if (vec4f::cross(otherFace->n, tmp.n) == vec4f(0.f))
 			{
 				std::cout << "WEIRD CASE" << std::endl;
 			}
@@ -130,7 +130,7 @@ Mesh* QuickHull::getConvexHull(Mesh* m)
 		{
 			for (auto it = coneFaces.begin(); it != coneFaces.end(); it++)
 			{
-				if (glm::dot((*it)->n, unclaimedPoints[i] - (*it)->p1) > 0)
+				if (vec4f::dot((*it)->n, unclaimedPoints[i] - (*it)->p1) > 0)
 				{
 					(*it)->outter.push_back(unclaimedPoints[i]);
 					break;
@@ -154,15 +154,15 @@ Mesh* QuickHull::getConvexHull(Mesh* m)
 	if (degenerated)
 	{
 		std::cout << "  degenerated mesh !" << std::endl;
-		mesh->initialize(std::vector<glm::vec3>(), std::vector<glm::vec3>(), std::vector<glm::vec3>(), std::vector<unsigned short>(), std::vector<glm::ivec3>(), std::vector<glm::vec3>());
+		mesh->initialize(std::vector<vec4f>(), std::vector<vec4f>(), std::vector<vec4f>(), std::vector<unsigned short>(), std::vector<vec4i>(), std::vector<vec4f>());
 	}
 	else
 	{
 		std::cout << "  good mesh" << std::endl;
-		glm::vec3 hullColor = glm::vec3(0.5f, 0.f, 1.f);
-		std::vector<glm::vec3> vertices;
-		std::vector<glm::vec3> normales;
-		std::vector<glm::vec3> colors;
+		vec4f hullColor = vec4f(0.5f, 0.f, 1.f, 1.f);
+		std::vector<vec4f> vertices;
+		std::vector<vec4f> normales;
+		std::vector<vec4f> colors;
 		std::vector<unsigned short> faces;
 
 		for (auto it = hullFaces.begin(); it != hullFaces.end(); it++)
@@ -175,27 +175,27 @@ Mesh* QuickHull::getConvexHull(Mesh* m)
 			colors.push_back(hullColor);
 			colors.push_back(hullColor);
 
-			normales.push_back(glm::normalize(it->n));
+			normales.push_back(it->n.getNormal());
 			normales.push_back(normales.back());
 			normales.push_back(normales.back());
 		}
 		ToolBox::optimizeStaticMesh(vertices, normales, colors, faces);
-		mesh->initialize(vertices, normales, colors, faces, std::vector<glm::ivec3>(), std::vector<glm::vec3>());
+		mesh->initialize(vertices, normales, colors, faces, std::vector<vec4i>(), std::vector<vec4f>());
 	}
 	return mesh;
 }
 
 
-void QuickHull::initializeHull(const std::vector<glm::vec3>& pointCloud)
+void QuickHull::initializeHull(const std::vector<vec4f>& pointCloud)
 {
 	//	compute initial segment
-	glm::vec3 p1, p2;
-	float minx = std::numeric_limits<float>::max();     glm::vec3 x;
-	float maxx = std::numeric_limits<float>::min();     glm::vec3 X;
-	float miny = std::numeric_limits<float>::max();		glm::vec3 y;
-	float maxy = std::numeric_limits<float>::min();		glm::vec3 Y;
-	float minz = std::numeric_limits<float>::max();		glm::vec3 z;
-	float maxz = std::numeric_limits<float>::min();		glm::vec3 Z;
+	vec4f p1, p2;
+	float minx = std::numeric_limits<float>::max();     vec4f x;
+	float maxx = std::numeric_limits<float>::min();     vec4f X;
+	float miny = std::numeric_limits<float>::max();		vec4f y;
+	float maxy = std::numeric_limits<float>::min();		vec4f Y;
+	float minz = std::numeric_limits<float>::max();		vec4f z;
+	float maxz = std::numeric_limits<float>::min();		vec4f Z;
 
 	for (unsigned int j = 0; j < pointCloud.size(); j++)
 	{
@@ -247,11 +247,11 @@ void QuickHull::initializeHull(const std::vector<glm::vec3>& pointCloud)
 
 	// search maximum distant point from initial segment
 	float maxd = std::numeric_limits<float>::min();
-	glm::vec3 T;
-	glm::vec3 u = p2 - p1;
+	vec4f T;
+	vec4f u = p2 - p1;
 	for (unsigned int j = 0; j < pointCloud.size(); j++)
 	{
-		float d = glm::length(glm::cross(pointCloud[j] -p1, u));
+		float d = vec4f::cross(pointCloud[j] -p1, u).getNorm();
 		if (d > maxd)
 		{
 			maxd = d;
@@ -266,11 +266,11 @@ void QuickHull::initializeHull(const std::vector<glm::vec3>& pointCloud)
 
 	// search maximum distant point from triangle
 	maxd = std::numeric_limits<float>::min();
-	glm::vec3 P;
-	glm::vec3 n = glm::cross(T - p1, u);
+	vec4f P;
+	vec4f n = vec4f::cross(T - p1, u);
 	for (unsigned int j = 0; j < pointCloud.size(); j++)
 	{
-		float d = std::abs(glm::dot(pointCloud[j], n));
+		float d = std::abs(vec4f::dot(pointCloud[j], n));
 		if (d > maxd)
 		{
 			maxd = d;
@@ -292,20 +292,20 @@ void QuickHull::initializeHull(const std::vector<glm::vec3>& pointCloud)
 	hullEdges.push_back(Edge(p2, P));
 	hullEdges.push_back(Edge(T, P));
 
-	Face f1(p1, p2, T, glm::cross(u, T - p1));
-	if (glm::dot(f1.n, P) > 0) f1.n *= -1.f;
+	Face f1(p1, p2, T, vec4f::cross(u, T - p1));
+	if (vec4f::dot(f1.n, P) > 0) f1.n *= -1.f;
 	hullFaces.push_back(f1);
 
-	Face f2(p1, p2, P, glm::cross(u, P - p1));
-	if (glm::dot(f2.n, T) > 0) f2.n *= -1.f;
+	Face f2(p1, p2, P, vec4f::cross(u, P - p1));
+	if (vec4f::dot(f2.n, T) > 0) f2.n *= -1.f;
 	hullFaces.push_back(f2);
 
-	Face f3(p1, T, P, glm::cross(T - p1, P - p1));
-	if (glm::dot(f3.n, p2) > 0) f3.n *= -1.f;
+	Face f3(p1, T, P, vec4f::cross(T - p1, P - p1));
+	if (vec4f::dot(f3.n, p2) > 0) f3.n *= -1.f;
 	hullFaces.push_back(f3);
 
-	Face f4(p2, T, P, glm::cross(T - p2, P - p2));
-	if (glm::dot(f4.n, p1) > 0) f4.n *= -1.f;
+	Face f4(p2, T, P, vec4f::cross(T - p2, P - p2));
+	if (vec4f::dot(f4.n, p1) > 0) f4.n *= -1.f;
 	hullFaces.push_back(f4);
 
 	// assign pointers
@@ -330,7 +330,7 @@ void QuickHull::initializeHull(const std::vector<glm::vec3>& pointCloud)
 	}
 
 }
-void QuickHull::computeHorizon(const glm::vec3& eye, Edge* crossedEdge, Face* face, std::list<Edge*>& horizon, std::vector<glm::vec3>& unclaimed)
+void QuickHull::computeHorizon(const vec4f& eye, Edge* crossedEdge, Face* face, std::list<Edge*>& horizon, std::vector<vec4f>& unclaimed)
 {
 	if (!face->onHull)
 	{
@@ -338,7 +338,7 @@ void QuickHull::computeHorizon(const glm::vec3& eye, Edge* crossedEdge, Face* fa
 		return;
 	}
 
-	if (glm::dot(face->n, eye - face->p1) > 0)
+	if (vec4f::dot(face->n, eye - face->p1) > 0)
 	{
 		face->onHull = false;
 		unclaimed.insert(unclaimed.end(), face->outter.begin(), face->outter.end());
@@ -384,7 +384,7 @@ bool QuickHull::isFaceEdge(const Face& f, const Edge& e)
 	else if (f.p1 == e.p2 && f.p3 == e.p1) return true;		// just f.p2 is not in edge
 	else return false;
 }
-QuickHull::Edge* QuickHull::existingEdge(const glm::vec3& p1, const glm::vec3& p2)
+QuickHull::Edge* QuickHull::existingEdge(const vec4f& p1, const vec4f& p2)
 {
 	for (auto it = hullEdges.begin(); it != hullEdges.end(); it++)
 	{

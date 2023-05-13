@@ -2,18 +2,18 @@
 #include "Sphere.h"
 #include "OrientedBox.h"
 
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/quaternion.hpp>
+/*#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/quaternion.hpp>*/
 
 
 
-AxisAlignedBox::AxisAlignedBox(const glm::vec4& cornerMin, const glm::vec4& cornerMax)
+AxisAlignedBox::AxisAlignedBox(const vec4f& cornerMin, const vec4f& cornerMax)
 	: Shape(ShapeType::AXIS_ALIGNED_BOX), min(cornerMin), max(cornerMax) 
 {
 	min.w = 1.f;
 	max.w = 1.f;
 }
-Sphere AxisAlignedBox::toSphere() const { return Sphere(0.5f*(min + max), 0.5f*glm::length(min - max)); }
+Sphere AxisAlignedBox::toSphere() const { return Sphere(0.5f * (min + max), 0.5f * (min - max).getNorm()); }
 Shape& AxisAlignedBox::operator=(const Shape& s)
 {
 	if (s.type == Shape::ShapeType::AXIS_ALIGNED_BOX)
@@ -25,18 +25,18 @@ Shape& AxisAlignedBox::operator=(const Shape& s)
 	return *this;
 }
 AxisAlignedBox AxisAlignedBox::toAxisAlignedBox() const { return *this; }
-void AxisAlignedBox::transform(const glm::vec4& position, const glm::vec3& scale, const glm::fquat& orientation)
+void AxisAlignedBox::transform(const vec4f& position, const vec4f& scale, const quatf& orientation)
 {
-	OrientedBox base = OrientedBox(glm::mat4(1.f), min, max);
+	OrientedBox base = OrientedBox(mat4f::identity, min, max);
 	base.transform(position, scale, orientation);
 	AxisAlignedBox result = base.toAxisAlignedBox();
 	min = result.min; 
 	max = result.max;
 }
 Shape* AxisAlignedBox::duplicate() const { return new AxisAlignedBox(*this); }
-glm::vec4 AxisAlignedBox::support(const glm::vec4& direction) const
+vec4f AxisAlignedBox::support(const vec4f& direction) const
 {
-	glm::vec4 support(0.f);
+	vec4f support(0.f);
 
 	if (direction.x >= 0.f) support.x = max.x;
 	else support.x = min.x;
@@ -47,27 +47,25 @@ glm::vec4 AxisAlignedBox::support(const glm::vec4& direction) const
 
 	return support;
 }
-void AxisAlignedBox::getFacingFace(const glm::vec4& direction, std::vector<glm::vec4>& points) const
+void AxisAlignedBox::getFacingFace(const vec4f& direction, std::vector<vec4f>& points) const
 {
-	glm::vec4 d = glm::abs(direction);
+	vec4f d = vec4f::abs(direction);
 
 	if (d.x > d.y && d.x > d.z)
 	{
 		if (direction.x < 0.f)
 		{
 			points.push_back(min);
-			//points.push_back(glm::vec3(min.x, min.y, min.z));
-			points.push_back(glm::vec4(min.x, min.y, max.z, 1));
-			points.push_back(glm::vec4(min.x, max.y, max.z, 1));
-			points.push_back(glm::vec4(min.x, max.y, min.z, 1));
+			points.push_back(vec4f(min.x, min.y, max.z, 1));
+			points.push_back(vec4f(min.x, max.y, max.z, 1));
+			points.push_back(vec4f(min.x, max.y, min.z, 1));
 		}
 		else
 		{
-			points.push_back(glm::vec4(max.x, min.y, min.z, 1));
-			points.push_back(glm::vec4(max.x, min.y, max.z, 1));
-			//points.push_back(glm::vec3(max.x, max.y, max.z));
+			points.push_back(vec4f(max.x, min.y, min.z, 1));
+			points.push_back(vec4f(max.x, min.y, max.z, 1));
 			points.push_back(max);
-			points.push_back(glm::vec4(max.x, max.y, min.z, 1));
+			points.push_back(vec4f(max.x, max.y, min.z, 1));
 		}
 	}
 	else if (d.y > d.x && d.y > d.z)
@@ -75,18 +73,16 @@ void AxisAlignedBox::getFacingFace(const glm::vec4& direction, std::vector<glm::
 		if (direction.y < 0.f)
 		{
 			points.push_back(min);
-			//points.push_back(glm::vec3(min.x, min.y, min.z));
-			points.push_back(glm::vec4(min.x, min.y, max.z, 1));
-			points.push_back(glm::vec4(max.x, min.y, max.z, 1));
-			points.push_back(glm::vec4(max.x, min.y, min.z, 1));
+			points.push_back(vec4f(min.x, min.y, max.z, 1));
+			points.push_back(vec4f(max.x, min.y, max.z, 1));
+			points.push_back(vec4f(max.x, min.y, min.z, 1));
 		}
 		else
 		{
-			points.push_back(glm::vec4(min.x, max.y, min.z, 1));
-			points.push_back(glm::vec4(min.x, max.y, max.z, 1));
-			//points.push_back(glm::vec3(max.x, max.y, max.z));
+			points.push_back(vec4f(min.x, max.y, min.z, 1));
+			points.push_back(vec4f(min.x, max.y, max.z, 1));
 			points.push_back(max);
-			points.push_back(glm::vec4(max.x, max.y, min.z, 1));
+			points.push_back(vec4f(max.x, max.y, min.z, 1));
 		}
 	}
 	else
@@ -94,25 +90,23 @@ void AxisAlignedBox::getFacingFace(const glm::vec4& direction, std::vector<glm::
 		if (direction.z < 0.f)
 		{
 			points.push_back(min);
-			//points.push_back(glm::vec3(min.x, min.y, min.z));
-			points.push_back(glm::vec4(min.x, max.y, min.z, 1));
-			points.push_back(glm::vec4(max.x, max.y, min.z, 1));
-			points.push_back(glm::vec4(max.x, min.y, min.z, 1));
+			points.push_back(vec4f(min.x, max.y, min.z, 1));
+			points.push_back(vec4f(max.x, max.y, min.z, 1));
+			points.push_back(vec4f(max.x, min.y, min.z, 1));
 		}
 		else
 		{
-			points.push_back(glm::vec4(min.x, min.y, max.z, 1));
-			points.push_back(glm::vec4(min.x, max.y, max.z, 1));
-			//points.push_back(glm::vec3(max.x, max.y, max.z));
+			points.push_back(vec4f(min.x, min.y, max.z, 1));
+			points.push_back(vec4f(min.x, max.y, max.z, 1));
 			points.push_back(max);
-			points.push_back(glm::vec4(max.x, min.y, max.z, 1));
+			points.push_back(vec4f(max.x, min.y, max.z, 1));
 		}
 	}
 }
-glm::mat3 AxisAlignedBox::computeInertiaMatrix() const
+mat4f AxisAlignedBox::computeInertiaMatrix() const
 {
-	glm::vec4 size = 0.5f * (max - min);
-	glm::mat3 M(0.f);
+	vec4f size = 0.5f * (max - min);
+	mat4f M(0.f);
 	M[0][0] = 1.f / 12.f * (size.y * size.y + size.z * size.z);
 	M[1][1] = 1.f / 12.f * (size.x * size.x + size.z * size.z);
 	M[2][2] = 1.f / 12.f * (size.x * size.x + size.y * size.y);
@@ -122,6 +116,6 @@ glm::mat3 AxisAlignedBox::computeInertiaMatrix() const
 
 void AxisAlignedBox::add(const AxisAlignedBox& _other)
 {
-	min = glm::min(min, _other.min);
-	max = glm::max(max, _other.max);
+	min = vec4f::min(min, _other.min);
+	max = vec4f::max(max, _other.max);
 }

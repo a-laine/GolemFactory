@@ -22,7 +22,7 @@ class Tvec3
 		Tvec3(T2 v = T2(0)) : x(T(v)), y(T(v)), z(T(v)) {}
 
 		template<typename T2>
-		Tvec3(const Tvec3<T2>& v) : x(v.x), y(v.y), z(v.z) {}
+		Tvec3(const Tvec3<T2>& v) : x(T(v.x)), y(T(v.y)), z(T(v.z)) {}
 
 		template<typename T2, typename T3>
 		Tvec3(const Tvec2<T2>& v, T3 scalar = T3(0)) : x(v.x), y(v.y), z(scalar) {}
@@ -54,6 +54,11 @@ class Tvec3
 		//constants
 		static const Tvec3 zero;
 		static const Tvec3 one;
+
+		//math
+		static T dot(const Tvec3& a, const Tvec3& b);
+		static Tvec3 cross(const Tvec3& a, const Tvec3& b);
+		static Tvec3 lerp(const Tvec3& a, const Tvec3& b, const T& t);
 };
 
 #include "Tvec3.hpp"

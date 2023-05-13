@@ -35,10 +35,10 @@ class Physics
 		//
 
 		//	Set / get ...
-		void setGravity(const glm::vec4& g);
+		void setGravity(const vec4f& g);
 		void setDefaultFriction(const float& f);
 
-		glm::vec4 getGravity() const;
+		vec4f getGravity() const;
 		float getDefaultFriction() const;
 
 		void addMovingEntity(Entity* e);
@@ -85,7 +85,7 @@ class Physics
 		//
 
 		//	Attributes
-		glm::vec4 gravity;
+		vec4f gravity;
 		float defaultFriction;
 		std::set<Entity*> movingEntity;
 

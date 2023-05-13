@@ -9,11 +9,11 @@ class BoxSceneQuerry : public VirtualSceneQuerry
 	friend class Physics;
 
 	public:
-		BoxSceneQuerry(const glm::vec4& cornerMin, const glm::vec4& cornerMax);
+		BoxSceneQuerry(const vec4f& cornerMin, const vec4f& cornerMax);
 
 		VirtualSceneQuerry::CollisionType operator() (const NodeVirtual* node) override;
 
 	private:
-		glm::vec4 bbMin;
-		glm::vec4 bbMax;
+		vec4f bbMin;
+		vec4f bbMax;
 };
