@@ -58,7 +58,7 @@
 #include "Physics/GJK.h"
 #include <Utiles/ConsoleColor.h>
 
-#define GRID_SIZE 256
+#define GRID_SIZE 512
 #define GRID_ELEMENT_SIZE 1.f
 #define DEBUG_LEVEL 0
 
@@ -478,7 +478,7 @@ void initializeSyntyScene()
 	// load file and parse JSON
 	std::string repository = ResourceManager::getInstance()->getRepository();
 	std::string packageName = "PolygonDungeon";
-	std::string sceneName = "Overview";
+	std::string sceneName = "Demo";
 	std::string fullFileName = repository + "Scenes/" + packageName + "/" + sceneName + ".json";
 	Variant v; Variant* tmp = nullptr;
 	try
@@ -538,12 +538,14 @@ void initializeSyntyScene()
 					if (!prefabName.empty())
 					{
 						// load prefab
-						if (!world.getEntityFactory().containPrefab(prefabName) && world.getEntityFactory().loadPrefab(repository, packageName, prefabName))
+						bool contain = world.getEntityFactory().containPrefab(prefabName);
+						bool loaded = world.getEntityFactory().loadPrefab(repository, packageName, prefabName);
+						if (!contain && loaded)
 						{
-							//std::cout << ConsoleColor::getColorString(ConsoleColor::Color::GREEN) << prefabName << " loaded" << std::flush;
-							//std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
+							std::cout << ConsoleColor::getColorString(ConsoleColor::Color::GREEN) << prefabName << " loaded" << std::flush;
+							std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
 						}
-						else
+						else if(!loaded)
 						{
 							if (ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
 								std::cerr << "ERROR : loading scene : " << sceneName << " : fail loading prefab : " << prefabName << std::endl;
@@ -577,6 +579,9 @@ void initializeSyntyScene()
 						(*it)["rotation"].getArray()[2].toDouble());
 					rotation.normalize();
 
+					if (!prefabName.empty())
+						scale *= newObject->getWorldScale();
+
 					// set parent and local transform
 					if (parent)
 					{
@@ -591,12 +596,19 @@ void initializeSyntyScene()
 					world.addToScene(newObject);
 					
 					// push to stack if newObject is a parent
-					try
+					if ((*it).getMap().find("childs") != (*it).getMap().end())
 					{
-						for (auto it2 = (*it)["childs"].getArray().begin(); it2 != (*it)["childs"].getArray().end(); it2++)
-							parentStack.push_back(newObject);
+						try
+						{
+							auto childrenIt = (*it)["childs"].getArray();
+							if (childrenIt.size() > 0)
+							{
+								for (auto it2 = childrenIt.begin(); it2 != childrenIt.end(); it2++)
+									parentStack.push_back(newObject);
+							}
+						}
+						catch (std::exception&) {}
 					}
-					catch (std::exception&) {}
 				}
 			}
 		}
@@ -657,7 +669,7 @@ void initManagers()
     ResourceManager::getInstance()->addNewResourceLoader(".texture", new TextureLoader());
 
 	// Init world
-	const vec4f worldHalfSize = vec4f(GRID_SIZE * GRID_ELEMENT_SIZE, 32.f, GRID_SIZE * GRID_ELEMENT_SIZE, 0) * 0.5f;
+	const vec4f worldHalfSize = vec4f(GRID_SIZE * GRID_ELEMENT_SIZE, 128.f, GRID_SIZE * GRID_ELEMENT_SIZE, 0) * 0.5f;
 	const vec4f worldPos = vec4f(0, 0.5f * worldHalfSize.y, 0, 1);
 	NodeVirtual::debugWorld = &world;
 	world.getSceneManager().init(worldPos - worldHalfSize, worldPos + worldHalfSize, vec3i(4, 1, 4), 2);

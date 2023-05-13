@@ -1,4 +1,5 @@
 {
+	"scale": 0.01,
     "drawableComponent": {
         "meshName": "SM_Prop_Skeleton_Slave_Wall_Sitting_01",
         "shaderName": "defaultTextured"

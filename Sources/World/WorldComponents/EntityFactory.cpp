@@ -221,7 +221,12 @@ bool EntityFactory::loadPrefab(const std::string& resourceDirectory, const std::
 	// create and set transform
 	Entity* prefab = createEntity();
 	prefab->setName(fileName);
-	prefab->setWorldTransformation(vec4f(0, 0, 0, 1), 1.f, quatf(1, 0, 0, 0));
+
+	float scale = 1.f;
+	if (prefabMap.getMap().find("scale") != prefabMap.getMap().end())
+		scale = prefabMap["scale"].toDouble();
+
+	prefab->setWorldTransformation(vec4f(0, 0, 0, 1), scale, quatf(1, 0, 0, 0));
 	prefabs.emplace(fileName, prefab);
 
 	// component of prefab
@@ -239,7 +244,7 @@ Entity* EntityFactory::instantiatePrefab(std::string prefabName, bool _addToScen
 	{
 		Entity* copy = createEntity();
 		copy->setName(prefabName + " (copy)");
-		copy->setWorldTransformation(vec4f(0, 0, 0, 1), 1.f, quatf(1, 0, 0, 0));
+		copy->setWorldTransformation(vec4f(0, 0, 0, 1), it->second->getWorldScale(), quatf(1, 0, 0, 0));
 
 		auto ComponentVisitor = [&](const EntityBase::Element& element)
 		{
@@ -272,11 +277,14 @@ void EntityFactory::tryLoadComponents(Entity* object, Variant* variant, const st
 			std::string meshName = assetPackName + "/" + (*variant)["drawableComponent"]["meshName"].toString();
 			std::string shaderName = (*variant)["drawableComponent"]["shaderName"].toString();
 
-			if (meshName.find('.') == std::string::npos)
-				meshName += ".fbx";
+			if (!meshName.empty() && !shaderName.empty())
+			{
+				if (meshName.find('.') == std::string::npos)
+					meshName += ".fbx";
 
-			DrawableComponent* drawable = new DrawableComponent(meshName, shaderName);
-			object->addComponent(drawable);
+				DrawableComponent* drawable = new DrawableComponent(meshName, shaderName);
+				object->addComponent(drawable);
+			}
 		}
 		catch (std::exception&) {}
 	}

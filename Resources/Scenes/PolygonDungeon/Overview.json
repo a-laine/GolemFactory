@@ -803,7 +803,7 @@
                 0.0,
                 0.7071076035499573
             ],
-            "scale": 0.01,
+            "scale": 1.0,
             "prefabName": "SM_Wep_Greatsword_Straight_01",
             "drawableComponent": {
                 "meshName": "SM_Wep_Greatsword_Straight_01",
@@ -7191,7 +7191,7 @@
                 0.0,
                 1.0
             ],
-            "scale": 0.01,
+            "scale": 1.0,
             "prefabName": "SM_Prop_Skeleton_Slave_Lying_01",
             "drawableComponent": {
                 "meshName": "SM_Prop_Skeleton_Slave_Lying_01",
@@ -7548,7 +7548,7 @@
                 0.0,
                 1.0
             ],
-            "scale": 0.01,
+            "scale": 1.0,
             "prefabName": "SM_Prop_Tech_Chamber_Skeleton_01",
             "drawableComponent": {
                 "meshName": "SM_Prop_Skeleton_Cage_01",
@@ -8325,7 +8325,7 @@
                 0.0,
                 1.0
             ],
-            "scale": 0.01,
+            "scale": 1.0,
             "prefabName": "SM_Prop_Skeleton_Slave_Wall_Sitting_01",
             "drawableComponent": {
                 "meshName": "SM_Prop_Skeleton_Slave_Wall_Sitting_01",
@@ -9123,7 +9123,7 @@
                 0.0,
                 1.0
             ],
-            "scale": 0.01,
+            "scale": 1.0,
             "prefabName": "SM_Prop_Skeleton_Slave_Shackles_02",
             "drawableComponent": {
                 "meshName": "SM_Prop_Skeleton_Slave_Shackles_02",
@@ -9417,7 +9417,7 @@
                 0.0,
                 1.0
             ],
-            "scale": 0.01,
+            "scale": 1.0,
             "prefabName": "SM_Prop_Skeleton_Table_01",
             "drawableComponent": {
                 "meshName": "SM_Prop_Skeleton_Table_01",
@@ -9669,7 +9669,7 @@
                 0.0,
                 1.0
             ],
-            "scale": 0.01,
+            "scale": 1.0,
             "prefabName": "SM_Prop_Skeleton_Knight_Throne_01",
             "drawableComponent": {
                 "meshName": "SM_Prop_Skeleton_Knight_Throne_01",
@@ -9963,7 +9963,7 @@
                 0.0,
                 1.0
             ],
-            "scale": 0.01,
+            "scale": 1.0,
             "prefabName": "SM_Prop_Skeleton_Slave_Shackles_01",
             "drawableComponent": {
                 "meshName": "SM_Prop_Skeleton_Slave_Shackles_01",
