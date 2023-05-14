@@ -45,7 +45,7 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
     {
         if (ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
             PrintError(fileName.c_str(), "could not open file");
-            //std::cerr << "ERROR : AssimpLoader : " << fileName << " : could not open file" << std::endl;
+            std::cerr << "        : AssimpImporter log : " << importer.GetErrorString() << std::endl;
         return false;
     }
 
@@ -74,6 +74,7 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
     bool hasPrintedNotTriangle = false;
     bool hasPrintedMeshTooLarge = false;
     bool hasPrintedFaceIndexOutOfBound = false;
+    bool hasPrintedNoUV = false;
 
     //	Load mesh
     for(unsigned int i = 0; i < scene->mNumMeshes; i++)
@@ -113,6 +114,12 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
 
             aiVector3D uv = (mesh->HasTextureCoords(0) ? mesh->mTextureCoords[0][j] : aiVector3D(0.0f, 0.0f, 0.0f));
             uvs.push_back(vec4f(uv.x, 1 - uv.y, uv.z, 0.f));
+
+            if (!hasPrintedNoUV && !mesh->HasTextureCoords(0))
+            {
+                hasPrintedNoUV = true;
+                PrintWarning(fileName.c_str(), "No valid UV (maybe your mesh doesn't have materials)");
+            }
         }
 
         //	demande a second pass to parse bone and skeleton

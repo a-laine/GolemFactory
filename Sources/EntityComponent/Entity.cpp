@@ -442,12 +442,14 @@ bool Entity::drawImGui(World& world)
 
 	const auto DrawTransform = [](vec4f p, quatf o)
 	{
+		Debug::setDepthTest(false);
 		Debug::color = Debug::red;
 		Debug::drawLine(p, p + o * vec4f(1, 0, 0, 0));
 		Debug::color = Debug::green;
 		Debug::drawLine(p, p + o * vec4f(0, 1, 0, 0));
 		Debug::color = Debug::blue;
 		Debug::drawLine(p, p + o * vec4f(0, 0, 1, 0));
+		Debug::setDepthTest(true);
 	};
 
 	if (m_drawBoundingBox)

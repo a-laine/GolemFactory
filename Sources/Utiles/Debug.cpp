@@ -43,7 +43,9 @@ Debug::~Debug()
 //
 
 //	Public functions
-void Debug::initialize(const std::string& pointMeshName, const std::string& cubeMeshName, const std::string& sphereMeshName, const std::string& capsuleMeshName, const std::string& pointShaderName, const std::string& segmentShaderName, const std::string& defaultShaderName, const std::string& wiredShaderName)
+void Debug::initialize(const std::string& pointMeshName, const std::string& cubeMeshName, const std::string& sphereMeshName, 
+	const std::string& capsuleMeshName, const std::string& pointShaderName, const std::string& segmentShaderName, 
+	const std::string& defaultShaderName, const std::string& wiredShaderName)
 {
 	renderer = Renderer::getInstance();
 	pointMesh = ResourceManager::getInstance()->getResource<Mesh>(pointMeshName);
@@ -55,6 +57,13 @@ void Debug::initialize(const std::string& pointMeshName, const std::string& cube
 	segmentShader = ResourceManager::getInstance()->getResource<Shader>(segmentShaderName);
 	defaultShader = ResourceManager::getInstance()->getResource<Shader>(defaultShaderName);
 	wiredShader = ResourceManager::getInstance()->getResource<Shader>(wiredShaderName);
+}
+void Debug::setDepthTest(bool enable)
+{
+	if (enable)
+		glEnable(GL_DEPTH_TEST);// glDepthFunc(GL_LESS);
+	else
+		glDisable(GL_DEPTH_TEST);//glDepthFunc(GL_ALWAYS);
 }
 void Debug::drawLineCube(const mat4f& transform, const vec4f& size)
 {

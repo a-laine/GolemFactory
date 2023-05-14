@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Prop_Tech_Chamber_Skeleton_01",
+        "meshName": "SM_Env_Stairs_Wall_02",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

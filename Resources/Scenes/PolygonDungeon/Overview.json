@@ -7551,7 +7551,7 @@
             "scale": 1.0,
             "prefabName": "SM_Prop_Tech_Chamber_Skeleton_01",
             "drawableComponent": {
-                "meshName": "SM_Prop_Skeleton_Cage_01",
+                "meshName": "SM_Prop_Tech_Chamber_Skeleton_01",
                 "shaderName": "defaultTextured"
             }
         },

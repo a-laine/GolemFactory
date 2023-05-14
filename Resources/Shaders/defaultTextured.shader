@@ -42,7 +42,7 @@ DefaultTextured
 		{
 			gl_Position = (projection * view * model) * position;
 			fragmentNormal = view * model * normal;
-			fragmentUv = uv;
+			fragmentUv = uv;//vec4(uv.x, 1.0 - uv.y, uv.z, uv.w);
 			
 			vec4 eyeDirectionCameraSpace = -(view * model * position);
 			vec4 lightPositionCameraSpace = view * lightCoordinateWorldSpace;
@@ -68,10 +68,13 @@ DefaultTextured
 		// program
 		void main()
 		{
-			vec4 albedoColor = texture(albedo, fragmentUv.xy);
+			vec4 albedoColor = texture(albedo, vec2(fragmentUv.x, fragmentUv.y));
 			vec4 emmisiveColor = texture(emmisive, fragmentUv.xy);
-			
 			float costeta = clamp( dot(normalize(fragmentNormal), normalize(lightDirectionCameraSpace)), 0,1 );
+			
+			//fragColor = fragmentUv ;
+			//if(fragmentUv.x > 1.0 ||fragmentUv.y > 1.0 || fragmentUv.x < 0.0 ||fragmentUv.y < 0.0) fragColor.z = 1.0;
+			
 			fragColor = albedoColor * (0.4*costeta + 0.6) + emmisiveColor;
 		}
 	};

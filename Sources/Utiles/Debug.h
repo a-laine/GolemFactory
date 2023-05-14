@@ -17,6 +17,8 @@ class Debug : public Singleton<Debug>
 		//
 
 		//  Draw functions
+		static void setDepthTest(bool enable);
+
 		static void drawPoint(const vec4f& p) { Debug::point(p, This->pointShader); };
 		static void drawCube(const mat4f& transform, const vec4f& size) { Debug::mesh(This->cubeMesh, mat4f::scale(transform, size), This->defaultShader); };
 		static void drawSphere(const vec4f& center, const float& radius) { Debug::mesh(This->sphereMesh, mat4f::scale(mat4f::translate(mat4f::identity, center), vec4f(radius)), This->defaultShader); };

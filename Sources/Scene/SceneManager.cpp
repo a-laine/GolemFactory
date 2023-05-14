@@ -11,7 +11,7 @@
 
 #ifdef USE_IMGUI
 bool HierarchyWindowEnable = true;
-bool SpatialPartitionningWindowEnable = true;
+bool SpatialPartitionningWindowEnable = false;
 #endif // USE_IMGUI
 
 
@@ -414,8 +414,10 @@ void SceneManager::drawRecursiveImGuiEntity(World& world, Entity* entity, int de
 	{
 		if (ImGui::IsItemHovered())
 		{
+			Debug::setDepthTest(false);
 			Debug::color = Debug::magenta;
 			Debug::drawLineCube(mat4f::identity, entity->m_worldBoundingBox.min, entity->m_worldBoundingBox.max);
+			Debug::setDepthTest(true);
 		}
 	};
 

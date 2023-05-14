@@ -126,7 +126,7 @@ int main()
 		Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("wired"));
 		//initializePhysicsScene(0);
 
-		EventHandler::getInstance()->setCursorMode(true);
+		//EventHandler::getInstance()->setCursorMode(true);
 
 		initializeSyntyScene();
 
@@ -197,8 +197,6 @@ int main()
 		ImGui_ImplGlfw_NewFrame();
 		events();						// handle event before draw for text input and scrolling to work
 		ImGui::NewFrame();
-		ImGuiMenuBar();
-		ImGuiSystemDraw();
 #else 
 		events();
 #endif
@@ -223,7 +221,11 @@ int main()
 		 
 		Renderer::getInstance()->drawMap(world.getMapPtr(), &Debug::view[0][0], &Debug::projection[0][0], normalShader);
 		
-		// 
+		// gizmos and hud
+#ifdef USE_IMGUI
+		ImGuiMenuBar();
+		ImGuiSystemDraw();
+#endif
 		picking();
 		Renderer::getInstance()->renderHUD();
 
@@ -473,7 +475,23 @@ void initializePhysicsScene(int testCase)
 void initializeSyntyScene()
 {
 	glClearColor(0.6f, 0.85f, 0.91f, 0.f);
-	Renderer::getInstance()->setShader(Renderer::GRID, nullptr);// ResourceManager::getInstance()->getResource<Shader>("wired"));
+	Renderer::getInstance()->setShader(Renderer::GRID, nullptr);//ResourceManager::getInstance()->getResource<Shader>("wired")
+
+#if 0
+	Entity* newObject = world.getEntityFactory().createEntity();
+	newObject->setName("aaa");
+	DrawableComponent* drawable = new DrawableComponent("PolygonDungeon/SM_Env_Grass_03.fbx", "defaultTextured");
+	newObject->addComponent(drawable);
+	newObject->recomputeBoundingBox();
+	world.addToScene(newObject);
+	return;
+#endif
+
+
+
+
+
+
 
 	// load file and parse JSON
 	std::string repository = ResourceManager::getInstance()->getRepository();

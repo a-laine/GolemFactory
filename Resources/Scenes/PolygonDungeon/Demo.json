@@ -16150,17 +16150,17 @@
             "name": "SM_Env_Ceiling_Stone_Stairs_03",
             "id": 729,
             "position": [
-                40.0,
-                17.5,
-                -10.0
+                32.0,
+                15.0,
+                -5.0
             ],
             "rotation": [
                 0.0,
-                0.000003904103778040735,
+                1.0,
                 0.0,
-                -1.0
+                0.0
             ],
-            "scale": 1.0,
+            "scale": 2.0,
             "prefabName": "SM_Env_Ceiling_Stone_Stairs_01",
             "drawableComponent": {
                 "meshName": "SM_Env_Ceiling_Stone_Stairs_01",
@@ -16171,17 +16171,17 @@
             "name": "SM_Env_Ceiling_Stone_Stairs_07",
             "id": 730,
             "position": [
-                30.0,
-                22.5,
-                -15.0
+                25.0,
+                10.5,
+                -7.5
             ],
             "rotation": [
                 0.0,
-                0.707109808921814,
+                -0.707109808921814,
                 0.0,
                 -0.7071038484573364
             ],
-            "scale": 1.0,
+            "scale": 2.0,
             "prefabName": "SM_Env_Ceiling_Stone_Stairs_01",
             "drawableComponent": {
                 "meshName": "SM_Env_Ceiling_Stone_Stairs_01",
@@ -16194,7 +16194,7 @@
             "position": [
                 35.0,
                 20.0,
-                -15.0
+                -12.0
             ],
             "rotation": [
                 0.0,
@@ -16202,7 +16202,7 @@
                 0.0,
                 -0.7071038484573364
             ],
-            "scale": 1.0,
+            "scale": 2.0,
             "prefabName": "SM_Env_Ceiling_Stone_Stairs_01",
             "drawableComponent": {
                 "meshName": "SM_Env_Ceiling_Stone_Stairs_01",
@@ -37075,7 +37075,7 @@
             "name": "SM_Env_Ceiling_Stone_Flat_67",
             "id": 1658,
             "position": [
-                -10.0,
+                -5.0,
                 15.0,
                 60.0
             ],
@@ -37180,7 +37180,7 @@
             "name": "SM_Env_Ceiling_Stone_Flat_68",
             "id": 1663,
             "position": [
-                15.0,
+                10.0,
                 15.0,
                 50.0
             ],
@@ -37537,7 +37537,7 @@
             "name": "SM_Env_Ceiling_Stone_Flat_55",
             "id": 1680,
             "position": [
-                10.0,
+                5.0,
                 15.0,
                 70.0
             ],
@@ -46168,9 +46168,9 @@
             "name": "SM_Env_Stairs_09",
             "id": 2091,
             "position": [
-                10.0,
-                -5.0,
-                74.5
+                10.40,
+                -11.2,
+                65.5
             ],
             "rotation": [
                 0.0,
@@ -46178,7 +46178,7 @@
                 0.0,
                 0.000002324580918866559
             ],
-            "scale": 3.0399999618530275,
+            "scale": 3.0,
             "prefabName": "SM_Env_Stairs_01",
             "drawableComponent": {
                 "meshName": "SM_Env_Stairs_01",
@@ -56072,13 +56072,13 @@
             "rotation": [
                 0.0,
                 0.0,
-                -0.97,
-                0.23
+                0.0,
+                1.0
             ],
             "scale": 1.0,
-            "prefabName": "SM_Env_Stairs_Wall_01",
+            "prefabName": "SM_Env_Stairs_Wall_02",
             "drawableComponent": {
-                "meshName": "SM_Env_Stairs_Wall_01",
+                "meshName": "SM_Env_Stairs_Wall_02",
                 "shaderName": "defaultTextured"
             }
         },
@@ -56092,14 +56092,14 @@
             ],
             "rotation": [
                 0.0,
-                -0.7071059942245483,
+                0.7071059942245483,
                 0.0,
                 0.7071076035499573
             ],
             "scale": 1.0,
-            "prefabName": "SM_Env_Stairs_Wall_01",
+            "prefabName": "SM_Env_Stairs_Wall_02",
             "drawableComponent": {
-                "meshName": "SM_Env_Stairs_Wall_01",
+                "meshName": "SM_Env_Stairs_Wall_02",
                 "shaderName": "defaultTextured"
             }
         },
