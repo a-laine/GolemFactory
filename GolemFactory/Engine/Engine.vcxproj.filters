@@ -5,16 +5,9 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
-    <Filter Include="Fichiers d%27en-tête">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
     <Filter Include="Fichiers de ressources">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
-    <Filter Include="Fichiers d%27en-tête\Animation">
-      <UniqueIdentifier>{f2642ae3-1b25-4a95-a7f7-6ef55927be1b}</UniqueIdentifier>
     </Filter>
     <Filter Include="Fichiers sources\Animation">
       <UniqueIdentifier>{f38aa3c6-ba43-4b92-8da8-0e40904572e9}</UniqueIdentifier>
@@ -24,18 +17,6 @@
     </Filter>
     <Filter Include="Fichiers sources\Core">
       <UniqueIdentifier>{81308d73-7b2a-4d01-8977-da8868ab7caf}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Fichiers d%27en-tête\EntityComponent">
-      <UniqueIdentifier>{b82a54a2-6e48-4467-83af-77611e29f5bd}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Fichiers d%27en-tête\Core">
-      <UniqueIdentifier>{694bcd11-e1ec-4cdd-a90f-4ecf21f9ce63}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Fichiers d%27en-tête\Generators">
-      <UniqueIdentifier>{e8688ad8-4a27-445d-9164-e3d64541447b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Fichiers d%27en-tête\Events">
-      <UniqueIdentifier>{a208e9a4-2735-4e91-8bca-28410df066b9}</UniqueIdentifier>
     </Filter>
     <Filter Include="Fichiers sources\Generators">
       <UniqueIdentifier>{14844ded-9bc6-4c50-b9d1-52c04af66b37}</UniqueIdentifier>
@@ -49,26 +30,8 @@
     <Filter Include="Fichiers sources\HUD">
       <UniqueIdentifier>{bec79e91-36e2-42fd-869b-839e8bc9699d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Fichiers d%27en-tête\Renderer">
-      <UniqueIdentifier>{7579bd9e-8e6b-4677-840d-31fbb516ec21}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Fichiers d%27en-tête\HUD">
-      <UniqueIdentifier>{06c37bcc-4817-41c0-9884-575be08861cf}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Fichiers d%27en-tête\HUD\Loader">
-      <UniqueIdentifier>{563d4624-c703-46cf-82f7-3e8c698af421}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Fichiers sources\HUD\Loader">
       <UniqueIdentifier>{0e63d5ad-6b93-4332-9e6c-54b2a9ae4240}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Fichiers d%27en-tête\Resources">
-      <UniqueIdentifier>{cf046a01-76da-41da-9a6d-860d9a1ab96d}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Fichiers d%27en-tête\Scene">
-      <UniqueIdentifier>{fceefed8-429f-47f0-884a-b4ce20dab0af}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Fichiers d%27en-tête\Terrain">
-      <UniqueIdentifier>{a939a612-380b-4d10-b362-f359eb4086f1}</UniqueIdentifier>
     </Filter>
     <Filter Include="Fichiers sources\Resources">
       <UniqueIdentifier>{1da562b9-912d-4fd7-9da6-deaa763fb749}</UniqueIdentifier>
@@ -79,9 +42,6 @@
     <Filter Include="Fichiers sources\Terrain">
       <UniqueIdentifier>{0724f986-0719-472c-9c5a-fbd37949675c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Fichiers d%27en-tête\Resources\Loader">
-      <UniqueIdentifier>{071bbb50-21ff-4fae-9bb7-3aa42e26fc89}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Fichiers sources\Resources\Loader">
       <UniqueIdentifier>{3609853a-994d-4020-a383-6d45516a7d76}</UniqueIdentifier>
     </Filter>
@@ -91,32 +51,11 @@
     <Filter Include="Fichiers sources\Utiles\Parser">
       <UniqueIdentifier>{bbe83015-1505-496a-9112-15ffa850d16e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Fichiers d%27en-tête\Utiles">
-      <UniqueIdentifier>{d7bdc8db-af55-45f9-90e9-b201200241f7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Fichiers d%27en-tête\Utiles\Parser">
-      <UniqueIdentifier>{93a2685e-bd96-49b0-90f2-195ff0dece3f}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Fichiers sources\World">
       <UniqueIdentifier>{8a5bbb4b-b7c1-419a-9ced-8ba634c1a361}</UniqueIdentifier>
     </Filter>
     <Filter Include="Fichiers sources\World\WorldComponent">
       <UniqueIdentifier>{eacf5834-68c3-4ed4-a68d-9f4561d725c9}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Fichiers d%27en-tête\World">
-      <UniqueIdentifier>{1b852a68-1a8a-424a-a309-f741580dc1e9}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Fichiers d%27en-tête\World\WorldComponent">
-      <UniqueIdentifier>{a4fe2680-0c2d-4f45-9f30-610e232f3547}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Fichiers d%27en-tête\Physics">
-      <UniqueIdentifier>{81a4ce61-311b-4378-8875-b549d5fcd567}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Fichiers d%27en-tête\Physics\SpecificCollision">
-      <UniqueIdentifier>{022c38c2-12a0-4a50-99ab-ca93704149bf}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Fichiers d%27en-tête\Physics\Shapes">
-      <UniqueIdentifier>{42ad2fd4-7bd9-4b82-a78b-68303b59f2c9}</UniqueIdentifier>
     </Filter>
     <Filter Include="Fichiers sources\Physics">
       <UniqueIdentifier>{1e277d20-a135-4864-9c47-d722a590caff}</UniqueIdentifier>
@@ -130,10 +69,7 @@
     <Filter Include="Fichiers sources\Physics\SpecificIntersection">
       <UniqueIdentifier>{d819f4f0-93da-4b02-8dc5-33fe2eb4ef6e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Fichiers d%27en-tête\Physics\SpecificIntersection">
-      <UniqueIdentifier>{bed551a6-8807-422a-b14a-3cf31b1c20d1}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Fichiers d%27en-tête\Math">
+    <Filter Include="Fichiers sources\Math">
       <UniqueIdentifier>{abbcb74b-fb51-4b33-8210-4d9072c4f174}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -458,398 +394,398 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Sources\Animation\AnimationComponent.h">
-      <Filter>Fichiers d%27en-tête\Animation</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Animation\Animator.h">
-      <Filter>Fichiers d%27en-tête\Animation</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Animation\SkeletonComponent.h">
-      <Filter>Fichiers d%27en-tête\Animation</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Core\Application.h">
-      <Filter>Fichiers d%27en-tête\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Core\RenderContext.h">
-      <Filter>Fichiers d%27en-tête\Core</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\EntityComponent\Component.hpp">
-      <Filter>Fichiers d%27en-tête\EntityComponent</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\EntityComponent\Entity.hpp">
-      <Filter>Fichiers d%27en-tête\EntityComponent</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\EntityComponent\EntityBase.hpp">
-      <Filter>Fichiers d%27en-tête\EntityComponent</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Events\Event.h">
-      <Filter>Fichiers d%27en-tête\Events</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Events\EventEnum.h">
-      <Filter>Fichiers d%27en-tête\Events</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Events\EventHandler.h">
-      <Filter>Fichiers d%27en-tête\Events</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Events\EventHandlerEnum.h">
-      <Filter>Fichiers d%27en-tête\Events</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Events\EventHandlerImpl.h">
-      <Filter>Fichiers d%27en-tête\Events</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Events\EventHandlerString.h">
-      <Filter>Fichiers d%27en-tête\Events</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Events\EventSequence.h">
-      <Filter>Fichiers d%27en-tête\Events</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Generators\HouseGenerator.h">
-      <Filter>Fichiers d%27en-tête\Generators</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Generators\ReferenceMeshGenerator.h">
-      <Filter>Fichiers d%27en-tête\Generators</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\HUD\Loader\WidgetSaver.h">
-      <Filter>Fichiers d%27en-tête\HUD\Loader</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\HUD\Layer.h">
-      <Filter>Fichiers d%27en-tête\HUD</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\HUD\WidgetBoard.h">
-      <Filter>Fichiers d%27en-tête\HUD</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\HUD\WidgetConsole.h">
-      <Filter>Fichiers d%27en-tête\HUD</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\HUD\WidgetImage.h">
-      <Filter>Fichiers d%27en-tête\HUD</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\HUD\WidgetLabel.h">
-      <Filter>Fichiers d%27en-tête\HUD</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\HUD\WidgetManager.h">
-      <Filter>Fichiers d%27en-tête\HUD</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\HUD\WidgetRadioButton.h">
-      <Filter>Fichiers d%27en-tête\HUD</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\HUD\WidgetVirtual.h">
-      <Filter>Fichiers d%27en-tête\HUD</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Renderer\CameraComponent.h">
-      <Filter>Fichiers d%27en-tête\Renderer</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Renderer\DrawableComponent.h">
-      <Filter>Fichiers d%27en-tête\Renderer</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Renderer\Renderer.h">
-      <Filter>Fichiers d%27en-tête\Renderer</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Terrain\Chunk.h">
-      <Filter>Fichiers d%27en-tête\Terrain</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Scene\BoxSceneQuerry.h">
-      <Filter>Fichiers d%27en-tête\Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Scene\FrustrumEntityCollector.h">
-      <Filter>Fichiers d%27en-tête\Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Scene\FrustrumSceneQuerry.h">
-      <Filter>Fichiers d%27en-tête\Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Scene\NodeVirtual.h">
-      <Filter>Fichiers d%27en-tête\Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Scene\RayEntityCollector.h">
-      <Filter>Fichiers d%27en-tête\Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Scene\RaySceneQuerry.h">
-      <Filter>Fichiers d%27en-tête\Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Scene\SceneManager.h">
-      <Filter>Fichiers d%27en-tête\Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Scene\VirtualEntityCollector.h">
-      <Filter>Fichiers d%27en-tête\Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Scene\VirtualSceneQuerry.h">
-      <Filter>Fichiers d%27en-tête\Scene</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Resources\Animation.h">
-      <Filter>Fichiers d%27en-tête\Resources</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Resources\Font.h">
-      <Filter>Fichiers d%27en-tête\Resources</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Resources\IResourceLoader.h">
-      <Filter>Fichiers d%27en-tête\Resources</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Resources\Joint.h">
-      <Filter>Fichiers d%27en-tête\Resources</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Resources\Mesh.h">
-      <Filter>Fichiers d%27en-tête\Resources</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Resources\ResourceManager.h">
-      <Filter>Fichiers d%27en-tête\Resources</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Resources\ResourceVirtual.h">
-      <Filter>Fichiers d%27en-tête\Resources</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Resources\Shader.h">
-      <Filter>Fichiers d%27en-tête\Resources</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Resources\Skeleton.h">
-      <Filter>Fichiers d%27en-tête\Resources</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Resources\Texture.h">
-      <Filter>Fichiers d%27en-tête\Resources</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Resources\Loader\AnimationLoader.h">
-      <Filter>Fichiers d%27en-tête\Resources\Loader</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Resources\Loader\AnimationSaver.h">
-      <Filter>Fichiers d%27en-tête\Resources\Loader</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Resources\Loader\AssimpLoader.h">
-      <Filter>Fichiers d%27en-tête\Resources\Loader</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Resources\Loader\FontLoader.h">
-      <Filter>Fichiers d%27en-tête\Resources\Loader</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Resources\Loader\ImageLoader.h">
-      <Filter>Fichiers d%27en-tête\Resources\Loader</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Resources\Loader\MeshLoader.h">
-      <Filter>Fichiers d%27en-tête\Resources\Loader</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Resources\Loader\MeshSaver.h">
-      <Filter>Fichiers d%27en-tête\Resources\Loader</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Resources\Loader\ShaderLoader.h">
-      <Filter>Fichiers d%27en-tête\Resources\Loader</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Resources\Loader\SkeletonLoader.h">
-      <Filter>Fichiers d%27en-tête\Resources\Loader</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Resources\Loader\SkeletonSaver.h">
-      <Filter>Fichiers d%27en-tête\Resources\Loader</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Resources\Loader\stb_image.h">
-      <Filter>Fichiers d%27en-tête\Resources\Loader</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Resources\Loader\TextureLoader.h">
-      <Filter>Fichiers d%27en-tête\Resources\Loader</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Utiles\Parser\Reader.h">
-      <Filter>Fichiers d%27en-tête\Utiles\Parser</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Utiles\Parser\Variant.h">
-      <Filter>Fichiers d%27en-tête\Utiles\Parser</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Utiles\Parser\Writer.h">
-      <Filter>Fichiers d%27en-tête\Utiles\Parser</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Utiles\Assert.hpp">
-      <Filter>Fichiers d%27en-tête\Utiles</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Utiles\ConsoleColor.h">
-      <Filter>Fichiers d%27en-tête\Utiles</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Utiles\Debug.h">
-      <Filter>Fichiers d%27en-tête\Utiles</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Utiles\GiftWrapping.h">
-      <Filter>Fichiers d%27en-tête\Utiles</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Utiles\IncrementalHull.h">
-      <Filter>Fichiers d%27en-tête\Utiles</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Utiles\Mutex.h">
-      <Filter>Fichiers d%27en-tête\Utiles</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Utiles\QuickHull.h">
-      <Filter>Fichiers d%27en-tête\Utiles</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Utiles\SafeFoxwardList.h">
-      <Filter>Fichiers d%27en-tête\Utiles</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Utiles\Singleton.h">
-      <Filter>Fichiers d%27en-tête\Utiles</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Utiles\System.h">
-      <Filter>Fichiers d%27en-tête\Utiles</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Utiles\ToolBox.h">
-      <Filter>Fichiers d%27en-tête\Utiles</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\World\WorldComponents\EntityFactory.h">
-      <Filter>Fichiers d%27en-tête\World\WorldComponent</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\World\WorldComponents\EntityManager.h">
-      <Filter>Fichiers d%27en-tête\World\WorldComponent</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\World\WorldComponents\Map.h">
-      <Filter>Fichiers d%27en-tête\World\WorldComponent</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\World\World.h">
-      <Filter>Fichiers d%27en-tête\World</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Physics\Shapes\AxisAlignedBox.h">
-      <Filter>Fichiers d%27en-tête\Physics\Shapes</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Physics\Shapes\Capsule.h">
-      <Filter>Fichiers d%27en-tête\Physics\Shapes</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Physics\Shapes\Hull.h">
-      <Filter>Fichiers d%27en-tête\Physics\Shapes</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Physics\Shapes\OrientedBox.h">
-      <Filter>Fichiers d%27en-tête\Physics\Shapes</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Physics\Shapes\Point.h">
-      <Filter>Fichiers d%27en-tête\Physics\Shapes</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Physics\Shapes\Segment.h">
-      <Filter>Fichiers d%27en-tête\Physics\Shapes</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Physics\Shapes\Shape.h">
-      <Filter>Fichiers d%27en-tête\Physics\Shapes</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Physics\Shapes\Sphere.h">
-      <Filter>Fichiers d%27en-tête\Physics\Shapes</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Physics\Shapes\Triangle.h">
-      <Filter>Fichiers d%27en-tête\Physics\Shapes</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Physics\SpecificCollision\CollisionAxisAlignedBox.h">
-      <Filter>Fichiers d%27en-tête\Physics\SpecificCollision</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Physics\SpecificCollision\CollisionCapsule.h">
-      <Filter>Fichiers d%27en-tête\Physics\SpecificCollision</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Physics\SpecificCollision\CollisionOrientedBox.h">
-      <Filter>Fichiers d%27en-tête\Physics\SpecificCollision</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Physics\SpecificCollision\CollisionSegment.h">
-      <Filter>Fichiers d%27en-tête\Physics\SpecificCollision</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Physics\SpecificCollision\CollisionSphere.h">
-      <Filter>Fichiers d%27en-tête\Physics\SpecificCollision</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Physics\SpecificCollision\CollisionTriangle.h">
-      <Filter>Fichiers d%27en-tête\Physics\SpecificCollision</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Physics\SpecificCollision\CollisionUtils.h">
-      <Filter>Fichiers d%27en-tête\Physics\SpecificCollision</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Physics\SpecificIntersection\IntersectionAxisAlignedBox.h">
-      <Filter>Fichiers d%27en-tête\Physics\SpecificIntersection</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Physics\SpecificIntersection\IntersectionCapsule.h">
-      <Filter>Fichiers d%27en-tête\Physics\SpecificIntersection</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Physics\SpecificIntersection\IntersectionContact.h">
-      <Filter>Fichiers d%27en-tête\Physics\SpecificIntersection</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Physics\SpecificIntersection\IntersectionOrientedBox.h">
-      <Filter>Fichiers d%27en-tête\Physics\SpecificIntersection</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Physics\SpecificIntersection\IntersectionSegment.h">
-      <Filter>Fichiers d%27en-tête\Physics\SpecificIntersection</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Physics\SpecificIntersection\IntersectionSphere.h">
-      <Filter>Fichiers d%27en-tête\Physics\SpecificIntersection</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Physics\SpecificIntersection\IntersectionTriangle.h">
-      <Filter>Fichiers d%27en-tête\Physics\SpecificIntersection</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Physics\BoundingVolume.h">
-      <Filter>Fichiers d%27en-tête\Physics</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Physics\Collision.h">
-      <Filter>Fichiers d%27en-tête\Physics</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Physics\CollisionReport.h">
-      <Filter>Fichiers d%27en-tête\Physics</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Physics\GJK.h">
-      <Filter>Fichiers d%27en-tête\Physics</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Physics\Physics.h">
-      <Filter>Fichiers d%27en-tête\Physics</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Physics\RigidBody.h">
-      <Filter>Fichiers d%27en-tête\Physics</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\HUD\Loader\WidgetLoader.h">
-      <Filter>Fichiers d%27en-tête\HUD\Loader</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Utiles\FileWatcher.h">
-      <Filter>Fichiers d%27en-tête\Utiles</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Utiles\DirectoryWatcher.h">
-      <Filter>Fichiers d%27en-tête\Utiles</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Utiles\OpenSaveFileDialog.h">
-      <Filter>Fichiers d%27en-tête\Utiles</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Physics\Constraint.h">
-      <Filter>Fichiers d%27en-tête\Physics</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Utiles\ImguiConfig.h">
-      <Filter>Fichiers d%27en-tête\Utiles</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Physics\Shapes\Collider.h">
-      <Filter>Fichiers d%27en-tête\Physics\Shapes</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Physics\Shapes\ShapeCacheContainer.h">
-      <Filter>Fichiers d%27en-tête\Physics\Shapes</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Sources\Math\TMath.h">
-      <Filter>Fichiers d%27en-tête\Math</Filter>
+      <Filter>Fichiers sources\Math</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Sources\Math\Tmat3.h">
-      <Filter>Fichiers d%27en-tête\Math</Filter>
+      <Filter>Fichiers sources\Math</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Sources\Math\Tmat3.hpp">
-      <Filter>Fichiers d%27en-tête\Math</Filter>
+      <Filter>Fichiers sources\Math</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Sources\Math\Ttypes.h">
-      <Filter>Fichiers d%27en-tête\Math</Filter>
+      <Filter>Fichiers sources\Math</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Sources\Math\Tvec2.h">
-      <Filter>Fichiers d%27en-tête\Math</Filter>
+      <Filter>Fichiers sources\Math</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Sources\Math\Tvec2.hpp">
-      <Filter>Fichiers d%27en-tête\Math</Filter>
+      <Filter>Fichiers sources\Math</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Sources\Math\Tvec3.h">
-      <Filter>Fichiers d%27en-tête\Math</Filter>
+      <Filter>Fichiers sources\Math</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Sources\Math\Tvec3.hpp">
-      <Filter>Fichiers d%27en-tête\Math</Filter>
+      <Filter>Fichiers sources\Math</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Sources\Math\Tvec4.h">
-      <Filter>Fichiers d%27en-tête\Math</Filter>
+      <Filter>Fichiers sources\Math</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Sources\Math\Tvec4.hpp">
-      <Filter>Fichiers d%27en-tête\Math</Filter>
+      <Filter>Fichiers sources\Math</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Sources\Math\Tmat4.h">
-      <Filter>Fichiers d%27en-tête\Math</Filter>
+      <Filter>Fichiers sources\Math</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Sources\Math\Tmat4.hpp">
-      <Filter>Fichiers d%27en-tête\Math</Filter>
+      <Filter>Fichiers sources\Math</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Sources\Math\Tquat.h">
-      <Filter>Fichiers d%27en-tête\Math</Filter>
+      <Filter>Fichiers sources\Math</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Sources\Math\Tquat.hpp">
-      <Filter>Fichiers d%27en-tête\Math</Filter>
+      <Filter>Fichiers sources\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Animation\AnimationComponent.h">
+      <Filter>Fichiers sources\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Animation\Animator.h">
+      <Filter>Fichiers sources\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Animation\SkeletonComponent.h">
+      <Filter>Fichiers sources\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Core\Application.h">
+      <Filter>Fichiers sources\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Core\RenderContext.h">
+      <Filter>Fichiers sources\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\EntityComponent\Component.hpp">
+      <Filter>Fichiers sources\EntityComponent</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\EntityComponent\Entity.hpp">
+      <Filter>Fichiers sources\EntityComponent</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\EntityComponent\EntityBase.hpp">
+      <Filter>Fichiers sources\EntityComponent</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Sources\EntityComponent\EntityFlags.h">
-      <Filter>Fichiers d%27en-tête\EntityComponent</Filter>
+      <Filter>Fichiers sources\EntityComponent</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Events\Event.h">
+      <Filter>Fichiers sources\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Events\EventEnum.h">
+      <Filter>Fichiers sources\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Events\EventHandler.h">
+      <Filter>Fichiers sources\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Events\EventHandlerEnum.h">
+      <Filter>Fichiers sources\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Events\EventHandlerImpl.h">
+      <Filter>Fichiers sources\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Events\EventHandlerString.h">
+      <Filter>Fichiers sources\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Events\EventSequence.h">
+      <Filter>Fichiers sources\Events</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Generators\HouseGenerator.h">
+      <Filter>Fichiers sources\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Generators\ReferenceMeshGenerator.h">
+      <Filter>Fichiers sources\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\HUD\Layer.h">
+      <Filter>Fichiers sources\HUD</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\HUD\WidgetBoard.h">
+      <Filter>Fichiers sources\HUD</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\HUD\WidgetConsole.h">
+      <Filter>Fichiers sources\HUD</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\HUD\WidgetImage.h">
+      <Filter>Fichiers sources\HUD</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\HUD\WidgetLabel.h">
+      <Filter>Fichiers sources\HUD</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\HUD\WidgetManager.h">
+      <Filter>Fichiers sources\HUD</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\HUD\WidgetRadioButton.h">
+      <Filter>Fichiers sources\HUD</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\HUD\WidgetVirtual.h">
+      <Filter>Fichiers sources\HUD</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\HUD\Loader\WidgetLoader.h">
+      <Filter>Fichiers sources\HUD\Loader</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\HUD\Loader\WidgetSaver.h">
+      <Filter>Fichiers sources\HUD\Loader</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Physics\RigidBody.h">
+      <Filter>Fichiers sources\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Physics\BoundingVolume.h">
+      <Filter>Fichiers sources\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Physics\Collision.h">
+      <Filter>Fichiers sources\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Physics\CollisionReport.h">
+      <Filter>Fichiers sources\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Physics\Constraint.h">
+      <Filter>Fichiers sources\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Physics\GJK.h">
+      <Filter>Fichiers sources\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Physics\Physics.h">
+      <Filter>Fichiers sources\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Physics\SpecificIntersection\IntersectionAxisAlignedBox.h">
+      <Filter>Fichiers sources\Physics\SpecificIntersection</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Physics\SpecificIntersection\IntersectionCapsule.h">
+      <Filter>Fichiers sources\Physics\SpecificIntersection</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Physics\SpecificIntersection\IntersectionContact.h">
+      <Filter>Fichiers sources\Physics\SpecificIntersection</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Physics\SpecificIntersection\IntersectionOrientedBox.h">
+      <Filter>Fichiers sources\Physics\SpecificIntersection</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Physics\SpecificIntersection\IntersectionSegment.h">
+      <Filter>Fichiers sources\Physics\SpecificIntersection</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Physics\SpecificIntersection\IntersectionSphere.h">
+      <Filter>Fichiers sources\Physics\SpecificIntersection</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Physics\SpecificIntersection\IntersectionTriangle.h">
+      <Filter>Fichiers sources\Physics\SpecificIntersection</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Physics\SpecificCollision\CollisionAxisAlignedBox.h">
+      <Filter>Fichiers sources\Physics\SpecificCollision</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Physics\SpecificCollision\CollisionCapsule.h">
+      <Filter>Fichiers sources\Physics\SpecificCollision</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Physics\SpecificCollision\CollisionOrientedBox.h">
+      <Filter>Fichiers sources\Physics\SpecificCollision</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Physics\SpecificCollision\CollisionSegment.h">
+      <Filter>Fichiers sources\Physics\SpecificCollision</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Physics\SpecificCollision\CollisionSphere.h">
+      <Filter>Fichiers sources\Physics\SpecificCollision</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Physics\SpecificCollision\CollisionTriangle.h">
+      <Filter>Fichiers sources\Physics\SpecificCollision</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Physics\SpecificCollision\CollisionUtils.h">
+      <Filter>Fichiers sources\Physics\SpecificCollision</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Physics\Shapes\AxisAlignedBox.h">
+      <Filter>Fichiers sources\Physics\Shapes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Physics\Shapes\Capsule.h">
+      <Filter>Fichiers sources\Physics\Shapes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Physics\Shapes\Collider.h">
+      <Filter>Fichiers sources\Physics\Shapes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Physics\Shapes\Hull.h">
+      <Filter>Fichiers sources\Physics\Shapes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Physics\Shapes\OrientedBox.h">
+      <Filter>Fichiers sources\Physics\Shapes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Physics\Shapes\Point.h">
+      <Filter>Fichiers sources\Physics\Shapes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Physics\Shapes\Segment.h">
+      <Filter>Fichiers sources\Physics\Shapes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Physics\Shapes\Shape.h">
+      <Filter>Fichiers sources\Physics\Shapes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Physics\Shapes\ShapeCacheContainer.h">
+      <Filter>Fichiers sources\Physics\Shapes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Physics\Shapes\Sphere.h">
+      <Filter>Fichiers sources\Physics\Shapes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Physics\Shapes\Triangle.h">
+      <Filter>Fichiers sources\Physics\Shapes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\World\World.h">
+      <Filter>Fichiers sources\World</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\World\WorldComponents\Map.h">
+      <Filter>Fichiers sources\World\WorldComponent</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\World\WorldComponents\EntityFactory.h">
+      <Filter>Fichiers sources\World\WorldComponent</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\World\WorldComponents\EntityManager.h">
+      <Filter>Fichiers sources\World\WorldComponent</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Utiles\ToolBox.h">
+      <Filter>Fichiers sources\Utiles</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Utiles\Assert.hpp">
+      <Filter>Fichiers sources\Utiles</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Utiles\ConsoleColor.h">
+      <Filter>Fichiers sources\Utiles</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Utiles\Debug.h">
+      <Filter>Fichiers sources\Utiles</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Utiles\DirectoryWatcher.h">
+      <Filter>Fichiers sources\Utiles</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Utiles\FileWatcher.h">
+      <Filter>Fichiers sources\Utiles</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Utiles\GiftWrapping.h">
+      <Filter>Fichiers sources\Utiles</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Utiles\ImguiConfig.h">
+      <Filter>Fichiers sources\Utiles</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Utiles\IncrementalHull.h">
+      <Filter>Fichiers sources\Utiles</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Utiles\Mutex.h">
+      <Filter>Fichiers sources\Utiles</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Utiles\OpenSaveFileDialog.h">
+      <Filter>Fichiers sources\Utiles</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Utiles\QuickHull.h">
+      <Filter>Fichiers sources\Utiles</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Utiles\SafeFoxwardList.h">
+      <Filter>Fichiers sources\Utiles</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Utiles\Singleton.h">
+      <Filter>Fichiers sources\Utiles</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Utiles\System.h">
+      <Filter>Fichiers sources\Utiles</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Utiles\Parser\Reader.h">
+      <Filter>Fichiers sources\Utiles\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Utiles\Parser\Variant.h">
+      <Filter>Fichiers sources\Utiles\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Utiles\Parser\Writer.h">
+      <Filter>Fichiers sources\Utiles\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Terrain\Chunk.h">
+      <Filter>Fichiers sources\Terrain</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Scene\BoxSceneQuerry.h">
+      <Filter>Fichiers sources\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Scene\FrustrumEntityCollector.h">
+      <Filter>Fichiers sources\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Scene\FrustrumSceneQuerry.h">
+      <Filter>Fichiers sources\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Scene\NodeVirtual.h">
+      <Filter>Fichiers sources\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Scene\RayEntityCollector.h">
+      <Filter>Fichiers sources\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Scene\RaySceneQuerry.h">
+      <Filter>Fichiers sources\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Scene\SceneManager.h">
+      <Filter>Fichiers sources\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Scene\VirtualEntityCollector.h">
+      <Filter>Fichiers sources\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Scene\VirtualSceneQuerry.h">
+      <Filter>Fichiers sources\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Renderer\CameraComponent.h">
+      <Filter>Fichiers sources\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Renderer\DrawableComponent.h">
+      <Filter>Fichiers sources\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Renderer\Renderer.h">
+      <Filter>Fichiers sources\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Resources\Texture.h">
+      <Filter>Fichiers sources\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Resources\Animation.h">
+      <Filter>Fichiers sources\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Resources\Font.h">
+      <Filter>Fichiers sources\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Resources\IResourceLoader.h">
+      <Filter>Fichiers sources\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Resources\Joint.h">
+      <Filter>Fichiers sources\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Resources\Mesh.h">
+      <Filter>Fichiers sources\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Resources\ResourceManager.h">
+      <Filter>Fichiers sources\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Resources\ResourceVirtual.h">
+      <Filter>Fichiers sources\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Resources\Shader.h">
+      <Filter>Fichiers sources\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Resources\Skeleton.h">
+      <Filter>Fichiers sources\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Resources\Loader\TextureLoader.h">
+      <Filter>Fichiers sources\Resources\Loader</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Resources\Loader\AnimationLoader.h">
+      <Filter>Fichiers sources\Resources\Loader</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Resources\Loader\AnimationSaver.h">
+      <Filter>Fichiers sources\Resources\Loader</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Resources\Loader\AssimpLoader.h">
+      <Filter>Fichiers sources\Resources\Loader</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Resources\Loader\FontLoader.h">
+      <Filter>Fichiers sources\Resources\Loader</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Resources\Loader\ImageLoader.h">
+      <Filter>Fichiers sources\Resources\Loader</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Resources\Loader\MeshLoader.h">
+      <Filter>Fichiers sources\Resources\Loader</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Resources\Loader\MeshSaver.h">
+      <Filter>Fichiers sources\Resources\Loader</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Resources\Loader\ShaderLoader.h">
+      <Filter>Fichiers sources\Resources\Loader</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Resources\Loader\SkeletonLoader.h">
+      <Filter>Fichiers sources\Resources\Loader</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Resources\Loader\SkeletonSaver.h">
+      <Filter>Fichiers sources\Resources\Loader</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Resources\Loader\stb_image.h">
+      <Filter>Fichiers sources\Resources\Loader</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
