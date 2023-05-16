@@ -19,7 +19,7 @@
 
 
 //	Drawing functions
-void Renderer::drawObject(Entity* object, const float* view, const float* projection)
+void Renderer::drawObject(Entity* object)
 {
 	ShaderIdentifier shaderType = INSTANCE_DRAWABLE;
 	ShaderIdentifier shaderBBType = INSTANCE_DRAWABLE_BB;
@@ -46,10 +46,11 @@ void Renderer::drawObject(Entity* object, const float* view, const float* projec
 	if (!shaderToUse) 
 		shaderToUse = defaultShader[shaderType];
 
-	loadMVPMatrix(shaderToUse, &object->getWorldTransformMatrix()[0][0], view, projection);
-	if (!shaderToUse) 
+	loadMVPMatrix(shaderToUse, &object->getWorldTransformMatrix()[0][0], object->getWorldOrientation());
+	if (!shaderToUse)
 		return;
 
+	// animation uniforms
 	if (shaderType == INSTANCE_ANIMATABLE)
 	{
 		//	Load skeleton pose matrix list for vertex skinning calculation
@@ -79,11 +80,18 @@ void Renderer::drawObject(Entity* object, const float* view, const float* projec
 	{
 		loadVAO(drawableComp->getMesh()->getVAO());
 		glDrawElements(GL_TRIANGLES, (int)drawableComp->getMesh()->getFaces()->size(), GL_UNSIGNED_SHORT, NULL);
+
+		if (renderOption == RenderOption::NORMALS && normalViewer)
+		{
+			loadMVPMatrix(normalViewer, &object->getWorldTransformMatrix()[0][0], object->getWorldOrientation());
+			loadVAO(drawableComp->getMesh()->getVAO());
+			glDrawElements(GL_TRIANGLES, (int)drawableComp->getMesh()->getFaces()->size(), GL_UNSIGNED_SHORT, NULL);
+		}
 	}
 	instanceDrawn++;
 	trianglesDrawn += drawableComp->getMesh()->getNumberFaces();
 }
-void Renderer::drawInstancedObject(Shader* s, Mesh* m, std::vector<mat4f>& models, const float* view, const float* projection)
+void Renderer::drawInstancedObject(Shader* s, Mesh* m, std::vector<mat4f>& models)
 {
 	//	Get shader and prepare matrix
 	Shader* shaderToUse;
@@ -99,7 +107,7 @@ void Renderer::drawInstancedObject(Shader* s, Mesh* m, std::vector<mat4f>& model
 		shaderToUse = shaderToUse->getInstanciable();
 
 	//	Load MVP matrix
-	loadMVPMatrix(shaderToUse, (const float*)models.data(), view, projection, (int)models.size());
+	loadMVPMatrix(shaderToUse, (const float*)models.data(), quatf::identity, (int)models.size());
 
 	//	Draw instanced
 	if (renderOption == RenderOption::BOUNDING_BOX)
@@ -115,13 +123,13 @@ void Renderer::drawInstancedObject(Shader* s, Mesh* m, std::vector<mat4f>& model
 	instanceDrawn += (int)(models.size());
 	trianglesDrawn += (int)(models.size() * m->getNumberFaces());
 }
-void Renderer::drawMap(Map* map, const float* view, const float* projection, Shader* s)
+void Renderer::drawMap(Map* map, Shader* s)
 {
 	mat4f scale = mat4f::scale(mat4f::identity, map->getScale());
 	mat4f model = scale * map->getModelMatrix();
 
 	// raw
-	loadMVPMatrix(map->getShader(), &model[0][0], view, projection);
+	loadMVPMatrix(map->getShader(), &model[0][0], quatf::identity);
 	vec4i exclusion = map->getExclusionZone();
 	int loc = map->getShader()->getUniformLocation("exclusion");
 	if (loc >= 0) glUniform4iv(loc, 1, (int*)&exclusion);
@@ -145,7 +153,7 @@ void Renderer::drawMap(Map* map, const float* view, const float* projection, Sha
 		if (chunk->isInitialized())
 		{
 			model = scale * chunk->getModelMatrix();
-			loadMVPMatrix(map->getShader(), &model[0][0], view, projection);
+			loadMVPMatrix(map->getShader(), &model[0][0], quatf::identity);
 			loadVAO(chunk->getVAO());
 
 			int lod = chunk->getLod();

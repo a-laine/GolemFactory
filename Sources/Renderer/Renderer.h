@@ -40,7 +40,20 @@ class Renderer : public Singleton<Renderer>
 		{
 			DEFAULT,
 			BOUNDING_BOX,
-			WIREFRAME
+			WIREFRAME,
+			NORMALS
+		};
+		struct GlobalMatrices
+		{
+			mat4f view;
+			mat4f projection;
+			vec4f cameraPosition;
+		};
+		struct EnvironementLighting
+		{
+			vec4f m_ambientColor;
+			vec4f m_directionalLightDirection;
+			vec4f m_directionalLightColor;
 		};
 		//
 
@@ -58,7 +71,12 @@ class Renderer : public Singleton<Renderer>
 		void setShader(ShaderIdentifier id, Shader* s);
 		void setGridVisible(bool enable);
 		void setRenderOption(const RenderOption& option);
-		
+
+		void setEnvAmbientColor(vec4f color);
+		void setEnvDirectionalLightDirection(vec4f direction);
+		void setEnvDirectionalLightColor(vec4f color);
+
+
 		CameraComponent* getCamera();
 		World* getWorld();
 		RenderContext* getContext();
@@ -67,11 +85,19 @@ class Renderer : public Singleton<Renderer>
 		unsigned int getNbDrawnInstances() const;
 		unsigned int getNbDrawnTriangles() const;
 		RenderOption getRenderOption() const;
+
+		vec4f getEnvAmbientColor() const;
+		vec4f getEnvDirectionalLightDirection() const;
+		vec4f getEnvDirectionalLightColor() const;
 		//
 
 		//	Render function
-		void drawObject(Entity* object, const float* view, const float* projection);
-		void drawMap(Map* map, const float* view, const float* projection, Shader* s = nullptr);
+		void drawObject(Entity* object);
+		void drawMap(Map* map, Shader* s = nullptr);
+		// 
+		
+		//	Debug
+		void drawImGui(World& world);
 		//
 
 		Shader* normalViewer;
@@ -97,10 +123,13 @@ class Renderer : public Singleton<Renderer>
 		//
 
 		//	Protected functions
-		void loadMVPMatrix(Shader* shader, const float* model, const float* view, const float* projection, const int& modelSize = 1);
+		void loadMVPMatrix(Shader* shader, const float* model, const quatf rotation, const int& modelSize = 1);
 		void loadVAO(const GLuint& vao);
 
-		void drawInstancedObject(Shader* s, Mesh* m, std::vector<mat4f>& models, const float* view, const float* projection);
+		void drawInstancedObject(Shader* s, Mesh* m, std::vector<mat4f>& models);
+
+		void initGlobalUniformBuffers();
+		void updateGlobalUniformBuffers();
 		//
 
 		//  Attributes
@@ -113,12 +142,25 @@ class Renderer : public Singleton<Renderer>
 		bool drawGrid;
 		unsigned int vboGridSize;
 		GLuint gridVAO, vertexbuffer, arraybuffer, colorbuffer, normalbuffer;
+		vec4f m_gridColor;
 		unsigned int instanceDrawn, trianglesDrawn;
 		Shader* lastShader;
 		GLuint lastVAO;
 
+		std::vector<std::pair<uint32_t, Entity*>> renderQueue;
 		std::map<Shader*, std::vector<Entity*> > simpleBatches;
 		std::map<Shader*, std::map<Mesh*, std::vector<mat4f> > > groupBatches;
+
+		EnvironementLighting m_envLighting;
+
+		GLuint m_globalMatricesID, m_environementLightingID;
+		GlobalMatrices m_globalMatrices;
+		EnvironementLighting m_environementLighting;
+
+
+#ifdef USE_IMGUI
+		bool m_drawLightDirection = false;
+#endif //USE_IMGUI
 		//
 };
 

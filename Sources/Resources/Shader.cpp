@@ -30,7 +30,7 @@ Shader::~Shader()
 
 //  Public functions
 void Shader::initialize(GLuint  vertexSh, GLuint fragSh, GLuint geomShr, GLuint tessControlSh, GLuint tessEvalSh, GLuint prog,
-    const std::map<std::string, std::string>& attType, const std::vector<std::string>& textures)
+    const std::map<std::string, std::string>& attType, const std::vector<std::string>& textures, uint16_t queue)
 {
     GF_ASSERT(state == INVALID);
     state = LOADING;
@@ -44,20 +44,25 @@ void Shader::initialize(GLuint  vertexSh, GLuint fragSh, GLuint geomShr, GLuint 
     program = prog;
     textureCount = 0;
     attributesType = attType;
+    renderQueue = queue;
 
     //	get attributes location
     for(auto it = attType.begin(); it != attType.end(); it++)
     {
         const std::string& uniformName = it->first;
-        GLint uniformLocation = glGetUniformLocation(program, uniformName.c_str());
-        attributesLocation[uniformName] = uniformLocation;
-        if(uniformLocation < 0)
+        const std::string& type = it->first;
+
         {
-            if(uniformName.size() >= 3 && uniformName[0] == 'g' && uniformName[1] == 'l' && uniformName[2] == '_' && 
-                ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
-                std::cerr << "ERROR : loading shader : " << name << " : error in loading '" << uniformName << "' : name format not allowed, remove the 'gl_' prefix." << std::endl;
-            else if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
-                std::cerr << "ERROR : loading shader : " << name << " : ERROR in loading '" << uniformName << "' variable location : " << uniformLocation << "; maybe the variable name does not correspond to an active uniform variable" << std::endl;
+            GLint uniformLocation = glGetUniformLocation(program, uniformName.c_str());
+            attributesLocation[uniformName] = uniformLocation;
+            if(uniformLocation < 0)
+            {
+                if(uniformName.size() >= 3 && uniformName[0] == 'g' && uniformName[1] == 'l' && uniformName[2] == '_' && 
+                    ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
+                    std::cerr << "ERROR : loading shader : " << name << " : error in loading '" << uniformName << "' : name format not allowed, remove the 'gl_' prefix." << std::endl;
+                else if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
+                    std::cerr << "ERROR : loading shader : " << name << " : ERROR in loading '" << uniformName << "' variable location : " << uniformLocation << "; maybe the variable name does not correspond to an active uniform variable" << std::endl;
+            }
         }
     }
 
@@ -125,6 +130,7 @@ bool Shader::useShaderType(ShaderType shaderType) const
         default:            return false;
     }
 }
+uint16_t Shader::getRenderQueue() const { return renderQueue; }
 
 int Shader::getUniformLocation(const std::string& uniform)
 {

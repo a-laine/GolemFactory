@@ -3,13 +3,21 @@ Default
 	uniform :
 	{
 		model : "mat4 array32";
-		view : "mat4";
-		projection : "mat4";
 	};
 	
+	includes :
+	{
+		#version 420
+		
+		layout(std140, binding = 0) uniform GlobalMatrices
+		{
+			mat4 view;
+			mat4 projection;
+			vec4 cameraPosition;
+		};
+	};
 	vertex :
 	{
-		#version 330
 		#define MAX_INSTANCE 32
 
 		// input
@@ -21,8 +29,6 @@ Default
 		//in vec3 weight;
 
 		uniform mat4 model[MAX_INSTANCE]; 	// model matrix
-		uniform mat4 view; 					// view matrix
-		uniform mat4 projection;			// projection matrix
 
 		// output
 		out vec4 lightDirectionCameraSpace;
@@ -43,6 +49,27 @@ Default
 			lightDirectionCameraSpace = lightPositionCameraSpace + eyeDirectionCameraSpace;
 		}
 	};
-	
-	fragment : "default.fs";
+	fragment : 
+	{
+		// input
+		in vec4 lightDirectionCameraSpace;
+		in vec4 fragmentNormal;
+		in vec4 fragmentColor;
+
+		uniform vec4 overrideColor = vec4(-1.0 , 0.0 , 0.0 , 0.0);
+
+		// output
+		layout (location = 0) out vec4 fragColor;
+
+		// program
+		void main()
+		{
+			vec4 color = fragmentColor;
+			if (overrideColor.x >= 0.0)
+				color = overrideColor;
+
+			float costeta = clamp( dot(normalize(fragmentNormal), normalize(lightDirectionCameraSpace)), 0,1 );
+			fragColor = color * (0.4*costeta + 0.6);
+		}
+	};
 }

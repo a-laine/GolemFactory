@@ -3428,14 +3428,14 @@
             "id": 137,
             "position": [
                 -18.239999771118165,
-                9.640000343322754,
-                -85.12000274658203
+                8.640000343322754,
+                -82.92000274658203
             ],
             "rotation": [
-                0.19138598442077638,
-                -0.13270924985408784,
-                -0.709416925907135,
-                0.6651971936225891
+                -0.975,
+                0.0,
+                -0.16,
+                0.151
             ],
             "scale": 15.014113426208496,
             "prefabName": "SM_Env_Rock_Spike_04",
@@ -6473,7 +6473,7 @@
             "id": 282,
             "position": [
                 7.769999980926514,
-                7.630000114440918,
+                4.3,
                 -141.32000732421876
             ],
             "rotation": [
@@ -11627,7 +11627,7 @@
                 0.0,
                 0.8388240933418274
             ],
-            "scale": 0.3368777334690094,
+            "scale": 0.2,
             "prefabName": "SM_Env_Cave_Background_01",
             "drawableComponent": {
                 "meshName": "SM_Env_Cave_Background_01",
@@ -55456,15 +55456,15 @@
             "name": "SM_Env_Ceiling_Stone_Curved_End_02",
             "id": 2501,
             "position": [
-                -5.0,
-                10.0,
-                -20.0
+                0.0,
+                15.0,
+                -20.1
             ],
             "rotation": [
                 0.0,
-                1.0,
                 0.0,
-                0.0
+                0.707,
+                0.707
             ],
             "scale": 1.0,
             "prefabName": "SM_Env_Ceiling_Stone_Curved_End_01",
@@ -61199,7 +61199,7 @@
                 0.0,
                 1.0
             ],
-            "scale": 0.30000001192092898,
+            "scale": 1.0,
             "prefabName": "SM_Env_Tile_Simple_01",
             "drawableComponent": {
                 "meshName": "SM_Env_Tile_Simple_01",
@@ -77853,7 +77853,7 @@
             "prefabName": "",
             "drawableComponent": {
                 "meshName": "Plane",
-                "shaderName": "defaultTextured"
+                "shaderName": "fog"
             }
         },
         {
@@ -77874,7 +77874,7 @@
             "prefabName": "",
             "drawableComponent": {
                 "meshName": "Plane",
-                "shaderName": "defaultTextured"
+                "shaderName": "fog"
             }
         },
         {
@@ -77891,11 +77891,11 @@
                 0.0,
                 0.9539327621459961
             ],
-            "scale": 1.8109521865844727,
+            "scale": 3.5,
             "prefabName": "",
             "drawableComponent": {
                 "meshName": "Plane",
-                "shaderName": "defaultTextured"
+                "shaderName": "fog"
             }
         },
         {
@@ -77909,14 +77909,14 @@
             "rotation": [
                 0.0,
                 0.0,
-                0.0,
-                1.0
+                -1.0,
+                0.0
             ],
             "scale": 4.994878768920898,
             "prefabName": "",
             "drawableComponent": {
                 "meshName": "Plane",
-                "shaderName": "defaultTextured"
+                "shaderName": "fog"
             }
         },
         {
@@ -77937,7 +77937,7 @@
             "prefabName": "",
             "drawableComponent": {
                 "meshName": "Plane",
-                "shaderName": "defaultTextured"
+                "shaderName": "fog"
             }
         },
         {
@@ -77958,7 +77958,7 @@
             "prefabName": "",
             "drawableComponent": {
                 "meshName": "Plane",
-                "shaderName": "defaultTextured"
+                "shaderName": "fog"
             }
         }
     ]

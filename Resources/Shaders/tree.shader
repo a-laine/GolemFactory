@@ -8,10 +8,19 @@ Tree
 		wind : "vec4";
 	};
 	
+	includes :
+	{
+		#version 420
+		
+		layout(std140, binding = 0) uniform GlobalMatrices
+		{
+			mat4 view;
+			mat4 projection;
+			vec4 cameraPosition;
+		};
+	};
 	vertex : 
 	{
-		#version 330
-
 		// input
 		layout(location = 0) in vec4 position;
 		layout(location = 1) in vec4 normal;
@@ -21,9 +30,6 @@ Tree
 		//in vec3 weight;
 
 		uniform mat4 model; 	// model matrix (has to be present at this location)
-		uniform mat4 view; 		// view matrix
-		uniform mat4 projection;// projection matrix
-
 		uniform vec4 wind;
 
 		// output
@@ -50,8 +56,6 @@ Tree
 	
 	fragment : 
 	{
-		#version 330
-
 		// input
 		in vec4 lightDirectionCameraSpace;
 		in vec4 fragmentNormal;

@@ -41,7 +41,7 @@ class Shader : public ResourceVirtual
 
         //  Public functions
         void initialize(GLuint  vertexSh, GLuint fragSh, GLuint geomShr, GLuint tessControlSh, GLuint tessEvalSh, GLuint prog,
-            const std::map<std::string, std::string>& attType, const std::vector<std::string>& textures);
+            const std::map<std::string, std::string>& attType, const std::vector<std::string>& textures, uint16_t queue);
         void enable();
 
 		void setInstanciable(Shader* instaciedVersion);
@@ -50,6 +50,7 @@ class Shader : public ResourceVirtual
         int getTextureCount() const;
         GLuint getShaderID(ShaderType shaderType) const;
 		bool useShaderType(ShaderType shaderType) const;
+        uint16_t getRenderQueue() const;
 
 		int getUniformLocation(const std::string& uniform);
 		std::string getUniformType(const std::string& uniform);
@@ -73,6 +74,7 @@ class Shader : public ResourceVirtual
                 tessControlShader,							//!< Tesselation control shader opengl id
                 tessEvalShader,								//!< Tesselation evaluation shader opengl id
                 program;									//!< Program opengl id
+        uint16_t renderQueue;
         uint8_t textureCount;								//!< The number of texture use by the program
         std::map<std::string, GLint> attributesLocation;	//!< The shader attribute map with their opengl location
 		std::map<std::string, std::string> attributesType;

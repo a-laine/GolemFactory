@@ -3,25 +3,45 @@ Point
 	uniform :
 	{
 		model : "mat4";
-		view : "mat4";
-		projection : "mat4";
 		
 		overrideColor : "vec4";
 	};
 	
-	vertex :   "Shapes/point.vs";
-	fragment : "Shapes/point.fs";
-	
+	includes :
+	{
+		#version 420
+		
+		layout(std140, binding = 0) uniform GlobalMatrices
+		{
+			mat4 view;
+			mat4 projection;
+			vec4 cameraPosition;
+		};
+	};
+	vertex :   
+	{
+		// input
+		layout(location = 0) in vec4 position;
+		layout(location = 1) in vec4 normal;
+		layout(location = 2) in vec4 vertexcolor;
+
+		// output
+		out vec4 fragmentColor;
+
+
+		// program
+		void main()
+		{
+			gl_Position = position;
+			fragmentColor = vertexcolor;
+		}
+	};
 	geometry : 
 	{
-		#version 330
-
 		layout(points) in;
 		layout(line_strip, max_vertices = 8) out;
 
 		uniform mat4 model;
-		uniform mat4 view; 		// view matrix
-		uniform mat4 projection;// projection matrix
 
 		in vec4 fragmentColor[];
 		out vec4 fragmentColor1;
@@ -52,6 +72,25 @@ Point
 			drawSegment(p - right * size, p + right * size);
 			drawSegment(p - normalize(right + up) * size, p + normalize(right + up) * size);
 			drawSegment(p - normalize(right - up) * size, p + normalize(right - up) * size);
+		}
+	};
+	fragment : 
+	{
+		// input
+		in vec4 fragmentColor1;
+
+		uniform vec4 overrideColor = vec4(-1.0 , 0.0 , 0.0 , 0.0);
+
+		// output
+		layout (location = 0) out vec4 fragColor;
+
+
+		// program
+		void main()
+		{
+			if (overrideColor.x >= 0.0)
+				fragColor = overrideColor;
+			else fragColor = fragmentColor1;
 		}
 	};
 }

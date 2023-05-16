@@ -95,7 +95,7 @@ void Debug::point(const vec4f& p, Shader* shader)
 	if (This->renderer && shader && This->pointMesh)
 	{
 		//	Get shader and prepare matrix
-		This->renderer->loadMVPMatrix(shader, &mat4f::translate(mat4f::identity, p)[0][0], &view[0][0], &projection[0][0]);
+		This->renderer->loadMVPMatrix(shader, &mat4f::translate(mat4f::identity, p)[0][0], quatf::identity);
 
 		//	override mesh color
 		int loc = shader->getUniformLocation("overrideColor");
@@ -117,7 +117,7 @@ void Debug::line(const vec4f& point1, const vec4f& point2, Shader* shader)
 	if (This->renderer && shader && This->pointMesh)
 	{
 		//	Get shader and prepare matrix
-		This->renderer->loadMVPMatrix(shader, &mat4f::translate(mat4f::identity, point1)[0][0], &view[0][0], &projection[0][0]);
+		This->renderer->loadMVPMatrix(shader, &mat4f::translate(mat4f::identity, point1)[0][0], quatf::identity);
 
 		int loc = shader->getUniformLocation("vector");
 		if (loc >= 0) glUniform4fv(loc, 1, (float*)&(point2 - point1)[0]);
@@ -149,15 +149,16 @@ void Debug::capsule(const vec4f& point1, const vec4f& point2, const float& radiu
 		vec4f center = 0.5f * (point1 + point2);
 		mat4f base = mat4f::translate(mat4f::identity, center);
 		vec4f v = vec4f::cross(vec4f(0, 0, 1, 0), point1 - point2);
+		quatf orientation = quatf::identity;
 		if (v != vec4f::zero)
 		{
 			float angle = asinf(v.getNorm() / (point1 - point2).getNorm());
-			quatf q = quatf(angle, (vec3f)v.getNormal());
-			base = mat4f::rotate(base, q);
+			orientation = quatf(angle, (vec3f)v.getNormal());
+			base = mat4f::rotate(base, orientation);
 		}
 
 		//	Get shader and prepare matrix
-		This->renderer->loadMVPMatrix(shader, &base[0][0], &view[0][0], &projection[0][0]);
+		This->renderer->loadMVPMatrix(shader, &base[0][0], orientation);
 
 		//	override mesh color
 		int loc = shader->getUniformLocation("overrideColor");
@@ -168,17 +169,17 @@ void Debug::capsule(const vec4f& point1, const vec4f& point2, const float& radiu
 		This->renderer->loadVAO(This->capsuleMesh->getVAO());
 
 		mat4f model = mat4f::scale(base, vec4f(radius, radius, length, 1.f));
-		This->renderer->loadMVPMatrix(shader, &model[0][0], &view[0][0], &projection[0][0]);
+		This->renderer->loadMVPMatrix(shader, &model[0][0], orientation);
 		glDrawElements(GL_TRIANGLES, cylinderFaces, GL_UNSIGNED_SHORT, NULL);
 
 		model = mat4f::translate(base, vec4f(0, 0, length, 0.f));
 		model = mat4f::scale(model, vec4f(radius, radius, radius, 1.f));
-		This->renderer->loadMVPMatrix(shader, &model[0][0], &view[0][0], &projection[0][0]);
+		This->renderer->loadMVPMatrix(shader, &model[0][0], orientation);
 		glDrawElements(GL_TRIANGLES, hemisphereFaces, GL_UNSIGNED_SHORT, (void*)(cylinderFaces * sizeof(unsigned short)));
 
 		model = mat4f::translate(base, vec4f(0, 0, -length, 0.f));
 		model = mat4f::scale(model, vec4f(radius, radius, radius, 1.f));
-		This->renderer->loadMVPMatrix(shader, &model[0][0], &view[0][0], &projection[0][0]);
+		This->renderer->loadMVPMatrix(shader, &model[0][0], orientation);
 		glDrawElements(GL_TRIANGLES, (int)This->capsuleMesh->getFaces()->size(), GL_UNSIGNED_SHORT, (void*)((hemisphereFaces + cylinderFaces) * sizeof(unsigned short)));
 
 		if (loc >= 0) glUniform4fv(loc, 1, (float*)&vec4f(-1.f, 0.f, 0.f, 1.f)[0]);
@@ -189,7 +190,8 @@ void Debug::mesh(const Mesh* const mesh, const mat4f& transform, Shader* shader)
 	if (This->renderer && shader && mesh)
 	{
 		//	Get shader and prepare matrix
-		This->renderer->loadMVPMatrix(shader, &transform[0][0], &view[0][0], &projection[0][0]);
+		quatf orientation = quatf(transform);
+		This->renderer->loadMVPMatrix(shader, &transform[0][0], orientation);
 
 		//	override mesh color
 		int loc = shader->getUniformLocation("overrideColor");

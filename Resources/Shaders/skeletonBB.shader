@@ -3,14 +3,22 @@ SkeletonBB
 	uniform :
 	{
 		model : "mat4";
-		view : "mat4";
-		projection : "mat4";
 		skeletonPose : "mat4 array32";
 	};
 	
+	includes :
+	{
+		#version 420
+		
+		layout(std140, binding = 0) uniform GlobalMatrices
+		{
+			mat4 view;
+			mat4 projection;
+			vec4 cameraPosition;
+		};
+	};
 	vertex :
 	{
-		#version 330
 		#define MAX_SKELETON_BONE 32
 
 		// input
@@ -18,9 +26,6 @@ SkeletonBB
 		layout(location = 1) in float segmentRadius;
 
 		uniform mat4 model;			// model matrix (has to be present at this location)
-		uniform mat4 view;			// view matrix
-		uniform mat4 projection;	// projection matrix
-
 		uniform mat4 skeletonPose[MAX_SKELETON_BONE]; 	// bone matrix
 
 		// output
@@ -50,8 +55,6 @@ SkeletonBB
 	
 	geometry :
 	{
-		#version 330
-
 		#define M_PI 		3.1415926535897932384626433832795
 		#define QUADRATURE 	7
 		#define QUADRATURE_S 2
@@ -182,8 +185,6 @@ SkeletonBB
 	
 	fragment :
 	{
-		#version 330
-
 		// input
 		in vec2 barycentricCoord;
 

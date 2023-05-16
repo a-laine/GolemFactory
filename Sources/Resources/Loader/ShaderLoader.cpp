@@ -9,6 +9,7 @@
 
 ShaderLoader::ShaderLoader() : vertexShader(0), fragmentShader(0), geometricShader(0), tessControlShader(0), tessEvalShader(0), program(0)
 {
+    codeBlockKeys.push_back("includes");
     codeBlockKeys.push_back("vertex");
     codeBlockKeys.push_back("fragment");
     codeBlockKeys.push_back("geometry");
@@ -50,6 +51,21 @@ bool ShaderLoader::load(const std::string& resourceDirectory, const std::string&
             std::cerr << "ERROR : loading shader : " << fileName << " : wrong file formating" << std::endl;
         return false;
     }
+
+    // load includes bloc
+    try
+    {
+        includes = shaderMap["includes"].toString();
+        if (!includes.empty())
+            includes[0] = ' ';
+    }
+    catch (std::exception&){}
+
+    // renderQueue
+    renderQueue = 1000;
+    try { renderQueue = shaderMap["renderQueue"].toInt(); }
+    catch (std::exception&) {}
+
 
     // main shaders
     bool vertSuccess = tryCompile(shaderMap, Shader::ShaderType::VERTEX_SH, "vertex", vertexShader, resourceDirectory, fileName);
@@ -143,7 +159,7 @@ bool ShaderLoader::load(const std::string& resourceDirectory, const std::string&
 void ShaderLoader::initialize(ResourceVirtual* resource)
 {
     Shader* shader = static_cast<Shader*>(resource);
-    shader->initialize(vertexShader, fragmentShader, geometricShader, tessControlShader, tessEvalShader, program, attributesType, textureNames);
+    shader->initialize(vertexShader, fragmentShader, geometricShader, tessControlShader, tessEvalShader, program, attributesType, textureNames, renderQueue);
 
     for (int i = 0; i < textureResources.size(); i++)
         shader->pushTexture(textureResources[i]);
@@ -175,6 +191,8 @@ void ShaderLoader::clear()
     attributesType.clear();
     textureNames.clear();
     textureResources.clear();
+
+    includes = "";
 }
 
 bool ShaderLoader::tryCompile(Variant& shaderMap, Shader::ShaderType shaderType, const std::string& key, GLuint& shader, const std::string& resourceDirectory, const std::string& filename)
@@ -191,6 +209,8 @@ bool ShaderLoader::tryCompile(Variant& shaderMap, Shader::ShaderType shaderType,
         {
             std::string source = shaderMap[key].toString();
             if (!source.empty()) source[0] = ' ';
+            if (!includes.empty())
+                source = includes + source;
             std::string header = "ERROR : loading shader : " + filename + " : in resource ";
             if (!loadSource(shaderType, source, shader, header, ResourceVirtual::VerboseLevel::ALL))
                 return false;
@@ -221,6 +241,8 @@ void ShaderLoader::tryAttach(Variant& shaderMap, Shader::ShaderType shaderType, 
         {
             std::string source = shaderMap[key].toString();
             if (!source.empty()) source[0] = ' ';
+            if (!includes.empty())
+                source = includes + source;
             std::string header = "ERROR : loading shader : " + filename + " : in resource ";
             if (!loadSource(Shader::ShaderType::GEOMETRIC_SH, source, shader, header, ResourceVirtual::VerboseLevel::WARNINGS))
                 return;
@@ -311,6 +333,7 @@ bool ShaderLoader::loadSource(Shader::ShaderType shaderType, const std::string& 
             std::cerr << errorHeader << std::endl;
             std::cerr << "FATAL ERROR : " << Shader::toString(shaderType) << " : fail to compile" << std::endl << std::endl;
             std::cerr << log << std::endl << std::endl;
+            std::cerr << sourceData << std::endl << std::endl;
         }
         delete[] log;
         return false;

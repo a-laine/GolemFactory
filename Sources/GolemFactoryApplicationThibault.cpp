@@ -126,7 +126,7 @@ int main()
 		Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("wired"));
 		//initializePhysicsScene(0);
 
-		//EventHandler::getInstance()->setCursorMode(true);
+		EventHandler::getInstance()->setCursorMode(true);
 
 		initializeSyntyScene();
 
@@ -212,14 +212,14 @@ int main()
 		world.getPhysics().stepSimulation(physicsTimeSpeed * 0.016f, &world.getSceneManager());
 
 		// Render scene & picking
-		if (WidgetManager::getInstance()->getBoolean("BBrendering"))
+		/*if (WidgetManager::getInstance()->getBoolean("BBrendering"))
 			Renderer::getInstance()->setRenderOption(Renderer::RenderOption::BOUNDING_BOX);
 		else if (WidgetManager::getInstance()->getBoolean("wireframe"))
 			Renderer::getInstance()->setRenderOption(Renderer::RenderOption::WIREFRAME);
-		else Renderer::getInstance()->setRenderOption(Renderer::RenderOption::DEFAULT);
+		else Renderer::getInstance()->setRenderOption(Renderer::RenderOption::DEFAULT);*/
 		Renderer::getInstance()->render(currentCamera);
 		 
-		Renderer::getInstance()->drawMap(world.getMapPtr(), &Debug::view[0][0], &Debug::projection[0][0], normalShader);
+		Renderer::getInstance()->drawMap(world.getMapPtr(), normalShader);
 		
 		// gizmos and hud
 #ifdef USE_IMGUI
@@ -475,7 +475,7 @@ void initializePhysicsScene(int testCase)
 void initializeSyntyScene()
 {
 	glClearColor(0.6f, 0.85f, 0.91f, 0.f);
-	Renderer::getInstance()->setShader(Renderer::GRID, nullptr);//ResourceManager::getInstance()->getResource<Shader>("wired")
+	Renderer::getInstance()->setShader(Renderer::GRID, nullptr);//ResourceManager::getInstance()->getResource<Shader>("wired"));//
 
 #if 0
 	Entity* newObject = world.getEntityFactory().createEntity();
@@ -815,11 +815,8 @@ void picking()
 		{
 			Renderer::RenderOption option = Renderer::getInstance()->getRenderOption();
 			Renderer::getInstance()->setRenderOption(option == Renderer::RenderOption::DEFAULT ? Renderer::RenderOption::BOUNDING_BOX : Renderer::RenderOption::DEFAULT);
-			mat4f view = currentCamera->getViewMatrix();
-			mat4f projection = mat4f::perspective(currentCamera->getVerticalFieldOfView(), context->getViewportRatio(), 0.1f, 1500.f);
-
 			for (auto it = collector.getResult().begin(); it != collector.getResult().end(); ++it)
-				Renderer::getInstance()->drawObject((*it), &view[0][0], &projection[0][0]);
+				Renderer::getInstance()->drawObject((*it));
 			Renderer::getInstance()->setRenderOption(option);
 		}
 	}
@@ -1066,6 +1063,7 @@ void ImGuiMenuBar()
 	extern bool PhysicDebugWindowEnable;
 	extern bool HierarchyWindowEnable;
 	extern bool SpatialPartitionningWindowEnable;
+	extern bool RenderingWindowEnable;
 
 
 	if (EventHandler::getInstance()->isActivated(ALT))
@@ -1075,6 +1073,7 @@ void ImGuiMenuBar()
 			if (ImGui::BeginMenu("Level"))
 			{
 				ImGui::MenuItem("Physics", NULL, &PhysicDebugWindowEnable);
+				ImGui::MenuItem("Rendering settings", NULL, &RenderingWindowEnable);
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("Scene"))
@@ -1094,6 +1093,7 @@ void ImGuiSystemDraw()
 	extern bool PhysicDebugWindowEnable; 
 	extern bool HierarchyWindowEnable;
 	extern bool SpatialPartitionningWindowEnable;
+	extern bool RenderingWindowEnable;
 
 	if (PhysicDebugWindowEnable)
 	{
@@ -1101,14 +1101,11 @@ void ImGuiSystemDraw()
 		world.getPhysics().debugDraw();
 	}
 	if (HierarchyWindowEnable)
-	{
 		world.getSceneManager().drawImGuiHierarchy(world);
-	}
 	if (SpatialPartitionningWindowEnable)
-	{
 		world.getSceneManager().drawImGuiSpatialPartitioning(world);
-		//world.getSceneManager().drawSceneNodes();
-	}
+	if (RenderingWindowEnable)
+		Renderer::getInstance()->drawImGui(world);
 #endif
 }
 //

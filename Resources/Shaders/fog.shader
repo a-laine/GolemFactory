@@ -1,8 +1,12 @@
-greenGrass {	
+Fog
+{	
+	renderQueue : 3000;
+
 	uniform :
 	{
 		model : "mat4";
 	};
+	
 	
 	includes :
 	{
@@ -19,25 +23,32 @@ greenGrass {
 	{
 		// input
 		layout(location = 0) in vec4 position;
+		layout(location = 1) in vec4 normal;
 
 		uniform mat4 model; 	// model matrix (has to be present at this location)
+		
+		// output
+		out vec4 fragmentNormal;
 
 		// program
 		void main()
 		{
-			gl_Position = projection * view * model * position;
+			gl_Position = (projection * view * model) * position;
+			fragmentNormal = view * model * normal;
 		}
 	};
 	fragment :
 	{
+		// input
+		in vec4 fragmentNormal;
+		
 		// output
-		layout (location = 0) out vec3 fragColor;
-
+		layout (location = 0) out vec4 fragColor;
 
 		// program
 		void main()
 		{
-			fragColor = 3.0 * vec3(0.0, 0.146154, 0.001127);
+			discard;
 		}
 	};
-}
+} 

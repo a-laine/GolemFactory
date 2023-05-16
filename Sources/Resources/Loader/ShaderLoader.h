@@ -31,6 +31,7 @@ class ShaderLoader : public IResourceLoader
                 tessControlShader,
                 tessEvalShader,
                 program;
+        uint16_t renderQueue;
         std::map<std::string, std::string> attributesType;
         std::vector<std::string> textureNames;
         std::vector<Texture*> textureResources;
@@ -40,6 +41,7 @@ class ShaderLoader : public IResourceLoader
         // Helpers
         void clear();
         bool tryCompile(Variant& shaderMap, Shader::ShaderType shaderType, const std::string& key, GLuint& shader, const std::string& resourceDirectory, const std::string& filename);
+
         void tryAttach(Variant& shaderMap, Shader::ShaderType shaderType, const std::string& key, GLuint& shader, GLuint& program, const std::string& resourceDirectory, const std::string& filename);
 
         bool loadShader(Shader::ShaderType shaderType, std::string filename, GLuint& shader);
@@ -48,6 +50,7 @@ class ShaderLoader : public IResourceLoader
 
         // Private attributes
         std::vector<std::string> codeBlockKeys;
+        std::string includes;
         //
 };
 

@@ -7,10 +7,19 @@ Test
 		projection : "mat4";
 	};
 	
+	includes :
+	{
+		#version 420
+		
+		layout(std140, binding = 0) uniform GlobalMatrices
+		{
+			mat4 view;
+			mat4 projection;
+			vec4 cameraPosition;
+		};
+	};
 	vertex : 
 	{
-		#version 440
-
 		layout (location = 0) in vec3 position;
 		layout (location = 1) in vec3 normal;
 		layout (location = 2) in vec2 texture;
@@ -30,11 +39,8 @@ Test
 			//gl_Position = gl_ModelViewProjectionMatrix*vec4(position,1);
 		}
 	};
-	
 	control : 
 	{
-		#version 440
-
 		layout(vertices = 3) out;
 
 		in vec3 vPosition[];
@@ -59,11 +65,8 @@ Test
 			}
 		}
 	};
-	
 	evaluation : 
 	{
-		#version 440
-
 		layout(triangles,equal_spacing,cw) in;
 
 		in vec3 tcPosition[];
@@ -79,11 +82,8 @@ Test
 			gl_Position = tcProjModMatrix[0]*vec4(tePosition, 1);
 		}
 	};
-	
 	geometry : 
 	{
-		#version 440
-
 		layout(triangles) in;
 		layout(triangle_strip, max_vertices = 3) out;
 
@@ -95,11 +95,8 @@ Test
 			EndPrimitive();
 		}
 	};
-	
 	fragment : 
 	{
-		#version 440
-
 		in vec2 texCoord
 		layout (location = 0) out vec4 fragColor;
 		

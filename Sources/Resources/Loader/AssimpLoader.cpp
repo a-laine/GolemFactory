@@ -110,7 +110,7 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
             }
 
             aiVector3D normal = (mesh->HasNormals() ? mesh->mNormals[j] : aiVector3D(0.0f, 0.0f, 0.0f));
-            normales.push_back(vec4f(normal.x, normal.y, normal.z, 0.f));
+            normales.push_back(vec4f(-normal.x, normal.y, normal.z, 0.f));
 
             aiVector3D uv = (mesh->HasTextureCoords(0) ? mesh->mTextureCoords[0][j] : aiVector3D(0.0f, 0.0f, 0.0f));
             uvs.push_back(vec4f(uv.x, 1 - uv.y, uv.z, 0.f));

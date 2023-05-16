@@ -318,11 +318,8 @@ void picking()
 		{
 			Renderer::RenderOption option = Renderer::getInstance()->getRenderOption();
 			Renderer::getInstance()->setRenderOption(option == Renderer::RenderOption::DEFAULT ? Renderer::RenderOption::BOUNDING_BOX : Renderer::RenderOption::DEFAULT);
-			mat4f view = currentCamera->getViewMatrix();
-			mat4f projection = mat4f::perspective(currentCamera->getVerticalFieldOfView(), context->getViewportRatio(), 0.1f, 1500.f);
-
 			for (auto it = collector.getResult().begin(); it != collector.getResult().end(); ++it)
-				Renderer::getInstance()->drawObject((*it), &view[0][0], &projection[0][0]);
+				Renderer::getInstance()->drawObject((*it));
 			Renderer::getInstance()->setRenderOption(option);
 		}
 	}

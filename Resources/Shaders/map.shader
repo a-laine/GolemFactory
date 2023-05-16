@@ -3,24 +3,29 @@ Map
 	uniform :
 	{
 		model : "mat4";
-		view : "mat4";
-		projection : "mat4";
 		overrideColor : "vec4";
 		exclusion : "ivec4";
 	};
 	
+	includes :
+	{
+		#version 420
+		
+		layout(std140, binding = 0) uniform GlobalMatrices
+		{
+			mat4 view;
+			mat4 projection;
+			vec4 cameraPosition;
+		};
+	};
 	vertex :
 	{
-		#version 330
-
 		// input
 		layout(location = 0) in vec4 position;
 		layout(location = 1) in vec4 normal;
 		layout(location = 2) in vec4 color;
 
 		uniform mat4 model; 	// model matrix (has to be present at this location)
-		uniform mat4 view; 		// view matrix
-		uniform mat4 projection;// projection matrix
 		uniform int listsize = 0;
 
 		// output
@@ -42,11 +47,8 @@ Map
 			lightDirectionCameraSpace_gs = lightPositionCameraSpace + eyeDirectionCameraSpace;
 		}
 	};
-	
 	geometry :
 	{
-		#version 330
-
 		layout(triangles) in;
 		layout(triangle_strip, max_vertices = 3) out;
 
@@ -104,11 +106,8 @@ Map
 			EndPrimitive();
 		}
 	};
-	
 	fragment :
 	{
-		#version 330
-
 		// input
 		in vec4 lightDirectionCameraSpace_fs;
 		in vec4 normal_fs;

@@ -3,28 +3,32 @@ Triangle
 	uniform :
 	{
 		model : "mat4";
-		view : "mat4";
-		projection : "mat4";
 		
 		vector1 : "vec4";
 		vector2 : "vec4";
-		
 		wired : "int";
 		overrideColor : "vec4";
 	};
 	
 	vertex :   "Shapes/point.vs";
 	
+	includes :
+	{
+		#version 420
+		
+		layout(std140, binding = 0) uniform GlobalMatrices
+		{
+			mat4 view;
+			mat4 projection;
+			vec4 cameraPosition;
+		};
+	};
 	geometry : 
 	{
-		#version 330
-
 		layout(points) in;
 		layout(triangle_strip, max_vertices = 3) out;
 
 		uniform mat4 model;
-		uniform mat4 view; 		// view matrix
-		uniform mat4 projection;// projection matrix
 
 		uniform vec4 vector1 = vec3(0.0 , 0.0 , 0.0 , 0.0);
 		uniform vec4 vector2 = vec3(0.0 , 0.0 , 0.0 , 0.0);
@@ -57,8 +61,6 @@ Triangle
 	
 	fragment : 
 	{
-		#version 330
-
 		// input
 		in vec3 barycentricCoord;
 		in vec4 fragmentColor;
