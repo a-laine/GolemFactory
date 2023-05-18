@@ -297,6 +297,12 @@ void Entity::addChild(Entity* child)
 	m_childs.push_back(child);
 	child->m_parentEntity = this;
 }
+void Entity::recursiveHierarchyCollect(std::vector<Entity*>& collection)
+{
+	collection.push_back(this);
+	for (auto& child : m_childs)
+		child->recursiveHierarchyCollect(collection);
+}
 //
 
 // Helpers

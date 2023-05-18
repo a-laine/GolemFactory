@@ -172,19 +172,14 @@ void Renderer::updateGlobalUniformBuffers()
 	glBindBuffer(GL_UNIFORM_BUFFER, m_environementLightingID);
 	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(m_environementLighting), &m_environementLighting);
 
-	int firstUpdateIndex = 0;
 	bool needLightUpdate = false;
 	for (int i = 0; i < m_lightComponents.size() && !needLightUpdate; i++)
-	{
 		needLightUpdate |= m_lightComponents[i]->m_isUniformBufferDirty;
-		if (needLightUpdate)
-			firstUpdateIndex = i;
-	}
 
-	if (needLightUpdate)
+	//if (needLightUpdate)
 	{
 		m_lightCount = 0;
-		for (int i = firstUpdateIndex; i < MAX_LIGHT_COUNT && i < m_lightComponents.size(); i++)
+		for (int i = 0; i < MAX_LIGHT_COUNT && i < m_lightComponents.size(); i++)
 		{
 			m_lights[i].m_color = m_lightComponents[i]->m_color;
 			m_lights[i].m_position = m_lightComponents[i]->getPosition();

@@ -2739,10 +2739,10 @@
                 -0.15270648896694184
             ],
             "scale": 3.1593966484069826,
-            "prefabName": "SM_Env_Gem_Spike_02",
+            "XXX_prefabName": "SM_Env_Gem_Spike_02",
             "drawableComponent": {
                 "meshName": "SM_Env_Gem_Spike_02",
-                "shaderName": "defaultTextured"
+                "shaderName": "defaultTextured02"
             }
         },
         {
@@ -2907,10 +2907,10 @@
                 -0.0022792709060013296
             ],
             "scale": 3.5497827529907228,
-            "prefabName": "SM_Env_Gem_Spike_02",
+            "XXX_prefabName": "SM_Env_Gem_Spike_02",
             "drawableComponent": {
                 "meshName": "SM_Env_Gem_Spike_02",
-                "shaderName": "defaultTextured"
+                "shaderName": "defaultTextured02"
             }
         },
         {
@@ -2949,10 +2949,10 @@
                 0.9760334491729736
             ],
             "scale": 3.118748664855957,
-            "prefabName": "SM_Env_Gem_Spike_01",
+            "XXX_prefabName": "SM_Env_Gem_Spike_01",
             "drawableComponent": {
                 "meshName": "SM_Env_Gem_Spike_01",
-                "shaderName": "defaultTextured"
+                "shaderName": "defaultTextured03"
             }
         },
         {
@@ -3180,10 +3180,10 @@
                 0.9233744740486145
             ],
             "scale": 3.9774608612060549,
-            "prefabName": "SM_Env_Gem_Spike_02",
+            "XXX_prefabName": "SM_Env_Gem_Spike_02",
             "drawableComponent": {
                 "meshName": "SM_Env_Gem_Spike_02",
-                "shaderName": "defaultTextured"
+                "shaderName": "defaultTextured02"
             }
         },
         {
@@ -3323,10 +3323,10 @@
                 0.19341164827346803
             ],
             "scale": 2.341398000717163,
-            "prefabName": "SM_Env_Gem_Spike_01",
+            "XXX_prefabName": "SM_Env_Gem_Spike_01",
             "drawableComponent": {
                 "meshName": "SM_Env_Gem_Spike_01",
-                "shaderName": "defaultTextured"
+                "shaderName": "defaultTextured02"
             }
         },
         {
@@ -3554,10 +3554,10 @@
                 0.8885015845298767
             ],
             "scale": 2.3431997299194338,
-            "prefabName": "SM_Env_Gem_Spike_01",
+            "XXX_prefabName": "SM_Env_Gem_Spike_01",
             "drawableComponent": {
                 "meshName": "SM_Env_Gem_Spike_01",
-                "shaderName": "defaultTextured"
+                "shaderName": "defaultTextured03"
             }
         },
         {
@@ -3701,10 +3701,10 @@
                 1.0
             ],
             "scale": 1.7603176832199097,
-            "prefabName": "SM_Env_Gem_Large_01",
+            "XXX_prefabName": "SM_Env_Gem_Large_01",
             "drawableComponent": {
                 "meshName": "SM_Env_Gem_Large_01",
-                "shaderName": "defaultTextured"
+                "shaderName": "defaultTextured02"
             }
         },
         {
@@ -11919,10 +11919,10 @@
                 0.920548677444458
             ],
             "scale": 1.7027842998504639,
-            "prefabName": "SM_Env_Gem_Spike_01",
+            "XXX_prefabName": "SM_Env_Gem_Spike_01",
             "drawableComponent": {
                 "meshName": "SM_Env_Gem_Spike_01",
-                "shaderName": "defaultTextured"
+                "shaderName": "defaultTextured02"
             }
         },
         {
@@ -11940,10 +11940,10 @@
                 0.9146448969841003
             ],
             "scale": 2.3422658443450929,
-            "prefabName": "SM_Env_Gem_Spike_02",
+            "XXX_prefabName": "SM_Env_Gem_Spike_02",
             "drawableComponent": {
                 "meshName": "SM_Env_Gem_Spike_02",
-                "shaderName": "defaultTextured"
+                "shaderName": "defaultTextured02"
             }
         },
         {
@@ -11961,10 +11961,10 @@
                 0.9322466254234314
             ],
             "scale": 1.562394380569458,
-            "prefabName": "SM_Env_Gem_Large_02",
+            "XXX_prefabName": "SM_Env_Gem_Large_02",
             "drawableComponent": {
                 "meshName": "SM_Env_Gem_Large_02",
-                "shaderName": "defaultTextured"
+                "shaderName": "defaultTextured03"
             }
         },
         {
@@ -11982,10 +11982,10 @@
                 1.0
             ],
             "scale": 1.7603176832199097,
-            "prefabName": "SM_Env_Gem_Large_01",
+            "XXX_prefabName": "SM_Env_Gem_Large_01",
             "drawableComponent": {
                 "meshName": "SM_Env_Gem_Large_01",
-                "shaderName": "defaultTextured"
+                "shaderName": "defaultTextured02"
             }
         },
         {
@@ -13549,10 +13549,6 @@
             ],
             "scale": 1.0,
             "prefabName": "SM_Env_Basement_WallPanel_01",
-            "drawableComponent": {
-                "meshName": "SM_Env_Basement_WallPanel_01",
-                "shaderName": "defaultTextured"
-            }
         },
         {
             "name": "SM_Env_Trap_Pit_01",
@@ -13570,10 +13566,6 @@
             ],
             "scale": 1.0,
             "prefabName": "SM_Env_Trap_Pit_01",
-            "drawableComponent": {
-                "meshName": "SM_Prop_Trap_Pit_01",
-                "shaderName": "defaultTextured"
-            }
         },
         {
             "name": "SM_Env_Basement_Ceiling_05",
@@ -13591,10 +13583,6 @@
             ],
             "scale": 1.0,
             "prefabName": "SM_Env_Basement_Ceiling_01",
-            "drawableComponent": {
-                "meshName": "SM_Env_Basement_Ceiling_01",
-                "shaderName": "defaultTextured"
-            }
         },
         {
             "name": "SM_Env_Basement_Ceiling_04",
@@ -13612,10 +13600,6 @@
             ],
             "scale": 1.0,
             "prefabName": "SM_Env_Basement_Ceiling_01",
-            "drawableComponent": {
-                "meshName": "SM_Env_Basement_Ceiling_01",
-                "shaderName": "defaultTextured"
-            }
         },
         {
             "name": "SM_Env_Basement_WallPanel_12",
@@ -13633,10 +13617,6 @@
             ],
             "scale": 1.0,
             "prefabName": "SM_Env_Basement_WallPanel_01",
-            "drawableComponent": {
-                "meshName": "SM_Env_Basement_WallPanel_01",
-                "shaderName": "defaultTextured"
-            }
         },
         {
             "name": "SM_Env_Basement_WallPanel_11",
@@ -13654,10 +13634,6 @@
             ],
             "scale": 1.0,
             "prefabName": "SM_Env_Basement_WallPanel_01",
-            "drawableComponent": {
-                "meshName": "SM_Env_Basement_WallPanel_01",
-                "shaderName": "defaultTextured"
-            }
         },
         {
             "name": "SM_Env_Basement_WallPanel_10",
@@ -15166,10 +15142,6 @@
             ],
             "scale": 1.0,
             "prefabName": "SM_Prop_Toture_IronMaiden_01",
-            "drawableComponent": {
-                "meshName": "SM_Prop_Toture_IronMaiden_01",
-                "shaderName": "defaultTextured"
-            }
         },
         {
             "name": "SM_Prop_Chain_08",
@@ -52247,11 +52219,7 @@
                 0.7071076035499573
             ],
             "scale": 1.0,
-            "prefabName": "SM_Env_Sewer_Water_01",
-            "drawableComponent": {
-                "meshName": "SM_Env_Sewer_Water_01",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_Sewer_Water_01"
         },
         {
             "name": "SM_Env_Sewer_Water_08",
@@ -52268,11 +52236,7 @@
                 0.7071076035499573
             ],
             "scale": 1.0,
-            "prefabName": "SM_Env_Sewer_Water_01",
-            "drawableComponent": {
-                "meshName": "SM_Env_Sewer_Water_01",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_Sewer_Water_01"
         },
         {
             "name": "SM_Env_Sewer_Water_07",
@@ -52289,11 +52253,7 @@
                 0.7071076035499573
             ],
             "scale": 1.0,
-            "prefabName": "SM_Env_Sewer_Water_01",
-            "drawableComponent": {
-                "meshName": "SM_Env_Sewer_Water_01",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_Sewer_Water_01"
         },
         {
             "name": "SM_Env_Sewer_Water_06",
@@ -52310,11 +52270,7 @@
                 0.7071076035499573
             ],
             "scale": 1.0,
-            "prefabName": "SM_Env_Sewer_Water_01",
-            "drawableComponent": {
-                "meshName": "SM_Env_Sewer_Water_01",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_Sewer_Water_01"
         },
         {
             "name": "SM_Env_Sewer_Water_05",
@@ -52331,11 +52287,7 @@
                 0.7071076035499573
             ],
             "scale": 1.0,
-            "prefabName": "SM_Env_Sewer_Water_01",
-            "drawableComponent": {
-                "meshName": "SM_Env_Sewer_Water_01",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_Sewer_Water_01"
         },
         {
             "name": "SM_Env_Sewer_Water_Corner_01",
@@ -52352,11 +52304,7 @@
                 0.7071076035499573
             ],
             "scale": 1.0,
-            "prefabName": "SM_Env_Sewer_Water_Corner_01",
-            "drawableComponent": {
-                "meshName": "SM_Env_Sewer_Water_Corner_01",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_Sewer_Water_Corner_01"
         },
         {
             "name": "SM_Env_Sewer_Water_04",
@@ -52373,11 +52321,7 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "SM_Env_Sewer_Water_01",
-            "drawableComponent": {
-                "meshName": "SM_Env_Sewer_Water_01",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_Sewer_Water_01"
         },
         {
             "name": "SM_Env_Sewer_Water_03",
@@ -52394,11 +52338,7 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "SM_Env_Sewer_Water_01",
-            "drawableComponent": {
-                "meshName": "SM_Env_Sewer_Water_01",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_Sewer_Water_01"
         },
         {
             "name": "SM_Env_Sewer_Water_01",
@@ -52415,11 +52355,7 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "SM_Env_Sewer_Water_01",
-            "drawableComponent": {
-                "meshName": "SM_Env_Sewer_Water_01",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_Sewer_Water_01"
         },
         {
             "name": "SM_Env_Ceiling_Stone_Flat_71",
@@ -53717,11 +53653,7 @@
                 0.7071076035499573
             ],
             "scale": 1.0,
-            "prefabName": "SM_Env_Sewer_Water_01",
-            "drawableComponent": {
-                "meshName": "SM_Env_Sewer_Water_01",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_Sewer_Water_01"
         },
         {
             "name": "SM_Env_Sewer_Water_02",
@@ -53738,11 +53670,7 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "SM_Env_Sewer_Water_01",
-            "drawableComponent": {
-                "meshName": "SM_Env_Sewer_Water_01",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_Sewer_Water_01"
         },
         {
             "name": "SM_Env_Wall_338",

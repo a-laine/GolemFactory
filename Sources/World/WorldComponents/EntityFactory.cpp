@@ -233,6 +233,7 @@ bool EntityFactory::loadPrefab(const std::string& resourceDirectory, const std::
 
 	// component of prefab
 	tryLoadComponents(prefab, &prefabMap, assetPackName);
+	tryLoadHierarchy(prefab, &prefabMap, assetPackName);
 	prefab->recomputeBoundingBox();
 
 	// end
@@ -244,9 +245,8 @@ Entity* EntityFactory::instantiatePrefab(std::string prefabName, bool _addToScen
 	auto it = prefabs.find(prefabName);
 	if (it != prefabs.end())
 	{
-		Entity* copy = createEntity();
+		/*Entity* copy = createEntity();
 		copy->setName(prefabName + " (copy)");
-		copy->setWorldTransformation(vec4f(0, 0, 0, 1), it->second->getWorldScale(), quatf(1, 0, 0, 0));
 
 		auto ComponentVisitor = [&](const EntityBase::Element& element)
 		{
@@ -260,13 +260,74 @@ Entity* EntityFactory::instantiatePrefab(std::string prefabName, bool _addToScen
 		};
 
 		it->second->allComponentsVisitor(ComponentVisitor);
-		copy->recomputeBoundingBox();
+		copy->recomputeBoundingBox();*/
 
+
+		Entity* copy = deepCopy(it->second);
+		copy->setWorldTransformation(vec4f(0, 0, 0, 1), it->second->getWorldScale(), quatf(1, 0, 0, 0));
 		if (_addToScene)
 			addToScene(copy);
 		return copy;
 	}
 	return nullptr;
+}
+
+Entity* EntityFactory::deepCopy(Entity* original)
+{
+	Entity* copy = createEntity();
+	copy->setName(original->getName());
+	copy->setLocalTransformation(original->getLocalPosition(), original->getLocalScale(), original->getLocalOrientation());
+
+	auto ComponentVisitor = [&](const EntityBase::Element& element)
+	{
+		if (element.type == DrawableComponent::getStaticClassID())
+		{
+			const DrawableComponent* original = static_cast<const DrawableComponent*>(element.comp);
+			DrawableComponent* drawable = new DrawableComponent(original->getMesh()->name, original->getShader()->name);
+			copy->addComponent(drawable);
+		}
+		return false;
+	};
+
+	original->allComponentsVisitor(ComponentVisitor);
+	copy->recomputeBoundingBox();
+
+	const auto& children = original->getChilds();
+	for (int i = 0; i < children.size(); i++)
+	{
+		Entity* child = deepCopy(children[i]);
+		copy->addChild(child);
+		child->setLocalTransformation(child->getLocalPosition(), child->getLocalScale(), child->getLocalOrientation());
+	}
+
+	return copy;
+}
+
+void EntityFactory::tryLoadTransform(Entity* object, Variant* variant)
+{
+	// transform load
+	vec4f position = vec4f(
+		(*variant)["position"].getArray()[0].toDouble(),
+		(*variant)["position"].getArray()[1].toDouble(),
+		(*variant)["position"].getArray()[2].toDouble(),
+		1.f);
+	quatf rotation = quatf(
+		(*variant)["rotation"].getArray()[3].toDouble(),
+		(*variant)["rotation"].getArray()[0].toDouble(),
+		(*variant)["rotation"].getArray()[1].toDouble(),
+		(*variant)["rotation"].getArray()[2].toDouble());
+	rotation.normalize();
+
+	float scale = 1.f;
+	auto& scaleVariant = (*variant)["scale"];
+	if (scaleVariant.getType() == Variant::INT)
+		scale = scaleVariant.toInt();
+	else if (scaleVariant.getType() == Variant::FLOAT)
+		scale = scaleVariant.toFloat();
+	else if (scaleVariant.getType() == Variant::DOUBLE)
+		scale = scaleVariant.toDouble();
+
+	object->setLocalTransformation(position, scale, rotation);
 }
 
 void EntityFactory::tryLoadComponents(Entity* object, Variant* variant, const std::string& assetPackName)
@@ -340,7 +401,7 @@ void EntityFactory::tryLoadComponents(Entity* object, Variant* variant, const st
 		{
 			std::string secondHeader = " : DrawableComponent";
 
-			std::string meshName, shaderName;
+			std::string meshName, shaderName, subMeshName;
 			auto it1 = it0->second.getMap().find("meshName");
 			if (it1 != it0->second.getMap().end() && it1->second.getType() == Variant::STRING)
 			{
@@ -349,6 +410,22 @@ void EntityFactory::tryLoadComponents(Entity* object, Variant* variant, const st
 					meshName = assetPackName + "/" + meshName;
 				if (meshName.find('.') == std::string::npos)
 					meshName += ".fbx";
+			}
+
+			it1 = it0->second.getMap().find("subMeshName");
+			if (it1 != it0->second.getMap().end() && it1->second.getType() == Variant::STRING)
+			{
+				meshName = it1->second.toString();
+				/*if (ResourceManager::getInstance()->findResource<Mesh>(it1->second.toString()))
+				{
+					meshName = it1->second.toString();
+				}
+
+				meshName = it1->second.toString();
+				if (!meshName.empty())
+					meshName = assetPackName + "/" + meshName;
+				if (meshName.find('.') == std::string::npos)
+					meshName += ".fbx";*/
 			}
 
 			it1 = it0->second.getMap().find("shaderName");
@@ -423,6 +500,7 @@ void EntityFactory::tryLoadComponents(Entity* object, Variant* variant, const st
 				light->setColor(color);
 				light->setRange(range);
 				light->setIntensity(intensity);
+				light->setPointLight(type == 0);
 
 				if (type == 1)
 				{
@@ -431,6 +509,56 @@ void EntityFactory::tryLoadComponents(Entity* object, Variant* variant, const st
 				}
 
 				object->addComponent(light);
+			}
+		}
+	}
+}
+
+
+void EntityFactory::tryLoadHierarchy(Entity* object, Variant* variant, const std::string& assetPackName)
+{
+	std::string messageHeader = "Loading hierarchy of " + object->getName();
+	if (variant->getType() == Variant::MAP)
+	{
+		auto it = variant->getMap().find("prefabEntities");
+		if (it != variant->getMap().end() && it->second.getType() == Variant::ARRAY)
+		{
+			auto& childrenArray = it->second.getArray();
+			for (auto it2 = childrenArray.begin(); it2 != childrenArray.end(); it2++)
+			{
+				if (it2->getType() == Variant::MAP)
+				{
+					// load name
+					std::string prefabName = "";
+					auto prefabNameVariant = it2->getMap().find("prefabName");
+					if (prefabNameVariant != it2->getMap().end() && prefabNameVariant->second.getType() == Variant::STRING)
+						prefabName = prefabNameVariant->second.toString();
+
+					Entity* child = nullptr;
+					if (prefabName.empty())
+					{
+						child = createEntity();
+
+						// load components and childs
+						tryLoadComponents(child, &(*it2), assetPackName);
+						tryLoadHierarchy(child, &(*it2), assetPackName);
+					}
+					else
+					{
+						loadPrefab(ResourceManager::getInstance()->getRepository(), assetPackName, prefabName);
+						child = instantiatePrefab(prefabName);
+					}
+
+					auto objectNameVariant = it2->getMap().find("name");
+					if (objectNameVariant != it2->getMap().end() && objectNameVariant->second.getType() == Variant::STRING)
+						child->setName(objectNameVariant->second.toString());
+
+					// set parent and local transform
+					object->addChild(child);
+					tryLoadTransform(child, &(*it2));
+					child->recomputeBoundingBox();
+					//child->setLocalTransformation(child->getLocalPosition(), child->getLocalScale(), child->getLocalOrientation());
+				}
 			}
 		}
 	}

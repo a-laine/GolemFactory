@@ -232,7 +232,7 @@ bool ShaderLoader::load(const std::string& resourceDirectory, const std::string&
                     }
                     else hasError = true;
                 }
-                else hasError = true;
+                //else hasError = true;
             }
 
             if (hasError)

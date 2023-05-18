@@ -33,7 +33,7 @@ void LightComponent::setOuterCutOffAngle(float _angleRad) { m_outerCutoffAngle =
 
 vec4f LightComponent::getDirection()
 {
-	return getParentEntity()->getWorldOrientation() * vec4f(0, 0, -1, 0);
+	return getParentEntity()->getWorldOrientation() * vec4f(0, 0, 1, 0);
 }
 vec4f LightComponent::getPosition()
 {
@@ -50,6 +50,10 @@ float LightComponent::getOuterCutOffAngle() const { return m_outerCutoffAngle; }
 void LightComponent::onDrawImGui()
 {
 #ifdef USE_IMGUI
+	static vec4f lastDirection = getDirection();
+	bool hasChanged = (getDirection() - lastDirection).getNorm2() > 0.001f;
+	lastDirection = getDirection();
+
 	const ImVec4 componentColor = ImVec4(0.7, 0.7, 0.5, 1);
 	std::ostringstream unicName;
 	unicName << "Light component##" << (uintptr_t)this;
@@ -58,7 +62,6 @@ void LightComponent::onDrawImGui()
 		ImGui::TextColored(componentColor, "Parameters");
 		ImGui::Indent();
 
-		bool hasChanged = false;
 		static int typeCurrent = (m_isPointLight ? 0 : 1);
 		hasChanged |= ImGui::Combo("Type", &typeCurrent, "Point\0Spot\0\0");
 		m_isPointLight = (typeCurrent == 0);
@@ -68,8 +71,7 @@ void LightComponent::onDrawImGui()
 			hasChanged |= ImGui::DragFloatRange2("CutOff angles", &m_innerCutoffAngle, &m_outerCutoffAngle, 0.1f, 0.f, 180.f, "%.3fdeg");
 		hasChanged |= ImGui::ColorEdit3("Color", &m_color[0]);
 		hasChanged |= ImGui::DragFloat("Intensity", &m_intensity, 0.01, 0.0001f, 100.f);
-		m_isUniformBufferDirty |= hasChanged;
-
+		
 		ImGui::Unindent();
 
 		ImGui::Spacing();
@@ -80,6 +82,8 @@ void LightComponent::onDrawImGui()
 
 		ImGui::TreePop();
 	}
+	
+	m_isUniformBufferDirty |= hasChanged;
 
 	if (m_drawRange)
 	{

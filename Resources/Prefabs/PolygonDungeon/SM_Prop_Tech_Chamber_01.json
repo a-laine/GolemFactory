@@ -9,8 +9,8 @@
             "id": 0,
             "position": [
                 0.0,
-                0.10092928260564804,
-                -2.3489890565997485e-7
+                0.0,
+                0.0
             ],
             "rotation": [
                 0.0,
@@ -23,7 +23,7 @@
             "childs": [],
             "drawableComponent": {
                 "meshName": "SM_Prop_Tech_Chamber_Glass",
-                "shaderName": "defaultTextured"
+                "shaderName": "transparentTextured"
             }
         }
     ]

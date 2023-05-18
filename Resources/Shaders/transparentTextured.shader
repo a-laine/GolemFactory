@@ -1,7 +1,8 @@
-DefaultTextured
+TransparentTextured
 {	
-	renderQueue : 1000;//opaque
-	
+	renderQueue : 2900;//transparent
+	transparent : true;
+
 	uniform :
 	{
 		model : "mat4";
@@ -16,10 +17,10 @@ DefaultTextured
 		},{
 			name : "emmisive";
 			resource : "PolygonDungeon/Emmisive_01.png";
-		},{
+		}/*,{
 			name : "metalic";
 			resource : "PolygonDungeon/Dungeons_Crystal_Metallic.png";
-		}
+		}*/
 	];
 	
 	includes :
@@ -84,7 +85,7 @@ DefaultTextured
 		//	uniform
 		uniform sampler2D albedo;   //texture unit 0
 		uniform sampler2D emmisive; //texture unit 1
-		uniform sampler2D metalic;  //texture unit 2
+		//uniform sampler2D metalic;  //texture unit 2
 		
 		uniform int lightCount;
 		
@@ -106,12 +107,12 @@ DefaultTextured
 			vec4 albedoColor = texture(albedo, vec2(fragmentUv.x, fragmentUv.y));
 			vec4 emmisiveColor = texture(emmisive, fragmentUv.xy);
 			vec4 diffuse = clamp(dot(normalize(fragmentNormal), normalize(-m_directionalLightDirection)), 0 , 1 ) * m_directionalLightColor;
-			vec4 metalicParam = texture(metalic, vec2(fragmentUv.x, fragmentUv.y));
+			//vec4 metalicParam = albedoColor.w;//texture(metalic, vec2(fragmentUv.x, fragmentUv.y));
 			
 			vec4 viewDir = normalize(cameraPosition - fragmentPosition);
 			vec4 reflectDir = reflect(normalize(m_directionalLightDirection), fragmentNormal);  
 			float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
-			vec4 specular = metalicParam.x * spec * m_directionalLightColor;  
+			vec4 specular = albedoColor.w * spec * m_directionalLightColor;  
 			
 			fragColor = (diffuse + m_ambientColor + specular) * albedoColor + emmisiveColor;
 			
@@ -127,7 +128,7 @@ DefaultTextured
 					lightRay /= d;
 					diffuse = clamp(dot(normalize(fragmentNormal), normalize(-lightRay)), 0 , 1 ) * lights[i].m_color;
 					spec = pow(max(dot(viewDir, lightRay), 0.0), 32);
-					specular = metalicParam.x * spec * lights[i].m_color;
+					specular = albedoColor.w * spec * lights[i].m_color;
 					
 					float u = d / lights[i].m_range;
 					float attenuation = lights[i].m_intensity / (1.0 + 25 * u * u)* clamp((1 - u) * 5.0 , 0 , 1);
@@ -143,7 +144,7 @@ DefaultTextured
 					fragColor += (spotAttenuation * attenuation) * ((diffuse + specular) * albedoColor);
 				}
 			}
-			
+			fragColor.w = 0.5;
 		}
 	};
 } 

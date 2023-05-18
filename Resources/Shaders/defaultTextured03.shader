@@ -1,4 +1,4 @@
-DefaultTextured
+DefaultTextured03
 {	
 	renderQueue : 1000;//opaque
 	
@@ -12,10 +12,10 @@ DefaultTextured
 	textures : [
 		{
 			name : "albedo";
-			resource : "PolygonDungeon/Dungeons_Texture_01.png";
+			resource : "PolygonDungeon/Dungeons_Texture_03.png";
 		},{
 			name : "emmisive";
-			resource : "PolygonDungeon/Emmisive_01.png";
+			resource : "PolygonDungeon/Emmisive_03.png";
 		},{
 			name : "metalic";
 			resource : "PolygonDungeon/Dungeons_Crystal_Metallic.png";

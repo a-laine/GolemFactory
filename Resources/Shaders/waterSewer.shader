@@ -1,7 +1,8 @@
-DefaultTextured
-{	
-	renderQueue : 1000;//opaque
-	
+WaterSewer
+{
+	renderQueue : 3000;//transparent
+	transparent : true;
+
 	uniform :
 	{
 		model : "mat4";
@@ -9,18 +10,6 @@ DefaultTextured
 		lightCount : "int"
 	};
 	
-	textures : [
-		{
-			name : "albedo";
-			resource : "PolygonDungeon/Dungeons_Texture_01.png";
-		},{
-			name : "emmisive";
-			resource : "PolygonDungeon/Emmisive_01.png";
-		},{
-			name : "metalic";
-			resource : "PolygonDungeon/Dungeons_Crystal_Metallic.png";
-		}
-	];
 	
 	includes :
 	{
@@ -60,15 +49,13 @@ DefaultTextured
 		// input
 		layout(location = 0) in vec4 position;
 		layout(location = 1) in vec4 normal;
-		layout(location = 2) in vec4 uv;
 
 		uniform mat4 model; 	// model matrix (has to be present at this location)
 		uniform mat4 normalMatrix;
-
+		
 		// output
-		out vec4 fragmentPosition;
 		out vec4 fragmentNormal;
-		out vec4 fragmentUv;
+		out vec4 fragmentPosition;
 
 		// program
 		void main()
@@ -76,22 +63,15 @@ DefaultTextured
 			fragmentPosition = model * position;
 			gl_Position = projection * view * fragmentPosition;
 			fragmentNormal = normalize(normalMatrix * normal);
-			fragmentUv = uv;
 		}
 	};
 	fragment :
 	{
-		//	uniform
-		uniform sampler2D albedo;   //texture unit 0
-		uniform sampler2D emmisive; //texture unit 1
-		uniform sampler2D metalic;  //texture unit 2
-		
 		uniform int lightCount;
 		
 		// input
 		in vec4 fragmentPosition;
 		in vec4 fragmentNormal;
-		in vec4 fragmentUv;
 
 		// output
 		layout (location = 0) out vec4 fragColor;
@@ -99,21 +79,21 @@ DefaultTextured
 		float map(float value, float min1, float max1, float min2, float max2) {
 		  return min2 + (value - min1) * (max2 - min2) / max(max1 - min1, 0.0001);
 		}
+
 		// program
 		void main()
 		{
 			// compute base color depending on environement light (directional)
-			vec4 albedoColor = texture(albedo, vec2(fragmentUv.x, fragmentUv.y));
-			vec4 emmisiveColor = texture(emmisive, fragmentUv.xy);
+			vec4 albedoColor = vec4(0.3 , 0.3 , 0.09 , 0.56);
 			vec4 diffuse = clamp(dot(normalize(fragmentNormal), normalize(-m_directionalLightDirection)), 0 , 1 ) * m_directionalLightColor;
-			vec4 metalicParam = texture(metalic, vec2(fragmentUv.x, fragmentUv.y));
 			
 			vec4 viewDir = normalize(cameraPosition - fragmentPosition);
 			vec4 reflectDir = reflect(normalize(m_directionalLightDirection), fragmentNormal);  
 			float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
-			vec4 specular = metalicParam.x * spec * m_directionalLightColor;  
+			float smoothness = 0.6;
+			vec4 specular = smoothness * spec * m_directionalLightColor;
 			
-			fragColor = (diffuse + m_ambientColor + specular) * albedoColor + emmisiveColor;
+			fragColor = (diffuse + m_ambientColor + specular) * albedoColor;
 			
 			// process other lights
 			if (lightCount > 0)
@@ -127,7 +107,7 @@ DefaultTextured
 					lightRay /= d;
 					diffuse = clamp(dot(normalize(fragmentNormal), normalize(-lightRay)), 0 , 1 ) * lights[i].m_color;
 					spec = pow(max(dot(viewDir, lightRay), 0.0), 32);
-					specular = metalicParam.x * spec * lights[i].m_color;
+					specular = smoothness * spec * lights[i].m_color;
 					
 					float u = d / lights[i].m_range;
 					float attenuation = lights[i].m_intensity / (1.0 + 25 * u * u)* clamp((1 - u) * 5.0 , 0 , 1);
@@ -143,7 +123,7 @@ DefaultTextured
 					fragColor += (spotAttenuation * attenuation) * ((diffuse + specular) * albedoColor);
 				}
 			}
-			
+			fragColor.w = albedoColor.w;
 		}
 	};
 } 

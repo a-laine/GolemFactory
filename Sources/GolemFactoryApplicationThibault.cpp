@@ -622,7 +622,11 @@ void initializeSyntyScene()
 						newObject->setLocalTransformation(position, scale, rotation);
 						world.getSceneManager().addToRootList(newObject);
 					}
-					world.addToScene(newObject);
+
+					std::vector<Entity*> allObjectHierarchy;
+					newObject->recursiveHierarchyCollect(allObjectHierarchy);
+					for (Entity* e : allObjectHierarchy)
+						world.addToScene(e);
 					
 					// push to stack if newObject is a parent
 					auto childVariant = (*it).getMap().find("childs");
