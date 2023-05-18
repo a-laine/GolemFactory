@@ -14,21 +14,21 @@
 #include <Resources/Animation.h>
 #include <Utiles/ConsoleColor.h>
 
-void PrintError(const char* filename, const char* msg)
-{
-    std::cout << ConsoleColor::getColorString(ConsoleColor::Color::RED) <<    "ERROR   : AssimpLoader : " << filename << " : " << msg << std::flush;
-    std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
-}
-void PrintWarning(const char* filename, const char* msg)
-{
-    std::cout << ConsoleColor::getColorString(ConsoleColor::Color::YELLOW) << "WARNING : AssimpLoader : " << filename << " : " << msg << std::flush;
-    std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
-}
 
 //  Default
 AssimpLoader::AssimpLoader(ResourceType resourceToLoad)
     : firstResource(resourceToLoad)
 {}
+void AssimpLoader::PrintError(const char* filename, const char* msg)
+{
+    std::cout << ConsoleColor::getColorString(ConsoleColor::Color::RED) <<    "ERROR   : AssimpLoader : " << filename << " : " << msg << std::flush;
+    std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
+}
+void AssimpLoader::PrintWarning(const char* filename, const char* msg)
+{
+    std::cout << ConsoleColor::getColorString(ConsoleColor::Color::YELLOW) << "WARNING : AssimpLoader : " << filename << " : " << msg << std::flush;
+    std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
+}
 //
 
 //  Public functions

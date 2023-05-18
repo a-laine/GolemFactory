@@ -5,9 +5,11 @@
 #include <Utiles/Parser/Reader.h>
 #include <Utiles/Parser/Writer.h>
 #include <Resources/ResourceManager.h>
+#include <Utiles/ConsoleColor.h>
 
 
-ShaderLoader::ShaderLoader() : vertexShader(0), fragmentShader(0), geometricShader(0), tessControlShader(0), tessEvalShader(0), program(0)
+
+ShaderLoader::ShaderLoader() : vertexShader(0), fragmentShader(0), geometricShader(0), tessControlShader(0), tessEvalShader(0), program(0), renderQueue(1000)
 {
     codeBlockKeys.push_back("includes");
     codeBlockKeys.push_back("vertex");
@@ -17,9 +19,30 @@ ShaderLoader::ShaderLoader() : vertexShader(0), fragmentShader(0), geometricShad
     codeBlockKeys.push_back("control");
 }
 
+void ShaderLoader::PrintError(const char* filename, const char* msg)
+{
+    if (ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
+    {
+        std::cout << ConsoleColor::getColorString(ConsoleColor::Color::RED) << "ERROR   : ShaderLoader : " << filename << " : " << msg << std::flush;
+        std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
+    }
+}
+
+void ShaderLoader::PrintWarning(const char* filename, const char* msg)
+{
+    if (ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::WARNINGS)
+    {
+        std::cout << ConsoleColor::getColorString(ConsoleColor::Color::YELLOW) << "WARNING : ShaderLoader : " << filename << " : " << msg << std::flush;
+        std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
+    }
+}
+
 bool ShaderLoader::load(const std::string& resourceDirectory, const std::string& fileName)
 {
 	//  Initialization
+    const uint16_t transparentBit = 1 << 15;
+    const uint16_t faceCullingBit = 1 << 14;
+
     clear();
     std::string fullFileName = getFileName(resourceDirectory, fileName);
 
@@ -38,34 +61,97 @@ bool ShaderLoader::load(const std::string& resourceDirectory, const std::string&
     }
     catch(std::exception&)
     {
-        if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
-            std::cerr << "ERROR : loading shader : " << fileName << " : fail to open or parse file" << std::endl;
+        PrintError(fullFileName.c_str(), "fail to open or parse file");
         return false;
     }
     Variant& shaderMap = *tmp;
     std::string path = resourceDirectory + Shader::directory;
 
-    if(shaderMap.getType() != Variant::MAP)
+    if (shaderMap.getType() != Variant::MAP)
     {
-        if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
-            std::cerr << "ERROR : loading shader : " << fileName << " : wrong file formating" << std::endl;
+        PrintError(fileName.c_str(), "wrong file formating");
         return false;
     }
 
     // load includes bloc
-    try
+    auto it = shaderMap.getMap().find("includes");
+    if (it != shaderMap.getMap().end() && it->second.getType() == Variant::CODEBLOCK)
     {
         includes = shaderMap["includes"].toString();
         if (!includes.empty())
             includes[0] = ' ';
     }
-    catch (std::exception&){}
 
     // renderQueue
     renderQueue = 1000;
-    try { renderQueue = shaderMap["renderQueue"].toInt(); }
-    catch (std::exception&) {}
+    it = shaderMap.getMap().find("renderQueue");
+    if (it != shaderMap.getMap().end() && it->second.getType() == Variant::INT)
+    {
+        int value = shaderMap["renderQueue"].toInt();
+        if (value > 4095)
+        {
+            PrintWarning(fileName.c_str(), "renderQueue attribute need to be an integer between 0 and 4095, value has been clamped");
+            renderQueue = 4095;
+        }
+        else if (value < 0)
+        {
+            PrintWarning(fileName.c_str(), "renderQueue attribute need to be an integer between 0 and 4095, value has been clamped");
+            renderQueue = 0;
+        }
+        else
+        {
+            renderQueue = value;
+        }
+    }
 
+    // transparent
+    it = shaderMap.getMap().find("transparent");
+    if (it != shaderMap.getMap().end())
+    {
+        bool b = false;
+        if (it->second.getType() == Variant::BOOL)
+            b = it->second.toBool();
+        else
+        {
+            PrintWarning(fileName.c_str(), "transparent attribute need to be a boolean");
+
+            switch (it->second.getType())
+            {
+                case Variant::INT:      b = it->second.toInt() == 0;        break;
+                case Variant::FLOAT:    b = it->second.toFloat() == 0.f;    break;
+                case Variant::DOUBLE:   b = it->second.toDouble() == 0.0;   break;
+                default: break;
+            }
+        }
+
+        if (b)
+            renderQueue |= transparentBit;
+    }
+    
+    // faceCulling
+    it = shaderMap.getMap().find("faceCulling");
+    if (it != shaderMap.getMap().end())
+    {
+        bool b = false;
+        if (it->second.getType() == Variant::BOOL)
+            b = it->second.toBool();
+        else
+        {
+            PrintWarning(fileName.c_str(), "faceCulling attribute need to be a boolean");
+
+            switch (it->second.getType())
+            {
+                case Variant::INT:      b = it->second.toInt() == 0;        break;
+                case Variant::FLOAT:    b = it->second.toFloat() == 0.f;    break;
+                case Variant::DOUBLE:   b = it->second.toDouble() == 0.0;   break;
+                default: break;
+            }
+        }
+
+        if (b)
+            renderQueue |= faceCullingBit;
+    }
+    else renderQueue |= faceCullingBit;
 
     // main shaders
     bool vertSuccess = tryCompile(shaderMap, Shader::ShaderType::VERTEX_SH, "vertex", vertexShader, resourceDirectory, fileName);
@@ -122,37 +208,38 @@ bool ShaderLoader::load(const std::string& resourceDirectory, const std::string&
         }
     }
 
-    try
+    auto textureVariant = shaderMap.getMap().find("textures");
+    if (textureVariant != shaderMap.getMap().end())
     {
-        if (shaderMap["textures"].getType() == Variant::ARRAY)
+        if (textureVariant->second.getType() == Variant::ARRAY || textureVariant->second.getArray().size() <= 0)
         {
-            size_t textureCount = shaderMap["textures"].getArray().size();
-            int i = 0;
-            for (auto it2 = shaderMap["textures"].getArray().begin(); it2 != shaderMap["textures"].getArray().end(); it2++, i++)
+            auto& textureArray = textureVariant->second.getArray();
+            bool hasError = false;
+            for (auto it2 = textureArray.begin(); it2 != textureArray.end(); it2++)
             {
                 if (it2->getType() == Variant::MAP)
                 {
-                    textureNames.push_back((*it2)["name"].toString());
-                    std::string fileName = (*it2)["resource"].toString();
-                    textureResources.push_back(ResourceManager::getInstance()->getResource<Texture>(fileName,
-                        (uint8_t)Texture::TextureConfiguration::TEXTURE_2D | (uint8_t)Texture::TextureConfiguration::USE_MIPMAP |
-                        (uint8_t)Texture::TextureConfiguration::WRAP_REPEAT));
+                    auto nameVariant = it2->getMap().find("name");
+                    auto resourceVariant = it2->getMap().find("resource");
+                    if (nameVariant != it2->getMap().end() && resourceVariant != it2->getMap().end() &&
+                        nameVariant->second.getType() == Variant::STRING && resourceVariant->second.getType() == Variant::STRING)
+                    {
+                        textureNames.push_back(nameVariant->second.toString());
+                        std::string texFileName = resourceVariant->second.toString();
+                        textureResources.push_back(ResourceManager::getInstance()->getResource<Texture>(texFileName,
+                            (uint8_t)Texture::TextureConfiguration::TEXTURE_2D | (uint8_t)Texture::TextureConfiguration::USE_MIPMAP |
+                            (uint8_t)Texture::TextureConfiguration::WRAP_REPEAT));
+                    }
+                    else hasError = true;
                 }
+                else hasError = true;
             }
-        }
-    }
-    catch (std::exception&) 
-    { 
-        if (textureNames.size() > 0)
-        {
-            if (ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::WARNINGS)
-                std::cerr << "WARNING : loading shader : " << fileName << " : fail to load textures" << std::endl;
-        }
 
-        textureNames.clear(); 
-        textureResources.clear();
+            if (hasError)
+                PrintError(fileName.c_str(), "Texture array contain invalid object field");
+        }
+        else PrintError(fileName.c_str(), "Texture field is not a valid array (or is empty)");
     }
-
     return true;
 }
 
@@ -229,28 +316,28 @@ bool ShaderLoader::tryCompile(Variant& shaderMap, Shader::ShaderType shaderType,
 
 void ShaderLoader::tryAttach(Variant& shaderMap, Shader::ShaderType shaderType, const std::string& key, GLuint& shader, GLuint& program, const std::string& resourceDirectory, const std::string& filename)
 {
-    try
+    auto it = shaderMap.getMap().find(key);
+    if (it == shaderMap.getMap().end())
+        return;
+    if (it->second.getType() != Variant::STRING && it->second.getType() != Variant::CODEBLOCK)
+        return;
+    if (it->second.getType() == Variant::VariantType::STRING)
     {
-        if (shaderMap[key].getType() == Variant::VariantType::STRING)
-        {
-            std::string value = resourceDirectory + Shader::directory + shaderMap[key].toString();
-            if (loadShader(Shader::ShaderType::GEOMETRIC_SH, value, shader))
-                glAttachShader(program, shader);
-        }
-        else
-        {
-            std::string source = shaderMap[key].toString();
-            if (!source.empty()) source[0] = ' ';
-            if (!includes.empty())
-                source = includes + source;
-            std::string header = "ERROR : loading shader : " + filename + " : in resource ";
-            if (!loadSource(Shader::ShaderType::GEOMETRIC_SH, source, shader, header, ResourceVirtual::VerboseLevel::WARNINGS))
-                return;
+        std::string value = resourceDirectory + Shader::directory + it->second.toString();
+        if (loadShader(Shader::ShaderType::GEOMETRIC_SH, value, shader))
             glAttachShader(program, shader);
-
-        }
     }
-    catch (std::exception&) {}
+    else
+    {
+        std::string source = it->second.toString();
+        if (!source.empty()) source[0] = ' ';
+        if (!includes.empty())
+            source = includes + source;
+        std::string header = "ERROR : loading shader : " + filename + " : in resource ";
+        if (!loadSource(Shader::ShaderType::GEOMETRIC_SH, source, shader, header, ResourceVirtual::VerboseLevel::WARNINGS))
+            return;
+        glAttachShader(program, shader);
+    }
 }
 
 bool ShaderLoader::loadShader(Shader::ShaderType shaderType, std::string fileName, GLuint& shader)

@@ -5,12 +5,12 @@
 //#include <glm/gtx/quaternion.hpp>
 
 #include <EntityComponent/Component.hpp>
-#include "Math/TMath.h"
+#include <Math/TMath.h>
 
 
 class CameraComponent : public Component
 {
-	GF_DECLARE_COMPONENT_CLASS(AnimationComponent, Component)
+	GF_DECLARE_COMPONENT_CLASS(CameraComponent, Component)
 
 public:
 	explicit CameraComponent(bool freeRotations);
@@ -24,7 +24,6 @@ public:
 	vec4f getUp() const;
 	vec4f getPosition() const;
 	quatf getOrientation() const;
-	//float getFieldOfView() const;
 	float getVerticalFieldOfView() const;
 	void getFrustrum(vec4f& position, vec4f& forward, vec4f& right, vec4f& up) const;
 

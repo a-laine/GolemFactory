@@ -15,11 +15,6 @@
                 -0.9843001961708069
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
         },
         {
             "name": "Lighting",
@@ -134,11 +129,7 @@
                 95,
                 96,
                 97
-            ],
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            ]
         },
         {
             "name": "Point light 41",
@@ -155,10 +146,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 1,
+				"color" : [0,255,181],
             }
         },
         {
@@ -176,10 +168,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 1,
+				"color" : [0,255,181],
             }
         },
         {
@@ -197,10 +190,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 1,
+				"color" : [0,255,181],
             }
         },
         {
@@ -218,10 +212,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 1,
+				"color" : [0,255,181],
             }
         },
         {
@@ -238,11 +233,12 @@
                 0.0,
                 1.0
             ],
-            "scale": -28.72161865234375,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "scale": 1.0,
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 5,
+				"color" : [255,153,0],
             }
         },
         {
@@ -259,11 +255,12 @@
                 0.0,
                 1.0
             ],
-            "scale": -28.72161865234375,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "scale": 1.0,
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 5,
+				"color" : [255,153,0],
             }
         },
         {
@@ -280,11 +277,12 @@
                 0.0,
                 1.0
             ],
-            "scale": -28.72161865234375,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "scale": 1.0,
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 5,
+				"color" : [255,153,0],
             }
         },
         {
@@ -302,10 +300,11 @@
                 -0.661554753780365
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 3,
+				"color" : [255,176,36],
             }
         },
         {
@@ -323,10 +322,11 @@
                 -0.6959376931190491
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 3,
+				"color" : [255,176,36],
             }
         },
         {
@@ -344,10 +344,11 @@
                 -0.9598910808563232
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 3,
+				"color" : [255,176,36],
             }
         },
         {
@@ -365,10 +366,11 @@
                 -0.6959376931190491
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 3,
+				"color" : [255,176,36],
             }
         },
         {
@@ -386,10 +388,11 @@
                 -0.9598910808563232
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 3,
+				"color" : [255,176,36],
             }
         },
         {
@@ -407,10 +410,11 @@
                 -0.02431425079703331
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 3,
+				"color" : [255,176,36],
             }
         },
         {
@@ -428,10 +432,11 @@
                 -0.9598910808563232
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 3,
+				"color" : [255,176,36],
             }
         },
         {
@@ -449,10 +454,11 @@
                 -0.02431425452232361
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 3,
+				"color" : [255,176,36],
             }
         },
         {
@@ -470,10 +476,11 @@
                 -0.02431425079703331
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 3,
+				"color" : [255,176,36],
             }
         },
         {
@@ -491,10 +498,11 @@
                 -0.02431425452232361
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 3,
+				"color" : [255,176,36],
             }
         },
         {
@@ -512,10 +520,11 @@
                 -0.9598910808563232
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 3,
+				"color" : [255,176,36],
             }
         },
         {
@@ -533,10 +542,11 @@
                 -0.69593745470047
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 3,
+				"color" : [255,176,36],
             }
         },
         {
@@ -554,10 +564,11 @@
                 -0.02431425079703331
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 3,
+				"color" : [255,176,36],
             }
         },
         {
@@ -575,10 +586,11 @@
                 -0.02431425452232361
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 3,
+				"color" : [255,176,36],
             }
         },
         {
@@ -596,10 +608,11 @@
                 -0.02431425079703331
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 3,
+				"color" : [255,176,36],
             }
         },
         {
@@ -617,10 +630,11 @@
                 -0.02431425079703331
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 3,
+				"color" : [255,176,36],
             }
         },
         {
@@ -638,10 +652,11 @@
                 -0.02431425079703331
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 3,
+				"color" : [255,176,36],
             }
         },
         {
@@ -659,10 +674,11 @@
                 -0.69593745470047
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 3,
+				"color" : [255,176,36],
             }
         },
         {
@@ -680,10 +696,11 @@
                 -0.02431425079703331
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 3,
+				"color" : [255,176,36],
             }
         },
         {
@@ -701,10 +718,11 @@
                 -0.02431425079703331
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 3,
+				"color" : [255,176,36],
             }
         },
         {
@@ -722,10 +740,11 @@
                 -0.02431425079703331
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 3,
+				"color" : [255,176,36],
             }
         },
         {
@@ -743,10 +762,11 @@
                 -0.02431425079703331
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 3,
+				"color" : [255,176,36],
             }
         },
         {
@@ -764,10 +784,11 @@
                 -0.02431425079703331
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 3,
+				"color" : [255,176,36],
             }
         },
         {
@@ -785,10 +806,11 @@
                 -0.02431425079703331
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 3,
+				"color" : [255,176,36],
             }
         },
         {
@@ -806,10 +828,11 @@
                 -0.02431425079703331
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 3,
+				"color" : [255,176,36],
             }
         },
         {
@@ -827,10 +850,11 @@
                 -0.02431425079703331
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 3,
+				"color" : [255,176,36],
             }
         },
         {
@@ -848,10 +872,11 @@
                 -0.02431425079703331
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 3,
+				"color" : [255,176,36],
             }
         },
         {
@@ -869,10 +894,11 @@
                 -0.02431425079703331
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 3,
+				"color" : [255,176,36],
             }
         },
         {
@@ -891,9 +917,11 @@
             ],
             "scale": 1.0,
             "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 1.72,
+				"color" : [255,142,0],
             }
         },
         {
@@ -911,10 +939,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 15,
+				"intensity" : 4,
+				"color" : [255,153,43],
             }
         },
         {
@@ -932,10 +961,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 2.77,
+				"color" : [255,121,0],
             }
         },
         {
@@ -953,10 +983,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 2,
+				"color" : [255,0,248],
             }
         },
         {
@@ -974,10 +1005,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 7,
+				"intensity" : 2,
+				"color" : [255,153,0],
             }
         },
         {
@@ -995,10 +1027,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 20,
+				"intensity" : 8,
+				"color" : [255,79,0],
             }
         },
         {
@@ -1016,10 +1049,11 @@
                 0.977206289768219
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 7,
+				"intensity" : 2,
+				"color" : [255,153,0],
             }
         },
         {
@@ -1037,10 +1071,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 7,
+				"intensity" : 2,
+				"color" : [255,153,0],
             }
         },
         {
@@ -1058,10 +1093,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 7,
+				"intensity" : 2,
+				"color" : [255,153,0],
             }
         },
         {
@@ -1079,10 +1115,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 7,
+				"intensity" : 2,
+				"color" : [255,153,0],
             }
         },
         {
@@ -1100,10 +1137,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 50,
+				"intensity" : 8,
+				"color" : [255,53,0],
             }
         },
         {
@@ -1121,10 +1159,11 @@
                 0.9901851415634155
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 7,
+				"intensity" : 2,
+				"color" : [255,153,0],
             }
         },
         {
@@ -1142,10 +1181,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 7,
+				"intensity" : 2,
+				"color" : [255,153,0],
             }
         },
         {
@@ -1163,10 +1203,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 7,
+				"intensity" : 2,
+				"color" : [255,153,0],
             }
         },
         {
@@ -1184,10 +1225,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 7,
+				"intensity" : 2,
+				"color" : [255,153,0],
             }
         },
         {
@@ -1205,10 +1247,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 7,
+				"intensity" : 2,
+				"color" : [255,153,0],
             }
         },
         {
@@ -1226,10 +1269,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 7,
+				"intensity" : 2,
+				"color" : [255,153,0],
             }
         },
         {
@@ -1247,10 +1291,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 7,
+				"intensity" : 2,
+				"color" : [255,153,0],
             }
         },
         {
@@ -1268,10 +1313,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 7,
+				"intensity" : 2,
+				"color" : [255,153,0],
             }
         },
         {
@@ -1289,10 +1335,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 7,
+				"intensity" : 2,
+				"color" : [255,153,0],
             }
         },
         {
@@ -1310,10 +1357,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 7,
+				"intensity" : 2,
+				"color" : [255,153,0],
             }
         },
         {
@@ -1331,10 +1379,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 20,
+				"intensity" : 1.56,
+				"color" : [255,217,94],
             }
         },
         {
@@ -1352,10 +1401,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 20,
+				"intensity" : 1.56,
+				"color" : [255,217,94],
             }
         },
         {
@@ -1373,10 +1423,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 4.13,
+				"color" : [255,217,94],
             }
         },
         {
@@ -1394,10 +1445,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 8,
+				"intensity" : 4.13,
+				"color" : [255,217,94],
             }
         },
         {
@@ -1415,10 +1467,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 20,
+				"intensity" : 1.56,
+				"color" : [255,217,94],
             }
         },
         {
@@ -1436,10 +1489,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 5,
+				"intensity" : 3.89,
+				"color" : [0,234,255],
             }
         },
         {
@@ -1457,10 +1511,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 5,
+				"intensity" : 3.89,
+				"color" : [0,234,255],
             }
         },
         {
@@ -1477,11 +1532,12 @@
                 0.0,
                 1.0
             ],
-            "scale": -28.72161865234375,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "scale": 1.0,
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 5,
+				"color" : [255,153,0],
             }
         },
         {
@@ -1499,10 +1555,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 5,
+				"intensity" : 3.89,
+				"color" : [0,234,255],
             }
         },
         {
@@ -1520,10 +1577,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 1.72,
+				"color" : [255,153,0],
             }
         },
         {
@@ -1541,10 +1599,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 7,
+				"intensity" : 2,
+				"color" : [255,153,0],
             }
         },
         {
@@ -1562,10 +1621,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 1.72,
+				"color" : [255,153,0],
             }
         },
         {
@@ -1583,10 +1643,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 20,
+				"intensity" : 4.44,
+				"color" : [255,153,0],
             }
         },
         {
@@ -1604,10 +1665,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 1.72,
+				"color" : [255,153,0],
             }
         },
         {
@@ -1625,10 +1687,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 7,
+				"intensity" : 2,
+				"color" : [255,153,0],
             }
         },
         {
@@ -1646,10 +1709,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 1.72,
+				"color" : [255,153,0],
             }
         },
         {
@@ -1667,10 +1731,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 5,
+				"intensity" : 3.89,
+				"color" : [0,234,255],
             }
         },
         {
@@ -1688,10 +1753,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 1.72,
+				"color" : [255,153,0],
             }
         },
         {
@@ -1709,10 +1775,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 7,
+				"intensity" : 2,
+				"color" : [255,153,0],
             }
         },
         {
@@ -1730,10 +1797,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 2,
+				"color" : [0,107,255],
             }
         },
         {
@@ -1751,10 +1819,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 20,
+				"intensity" : 8,
+				"color" : [255,111,0],
             }
         },
         {
@@ -1772,10 +1841,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 7,
+				"intensity" : 2,
+				"color" : [255,153,0],
             }
         },
         {
@@ -1793,10 +1863,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 2,
+				"color" : [0,107,255],
             }
         },
         {
@@ -1814,10 +1885,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 20,
+				"intensity" : 1.31,
+				"color" : [255,47,0],
             }
         },
         {
@@ -1835,10 +1907,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 5,
+				"color" : [255,42,0],
             }
         },
         {
@@ -1856,10 +1929,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 30,
+				"intensity" : 8,
+				"color" : [255,42,0],
             }
         },
         {
@@ -1877,10 +1951,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 15,
+				"intensity" : 5.85,
+				"color" : [255,197,111],
             }
         },
         {
@@ -1898,10 +1973,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 15,
+				"intensity" : 5.85,
+				"color" : [255,197,111],
             }
         },
         {
@@ -1919,10 +1995,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 15,
+				"intensity" : 5.85,
+				"color" : [255,197,111],
             }
         },
         {
@@ -1940,10 +2017,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 15,
+				"intensity" : 5.85,
+				"color" : [255,197,111],
             }
         },
         {
@@ -1961,10 +2039,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 30,
+				"intensity" : 5,
+				"color" : [75,181,255],
             }
         },
         {
@@ -1982,10 +2061,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 20,
+				"intensity" : 8,
+			"color" : [255,230,186],
             }
         },
         {
@@ -2003,10 +2083,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 20,
+				"intensity" : 2.16,
+			"color" : [0,159,54],
             }
         },
         {
@@ -2024,10 +2105,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 20,
+				"intensity" : 3.89,
+			"color" : [255,132,0],
             }
         },
         {
@@ -2045,10 +2127,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 15,
+				"intensity" : 4,
+			"color" : [255,153,43],
             }
         },
         {
@@ -2066,10 +2149,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 1.72,
+			"color" : [255,142,0],
             }
         },
         {
@@ -2087,10 +2171,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 20,
+				"intensity" : 1.56,
+			"color" : [255,217,94],
             }
         },
         {
@@ -2108,10 +2193,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 15,
+				"intensity" : 5.65,
+			"color" : [255,227,208],
             }
         },
         {
@@ -2129,10 +2215,11 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
+            "lightComponent": {
+				"type" : 0,
+				"range" : 10,
+				"intensity" : 1,
+			"color" : [255,111,0],
             }
         },
         {
@@ -2150,11 +2237,6 @@
                 0.8754260540008545
             ],
             "scale": 1.0,
-            "prefabName": "",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
         },
         {
             "name": "Crystal_Caves",
@@ -2619,11 +2701,7 @@
                 542,
                 543,
                 544
-            ],
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            ]
         },
         {
             "name": "SM_Env_RockPile_Square_29",
@@ -3123,11 +3201,7 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "FX_Dust_Large_Soft",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Dust_Large_Soft"
         },
         {
             "name": "SM_Env_Rock_Flat_54",
@@ -4152,11 +4226,7 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "FX_Sparkles",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Sparkles"
         },
         {
             "name": "FX_Glow_Cube 2",
@@ -4173,11 +4243,7 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "FX_Glow_Cube",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Glow_Cube"
         },
         {
             "name": "SM_Env_Rubble_Plank_12",
@@ -4215,11 +4281,7 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "FX_Sparkles",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Sparkles"
         },
         {
             "name": "FX_Dust_Large_Cube 1",
@@ -4236,11 +4298,7 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "FX_Dust_Large_Cube",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Dust_Large_Cube"
         },
         {
             "name": "FX_Dust_Large_Cube",
@@ -4257,11 +4315,7 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "FX_Dust_Large_Cube",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Dust_Large_Cube"
         },
         {
             "name": "FX_Glow_Cube 3",
@@ -4278,11 +4332,7 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "FX_Glow_Cube",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Glow_Cube"
         },
         {
             "name": "FX_Glow_Cube 1",
@@ -4299,11 +4349,7 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "FX_Glow_Cube",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Glow_Cube"
         },
         {
             "name": "FX_Glow_Cube",
@@ -4320,11 +4366,7 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "FX_Glow_Cube",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Glow_Cube"
         },
         {
             "name": "FX_Sparkles 3",
@@ -4341,11 +4383,7 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "FX_Sparkles",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Sparkles"
         },
         {
             "name": "SM_Env_Wood_Bridge_Start_01",
@@ -4383,11 +4421,7 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "FX_Glow_Soft",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Glow_Soft"
         },
         {
             "name": "FX_Glow_Soft 2",
@@ -4404,11 +4438,7 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "FX_Glow_Soft",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Glow_Soft"
         },
         {
             "name": "FX_Glow_Soft 1",
@@ -4425,11 +4455,7 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "FX_Glow_Soft",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Glow_Soft"
         },
         {
             "name": "FX_Glow_Soft",
@@ -4446,11 +4472,7 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "FX_Glow_Soft",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Glow_Soft"
         },
         {
             "name": "FX_Sparkles 1",
@@ -4467,11 +4489,7 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "FX_Sparkles",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Sparkles"
         },
         {
             "name": "SM_Env_BonePile_Small_01",
@@ -12190,11 +12208,7 @@
                 725,
                 726,
                 727
-            ],
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            ]
         },
         {
             "name": "SM_Prop_Skeleton_Slave_Shackles_03",
@@ -16140,11 +16154,7 @@
                 831,
                 832,
                 833
-            ],
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            ]
         },
         {
             "name": "SM_Env_Ceiling_Stone_Stairs_03",
@@ -18734,11 +18744,7 @@
                 1198,
                 1199,
                 1200
-            ],
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            ]
         },
         {
             "name": "FX_Fire_02",
@@ -18755,11 +18761,7 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "FX_Fire_02",
@@ -18776,11 +18778,7 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "FX_Fire_02",
@@ -18797,11 +18795,7 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "FX_Fire_02",
@@ -18818,11 +18812,7 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "FX_Fire_02",
@@ -18839,11 +18829,7 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "FX_Fire_02",
@@ -18860,11 +18846,7 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "FX_Fire_02",
@@ -18881,11 +18863,7 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "FX_Fire_02",
@@ -18902,11 +18880,7 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "FX_Fire_02",
@@ -18923,11 +18897,7 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "FX_Fire_02",
@@ -18944,11 +18914,7 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "FX_Fire_02",
@@ -18965,11 +18931,7 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "FX_Fire_02",
@@ -18986,11 +18948,7 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "SM_Env_Bone_Skull_03",
@@ -26536,11 +26494,7 @@
                 1292,
                 1293,
                 1294
-            ],
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            ]
         },
         {
             "name": "SM_Env_Ceiling_Stone_Flat_107",
@@ -28589,11 +28543,7 @@
                 1370,
                 1371,
                 1372
-            ],
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            ]
         },
         {
             "name": "SM_Prop_Barrel_19",
@@ -30279,11 +30229,7 @@
                 1421,
                 1422,
                 1423
-            ],
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            ]
         },
         {
             "name": "SM_Env_Ceiling_Stone_Flat_96",
@@ -31466,11 +31412,7 @@
                 1536,
                 1537,
                 1538
-            ],
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            ]
         },
         {
             "name": "SM_Wep_HandAxe_03",
@@ -34587,11 +34529,7 @@
                 2241,
                 2242,
                 2243
-            ],
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            ]
         },
         {
             "name": "SM_Env_Wall_Window_Bars_03",
@@ -34734,11 +34672,7 @@
                 0.9762312769889832
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire"
         },
         {
             "name": "FX_Fire_02",
@@ -34755,11 +34689,7 @@
                 0.977206289768219
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "SM_Env_DoorDouble_Flat_02",
@@ -34797,11 +34727,7 @@
                 -0.02431425079703331
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "FX_Fire_02",
@@ -34818,11 +34744,7 @@
                 -0.02431425079703331
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "FX_Fire_02",
@@ -34839,11 +34761,7 @@
                 -0.02431425079703331
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "FX_Fire_02",
@@ -34860,11 +34778,7 @@
                 -0.02431425079703331
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "FX_Fire_02",
@@ -34881,11 +34795,7 @@
                 -0.02431425079703331
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "FX_Fire_02",
@@ -34902,11 +34812,7 @@
                 -0.02431425079703331
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "FX_Fire_02",
@@ -34923,11 +34829,7 @@
                 -0.02431425452232361
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "FX_Fire_02",
@@ -34944,11 +34846,7 @@
                 -0.69593745470047
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "FX_Fire_02",
@@ -34965,11 +34863,7 @@
                 -0.9598910808563232
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "FX_Fire_02",
@@ -34986,11 +34880,7 @@
                 -0.02431425452232361
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "FX_Fire_02",
@@ -35007,11 +34897,7 @@
                 -0.02431425452232361
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "FX_Fire_02",
@@ -35028,11 +34914,7 @@
                 -0.9598910808563232
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "FX_Fire_02",
@@ -35049,11 +34931,7 @@
                 -0.9598910808563232
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "FX_Fire",
@@ -35070,11 +34948,7 @@
                 0.9762312769889832
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire"
         },
         {
             "name": "FX_Fire",
@@ -35091,11 +34965,7 @@
                 0.9762312769889832
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire"
         },
         {
             "name": "FX_Fire",
@@ -35112,11 +34982,7 @@
                 0.9762312769889832
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire"
         },
         {
             "name": "SM_Prop_Chain_01",
@@ -35406,11 +35272,7 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "FX_Dust_Large_Soft",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Dust_Large_Soft"
         },
         {
             "name": "SM_Env_Wall_DoorFrame_30",
@@ -49525,11 +49387,7 @@
                 2373,
                 2374,
                 2375
-            ],
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            ]
         },
         {
             "name": "FX_Fire_02",
@@ -49546,11 +49404,7 @@
                 -0.02431425079703331
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "FX_Fire_02",
@@ -49567,11 +49421,7 @@
                 -0.6959376931190491
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "FX_Fire_02",
@@ -49588,11 +49438,7 @@
                 -0.661554753780365
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "SM_Prop_Skeleton_Slave_Lying_01",
@@ -52384,11 +52230,7 @@
                 2459,
                 2460,
                 2461
-            ],
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            ]
         },
         {
             "name": "SM_Env_Sewer_Water_09",
@@ -54648,11 +54490,7 @@
                 2916,
                 2917,
                 2918
-            ],
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            ]
         },
         {
             "name": "SM_Env_Wall_Pillar_Large_Round_01",
@@ -54753,11 +54591,7 @@
                 -0.02431425079703331
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "FX_Fire_02",
@@ -54774,11 +54608,7 @@
                 -0.02431425079703331
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "FX_Fire_02",
@@ -54795,11 +54625,7 @@
                 -0.02431425079703331
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "FX_Fire_02",
@@ -54816,11 +54642,7 @@
                 -0.02431425079703331
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "FX_Fire_02",
@@ -54837,11 +54659,7 @@
                 -0.02431425079703331
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "FX_Fire_02",
@@ -54858,11 +54676,7 @@
                 -0.69593745470047
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "FX_Fire_02",
@@ -54879,11 +54693,7 @@
                 -0.02431425079703331
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "FX_Fire_02",
@@ -54900,11 +54710,7 @@
                 -0.02431425079703331
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "SM_Env_Wall_DoorFrame_31",
@@ -64861,11 +64667,7 @@
                 3531,
                 3532,
                 3533
-            ],
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            ]
         },
         {
             "name": "FX_Fire_02",
@@ -64882,11 +64684,7 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "FX_Fire_02",
@@ -64903,11 +64701,7 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "FX_Fire_02",
@@ -64924,11 +64718,7 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "FX_Fire_02",
@@ -64945,11 +64735,7 @@
                 1.0
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "SM_Env_Wall_Pillar_Large_Round_02",
@@ -65071,11 +64857,7 @@
                 -0.02431425079703331
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "SM_Env_Wall_Pillar_Large_Round_01_Base",
@@ -65113,11 +64895,7 @@
                 -0.6959376931190491
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "SM_Env_DoorDouble_Flat_02",
@@ -65155,11 +64933,7 @@
                 -0.9598910808563232
             ],
             "scale": 1.0,
-            "prefabName": "FX_Fire_02",
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            "prefabName": "FX_Fire_02"
         },
         {
             "name": "SM_Prop_Barrel_28",
@@ -77779,11 +77553,7 @@
             "prefabName": "",
             "childs": [
                 3535
-            ],
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            ]
         },
         {
             "name": "SM_Env_Tiles_Pentagram_01",
@@ -77829,11 +77599,7 @@
                 3540,
                 3541,
                 3542
-            ],
-            "drawableComponent": {
-                "meshName": "",
-                "shaderName": ""
-            }
+            ]
         },
         {
             "name": "Plane 5",
@@ -77870,7 +77636,7 @@
                 0.0,
                 0.9539327621459961
             ],
-            "scale": 1.7556183338165284,
+            "scale": 3.5,
             "prefabName": "",
             "drawableComponent": {
                 "meshName": "Plane",

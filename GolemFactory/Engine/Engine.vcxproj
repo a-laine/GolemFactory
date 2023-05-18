@@ -225,6 +225,7 @@
     <ClCompile Include="..\..\Sources\Physics\SpecificIntersection\IntersectionTriangle.cpp" />
     <ClCompile Include="..\..\Sources\Renderer\CameraComponent.cpp" />
     <ClCompile Include="..\..\Sources\Renderer\DrawableComponent.cpp" />
+    <ClCompile Include="..\..\Sources\Renderer\Lighting\LightComponent.cpp" />
     <ClCompile Include="..\..\Sources\Renderer\Renderer.cpp" />
     <ClCompile Include="..\..\Sources\Renderer\Renderer2.cpp" />
     <ClCompile Include="..\..\Sources\Resources\Animation.cpp" />
@@ -351,6 +352,7 @@
     <ClInclude Include="..\..\Sources\Physics\SpecificIntersection\IntersectionTriangle.h" />
     <ClInclude Include="..\..\Sources\Renderer\CameraComponent.h" />
     <ClInclude Include="..\..\Sources\Renderer\DrawableComponent.h" />
+    <ClInclude Include="..\..\Sources\Renderer\Lighting\LightComponent.h" />
     <ClInclude Include="..\..\Sources\Renderer\Renderer.h" />
     <ClInclude Include="..\..\Sources\Resources\Animation.h" />
     <ClInclude Include="..\..\Sources\Resources\Font.h" />

@@ -50,6 +50,9 @@ void Renderer::drawObject(Entity* object)
 	if (!shaderToUse)
 		return;
 
+	int loc = shaderToUse->getUniformLocation("lightCount");
+	if (loc >= 0) glUniform1i(loc, m_lightCount);
+
 	// animation uniforms
 	if (shaderType == INSTANCE_ANIMATABLE)
 	{

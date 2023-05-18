@@ -19,6 +19,7 @@ Wired
 		};
 		layout(std140, binding = 1) uniform EnvironementLighting
 		{
+			vec4 m_backgroundColor;
 			vec4 m_ambientColor;
 			vec4 m_directionalLightDirection;
 			vec4 m_directionalLightColor;

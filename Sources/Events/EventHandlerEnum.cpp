@@ -178,10 +178,18 @@ void EventHandlerEnum::loadKeyMapping(const std::string& path, std::string event
 			if (!eventConfig) continue;
 
 			//	check if valid event before instanciate
-			if (currentEvent.getMap().find("listeningKey") == currentEvent.getMap().end()       && currentEvent.getMap().find("listeningMouse") == currentEvent.getMap().end()        &&
-				currentEvent.getMap().find("listeningScroll") == currentEvent.getMap().end()	&& currentEvent.getMap().find("listeningText") == currentEvent.getMap().end()         &&
-				currentEvent.getMap().find("listeningCursorPos") == currentEvent.getMap().end() && currentEvent.getMap().find("listeningCursorEntred") == currentEvent.getMap().end() &&
-				currentEvent.getMap().find("listeningDragDrop") == currentEvent.getMap().end())
+			auto listeningKey = currentEvent.getMap().find("listeningKey");
+			auto listeningScroll = currentEvent.getMap().find("listeningScroll");
+			auto listeningCursorPos = currentEvent.getMap().find("listeningCursorPos");
+			auto listeningDragDrop = currentEvent.getMap().find("listeningDragDrop");
+			auto listeningMouse = currentEvent.getMap().find("listeningMouse");
+			auto listeningText = currentEvent.getMap().find("listeningText");
+			auto listeningCursorEntred = currentEvent.getMap().find("listeningCursorEntred");
+
+			if (listeningKey == currentEvent.getMap().end()       && listeningMouse == currentEvent.getMap().end()        &&
+				listeningScroll == currentEvent.getMap().end()	&& listeningText == currentEvent.getMap().end()         &&
+				listeningCursorPos == currentEvent.getMap().end() && listeningCursorEntred == currentEvent.getMap().end() &&
+				listeningDragDrop == currentEvent.getMap().end())
 			{
 				if (!errorHeaderPrinted) { errorHeaderPrinted = true; std::cerr << "EventHandler : Errors occurs in loading key mapping :" << std::endl; }
 				std::cerr << "               Event '" << it->first << "' : no listening callback defined" << std::endl;
@@ -207,85 +215,82 @@ void EventHandlerEnum::loadKeyMapping(const std::string& path, std::string event
 			}
 
 			//	Attach keyboard input
-			try
+			if (listeningKey != currentEvent.getMap().end() && listeningKey->second.getType() == Variant::ARRAY)
 			{
-				for (auto it2 = currentEvent["listeningKey"].getArray().begin(); it2 != currentEvent["listeningKey"].getArray().end(); it2++)
+				auto& tmpArray = listeningKey->second.getArray();
+				for (auto it2 = tmpArray.begin(); it2 != tmpArray.end(); it2++)
 				{
 					int key = it2->toInt();
 					event->addInput(Event::InputType::KEY, key);
 					auto it3 = std::find(keyboardListenersBuffer[key].begin(), keyboardListenersBuffer[key].end(), event);
-					if (it3 == keyboardListenersBuffer[key].end()) keyboardListenersBuffer[key].insert(keyboardListenersBuffer[key].end(), event);
+					if (it3 == keyboardListenersBuffer[key].end()) 
+						keyboardListenersBuffer[key].insert(keyboardListenersBuffer[key].end(), event);
 				}
 			}
-			catch (const std::exception&) {}
 
 			//	Attach mouse input
-			try
+			if (listeningMouse != currentEvent.getMap().end() && listeningMouse->second.getType() == Variant::ARRAY)
 			{
-				for (auto it2 = currentEvent["listeningMouse"].getArray().begin(); it2 != currentEvent["listeningMouse"].getArray().end(); it2++)
+				auto& tmpArray = listeningMouse->second.getArray();
+				for (auto it2 = tmpArray.begin(); it2 != tmpArray.end(); it2++)
 				{
 					int key = it2->toInt();
 					event->addInput(Event::InputType::MOUSEBUTTON, key);
 					auto it3 = std::find(mouseButtonListenersBuffer[key].begin(), mouseButtonListenersBuffer[key].end(), event);
-					if (it3 == mouseButtonListenersBuffer[key].end()) mouseButtonListenersBuffer[key].insert(mouseButtonListenersBuffer[key].end(), event);
+					if (it3 == mouseButtonListenersBuffer[key].end()) 
+						mouseButtonListenersBuffer[key].insert(mouseButtonListenersBuffer[key].end(), event);
 				}
 			}
-			catch (const std::exception&) {}
 
 			//	Attach scrolling input
-			try
+			if (listeningScroll != currentEvent.getMap().end() && listeningScroll->second.getType() == Variant::BOOL)
 			{
-				if (currentEvent["listeningScroll"].toBool())
+				if (listeningScroll->second.toBool())
 				{
 					event->addInput(Event::InputType::SCROLLING, -1);
 					scrollingListenersBuffer.push_back(event);
 				}
 			}
-			catch (const std::exception&) {}
 
 			//	Attach text input
-			try
+			if (listeningText != currentEvent.getMap().end() && listeningText->second.getType() == Variant::BOOL)
 			{
-				if (currentEvent["listeningText"].toBool())
+				if (listeningText->second.toBool())
 				{
 					event->addInput(Event::InputType::CHAR, -1);
-					scrollingListenersBuffer.push_back(event);
+					charEnteredListenersBuffer.push_back(event);
 				}
 			}
-			catch (const std::exception&) {}
 
 			//	Attach cursor position input
-			try
+			if (listeningCursorPos != currentEvent.getMap().end() && listeningCursorPos->second.getType() == Variant::BOOL)
 			{
-				if (currentEvent["listeningCursorPos"].toBool())
+				if (listeningCursorPos->second.toBool())
 				{
 					event->addInput(Event::InputType::CURSORPOS, -1);
-					scrollingListenersBuffer.push_back(event);
+					cursorPositionListenersBuffer.push_back(event);
 				}
 			}
-			catch (const std::exception&) {}
 
 			//	Attach cursor entred input
-			try
+			if (listeningCursorEntred != currentEvent.getMap().end() && listeningCursorEntred->second.getType() == Variant::BOOL)
 			{
-				if (currentEvent["listeningCursorEntred"].toBool())
+				if (listeningCursorEntred->second.toBool())
 				{
 					event->addInput(Event::InputType::CURSORENTER, -1);
-					scrollingListenersBuffer.push_back(event);
+					cursorEnterListenersBuffer.push_back(event);
 				}
 			}
-			catch (const std::exception&) {}
 
 			//	Attach cursor drag and drop input
-			try
+			if (listeningDragDrop != currentEvent.getMap().end() && listeningDragDrop->second.getType() == Variant::BOOL)
 			{
-				if (currentEvent["listeningDragDrop"].toBool())
+				if (listeningDragDrop->second.toBool())
 				{
 					event->addInput(Event::InputType::DRAGANDDROP, -1);
-					scrollingListenersBuffer.push_back(event);
+					dragAndDropListenersBuffer.push_back(event);
 				}
 			}
-			catch (const std::exception&) {}
 		}
 	}
 

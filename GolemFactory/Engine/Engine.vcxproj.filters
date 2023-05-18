@@ -72,6 +72,9 @@
     <Filter Include="Fichiers sources\Math">
       <UniqueIdentifier>{abbcb74b-fb51-4b33-8210-4d9072c4f174}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Fichiers sources\Renderer\Lighting">
+      <UniqueIdentifier>{374afe81-bdb4-414a-bd70-131bfd92102b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\Sources\Animation\AnimationComponent.cpp">
@@ -391,6 +394,9 @@
     </ClCompile>
     <ClCompile Include="..\..\Sources\Physics\Collision.cpp">
       <Filter>Fichiers sources\Physics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Sources\Renderer\Lighting\LightComponent.cpp">
+      <Filter>Fichiers sources\Renderer\Lighting</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -786,6 +792,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Sources\Resources\Loader\stb_image.h">
       <Filter>Fichiers sources\Resources\Loader</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Renderer\Lighting\LightComponent.h">
+      <Filter>Fichiers sources\Renderer\Lighting</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

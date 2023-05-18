@@ -1,0 +1,60 @@
+#pragma once
+
+#include <EntityComponent/Component.hpp>
+#include <Math/TMath.h>
+
+
+class LightComponent : public Component
+{
+	GF_DECLARE_COMPONENT_CLASS(LightComponent, Component)
+
+public:
+	friend class Renderer;
+
+	explicit LightComponent();
+
+	void onAddToEntity(Entity* entity) override;
+
+	// setter geter
+	void setPointLight(bool _isPointLight);
+	void setRange(float _range);
+	void setIntensity(float _intensity);
+	void setColor(vec4f _color);
+	void setInnerCutOffAngle(float _angleRad);
+	void setOuterCutOffAngle(float _angleRad);
+
+
+	vec4f getDirection();
+	vec4f getPosition();
+	bool isPointLight() const;
+	float getRange() const;
+	float getIntensity() const;
+	float getInnerCutOffAngle() const;
+	float getOuterCutOffAngle() const;
+	//
+
+	//	Debug
+	void onDrawImGui() override;
+	//
+
+protected:
+	bool m_isUniformBufferDirty;
+	bool m_isPointLight;
+
+	vec4f m_color;
+	float m_range;
+	float m_intensity;
+	float m_innerCutoffAngle;
+	float m_outerCutoffAngle;
+
+#ifdef USE_IMGUI
+	bool  m_drawRange = false;
+#endif
+};
+
+
+
+
+
+
+

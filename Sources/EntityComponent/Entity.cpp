@@ -1,7 +1,8 @@
 #include "Entity.hpp"
-#include "Renderer/DrawableComponent.h"
 #include "Utiles/Assert.hpp"
 #include "Physics/Shapes/Collider.h"
+#include "Renderer/DrawableComponent.h"
+#include "Renderer/Lighting/LightComponent.h"
 #include "World/World.h"
 
 #include <Utiles/Debug.h>
@@ -205,6 +206,14 @@ void Entity::recomputeBoundingBox()
 				m_localBoundingBox = drawable->getMesh()->getBoundingBox();
 			else m_localBoundingBox.add(drawable->getMesh()->getBoundingBox());
 			firstshape = false;
+		}
+		else if (element.type == LightComponent::getStaticClassID())
+		{
+			const LightComponent* light = static_cast<const LightComponent*>(element.comp);
+			vec4f radius4 = vec4f(light->getRange());
+			radius4.w = 1;
+			m_localBoundingBox.min = vec4f::min(m_localBoundingBox.min, radius4);
+			m_localBoundingBox.max = vec4f::max(m_localBoundingBox.max, radius4);
 		}
 		return false;
 	};

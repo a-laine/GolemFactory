@@ -6,12 +6,7 @@ DefaultTextured
 	{
 		model : "mat4";
 		normalMatrix : "mat4";
-		//view : "mat4";
-		//projection : "mat4";
-		//cameraPosition : "vec4";
-		//m_directionalLightDirection : "vec4";
-		//m_directionalLightColor : "vec4";
-		//m_ambientColor : "vec4";
+		lightCount : "int"
 	};
 	
 	textures : [
@@ -39,9 +34,25 @@ DefaultTextured
 		};
 		layout(std140, binding = 1) uniform EnvironementLighting
 		{
+			vec4 m_backgroundColor;
 			vec4 m_ambientColor;
 			vec4 m_directionalLightDirection;
 			vec4 m_directionalLightColor;
+		};
+		
+		struct Light
+		{
+			vec4 m_position;
+			vec4 m_direction;
+			vec4 m_color;
+			float m_range;
+			float m_intensity;
+			float m_inCutOff;
+			float m_outCutOff;
+		};
+		layout(std140, binding = 2) uniform Lights
+		{
+			Light lights[128];
 		};
 	};
 	vertex :
@@ -75,6 +86,8 @@ DefaultTextured
 		uniform sampler2D emmisive; //texture unit 1
 		uniform sampler2D metalic;  //texture unit 2
 		
+		uniform int lightCount;
+		
 		// input
 		in vec4 fragmentPosition;
 		in vec4 fragmentNormal;
@@ -97,6 +110,26 @@ DefaultTextured
 			vec4 specular = metalicParam.x * spec * m_directionalLightColor;  
 			
 			fragColor = (diffuse + m_ambientColor + specular) * albedoColor + emmisiveColor;
+			
+			if (lightCount > 0)
+			{
+				for (int i = 0; i < lightCount; i++)
+				{
+					vec4 lightColor = lights[i].m_color;
+					vec4 lightRay = fragmentPosition - lights[i].m_position;
+					float d = length(lightRay);
+					lightRay /= d;
+					diffuse = clamp(dot(normalize(fragmentNormal), normalize(-lightRay)), 0 , 1 ) * lights[i].m_color;
+					spec = pow(max(dot(viewDir, lightRay), 0.0), 32);
+					specular = metalicParam.x * spec * lights[i].m_color;
+					
+					float u = d / lights[i].m_range;
+					//float attenuation = lights[i].m_intensity * max(0.0 , 1.0 - pow(d / lights[i].m_range, 0.5));//intensity / (1.0 + lights[i].m_linear * d + lights[i].m_quadratic * (d * d));
+					float attenuation = lights[i].m_intensity / (1.0 + 25 * u * u)* clamp((1 - u) * 5.0 , 0 , 1);
+					fragColor += (diffuse + specular) * attenuation * albedoColor;
+				}
+			}
+			
 		}
 	};
 } 

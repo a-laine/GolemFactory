@@ -119,7 +119,7 @@ int main()
 	initManagers();
 
 	//	Collision test
-		WidgetManager::getInstance()->setActiveHUD("debug");
+		//WidgetManager::getInstance()->setActiveHUD("debug");
 		normalShader = ResourceManager::getInstance()->getResource<Shader>("normalViewer");
 
 	//	Test scene
@@ -269,7 +269,7 @@ int main()
 void initializeForestScene(bool emptyPlace)
 {
 	// blue sky & green grass!!
-	glClearColor(0.6f, 0.85f, 0.91f, 0.f);
+	Renderer::getInstance()->setEnvBackgroundColor(vec4f(0.6f, 0.85f, 0.91f, 0.f));
 	Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("greenGrass"));
 
 	// init instance placement
@@ -392,7 +392,7 @@ void initializeForestScene(bool emptyPlace)
 }
 void initializePhysicsScene(int testCase)
 {
-	glClearColor(0.6f, 0.85f, 0.91f, 0.f);
+	Renderer::getInstance()->setEnvBackgroundColor(vec4f(0.6f, 0.85f, 0.91f, 0.f));
 	Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("wired"));
 
 	if (testCase == 0)
@@ -474,7 +474,7 @@ void initializePhysicsScene(int testCase)
 }
 void initializeSyntyScene()
 {
-	glClearColor(0.6f, 0.85f, 0.91f, 0.f);
+	Renderer::getInstance()->setEnvBackgroundColor(vec4f(0.f, 0.f, 0.f, 0.f));
 	Renderer::getInstance()->setShader(Renderer::GRID, nullptr);//ResourceManager::getInstance()->getResource<Shader>("wired"));//
 
 #if 0
@@ -486,9 +486,6 @@ void initializeSyntyScene()
 	world.addToScene(newObject);
 	return;
 #endif
-
-
-
 
 
 
@@ -537,11 +534,9 @@ void initializeSyntyScene()
 					// get id and name
 					int id = (*it)["id"].toInt();
 					std::string prefabName = "";
-					try
-					{
-						prefabName = (*it)["prefabName"].toString();
-					}
-					catch (std::exception&) {}
+					auto prefabNameVariant = it->getMap().find("prefabName");
+					if (prefabNameVariant != it->getMap().end() && prefabNameVariant->second.getType() == Variant::STRING)
+						prefabName = prefabNameVariant->second.toString();
 
 					// pop parent now in case of loading error
 					Entity* newObject = nullptr;
@@ -589,13 +584,21 @@ void initializeSyntyScene()
 						(*it)["position"].getArray()[1].toDouble(),
 						(*it)["position"].getArray()[2].toDouble(),
 						1.f);
-					float scale = (*it)["scale"].toDouble();
 					quatf rotation = quatf(
 						(*it)["rotation"].getArray()[3].toDouble(),
 						(*it)["rotation"].getArray()[0].toDouble(),
 						(*it)["rotation"].getArray()[1].toDouble(),
 						(*it)["rotation"].getArray()[2].toDouble());
 					rotation.normalize();
+
+					float scale = 1.f;
+					auto& scaleVariant = (*it)["scale"];
+					if (scaleVariant.getType() == Variant::INT)
+						scale = scaleVariant.toInt();
+					else if (scaleVariant.getType() == Variant::FLOAT)
+						scale = scaleVariant.toFloat();
+					else if (scaleVariant.getType() == Variant::DOUBLE)
+						scale = scaleVariant.toDouble();
 
 					if (!prefabName.empty())
 						scale *= newObject->getWorldScale();
@@ -622,18 +625,15 @@ void initializeSyntyScene()
 					world.addToScene(newObject);
 					
 					// push to stack if newObject is a parent
-					if ((*it).getMap().find("childs") != (*it).getMap().end())
+					auto childVariant = (*it).getMap().find("childs");
+					if (childVariant != (*it).getMap().end() && childVariant->second.getType() == Variant::ARRAY)
 					{
-						try
+						auto childrenArray = childVariant->second.getArray();
+						if (childrenArray.size() > 0)
 						{
-							auto childrenIt = (*it)["childs"].getArray();
-							if (childrenIt.size() > 0)
-							{
-								for (auto it2 = childrenIt.begin(); it2 != childrenIt.end(); it2++)
-									parentStack.push_back(newObject);
-							}
+							for (auto it2 = childrenArray.begin(); it2 != childrenArray.end(); it2++)
+								parentStack.push_back(newObject);
 						}
-						catch (std::exception&) {}
 					}
 				}
 			}
@@ -673,8 +673,6 @@ void initManagers()
 	EventHandler::getInstance()->loadKeyMapping("RPG Key mapping", "");
 	EventHandler::getInstance()->setCursorMode(false);
 	EventHandler::getInstance()->addResizeCallback(WidgetManager::resizeCallback);
-	//EventHandler::getInstance()->addTextInputCallback([](GLFWwindow* window, unsigned int c) { ImGui::GetIO().AddInputCharacter(c); });
-	//EventHandler::getInstance()->addScollingCallback([](GLFWwindow* window, double xoffset, double yoffset) { ImGui_ImplGlfw_ScrollCallback(window, xoffset, yoffset); });
 
 	// Init Resources manager
 	ResourceVirtual::logVerboseLevel = ResourceVirtual::VerboseLevel::ALL;

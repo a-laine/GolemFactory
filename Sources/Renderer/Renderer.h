@@ -12,9 +12,11 @@
 
 #include "CameraComponent.h"
 
+#define MAX_LIGHT_COUNT 128
 
 class Shader;
 class Mesh;
+class LightComponent;
 
 class Renderer : public Singleton<Renderer>
 {
@@ -51,9 +53,20 @@ class Renderer : public Singleton<Renderer>
 		};
 		struct EnvironementLighting
 		{
+			vec4f m_backgroundColor;
 			vec4f m_ambientColor;
 			vec4f m_directionalLightDirection;
 			vec4f m_directionalLightColor;
+		};
+		struct Light
+		{
+			vec4f m_position;
+			vec4f m_direction;
+			vec4f m_color;
+			float m_range;
+			float m_intensity;
+			float m_inCutOff;
+			float m_outCutOff;
 		};
 		//
 
@@ -72,10 +85,12 @@ class Renderer : public Singleton<Renderer>
 		void setGridVisible(bool enable);
 		void setRenderOption(const RenderOption& option);
 
+		void setEnvBackgroundColor(vec4f color);
 		void setEnvAmbientColor(vec4f color);
 		void setEnvDirectionalLightDirection(vec4f direction);
 		void setEnvDirectionalLightColor(vec4f color);
 
+		void addLight(LightComponent* _light);
 
 		CameraComponent* getCamera();
 		World* getWorld();
@@ -86,6 +101,7 @@ class Renderer : public Singleton<Renderer>
 		unsigned int getNbDrawnTriangles() const;
 		RenderOption getRenderOption() const;
 
+		vec4f getEnvBackgroundColor() const;
 		vec4f getEnvAmbientColor() const;
 		vec4f getEnvDirectionalLightDirection() const;
 		vec4f getEnvDirectionalLightColor() const;
@@ -147,16 +163,18 @@ class Renderer : public Singleton<Renderer>
 		Shader* lastShader;
 		GLuint lastVAO;
 
-		std::vector<std::pair<uint32_t, Entity*>> renderQueue;
+		std::vector<std::pair<uint64_t, Entity*>> renderQueue;
 		std::map<Shader*, std::vector<Entity*> > simpleBatches;
 		std::map<Shader*, std::map<Mesh*, std::vector<mat4f> > > groupBatches;
 
 		EnvironementLighting m_envLighting;
 
-		GLuint m_globalMatricesID, m_environementLightingID;
+		GLuint m_globalMatricesID, m_environementLightingID, m_lightsID;
 		GlobalMatrices m_globalMatrices;
 		EnvironementLighting m_environementLighting;
-
+		Light m_lights[MAX_LIGHT_COUNT];
+		int m_lightCount;
+		std::vector<LightComponent*> m_lightComponents;
 
 #ifdef USE_IMGUI
 		bool m_drawLightDirection = false;

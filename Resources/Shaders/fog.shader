@@ -1,6 +1,8 @@
 Fog
 {	
-	renderQueue : 3000;
+	renderQueue : 3000;//transparent
+	transparent : true;
+	faceCulling : false;
 
 	uniform :
 	{
@@ -48,7 +50,7 @@ Fog
 		// program
 		void main()
 		{
-			discard;
+			fragColor = vec4(0 , 0 , 0 , 0.5);
 		}
 	};
 } 

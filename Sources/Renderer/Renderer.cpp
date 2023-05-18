@@ -11,6 +11,7 @@
 #include <Resources/Skeleton.h>
 #include <Renderer/DrawableComponent.h>
 #include <Animation/SkeletonComponent.h>
+#include <Renderer/Lighting/LightComponent.h>
 #include <Utiles/Debug.h>
 
 
@@ -141,7 +142,6 @@ void Renderer::initGlobalUniformBuffers()
 	glBufferData(GL_UNIFORM_BUFFER, sizeof(m_globalMatrices), NULL, GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 	glBindBufferRange(GL_UNIFORM_BUFFER, 0, m_globalMatricesID, 0, sizeof(m_globalMatrices));
-	//glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 	// environment lighting settings
 	m_environementLighting.m_directionalLightDirection = vec4f(-10, -20, 10, 0);
@@ -153,6 +153,15 @@ void Renderer::initGlobalUniformBuffers()
 	glBufferData(GL_UNIFORM_BUFFER, sizeof(m_environementLighting), NULL, GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 	glBindBufferRange(GL_UNIFORM_BUFFER, 1, m_environementLightingID, 0, sizeof(m_environementLighting));
+
+	// lights data
+	glGenBuffers(1, &m_lightsID);
+	glBindBuffer(GL_UNIFORM_BUFFER, m_lightsID);
+	glBufferData(GL_UNIFORM_BUFFER, MAX_LIGHT_COUNT * sizeof(Light), NULL, GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+	glBindBufferRange(GL_UNIFORM_BUFFER, 2, m_lightsID, 0, MAX_LIGHT_COUNT * sizeof(Light));
+
+	// end
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 void Renderer::updateGlobalUniformBuffers()
@@ -162,7 +171,36 @@ void Renderer::updateGlobalUniformBuffers()
 
 	glBindBuffer(GL_UNIFORM_BUFFER, m_environementLightingID);
 	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(m_environementLighting), &m_environementLighting);
-	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+	int firstUpdateIndex = 0;
+	bool needLightUpdate = false;
+	for (int i = 0; i < m_lightComponents.size() && !needLightUpdate; i++)
+	{
+		needLightUpdate |= m_lightComponents[i]->m_isUniformBufferDirty;
+		if (needLightUpdate)
+			firstUpdateIndex = i;
+	}
+
+	if (needLightUpdate)
+	{
+		m_lightCount = 0;
+		for (int i = firstUpdateIndex; i < MAX_LIGHT_COUNT && i < m_lightComponents.size(); i++)
+		{
+			m_lights[i].m_color = m_lightComponents[i]->m_color;
+			m_lights[i].m_position = m_lightComponents[i]->getPosition();
+			m_lights[i].m_direction = m_lightComponents[i]->isPointLight() ? vec4f(0.f) : m_lightComponents[i]->getDirection();
+			m_lights[i].m_range = m_lightComponents[i]->m_range;
+			m_lights[i].m_intensity = m_lightComponents[i]->m_intensity;
+			m_lights[i].m_inCutOff = cos((float)DEG2RAD * m_lightComponents[i]->m_innerCutoffAngle);
+			m_lights[i].m_outCutOff = cos((float)DEG2RAD * m_lightComponents[i]->m_outerCutoffAngle);
+			m_lightComponents[i]->m_isUniformBufferDirty = false;
+			m_lightCount++;
+		}
+
+		glBindBuffer(GL_UNIFORM_BUFFER, m_lightsID);
+		glBufferSubData(GL_UNIFORM_BUFFER, 0, m_lightCount * sizeof(Light), &m_lights);
+		glBindBuffer(GL_UNIFORM_BUFFER, 0);
+	}
 }
 
 
@@ -183,7 +221,8 @@ void Renderer::render(CameraComponent* renderCam)
 	
 	//	opengl state
 	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_CULL_FACE); 
+	glDisable(GL_BLEND);
+	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CW);
 
@@ -213,6 +252,8 @@ void Renderer::render(CameraComponent* renderCam)
 	world->getSceneManager().getEntities(&sceneTest, &collector);
 
 	//	sort
+	uint64_t transparentMask = 1ULL << 63;
+	uint64_t faceCullingMask = 1ULL << 62;
 	renderQueue.clear();
 	for (Entity* object : collector.getResult())
 	{
@@ -221,29 +262,65 @@ void Renderer::render(CameraComponent* renderCam)
 #ifdef USE_IMGUI
 		if (!comp->visible()) continue;
 #endif
-		uint32_t queue = comp->getShader()->getRenderQueue();
+		uint64_t queue = comp->getShader()->getRenderQueue();
+		queue = queue << 48;
 
 		vec4f v = object->getWorldPosition() - camPos;
-		uint16_t d = (uint16_t)vec4f::dot(v, v);
-		if (queue >= 3000)
+		uint32_t d = (uint32_t)(1000.f * v.getNorm());
+		if (queue & transparentMask)
 		{
 			//compute 2's complement of d
 			d = ~d; 
 			d++;
 		}
 
-		uint32_t hash = (queue << 16) | d;
+		uint64_t hash = queue | d;
 		renderQueue.push_back({ hash, object});
 	}
-	std::sort(renderQueue.begin(), renderQueue.end(), [](std::pair<uint32_t, Entity*> a, std::pair<uint32_t, Entity*> b) {return a.first < b.first; });
+
+	uint64_t compareMask = ~(transparentMask | faceCullingMask); // don't use the states bits for comparing entities
+	std::sort(renderQueue.begin(), renderQueue.end(), [compareMask](std::pair<uint64_t, Entity*> a, std::pair<uint64_t, Entity*> b)
+		{
+			return (compareMask & a.first) < (compareMask & b.first);
+		});
 
 	//	draw instance list
+	bool blendingEnabled = false;
+	bool faceCullingEnabled = true;
 	for (const auto& it : renderQueue)
 	{
+		//	opengl states managing
+		bool isTransparent = (it.first & transparentMask);
+		if (!blendingEnabled && isTransparent)
+		{
+			blendingEnabled = true;
+			glEnable(GL_BLEND);
+		}
+		else if (blendingEnabled && !isTransparent)
+		{
+			blendingEnabled = false;
+			glDisable(GL_BLEND);
+		}
+
+		bool needCulling = (it.first & faceCullingMask);
+		if (!faceCullingEnabled && needCulling)
+		{
+			faceCullingEnabled = true;
+			glEnable(GL_CULL_FACE);
+		}
+		else if (faceCullingEnabled && !needCulling)
+		{
+			faceCullingEnabled = false;
+			glDisable(GL_CULL_FACE);
+		}
+
+
 		//	try to do dynamic batching
 		Entity* object = it.second;
 		DrawableComponent* comp = object->getComponent<DrawableComponent>();
-		if (GLEW_VERSION_1_3 && comp->getShader()->getInstanciable())
+		drawObject(object);
+
+		/*if (GLEW_VERSION_1_3 && comp->getShader()->getInstanciable())
 		{
 			shader = comp->getShader()->getInstanciable();
 			Mesh* m = comp->getMesh();
@@ -265,11 +342,11 @@ void Renderer::render(CameraComponent* renderCam)
 					drawObject(batch[i]);
 				batch.clear();
 			}
-		}
+		}*/
 	}
 
 	//	draw residual objects in batches
-	for (auto it = simpleBatches.begin(); it != simpleBatches.end(); ++it)
+	/*for (auto it = simpleBatches.begin(); it != simpleBatches.end(); ++it)
 	{
 		std::vector<Entity*>& batch = it->second;
 		for (unsigned int i = 0; i < batch.size(); i++)
@@ -286,7 +363,7 @@ void Renderer::render(CameraComponent* renderCam)
 				drawInstancedObject(shader, m, groupBatches[shader][m]);
 			groupBatches[shader][m].clear();
 		}
-	}
+	}*/
 }
 void Renderer::renderHUD()
 {
@@ -420,12 +497,24 @@ unsigned int Renderer::getNbDrawnTriangles() const { return trianglesDrawn; }
 Renderer::RenderOption Renderer::getRenderOption() const { return renderOption; }
 
 
+void Renderer::setEnvBackgroundColor(vec4f color)
+{ 
+	m_environementLighting.m_backgroundColor = color;
+	glClearColor(m_environementLighting.m_backgroundColor.x, m_environementLighting.m_backgroundColor.y, m_environementLighting.m_backgroundColor.z, m_environementLighting.m_backgroundColor.w);
+}
 void Renderer::setEnvAmbientColor(vec4f color) { m_environementLighting.m_ambientColor = color; }
 void Renderer::setEnvDirectionalLightDirection(vec4f direction) { m_environementLighting.m_directionalLightDirection = direction; }
 void Renderer::setEnvDirectionalLightColor(vec4f color) { m_environementLighting.m_directionalLightColor = color; }
+vec4f Renderer::getEnvBackgroundColor() const { return m_environementLighting.m_backgroundColor; }
 vec4f Renderer::getEnvAmbientColor() const { return m_environementLighting.m_ambientColor; }
 vec4f Renderer::getEnvDirectionalLightDirection() const { return m_environementLighting.m_directionalLightDirection; }
 vec4f Renderer::getEnvDirectionalLightColor() const { return m_environementLighting.m_directionalLightColor; }
+
+
+void Renderer::addLight(LightComponent* _light)
+{
+	m_lightComponents.push_back(_light);
+}
 //
 
 //	Debug
@@ -438,6 +527,8 @@ void Renderer::drawImGui(World& world)
 	ImGui::DragFloat3("Directional light direction", &m_environementLighting.m_directionalLightDirection[0], 0.01f);
 	ImGui::ColorEdit3("Directional light color", &m_environementLighting.m_directionalLightColor[0]);
 	ImGui::ColorEdit3("Ambient color", &m_environementLighting.m_ambientColor[0]);
+	if (ImGui::ColorEdit3("Background color", &m_environementLighting.m_backgroundColor[0]))
+		glClearColor(m_environementLighting.m_backgroundColor.x, m_environementLighting.m_backgroundColor.y, m_environementLighting.m_backgroundColor.z, m_environementLighting.m_backgroundColor.w);
 	ImGui::Checkbox("Draw light direction", &m_drawLightDirection);
 
 	const char* renderOptions[] = { "Default", "Bounding box", "Wireframe", "Normals" };

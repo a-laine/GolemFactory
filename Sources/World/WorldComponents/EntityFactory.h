@@ -48,6 +48,8 @@ class EntityFactory
 		
 		void addComponents(Entity* object, const std::vector<Component*>& components);
 
+		void printError(std::string header, const char* msg);
+		void printWarning(std::string header, const char* msg);
 
 		World* world;
 		std::map<std::string, Entity*> prefabs;

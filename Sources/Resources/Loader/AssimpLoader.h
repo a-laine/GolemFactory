@@ -35,6 +35,9 @@ class AssimpLoader : public IResourceLoader
         void initialize(ResourceVirtual* resource) override;
         void getResourcesToRegister(std::vector<ResourceVirtual*>& resourceList) override;
 
+        void PrintError(const char* filename, const char* msg) override;
+        void PrintWarning(const char* filename, const char* msg) override;
+
         static bool isAssimpFileMesh(const std::string& fileName);
         //
 

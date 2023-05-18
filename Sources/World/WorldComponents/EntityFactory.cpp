@@ -11,6 +11,8 @@
 #include <Animation/SkeletonComponent.h>
 #include <Animation/AnimationComponent.h>
 #include <Physics/Shapes/Collider.h>
+#include <Renderer/Lighting/LightComponent.h>
+#include <Utiles/ConsoleColor.cpp>
 
 
 
@@ -269,23 +271,185 @@ Entity* EntityFactory::instantiatePrefab(std::string prefabName, bool _addToScen
 
 void EntityFactory::tryLoadComponents(Entity* object, Variant* variant, const std::string& assetPackName)
 {
+	// helpers
+	const auto TryLoadAsFloat = [](Variant& variant, const char* label, float& destination)
+	{
+		if (variant.getMap().find(label) != variant.getMap().end())
+		{
+			auto& v = variant[label];
+			if (v.getType() == Variant::FLOAT)
+				destination = v.toFloat();
+			else if (v.getType() == Variant::DOUBLE)
+				destination = v.toDouble();
+			else if (v.getType() == Variant::INT)
+				destination = v.toInt();
+			else
+				return false;
+			return true;
+		}
+		return false;
+	};
+	const auto TryLoadAsVec4f = [](Variant& variant, const char* label, vec4f& destination)
+	{
+		int sucessfullyParsed = 0;
+		auto it0 = variant.getMap().find(label);
+		if (it0 != variant.getMap().end() && it0->second.getType() == Variant::ARRAY)
+		{
+			auto varray = it0->second.getArray();
+			vec4f parsed = destination;
+			for (int i = 0; i < 4 && i < varray.size(); i++)
+			{
+				auto& element = varray[i];
+				if (element.getType() == Variant::FLOAT)
+				{
+					parsed[i] = element.toFloat();
+					sucessfullyParsed++;
+				}
+				else if (element.getType() == Variant::DOUBLE)
+				{
+					parsed[i] = element.toDouble();
+					sucessfullyParsed++;
+				}
+				else if (element.getType() == Variant::INT)
+				{
+					parsed[i] = element.toInt();
+					sucessfullyParsed++;
+				}
+			}
+			destination = parsed;
+		}
+		return sucessfullyParsed;
+	};
+	const auto TryLoadInt = [](Variant& variant, const char* label, int& destination)
+	{
+		auto it0 = variant.getMap().find(label);
+		if (it0 != variant.getMap().end() && it0->second.getType() == Variant::INT)
+		{
+			destination = it0->second.toInt();
+			return true;
+		}
+		return false;
+	};
+
+	std::string messageHeader = "Loading components of " + object->getName();
 	if (variant->getType() == Variant::MAP)
 	{
 		// drawableComponent
-		try
+		auto it0 = variant->getMap().find("drawableComponent");
+		if (it0 != variant->getMap().end() && it0->second.getType() == Variant::MAP)
 		{
-			std::string meshName = assetPackName + "/" + (*variant)["drawableComponent"]["meshName"].toString();
-			std::string shaderName = (*variant)["drawableComponent"]["shaderName"].toString();
+			std::string secondHeader = " : DrawableComponent";
+
+			std::string meshName, shaderName;
+			auto it1 = it0->second.getMap().find("meshName");
+			if (it1 != it0->second.getMap().end() && it1->second.getType() == Variant::STRING)
+			{
+				meshName = it1->second.toString();
+				if (!meshName.empty())
+					meshName = assetPackName + "/" + meshName;
+				if (meshName.find('.') == std::string::npos)
+					meshName += ".fbx";
+			}
+
+			it1 = it0->second.getMap().find("shaderName");
+			if (it1 != it0->second.getMap().end() && it1->second.getType() == Variant::STRING)
+				shaderName = it1->second.toString();
 
 			if (!meshName.empty() && !shaderName.empty())
 			{
-				if (meshName.find('.') == std::string::npos)
-					meshName += ".fbx";
-
 				DrawableComponent* drawable = new DrawableComponent(meshName, shaderName);
 				object->addComponent(drawable);
 			}
+			else
+			{
+				if (meshName.empty())
+					printError(messageHeader + secondHeader, "no mesh name");
+				if (shaderName.empty())
+					printError(messageHeader + secondHeader, "no shader name");
+			}
 		}
-		catch (std::exception&) {}
+
+		// lightComponent
+		it0 = variant->getMap().find("lightComponent");
+		if (it0 != variant->getMap().end() && it0->second.getType() == Variant::MAP)
+		{
+			std::string secondHeader = " : LightComponent";
+			vec4f color = vec4f(1.f, 1.f, 1.f, 1.f);
+			float range = 10;
+			float intensity = 1;
+			float inCutOff = 28;
+			float outCutOff = 32;
+			int type = 0;
+
+			bool rangeOk = TryLoadAsFloat(it0->second, "range", range);
+			bool intensityOk = TryLoadAsFloat(it0->second, "intensity", intensity);
+			int colorOk = TryLoadAsVec4f(it0->second, "color", color);
+			bool typeOk = TryLoadInt(it0->second, "type", type);
+			bool inCutoffOk = TryLoadAsFloat(it0->second, "inCutOff", inCutOff);
+			bool outCutoffOk = TryLoadAsFloat(it0->second, "outCutOff", outCutOff);
+
+			if (!typeOk)
+				printError(messageHeader + secondHeader, "fail parsing light type");
+			else if ((type != 0) && (type != 1))
+			{
+				printWarning(messageHeader + secondHeader, "invalid light type, valid are 0=point, 1=spot. Was set to 0");
+				type = 0;
+			}
+			else if (type == 1)
+			{
+				if (!inCutoffOk)
+					printWarning(messageHeader + secondHeader, "fail parsing spot in cutoff angle, Was set to 28");
+				if (!outCutoffOk)
+					printWarning(messageHeader + secondHeader, "fail parsing spot in cutoff angle, Was set to 32");
+			}
+
+			if (!rangeOk)
+				printWarning(messageHeader + secondHeader, "fail parsing light range, was set to 10");
+			if (!intensityOk)
+				printWarning(messageHeader + secondHeader, "fail parsing light intensity, was set to 1");
+			if (colorOk < 3)
+				printWarning(messageHeader + secondHeader, "fail parsing light color, was set to white");
+			else
+			{
+				float maxValue = std::max(color.x, std::max(color.y, color.z));
+				if (maxValue > 1.f)
+					color *= 1.f / 255.f;
+				color.w = 1.f;
+			}
+			
+			if (typeOk)
+			{
+				LightComponent* light = new LightComponent();
+				light->setColor(color);
+				light->setRange(range);
+				light->setIntensity(intensity);
+
+				if (type == 1)
+				{
+					light->setInnerCutOffAngle(std::min(inCutOff, outCutOff));
+					light->setOuterCutOffAngle(std::max(inCutOff, outCutOff));
+				}
+
+				object->addComponent(light);
+			}
+		}
+	}
+}
+
+void EntityFactory::printError(std::string header, const char* msg)
+{
+	if (ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
+	{
+		std::cout << ConsoleColor::getColorString(ConsoleColor::Color::RED) << "ERROR   : EntityFactory : " << header << " : " << msg << std::flush;
+		std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
+	}
+}
+
+void EntityFactory::printWarning(std::string header, const char* msg)
+{
+	if (ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::WARNINGS)
+	{
+		std::cout << ConsoleColor::getColorString(ConsoleColor::Color::YELLOW) << "WARNING : EntityFactory : " << header << " : " << msg << std::flush;
+		std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
 	}
 }
