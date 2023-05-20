@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <fstream>
 
+#include <Utiles/ImguiConfig.h>
+
 /*! \class ResourceVirtual
  *	\brief Base class for resource implementation.
  *
@@ -28,14 +30,26 @@ class ResourceVirtual
 			WARNINGS = 2,	//!< Print errors and logs
 			ALL = 3			//!< Print all logs (errors, warning and optionnal informations)
 		};
+		enum class ResourceType
+		{
+            NONE = 0,
+            MESH,
+            MATERIAL,
+            TEXTURE,
+            SHADER,
+            SKELETON,
+            ANIMATION,
+            FONT
+		};
 		//
 
         //  Default
-        ResourceVirtual(const std::string& resourceName = "unknown");
+        ResourceVirtual(const std::string& resourceName = "unknown", ResourceType resourceType = ResourceType::NONE);
 		ResourceVirtual();
 	    virtual ~ResourceVirtual();
 
         bool isValid() const;
+        ResourceType getType() const { return type; };
         virtual std::string getIdentifier() const;
         virtual void assign(const ResourceVirtual* other);
         //
@@ -45,6 +59,7 @@ class ResourceVirtual
         std::string name;						//!< The resource name.
         //
 
+        virtual void onDrawImGui();
 
         static void printErrorLog(const std::string& resourceName, const int& errorLine, bool& printHeader);
 
@@ -58,5 +73,6 @@ class ResourceVirtual
         //	Attributes
         std::atomic_uint count;					//!< The number of clients using the resource.
         std::atomic<State> state;
+        ResourceType type = ResourceType::NONE;
         //
 };

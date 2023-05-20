@@ -33,8 +33,6 @@ Renderer::Renderer() :
 	world = nullptr;
 
 	defaultShader[GRID] = nullptr;
-	defaultShader[INSTANCE_ANIMATABLE] = nullptr;
-	defaultShader[INSTANCE_DRAWABLE] = nullptr;
 	defaultShader[INSTANCE_ANIMATABLE_BB] = nullptr;
 	defaultShader[INSTANCE_DRAWABLE_BB] = nullptr;
 	defaultShader[HUD] = nullptr;
@@ -176,7 +174,7 @@ void Renderer::updateGlobalUniformBuffers()
 	for (int i = 0; i < m_lightComponents.size() && !needLightUpdate; i++)
 		needLightUpdate |= m_lightComponents[i]->m_isUniformBufferDirty;
 
-	//if (needLightUpdate)
+	if (needLightUpdate)
 	{
 		m_lightCount = 0;
 		for (int i = 0; i < MAX_LIGHT_COUNT && i < m_lightComponents.size(); i++)
@@ -226,7 +224,7 @@ void Renderer::render(CameraComponent* renderCam)
 	if (drawGrid && shader && glIsVertexArray(gridVAO))
 	{
 		shader->enable();
-		loadMVPMatrix(shader, &mat4f::identity[0][0], quatf::identity);
+		loadModelMatrix(shader, &mat4f::identity, &mat4f::identity);
 		int loc = shader->getUniformLocation("overrideColor");
 		if (loc >= 0) glUniform4fv(loc, 1, &m_gridColor[0]);
 
@@ -309,56 +307,8 @@ void Renderer::render(CameraComponent* renderCam)
 			glDisable(GL_CULL_FACE);
 		}
 
-
-		//	try to do dynamic batching
-		Entity* object = it.second;
-		DrawableComponent* comp = object->getComponent<DrawableComponent>();
-		drawObject(object);
-
-		/*if (GLEW_VERSION_1_3 && comp->getShader()->getInstanciable())
-		{
-			shader = comp->getShader()->getInstanciable();
-			Mesh* m = comp->getMesh();
-			std::vector<mat4f>& batch = groupBatches[shader][m];
-			batch.push_back(object->getWorldTransformMatrix());
-			if (batch.size() >= BATCH_SIZE)
-			{
-				drawInstancedObject(shader, m, batch);
-				batch.clear();
-			}
-		}
-		else // simple draw
-		{
-			std::vector<Entity*>& batch = simpleBatches[comp->getShader()];
-			batch.push_back(object);
-			if (batch.size() >= BATCH_SIZE)
-			{
-				for (unsigned int i = 0; i < BATCH_SIZE; i++)
-					drawObject(batch[i]);
-				batch.clear();
-			}
-		}*/
+		drawObject(it.second);
 	}
-
-	//	draw residual objects in batches
-	/*for (auto it = simpleBatches.begin(); it != simpleBatches.end(); ++it)
-	{
-		std::vector<Entity*>& batch = it->second;
-		for (unsigned int i = 0; i < batch.size(); i++)
-			drawObject(batch[i]);
-		batch.clear();
-	}
-	for (auto it = groupBatches.begin(); it != groupBatches.end(); ++it)
-	{
-		shader = it->first;
-		for (auto it2 = it->second.begin(); it2 != it->second.end(); ++it2)
-		{
-			Mesh* m = it2->first;
-			if(!groupBatches[shader][m].empty())
-				drawInstancedObject(shader, m, groupBatches[shader][m]);
-			groupBatches[shader][m].clear();
-		}
-	}*/
 }
 void Renderer::renderHUD()
 {
@@ -396,8 +346,11 @@ void Renderer::renderHUD()
 					{
 						//	Get shader and prepare matrix
 						Shader* shader = nullptr;
-						if (!defaultShader[HUD]) shader = (*it2)->getShader();
-						loadMVPMatrix(shader, &mat4f::translate(model, (*it2)->getPosition())[0][0], quatf::identity);
+						if (!defaultShader[HUD]) 
+							shader = (*it2)->getShader();
+
+						mat4f m = mat4f::translate(model, (*it2)->getPosition());
+						loadModelMatrix(shader, &m, &model);
 						if (!shader) continue;
 
 						//	Draw
@@ -415,39 +368,33 @@ void Renderer::renderHUD()
 
 
 //	Protected functions
-void Renderer::loadMVPMatrix(Shader* shader, const float* model, const quatf rotation, const int& modelSize)
+void Renderer::loadModelMatrix(Shader* shader, const mat4f* model, const mat4f* rotMatrix, const int& modelSize)
 {
-	if (shader == lastShader && shader)
+	if (shader)
 	{
-		int loc = shader->getUniformLocation("model");
-		if (loc >= 0) glUniformMatrix4fv(loc, modelSize, GL_FALSE, model);
-
-		if (modelSize == 1)
-		{
-			loc = shader->getUniformLocation("normalMatrix");
-			if (loc >= 0)
-			{
-				mat4f rotationMatrix = mat4f(rotation);
-				glUniformMatrix4fv(loc, modelSize, GL_FALSE, &rotationMatrix[0][0]);
-			}
-		}
-	}
-	else if (shader)
-	{
-		shader->enable();
-		int loc = shader->getUniformLocation("model");
-		if (loc >= 0) glUniformMatrix4fv(loc, modelSize, GL_FALSE, model);
-
-		if (modelSize == 1)
-		{
-			loc = shader->getUniformLocation("normalMatrix");
-			if (loc >= 0)
-			{
-				mat4f rotationMatrix = mat4f(rotation);
-				glUniformMatrix4fv(loc, modelSize, GL_FALSE, &rotationMatrix[0][0]);
-			}
-		}
+		if (shader != lastShader)
+			shader->enable();
 		lastShader = shader;
+
+		if (modelSize == 1)
+		{
+			int loc = shader->getUniformLocation("model");
+			if (loc >= 0) 
+				glUniformMatrix4fv(loc, modelSize, GL_FALSE, (const float*)model);
+
+			loc = shader->getUniformLocation("normalMatrix");
+			if (loc >= 0)
+				glUniformMatrix4fv(loc, modelSize, GL_FALSE, (const float*)rotMatrix);
+		}
+		else
+		{
+			int loc = shader->getUniformLocation("models");
+			if (loc >= 0)
+				glUniformMatrix4fv(loc, modelSize, GL_FALSE, (const float*)model);
+			loc = shader->getUniformLocation("normalMatrices");
+			if (loc >= 0)
+				glUniformMatrix4fv(loc, modelSize, GL_FALSE, (const float*)rotMatrix);
+		}
 	}
 	else  lastShader = nullptr;
 }

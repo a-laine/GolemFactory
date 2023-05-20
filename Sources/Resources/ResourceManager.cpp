@@ -3,7 +3,11 @@
 #include "Loader/ShaderLoader.h"
 
 #include <Utiles/ToolBox.h>
+#include <World/World.h>
 
+#ifdef USE_IMGUI
+bool ResourcesWindowEnable = true;
+#endif
 
 //  Default
 ResourceManager::ResourceManager(const std::string& path)
@@ -119,22 +123,6 @@ void ResourceManager::loadResource_internal(ResourceVirtual* resource, const std
         if(!addResource_internal(res))
             delete res;
     }
-	
-	// HACK !!!!  dsl aurel :)
-	if (loaderId == Shader::extension)
-	{
-		std::ifstream strm(ShaderLoader::getFileName(getRepository(), fileName + "Instanced"));
-		if (!strm.is_open()) return;
-
-		IResourceLoader* loader2 = findLoader_internal(loaderId);
-		if (loader2 && loader2->load(getRepository(), fileName + "Instanced"))
-		{
-			Shader* instanced = new Shader(fileName + "Instanced");
-			loader2->initialize(instanced);
-			Shader* s = static_cast<Shader*>(resource);
-			s->setInstanciable(instanced);
-		}
-	}
 }
 bool ResourceManager::addResource_internal(ResourceVirtual* resource)
 {
@@ -161,5 +149,95 @@ IResourceLoader* ResourceManager::findLoader_internal(const std::string& loaderI
         return it->second;
     else
         return nullptr;
+}
+//
+
+//
+std::vector<std::string> ResourceManager::getAllResourceName(ResourceVirtual::ResourceType type)
+{
+    std::vector<std::string> result;
+    for (auto it = resources.begin(); it != resources.end(); it++)
+    {
+        if (it->second->getType() != type)
+            continue;
+        result.push_back(it->second->name);
+    }
+    return result;
+}
+void ResourceManager::drawImGui(World& world)
+{
+#ifdef USE_IMGUI
+    mutexList.lock();
+    ImGui::Begin("Resource manager");
+    ImGui::PushID(this);
+    const ImVec4 sectionColor = ImVec4(1, 1, 0, 1);
+
+    ImGui::TextColored(ImVec4(1, 1, 0, 1), "Filters");
+    m_nameFilter.Draw();
+
+    ImGui::Spacing(); ImGui::Spacing();
+
+    const char* TabNames[] = { "Meshes", "Materials",  "Textures" ,"Shaders", "Skeletons", "Animations", "Fonts" };
+    ResourceVirtual::ResourceType TabTypes[] = { ResourceVirtual::ResourceType::MESH, ResourceVirtual::ResourceType::MATERIAL,
+        ResourceVirtual::ResourceType::TEXTURE, ResourceVirtual::ResourceType::SHADER, ResourceVirtual::ResourceType::SKELETON,
+        ResourceVirtual::ResourceType::ANIMATION, ResourceVirtual::ResourceType::FONT };
+    
+    if (ImGui::BeginTabBar("ResourceTabBar", ImGuiTabBarFlags_None))
+    {
+        int TabLength = sizeof(TabTypes) / sizeof(ResourceVirtual::ResourceType);
+
+        for (int i = 0; i < TabLength; i++)
+        {
+            if (ImGui::BeginTabItem(TabNames[i]))
+            {
+                auto selectedIt = selectedResources.find(TabTypes[i]);
+                ResourceVirtual* selectedRes = selectedIt != selectedResources.end() ? selectedIt->second : nullptr;
+
+                ImGui::BeginChild("ResourceList", ImVec2(ImGui::GetContentRegionAvail().x * 0.5f, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
+                {
+                    bool noResourceLoaded = true;
+                    for (const auto& it : resources)
+                    {
+                        if (it.second->getType() != TabTypes[i])
+                            continue;
+                        if (!m_nameFilter.PassFilter(it.second->getIdentifier().c_str()))
+                            continue;
+
+                        noResourceLoaded = false;
+                        bool b = selectedRes == it.second;
+                        if (ImGui::Selectable(it.second->name.c_str(), &b))
+                            selectedResources[TabTypes[i]] = it.second;
+                    }
+
+                    if (noResourceLoaded)
+                    {
+                        ImGui::TextDisabled("(no loaded resource of this type, or none had pass the name filter)");
+                    }
+
+                    ImGui::EndChild();
+                }
+
+                ImGui::SameLine();
+                ImGui::BeginChild("ResourceInfos", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar);
+                {
+                    if (selectedRes)
+                        selectedRes->onDrawImGui();
+                    else
+                        ImGui::TextDisabled("(select an item)");
+                    ImGui::EndChild();
+                }
+
+                ImGui::EndTabItem();
+            }
+        }
+
+        ImGui::EndTabBar();
+    }
+
+
+    ImGui::PopID();
+    ImGui::End();
+    mutexList.unlock();
+#endif // USE_IMGUI
 }
 //

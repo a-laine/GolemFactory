@@ -21,32 +21,17 @@
 //	Drawing functions
 void Renderer::drawObject(Entity* object)
 {
-	ShaderIdentifier shaderType = INSTANCE_DRAWABLE;
-	ShaderIdentifier shaderBBType = INSTANCE_DRAWABLE_BB;
-	ShaderIdentifier shaderWire = INSTANCE_DRAWABLE_WIRED;
 	DrawableComponent* drawableComp = object->getComponent<DrawableComponent>();
 	SkeletonComponent* skeletonComp = object->getComponent<SkeletonComponent>();
-	if (!drawableComp || !drawableComp->isValid()) 
-		return;
-	if (skeletonComp && skeletonComp->isValid())
-	{
-		shaderType = INSTANCE_ANIMATABLE;
-		shaderBBType = INSTANCE_ANIMATABLE_BB;
-		shaderWire = INSTANCE_ANIMATABLE_WIRED;
-	}
+	bool isSkinned = skeletonComp && skeletonComp->isValid();
 
-	//	Get shader and prepare matrix
 	Shader* shaderToUse;
-	if (renderOption == RenderOption::BOUNDING_BOX) 
-		shaderToUse = defaultShader[shaderBBType];
-	else if (renderOption == RenderOption::WIREFRAME) 
-		shaderToUse = defaultShader[shaderWire];
+	if (renderOption == RenderOption::BOUNDING_BOX)
+		shaderToUse = isSkinned ? defaultShader[INSTANCE_ANIMATABLE_BB] : defaultShader[INSTANCE_DRAWABLE_BB];
 	else 
-		shaderToUse = drawableComp->getShader();
-	if (!shaderToUse) 
-		shaderToUse = defaultShader[shaderType];
+		shaderToUse = drawableComp->getShader()->getVariant(Shader::computeVariantCode(false, false, renderOption == RenderOption::WIREFRAME));
 
-	loadMVPMatrix(shaderToUse, &object->getWorldTransformMatrix()[0][0], object->getWorldOrientation());
+	loadModelMatrix(shaderToUse, &object->getWorldTransformMatrix(), &object->getNormalMatrix());
 	if (!shaderToUse)
 		return;
 
@@ -54,7 +39,7 @@ void Renderer::drawObject(Entity* object)
 	if (loc >= 0) glUniform1i(loc, m_lightCount);
 
 	// animation uniforms
-	if (shaderType == INSTANCE_ANIMATABLE)
+	if (isSkinned)
 	{
 		//	Load skeleton pose matrix list for vertex skinning calculation
 		std::vector<mat4f> pose = skeletonComp->getPose();
@@ -69,15 +54,18 @@ void Renderer::drawObject(Entity* object)
 	}
 
 	//	Draw mesh
-	if (renderOption == RenderOption::BOUNDING_BOX && shaderType == INSTANCE_ANIMATABLE)
+	if (renderOption == RenderOption::BOUNDING_BOX)
 	{
-		loadVAO(skeletonComp->getCapsuleVAO());
-		glDrawArrays(GL_POINTS, 0, (int)skeletonComp->getSegmentsIndex().size());
-	}
-	else if (renderOption == RenderOption::BOUNDING_BOX)
-	{
-		loadVAO(drawableComp->getMesh()->getBBoxVAO());
-		glDrawElements(GL_TRIANGLES, (int)drawableComp->getMesh()->getBBoxFaces()->size(), GL_UNSIGNED_SHORT, NULL);
+		if (isSkinned)
+		{
+			loadVAO(skeletonComp->getCapsuleVAO());
+			glDrawArrays(GL_POINTS, 0, (int)skeletonComp->getSegmentsIndex().size());
+		}
+		else
+		{
+			loadVAO(drawableComp->getMesh()->getBBoxVAO());
+			glDrawElements(GL_TRIANGLES, (int)drawableComp->getMesh()->getBBoxFaces()->size(), GL_UNSIGNED_SHORT, NULL);
+		}
 	}
 	else
 	{
@@ -86,7 +74,7 @@ void Renderer::drawObject(Entity* object)
 
 		if (renderOption == RenderOption::NORMALS && normalViewer)
 		{
-			loadMVPMatrix(normalViewer, &object->getWorldTransformMatrix()[0][0], object->getWorldOrientation());
+			loadModelMatrix(normalViewer, &object->getWorldTransformMatrix(), &object->getNormalMatrix());
 			loadVAO(drawableComp->getMesh()->getVAO());
 			glDrawElements(GL_TRIANGLES, (int)drawableComp->getMesh()->getFaces()->size(), GL_UNSIGNED_SHORT, NULL);
 		}
@@ -94,23 +82,17 @@ void Renderer::drawObject(Entity* object)
 	instanceDrawn++;
 	trianglesDrawn += drawableComp->getMesh()->getNumberFaces();
 }
-void Renderer::drawInstancedObject(Shader* s, Mesh* m, std::vector<mat4f>& models)
+void Renderer::drawInstancedObject(Shader* s, Mesh* m, std::vector<mat4f>& models, std::vector<mat4f>& normalMatrices)
 {
 	//	Get shader and prepare matrix
 	Shader* shaderToUse;
-	if (renderOption == RenderOption::BOUNDING_BOX) 
+	if (renderOption == RenderOption::BOUNDING_BOX)
 		shaderToUse = defaultShader[INSTANCE_DRAWABLE_BB];
-	else if (renderOption == RenderOption::WIREFRAME) 
-		shaderToUse = defaultShader[INSTANCE_DRAWABLE_WIRED];
-	else 
-		shaderToUse = defaultShader[INSTANCE_DRAWABLE];
-	if (!shaderToUse || !shaderToUse->getInstanciable()) 
-		shaderToUse = s;
-	else 
-		shaderToUse = shaderToUse->getInstanciable();
+	else
+		shaderToUse = s->getVariant(Shader::computeVariantCode(true, false, renderOption == RenderOption::WIREFRAME));
 
 	//	Load MVP matrix
-	loadMVPMatrix(shaderToUse, (const float*)models.data(), quatf::identity, (int)models.size());
+	loadModelMatrix(shaderToUse, models.data(), normalMatrices.data(), (int)models.size());
 
 	//	Draw instanced
 	if (renderOption == RenderOption::BOUNDING_BOX)
@@ -130,17 +112,20 @@ void Renderer::drawMap(Map* map, Shader* s)
 {
 	mat4f scale = mat4f::scale(mat4f::identity, map->getScale());
 	mat4f model = scale * map->getModelMatrix();
+	mat4f normalMatrix = map->getNormalMatrix();
 
 	// raw
-	loadMVPMatrix(map->getShader(), &model[0][0], quatf::identity);
+	loadModelMatrix(map->getShader(), &model, &normalMatrix);
 	vec4i exclusion = map->getExclusionZone();
 	int loc = map->getShader()->getUniformLocation("exclusion");
-	if (loc >= 0) glUniform4iv(loc, 1, (int*)&exclusion);
+	//if (loc >= 0) glUniform4iv(loc, 1, (int*)&exclusion);
+	if (loc >= 0) glUniform4iv(loc, 1, &vec4i(-1,0,0,0)[0]);
 	
 	loadVAO(map->getVAO());
 	glDrawElements(GL_TRIANGLES, map->getFacesCount(), GL_UNSIGNED_INT, NULL);
 	instanceDrawn++;
 	trianglesDrawn += map->getFacesCount() / 6;
+	//return;
 
 	// chunks
 	exclusion = vec4i(-1, 0, 0, 0);
@@ -156,7 +141,7 @@ void Renderer::drawMap(Map* map, Shader* s)
 		if (chunk->isInitialized())
 		{
 			model = scale * chunk->getModelMatrix();
-			loadMVPMatrix(map->getShader(), &model[0][0], quatf::identity);
+			loadModelMatrix(map->getShader(), &model, &normalMatrix);
 			loadVAO(chunk->getVAO());
 
 			int lod = chunk->getLod();

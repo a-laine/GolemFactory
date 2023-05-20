@@ -9,7 +9,7 @@
 
 
 
-ShaderLoader::ShaderLoader() : vertexShader(0), fragmentShader(0), geometricShader(0), tessControlShader(0), tessEvalShader(0), program(0), renderQueue(1000)
+ShaderLoader::ShaderLoader() : renderQueue(1000)
 {
     codeBlockKeys.push_back("includes");
     codeBlockKeys.push_back("vertex");
@@ -153,42 +153,87 @@ bool ShaderLoader::load(const std::string& resourceDirectory, const std::string&
     }
     else renderQueue |= faceCullingBit;
 
-    // main shaders
-    bool vertSuccess = tryCompile(shaderMap, Shader::ShaderType::VERTEX_SH, "vertex", vertexShader, resourceDirectory, fileName);
-    bool fragSuccess = tryCompile(shaderMap, Shader::ShaderType::FRAGMENT_SH, "fragment", fragmentShader, resourceDirectory, fileName);
-    if (!fragSuccess || !vertSuccess)
-    {
-        glDeleteShader(vertexShader);
-        glDeleteShader(fragmentShader);
+    // load vertex source
+    loadSourceCode(shaderMap, "vertex", vertexSourceCode, fileName);
+    loadSourceCode(shaderMap, "fragment", fragmentSourceCode, fileName);
+    loadSourceCode(shaderMap, "geometry", geometrySourceCode, fileName);
+    loadSourceCode(shaderMap, "evaluation", evaluationSourceCode, fileName);
+    loadSourceCode(shaderMap, "control", controlSourceCode, fileName);
+
+    if (vertexSourceCode.empty() || fragmentSourceCode.empty())
         return false;
-    }
-    program = glCreateProgram();
-    glAttachShader(program, vertexShader);
-    glAttachShader(program, fragmentShader);
 
-    //  Optional staging
-    tryAttach(shaderMap, Shader::ShaderType::GEOMETRIC_SH, "geometry", geometricShader, program, resourceDirectory, fullFileName);
-    tryAttach(shaderMap, Shader::ShaderType::TESS_EVAL_SH, "evaluation", tessEvalShader, program, resourceDirectory, fullFileName);
-    tryAttach(shaderMap, Shader::ShaderType::TESS_CONT_SH, "control", tessControlShader, program, resourceDirectory, fullFileName);
+    vertexPragmas = extractPragmas(vertexSourceCode);
+    fragmentPragmas = extractPragmas(fragmentSourceCode);
+    geometryPragmas = extractPragmas(geometrySourceCode);
+    evaluationPragmas = extractPragmas(evaluationSourceCode);
+    controlPragmas = extractPragmas(controlSourceCode);
+    std::vector<ShaderLoader::InternalVariantDefine> variantDefines = createVariantDefines();
 
-    //  Linking program
-    glLinkProgram(program);
-    glDeleteShader(vertexShader);
-    glDeleteShader(fragmentShader);
-    if(glIsShader(geometricShader))   glDeleteShader(geometricShader);
-    if(glIsShader(tessControlShader)) glDeleteShader(tessControlShader);
-    if(glIsShader(tessEvalShader))    glDeleteShader(tessEvalShader);
-
-    GLint compile_status = GL_TRUE;
-    glGetShaderiv(program, GL_COMPILE_STATUS, &compile_status);
-    if(compile_status != GL_TRUE)
+    for (int i = 0; i < variantDefines.size(); i++)
     {
-        GLint logsize;
-        glGetShaderiv(program, GL_INFO_LOG_LENGTH, &logsize);
-        char *log = new char[logsize];
-        glGetShaderInfoLog(program, logsize, &logsize, log);
-        std::cout << log << std::endl;
-        delete[] log;
+        // compile vertex & fragment
+        GLuint tmpVertexId, tmpFragmentId;
+        std::string errorHeader = "ERROR : loading shader : " + fileName + variantDefines[i].allDefines;
+        bool vertexOk = compileSource(Shader::ShaderType::VERTEX_SH, vertexSourceCode, variantDefines[i].defines, tmpVertexId, errorHeader);
+        bool fragmentOk = compileSource(Shader::ShaderType::FRAGMENT_SH, fragmentSourceCode, variantDefines[i].defines, tmpFragmentId, errorHeader);
+        if (!vertexOk || !fragmentOk)
+        {
+            glDeleteShader(tmpVertexId);
+            glDeleteShader(tmpFragmentId);
+            continue;
+        }
+
+        // create a new variant
+        shaderVariants.emplace_back();
+        ShaderStruct& shader = shaderVariants.back();
+        shader.variantCode = variantDefines[i].shaderCode;
+        shader.program = glCreateProgram();
+        shader.vertexShader = tmpVertexId;
+        shader.fragmentShader = tmpFragmentId;
+        shader.geometricShader = 0;
+        shader.tessEvalShader = 0;
+        shader.tessControlShader = 0;
+        shader.allDefines = variantDefines[i].allDefines;
+        glAttachShader(shader.program, shader.vertexShader);
+        glAttachShader(shader.program, shader.fragmentShader);
+
+        // attach optional stages
+        if (!geometrySourceCode.empty() && shouldAttachStage(geometryPragmas, variantDefines[i].defines))
+        {
+            if (compileSource(Shader::ShaderType::GEOMETRIC_SH, geometrySourceCode, variantDefines[i].defines, shader.geometricShader, errorHeader))
+                glAttachShader(shader.program, shader.geometricShader);
+        }
+        if (!evaluationSourceCode.empty() && shouldAttachStage(evaluationPragmas, variantDefines[i].defines))
+        {
+            if (compileSource(Shader::ShaderType::TESS_EVAL_SH, evaluationSourceCode, variantDefines[i].defines, shader.tessEvalShader, errorHeader))
+                glAttachShader(shader.program, shader.tessEvalShader);
+        }
+        if (!controlSourceCode.empty() && shouldAttachStage(controlPragmas, variantDefines[i].defines))
+        {
+            if (compileSource(Shader::ShaderType::TESS_CONT_SH, controlSourceCode, variantDefines[i].defines, shader.tessControlShader, errorHeader))
+                glAttachShader(shader.program, shader.tessControlShader);
+        }
+
+        //  Linking program
+        glLinkProgram(shader.program);
+        glDeleteShader(shader.vertexShader);
+        glDeleteShader(shader.fragmentShader);
+        if (glIsShader(shader.geometricShader))   glDeleteShader(shader.geometricShader);
+        if (glIsShader(shader.tessControlShader)) glDeleteShader(shader.tessControlShader);
+        if (glIsShader(shader.tessEvalShader))    glDeleteShader(shader.tessEvalShader);
+
+        GLint compile_status = GL_TRUE;
+        glGetShaderiv(shader.program, GL_COMPILE_STATUS, &compile_status);
+        if (compile_status != GL_TRUE)
+        {
+            GLint logsize;
+            glGetShaderiv(shader.program, GL_INFO_LOG_LENGTH, &logsize);
+            char* log = new char[logsize];
+            glGetShaderInfoLog(shader.program, logsize, &logsize, log);
+            std::cout << log << std::endl;
+            delete[] log;
+        }
     }
 
     //	get default matrix attribute location
@@ -232,7 +277,6 @@ bool ShaderLoader::load(const std::string& resourceDirectory, const std::string&
                     }
                     else hasError = true;
                 }
-                //else hasError = true;
             }
 
             if (hasError)
@@ -240,16 +284,35 @@ bool ShaderLoader::load(const std::string& resourceDirectory, const std::string&
         }
         else PrintError(fileName.c_str(), "Texture field is not a valid array (or is empty)");
     }
-    return true;
+    
+    return shaderVariants.size() > 0;
 }
 
 void ShaderLoader::initialize(ResourceVirtual* resource)
 {
-    Shader* shader = static_cast<Shader*>(resource);
-    shader->initialize(vertexShader, fragmentShader, geometricShader, tessControlShader, tessEvalShader, program, attributesType, textureNames, renderQueue);
+    Shader* baseShader = static_cast<Shader*>(resource);
+    ShaderStruct& base = shaderVariants.front();
+    baseShader->initialize(base.vertexShader, base.fragmentShader, base.geometricShader, base.tessControlShader, base.tessEvalShader, base.program,
+        attributesType, textureNames, renderQueue);
 
     for (int i = 0; i < textureResources.size(); i++)
-        shader->pushTexture(textureResources[i]);
+        baseShader->pushTexture(textureResources[i]);
+
+    for (int i = 1; i < shaderVariants.size(); i++)
+    {
+        ShaderStruct& variant = shaderVariants[i];
+        std::string variantName = baseShader->name;
+        if (!variant.allDefines.empty())
+            variantName += '+' + variant.allDefines;
+
+        Shader* variantShader = new Shader(variantName);
+        variantShader->initialize(variant.vertexShader, variant.fragmentShader, variant.geometricShader, variant.tessControlShader, variant.tessEvalShader, variant.program,
+            attributesType, textureNames, renderQueue);
+        for (int i = 0; i < textureResources.size(); i++)
+            variantShader->pushTexture(textureResources[i]);
+
+        baseShader->addVariant(variant.variantCode, variantShader);
+    }
 }
 
 void ShaderLoader::getResourcesToRegister(std::vector<ResourceVirtual*>& resourceList)
@@ -268,118 +331,26 @@ std::string ShaderLoader::getFileName(const std::string& resourceDirectory, cons
 
 void ShaderLoader::clear()
 {
-    vertexShader = 0;
-    fragmentShader = 0;
-    geometricShader = 0;
-    tessControlShader = 0;
-    tessEvalShader = 0;
-    program = 0;
-
+    renderQueue = 0;
     attributesType.clear();
     textureNames.clear();
     textureResources.clear();
+    includes.clear();
+    shaderVariants.clear();
+    vertexPragmas.clear();
+    fragmentPragmas.clear();
+    geometryPragmas.clear();
+    evaluationPragmas.clear();
+    controlPragmas.clear();
 
-    includes = "";
+    vertexSourceCode.clear();
+    fragmentSourceCode.clear();
+    geometrySourceCode.clear();
+    evaluationSourceCode.clear();
+    controlSourceCode.clear();
 }
 
-bool ShaderLoader::tryCompile(Variant& shaderMap, Shader::ShaderType shaderType, const std::string& key, GLuint& shader, const std::string& resourceDirectory, const std::string& filename)
-{
-    try
-    {
-        if (shaderMap[key].getType() == Variant::VariantType::STRING)
-        {
-            std::string file = resourceDirectory + Shader::directory + shaderMap[key].toString();
-            if (!loadShader(shaderType, file, shader))
-                return false;
-        }
-        else
-        {
-            std::string source = shaderMap[key].toString();
-            if (!source.empty()) source[0] = ' ';
-            if (!includes.empty())
-                source = includes + source;
-            std::string header = "ERROR : loading shader : " + filename + " : in resource ";
-            if (!loadSource(shaderType, source, shader, header, ResourceVirtual::VerboseLevel::ALL))
-                return false;
-        }
-    }
-    catch (std::exception&)
-    {
-        if (ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::WARNINGS)
-            std::cerr << "WARNING : loading shader : " << filename << " : fail to parse vertex shader name or source, try loading default.vs instead" << std::endl;
-        std::string file = resourceDirectory + Shader::directory + "default.vs";
-        if (!loadShader(shaderType, file, shader))
-            return false;
-    }
-    return true;
-}
-
-void ShaderLoader::tryAttach(Variant& shaderMap, Shader::ShaderType shaderType, const std::string& key, GLuint& shader, GLuint& program, const std::string& resourceDirectory, const std::string& filename)
-{
-    auto it = shaderMap.getMap().find(key);
-    if (it == shaderMap.getMap().end())
-        return;
-    if (it->second.getType() != Variant::STRING && it->second.getType() != Variant::CODEBLOCK)
-        return;
-    if (it->second.getType() == Variant::VariantType::STRING)
-    {
-        std::string value = resourceDirectory + Shader::directory + it->second.toString();
-        if (loadShader(Shader::ShaderType::GEOMETRIC_SH, value, shader))
-            glAttachShader(program, shader);
-    }
-    else
-    {
-        std::string source = it->second.toString();
-        if (!source.empty()) source[0] = ' ';
-        if (!includes.empty())
-            source = includes + source;
-        std::string header = "ERROR : loading shader : " + filename + " : in resource ";
-        if (!loadSource(Shader::ShaderType::GEOMETRIC_SH, source, shader, header, ResourceVirtual::VerboseLevel::WARNINGS))
-            return;
-        glAttachShader(program, shader);
-    }
-}
-
-bool ShaderLoader::loadShader(Shader::ShaderType shaderType, std::string fileName, GLuint& shader)
-{
-    std::string source;
-    std::ifstream file(fileName);
-
-    ResourceVirtual::VerboseLevel errorLevel;
-    std::string gravityIssue;
-    if(shaderType == Shader::ShaderType::VERTEX_SH || shaderType == Shader::ShaderType::FRAGMENT_SH)
-    {
-        gravityIssue = "ERROR";
-        errorLevel = ResourceVirtual::VerboseLevel::ERRORS;
-    }
-    else
-    {
-        gravityIssue = "WARNING";
-        errorLevel = ResourceVirtual::VerboseLevel::WARNINGS;
-    }
-
-    if(!file.good())
-    {
-        if(ResourceVirtual::logVerboseLevel >= errorLevel)
-            std::cerr << gravityIssue << " : loading shader : " << fileName << " : in resource " << Shader::toString(shaderType) << " : fail to open file" << std::endl;
-        return false;
-    }
-    else
-    {
-        source.assign((std::istreambuf_iterator<char>(file)), (std::istreambuf_iterator<char>()));
-        file.close();
-        if(source.empty())
-        {
-            if(ResourceVirtual::logVerboseLevel >= errorLevel)
-                std::cerr << gravityIssue << " : loading shader : " << fileName << " : in resource " << Shader::toString(shaderType) << " : empty file" << std::endl;
-            return false;
-        }
-    }
-
-    return loadSource(shaderType, source, shader, gravityIssue + " : loading shader : " + fileName + " : in resource ", errorLevel);
-}
-
-bool ShaderLoader::loadSource(Shader::ShaderType shaderType, const std::string& source, GLuint& shader, const std::string& errorHeader, ResourceVirtual::VerboseLevel errorLevel)
+bool ShaderLoader::compileSource(Shader::ShaderType shaderType, std::string source, std::vector<std::string> defines, GLuint& shader, const std::string& errorHeader)
 {
     // Generate ID from OpenGL
     switch (shaderType)
@@ -390,16 +361,20 @@ bool ShaderLoader::loadSource(Shader::ShaderType shaderType, const std::string& 
         case Shader::ShaderType::TESS_EVAL_SH:  shader = glCreateShader(GL_TESS_EVALUATION_SHADER); break;
         case Shader::ShaderType::TESS_CONT_SH:  shader = glCreateShader(GL_TESS_CONTROL_SHADER);    break;
         default:
-            if (ResourceVirtual::logVerboseLevel >= errorLevel)
-                std::cerr << errorHeader << Shader::toString(shaderType) << std::endl;
+            std::cerr << errorHeader << Shader::toString(shaderType) << std::endl;
             return false;
     }
     if (!shader)
     {
-        if (ResourceVirtual::logVerboseLevel >= errorLevel)
-            std::cerr << errorHeader << Shader::toString(shaderType) << " : fail to create OPENGL shader" << std::endl;
+        std::cerr << errorHeader << Shader::toString(shaderType) << " : fail to create OPENGL shader" << std::endl;
         return false;
     }
+
+    // inject variant define
+    std::string alldefine = "";
+    for (int i = 0; i < defines.size(); i++)
+        alldefine += defines[i];
+    source = includes + alldefine + source;
 
     // Compile shader source
     const char* sourceData = source.data();
@@ -426,4 +401,141 @@ bool ShaderLoader::loadSource(Shader::ShaderType shaderType, const std::string& 
         return false;
     }
     return true;
+}
+
+
+std::vector<std::string> ShaderLoader::extractPragmas(std::string& source)
+{
+    std::string pragmaToken = "#pragma";
+    std::vector<std::string> result;
+
+    int index = 0;
+    while ((index = source.find(pragmaToken, index)) != std::string::npos)
+    {
+        int start = index + pragmaToken.size() + 1;
+        int index2 = start;
+        while (source[index2] != '\n')
+            index2++;
+
+        result.push_back(source.substr(start, index2 - start));
+        source.erase(index, index2 - index);
+    }
+    return result;
+}
+bool ShaderLoader::loadSourceCode(Variant& shaderMap, const std::string& key, std::string& destination, const std::string& filename)
+{
+    auto it = shaderMap.getMap().find(key);
+    if (it != shaderMap.getMap().end())
+    {
+        destination = it->second.toString();
+        if (!destination.empty())
+            destination[0] = ' ';
+        //if (!includes.empty())
+        //    destination = includes + destination;
+        return true;
+    }
+    else if (key == "vertex" || key == "fragment")
+    {
+        std::string msg = "no " + key + " codeblock found";
+        PrintError(filename.c_str(), msg.c_str());
+    }
+    return false;
+}
+bool ShaderLoader::shouldAttachStage(std::vector<std::string>& stagePragmas, std::vector<std::string>& defines)
+{
+    if (stagePragmas.empty())
+        return true;
+
+    for (std::string& s1 : defines)
+        for (std::string& s2 : stagePragmas)
+        {
+            if (s1.find(s2) != std::string::npos)
+            {
+                return true;
+            }
+        }
+    return false;
+}
+
+std::vector<ShaderLoader::InternalVariantDefine> ShaderLoader::createVariantDefines()
+{
+    bool instancing = false;
+    bool shadow = false;
+    bool wired = false;
+
+    const auto testPragma = [&](std::vector<std::string>& list)
+    {
+        for (int i = 0; i < list.size(); i++)
+        {
+            instancing |= (list[i] == "INSTANCING");
+            shadow |= (list[i] == "SHADOW_PASS");
+            wired |= (list[i] == "WIRED_MODE");
+        }
+    }; 
+    const auto testSource = [&](std::string& source)
+    {
+        if (source.empty())
+            return;
+        instancing |= source.find("INSTANCING") != std::string::npos;
+        instancing |= source.find("SHADOW_PASS") != std::string::npos;
+        instancing |= source.find("WIRED_MODE") != std::string::npos;
+    };
+
+    testPragma(vertexPragmas);
+    testPragma(fragmentPragmas);
+    testPragma(geometryPragmas);
+    testPragma(evaluationPragmas);
+    testPragma(controlPragmas);
+    testSource(vertexSourceCode);
+    testSource(fragmentSourceCode);
+    testSource(geometrySourceCode);
+    testSource(evaluationSourceCode);
+    testSource(controlSourceCode);
+
+    std::vector<ShaderLoader::InternalVariantDefine> result;
+    result.emplace_back();
+    result.back().shaderCode = Shader::computeVariantCode(false, false, false);
+
+    if (instancing)
+    {
+        result.emplace_back();
+        result.back().shaderCode = Shader::computeVariantCode(true, false, false);
+        result.back().defines.push_back("#define INSTANCING\n");
+        result.back().allDefines = "INSTANCING";
+    }
+
+    if (shadow)
+    {
+        result.emplace_back();
+        result.back().shaderCode = Shader::computeVariantCode(false, true, false);
+        result.back().defines.push_back("#define SHADOW_PASS\n");
+        result.back().allDefines = "SHADOW_PASS";
+
+        if (instancing)
+        {
+            result.emplace_back();
+            result.back().shaderCode = Shader::computeVariantCode(true, true, false);
+            result.back().defines.push_back("#define INSTANCING\n");
+            result.back().defines.push_back("#define SHADOW_PASS\n");
+            result.back().allDefines = "INSTANCING+SHADOW_PASS";
+        }
+    }
+
+    if (wired)
+    {
+        result.emplace_back();
+        result.back().shaderCode = Shader::computeVariantCode(false, false, true);
+        result.back().defines.push_back("#define WIRED_MODE\n");
+        result.back().allDefines = "WIRED_MODE";
+
+        if (instancing)
+        {
+            result.emplace_back();
+            result.back().shaderCode = Shader::computeVariantCode(true, false, true);
+            result.back().defines.push_back("#define INSTANCING\n");
+            result.back().defines.push_back("#define WIRED_MODE\n");
+            result.back().allDefines = "INSTANCING+WIRED_MODE";
+        }
+    }
+    return result;
 }

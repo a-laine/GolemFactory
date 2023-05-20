@@ -70,7 +70,7 @@ World world;
 Entity* avatar = nullptr;
 Entity* freeflyCamera = nullptr;
 Entity* frustrumCamera = nullptr;
-Shader* normalShader = nullptr;
+//Shader* normalShader = nullptr;
 
 float physicsTimeSpeed = 0.f;
 
@@ -104,7 +104,6 @@ void ImGuiSystemDraw();
 //
 
 
-bool wiredhull = true;
 Entity* testEntity = nullptr;
 
 // program
@@ -120,7 +119,7 @@ int main()
 
 	//	Collision test
 		//WidgetManager::getInstance()->setActiveHUD("debug");
-		normalShader = ResourceManager::getInstance()->getResource<Shader>("normalViewer");
+		//normalShader = ResourceManager::getInstance()->getResource<Shader>("normalViewer");
 
 	//	Test scene
 		Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("wired"));
@@ -219,7 +218,7 @@ int main()
 		else Renderer::getInstance()->setRenderOption(Renderer::RenderOption::DEFAULT);*/
 		Renderer::getInstance()->render(currentCamera);
 		 
-		Renderer::getInstance()->drawMap(world.getMapPtr(), normalShader);
+		//Renderer::getInstance()->drawMap(world.getMapPtr(), normalShader);
 		
 		// gizmos and hud
 #ifdef USE_IMGUI
@@ -760,20 +759,18 @@ void initManagers()
 	}
 
 	world.getMap().setShader(ResourceManager::getInstance()->getResource<Shader>("map"));
+	//world.getMap().loadFromHeightmap(resourceRepository + "Textures/", "mountains512.png"); /// >> CREATE BUGS WITH TRANSPARENT ?
 
 	//	Renderer
 	Renderer::getInstance()->setContext(context);
 	Renderer::getInstance()->setWorld(&world);
 	Renderer::getInstance()->initializeGrid(GRID_SIZE, GRID_ELEMENT_SIZE, vec4f(24 / 255.f, 202 / 255.f, 230 / 255.f, 1.f));	// blue tron
 	Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("greenGrass"));
-	Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE, ResourceManager::getInstance()->getResource<Shader>("default"));
 	Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE_BB, ResourceManager::getInstance()->getResource<Shader>("wired"));
 	Renderer::getInstance()->setShader(Renderer::INSTANCE_ANIMATABLE_BB, ResourceManager::getInstance()->getResource<Shader>("skeletonBB"));
-	Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE_WIRED, ResourceManager::getInstance()->getResource<Shader>("wired"));
-	Renderer::getInstance()->setShader(Renderer::INSTANCE_ANIMATABLE_WIRED, ResourceManager::getInstance()->getResource<Shader>("wiredSkinning"));
 	
 	// Debug
-	Debug::getInstance()->initialize("Shapes/point", "Shapes/box", "Shapes/sphere", "Shapes/capsule", "Shapes/point", "Shapes/segment", "default", "wired");
+	Debug::getInstance()->initialize("Shapes/point", "Shapes/box", "Shapes/sphere.obj", "Shapes/capsule", "Shapes/point", "Shapes/segment", "default", "wired");
 
 	// Animator
 	Animator::getInstance();
@@ -919,11 +916,6 @@ void events()
 
 
 		else if (v[i] == F4)   WidgetManager::getInstance()->setBoolean("wireframe", !WidgetManager::getInstance()->getBoolean("wireframe"));
-		else if (v[i] == F5)
-		{
-			wiredhull = !wiredhull;
-			Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE_WIRED, ResourceManager::getInstance()->getResource<Shader>(wiredhull ? "wired" : "default"));
-		}
 	}
 }
 void updates(float elapseTime)
@@ -1066,6 +1058,7 @@ void ImGuiMenuBar()
 	extern bool HierarchyWindowEnable;
 	extern bool SpatialPartitionningWindowEnable;
 	extern bool RenderingWindowEnable;
+	extern bool ResourcesWindowEnable;
 
 
 	if (EventHandler::getInstance()->isActivated(ALT))
@@ -1076,6 +1069,7 @@ void ImGuiMenuBar()
 			{
 				ImGui::MenuItem("Physics", NULL, &PhysicDebugWindowEnable);
 				ImGui::MenuItem("Rendering settings", NULL, &RenderingWindowEnable);
+				ImGui::MenuItem("Resources", NULL, &ResourcesWindowEnable);
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("Scene"))
@@ -1096,6 +1090,7 @@ void ImGuiSystemDraw()
 	extern bool HierarchyWindowEnable;
 	extern bool SpatialPartitionningWindowEnable;
 	extern bool RenderingWindowEnable;
+	extern bool ResourcesWindowEnable;
 
 	if (PhysicDebugWindowEnable)
 	{
@@ -1107,7 +1102,9 @@ void ImGuiSystemDraw()
 	if (SpatialPartitionningWindowEnable)
 		world.getSceneManager().drawImGuiSpatialPartitioning(world);
 	if (RenderingWindowEnable)
-		Renderer::getInstance()->drawImGui(world);
+		Renderer::getInstance()->drawImGui(world); 
+	if (ResourcesWindowEnable)
+		ResourceManager::getInstance()->drawImGui(world);
 #endif
 }
 //

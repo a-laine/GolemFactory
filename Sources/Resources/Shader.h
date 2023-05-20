@@ -8,6 +8,7 @@
 #include "ResourceVirtual.h"
 #include "Texture.h"
 
+
 class Shader : public ResourceVirtual
 {
     public:
@@ -17,6 +18,8 @@ class Shader : public ResourceVirtual
         static std::string getIdentifier(const std::string& resourceName);
         static const std::string& getDefaultName();
         static void setDefaultName(const std::string& name);
+
+        static int computeVariantCode(bool instanced, bool shadow, bool wireframe);
 
         //  Miscellaneous
         enum class ShaderType
@@ -44,7 +47,8 @@ class Shader : public ResourceVirtual
             const std::map<std::string, std::string>& attType, const std::vector<std::string>& textures, uint16_t queue);
         void enable();
 
-		void setInstanciable(Shader* instaciedVersion);
+		//void setInstanciable(Shader* instaciedVersion);
+        void addVariant(int variantCode, Shader* variantShader);
 		
 		GLuint getProgram() const;
         int getTextureCount() const;
@@ -54,7 +58,8 @@ class Shader : public ResourceVirtual
 
 		int getUniformLocation(const std::string& uniform);
 		std::string getUniformType(const std::string& uniform);
-		Shader* getInstanciable() const;
+        bool supportInstancing() const;
+        Shader* getVariant(int variantCode);
 
         std::string getIdentifier() const override;
         std::string getLoaderId(const std::string& resourceName) const;
@@ -62,6 +67,8 @@ class Shader : public ResourceVirtual
 
         const std::vector<Texture*>& getTextures() const { return textures; }
         const std::map<std::string, std::string>& getUniforms() const {return attributesType; }
+
+        void onDrawImGui() override;
         //
 
     private:
@@ -78,7 +85,12 @@ class Shader : public ResourceVirtual
         uint8_t textureCount;								//!< The number of texture use by the program
         std::map<std::string, GLint> attributesLocation;	//!< The shader attribute map with their opengl location
 		std::map<std::string, std::string> attributesType;
+        std::vector<std::string> textureIdentifiers;
         std::vector<Texture*> textures;
-		Shader* instanciable;
-        //
+
+        std::map<int, Shader*> variants;
+
+#ifdef USE_IMGUI
+        int dynamicQueue;
+#endif
 };

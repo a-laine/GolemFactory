@@ -11,7 +11,9 @@ std::string Font::defaultName;
 //
 
 //  Default
-Font::Font(const std::string& fontName) : ResourceVirtual(fontName), texture(0), begin(0), end(0), defaultChar(0) {}
+Font::Font(const std::string& fontName)
+    : ResourceVirtual(fontName, ResourceVirtual::ResourceType::FONT)
+    , texture(0), begin(0), end(0), defaultChar(0) {}
 Font::~Font()
 {
     if(glIsTexture(texture)) glDeleteTextures(1,&texture);
@@ -119,3 +121,26 @@ void Font::clear()
 //	Internal classes
 Font::Patch::Patch() : corner1(0.f), corner2(0.f) {}
 //
+
+void Font::onDrawImGui()
+{
+#ifdef USE_IMGUI
+    ResourceVirtual::onDrawImGui();
+
+    ImGui::TextColored(ImVec4(1, 1, 0.5, 1), "Type infos");
+    ImGui::Text("Fallback resource name : %s", defaultName.c_str());
+    ImGui::Text("Directory : %s", directory);
+    ImGui::Text("File extension : %s", extension);
+
+    ImGui::Spacing();
+    ImGui::TextColored(ImVec4(1, 1, 0.5, 1), "Font infos");
+    ImGui::Text("Texture width : %d", (int)size.x);
+    ImGui::Text("Texture height : %d", (int)size.y);
+
+    // overview
+    float ratio = (ImGui::GetContentRegionAvail().x - 5) / size.x;
+    ImGui::Spacing();
+    ImGui::TextColored(ImVec4(1, 1, 0.5, 1), "Overview");
+    ImGui::Image((void*)texture, ImVec2(size.x * ratio, size.y * ratio), ImVec2(0, 0), ImVec2(1, 1), ImColor(255, 255, 255, 255), ImColor(255, 255, 255, 128));
+#endif
+}

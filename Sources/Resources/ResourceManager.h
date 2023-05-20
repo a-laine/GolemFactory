@@ -14,6 +14,7 @@
 
 
 
+class World;
 
 class ResourceManager : public Singleton<ResourceManager>
 {
@@ -47,6 +48,10 @@ class ResourceManager : public Singleton<ResourceManager>
         unsigned int getNumberOfRessources() const;
         //
 
+        //
+        void drawImGui(World& world);
+        std::vector<std::string> getAllResourceName(ResourceVirtual::ResourceType type);
+        //
 
     private:
         //  Default
@@ -71,6 +76,12 @@ class ResourceManager : public Singleton<ResourceManager>
         std::string repository;							//!< The repository path.
         std::map<std::string, IResourceLoader*> loaders;
         //
+
+
+#ifdef USE_IMGUI
+        std::map<ResourceVirtual::ResourceType, ResourceVirtual*> selectedResources;
+        ImGuiTextFilter m_nameFilter;
+#endif // USE_IMGUI
 };
 
 

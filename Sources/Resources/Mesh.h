@@ -68,6 +68,8 @@ class Mesh : public ResourceVirtual
 
 		const GLuint getVAO() const;
 		const GLuint getBBoxVAO() const;
+
+		void onDrawImGui() override;
         //
 
 	private:

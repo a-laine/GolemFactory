@@ -358,6 +358,7 @@ void AssimpLoader::getResourcesToRegister(std::vector<ResourceVirtual*>& resourc
         mesh->initialize(vertices, normales, uvs, faces, bones, weights);
         resourceList.push_back(mesh);
     }
+    /*
     if(firstResource != ResourceType::SKELETON)
     {
         Skeleton* skeleton = new Skeleton(resourceName);
@@ -370,6 +371,7 @@ void AssimpLoader::getResourcesToRegister(std::vector<ResourceVirtual*>& resourc
         animation->initialize(animations);
         resourceList.push_back(animation);
     }
+    */
 }
 
 std::string AssimpLoader::getFileName(const std::string& resourceDirectory, const std::string& fileName) const

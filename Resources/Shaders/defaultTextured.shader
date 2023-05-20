@@ -6,6 +6,8 @@ DefaultTextured
 	{
 		model : "mat4";
 		normalMatrix : "mat4";
+		models : "mat4 array32";
+		normalMatrices : "mat4 array32";
 		lightCount : "int"
 	};
 	
@@ -62,21 +64,92 @@ DefaultTextured
 		layout(location = 1) in vec4 normal;
 		layout(location = 2) in vec4 uv;
 
-		uniform mat4 model; 	// model matrix (has to be present at this location)
-		uniform mat4 normalMatrix;
+
+		
+		#ifdef INSTANCING
+			#define MAX_INSTANCE 32
+			uniform mat4 models[MAX_INSTANCE];
+			uniform mat4 normalMatrices[MAX_INSTANCE];	
+		#else
+			uniform mat4 model; 	// model matrix (has to be present at this location)
+			uniform mat4 normalMatrix;		
+		#endif
+		
 
 		// output
-		out vec4 fragmentPosition;
-		out vec4 fragmentNormal;
-		out vec4 fragmentUv;
-
+		#ifdef WIRED_MODE
+			out vec4 fragmentPosition_gs;
+			out vec4 fragmentNormal_gs;
+			out vec4 fragmentUv_gs;
+		#else
+			out vec4 fragmentPosition;
+			out vec4 fragmentNormal;
+			out vec4 fragmentUv;
+		#endif
+		
 		// program
 		void main()
 		{
-			fragmentPosition = model * position;
-			gl_Position = projection * view * fragmentPosition;
-			fragmentNormal = normalize(normalMatrix * normal);
-			fragmentUv = uv;
+			#ifdef INSTANCING
+				mat4 model = models[gl_InstanceID];
+				mat4 normalMatrix = normalMatrices[gl_InstanceID];
+			#endif
+		
+			#ifdef WIRED_MODE
+				fragmentPosition_gs = model * position;
+				gl_Position = projection * view * fragmentPosition_gs;
+				fragmentNormal_gs = normalize(normalMatrix * normal);
+				fragmentUv_gs = uv;
+			#else
+				fragmentPosition = model * position;
+				gl_Position = projection * view * fragmentPosition;
+				fragmentNormal = normalize(normalMatrix * normal);
+				fragmentUv = uv;
+			#endif
+		}
+	};
+	geometry : 
+	{
+		#pragma WIRED_MODE
+		
+		layout(triangles) in;
+		layout(triangle_strip, max_vertices = 3) out;
+
+		// input
+		in vec4 fragmentPosition_gs[];
+		in vec4 fragmentNormal_gs[];
+		in vec4 fragmentUv_gs[];
+
+		// output
+		out vec4 fragmentNormal;
+		out vec4 fragmentPosition;
+		out vec4 fragmentUv;
+		out vec3 barycentricCoord;
+
+		void main()
+		{
+			gl_Position = gl_in[0].gl_Position;
+			fragmentPosition = fragmentPosition_gs[0];
+			fragmentNormal = fragmentNormal_gs[0];
+			fragmentUv = fragmentUv_gs[0];
+			barycentricCoord = vec3(1.0 , 0.0 , 0.0);
+			EmitVertex();
+			
+			gl_Position = gl_in[1].gl_Position;
+			fragmentPosition = fragmentPosition_gs[1];
+			fragmentNormal = fragmentNormal_gs[1];
+			fragmentUv = fragmentUv_gs[1];
+			barycentricCoord = vec3(0.0 , 1.0 , 0.0);
+			EmitVertex();
+			
+			gl_Position = gl_in[2].gl_Position;
+			fragmentPosition = fragmentPosition_gs[2];
+			fragmentNormal = fragmentNormal_gs[2];
+			fragmentUv = fragmentUv_gs[2];
+			barycentricCoord = vec3(0.0 , 0.0 , 1.0);
+			EmitVertex();
+			
+			EndPrimitive();
 		}
 	};
 	fragment :
@@ -92,6 +165,10 @@ DefaultTextured
 		in vec4 fragmentPosition;
 		in vec4 fragmentNormal;
 		in vec4 fragmentUv;
+			
+		#ifdef WIRED_MODE
+			in vec3 barycentricCoord;
+		#endif
 
 		// output
 		layout (location = 0) out vec4 fragColor;
@@ -102,6 +179,14 @@ DefaultTextured
 		// program
 		void main()
 		{
+			#ifdef WIRED_MODE
+				float edgeMultiplier = 0.4; // lower for thiner edges;
+				vec3 a3 = smoothstep(vec3(0.0), fwidth(barycentricCoord) * edgeMultiplier , barycentricCoord);
+				float edgeFactor = min(min(a3.x, a3.y), a3.z);
+				if(edgeFactor >= 1.0)
+					discard;
+			#endif
+			
 			// compute base color depending on environement light (directional)
 			vec4 albedoColor = texture(albedo, vec2(fragmentUv.x, fragmentUv.y));
 			vec4 emmisiveColor = texture(emmisive, fragmentUv.xy);
@@ -113,7 +198,7 @@ DefaultTextured
 			float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
 			vec4 specular = metalicParam.x * spec * m_directionalLightColor;  
 			
-			fragColor = (diffuse + m_ambientColor + specular) * albedoColor + emmisiveColor;
+			vec4 fragmentColor = (diffuse + m_ambientColor + specular) * albedoColor + emmisiveColor;
 			
 			// process other lights
 			if (lightCount > 0)
@@ -140,10 +225,12 @@ DefaultTextured
 					float spotAttenuation = max(isSpotMultiplier, cutoff01);
 					
 					// additive blending
-					fragColor += (spotAttenuation * attenuation) * ((diffuse + specular) * albedoColor);
+					fragmentColor += (spotAttenuation * attenuation) * ((diffuse + specular) * albedoColor);
 				}
 			}
 			
+			
+			fragColor = fragmentColor;
 		}
 	};
 } 

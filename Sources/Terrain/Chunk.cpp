@@ -23,10 +23,10 @@ Chunk::~Chunk()
 void Chunk::initialize(const float& topLeft, const float& topRight, const float& bottomRight)
 {
 	// primer square vertices
-	vertices.push_back(vec4f( 0.5f,  0.5f, corner, 1.f)); // bottomLeft
-	vertices.push_back(vec4f(-0.5f,  0.5f, topLeft, 1.f));
-	vertices.push_back(vec4f( 0.5f, -0.5f, bottomRight, 1.f));
-	vertices.push_back(vec4f(-0.5f, -0.5f, topRight, 1.f));
+	vertices.push_back(vec4f( 0.5f,  corner, 0.5f, 1.f)); // bottomLeft
+	vertices.push_back(vec4f(-0.5f,  topLeft, 0.5f, 1.f));
+	vertices.push_back(vec4f( 0.5f, bottomRight, -0.5f, 1.f));
+	vertices.push_back(vec4f(-0.5f, topRight, -0.5f, 1.f));
 
 	colors.push_back(vec4f(1, 1, 1, 1.f));
 	colors.push_back(vec4f(1, 1, 1, 1.f));
@@ -332,10 +332,10 @@ unsigned int Chunk::instantiateVertex(const vec4f& base, const float& amplitude)
 	auto it = indexes.find(gfvertex(base));
 	if (it == indexes.end())
 	{
-		vec4f v = vec4f(base.x, base.y, base.z + amplitude * randf(), 1.f);
+		vec4f v = vec4f(base.x, base.y + amplitude * randf(), base.z, 1.f);
 		vertices.push_back(v);
 		colors.push_back(vec4f(1.f, 1.f, 1.f, 1.f));
-		normals.push_back(vec4f(0, 0, 1, 0));
+		normals.push_back(vec4f(0, 1, 0, 0));
 		indexes[gfvertex(base)] = (unsigned int)vertices.size() - 1;
 		return (unsigned int)vertices.size() - 1;
 	}
@@ -343,35 +343,35 @@ unsigned int Chunk::instantiateVertex(const vec4f& base, const float& amplitude)
 }
 unsigned int Chunk::instantiateVertexSmooth(const vec4f& v, const float& step, const float&  amplitude)
 {
-	vec4f base = vec4f(v.x, v.y, 0.f, 1.f);
+	vec4f base = vec4f(v.x, 0.f, v.y, 1.f);
 	int n = 0;
 
 	auto it = indexes.find(gfvertex(v.x + step, v.y));
 	if (it != indexes.end())
 	{
 		n++;
-		base.z += vertices[it->second].z;
+		base.y += vertices[it->second].z;
 	}
 
 	it = indexes.find(gfvertex(v.x - step, v.y));
 	if (it != indexes.end())
 	{
 		n++;
-		base.z += vertices[it->second].z;
+		base.y += vertices[it->second].z;
 	}
 
 	it = indexes.find(gfvertex(v.x, v.y + step));
 	if (it != indexes.end())
 	{
 		n++;
-		base.z += vertices[it->second].z;
+		base.y += vertices[it->second].z;
 	}
 
 	it = indexes.find(gfvertex(v.x, v.y - step));
 	if (it != indexes.end())
 	{
 		n++;
-		base.z += vertices[it->second].z;
+		base.y += vertices[it->second].z;
 	}
 
 	base.z /= (float)n;

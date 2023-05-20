@@ -11,7 +11,7 @@
 //	Default
 Entity::Entity() : m_refCount(0), m_name("unknown"), m_parentWorld(nullptr), 
 	m_worldPosition(0.f), m_localPosition(0.f), m_worldOrientation(quatf::identity), m_localOrientation(quatf::identity), 
-	m_worldScale(1.f), m_localScale(1.f), m_transformIsDirty(false), m_transform(1.f), m_invTransform(1.f), m_flags(0)
+	m_worldScale(1.f), m_localScale(1.f), m_transformIsDirty(false), m_transform(1.f), m_normalMatrix(1.f), m_invTransform(1.f), m_flags(0)
 {
 	m_parentEntity = nullptr;
 }
@@ -211,18 +211,18 @@ void Entity::recomputeBoundingBox()
 		{
 			const LightComponent* light = static_cast<const LightComponent*>(element.comp);
 			vec4f radius4 = vec4f(light->getRange());
-			radius4.w = 1;
-			m_localBoundingBox.min = vec4f::min(m_localBoundingBox.min, radius4);
+			m_localBoundingBox.min = vec4f::min(m_localBoundingBox.min, -radius4);
 			m_localBoundingBox.max = vec4f::max(m_localBoundingBox.max, radius4);
+			firstshape = false;
 		}
 		return false;
 	};
 	allComponentsVisitor(visitor);
 
 	if (firstshape)
-	{
 		m_localBoundingBox.min = m_localBoundingBox.max = vec4f(0, 0, 0, 1);
-	}
+	m_localBoundingBox.min.w = 1.f;
+	m_localBoundingBox.max.w = 1.f;
 
 	recomputeWorldBoundingBox();
 }
@@ -238,6 +238,7 @@ const mat4f& Entity::getWorldTransformMatrix()
 	{
 		m_transform = mat4f::TRS(m_worldPosition, m_worldOrientation, vec4f(m_worldScale));
 		m_invTransform = mat4f::inverse(m_transform);
+		m_normalMatrix = mat4f(m_worldOrientation);
 		m_transformIsDirty = false;
 
 		for (int i = 0; i < m_childs.size(); i++)
@@ -248,6 +249,11 @@ const mat4f& Entity::getWorldTransformMatrix()
 	}
 
 	return m_transform; 
+}
+const mat4f& Entity::getNormalMatrix()
+{
+	getWorldTransformMatrix();
+	return m_normalMatrix;
 }
 const mat4f& Entity::getInverseWorldTransformMatrix()
 {
@@ -472,7 +478,7 @@ bool Entity::drawImGui(World& world)
 		Debug::color = Debug::magenta;
 		Debug::drawLineCube(mat4f::identity, m_worldBoundingBox.min, m_worldBoundingBox.max);
 		Debug::color = Debug::orange;
-		Debug::drawLineCube(m_transform, m_localBoundingBox.min, m_localBoundingBox.max);
+		Debug::drawLineCube(getWorldTransformMatrix(), m_localBoundingBox.min, m_localBoundingBox.max);
 	}
 	if (m_showTransform)
 	{

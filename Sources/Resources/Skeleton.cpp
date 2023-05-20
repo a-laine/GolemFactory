@@ -10,7 +10,8 @@ std::string Skeleton::defaultName;
 //
 
 //	Default
-Skeleton::Skeleton(const std::string& skeletonName) : ResourceVirtual(skeletonName) {}
+Skeleton::Skeleton(const std::string& skeletonName) : ResourceVirtual(skeletonName, ResourceVirtual::ResourceType::SKELETON) 
+{}
 Skeleton::~Skeleton() {}
 //
 

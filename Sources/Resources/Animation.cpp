@@ -10,7 +10,7 @@ std::string Animation::defaultName;
 //
 
 //  Default
-Animation::Animation(const std::string& animationName) : ResourceVirtual(animationName) {}
+Animation::Animation(const std::string& animationName) : ResourceVirtual(animationName, ResourceVirtual::ResourceType::ANIMATION) {}
 Animation::~Animation() {}
 //
 

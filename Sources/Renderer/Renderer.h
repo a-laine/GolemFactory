@@ -30,13 +30,8 @@ class Renderer : public Singleton<Renderer>
 			HUD = 1,
 			GRID,
 
-			INSTANCE_DRAWABLE,
 			INSTANCE_DRAWABLE_BB,
-			INSTANCE_DRAWABLE_WIRED,
-
-			INSTANCE_ANIMATABLE,
 			INSTANCE_ANIMATABLE_BB,
-			INSTANCE_ANIMATABLE_WIRED
 		};
 		enum class RenderOption
 		{
@@ -139,10 +134,10 @@ class Renderer : public Singleton<Renderer>
 		//
 
 		//	Protected functions
-		void loadMVPMatrix(Shader* shader, const float* model, const quatf rotation, const int& modelSize = 1);
+		void loadModelMatrix(Shader* shader, const mat4f* model, const mat4f* rotMatrix, const int& modelSize = 1);
 		void loadVAO(const GLuint& vao);
 
-		void drawInstancedObject(Shader* s, Mesh* m, std::vector<mat4f>& models);
+		void drawInstancedObject(Shader* s, Mesh* m, std::vector<mat4f>& models, std::vector<mat4f>& normalMatrices);
 
 		void initGlobalUniformBuffers();
 		void updateGlobalUniformBuffers();
@@ -164,8 +159,6 @@ class Renderer : public Singleton<Renderer>
 		GLuint lastVAO;
 
 		std::vector<std::pair<uint64_t, Entity*>> renderQueue;
-		std::map<Shader*, std::vector<Entity*> > simpleBatches;
-		std::map<Shader*, std::map<Mesh*, std::vector<mat4f> > > groupBatches;
 
 		EnvironementLighting m_envLighting;
 

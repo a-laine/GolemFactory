@@ -5,16 +5,18 @@ ResourceVirtual::VerboseLevel ResourceVirtual::logVerboseLevel = ResourceVirtual
 //
 
 //  Default
-ResourceVirtual::ResourceVirtual(const std::string& resourceName)
+ResourceVirtual::ResourceVirtual(const std::string& resourceName, ResourceType resourceType)
     : name(resourceName)
     , count(0)
     , state(INVALID)
+    , type(resourceType)
 {
 }
 ResourceVirtual::ResourceVirtual()
     : name("unknown")
     , count(0)
     , state(INVALID)
+    , type(ResourceType::NONE)
 {
 }
 ResourceVirtual::~ResourceVirtual() {}
@@ -37,6 +39,16 @@ void ResourceVirtual::assign(const ResourceVirtual* other)
     state = s;
 }
 //
+
+void ResourceVirtual::onDrawImGui()
+{
+#ifdef USE_IMGUI
+    ImGui::TextColored(ImVec4(1, 1, 0.5, 1), "Sharable infos");
+    ImGui::Text("Name : %s", name.c_str());
+    ImGui::Text("Reference count : %d", count.load());
+    ImGui::Spacing();
+#endif
+}
 
 //	Protected functions
 void ResourceVirtual::printErrorLog(const std::string& resourceName, const int& errorLine, bool& printHeader)

@@ -13,7 +13,7 @@ std::string Mesh::defaultName;
 
 //  Default
 Mesh::Mesh(const std::string& meshName)
-    : ResourceVirtual(meshName)
+    : ResourceVirtual(meshName, ResourceVirtual::ResourceType::MESH)
     , boundingBox(vec4f::zero, vec4f::zero)
     , vao(0), verticesBuffer(0), uvsBuffer(0), normalsBuffer(0), facesBuffer(0)
     , BBoxVao(0), vBBoxBuffer(0), fBBoxBuffer(0)
@@ -330,3 +330,19 @@ void Mesh::clear()
 }
 
 
+void Mesh::onDrawImGui()
+{
+#ifdef USE_IMGUI
+    ResourceVirtual::onDrawImGui();
+
+    ImGui::TextColored(ImVec4(1, 1, 0.5, 1), "Type infos");
+    ImGui::Text("Fallback resource name : %s", defaultName.c_str());
+    ImGui::Text("Directory : %s", directory);
+    ImGui::Text("File extension : %s", extension);
+
+    ImGui::Spacing();
+    ImGui::TextColored(ImVec4(1, 1, 0.5, 1), "Mesh infos");
+    ImGui::Text("Vertices count : %d", getNumberVertices());
+    ImGui::Text("Vaces count : %d", getNumberFaces());
+#endif
+}

@@ -10,8 +10,14 @@ std::string Texture::defaultName;
 //
 
 //  Default
-Texture::Texture(const std::string& textureName, TextureConfiguration conf) : ResourceVirtual(textureName), texture(0), configuration((uint8_t)conf) {}
-Texture::Texture(const std::string& textureName, uint8_t conf) : ResourceVirtual(textureName), texture(0), configuration(conf) {}
+Texture::Texture(const std::string& textureName, TextureConfiguration conf)
+    : ResourceVirtual(textureName, ResourceVirtual::ResourceType::TEXTURE)
+    , texture(0), configuration((uint8_t)conf) 
+{}
+Texture::Texture(const std::string& textureName, uint8_t conf)
+    : ResourceVirtual(textureName, ResourceVirtual::ResourceType::TEXTURE)
+    , texture(0), configuration(conf) 
+{}
 Texture::~Texture()
 {
 	glDeleteTextures(1, &texture);
@@ -166,3 +172,76 @@ void Texture::initOpenGL(const uint8_t* textureData, const std::string& textureN
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
+void Texture::onDrawImGui()
+{
+#ifdef USE_IMGUI
+    ResourceVirtual::onDrawImGui();
+
+    ImGui::TextColored(ImVec4(1, 1, 0.5, 1), "Type infos");
+    ImGui::Text("Fallback resource name : %s", defaultName.c_str());
+    ImGui::Text("Directory : %s", directory);
+    ImGui::Text("File extension : %s", extension);
+
+    ImGui::Spacing();
+    ImGui::TextColored(ImVec4(1, 1, 0.5, 1), "Texture infos");
+
+    // type
+    TextureConfiguration type = (TextureConfiguration)(configuration & (uint8_t)TextureConfiguration::TYPE_MASK);
+    switch (type)
+    {
+        case Texture::TextureConfiguration::TEXTURE_1D:
+            ImGui::Text("Type : 1D");
+            ImGui::Text("Width : %d", (int)size.x);
+            break;
+        case Texture::TextureConfiguration::TEXTURE_2D:
+            ImGui::Text("Type : 2D");
+            ImGui::Text("Width : %d", (int)size.x);
+            ImGui::Text("Height : %d", (int)size.y);
+            break;
+        case Texture::TextureConfiguration::TEXTURE_3D:
+            ImGui::Text("Type : 3D");
+            ImGui::Text("Width : %d", (int)size.x);
+            ImGui::Text("Height : %d", (int)size.y);
+            ImGui::Text("Depth : %d", (int)size.z);
+            break;
+        default:
+            break;
+    }
+
+    // mipmaps
+    if (configuration & (uint8_t)TextureConfiguration::USE_MIPMAP)
+        ImGui::Text("Mipmap : True");
+    else ImGui::Text("Mipmap : False");
+
+    // Filtering (point, linear, ...)
+    if (configuration & (uint8_t)TextureConfiguration::MAG_NEAREST)
+        ImGui::Text("Magify filter : Nearest");
+    else ImGui::Text("Magify filter : Linear");
+    if (configuration & (uint8_t)TextureConfiguration::MIN_NEAREST)
+        ImGui::Text("Minify filter : Nearest");
+    else ImGui::Text("Minify filter : Linear");
+
+    // wrap mode
+    TextureConfiguration wrap = (TextureConfiguration)(configuration & (uint8_t)TextureConfiguration::WRAP_MASK);
+    switch (type)
+    {
+        case Texture::TextureConfiguration::WRAP_CLAMP:
+            ImGui::Text("Wrap mode : Clamp");
+            break;
+        case Texture::TextureConfiguration::WRAP_REPEAT:
+            ImGui::Text("Wrap mode : Repeat");
+            break;
+        case Texture::TextureConfiguration::WRAP_MIRROR:
+            ImGui::Text("Wrap mode : Miror");
+            break;
+        default:
+            break;
+    }
+
+    // overview
+    float ratio = (ImGui::GetContentRegionAvail().x - 5) / size.x;
+    ImGui::Spacing();
+    ImGui::TextColored(ImVec4(1, 1, 0.5, 1), "Overview");
+    ImGui::Image((void*)texture, ImVec2(size.x * ratio, size.y * ratio), ImVec2(0, 0), ImVec2(1, 1), ImColor(255, 255, 255, 255), ImColor(255, 255, 255, 128));
+#endif
+}

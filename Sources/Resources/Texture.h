@@ -42,6 +42,7 @@ class Texture : public ResourceVirtual
         ~Texture();
 
         void initialize(const vec3f& imageSize, const uint8_t* data, uint8_t config = 0);
+        void onDrawImGui() override;
         //
 
         //  Set/get functions

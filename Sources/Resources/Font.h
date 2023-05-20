@@ -76,6 +76,7 @@ class Font : public ResourceVirtual
         void initialize(uint8_t* image, const vec2f& imageSize, unsigned short beginC, unsigned short endC, unsigned short defaultC, const std::vector<Patch>& table);
         void initialize(uint8_t* image, const vec2f& imageSize, unsigned short beginC, unsigned short endC, unsigned short defaultC, std::vector<Patch>&& table);
         Patch getPatch(char c) const;
+        void onDrawImGui() override;
         //
 
         //  Attributes

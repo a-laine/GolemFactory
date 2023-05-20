@@ -28,32 +28,53 @@ class ShaderLoader : public IResourceLoader
         //
 
         // Loaded attributes
-        GLuint  vertexShader,
+        struct ShaderStruct
+        {
+            unsigned int  vertexShader,
                 fragmentShader,
                 geometricShader,
                 tessControlShader,
                 tessEvalShader,
                 program;
+            int variantCode;
+            std::string allDefines;
+        };
+        std::vector<ShaderStruct> shaderVariants;
         uint16_t renderQueue;
         std::map<std::string, std::string> attributesType;
         std::vector<std::string> textureNames;
         std::vector<Texture*> textureResources;
         //
 
-    private:
+    private:        
+        struct InternalVariantDefine
+        {
+            std::vector<std::string> defines;
+            std::string allDefines;
+            int shaderCode;
+        };
+
         // Helpers
         void clear();
-        bool tryCompile(Variant& shaderMap, Shader::ShaderType shaderType, const std::string& key, GLuint& shader, const std::string& resourceDirectory, const std::string& filename);
 
-        void tryAttach(Variant& shaderMap, Shader::ShaderType shaderType, const std::string& key, GLuint& shader, GLuint& program, const std::string& resourceDirectory, const std::string& filename);
-
-        bool loadShader(Shader::ShaderType shaderType, std::string filename, GLuint& shader);
-        bool loadSource(Shader::ShaderType shaderType, const std::string& source, GLuint& shader, const std::string& errorHeader, ResourceVirtual::VerboseLevel errorLevel);
+        std::vector<std::string> extractPragmas(std::string& source);
+        bool loadSourceCode(Variant& shaderMap, const std::string& key, std::string& destination, const std::string& filename);
+        bool compileSource(Shader::ShaderType shaderType, std::string source, std::vector<std::string> defines, GLuint& shader, const std::string& errorHeader);
+        bool shouldAttachStage(std::vector<std::string>& stagePragmas, std::vector<std::string>& defines);
+        //void getVariants(bool& instance, bool& shadow, bool& wired);
+        std::vector<InternalVariantDefine> createVariantDefines();
         //
 
         // Private attributes
-        std::vector<std::string> codeBlockKeys;
         std::string includes;
+        std::vector<std::string> codeBlockKeys;
+        std::vector<std::string> vertexPragmas;
+        std::vector<std::string> fragmentPragmas;
+        std::vector<std::string> geometryPragmas;
+        std::vector<std::string> evaluationPragmas;
+        std::vector<std::string> controlPragmas;
+
+        std::string vertexSourceCode, fragmentSourceCode, geometrySourceCode, evaluationSourceCode, controlSourceCode;
         //
 };
 

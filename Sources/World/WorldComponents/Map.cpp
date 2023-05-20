@@ -8,7 +8,7 @@
 
 
 //	Default
-Map::Map() : height(0), width(0), chunks(nullptr), amplitude(16.f), scale(16.f), vao(0), facesCount(0), lastPlayerCell(-1, -1)
+Map::Map() : height(0), width(0), chunks(nullptr), amplitude(16.f), scale(1.f), vao(0), facesCount(0), lastPlayerCell(-1, -1)
 {
 	lodRadius[0] = 2.2f;
 	lodRadius[1] = 3.2f;
@@ -64,8 +64,8 @@ bool Map::loadFromHeightmap(const std::string& resourceDirectory, const std::str
 		for (int h = 0; h < height; h++)
 		{
 			float z0 = amplitude * ((int)data[h * width + w] - offset) * 0.00390625f; // = 1/256
-			vec4f chunkPos = vec4f(w - 0.5f * width, h - 0.5f * height, 0, 1.f);
-			mat4f m = mat4f::translate(mat4f(1.f), chunkPos); // glm::scale(mat4f(1.f), chunkSize)
+			vec4f chunkPos = vec4f(w - 0.5f * width, 0, h - 0.5f * height, 1.f);
+			mat4f m = mat4f::translate(mat4f::identity, chunkPos); // glm::scale(mat4f(1.f), chunkSize)
 			chunks[w][h] = new Chunk(rand(), m, z0);
 		}
 
@@ -238,7 +238,8 @@ unsigned int Map::getFacesCount() const { return facesCount; }
 GLuint Map::getVAO() const { return vao; }
 Chunk* Map::getChunk(const int& w, const int& h) { return chunks[w][h]; }
 std::vector<vec2i> Map::getDrawableChunks() { return drawableChunks; }
-mat4f Map::getModelMatrix() const { return mat4f::scale(mat4f::identity, vec4f(height - 1, width - 1, 1.f, 1.f)); }
+mat4f Map::getModelMatrix() const { return mat4f::scale(mat4f::identity, vec4f(height - 1, 1.f, width - 1, 1.f)); }
+mat4f Map::getNormalMatrix() const { return mat4f::transpose(mat4f::inverse(getModelMatrix())); }
 vec4f Map::getScale() const { return scale; }
 Shader* Map::getShader() { return shader; }
 
@@ -246,7 +247,7 @@ Shader* Map::getShader() { return shader; }
 vec2i Map::worldToChunk(vec4f p) const
 {
 	vec2f firstChunkPos = vec2f(-0.5f * width - 0.5f, -0.5f * height - 0.5f);
-	vec2f v = vec2f(p.x / scale.x, p.y / scale.y) - firstChunkPos;
+	vec2f v = vec2f(p.x / scale.x, p.z / scale.z) - firstChunkPos;
 	return vec2i((int)v.x, (int)v.y);
 }
 bool Map::inBound(const int& x, const int& y) const
@@ -264,7 +265,7 @@ vec4i Map::getExclusionZone() const { return exclusionZone; }
 // Privates functions
 vec4f Map::getVertex(const int& x, const int& y)
 {
-	return vec4f((float)x / (width - 1) - 0.5f, (float)y / (height - 1) - 0.5f, chunks[x][y]->getCorner(), 1.f);
+	return vec4f((float)x / (width - 1) - 0.5f, chunks[x][y]->getCorner(), (float)y / (height - 1) - 0.5f, 1.f);
 }
 vec4f Map::getNormal(const int& x, const int& y)
 {

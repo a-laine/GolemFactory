@@ -64,6 +64,7 @@ class Entity : public EntityBase
 
         uint64_t getId() const;
 		const mat4f& getWorldTransformMatrix();
+		const mat4f& getNormalMatrix();
 		const mat4f& getInverseWorldTransformMatrix();
 		vec4f getWorldPosition() const;
 		float getWorldScale() const;
@@ -111,6 +112,7 @@ class Entity : public EntityBase
 		float m_worldScale, m_localScale;
 		bool m_transformIsDirty;
 		mat4f m_transform;
+		mat4f m_normalMatrix;
 		mat4f m_invTransform;
 		std::string m_name;
 		uint64_t m_flags;

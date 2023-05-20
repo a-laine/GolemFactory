@@ -31,6 +31,7 @@ class Map
 		Chunk* getChunk(const int& h, const  int& w);
 		std::vector<vec2i> getDrawableChunks();
 		mat4f getModelMatrix() const;
+		mat4f getNormalMatrix() const;
 		vec4f getScale() const;
 		Shader* getShader();
 
