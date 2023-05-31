@@ -5,9 +5,7 @@ WaterSewer
 
 	uniform :
 	{
-		model : "mat4";
-		normalMatrix : "mat4";
-		lightCount : "int"
+		matrixArray : "mat4";
 	};
 	
 	
@@ -50,8 +48,7 @@ WaterSewer
 		layout(location = 0) in vec4 position;
 		layout(location = 1) in vec4 normal;
 
-		uniform mat4 model; 	// model matrix (has to be present at this location)
-		uniform mat4 normalMatrix;
+		uniform mat4 matrixArray[2];
 		
 		// output
 		out vec4 fragmentNormal;
@@ -60,9 +57,9 @@ WaterSewer
 		// program
 		void main()
 		{
-			fragmentPosition = model * position;
+			fragmentPosition = matrixArray[0] * position;
 			gl_Position = projection * view * fragmentPosition;
-			fragmentNormal = normalize(normalMatrix * normal);
+			fragmentNormal = normalize(matrixArray[1] * normal);
 		}
 	};
 	fragment :

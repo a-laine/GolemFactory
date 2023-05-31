@@ -63,11 +63,23 @@ class Renderer : public Singleton<Renderer>
 			float m_inCutOff;
 			float m_outCutOff;
 		};
+		struct SceneLights
+		{
+			int m_lightCount;
+			int pading0;
+			float m_clusterDepthScale;
+			float m_clusterDepthBias;
+			float m_near;
+			float m_far;
+			float m_tanFovX;
+			float m_tanFovY;
+			Light m_lights[MAX_LIGHT_COUNT];
+		};
 		//
 
 		//  Public functions
 		void initializeGrid(const unsigned int& gridSize, const float& elementSize = 1.f, const vec4f& color = vec4f(0.4f, 0.2f, 0.1f, 1.f));
-		//void initi
+		void initializeLightClusterBuffer(int width, int height, int depth);
 		void render(CameraComponent* renderCam);
 		void renderHUD();
 		//
@@ -85,14 +97,13 @@ class Renderer : public Singleton<Renderer>
 		void setEnvDirectionalLightDirection(vec4f direction);
 		void setEnvDirectionalLightColor(vec4f color);
 
-		void addLight(LightComponent* _light);
-
 		CameraComponent* getCamera();
 		World* getWorld();
 		RenderContext* getContext();
 		Shader* getShader(ShaderIdentifier id);
 		bool isGridVisible();
 		unsigned int getNbDrawnInstances() const;
+		unsigned int getNbDrawCalls() const;
 		unsigned int getNbDrawnTriangles() const;
 		RenderOption getRenderOption() const;
 
@@ -112,6 +123,7 @@ class Renderer : public Singleton<Renderer>
 		//
 
 		Shader* normalViewer;
+		Shader* lightClustering;
 
 	private:
 		//  Default
@@ -120,27 +132,35 @@ class Renderer : public Singleton<Renderer>
 		//
 
 		//	Miscellaneous
-		struct EntityCompareDistance
+		struct ModelMatrix
 		{
-			vec4f p;
-			explicit EntityCompareDistance(const vec4f& cameraPosition) : p(cameraPosition) {};
-			bool operator()(Entity* a, Entity* b) const
-			{
-				const float d1 = vec4f::dot(a->getWorldPosition() - p, a->getWorldPosition() - p);
-				const float d2 = vec4f::dot(b->getWorldPosition() - p, b->getWorldPosition() - p);
-				return d1 < d2;
-			}
+			mat4f model;
+			mat4f normalMatrix;
+		};
+		struct Batch
+		{
+			Shader* shader;
+			Mesh* mesh;
+			std::vector<ModelMatrix> models;
+		};
+		struct DrawElement
+		{
+			uint64_t hash;
+			Entity* entity;
+			Batch* batch;
 		};
 		//
 
 		//	Protected functions
-		void loadModelMatrix(Shader* shader, const mat4f* model, const mat4f* rotMatrix, const int& modelSize = 1);
+		//void loadModelMatrix(Shader* shader, const mat4f* model, const mat4f* rotMatrix, const int& modelSize = 0);
+		void loadModelMatrix(Shader* shader, const ModelMatrix* model, const int& modelSize = 1);
 		void loadVAO(const GLuint& vao);
 
-		void drawInstancedObject(Shader* s, Mesh* m, std::vector<mat4f>& models, std::vector<mat4f>& normalMatrices);
+		void drawInstancedObject(Shader* s, Mesh* m, std::vector<ModelMatrix>& models);
 
 		void initGlobalUniformBuffers();
 		void updateGlobalUniformBuffers();
+		void CPULightClustering();
 		//
 
 		//  Attributes
@@ -154,23 +174,35 @@ class Renderer : public Singleton<Renderer>
 		unsigned int vboGridSize;
 		GLuint gridVAO, vertexbuffer, arraybuffer, colorbuffer, normalbuffer;
 		vec4f m_gridColor;
-		unsigned int instanceDrawn, trianglesDrawn;
+		unsigned int instanceDrawn, drawCalls, trianglesDrawn;
 		Shader* lastShader;
 		GLuint lastVAO;
 
-		std::vector<std::pair<uint64_t, Entity*>> renderQueue;
+		bool m_enableInstancing = true;
+		std::vector<DrawElement> renderQueue;
+		std::map<std::pair<Shader*, Mesh*>, Batch*> batchOpened;
+		std::vector<Batch*> batchFreePool;
+		std::vector<Batch*> batchClosedPool;
 
-		EnvironementLighting m_envLighting;
-
+		// global params
 		GLuint m_globalMatricesID, m_environementLightingID, m_lightsID;
 		GlobalMatrices m_globalMatrices;
 		EnvironementLighting m_environementLighting;
-		Light m_lights[MAX_LIGHT_COUNT];
-		int m_lightCount;
-		std::vector<LightComponent*> m_lightComponents;
+		SceneLights m_sceneLights;
+
+		// light clustering param
+		GLuint imageID;
+		vec3i imageSize;
+		vec4ui* cpuClusterBuffer = nullptr;
 
 #ifdef USE_IMGUI
 		bool m_drawLightDirection = false;
+		bool m_lightFrustrumCulling = true;
+		bool m_lightClustering = true;
+		bool m_drawClusters = false;
+
+		vec4f* clustersMin = nullptr;
+		vec4f* clustersMax = nullptr;
 #endif //USE_IMGUI
 		//
 };

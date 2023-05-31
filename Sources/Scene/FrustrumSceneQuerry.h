@@ -11,6 +11,8 @@ class FrustrumSceneQuerry : public VirtualSceneQuerry
 		VirtualSceneQuerry::CollisionType operator() (const NodeVirtual* node) override;
 		std::vector<const NodeVirtual*>& getResult();
 
+		bool TestSphere(vec4f center, float radius);
+
 	private:
 		vec4f frustrumPlaneNormals[6];
 		vec4f frustrumCorners[5];

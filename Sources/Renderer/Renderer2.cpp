@@ -31,12 +31,10 @@ void Renderer::drawObject(Entity* object)
 	else 
 		shaderToUse = drawableComp->getShader()->getVariant(Shader::computeVariantCode(false, false, renderOption == RenderOption::WIREFRAME));
 
-	loadModelMatrix(shaderToUse, &object->getWorldTransformMatrix(), &object->getNormalMatrix());
+	ModelMatrix modelMatrix = {object->getWorldTransformMatrix(), object->getNormalMatrix()};
+	loadModelMatrix(shaderToUse, &modelMatrix);
 	if (!shaderToUse)
 		return;
-
-	int loc = shaderToUse->getUniformLocation("lightCount");
-	if (loc >= 0) glUniform1i(loc, m_lightCount);
 
 	// animation uniforms
 	if (isSkinned)
@@ -74,25 +72,28 @@ void Renderer::drawObject(Entity* object)
 
 		if (renderOption == RenderOption::NORMALS && normalViewer)
 		{
-			loadModelMatrix(normalViewer, &object->getWorldTransformMatrix(), &object->getNormalMatrix());
+			loadModelMatrix(normalViewer, &modelMatrix);
 			loadVAO(drawableComp->getMesh()->getVAO());
 			glDrawElements(GL_TRIANGLES, (int)drawableComp->getMesh()->getFaces()->size(), GL_UNSIGNED_SHORT, NULL);
 		}
 	}
+	drawCalls++;
 	instanceDrawn++;
 	trianglesDrawn += drawableComp->getMesh()->getNumberFaces();
 }
-void Renderer::drawInstancedObject(Shader* s, Mesh* m, std::vector<mat4f>& models, std::vector<mat4f>& normalMatrices)
+void Renderer::drawInstancedObject(Shader* s, Mesh* m, std::vector<ModelMatrix>& models)
 {
 	//	Get shader and prepare matrix
 	Shader* shaderToUse;
 	if (renderOption == RenderOption::BOUNDING_BOX)
 		shaderToUse = defaultShader[INSTANCE_DRAWABLE_BB];
 	else
-		shaderToUse = s->getVariant(Shader::computeVariantCode(true, false, renderOption == RenderOption::WIREFRAME));
+		shaderToUse = s;
 
 	//	Load MVP matrix
-	loadModelMatrix(shaderToUse, models.data(), normalMatrices.data(), (int)models.size());
+	loadModelMatrix(shaderToUse, models.data(), (int)models.size());
+	if (!shaderToUse)
+		return;
 
 	//	Draw instanced
 	if (renderOption == RenderOption::BOUNDING_BOX)
@@ -105,6 +106,7 @@ void Renderer::drawInstancedObject(Shader* s, Mesh* m, std::vector<mat4f>& model
 		loadVAO(m->getVAO());
 		glDrawElementsInstanced(GL_TRIANGLES, (int)m->getFaces()->size(), GL_UNSIGNED_SHORT, NULL, (unsigned short)models.size());
 	}
+	drawCalls++;
 	instanceDrawn += (int)(models.size());
 	trianglesDrawn += (int)(models.size() * m->getNumberFaces());
 }
@@ -112,10 +114,10 @@ void Renderer::drawMap(Map* map, Shader* s)
 {
 	mat4f scale = mat4f::scale(mat4f::identity, map->getScale());
 	mat4f model = scale * map->getModelMatrix();
-	mat4f normalMatrix = map->getNormalMatrix();
+	ModelMatrix modelMatrix = { scale * map->getModelMatrix(), map->getNormalMatrix() };
 
 	// raw
-	loadModelMatrix(map->getShader(), &model, &normalMatrix);
+	loadModelMatrix(map->getShader(), &modelMatrix);
 	vec4i exclusion = map->getExclusionZone();
 	int loc = map->getShader()->getUniformLocation("exclusion");
 	//if (loc >= 0) glUniform4iv(loc, 1, (int*)&exclusion);
@@ -123,6 +125,7 @@ void Renderer::drawMap(Map* map, Shader* s)
 	
 	loadVAO(map->getVAO());
 	glDrawElements(GL_TRIANGLES, map->getFacesCount(), GL_UNSIGNED_INT, NULL);
+	drawCalls++;
 	instanceDrawn++;
 	trianglesDrawn += map->getFacesCount() / 6;
 	//return;
@@ -141,7 +144,8 @@ void Renderer::drawMap(Map* map, Shader* s)
 		if (chunk->isInitialized())
 		{
 			model = scale * chunk->getModelMatrix();
-			loadModelMatrix(map->getShader(), &model, &normalMatrix);
+			modelMatrix.model = model;
+			loadModelMatrix(map->getShader(), &modelMatrix);
 			loadVAO(chunk->getVAO());
 
 			int lod = chunk->getLod();
@@ -205,7 +209,8 @@ void Renderer::drawMap(Map* map, Shader* s)
 				glDrawElements(GL_TRIANGLES, chunk->getBorderFacesCount(), GL_UNSIGNED_INT, (void*)(offset * sizeof(unsigned int)));
 				trianglesDrawn += chunk->getBorderFacesCount() / 6;
 			}
-			
+
+			drawCalls++;
 			instanceDrawn++;
 		}
 	}

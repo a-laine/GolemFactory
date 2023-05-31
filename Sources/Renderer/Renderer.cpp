@@ -15,7 +15,7 @@
 #include <Utiles/Debug.h>
 
 
-#define BATCH_SIZE 32
+#define MAX_INSTANCE 32
 
 #ifdef USE_IMGUI
 bool RenderingWindowEnable = true;
@@ -37,7 +37,10 @@ Renderer::Renderer() :
 	defaultShader[INSTANCE_DRAWABLE_BB] = nullptr;
 	defaultShader[HUD] = nullptr;
 
+	lightClustering = nullptr;
+
 	drawGrid = true;
+	batchFreePool.reserve(512);
 
 	initGlobalUniformBuffers();
 	updateGlobalUniformBuffers();
@@ -49,9 +52,12 @@ Renderer::~Renderer()
 	glDeleteBuffers(1, &colorbuffer);
 	glDeleteBuffers(1, &normalbuffer);
 	glDeleteBuffers(1, &arraybuffer);
+
+	glDeleteBuffers(1, &m_environementLightingID);
+	glDeleteBuffers(1, &m_lightsID);
+	glDeleteBuffers(1, &m_globalMatricesID);
 }
 //
-
 
 //  Public functions
 void Renderer::initializeGrid(const unsigned int& gridSize,const float& elementSize, const vec4f& color)
@@ -128,6 +134,63 @@ void Renderer::initializeGrid(const unsigned int& gridSize,const float& elementS
 	delete[] normalBufferGrid;
 	delete[] indexBufferGrid;
 }
+void Renderer::initializeLightClusterBuffer(int width, int height, int depth)
+{
+	imageID = 0;
+	imageSize = vec3i(16,9,32);
+
+	const auto CheckError = [](const char* label)
+	{
+		GLenum error = glGetError();
+		if (!label)
+			return;
+		switch (error)
+		{
+			case GL_INVALID_ENUM: std::cout << label << " : GL_INVALID_ENUM" << std::endl; break;
+			case GL_INVALID_VALUE: std::cout << label << " : GL_INVALID_VALUE" << std::endl; break;
+			case GL_INVALID_OPERATION: std::cout << label << " : GL_INVALID_OPERATION" << std::endl; break;
+			case GL_INVALID_FRAMEBUFFER_OPERATION: std::cout << label << " : GL_INVALID_FRAMEBUFFER_OPERATION" << std::endl; break;
+			case GL_OUT_OF_MEMORY: std::cout << label << " : GL_OUT_OF_MEMORY" << std::endl; break;
+			case GL_STACK_UNDERFLOW: std::cout << label << " : GL_STACK_UNDERFLOW" << std::endl; break;
+			case GL_STACK_OVERFLOW: std::cout << label << " : GL_STACK_OVERFLOW" << std::endl; break;
+			default: break;
+		}
+	};
+
+	CheckError(nullptr);
+	glGenTextures(1, &imageID); CheckError("glGenTextures");
+	glBindTexture(GL_TEXTURE_3D, imageID); CheckError("glBindTexture");
+
+	const int length = imageSize.x * imageSize.y * imageSize.z * 4;
+	uint32_t* buffer = new uint32_t[length];
+	for (int i = 0; i < imageSize.x; i++)
+		for (int j = 0; j < imageSize.y; j++)
+			for (int k = 0; k < imageSize.z; k++)
+			{
+				int id = i * imageSize.y * imageSize.z * 4 + j * imageSize.z * 4 + k * 4;
+
+				buffer[id] = 0xFFFFFFFF;
+				buffer[id + 1] = 0xFFFFFFFF;
+				buffer[id + 2] = 0xFFFFFFFF;
+				buffer[id + 3] = 0xFFFFFFFF;
+			}
+
+	glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32UI, imageSize.x, imageSize.y, imageSize.z, 0, GL_RGBA_INTEGER, GL_UNSIGNED_INT, buffer); CheckError("glTexImage3D");
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); CheckError("glTexParameteri WRAP_S");
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); CheckError("glTexParameteri WRAP_T");
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE); CheckError("glTexParameteri WRAP_R");
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); CheckError("glTexParameteri MAG_FILTER");
+	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); CheckError("glTexParameteri MIN_FILTER");
+	glBindTexture(GL_TEXTURE_3D, 0);
+	delete[] buffer;
+
+
+	m_sceneLights.m_near = 2.f;
+	m_sceneLights.m_far = 1500.f;
+	float logRatio = imageSize.z / log(m_sceneLights.m_far / m_sceneLights.m_near);
+	m_sceneLights.m_clusterDepthScale = logRatio;
+	m_sceneLights.m_clusterDepthBias = logRatio * log(m_sceneLights.m_near);
+}
 void Renderer::initGlobalUniformBuffers()
 {
 	// global matrices and camera position
@@ -155,9 +218,9 @@ void Renderer::initGlobalUniformBuffers()
 	// lights data
 	glGenBuffers(1, &m_lightsID);
 	glBindBuffer(GL_UNIFORM_BUFFER, m_lightsID);
-	glBufferData(GL_UNIFORM_BUFFER, MAX_LIGHT_COUNT * sizeof(Light), NULL, GL_DYNAMIC_DRAW);
+	glBufferData(GL_UNIFORM_BUFFER, sizeof(m_sceneLights), NULL, GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
-	glBindBufferRange(GL_UNIFORM_BUFFER, 2, m_lightsID, 0, MAX_LIGHT_COUNT * sizeof(Light));
+	glBindBufferRange(GL_UNIFORM_BUFFER, 2, m_lightsID, 0, sizeof(m_sceneLights));
 
 	// end
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
@@ -170,30 +233,99 @@ void Renderer::updateGlobalUniformBuffers()
 	glBindBuffer(GL_UNIFORM_BUFFER, m_environementLightingID);
 	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(m_environementLighting), &m_environementLighting);
 
+
+#if 0
 	bool needLightUpdate = false;
 	for (int i = 0; i < m_lightComponents.size() && !needLightUpdate; i++)
 		needLightUpdate |= m_lightComponents[i]->m_isUniformBufferDirty;
 
 	if (needLightUpdate)
 	{
-		m_lightCount = 0;
+		m_sceneLights.m_lightCount = 0;
 		for (int i = 0; i < MAX_LIGHT_COUNT && i < m_lightComponents.size(); i++)
 		{
-			m_lights[i].m_color = m_lightComponents[i]->m_color;
-			m_lights[i].m_position = m_lightComponents[i]->getPosition();
-			m_lights[i].m_direction = m_lightComponents[i]->isPointLight() ? vec4f(0.f) : m_lightComponents[i]->getDirection();
-			m_lights[i].m_range = m_lightComponents[i]->m_range;
-			m_lights[i].m_intensity = m_lightComponents[i]->m_intensity;
-			m_lights[i].m_inCutOff = cos((float)DEG2RAD * m_lightComponents[i]->m_innerCutoffAngle);
-			m_lights[i].m_outCutOff = cos((float)DEG2RAD * m_lightComponents[i]->m_outerCutoffAngle);
+			m_sceneLights.m_lights[i].m_color = m_lightComponents[i]->m_color;
+			m_sceneLights.m_lights[i].m_position = m_lightComponents[i]->getPosition();
+			m_sceneLights.m_lights[i].m_direction = m_lightComponents[i]->isPointLight() ? vec4f(0.f) : m_lightComponents[i]->getDirection();
+			m_sceneLights.m_lights[i].m_range = m_lightComponents[i]->m_range;
+			m_sceneLights.m_lights[i].m_intensity = m_lightComponents[i]->m_intensity;
+			m_sceneLights.m_lights[i].m_inCutOff = cos((float)DEG2RAD * m_lightComponents[i]->m_innerCutoffAngle);
+			m_sceneLights.m_lights[i].m_outCutOff = cos((float)DEG2RAD * m_lightComponents[i]->m_outerCutoffAngle);
 			m_lightComponents[i]->m_isUniformBufferDirty = false;
-			m_lightCount++;
+			m_sceneLights.m_lightCount++;
 		}
 
 		glBindBuffer(GL_UNIFORM_BUFFER, m_lightsID);
-		glBufferSubData(GL_UNIFORM_BUFFER, 0, m_lightCount * sizeof(Light), &m_lights);
+		glBufferSubData(GL_UNIFORM_BUFFER, 0, m_sceneLights.m_lightCount * sizeof(Light) + sizeof(vec4i), &m_sceneLights);
 		glBindBuffer(GL_UNIFORM_BUFFER, 0);
 	}
+#endif
+}
+void Renderer::CPULightClustering()
+{
+	const float nearFarRatio = m_sceneLights.m_far / m_sceneLights.m_near;
+	const vec3f invImageSize = vec3f(1.f / imageSize.x, 1.f / imageSize.y, 1.f / imageSize.z);
+	const int length = imageSize.x * imageSize.y * imageSize.z;
+	if (!cpuClusterBuffer)
+		cpuClusterBuffer = new vec4ui[length];
+
+#ifdef USE_IMGUI
+	if (!clustersMin)
+	{
+		clustersMin = new vec4f[length];
+		clustersMax = new vec4f[length];
+	}
+#endif
+
+	for (int i = 0; i < imageSize.x; i++)
+		for (int j = 0; j < imageSize.y; j++)
+			for (int k = 0; k < imageSize.z; k++)
+			{
+				vec4ui clusterLightMask = vec4ui(0xFFFFFFFF);
+				vec4f cellCornerMin, cellCornerMax;
+				if (m_lightClustering && m_sceneLights.m_lightCount > 0)
+				{
+					clusterLightMask = vec4ui(0);
+					float maxDepthBound = -pow(nearFarRatio, float(k + 1) * invImageSize.z) * m_sceneLights.m_near;
+					float minDepthBound;
+					if (k == 0)
+						minDepthBound = 1.0;
+					else
+						minDepthBound = -pow(nearFarRatio, float(k) * invImageSize.z) * m_sceneLights.m_near;
+
+					vec2f frustrumSize = vec2f(-m_sceneLights.m_tanFovX * maxDepthBound, -m_sceneLights.m_tanFovY * maxDepthBound);
+					vec2f cellSize = 2.0f * vec2f(frustrumSize.x * invImageSize.x, frustrumSize.y * invImageSize.y);
+
+					cellCornerMin = vec4f(i * cellSize.x - frustrumSize.x, j * cellSize.y - frustrumSize.y, maxDepthBound, 1);
+					cellCornerMax = vec4f(cellCornerMin.x + cellSize.x, cellCornerMin.y + cellSize.y, minDepthBound, 1);
+					vec4f cellCenter = 0.5f * (cellCornerMax + cellCornerMin);
+					vec4f cellHalfSize = 0.5f * (cellCornerMax - cellCornerMin);
+
+					// gather lights
+					for (int l = 0; l < m_sceneLights.m_lightCount; l++)
+					{
+						vec4f lightPosition = m_globalMatrices.view * m_sceneLights.m_lights[l].m_position;
+						vec4f closest = cellCenter + clamp(lightPosition - cellCenter, -cellHalfSize, cellHalfSize);
+						if ((lightPosition - closest).getNorm2() <= m_sceneLights.m_lights[l].m_range * m_sceneLights.m_lights[l].m_range)
+						{
+							unsigned int colorIndex = l >> 5;
+							unsigned int lightBit = l & 0x1F;
+							clusterLightMask[colorIndex] |= (1 << lightBit);
+						}
+					}
+				}
+
+				int id = k * imageSize.x * imageSize.y + j * imageSize.x + i;
+				cpuClusterBuffer[id] = clusterLightMask;
+
+				#ifdef USE_IMGUI
+					clustersMin[id] = cellCornerMin;
+					clustersMax[id] = cellCornerMax;
+				#endif
+			}
+
+	glBindTexture(GL_TEXTURE_3D, imageID);
+	glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32UI, imageSize.x, imageSize.y, imageSize.z, 0, GL_RGBA_INTEGER, GL_UNSIGNED_INT, cpuClusterBuffer);
 }
 
 
@@ -202,6 +334,7 @@ void Renderer::render(CameraComponent* renderCam)
 	//	clear previous states
 	trianglesDrawn = 0;
 	instanceDrawn = 0;
+	drawCalls = 0;
 	lastShader = nullptr;
 	lastVAO = 0;
 	if (!context || !camera || !world || !renderCam) return;
@@ -224,7 +357,8 @@ void Renderer::render(CameraComponent* renderCam)
 	if (drawGrid && shader && glIsVertexArray(gridVAO))
 	{
 		shader->enable();
-		loadModelMatrix(shader, &mat4f::identity, &mat4f::identity);
+		ModelMatrix modelMatrix = {mat4f::identity, mat4f::identity};
+		loadModelMatrix(shader, &modelMatrix);
 		int loc = shader->getUniformLocation("overrideColor");
 		if (loc >= 0) glUniform4fv(loc, 1, &m_gridColor[0]);
 
@@ -240,50 +374,195 @@ void Renderer::render(CameraComponent* renderCam)
 	camera->getFrustrum(camPos, camFwd, camRight, camUp);
 	FrustrumSceneQuerry sceneTest(camPos, camFwd, camUp, -camRight, camFovVert, context->getViewportRatio());
 	VirtualEntityCollector collector;
-	collector.m_flags = (uint64_t)Entity::Flags::Fl_Drawable;
+	collector.m_flags = (uint64_t)Entity::Flags::Fl_Drawable | (uint64_t)Entity::Flags::Fl_Light;
 	collector.m_exclusionFlags = (uint64_t)Entity::Flags::Fl_Hide;
 	world->getSceneManager().getEntities(&sceneTest, &collector);
 
-	//	sort
+	m_sceneLights.m_tanFovY = tan(0.5f * camera->getVerticalFieldOfView());
+	m_sceneLights.m_tanFovX = m_sceneLights.m_tanFovY * context->getViewportRatio();
+
+
+	// first pass
+	// gather lights, compute entities hash, ...
 	uint64_t transparentMask = 1ULL << 63;
 	uint64_t faceCullingMask = 1ULL << 62;
+	bool doBatching = false;
 	renderQueue.clear();
+	m_sceneLights.m_lightCount = 0;
 	for (Entity* object : collector.getResult())
 	{
-		DrawableComponent* comp = object->getComponent<DrawableComponent>();
-		if (!comp || !comp->isValid()) continue;
-#ifdef USE_IMGUI
-		if (!comp->visible()) continue;
-#endif
-		uint64_t queue = comp->getShader()->getRenderQueue();
-		queue = queue << 48;
-
-		vec4f v = object->getWorldPosition() - camPos;
-		uint32_t d = (uint32_t)(1000.f * v.getNorm());
-		if (queue & transparentMask)
+		if (object->getFlags() & (uint64_t)Entity::Flags::Fl_Drawable)
 		{
-			//compute 2's complement of d
-			d = ~d; 
-			d++;
-		}
+			DrawableComponent* comp = object->getComponent<DrawableComponent>();
+			bool ok = comp && comp->isValid();
+	#ifdef USE_IMGUI
+			ok &= comp->visible();
+	#endif
+			if (ok)
+			{
+				doBatching |= comp->getShader()->supportInstancing();
+				uint64_t queue = comp->getShader()->getRenderQueue();
+				queue = queue << 48;
 
-		uint64_t hash = queue | d;
-		renderQueue.push_back({ hash, object});
+				vec4f v = object->getWorldPosition() - camPos;
+				uint32_t d = (uint32_t)(1000.f * v.getNorm());
+				if (queue & transparentMask)
+				{
+					//compute 2's complement of d
+					d = ~d; 
+					d++;
+				}
+
+				uint64_t hash = queue | d;
+				renderQueue.push_back({ hash, object, nullptr});
+			}
+
+
+		}
+		if ((object->getFlags() & (uint64_t)Entity::Flags::Fl_Light))
+		{
+			LightComponent* comp = object->getComponent<LightComponent>();
+			bool ok = comp && m_sceneLights.m_lightCount < MAX_LIGHT_COUNT;
+
+			#ifdef USE_IMGUI
+				if (ok && m_lightFrustrumCulling)
+					ok = sceneTest.TestSphere(object->getWorldPosition(), comp->getRange());
+			#else
+				if (ok)
+					ok = sceneTest.TestSphere(object->getWorldPosition(), comp->getRange());
+			#endif
+
+			if (ok)
+			{
+				int i = m_sceneLights.m_lightCount;
+				m_sceneLights.m_lights[i].m_color = comp->m_color;
+				m_sceneLights.m_lights[i].m_position = comp->getPosition();
+				m_sceneLights.m_lights[i].m_direction = comp->isPointLight() ? vec4f(0.f) : comp->getDirection();
+				m_sceneLights.m_lights[i].m_range = comp->m_range;
+				m_sceneLights.m_lights[i].m_intensity = comp->m_intensity;
+				m_sceneLights.m_lights[i].m_inCutOff = cos((float)DEG2RAD * comp->m_innerCutoffAngle);
+				m_sceneLights.m_lights[i].m_outCutOff = cos((float)DEG2RAD * comp->m_outerCutoffAngle);
+				comp->m_isUniformBufferDirty = false;
+				m_sceneLights.m_lightCount++;
+			}
+		}
 	}
 
-	uint64_t compareMask = ~(transparentMask | faceCullingMask); // don't use the states bits for comparing entities
-	std::sort(renderQueue.begin(), renderQueue.end(), [compareMask](std::pair<uint64_t, Entity*> a, std::pair<uint64_t, Entity*> b)
+	// bind lights
+	glBindBuffer(GL_UNIFORM_BUFFER, m_lightsID);
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, m_sceneLights.m_lightCount * sizeof(Light) + 2*sizeof(vec4i), &m_sceneLights);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+	if (lightClustering)
+	{
+		//CPULightClustering();
+		
+
+		lightClustering->enable();
+
+		GLint lightClusterLocation = glGetUniformLocation(lightClustering->getProgram(), "lightClusters");
+		if (lightClusterLocation >= 0)
 		{
-			return (compareMask & a.first) < (compareMask & b.first);
+			glUniform1i(lightClusterLocation, 3);
+			glActiveTexture(GL_TEXTURE3);
+			glBindImageTexture(3, imageID, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32UI);
+		}
+
+		glDispatchCompute(4, 3, 4);
+		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+		lastShader = nullptr;
+		glUseProgram(0);
+	}
+
+	//	sort
+	uint64_t compareMask = ~(transparentMask | faceCullingMask); // don't use the states bits for comparing entities
+	std::sort(renderQueue.begin(), renderQueue.end(), [compareMask](DrawElement& a, DrawElement& b)
+		{
+			return (compareMask & a.hash) < (compareMask & b.hash);
 		});
+
+	// batching
+	if (m_enableInstancing && doBatching)
+	{
+		// clear batches containers
+		for (auto it : batchClosedPool)
+		{
+			it->models.clear();
+			it->mesh = nullptr;
+			it->shader = nullptr;
+			batchFreePool.push_back(it);
+		}
+		batchClosedPool.clear();
+		for (auto it : batchOpened)
+		{
+			it.second->models.clear();
+			it.second->mesh = nullptr;
+			it.second->shader = nullptr;
+			batchFreePool.push_back(it.second);
+		}
+		batchOpened.clear();
+
+		// second pass of renderqueue
+		int variantCode = Shader::computeVariantCode(true, false, renderOption == RenderOption::WIREFRAME);
+		for (auto& it : renderQueue)
+		{
+			DrawableComponent* comp = it.entity->getComponent<DrawableComponent>();
+			if (!comp->getShader()->supportInstancing())
+				continue;
+
+			Shader* shader = comp->getShader()->getVariant(variantCode);
+			Mesh* mesh = comp->getMesh();
+
+			// search insertion batch
+			Batch* batch;
+			bool isNewBatch = false;
+			std::pair<Shader*, Mesh*> key = {shader, mesh};
+			auto it2 = batchOpened.find(key);
+			if (it2 == batchOpened.end())
+			{
+				if (batchFreePool.empty())
+					batch = new Batch();
+				else
+				{
+					batch = batchFreePool.back();
+					batchFreePool.pop_back();
+				}
+
+				isNewBatch = true;
+				batch->shader = shader;
+				batch->mesh = mesh;
+				batchOpened[key] = batch;
+			}
+			else
+				batch = it2->second;
+
+			// insert object
+			batch->models.push_back({ it.entity->getWorldTransformMatrix() , it.entity->getNormalMatrix()});
+			it.batch = batch;
+
+			if (!isNewBatch)
+			{
+				it.entity = nullptr;
+				if (batch->models.size() >= MAX_INSTANCE)
+				{
+					batchClosedPool.push_back(batch);
+					batchOpened.erase(it2);
+				}
+			}
+		}
+	}
 
 	//	draw instance list
 	bool blendingEnabled = false;
 	bool faceCullingEnabled = true;
 	for (const auto& it : renderQueue)
 	{
+		// skip batched entities
+		if (!it.entity)
+			continue;
+
 		//	opengl states managing
-		bool isTransparent = (it.first & transparentMask);
+		bool isTransparent = (it.hash & transparentMask);
 		if (!blendingEnabled && isTransparent)
 		{
 			blendingEnabled = true;
@@ -295,7 +574,7 @@ void Renderer::render(CameraComponent* renderCam)
 			glDisable(GL_BLEND);
 		}
 
-		bool needCulling = (it.first & faceCullingMask);
+		bool needCulling = (it.hash & faceCullingMask);
 		if (!faceCullingEnabled && needCulling)
 		{
 			faceCullingEnabled = true;
@@ -307,7 +586,10 @@ void Renderer::render(CameraComponent* renderCam)
 			glDisable(GL_CULL_FACE);
 		}
 
-		drawObject(it.second);
+		if (it.batch)
+			drawInstancedObject(it.batch->shader, it.batch->mesh, it.batch->models);
+		else
+			drawObject(it.entity);
 	}
 }
 void Renderer::renderHUD()
@@ -350,11 +632,14 @@ void Renderer::renderHUD()
 							shader = (*it2)->getShader();
 
 						mat4f m = mat4f::translate(model, (*it2)->getPosition());
-						loadModelMatrix(shader, &m, &model);
-						if (!shader) continue;
+						ModelMatrix modelMatrix = { m, model };
+						loadModelMatrix(shader, &modelMatrix);
+						if (!shader)
+							continue;
 
 						//	Draw
 						(*it2)->draw(shader, stencilMask, model);
+						drawCalls;
 						instanceDrawn++;
 						trianglesDrawn += (*it2)->getNumberFaces();
 					}
@@ -368,33 +653,27 @@ void Renderer::renderHUD()
 
 
 //	Protected functions
-void Renderer::loadModelMatrix(Shader* shader, const mat4f* model, const mat4f* rotMatrix, const int& modelSize)
+void Renderer::loadModelMatrix(Shader* shader, const ModelMatrix* model, const int& modelSize)
 {
 	if (shader)
 	{
 		if (shader != lastShader)
+		{
 			shader->enable();
+
+			GLint lightClusterLocation = glGetUniformLocation(shader->getProgram(), "lightClusters");
+			if (lightClusterLocation >= 0)
+			{
+				glUniform1i(lightClusterLocation, 3);
+				glActiveTexture(GL_TEXTURE3);
+				glBindImageTexture(3, imageID, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32UI);
+			}
+		}
 		lastShader = shader;
 
-		if (modelSize == 1)
-		{
-			int loc = shader->getUniformLocation("model");
-			if (loc >= 0) 
-				glUniformMatrix4fv(loc, modelSize, GL_FALSE, (const float*)model);
-
-			loc = shader->getUniformLocation("normalMatrix");
-			if (loc >= 0)
-				glUniformMatrix4fv(loc, modelSize, GL_FALSE, (const float*)rotMatrix);
-		}
-		else
-		{
-			int loc = shader->getUniformLocation("models");
-			if (loc >= 0)
-				glUniformMatrix4fv(loc, modelSize, GL_FALSE, (const float*)model);
-			loc = shader->getUniformLocation("normalMatrices");
-			if (loc >= 0)
-				glUniformMatrix4fv(loc, modelSize, GL_FALSE, (const float*)rotMatrix);
-		}
+		int loc = shader->getUniformLocation("matrixArray");
+		if (loc >= 0)
+			glUniformMatrix4fv(loc, 2 * modelSize, GL_FALSE, (const float*)model);
 	}
 	else  lastShader = nullptr;
 }
@@ -435,6 +714,7 @@ Shader* Renderer::getShader(ShaderIdentifier id)
 }
 bool Renderer::isGridVisible() { return drawGrid; }
 unsigned int Renderer::getNbDrawnInstances() const { return instanceDrawn; }
+unsigned int Renderer::getNbDrawCalls() const { return drawCalls; }
 unsigned int Renderer::getNbDrawnTriangles() const { return trianglesDrawn; }
 Renderer::RenderOption Renderer::getRenderOption() const { return renderOption; }
 
@@ -452,11 +732,6 @@ vec4f Renderer::getEnvAmbientColor() const { return m_environementLighting.m_amb
 vec4f Renderer::getEnvDirectionalLightDirection() const { return m_environementLighting.m_directionalLightDirection; }
 vec4f Renderer::getEnvDirectionalLightColor() const { return m_environementLighting.m_directionalLightColor; }
 
-
-void Renderer::addLight(LightComponent* _light)
-{
-	m_lightComponents.push_back(_light);
-}
 //
 
 //	Debug
@@ -476,6 +751,11 @@ void Renderer::drawImGui(World& world)
 	const char* renderOptions[] = { "Default", "Bounding box", "Wireframe", "Normals" };
 	static int renderOptionsCurrentIdx = (int)renderOption;
 	const char* renderOptionPreviewValue = renderOptions[renderOptionsCurrentIdx];
+
+
+	ImGui::Spacing();
+	ImGui::TextColored(ImVec4(1, 1, 0, 1), "Rendering parameters");
+	ImGui::Checkbox("Instancing enabled", &m_enableInstancing);
 	if (ImGui::BeginCombo("Render option", renderOptionPreviewValue))
 	{
 		for (int n = 0; n < IM_ARRAYSIZE(renderOptions); n++)
@@ -491,6 +771,18 @@ void Renderer::drawImGui(World& world)
 		}
 		ImGui::EndCombo();
 	}
+	ImGui::Checkbox("Light frustrum culling", &m_lightFrustrumCulling);
+	ImGui::Checkbox("Do light clustering", &m_lightClustering);
+	ImGui::Checkbox("Draw light clusters", &m_drawClusters);
+
+
+	ImGui::Spacing();
+	ImGui::TextColored(ImVec4(1, 1, 0, 1), "DrawInfos");
+	ImGui::Text("Drawcalls : %d", drawCalls);
+	ImGui::Text("Entities : %d", instanceDrawn);
+	ImGui::Text("Triangles : %d", trianglesDrawn);
+	ImGui::Text("Lights : %d", m_sceneLights.m_lightCount);
+
 
 	ImGui::PopID();
 	ImGui::End();
@@ -507,6 +799,37 @@ void Renderer::drawImGui(World& world)
 				vec4f p = vec4f(5 * i, 0, 5 * j, 1.f);
 				Debug::drawLine(p, p - 100.f * d);
 			}
+	}
+
+	CameraComponent* mainCamera = world.getMainCamera();
+	if (m_drawClusters && mainCamera && clustersMin && clustersMax)
+	{
+		//Debug::color = Debug::white;
+		const float shrink = 1.f;
+		for (int i = 0; i < imageSize.x; i++)
+			for (int j = 0; j < imageSize.y; j++)
+				for (int k = 0; k < imageSize.z; k++)
+				{
+					//if (k != 0) continue;
+
+					int id = i * imageSize.y * imageSize.z + j * imageSize.z + k;
+					vec4f cellCenter = 0.5f * (clustersMax[id] + clustersMin[id]);
+					vec4f cellHalfSize = 0.5f *(clustersMax[id] - clustersMin[id]);
+
+					if (m_sceneLights.m_lightCount)
+					{
+						Debug::color = Debug::black;
+						vec4ui lightMask = cpuClusterBuffer[id];
+						for (int l = 0; l < 4; l++)
+							for (int m = 0; m < 32; m++)
+							{
+								if ((lightMask[l] & (1 << m)) != 0)
+									Debug::color[l] += 1.0;
+							}
+					}
+
+					Debug::drawLineCube(mainCamera->getModelMatrix(), cellCenter - shrink * cellHalfSize, cellCenter + shrink * cellHalfSize);
+				}
 	}
 #endif // USE_IMGUI
 }

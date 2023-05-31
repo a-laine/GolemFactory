@@ -2,7 +2,7 @@ Triangle
 {
 	uniform :
 	{
-		model : "mat4";
+		matrixArray : "mat4";
 		
 		vector1 : "vec4";
 		vector2 : "vec4";
@@ -28,7 +28,7 @@ Triangle
 		layout(points) in;
 		layout(triangle_strip, max_vertices = 3) out;
 
-		uniform mat4 model;
+		uniform mat4 matrixArray[2];
 
 		uniform vec4 vector1 = vec3(0.0 , 0.0 , 0.0 , 0.0);
 		uniform vec4 vector2 = vec3(0.0 , 0.0 , 0.0 , 0.0);
@@ -41,7 +41,7 @@ Triangle
 		void main()
 		{
 			//	create alias
-			vec4 p1 = model * gl_in[0].gl_Position;
+			vec4 p1 = matrixArray[0] * gl_in[0].gl_Position;
 			vec4 p2 = p1 + vector1;
 			vec4 p3 = p1 + vector2;
 			

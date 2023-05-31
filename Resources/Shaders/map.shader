@@ -2,7 +2,7 @@ Map
 {
 	uniform :
 	{
-		model : "mat4";
+		matrixArray : "mat4";
 		overrideColor : "vec4";
 		exclusion : "ivec4";
 	};
@@ -25,7 +25,7 @@ Map
 		layout(location = 1) in vec4 normal;
 		layout(location = 2) in vec4 color;
 
-		uniform mat4 model; 	// model matrix (has to be present at this location)
+		uniform mat4 matrixArray[2];
 		uniform int listsize = 0;
 
 		// output
@@ -38,6 +38,7 @@ Map
 		// program
 		void main()
 		{
+			mat4 model = matrixArray[0];
 			gl_Position = projection * view * model * position;
 			normal_gs = view * model * normal;
 			color_gs = color;

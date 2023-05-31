@@ -16,8 +16,12 @@ Shader::Shader(const std::string& shaderName)
     : ResourceVirtual(shaderName, ResourceVirtual::ResourceType::SHADER)
     , vertexShader(0), fragmentShader(0), geometricShader(0)
     , tessControlShader(0), tessEvalShader(0), program(0)
-    , textureCount(0)
-{}
+    , textureCount(0), renderQueue(1000), m_isComputeShader(false)
+{
+#ifdef USE_IMGUI
+    dynamicQueue = 1000;
+#endif
+}
 Shader::~Shader()
 {
     glDeleteProgram(program);
@@ -37,6 +41,7 @@ void Shader::initialize(GLuint  vertexSh, GLuint fragSh, GLuint geomShr, GLuint 
 {
     GF_ASSERT(state == INVALID);
     state = LOADING;
+    m_isComputeShader = false;
 
     // initialize attributes
     vertexShader = vertexSh;
@@ -67,8 +72,8 @@ void Shader::initialize(GLuint  vertexSh, GLuint fragSh, GLuint geomShr, GLuint 
                 if(uniformName.size() >= 3 && uniformName[0] == 'g' && uniformName[1] == 'l' && uniformName[2] == '_' && 
                     ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
                     std::cerr << "ERROR : loading shader : " << name << " : error in loading '" << uniformName << "' : name format not allowed, remove the 'gl_' prefix." << std::endl;
-                //else if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
-                //    std::cerr << "ERROR : loading shader : " << name << " : ERROR in loading '" << uniformName << "' variable location : " << uniformLocation << "; maybe the variable name does not correspond to an active uniform variable" << std::endl;
+                else if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
+                    std::cerr << "ERROR : loading shader : " << name << " : ERROR in loading '" << uniformName << "' variable location : " << uniformLocation << "; maybe the variable name does not correspond to an active uniform variable" << std::endl;
             }
         }
     }
@@ -95,6 +100,62 @@ void Shader::initialize(GLuint  vertexSh, GLuint fragSh, GLuint geomShr, GLuint 
     }
 
     if(glIsProgram(program))
+        state = VALID;
+    else
+        state = INVALID;
+}
+
+void Shader::initialize(GLuint computeSh, GLuint prog, const std::map<std::string, std::string>& attType, const std::vector<std::string>& textures)
+{
+    GF_ASSERT(state == INVALID);
+    state = LOADING;
+    m_isComputeShader = true;
+
+    vertexShader = computeSh;
+    program = prog;
+
+    //	get attributes location
+    for (auto it = attType.begin(); it != attType.end(); it++)
+    {
+        const std::string& uniformName = it->first;
+        const std::string& type = it->first;
+
+        {
+            GLint uniformLocation = glGetUniformLocation(program, uniformName.c_str());
+            attributesLocation[uniformName] = uniformLocation;
+            if (uniformLocation < 0)
+            {
+                if (uniformName.size() >= 3 && uniformName[0] == 'g' && uniformName[1] == 'l' && uniformName[2] == '_' &&
+                    ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
+                    std::cerr << "ERROR : loading shader : " << name << " : error in loading '" << uniformName << "' : name format not allowed, remove the 'gl_' prefix." << std::endl;
+                else if (ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
+                    std::cerr << "ERROR : loading shader : " << name << " : ERROR in loading '" << uniformName << "' variable location : " << uniformLocation << "; maybe the variable name does not correspond to an active uniform variable" << std::endl;
+            }
+        }
+    }
+
+    //  Binding texture to sample
+    if (!textures.empty())
+    {
+        glUseProgram(program);
+        try
+        {
+            textureCount = (uint8_t)textures.size();
+            GLuint location;
+            for (int i = 0; i < textureCount; i++)
+            {
+                location = glGetUniformLocation(program, textures[i].c_str());
+                attributesLocation[textures[i]] = location;
+                glUniform1i(location, i);
+            }
+        }
+        catch (std::exception&) { textureCount = 0; }
+        glUseProgram(0);
+
+        textureIdentifiers = textures;
+    }
+
+    if (glIsProgram(program))
         state = VALID;
     else
         state = INVALID;
@@ -192,6 +253,10 @@ bool Shader::supportInstancing() const
 {
     auto it = variants.find(1 << 0);
     return it != variants.end() && it->second;
+}
+bool Shader::isComputeShader() const
+{
+    return m_isComputeShader;
 }
 
 const std::string& Shader::getDefaultName() { return defaultName; }
@@ -343,6 +408,7 @@ std::string Shader::toString(ShaderType shaderType)
 		case ShaderType::FRAGMENT_SH:   return "fragment shader";
 		case ShaderType::TESS_EVAL_SH:  return "tesselation evaluation shader";
 		case ShaderType::TESS_CONT_SH:  return "tesselation control shader";
+		case ShaderType::COMPUTE_SH:    return "compute shader";
 		default: return "unknown shader";
 	}
 }

@@ -96,7 +96,8 @@ void Debug::point(const vec4f& p, Shader* shader)
 	{
 		//	Get shader and prepare matrix
 		mat4f m = mat4f::translate(mat4f::identity, p);
-		This->renderer->loadModelMatrix(shader, &m, &mat4f::identity);
+		Renderer::ModelMatrix modelMatrix = { m, mat4f::identity };
+		This->renderer->loadModelMatrix(shader, &modelMatrix);
 
 		//	override mesh color
 		int loc = shader->getUniformLocation("overrideColor");
@@ -119,7 +120,8 @@ void Debug::line(const vec4f& point1, const vec4f& point2, Shader* shader)
 	{
 		//	Get shader and prepare matrix
 		mat4f m = mat4f::translate(mat4f::identity, point1);
-		This->renderer->loadModelMatrix(shader, &m, &mat4f::identity);
+		Renderer::ModelMatrix modelMatrix = { m, mat4f::identity };
+		This->renderer->loadModelMatrix(shader, &modelMatrix);
 
 		int loc = shader->getUniformLocation("vector");
 		if (loc >= 0) glUniform4fv(loc, 1, (float*)&(point2 - point1)[0]);
@@ -162,7 +164,8 @@ void Debug::capsule(const vec4f& point1, const vec4f& point2, const float& radiu
 		}
 
 		//	Get shader and prepare matrix
-		This->renderer->loadModelMatrix(shader, &base, &rotMat);
+		Renderer::ModelMatrix modelMatrix = { base, rotMat };
+		This->renderer->loadModelMatrix(shader, &modelMatrix);
 
 		//	override mesh color
 		int loc = shader->getUniformLocation("overrideColor");
@@ -173,17 +176,17 @@ void Debug::capsule(const vec4f& point1, const vec4f& point2, const float& radiu
 		This->renderer->loadVAO(This->capsuleMesh->getVAO());
 
 		mat4f model = mat4f::scale(base, vec4f(radius, radius, length, 1.f));
-		This->renderer->loadModelMatrix(shader, &model, &rotMat);
+		This->renderer->loadModelMatrix(shader, &modelMatrix);
 		glDrawElements(GL_TRIANGLES, cylinderFaces, GL_UNSIGNED_SHORT, NULL);
 
 		model = mat4f::translate(base, vec4f(0, 0, length, 0.f));
 		model = mat4f::scale(model, vec4f(radius, radius, radius, 1.f));
-		This->renderer->loadModelMatrix(shader, &model, &rotMat);
+		This->renderer->loadModelMatrix(shader, &modelMatrix);
 		glDrawElements(GL_TRIANGLES, hemisphereFaces, GL_UNSIGNED_SHORT, (void*)(cylinderFaces * sizeof(unsigned short)));
 
 		model = mat4f::translate(base, vec4f(0, 0, -length, 0.f));
 		model = mat4f::scale(model, vec4f(radius, radius, radius, 1.f));
-		This->renderer->loadModelMatrix(shader, &model, &rotMat);
+		This->renderer->loadModelMatrix(shader, &modelMatrix);
 		glDrawElements(GL_TRIANGLES, (int)This->capsuleMesh->getFaces()->size(), GL_UNSIGNED_SHORT, (void*)((hemisphereFaces + cylinderFaces) * sizeof(unsigned short)));
 
 		if (loc >= 0) glUniform4fv(loc, 1, (float*)&vec4f(-1.f, 0.f, 0.f, 1.f)[0]);
@@ -195,7 +198,8 @@ void Debug::mesh(const Mesh* const mesh, const mat4f& transform, Shader* shader)
 	{
 		//	Get shader and prepare matrix
 		mat4f orientation = mat4f(quatf(transform));
-		This->renderer->loadModelMatrix(shader, &transform, &orientation);
+		Renderer::ModelMatrix modelMatrix = { transform, orientation };
+		This->renderer->loadModelMatrix(shader, &modelMatrix);
 
 		//	override mesh color
 		int loc = shader->getUniformLocation("overrideColor");

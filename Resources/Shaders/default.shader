@@ -3,7 +3,7 @@ Default
 	renderQueue : 1000;//opaque
 	uniform :
 	{
-		model : "mat4";
+		matrixArray : "mat4";
 		overrideColor : "vec4";
 	};
 	
@@ -25,7 +25,7 @@ Default
 		layout(location = 1) in vec4 normal;
 		layout(location = 2) in vec4 vertexcolor;
 
-		uniform mat4 model; 	// model matrix (has to be present at this location)
+		uniform mat4 matrixArray[2];
 
 		// output
 		out vec4 lightDirectionCameraSpace;
@@ -37,6 +37,7 @@ Default
 		// program
 		void main()
 		{
+			mat4 model = matrixArray[0];
 			gl_Position = projection * view * model * position;
 			fragmentNormal = view * model * normal;
 			fragmentColor = vertexcolor;

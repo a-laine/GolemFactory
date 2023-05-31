@@ -6,7 +6,7 @@ Fog
 
 	uniform :
 	{
-		model : "mat4";
+		matrixArray : "mat4";
 	};
 	
 	
@@ -27,7 +27,7 @@ Fog
 		layout(location = 0) in vec4 position;
 		layout(location = 1) in vec4 normal;
 
-		uniform mat4 model; 	// model matrix (has to be present at this location)
+		uniform mat4 matrixArray[2];
 		
 		// output
 		out vec4 fragmentNormal;
@@ -35,6 +35,7 @@ Fog
 		// program
 		void main()
 		{
+			mat4 model = matrixArray[0];
 			gl_Position = (projection * view * model) * position;
 			fragmentNormal = view * model * normal;
 		}

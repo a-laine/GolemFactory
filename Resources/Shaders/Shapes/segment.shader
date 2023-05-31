@@ -2,7 +2,7 @@ Segment
 {	
 	uniform :
 	{
-		model : "mat4";
+		matrixArray : "mat4";
 		vector : "vec4";
 		overrideColor : "vec4";
 	};
@@ -41,7 +41,7 @@ Segment
 		layout(points) in;
 		layout(line_strip, max_vertices = 2) out;
 
-		uniform mat4 model;
+		uniform mat4 matrixArray[2];
 		uniform vec4 vector = vec4(0.0 , 0.0 , 0.0 , 0.0);
 
 		in vec4 fragmentColor[];
@@ -51,7 +51,7 @@ Segment
 		void main()
 		{
 			//	create alias
-			vec3 p1 = (model * gl_in[0].gl_Position).xyz;
+			vec3 p1 = (matrixArray[0] * gl_in[0].gl_Position).xyz;
 			vec3 p2 = p1 + vector.xyz;
 			
 			//	draw segment

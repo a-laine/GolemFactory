@@ -768,6 +768,9 @@ void initManagers()
 	Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("greenGrass"));
 	Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE_BB, ResourceManager::getInstance()->getResource<Shader>("wired"));
 	Renderer::getInstance()->setShader(Renderer::INSTANCE_ANIMATABLE_BB, ResourceManager::getInstance()->getResource<Shader>("skeletonBB"));
+
+	Renderer::getInstance()->lightClustering = ResourceManager::getInstance()->getResource<Shader>("lightClustering");
+	Renderer::getInstance()->initializeLightClusterBuffer(64, 64, 64);
 	
 	// Debug
 	Debug::getInstance()->initialize("Shapes/point", "Shapes/box", "Shapes/sphere.obj", "Shapes/capsule", "Shapes/point", "Shapes/segment", "default", "wired");
@@ -948,7 +951,8 @@ void updates(float elapseTime)
 		"\n\nTime : " + ToolBox::to_string_with_precision(completeTime) + " ms\navg : " + ToolBox::to_string_with_precision(averageCompleteTime) + " ms");
 	WidgetManager::getInstance()->setString("drawcalls",
 		"Instances :\n  " + std::to_string(Renderer::getInstance()->getNbDrawnInstances() + WidgetManager::getInstance()->getNbDrawnWidgets()) +
-		"\n\nTriangles :\n  " + std::to_string(Renderer::getInstance()->getNbDrawnTriangles() + WidgetManager::getInstance()->getNbDrawnTriangles()));
+		"\nDrawCalls :\n  " + std::to_string(Renderer::getInstance()->getNbDrawCalls()) +
+		"\nTriangles :\n  " + std::to_string(Renderer::getInstance()->getNbDrawnTriangles() + WidgetManager::getInstance()->getNbDrawnTriangles()));
 	WidgetManager::getInstance()->update((float)elapseTime, EventHandler::getInstance()->isActivated(USE1));
 
 	//	Move avatar if needed

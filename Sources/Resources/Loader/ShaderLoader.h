@@ -41,9 +41,13 @@ class ShaderLoader : public IResourceLoader
         };
         std::vector<ShaderStruct> shaderVariants;
         uint16_t renderQueue;
+
         std::map<std::string, std::string> attributesType;
         std::vector<std::string> textureNames;
         std::vector<Texture*> textureResources;
+
+        bool isComputeShader;
+        unsigned int compute, computeProgram;
         //
 
     private:        
@@ -74,7 +78,7 @@ class ShaderLoader : public IResourceLoader
         std::vector<std::string> evaluationPragmas;
         std::vector<std::string> controlPragmas;
 
-        std::string vertexSourceCode, fragmentSourceCode, geometrySourceCode, evaluationSourceCode, controlSourceCode;
+        std::string vertexSourceCode, fragmentSourceCode, geometrySourceCode, evaluationSourceCode, controlSourceCode, computeSourceCode;
         //
 };
 

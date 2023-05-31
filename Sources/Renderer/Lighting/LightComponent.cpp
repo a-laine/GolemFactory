@@ -13,13 +13,12 @@ LightComponent::LightComponent()
 	m_intensity = 1.f;
 	m_innerCutoffAngle = RAD2DEG * 28.0;
 	m_outerCutoffAngle = RAD2DEG * 35.0;
-
-	Renderer::getInstance()->addLight(this);
 }
 
 void LightComponent::onAddToEntity(Entity* entity)
 {
 	Component::onAddToEntity(entity);
+	entity->setFlags((uint64_t)Entity::Flags::Fl_Light);
 }
 
 // setter geter

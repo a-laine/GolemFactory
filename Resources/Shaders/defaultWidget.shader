@@ -2,7 +2,7 @@ DefaultWidget
 {
 	uniform :
 	{
-		model : "mat4";
+		matrixArray : "mat4";
 		
 		color : "vec4";
 		useTexture : "int"
@@ -26,7 +26,7 @@ DefaultWidget
 		layout(location = 1) in vec2 textures;
 
 		//	uniform
-		uniform mat4 model; 	// model matrix (has to be present at this location)
+		uniform mat4 matrixArray[2];
 
 		//	output
 		out vec2 textureCoord0;
@@ -34,7 +34,7 @@ DefaultWidget
 		// program
 		void main()
 		{
-			gl_Position = projection * view * model * position;
+			gl_Position = projection * view * matrixArray[0] * position;
 			textureCoord0 = textures;
 		}
 	};

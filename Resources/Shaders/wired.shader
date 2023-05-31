@@ -6,7 +6,7 @@ Wired
 	
 	uniform :
 	{
-		model : "mat4";
+		matrixArray : "mat4";
 		overrideColor : "vec4";
 	};
 	
@@ -34,8 +34,7 @@ Wired
 		layout(location = 0) in vec4 position;
 		layout(location = 1) in vec4 normal;
 
-		uniform mat4 model; 	// model matrix (has to be present at this location)
-		uniform mat4 normalMatrix;
+		uniform mat4 matrixArray[2];
 
 		// output
 		out vec4 fragmentNormal_gs;
@@ -43,8 +42,8 @@ Wired
 		// program
 		void main()
 		{
-			gl_Position = projection * view * model * position;
-			fragmentNormal_gs = normalize(normalMatrix * normal);
+			gl_Position = projection * view * matrixArray[0] * position;
+			fragmentNormal_gs = normalize(matrixArray[1] * normal);
 		}
 	};
 	geometry : 

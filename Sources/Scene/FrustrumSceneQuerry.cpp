@@ -103,3 +103,17 @@ VirtualSceneQuerry::CollisionType FrustrumSceneQuerry::operator() (const NodeVir
 	return insideTest == 6 ? VirtualSceneQuerry::CollisionType::INSIDE : VirtualSceneQuerry::CollisionType::OVERLAP;
 }
 std::vector<const NodeVirtual*>& FrustrumSceneQuerry::getResult() { return result; }
+
+
+
+
+bool FrustrumSceneQuerry::TestSphere(vec4f center, float radius)
+{
+	// shphere against frustrum planes
+	for (int i = 0; i < 6; i++)
+	{
+		if (vec4f::dot(frustrumPlaneNormals[i], center) > radius)
+			return false;
+	}
+	return true;
+}

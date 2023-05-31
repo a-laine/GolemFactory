@@ -2,7 +2,7 @@ Skinning
 {
 	uniform :
 	{
-		model : "mat4";
+		matrixArray : "mat4";
 		view : "mat4";
 		projection : "mat4";
 		skeletonPose : "mat4 array32";
@@ -30,7 +30,8 @@ Skinning
 		layout(location = 2) in ivec4 boneIDs;
 		layout(location = 3) in vec4 weights;
 
-		uniform mat4 model;			// model matrix (has to be present at this location)
+
+		uniform mat4 matrixArray[2];
 		uniform mat4 skeletonPose[MAX_SKELETON_BONE]; 	// bone matrix
 		uniform mat4 inverseBindPose[MAX_SKELETON_BONE]; 		// vertex to bone transformation matrix
 
@@ -49,6 +50,7 @@ Skinning
 			vec4 transformPosition = boneTransform * position;
 			
 			// end
+			mat4 model = matrixArray[0];
 			fragmentPosition_gs = model * transformPosition;
 			gl_Position = projection * view * fragmentPosition_gs;
 			fragmentNormal_gs = model * boneTransform * normal;

@@ -6,7 +6,7 @@
 #include <World/World.h>
 
 #ifdef USE_IMGUI
-bool ResourcesWindowEnable = true;
+bool ResourcesWindowEnable = false;
 #endif
 
 //  Default

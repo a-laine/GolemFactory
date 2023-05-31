@@ -1,6 +1,5 @@
 #include <iostream>
 #include <algorithm>
-//#include <glm/gtc/matrix_access.hpp>
 
 #include "SceneManager.h"
 #include <Utiles/Assert.hpp>
@@ -10,7 +9,7 @@
 
 
 #ifdef USE_IMGUI
-bool HierarchyWindowEnable = true;
+bool HierarchyWindowEnable = false;
 bool SpatialPartitionningWindowEnable = false;
 #endif // USE_IMGUI
 

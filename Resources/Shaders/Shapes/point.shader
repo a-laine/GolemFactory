@@ -2,7 +2,7 @@ Point
 {	
 	uniform :
 	{
-		model : "mat4";
+		matrixArray : "mat4";
 		
 		overrideColor : "vec4";
 	};
@@ -41,7 +41,7 @@ Point
 		layout(points) in;
 		layout(line_strip, max_vertices = 8) out;
 
-		uniform mat4 model;
+		uniform mat4 matrixArray[2];
 
 		in vec4 fragmentColor[];
 		out vec4 fragmentColor1;
@@ -64,7 +64,7 @@ Point
 			//	create alias
 			vec3 right = vec3(view[0][0], view[1][0], view[2][0]);
 			vec3 up = vec3(view[0][1], view[1][1], view[2][1]);
-			vec3 p = (model * gl_in[0].gl_Position).xyz;
+			vec3 p = (matrixArray[0] * gl_in[0].gl_Position).xyz;
 			float size = 0.2;
 			
 			//	draw 4 segment (a star)

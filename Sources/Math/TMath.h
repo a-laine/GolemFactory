@@ -32,7 +32,7 @@ typedef glm::ivec4 vec4i;
 typedef glm::ivec3 vec3i;
 typedef glm::ivec2 vec2i;
 typedef glm::bvec4 vec4b;
-
+typedef glm::uvec4 vec4ui;
 
 
 // vec4f function
