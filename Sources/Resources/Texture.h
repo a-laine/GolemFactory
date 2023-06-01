@@ -41,7 +41,8 @@ class Texture : public ResourceVirtual
 		explicit Texture(const std::string& textureName, uint8_t conf = 0x0);
         ~Texture();
 
-        void initialize(const vec3f& imageSize, const uint8_t* data, uint8_t config = 0);
+        void initialize(const vec3i& imageSize, const uint8_t* data, uint8_t config = 0);
+        void initialize(const std::string& textureName, const vec3i& imageSize, const void* data, uint8_t config, unsigned int internalFormat, unsigned int pixelFormat, unsigned int colorFormat);
         void onDrawImGui() override;
         //
 
@@ -56,17 +57,22 @@ class Texture : public ResourceVirtual
         //
 
         //  Attributes
-        vec3f size;                     //!< Texture size
+        vec3i size;                     //!< Texture size
         //
 
     private:
         static std::string defaultName;
 
-        void initOpenGL(const uint8_t* textureData, const std::string& textureName);
+        //void initOpenGL(const uint8_t* textureData, const std::string& textureName);
 
 
         //  Attributes
         GLuint texture;                 //!< Texture Id
         uint8_t configuration;          //!< Texture configuration byte
+
+#ifdef USE_IMGUI
+        int layerOverview;
+        GLuint* textureLayers;
+#endif
         //
 };

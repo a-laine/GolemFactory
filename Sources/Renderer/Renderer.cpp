@@ -26,7 +26,7 @@ bool RenderingWindowEnable = true;
 Renderer::Renderer() : 
 	normalViewer(nullptr), renderOption(RenderOption::DEFAULT),
 	vboGridSize(0), gridVAO(0), vertexbuffer(0), arraybuffer(0), colorbuffer(0), normalbuffer(0),
-	instanceDrawn(0), trianglesDrawn(0), lastShader(nullptr)
+	instanceDrawn(0), trianglesDrawn(0), lastShader(nullptr), lightClusterTexture("lightClusterTexture", 0)
 {
 	context = nullptr;
 	camera = nullptr;
@@ -136,30 +136,7 @@ void Renderer::initializeGrid(const unsigned int& gridSize,const float& elementS
 }
 void Renderer::initializeLightClusterBuffer(int width, int height, int depth)
 {
-	imageID = 0;
-	imageSize = vec3i(16,9,32);
-
-	const auto CheckError = [](const char* label)
-	{
-		GLenum error = glGetError();
-		if (!label)
-			return;
-		switch (error)
-		{
-			case GL_INVALID_ENUM: std::cout << label << " : GL_INVALID_ENUM" << std::endl; break;
-			case GL_INVALID_VALUE: std::cout << label << " : GL_INVALID_VALUE" << std::endl; break;
-			case GL_INVALID_OPERATION: std::cout << label << " : GL_INVALID_OPERATION" << std::endl; break;
-			case GL_INVALID_FRAMEBUFFER_OPERATION: std::cout << label << " : GL_INVALID_FRAMEBUFFER_OPERATION" << std::endl; break;
-			case GL_OUT_OF_MEMORY: std::cout << label << " : GL_OUT_OF_MEMORY" << std::endl; break;
-			case GL_STACK_UNDERFLOW: std::cout << label << " : GL_STACK_UNDERFLOW" << std::endl; break;
-			case GL_STACK_OVERFLOW: std::cout << label << " : GL_STACK_OVERFLOW" << std::endl; break;
-			default: break;
-		}
-	};
-
-	CheckError(nullptr);
-	glGenTextures(1, &imageID); CheckError("glGenTextures");
-	glBindTexture(GL_TEXTURE_3D, imageID); CheckError("glBindTexture");
+	vec3i imageSize = vec3i(64, 36, 128);
 
 	const int length = imageSize.x * imageSize.y * imageSize.z * 4;
 	uint32_t* buffer = new uint32_t[length];
@@ -175,21 +152,18 @@ void Renderer::initializeLightClusterBuffer(int width, int height, int depth)
 				buffer[id + 3] = 0xFFFFFFFF;
 			}
 
-	glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32UI, imageSize.x, imageSize.y, imageSize.z, 0, GL_RGBA_INTEGER, GL_UNSIGNED_INT, buffer); CheckError("glTexImage3D");
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE); CheckError("glTexParameteri WRAP_S");
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE); CheckError("glTexParameteri WRAP_T");
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE); CheckError("glTexParameteri WRAP_R");
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_NEAREST); CheckError("glTexParameteri MAG_FILTER");
-	glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_NEAREST); CheckError("glTexParameteri MIN_FILTER");
-	glBindTexture(GL_TEXTURE_3D, 0);
+	using TC = Texture::TextureConfiguration;
+	uint8_t config = (uint8_t)TC::TEXTURE_3D | (uint8_t)TC::MIN_NEAREST | (uint8_t)TC::MAG_NEAREST | (uint8_t)TC::WRAP_CLAMP;
+	lightClusterTexture.initialize("lightClusterTexture", imageSize, buffer, config, GL_RGBA32UI, GL_RGBA_INTEGER, GL_UNSIGNED_INT);
+	ResourceManager::getInstance()->addResource(&lightClusterTexture);
 	delete[] buffer;
-
 
 	m_sceneLights.m_near = 2.f;
 	m_sceneLights.m_far = 1500.f;
 	float logRatio = imageSize.z / log(m_sceneLights.m_far / m_sceneLights.m_near);
 	m_sceneLights.m_clusterDepthScale = logRatio;
 	m_sceneLights.m_clusterDepthBias = logRatio * log(m_sceneLights.m_near);
+	m_sceneLights.m_shadingConfiguration = 0x01;
 }
 void Renderer::initGlobalUniformBuffers()
 {
@@ -232,100 +206,6 @@ void Renderer::updateGlobalUniformBuffers()
 
 	glBindBuffer(GL_UNIFORM_BUFFER, m_environementLightingID);
 	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(m_environementLighting), &m_environementLighting);
-
-
-#if 0
-	bool needLightUpdate = false;
-	for (int i = 0; i < m_lightComponents.size() && !needLightUpdate; i++)
-		needLightUpdate |= m_lightComponents[i]->m_isUniformBufferDirty;
-
-	if (needLightUpdate)
-	{
-		m_sceneLights.m_lightCount = 0;
-		for (int i = 0; i < MAX_LIGHT_COUNT && i < m_lightComponents.size(); i++)
-		{
-			m_sceneLights.m_lights[i].m_color = m_lightComponents[i]->m_color;
-			m_sceneLights.m_lights[i].m_position = m_lightComponents[i]->getPosition();
-			m_sceneLights.m_lights[i].m_direction = m_lightComponents[i]->isPointLight() ? vec4f(0.f) : m_lightComponents[i]->getDirection();
-			m_sceneLights.m_lights[i].m_range = m_lightComponents[i]->m_range;
-			m_sceneLights.m_lights[i].m_intensity = m_lightComponents[i]->m_intensity;
-			m_sceneLights.m_lights[i].m_inCutOff = cos((float)DEG2RAD * m_lightComponents[i]->m_innerCutoffAngle);
-			m_sceneLights.m_lights[i].m_outCutOff = cos((float)DEG2RAD * m_lightComponents[i]->m_outerCutoffAngle);
-			m_lightComponents[i]->m_isUniformBufferDirty = false;
-			m_sceneLights.m_lightCount++;
-		}
-
-		glBindBuffer(GL_UNIFORM_BUFFER, m_lightsID);
-		glBufferSubData(GL_UNIFORM_BUFFER, 0, m_sceneLights.m_lightCount * sizeof(Light) + sizeof(vec4i), &m_sceneLights);
-		glBindBuffer(GL_UNIFORM_BUFFER, 0);
-	}
-#endif
-}
-void Renderer::CPULightClustering()
-{
-	const float nearFarRatio = m_sceneLights.m_far / m_sceneLights.m_near;
-	const vec3f invImageSize = vec3f(1.f / imageSize.x, 1.f / imageSize.y, 1.f / imageSize.z);
-	const int length = imageSize.x * imageSize.y * imageSize.z;
-	if (!cpuClusterBuffer)
-		cpuClusterBuffer = new vec4ui[length];
-
-#ifdef USE_IMGUI
-	if (!clustersMin)
-	{
-		clustersMin = new vec4f[length];
-		clustersMax = new vec4f[length];
-	}
-#endif
-
-	for (int i = 0; i < imageSize.x; i++)
-		for (int j = 0; j < imageSize.y; j++)
-			for (int k = 0; k < imageSize.z; k++)
-			{
-				vec4ui clusterLightMask = vec4ui(0xFFFFFFFF);
-				vec4f cellCornerMin, cellCornerMax;
-				if (m_lightClustering && m_sceneLights.m_lightCount > 0)
-				{
-					clusterLightMask = vec4ui(0);
-					float maxDepthBound = -pow(nearFarRatio, float(k + 1) * invImageSize.z) * m_sceneLights.m_near;
-					float minDepthBound;
-					if (k == 0)
-						minDepthBound = 1.0;
-					else
-						minDepthBound = -pow(nearFarRatio, float(k) * invImageSize.z) * m_sceneLights.m_near;
-
-					vec2f frustrumSize = vec2f(-m_sceneLights.m_tanFovX * maxDepthBound, -m_sceneLights.m_tanFovY * maxDepthBound);
-					vec2f cellSize = 2.0f * vec2f(frustrumSize.x * invImageSize.x, frustrumSize.y * invImageSize.y);
-
-					cellCornerMin = vec4f(i * cellSize.x - frustrumSize.x, j * cellSize.y - frustrumSize.y, maxDepthBound, 1);
-					cellCornerMax = vec4f(cellCornerMin.x + cellSize.x, cellCornerMin.y + cellSize.y, minDepthBound, 1);
-					vec4f cellCenter = 0.5f * (cellCornerMax + cellCornerMin);
-					vec4f cellHalfSize = 0.5f * (cellCornerMax - cellCornerMin);
-
-					// gather lights
-					for (int l = 0; l < m_sceneLights.m_lightCount; l++)
-					{
-						vec4f lightPosition = m_globalMatrices.view * m_sceneLights.m_lights[l].m_position;
-						vec4f closest = cellCenter + clamp(lightPosition - cellCenter, -cellHalfSize, cellHalfSize);
-						if ((lightPosition - closest).getNorm2() <= m_sceneLights.m_lights[l].m_range * m_sceneLights.m_lights[l].m_range)
-						{
-							unsigned int colorIndex = l >> 5;
-							unsigned int lightBit = l & 0x1F;
-							clusterLightMask[colorIndex] |= (1 << lightBit);
-						}
-					}
-				}
-
-				int id = k * imageSize.x * imageSize.y + j * imageSize.x + i;
-				cpuClusterBuffer[id] = clusterLightMask;
-
-				#ifdef USE_IMGUI
-					clustersMin[id] = cellCornerMin;
-					clustersMax[id] = cellCornerMax;
-				#endif
-			}
-
-	glBindTexture(GL_TEXTURE_3D, imageID);
-	glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32UI, imageSize.x, imageSize.y, imageSize.z, 0, GL_RGBA_INTEGER, GL_UNSIGNED_INT, cpuClusterBuffer);
 }
 
 
@@ -449,26 +329,24 @@ void Renderer::render(CameraComponent* renderCam)
 	}
 
 	// bind lights
+	//m_sceneLights.m_shadingConfiguration = m_lightClustering ? 0x03 : 0x02;
 	glBindBuffer(GL_UNIFORM_BUFFER, m_lightsID);
-	glBufferSubData(GL_UNIFORM_BUFFER, 0, m_sceneLights.m_lightCount * sizeof(Light) + 2*sizeof(vec4i), &m_sceneLights);
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, m_sceneLights.m_lightCount * sizeof(Light) + 32, &m_sceneLights);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 	if (lightClustering)
 	{
-		//CPULightClustering();
-		
-
 		lightClustering->enable();
 
 		GLint lightClusterLocation = glGetUniformLocation(lightClustering->getProgram(), "lightClusters");
 		if (lightClusterLocation >= 0)
 		{
-			glUniform1i(lightClusterLocation, 3);
-			glActiveTexture(GL_TEXTURE3);
-			glBindImageTexture(3, imageID, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32UI);
+			glUniform1i(lightClusterLocation, 0);
+			glActiveTexture(GL_TEXTURE0);
+			glBindImageTexture(0, lightClusterTexture.getTextureId(), 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32UI);
 		}
 
-		glDispatchCompute(4, 3, 4);
+		glDispatchCompute(16,12,16);
 		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 		lastShader = nullptr;
 		glUseProgram(0);
@@ -664,9 +542,9 @@ void Renderer::loadModelMatrix(Shader* shader, const ModelMatrix* model, const i
 			GLint lightClusterLocation = glGetUniformLocation(shader->getProgram(), "lightClusters");
 			if (lightClusterLocation >= 0)
 			{
-				glUniform1i(lightClusterLocation, 3);
-				glActiveTexture(GL_TEXTURE3);
-				glBindImageTexture(3, imageID, 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32UI);
+				glUniform1i(lightClusterLocation, 0);
+				glActiveTexture(GL_TEXTURE0);
+				glBindImageTexture(0, lightClusterTexture.getTextureId(), 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32UI);
 			}
 		}
 		lastShader = shader;
@@ -772,7 +650,23 @@ void Renderer::drawImGui(World& world)
 		ImGui::EndCombo();
 	}
 	ImGui::Checkbox("Light frustrum culling", &m_lightFrustrumCulling);
-	ImGui::Checkbox("Do light clustering", &m_lightClustering);
+
+	const auto& CheckboxFlag = [](const char* label, unsigned int& bitfield, int flag, unsigned int mask = 0xFFFFFFFF)
+	{
+		bool b = bitfield & (1 << flag);
+		if (ImGui::Checkbox(label, &b))
+		{
+			bitfield &= mask;
+			if (b)
+				bitfield |= 1 << flag;
+			else	
+				bitfield &= ~(1 << flag);
+		}
+	};
+
+	CheckboxFlag("Do light clustering", m_sceneLights.m_shadingConfiguration, 0);
+	CheckboxFlag("Draw light count heatmap", m_sceneLights.m_shadingConfiguration, 1);
+
 	ImGui::Checkbox("Draw light clusters", &m_drawClusters);
 
 
@@ -804,30 +698,16 @@ void Renderer::drawImGui(World& world)
 	CameraComponent* mainCamera = world.getMainCamera();
 	if (m_drawClusters && mainCamera && clustersMin && clustersMax)
 	{
-		//Debug::color = Debug::white;
+		Debug::color = Debug::white;
 		const float shrink = 1.f;
+		vec3i imageSize = lightClusterTexture.size;
 		for (int i = 0; i < imageSize.x; i++)
 			for (int j = 0; j < imageSize.y; j++)
 				for (int k = 0; k < imageSize.z; k++)
 				{
-					//if (k != 0) continue;
-
 					int id = i * imageSize.y * imageSize.z + j * imageSize.z + k;
 					vec4f cellCenter = 0.5f * (clustersMax[id] + clustersMin[id]);
 					vec4f cellHalfSize = 0.5f *(clustersMax[id] - clustersMin[id]);
-
-					if (m_sceneLights.m_lightCount)
-					{
-						Debug::color = Debug::black;
-						vec4ui lightMask = cpuClusterBuffer[id];
-						for (int l = 0; l < 4; l++)
-							for (int m = 0; m < 32; m++)
-							{
-								if ((lightMask[l] & (1 << m)) != 0)
-									Debug::color[l] += 1.0;
-							}
-					}
-
 					Debug::drawLineCube(mainCamera->getModelMatrix(), cellCenter - shrink * cellHalfSize, cellCenter + shrink * cellHalfSize);
 				}
 	}

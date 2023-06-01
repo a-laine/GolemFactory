@@ -26,7 +26,7 @@ LightClustering
 		layout(std140, binding = 2) uniform Lights
 		{
 		    int lightCount;
-			int pading0;
+			uint shadingConfiguration;
 			float clusterDepthScale;
 			float clusterDepthBias;
 			float near;
@@ -38,19 +38,18 @@ LightClustering
 	};
 	compute :
 	{
-		layout (local_size_x = 4, local_size_y = 3, local_size_z = 8) in;
+		layout (local_size_x = 4 , local_size_y = 3 , local_size_z = 8) in;
 
-		layout(r32ui, binding = 3) restrict uniform uimage3D lightClusters;
+		layout(r32ui, binding = 0) restrict uniform uimage3D lightClusters;
 
 		void main()
 		{
 			// aliases
-			uvec3 clusterArraySize = gl_NumWorkGroups;
 			ivec3 clusterIndex = ivec3(gl_GlobalInvocationID.xyz);
 			ivec3 clusterSize = imageSize(lightClusters);
 			vec3 invImageSize = vec3(1.0 / clusterSize.x, 1.0 / clusterSize.y, 1.0 / clusterSize.z);
 			float nearFarRatio = far / near;
-			uvec4 clusterLightMask = uvec4(0);
+			uvec4 clusterLightMask = uvec4(0xFFFFFFFF);
 			
 			if (lightCount > 0)
 			{
@@ -70,16 +69,23 @@ LightClustering
 				vec3 cellHalfSize = 0.5 * vec3(cellCornerMax - cellCornerMin);
 
 				// gather lights
-				for (int i = 0; i < lightCount; i++)
+				int colorIndex = 0;
+				int byteShift = 0;
+				for (int i = 0; i < lightCount && colorIndex < 4; i++)
 				{
 					vec3 lightPosition = (view * lights[i].m_position).xyz;
 					vec3 closest = cellCenter + clamp(lightPosition - cellCenter, -cellHalfSize, cellHalfSize);
 					vec3 delta = lightPosition - closest;
 					if (dot(delta, delta) <= lights[i].m_range * lights[i].m_range)
 					{
-						uint colorIndex = i >> 5;//i / 32;
-						uint lightBit = i & 0x1F;//i % 32;
-						clusterLightMask[colorIndex] |= (1 << lightBit);
+						clusterLightMask[colorIndex] &= ~(0xFF << byteShift);
+						clusterLightMask[colorIndex] |= (i << byteShift);
+						byteShift += 8;
+						if (byteShift >= 32)
+						{
+							byteShift = 0;
+							colorIndex++;
+						}
 					}
 				}
 			}

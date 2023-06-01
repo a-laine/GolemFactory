@@ -13,6 +13,10 @@
 #include "CameraComponent.h"
 
 #define MAX_LIGHT_COUNT 128
+#define CLUSTER_MAX_LIGHT 16
+#define CLUSTER_SIZE_X 64
+#define CLUSTER_SIZE_Y 36
+#define CLUSTER_SIZE_Z 128
 
 class Shader;
 class Mesh;
@@ -66,7 +70,7 @@ class Renderer : public Singleton<Renderer>
 		struct SceneLights
 		{
 			int m_lightCount;
-			int pading0;
+			unsigned int m_shadingConfiguration;;
 			float m_clusterDepthScale;
 			float m_clusterDepthBias;
 			float m_near;
@@ -160,7 +164,6 @@ class Renderer : public Singleton<Renderer>
 
 		void initGlobalUniformBuffers();
 		void updateGlobalUniformBuffers();
-		void CPULightClustering();
 		//
 
 		//  Attributes
@@ -185,20 +188,17 @@ class Renderer : public Singleton<Renderer>
 		std::vector<Batch*> batchClosedPool;
 
 		// global params
-		GLuint m_globalMatricesID, m_environementLightingID, m_lightsID;
+		GLuint m_globalMatricesID, m_environementLightingID, m_lightsID, m_clustersID;
 		GlobalMatrices m_globalMatrices;
 		EnvironementLighting m_environementLighting;
 		SceneLights m_sceneLights;
 
 		// light clustering param
-		GLuint imageID;
-		vec3i imageSize;
-		vec4ui* cpuClusterBuffer = nullptr;
+		Texture lightClusterTexture;
 
 #ifdef USE_IMGUI
 		bool m_drawLightDirection = false;
 		bool m_lightFrustrumCulling = true;
-		bool m_lightClustering = true;
 		bool m_drawClusters = false;
 
 		vec4f* clustersMin = nullptr;

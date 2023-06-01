@@ -51,7 +51,7 @@ DefaultTextured
 		layout(std140, binding = 2) uniform Lights
 		{
 		    int lightCount;
-			int pading0;
+			uint shadingConfiguration;
 			float clusterDepthScale;
 			float clusterDepthBias;
 			float near;
@@ -153,14 +153,12 @@ DefaultTextured
 	};
 	fragment :
 	{
-		//	uniform
+		// textures
 		uniform sampler2D albedo;   //texture unit 0
 		uniform sampler2D emmisive; //texture unit 1
 		uniform sampler2D metalic;  //texture unit 2
 		
-		
-		
-		//uniform usampler3D lightClusters;
+		// images
 		layout(rgba32ui, binding = 3) readonly uniform uimage3D lightClusters;
 		
 		// input
@@ -193,57 +191,6 @@ DefaultTextured
 			vec2 floatIndex= ((fragmentViewPosition.xy + frustrumSize) / (2.0 * frustrumSize)) * clusterSize.xy;
 			clusterIndex.xy = ivec2(floatIndex);
 			clusterIndex = clamp(clusterIndex, ivec3(0), clusterSize - ivec3(1));
-			
-			// show light count
-			#if 1
-			float sum = 0;
-				uvec4 clusterData = imageLoad(lightClusters, clusterIndex);
-				for (int i = 0; i < 4; i++)
-					for (int j = 0; j < 32; j++)
-					{
-						if ((clusterData[i] & (1 << j)) != 0)
-						{
-							clusterColor[i] += 0.1;
-							sum += 0.1;
-						}
-					}
-				//clusterColor = vec4(sum);
-			
-			// raw data from cluster
-			#elif 0 
-				uvec4 clusterData = imageLoad(lightClusters, clusterIndex);
-				clusterColor.x = float(clusterData.x) / clusterSize.x;
-				//clusterColor.y = float(clusterData.y)/clusterSize.y;
-				//clusterColor.z = float(clusterData.z)/clusterSize.z;
-				
-			// show clusters
-			#elif 0 
-				clusterColor.x = mix(0.0 , 1.0 , clusterIndex.x / (clusterSize.x - 1.0));
-				clusterColor.y = mix(0.0 , 1.0 , clusterIndex.y / (clusterSize.y - 1.0));
-				clusterColor.z = mix(0.0 , 1.0 , clusterIndex.z / (clusterSize.z - 1.0));
-			
-			// show depth layer
-			#elif 0 
-				float layerPerColor = 0.25 * clusterSize.z;
-				if (clusterIndex.z < layerPerColor)
-					clusterColor = mix(vec4(0), vec4(1,0,0,1), clusterIndex.z / layerPerColor);
-				else if (clusterIndex.z < 2 * layerPerColor)
-					clusterColor = mix(vec4(1,0,0,1), vec4(0,1,0,1), (clusterIndex.z - layerPerColor) / layerPerColor);
-				else if (clusterIndex.z < 3 * layerPerColor)
-					clusterColor = mix(vec4(0,1,0,1), vec4(0,0,1,1), (clusterIndex.z - 2 * layerPerColor) / layerPerColor);
-				else
-					clusterColor = mix(vec4(0,0,1,1), vec4(1,1,1,1), (clusterIndex.z - 3 * layerPerColor) / layerPerColor);
-					
-			// show unic clusters
-			#elif 0 
-				int hash = clusterIndex.x + clusterIndex.y;
-				bool odd = (hash & 0x1) != 0;
-				bool oddz = (clusterIndex.z & 0x1) != 0;
-				clusterColor.x = (odd ? 0.0 : 1.0);
-				clusterColor.y = oddz ?(odd ? 1.0 : 0.0) : (odd ? 0.0 : 1.0);
-				clusterColor.z = (!oddz && odd) ? 1.0 : 0.0;
-			#endif
-			
 			return clusterIndex;
 			
 		}
@@ -255,7 +202,7 @@ DefaultTextured
 			vec4 lightRay = fragmentPosition - lights[lightIndex].m_position;
 			float d = length(lightRay);
 			float u = d / lights[lightIndex].m_range;
-			if (u > 1.0) return; // not that usefull if clustering is well done
+			//if (u > 1.0) return; // not that usefull if clustering is well done
 			
 			lightRay /= d;
 			vec4 lightColor = lights[lightIndex].m_color;
@@ -306,21 +253,62 @@ DefaultTextured
 			{
 				ivec3 clusterIndex = ComputeClusterIndex();
 				uvec4 clusterData = imageLoad(lightClusters, clusterIndex);
-				for (int i = 0; i < 4; i++)
-				{
-					if (clusterData[i] == 0)
-						continue;
+				int lightSum = 0;
 				
-					for (int j = 0; j < 32; j++)
+				if ((shadingConfiguration & 0x01) != 0)
+				{
+					for (int i = 0; i < 4; i++)
 					{
-						if ((clusterData[i] & (1 << j)) != 0)
-							ProcessLight(32 * i + j, albedoColor, metalicParam.x, viewDir);
+						int l0 =  int(clusterData[i] & 0xFF);
+						if (l0 == 0xFF) break;
+						lightSum++;
+						ProcessLight(l0, albedoColor, metalicParam.x, viewDir);
+							
+						int l1 = int((clusterData[i] >> 8) & 0xFF);
+						if (l1 == 0xFF) break;
+						lightSum++;
+						ProcessLight(l1, albedoColor, metalicParam.x, viewDir);
+							
+						int l2 = int((clusterData[i] >> 16) & 0xFF);
+						if (l2 == 0xFF) break;
+						lightSum++;
+						ProcessLight(l2, albedoColor, metalicParam.x, viewDir);
+							
+						int l3 = int((clusterData[i] >> 24) & 0xFF);
+						if (l3 == 0xFF) break;
+						lightSum++;
+						ProcessLight(l3, albedoColor, metalicParam.x, viewDir);
+					}					
+				}
+				else
+				{
+					for (int i = 0; i < lightCount; i++)
+					{
+						lightSum++;
+						ProcessLight(i, albedoColor, metalicParam.x, viewDir);
+					}
+				}
+				
+				if (shadingConfiguration != 0)
+				{
+					if ((shadingConfiguration & 0x02) != 0)
+					{
+						if (lightSum == 0.0)
+							clusterColor = vec4(0.0);
+						else if (lightSum <= 8)
+							clusterColor = vec4(0.0 , 1.0 , 0.0 , 0.0);
+						else if (lightSum <= 14)
+							clusterColor = vec4(1.0 , 1.0 , 0.0 , 0.0);
+						else
+							clusterColor = vec4(1.0 , 0.0 , 0.0 , 0.0);				
 					}
 				}
 			}
 			
-			//fragColor = 0.5 * fragmentColor + 0.5 * clusterColor;
-			fragColor = fragmentColor;
+			if ((shadingConfiguration & 0x02) != 0)
+				fragColor = 0.5 * fragmentColor + 0.5 * clusterColor;
+			else
+				fragColor = fragmentColor;
 		}
 	};
 } 
