@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Env_Bone_Tail_01",
+        "meshName": "PolygonDungeon/SM_Env_Bone_Tail_01",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

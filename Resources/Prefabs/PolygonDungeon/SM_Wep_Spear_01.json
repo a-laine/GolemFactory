@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Wep_Spear_01",
+        "meshName": "PolygonDungeon/SM_Wep_Spear_01",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

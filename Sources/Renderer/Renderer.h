@@ -10,9 +10,9 @@
 #include <Utiles/Singleton.h>
 #include <World/World.h>
 
-#include "CameraComponent.h"
+#include <Scene/FrustrumSceneQuerry.h>
 
-#define MAX_LIGHT_COUNT 128
+#define MAX_LIGHT_COUNT 255
 #define CLUSTER_MAX_LIGHT 16
 #define CLUSTER_SIZE_X 64
 #define CLUSTER_SIZE_Y 36
@@ -21,6 +21,9 @@
 class Shader;
 class Mesh;
 class LightComponent;
+class OccluderComponent;
+class CameraComponent;
+//class Debug::Vertex;
 
 class Renderer : public Singleton<Renderer>
 {
@@ -77,15 +80,26 @@ class Renderer : public Singleton<Renderer>
 			float m_far;
 			float m_tanFovX;
 			float m_tanFovY;
+
 			Light m_lights[MAX_LIGHT_COUNT];
+		};
+		struct DebugShaderUniform
+		{
+			vec4f vertexNormalColor;
+			vec4f faceNormalColor;
+			float wireframeEdgeFactor;
+			float occlusionResultDrawAlpha;
+			float occlusionResultCuttoff;
 		};
 		//
 
 		//  Public functions
 		void initializeGrid(const unsigned int& gridSize, const float& elementSize = 1.f, const vec4f& color = vec4f(0.4f, 0.2f, 0.1f, 1.f));
 		void initializeLightClusterBuffer(int width, int height, int depth);
+		void initializeOcclusionBuffers(int width, int height);
 		void render(CameraComponent* renderCam);
 		void renderHUD();
+		void swap();
 		//
 
 		//  Set/get functions
@@ -101,6 +115,9 @@ class Renderer : public Singleton<Renderer>
 		void setEnvDirectionalLightDirection(vec4f direction);
 		void setEnvDirectionalLightColor(vec4f color);
 
+		double getElapsedTime() const;
+		double getAvgElapsedTime() const;
+
 		CameraComponent* getCamera();
 		World* getWorld();
 		RenderContext* getContext();
@@ -115,6 +132,8 @@ class Renderer : public Singleton<Renderer>
 		vec4f getEnvAmbientColor() const;
 		vec4f getEnvDirectionalLightDirection() const;
 		vec4f getEnvDirectionalLightColor() const;
+
+		void fullScreenDraw(Texture* texture, Shader* shader = nullptr, float alpha = 1.f);
 		//
 
 		//	Render function
@@ -156,7 +175,6 @@ class Renderer : public Singleton<Renderer>
 		//
 
 		//	Protected functions
-		//void loadModelMatrix(Shader* shader, const mat4f* model, const mat4f* rotMatrix, const int& modelSize = 0);
 		void loadModelMatrix(Shader* shader, const ModelMatrix* model, const int& modelSize = 1);
 		void loadVAO(const GLuint& vao);
 
@@ -166,6 +184,13 @@ class Renderer : public Singleton<Renderer>
 		void updateGlobalUniformBuffers();
 		//
 
+		// Render stages
+		void CollectEntitiesBindLights();
+		void LightClustering();
+		void DynamicBatching();
+		void OcclusionCulling();
+		//
+
 		//  Attributes
 		CameraComponent* camera;
 		World* world;
@@ -173,36 +198,66 @@ class Renderer : public Singleton<Renderer>
 		std::map<ShaderIdentifier, Shader*> defaultShader;
 		RenderOption renderOption;
 
+		// grid and usefull opengl
 		bool drawGrid;
 		unsigned int vboGridSize;
 		GLuint gridVAO, vertexbuffer, arraybuffer, colorbuffer, normalbuffer;
 		vec4f m_gridColor;
 		unsigned int instanceDrawn, drawCalls, trianglesDrawn;
+		GLuint lastVAO, fullscreenVAO;
 		Shader* lastShader;
-		GLuint lastVAO;
+		Shader* fullscreenTriangle;
+		Shader* occlusionResultDraw;
 
-		bool m_enableInstancing = true;
+		// render queue - queries - collector
 		std::vector<DrawElement> renderQueue;
+		FrustrumSceneQuerry sceneQuery;
+		VirtualEntityCollector collector;
+
+		// batching - instancing
+		bool m_enableInstancing = true;
+		bool m_hasInstancingShaders = false;
 		std::map<std::pair<Shader*, Mesh*>, Batch*> batchOpened;
 		std::vector<Batch*> batchFreePool;
 		std::vector<Batch*> batchClosedPool;
 
+		// occlusion
+		bool m_enableOcclusionCulling = true;
+		std::vector<std::pair<float, OccluderComponent*>> m_occluders;
+		vec2i m_occlusionBufferSize;
+		float* m_occlusionCenterX = nullptr;
+		float* m_occlusionCenterY = nullptr;
+		float* m_occlusionDepth = nullptr;
+		std::vector<vec4f> occluderScreenVertices;
+		uint32_t* m_occlusionDepthColor = nullptr;
+		Texture occlusionTexture;
+		unsigned int occluderTriangles, occluderRasterizedTriangles, occluderPixelsTest, occlusionCulledInstances;
+
 		// global params
-		GLuint m_globalMatricesID, m_environementLightingID, m_lightsID, m_clustersID;
+		GLuint m_globalMatricesID, m_environementLightingID, m_lightsID, m_clustersID, m_DebugShaderUniformID;
 		GlobalMatrices m_globalMatrices;
 		EnvironementLighting m_environementLighting;
 		SceneLights m_sceneLights;
+		DebugShaderUniform m_debugShaderUniform;
 
 		// light clustering param
 		Texture lightClusterTexture;
+
+		// timing
+		unsigned int m_timerQueryID;
+		float m_GPUelapsedTime, m_GPUavgTime;
+		float m_OcclusionElapsedTime, m_OcclusionAvgTime;
+
 
 #ifdef USE_IMGUI
 		bool m_drawLightDirection = false;
 		bool m_lightFrustrumCulling = true;
 		bool m_drawClusters = false;
+		bool m_drawOcclusionBuffer = false;
 
-		vec4f* clustersMin = nullptr;
-		vec4f* clustersMax = nullptr;
+		//vec4f* clustersMin = nullptr;
+		//vec4f* clustersMax = nullptr;
+		//std::vector<Debug::Vertex> clusterLines;
 #endif //USE_IMGUI
 		//
 };

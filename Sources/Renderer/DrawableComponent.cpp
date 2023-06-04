@@ -4,6 +4,8 @@
 #include <Resources/Mesh.h>
 #include <Resources/Shader.h>
 #include <Utiles/Debug.h>
+#include <Utiles/Parser/Variant.h>
+#include <Utiles/ConsoleColor.h>
 
 
 DrawableComponent::DrawableComponent(const std::string& meshName, const std::string& shaderName)
@@ -22,6 +24,53 @@ DrawableComponent::~DrawableComponent()
 {
 	ResourceManager::getInstance()->release(m_mesh);
 	ResourceManager::getInstance()->release(m_shader);
+}
+
+bool DrawableComponent::load(Variant& jsonObject, const std::string& objectName)
+{
+	if (jsonObject.getType() == Variant::MAP)
+	{
+		std::string meshName, shaderName;
+		auto it1 = jsonObject.getMap().find("meshName");
+		if (it1 != jsonObject.getMap().end() && it1->second.getType() == Variant::STRING)
+		{
+			meshName = it1->second.toString();
+			if (meshName.find('.') == std::string::npos)
+				meshName += ".fbx";
+		}
+
+		it1 = jsonObject.getMap().find("shaderName");
+		if (it1 != jsonObject.getMap().end() && it1->second.getType() == Variant::STRING)
+			shaderName = it1->second.toString();
+
+		if (!meshName.empty() && !shaderName.empty())
+		{
+			m_mesh = ResourceManager::getInstance()->getResource<Mesh>(meshName);
+			m_shader = ResourceManager::getInstance()->getResource<Shader>(shaderName);
+			return true;
+		}
+		else
+		{
+			if (ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
+			{
+				if (meshName.empty())
+				{
+					std::cout << ConsoleColor::getColorString(ConsoleColor::Color::RED) << "ERROR   : EntityFactory : " << objectName << " : DrawableComponent loading : no mesh name" << std::flush;
+					std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
+				}
+				if (shaderName.empty())
+				{
+					std::cout << ConsoleColor::getColorString(ConsoleColor::Color::RED) << "ERROR   : EntityFactory : " << objectName << " : DrawableComponent loading : no shader name" << std::flush;
+					std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
+				}
+			}
+		}
+	}
+	return false;
+}
+void DrawableComponent::save(Variant& jsonObject)
+{
+
 }
 
 void DrawableComponent::setShader(const std::string& shaderName)

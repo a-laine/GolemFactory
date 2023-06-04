@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Trap_Swing_Blade_Housing_01",
+        "meshName": "PolygonDungeon/SM_Trap_Swing_Blade_Housing_01",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

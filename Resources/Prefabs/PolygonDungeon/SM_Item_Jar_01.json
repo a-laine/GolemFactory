@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Item_Jar_01",
+        "meshName": "PolygonDungeon/SM_Item_Jar_01",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

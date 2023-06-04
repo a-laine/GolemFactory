@@ -8,10 +8,6 @@
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-/*#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/rotate_vector.hpp>
-#include <glm/gtc/quaternion.hpp>*/
 
 #include <iostream>
 #include <list>
@@ -23,6 +19,7 @@
 #include "Events/EventHandler.h"
 #include "Renderer/Renderer.h"
 #include "Renderer/DrawableComponent.h"
+#include "Renderer/CameraComponent.h"
 #include "Animation/Animator.h"
 #include "Generators/HouseGenerator.h"
 #include "Resources/Loader/SkeletonSaver.h"
@@ -249,6 +246,7 @@ int main()
 		}
 #endif
 
+		Renderer::getInstance()->swap();
 		context->swapBuffers();
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
@@ -770,10 +768,11 @@ void initManagers()
 	Renderer::getInstance()->setShader(Renderer::INSTANCE_ANIMATABLE_BB, ResourceManager::getInstance()->getResource<Shader>("skeletonBB"));
 
 	Renderer::getInstance()->lightClustering = ResourceManager::getInstance()->getResource<Shader>("lightClustering");
-	Renderer::getInstance()->initializeLightClusterBuffer(64, 64, 64);
+	Renderer::getInstance()->initializeLightClusterBuffer(64, 36, 128);
+	Renderer::getInstance()->initializeOcclusionBuffers(256, 144);
 	
 	// Debug
-	Debug::getInstance()->initialize("Shapes/point", "Shapes/box", "Shapes/sphere.obj", "Shapes/capsule", "Shapes/point", "Shapes/segment", "default", "wired");
+	Debug::getInstance()->initialize("Shapes/point", "Shapes/box", "Shapes/sphere.obj", "Shapes/capsule", "Shapes/point", "Shapes/segment", "default", "wired", "Shapes/multipleSegment");
 
 	// Animator
 	Animator::getInstance();
@@ -945,10 +944,12 @@ void updates(float elapseTime)
 	}
 
 	//	Update widgets
-	averageCompleteTime = 0.99f * averageCompleteTime + 0.01f * completeTime;
+	int GPUdt = (int)Renderer::getInstance()->getElapsedTime();
+	int GPUavg = (int)Renderer::getInstance()->getAvgElapsedTime();
+	averageCompleteTime = 0.95f * averageCompleteTime + 0.05f * completeTime;
 	WidgetManager::getInstance()->setString("runtime speed",
-		"FPS : " + std::to_string((int)(1000.f / completeTime)) + "\navg : " + std::to_string((int)(1000.f / averageCompleteTime)) +
-		"\n\nTime : " + ToolBox::to_string_with_precision(completeTime) + " ms\navg : " + ToolBox::to_string_with_precision(averageCompleteTime) + " ms");
+		"CPU: " + std::to_string((int)(averageCompleteTime)) + "ms (" + std::to_string((int)(completeTime)) +
+		")\nGPU: " + std::to_string(GPUavg) + "ms (" + std::to_string(GPUdt) + ")\n\n\n");
 	WidgetManager::getInstance()->setString("drawcalls",
 		"Instances :\n  " + std::to_string(Renderer::getInstance()->getNbDrawnInstances() + WidgetManager::getInstance()->getNbDrawnWidgets()) +
 		"\nDrawCalls :\n  " + std::to_string(Renderer::getInstance()->getNbDrawCalls()) +

@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Env_Tree_Dandelion_02",
+        "meshName": "PolygonDungeon/SM_Env_Tree_Dandelion_02",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

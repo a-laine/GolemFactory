@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Env_Wall_Wood_Beams_01",
+        "meshName": "PolygonDungeon/SM_Env_Wall_Wood_Beams_01",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Prop_Candle_Chandelier_02_Broken",
+        "meshName": "PolygonDungeon/SM_Prop_Candle_Chandelier_02_Broken",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

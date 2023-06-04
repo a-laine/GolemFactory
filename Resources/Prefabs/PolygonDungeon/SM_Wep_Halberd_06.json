@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Wep_Halberd_06",
+        "meshName": "PolygonDungeon/SM_Wep_Halberd_06",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

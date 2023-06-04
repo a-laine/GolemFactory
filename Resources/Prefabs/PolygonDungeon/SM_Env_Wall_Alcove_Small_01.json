@@ -1,7 +1,11 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Env_Wall_Alcove_Small_01",
+        "meshName": "PolygonDungeon/SM_Env_Wall_Alcove_Small_01",
         "shaderName": "defaultTextured"
     },
+	"occluderComponent": {
+		"meshName" : "PolygonDungeon/AlcoveSmall01Occluder",
+		"backfaceCulling" : true
+	},
     "prefabEntities": []
 }

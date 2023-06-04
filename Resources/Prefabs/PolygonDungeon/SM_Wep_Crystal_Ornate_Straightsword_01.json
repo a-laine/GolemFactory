@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Wep_Crystal_Ornate_Straightsword_01",
+        "meshName": "PolygonDungeon/SM_Wep_Crystal_Ornate_Straightsword_01",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

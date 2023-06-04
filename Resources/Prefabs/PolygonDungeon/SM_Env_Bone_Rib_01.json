@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Env_Bone_Rib_01",
+        "meshName": "PolygonDungeon/SM_Env_Bone_Rib_01",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

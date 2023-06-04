@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Prop_Bricks_02",
+        "meshName": "PolygonDungeon/SM_Prop_Bricks_02",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

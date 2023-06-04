@@ -8,7 +8,11 @@
 FrustrumSceneQuerry::FrustrumSceneQuerry(const vec4f& position, const vec4f& direction, const vec4f& verticalDir, const vec4f& leftDir, 
 	float verticalAngle, float contextRatio)
 {
-	constexpr float farDistance = 1500.f;
+	Set(position, direction, verticalDir, leftDir, verticalAngle, contextRatio);
+}
+
+void FrustrumSceneQuerry::Set(const vec4f& position, const vec4f& direction, const vec4f& verticalDir, const vec4f& leftDir, float verticalAngle, float contextRatio, float farDistance)
+{
 	float a1 = 0.5f * verticalAngle;
 	float ratio = contextRatio;
 	float ca1 = cos(a1);
@@ -109,10 +113,57 @@ std::vector<const NodeVirtual*>& FrustrumSceneQuerry::getResult() { return resul
 
 bool FrustrumSceneQuerry::TestSphere(vec4f center, float radius)
 {
-	// shphere against frustrum planes
+	// sphere against frustrum planes
 	for (int i = 0; i < 6; i++)
 	{
 		if (vec4f::dot(frustrumPlaneNormals[i], center) > radius)
+			return false;
+	}
+	return true;
+}
+bool FrustrumSceneQuerry::TestAABB(vec4f min, vec4f max)
+{
+	vec4f center = 0.5f * (max + min);
+	vec4f halfSize = 0.5f * (max - min);
+	vec4f s; vec4b mask;
+
+	// AABB against frustrum planes
+	for (int i = 0; i < 6; i++)
+	{
+		mask = vec4f::lessThan(frustrumPlaneNormals[i], vec4f::zero);
+		s = vec4f::maskSelect(mask, -halfSize, halfSize);
+		if (vec4f::dot(frustrumPlaneNormals[i], center - s) > 0.f)
+			return false;
+	}
+
+	// frustrum corners against box planes
+	vec4f axis, p1, p2;
+	for (int i = 0; i < 3; i++)
+	{
+		axis = vec4f::zero;
+		axis[i] = 1.f;
+		s = vec4f::dot(halfSize, axis) * axis;
+		p1 = center + s;
+		p2 = center - s;
+
+		int failCount = 0;
+		for (int j = 0; j < 5; j++)
+		{
+			if (vec4f::dot(frustrumCorners[j] - p1, axis) > 0.f)
+				failCount++;
+			else break;
+		}
+		if (failCount == 5)
+			return false;
+
+		failCount = 0;
+		for (int j = 0; j < 5; j++)
+		{
+			if (vec4f::dot(frustrumCorners[j] - p1, axis) > 0.f)
+				failCount++;
+			else break;
+		}
+		if (failCount == 5)
 			return false;
 	}
 	return true;

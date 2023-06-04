@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Prop_Toture_IronMaiden_01",
+        "meshName": "PolygonDungeon/SM_Prop_Toture_IronMaiden_01",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": [
@@ -22,7 +22,7 @@
             "prefabName": "",
             "childs": [],
             "drawableComponent": {
-                "meshName": "SM_Prop_Toture_IronMaiden_Door_L",
+                "meshName": "PolygonDungeon/SM_Prop_Toture_IronMaiden_Door_L",
                 "shaderName": "defaultTextured"
             }
         },
@@ -44,7 +44,7 @@
             "prefabName": "",
             "childs": [],
             "drawableComponent": {
-                "meshName": "SM_Prop_Toture_IronMaiden_Door_R",
+                "meshName": "PolygonDungeon/SM_Prop_Toture_IronMaiden_Door_R",
                 "shaderName": "defaultTextured"
             }
         }

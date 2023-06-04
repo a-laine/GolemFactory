@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Env_Mushroom_Small_03",
+        "meshName": "PolygonDungeon/SM_Env_Mushroom_Small_03",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

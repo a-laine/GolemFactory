@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Prop_Goblin_Fence_02",
+        "meshName": "PolygonDungeon/SM_Prop_Goblin_Fence_02",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

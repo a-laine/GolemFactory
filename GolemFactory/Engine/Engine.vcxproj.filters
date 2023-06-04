@@ -152,10 +152,10 @@
     <ClCompile Include="..\..\Sources\Renderer\DrawableComponent.cpp">
       <Filter>Fichiers sources\Renderer</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Sources\Renderer\Renderer.cpp">
+    <ClCompile Include="..\..\Sources\Renderer\RendererBasic.cpp">
       <Filter>Fichiers sources\Renderer</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Sources\Renderer\Renderer2.cpp">
+    <ClCompile Include="..\..\Sources\Renderer\RendererDrawCommands.cpp">
       <Filter>Fichiers sources\Renderer</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Sources\Terrain\Chunk.cpp">
@@ -397,6 +397,12 @@
     </ClCompile>
     <ClCompile Include="..\..\Sources\Renderer\Lighting\LightComponent.cpp">
       <Filter>Fichiers sources\Renderer\Lighting</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Sources\Renderer\OccluderComponent.cpp">
+      <Filter>Fichiers sources\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Sources\Renderer\RendererRenderStages.cpp">
+      <Filter>Fichiers sources\Renderer</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -795,6 +801,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Sources\Renderer\Lighting\LightComponent.h">
       <Filter>Fichiers sources\Renderer\Lighting</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Renderer\OccluderComponent.h">
+      <Filter>Fichiers sources\Renderer</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

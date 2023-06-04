@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Env_Pillar_Square_Base_01",
+        "meshName": "PolygonDungeon/SM_Env_Pillar_Square_Base_01",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

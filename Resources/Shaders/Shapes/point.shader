@@ -2,7 +2,7 @@ Point
 {	
 	uniform :
 	{
-		matrixArray : "mat4";
+		matrixArray : "struct array32";
 		
 		overrideColor : "vec4";
 	};

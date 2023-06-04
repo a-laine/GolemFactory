@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Item_Coins_04",
+        "meshName": "PolygonDungeon/SM_Item_Coins_04",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

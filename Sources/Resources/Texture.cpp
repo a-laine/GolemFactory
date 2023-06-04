@@ -28,10 +28,22 @@ Texture::Texture(const std::string& textureName, uint8_t conf)
     textureLayers = nullptr;
 #endif
 }
+Texture::Texture()
+    : ResourceVirtual("unknown", ResourceVirtual::ResourceType::TEXTURE)
+    , texture(0), configuration(0)
+{
+    state = State::INVALID;
+
+#ifdef USE_IMGUI
+    layerOverview = 0;
+    textureLayers = nullptr;
+#endif
+}
 Texture::~Texture()
 {
-	glDeleteTextures(1, &texture);
-
+    if (glIsTexture(texture))
+	    glDeleteTextures(1, &texture);
+    
 #ifdef USE_IMGUI
     if (textureLayers)
     {
@@ -229,6 +241,7 @@ GLuint* Texture::getTextureIdPointer() { return &texture; }
 void Texture::initialize(const std::string& textureName, const vec3i& imageSize, const void* data, uint8_t config, unsigned int internalFormat, unsigned int pixelFormat, unsigned int colorFormat)
 {
     GF_ASSERT(state == INVALID);
+    name = textureName;
     state = LOADING;
     size = imageSize;
     configuration = config;
@@ -373,6 +386,38 @@ void Texture::initialize(const std::string& textureName, const vec3i& imageSize,
     if (glIsTexture(texture))
         state = VALID;
     else state = INVALID;
+}
+
+void Texture::update(const void* data, unsigned int pixelFormat, unsigned int colorFormat)
+{
+    unsigned int type = GL_TEXTURE_2D;
+    switch ((TextureConfiguration)(configuration & (uint8_t)TextureConfiguration::TYPE_MASK))
+    {
+        case TextureConfiguration::TEXTURE_1D:
+            glBindTexture(GL_TEXTURE_1D, texture);
+            glTexSubImage1D(GL_TEXTURE_1D, 0, 0, size.x, pixelFormat, colorFormat, data);
+            //CheckError("glTexSubImage1D");
+            type = GL_TEXTURE_1D;
+            break;
+
+        case TextureConfiguration::TEXTURE_2D:
+            glBindTexture(GL_TEXTURE_2D, texture);
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, size.x, size.y, pixelFormat, colorFormat, data);
+            //CheckError("glTexSubImage2D");
+            type = GL_TEXTURE_2D;
+            break;
+
+        case TextureConfiguration::TEXTURE_3D:
+            glBindTexture(GL_TEXTURE_3D, texture);
+            glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, size.x, size.y, size.z, pixelFormat, colorFormat, data);
+            //CheckError("glTexSubImage3D");
+            type = GL_TEXTURE_3D;
+            break;
+
+        default:
+            return;
+    }
+    glBindTexture(type, 0);
 }
 
 void Texture::onDrawImGui()

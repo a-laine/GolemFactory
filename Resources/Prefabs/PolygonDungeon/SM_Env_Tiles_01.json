@@ -1,7 +1,11 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Env_Tiles_01",
+        "meshName": "PolygonDungeon/SM_Env_Tiles_01",
         "shaderName": "defaultTextured"
     },
+	"occluderComponent": {
+		"meshName" : "PolygonDungeon/SM_Env_Tile_Simple_01",
+		"backfaceCulling" : true
+	},
     "prefabEntities": []
 }

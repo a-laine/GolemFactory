@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Prop_Chain_07",
+        "meshName": "PolygonDungeon/SM_Prop_Chain_07",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

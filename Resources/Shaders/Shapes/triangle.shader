@@ -2,7 +2,7 @@ Triangle
 {
 	uniform :
 	{
-		matrixArray : "mat4";
+		matrixArray : "struct array32";
 		
 		vector1 : "vec4";
 		vector2 : "vec4";

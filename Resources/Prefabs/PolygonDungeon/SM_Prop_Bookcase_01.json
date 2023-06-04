@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Prop_Bookcase_01",
+        "meshName": "PolygonDungeon/SM_Prop_Bookcase_01",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

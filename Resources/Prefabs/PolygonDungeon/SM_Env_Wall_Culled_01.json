@@ -1,7 +1,11 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Env_Wall_Culled_01",
+        "meshName": "PolygonDungeon/SM_Env_Wall_Culled_01",
         "shaderName": "defaultTextured"
     },
+	"occluderComponent": {
+		"meshName" : "PolygonDungeon/SM_Env_Wall_01_Texture",
+		"backfaceCulling" : true
+	},
     "prefabEntities": []
 }

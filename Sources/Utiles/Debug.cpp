@@ -26,7 +26,8 @@ const vec4f Debug::darkGreen = vec4f(0.f, 0.25f, 0.f, 1.f);
 //
 
 //  Default
-Debug::Debug() : renderer(nullptr), pointMesh(nullptr), cubeMesh(nullptr), sphereMesh(nullptr), capsuleMesh(nullptr), pointShader(nullptr), segmentShader(nullptr), defaultShader(nullptr), wiredShader(nullptr)
+Debug::Debug() : renderer(nullptr), pointMesh(nullptr), cubeMesh(nullptr), sphereMesh(nullptr), capsuleMesh(nullptr), pointShader(nullptr), 
+	segmentShader(nullptr), defaultShader(nullptr), wiredShader(nullptr), multipleSegmentShader(nullptr)
 {}
 Debug::~Debug()
 {
@@ -39,13 +40,19 @@ Debug::~Debug()
 	ResourceManager::getInstance()->release(segmentShader);
 	ResourceManager::getInstance()->release(defaultShader);
 	ResourceManager::getInstance()->release(wiredShader);
+	ResourceManager::getInstance()->release(multipleSegmentShader);
+
+	for (auto& it : This->vertexScratchBuffers)
+	{
+		glDeleteBuffers(1, &it.vbo);
+	}
 }
 //
 
 //	Public functions
 void Debug::initialize(const std::string& pointMeshName, const std::string& cubeMeshName, const std::string& sphereMeshName, 
 	const std::string& capsuleMeshName, const std::string& pointShaderName, const std::string& segmentShaderName, 
-	const std::string& defaultShaderName, const std::string& wiredShaderName)
+	const std::string& defaultShaderName, const std::string& wiredShaderName, const std::string& multipleSegmentShaderName)
 {
 	renderer = Renderer::getInstance();
 	pointMesh = ResourceManager::getInstance()->getResource<Mesh>(pointMeshName);
@@ -57,6 +64,7 @@ void Debug::initialize(const std::string& pointMeshName, const std::string& cube
 	segmentShader = ResourceManager::getInstance()->getResource<Shader>(segmentShaderName);
 	defaultShader = ResourceManager::getInstance()->getResource<Shader>(defaultShaderName);
 	wiredShader = ResourceManager::getInstance()->getResource<Shader>(wiredShaderName);
+	multipleSegmentShader = ResourceManager::getInstance()->getResource<Shader>(multipleSegmentShaderName);
 }
 void Debug::setDepthTest(bool enable)
 {
@@ -72,20 +80,24 @@ void Debug::drawLineCube(const mat4f& transform, const vec4f& size)
 	vec4f z = size.z * vec4f(transform[2]);
 	vec4f center = vec4f(transform[3]);
 
-	drawLine(center + x + y + z, center + x + y - z);
-	drawLine(center + x - y + z, center + x - y - z);
-	drawLine(center - x + y + z, center - x + y - z);
-	drawLine(center - x - y + z, center - x - y - z);
+	std::vector<Vertex> vertices;
+	vertices.reserve(24);
+	vertices.push_back({ center + x + y + z, color }); vertices.push_back({ center + x + y - z, color });
+	vertices.push_back({ center + x - y + z, color }); vertices.push_back({ center + x - y - z, color });
+	vertices.push_back({ center - x + y + z, color }); vertices.push_back({ center - x + y - z, color });
+	vertices.push_back({ center - x - y + z, color }); vertices.push_back({ center - x - y - z, color });
 
-	drawLine(center + x + y + z, center + x - y + z);
-	drawLine(center + x + y - z, center + x - y - z);
-	drawLine(center - x + y + z, center - x - y + z);
-	drawLine(center - x + y - z, center - x - y - z);
+	vertices.push_back({ center + x + y + z, color }); vertices.push_back({ center + x - y + z, color });
+	vertices.push_back({ center + x + y - z, color }); vertices.push_back({ center + x - y - z, color });
+	vertices.push_back({ center - x + y + z, color }); vertices.push_back({ center - x - y + z, color });
+	vertices.push_back({ center - x + y - z, color }); vertices.push_back({ center - x - y - z, color });
 
-	drawLine(center + x + y + z, center - x + y + z);
-	drawLine(center + x + y - z, center - x + y - z);
-	drawLine(center + x - y + z, center - x - y + z);
-	drawLine(center + x - y - z, center - x - y - z);
+	vertices.push_back({ center + x + y + z, color }); vertices.push_back({ center - x + y + z, color });
+	vertices.push_back({ center + x + y - z, color }); vertices.push_back({ center - x + y - z, color });
+	vertices.push_back({ center + x - y + z, color }); vertices.push_back({ center - x - y + z, color });
+	vertices.push_back({ center + x - y - z, color }); vertices.push_back({ center - x - y - z, color });
+
+	drawMultipleLines(vertices, mat4f::identity);
 }
 //
 
@@ -135,10 +147,6 @@ void Debug::line(const vec4f& point1, const vec4f& point2, Shader* shader)
 		glDrawElements(GL_POINTS, 1, GL_UNSIGNED_SHORT, NULL);
 
 		if (loc >= 0) glUniform4fv(loc, 1, (float*)&vec4f(-1.f, 0.f, 0.f, 1.f)[0]);
-	}
-	else
-	{
-
 	}
 }
 void Debug::capsule(const vec4f& point1, const vec4f& point2, const float& radius, Shader* shader)
@@ -213,4 +221,68 @@ void Debug::mesh(const Mesh* const mesh, const mat4f& transform, Shader* shader)
 		if (loc >= 0) glUniform4fv(loc, 1, (float*)&vec4f(-1.f, 0.f, 0.f, 1.f)[0]);
 	}
 }
+void Debug::drawMultipleLines(const std::vector<Vertex>& points, const mat4f& model)
+{
+	if (!This->multipleSegmentShader || !This->renderer)
+		return;
+
+	Renderer::ModelMatrix modelMatrix = { model, model };
+	This->renderer->loadModelMatrix(This->multipleSegmentShader, &modelMatrix);
+
+	constexpr size_t vboSize = sizeof(Vertex) * 4096;
+	uint8_t* startPtr = (uint8_t*)points.data();
+	uint8_t* endPtr = (uint8_t*)points.data() + sizeof(Vertex) * points.size();
+
+	while (startPtr < endPtr)
+	{
+		VertexVBO* buffer = nullptr;
+		for (auto& it : This->vertexScratchBuffers)
+		{
+			if (it.offset < vboSize)
+			{
+				buffer = &it;
+				break;
+			}
+		}
+		if (!buffer)
+		{
+			This->vertexScratchBuffers.emplace_back();
+			buffer = &This->vertexScratchBuffers.back();
+			buffer->offset = 0;
+
+			glGenBuffers(1, &buffer->vbo);
+			glBindBuffer(GL_ARRAY_BUFFER, buffer->vbo);
+			glBufferData(GL_ARRAY_BUFFER, vboSize, nullptr, GL_DYNAMIC_DRAW);
+
+			glGenVertexArrays(1, &buffer->vao);
+			glBindVertexArray(buffer->vao);
+
+			glEnableVertexAttribArray(0);
+			glBindBuffer(GL_ARRAY_BUFFER, buffer->vbo);
+			glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), NULL);
+
+			glEnableVertexAttribArray(1);
+			glBindBuffer(GL_ARRAY_BUFFER, buffer->vbo);
+			glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)sizeof(vec4f));
+		}
+
+		glBindVertexArray(0);
+		int range = std::min((size_t)(endPtr - startPtr), vboSize - buffer->offset);
+
+		glBindBuffer(GL_ARRAY_BUFFER, buffer->vbo);
+		glBufferSubData(GL_ARRAY_BUFFER, buffer->offset, range, startPtr);
+
+		glBindVertexArray(buffer->vao);
+		glDrawArrays(GL_LINES, (int)(buffer->offset / sizeof(Vertex)), (int)(range / sizeof(Vertex)));
+
+		startPtr += range;
+		buffer->offset += range;
+	}
+}
 //
+
+void Debug::clearVBOs()
+{
+	for (auto& it : This->vertexScratchBuffers)
+		it.offset = 0;
+}

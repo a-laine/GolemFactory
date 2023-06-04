@@ -2,7 +2,7 @@ Segment
 {	
 	uniform :
 	{
-		matrixArray : "mat4";
+		matrixArray : "struct array32";
 		vector : "vec4";
 		overrideColor : "vec4";
 	};

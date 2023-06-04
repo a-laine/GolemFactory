@@ -10,10 +10,22 @@
 class Debug : public Singleton<Debug>
 {
 	friend class Singleton<Debug>;
+	friend class Renderer;
 
 	public:
+		// Structs
+		struct Vertex
+		{
+			vec4f m_position;
+			vec4f m_color;
+		};
+		//
+		
+
 		// Public functions
-		void initialize(const std::string& pointMeshName, const std::string& cubeMeshName, const std::string& sphereMeshName, const std::string& capsuleMeshName, const std::string& pointShaderName, const std::string& segmentShaderName, const std::string& defaultShaderName, const std::string& wiredShaderName);
+		void initialize(const std::string& pointMeshName, const std::string& cubeMeshName, const std::string& sphereMeshName, const std::string& capsuleMeshName, 
+			const std::string& pointShaderName, const std::string& segmentShaderName, const std::string& defaultShaderName, const std::string& wiredShaderName,
+			const std::string& multipleSegmentShaderName);
 		//
 
 		//  Draw functions
@@ -25,6 +37,7 @@ class Debug : public Singleton<Debug>
 		static void drawLine(const vec4f& point1, const vec4f& point2) { Debug::line(point1, point2, This->segmentShader); };
 		static void drawCapsule(const vec4f& point1, const vec4f& point2, const float& radius) { Debug::capsule(point1, point2, radius, This->wiredShader); };
 		static void drawMesh(const Mesh* const mesh, const mat4f& transform) { Debug::mesh(mesh, transform, This->wiredShader); };
+		static void drawMultipleLines(const std::vector<Vertex>& points, const mat4f& model);
 
 		static void drawWiredCube(const mat4f& transform, const vec4f& size) { Debug::mesh(This->cubeMesh, mat4f::scale(transform, size), This->wiredShader); };
 		static void drawWiredCube(const mat4f& transform, const vec4f& min, const vec4f& max)
@@ -81,6 +94,10 @@ class Debug : public Singleton<Debug>
 		static void mesh(const Mesh* const mesh, const mat4f& transform, Shader* shader);
 		//
 
+		//
+		void clearVBOs();
+		//
+
 		// Attributes
 		Renderer* renderer;
 
@@ -93,5 +110,13 @@ class Debug : public Singleton<Debug>
 		Shader* segmentShader;
 		Shader* defaultShader;
 		Shader* wiredShader;
+		Shader* multipleSegmentShader;
+
+		struct VertexVBO
+		{
+			GLuint vbo, vao;
+			int offset;
+		};
+		std::list<VertexVBO> vertexScratchBuffers;
 		//
 };

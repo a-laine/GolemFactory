@@ -33,7 +33,7 @@ LightClustering
 			float far;
 			float tanFovX;
 			float tanFovY;
-			Light lights[128];
+			Light lights[254];
 		};
 	};
 	compute :

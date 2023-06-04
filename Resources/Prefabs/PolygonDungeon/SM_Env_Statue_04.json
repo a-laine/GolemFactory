@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Env_Statue_04",
+        "meshName": "PolygonDungeon/SM_Env_Statue_04",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

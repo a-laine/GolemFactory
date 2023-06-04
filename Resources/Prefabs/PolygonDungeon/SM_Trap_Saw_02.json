@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Trap_Saw_02",
+        "meshName": "PolygonDungeon/SM_Trap_Saw_02",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

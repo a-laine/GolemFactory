@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Env_Stairs_02",
+        "meshName": "PolygonDungeon/SM_Env_Stairs_02",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

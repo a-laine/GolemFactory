@@ -6,10 +6,11 @@
 #include <Utiles/Debug.h>
 #include <Utiles/ImguiConfig.h>
 #include <Scene/FrustrumSceneQuerry.h>
+#include <Renderer/CameraComponent.h>
 
 
 #ifdef USE_IMGUI
-bool HierarchyWindowEnable = false;
+bool HierarchyWindowEnable = true;
 bool SpatialPartitionningWindowEnable = false;
 #endif // USE_IMGUI
 

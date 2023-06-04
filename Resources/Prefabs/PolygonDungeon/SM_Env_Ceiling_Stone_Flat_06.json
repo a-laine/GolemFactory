@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Env_Ceiling_Stone_Flat_06",
+        "meshName": "PolygonDungeon/SM_Env_Ceiling_Stone_Flat_06",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

@@ -1,7 +1,11 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Env_Ceiling_Stone_Flat_04",
+        "meshName": "PolygonDungeon/SM_Env_Ceiling_Stone_Flat_04",
         "shaderName": "defaultTextured"
     },
+	"occluderComponent": {
+		"meshName" : "PolygonDungeon/CeilingFlatOccluder",
+		"backfaceCulling" : true
+	},
     "prefabEntities": []
 }

@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Wep_Ornate_Spikes_Long_01",
+        "meshName": "PolygonDungeon/SM_Wep_Ornate_Spikes_Long_01",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

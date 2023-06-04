@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Prop_Stool_03",
+        "meshName": "PolygonDungeon/SM_Prop_Stool_03",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

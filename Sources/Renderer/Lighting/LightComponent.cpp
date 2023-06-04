@@ -1,7 +1,9 @@
 #include "LightComponent.h"
+
 #include <EntityComponent/Entity.hpp>
 #include <Utiles/Debug.h>
 #include <Renderer/Renderer.h>
+#include <Utiles/ConsoleColor.h>
 
 
 LightComponent::LightComponent()
@@ -13,6 +15,149 @@ LightComponent::LightComponent()
 	m_intensity = 1.f;
 	m_innerCutoffAngle = RAD2DEG * 28.0;
 	m_outerCutoffAngle = RAD2DEG * 35.0;
+}
+
+bool LightComponent::load(Variant& jsonObject, const std::string& objectName)
+{
+	// helpers
+	const auto TryLoadAsFloat = [](Variant& variant, const char* label, float& destination)
+	{
+		if (variant.getMap().find(label) != variant.getMap().end())
+		{
+			auto& v = variant[label];
+			if (v.getType() == Variant::FLOAT)
+				destination = v.toFloat();
+			else if (v.getType() == Variant::DOUBLE)
+				destination = v.toDouble();
+			else if (v.getType() == Variant::INT)
+				destination = v.toInt();
+			else
+				return false;
+			return true;
+		}
+		return false;
+	};
+	const auto TryLoadAsVec4f = [](Variant& variant, const char* label, vec4f& destination)
+	{
+		int sucessfullyParsed = 0;
+		auto it0 = variant.getMap().find(label);
+		if (it0 != variant.getMap().end() && it0->second.getType() == Variant::ARRAY)
+		{
+			auto varray = it0->second.getArray();
+			vec4f parsed = destination;
+			for (int i = 0; i < 4 && i < varray.size(); i++)
+			{
+				auto& element = varray[i];
+				if (element.getType() == Variant::FLOAT)
+				{
+					parsed[i] = element.toFloat();
+					sucessfullyParsed++;
+				}
+				else if (element.getType() == Variant::DOUBLE)
+				{
+					parsed[i] = element.toDouble();
+					sucessfullyParsed++;
+				}
+				else if (element.getType() == Variant::INT)
+				{
+					parsed[i] = element.toInt();
+					sucessfullyParsed++;
+				}
+			}
+			destination = parsed;
+		}
+		return sucessfullyParsed;
+	};
+	const auto TryLoadInt = [](Variant& variant, const char* label, int& destination)
+	{
+		auto it0 = variant.getMap().find(label);
+		if (it0 != variant.getMap().end() && it0->second.getType() == Variant::INT)
+		{
+			destination = it0->second.toInt();
+			return true;
+		}
+		return false;
+	};
+	const auto PrintWarning = [](std::string header, const char* msg)
+	{
+		if (ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::WARNINGS)
+		{
+			std::cout << ConsoleColor::getColorString(ConsoleColor::Color::YELLOW) << header << msg << std::flush;
+			std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
+		}
+	};
+
+	if (jsonObject.getType() == Variant::MAP)
+	{
+		m_color = vec4f(1.f, 1.f, 1.f, 1.f);
+		m_range = 10;
+		m_intensity = 1;
+		float inCutOff = 28;
+		float outCutOff = 32;
+		int type = 0;
+		std::string warningHeader = "WARNING : " + objectName + " : LightComponent loading : ";
+
+		bool rangeOk = TryLoadAsFloat(jsonObject, "range", m_range);
+		bool intensityOk = TryLoadAsFloat(jsonObject, "intensity", m_intensity);
+		int colorOk = TryLoadAsVec4f(jsonObject, "color", m_color);
+		bool typeOk = TryLoadInt(jsonObject, "type", type);
+		bool inCutoffOk = TryLoadAsFloat(jsonObject, "inCutOff", inCutOff);
+		bool outCutoffOk = TryLoadAsFloat(jsonObject, "outCutOff", outCutOff);
+
+		if (!typeOk)
+		{
+			if (ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
+			{
+				std::cout << ConsoleColor::getColorString(ConsoleColor::Color::RED) << "ERROR   : " << objectName << 
+					" : LightComponent loading : fail parsing light type" << std::flush;
+				std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
+			}
+		}
+		else if ((type != 0) && (type != 1))
+		{
+			PrintWarning(warningHeader, "invalid light type, valid are 0=point, 1=spot. Was set to 0");
+			type = 0;
+		}
+		else if (type == 1)
+		{
+			if (!inCutoffOk)
+				PrintWarning(warningHeader, "fail parsing spot in cutoff angle, Was set to 28");
+			if (!outCutoffOk)
+				PrintWarning(warningHeader, "fail parsing spot in cutoff angle, Was set to 32");
+		}
+
+		if (!rangeOk)
+			PrintWarning(warningHeader, "fail parsing light range, was set to 10");
+		if (!intensityOk)
+			PrintWarning(warningHeader, "fail parsing light intensity, was set to 1");
+		if (colorOk < 3)
+			PrintWarning(warningHeader, "fail parsing light color, was set to white");
+		else
+		{
+			float maxValue = std::max(m_color.x, std::max(m_color.y, m_color.z));
+			if (maxValue > 1.f)
+				m_color *= 1.f / 255.f;
+			m_color.w = 1.f;
+		}
+
+		if (typeOk)
+		{
+			m_isPointLight = (type == 0);
+
+			if (type == 1)
+			{
+				m_innerCutoffAngle = std::min(inCutOff, outCutOff);
+				m_outerCutoffAngle = std::max(inCutOff, outCutOff);
+			}
+
+			return true;
+		}
+	}
+	return false;
+}
+void LightComponent::save(Variant& jsonObject)
+{
+
 }
 
 void LightComponent::onAddToEntity(Entity* entity)

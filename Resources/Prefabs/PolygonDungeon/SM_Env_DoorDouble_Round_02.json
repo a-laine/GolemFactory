@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Env_DoorDouble_Round_02",
+        "meshName": "PolygonDungeon/SM_Env_DoorDouble_Round_02",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

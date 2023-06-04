@@ -13,6 +13,9 @@ public:
 
 	explicit LightComponent();
 
+	bool load(Variant& jsonObject, const std::string& objectName) override;
+	void save(Variant& jsonObject) override;
+
 	void onAddToEntity(Entity* entity) override;
 
 	// setter geter

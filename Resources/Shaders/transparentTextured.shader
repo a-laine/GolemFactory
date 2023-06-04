@@ -17,10 +17,7 @@ TransparentTextured
 		},{
 			name : "emmisive";
 			resource : "PolygonDungeon/Emmisive_01.png";
-		}/*,{
-			name : "metalic";
-			resource : "PolygonDungeon/Dungeons_Crystal_Metallic.png";
-		}*/
+		}
 	];
 	
 	includes :
@@ -85,7 +82,6 @@ TransparentTextured
 		//	uniform
 		uniform sampler2D albedo;   //texture unit 0
 		uniform sampler2D emmisive; //texture unit 1
-		//uniform sampler2D metalic;  //texture unit 2
 		
 		uniform int lightCount;
 		
@@ -107,7 +103,6 @@ TransparentTextured
 			vec4 albedoColor = texture(albedo, vec2(fragmentUv.x, fragmentUv.y));
 			vec4 emmisiveColor = texture(emmisive, fragmentUv.xy);
 			vec4 diffuse = clamp(dot(normalize(fragmentNormal), normalize(-m_directionalLightDirection)), 0 , 1 ) * m_directionalLightColor;
-			//vec4 metalicParam = albedoColor.w;//texture(metalic, vec2(fragmentUv.x, fragmentUv.y));
 			
 			vec4 viewDir = normalize(cameraPosition - fragmentPosition);
 			vec4 reflectDir = reflect(normalize(m_directionalLightDirection), fragmentNormal);  

@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Wep_Hammer_Mace_Sphere_01",
+        "meshName": "PolygonDungeon/SM_Wep_Hammer_Mace_Sphere_01",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

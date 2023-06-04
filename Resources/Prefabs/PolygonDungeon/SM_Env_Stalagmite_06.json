@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Env_Stalagmite_06",
+        "meshName": "PolygonDungeon/SM_Env_Stalagmite_06",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

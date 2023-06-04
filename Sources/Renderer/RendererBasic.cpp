@@ -1,4 +1,6 @@
 #include "Renderer.h"
+#include "CameraComponent.h"
+#include "imgui_internal.h"
 
 #include <iostream>
 #include <sstream>
@@ -15,6 +17,8 @@
 #include <Utiles/Debug.h>
 
 
+
+
 #define MAX_INSTANCE 32
 
 #ifdef USE_IMGUI
@@ -26,11 +30,12 @@ bool RenderingWindowEnable = true;
 Renderer::Renderer() : 
 	normalViewer(nullptr), renderOption(RenderOption::DEFAULT),
 	vboGridSize(0), gridVAO(0), vertexbuffer(0), arraybuffer(0), colorbuffer(0), normalbuffer(0),
-	instanceDrawn(0), trianglesDrawn(0), lastShader(nullptr), lightClusterTexture("lightClusterTexture", 0)
+	instanceDrawn(0), trianglesDrawn(0), lastShader(nullptr)
 {
 	context = nullptr;
 	camera = nullptr;
 	world = nullptr;
+	m_OcclusionElapsedTime = m_OcclusionAvgTime = 0;
 
 	defaultShader[GRID] = nullptr;
 	defaultShader[INSTANCE_ANIMATABLE_BB] = nullptr;
@@ -41,6 +46,8 @@ Renderer::Renderer() :
 
 	drawGrid = true;
 	batchFreePool.reserve(512);
+
+	glGenQueries(1, &m_timerQueryID);
 
 	initGlobalUniformBuffers();
 	updateGlobalUniformBuffers();
@@ -56,6 +63,15 @@ Renderer::~Renderer()
 	glDeleteBuffers(1, &m_environementLightingID);
 	glDeleteBuffers(1, &m_lightsID);
 	glDeleteBuffers(1, &m_globalMatricesID);
+
+	if (m_occlusionDepth)
+	{
+		delete[] m_occlusionDepth;
+		delete[] m_occlusionCenterX;
+		delete[] m_occlusionCenterY;
+		delete[] m_occlusionDepthColor;
+	}
+
 }
 //
 
@@ -136,7 +152,7 @@ void Renderer::initializeGrid(const unsigned int& gridSize,const float& elementS
 }
 void Renderer::initializeLightClusterBuffer(int width, int height, int depth)
 {
-	vec3i imageSize = vec3i(64, 36, 128);
+	vec3i imageSize = vec3i(width, height, depth);
 
 	const int length = imageSize.x * imageSize.y * imageSize.z * 4;
 	uint32_t* buffer = new uint32_t[length];
@@ -165,8 +181,43 @@ void Renderer::initializeLightClusterBuffer(int width, int height, int depth)
 	m_sceneLights.m_clusterDepthBias = logRatio * log(m_sceneLights.m_near);
 	m_sceneLights.m_shadingConfiguration = 0x01;
 }
+void Renderer::initializeOcclusionBuffers(int width, int height)
+{
+	m_occlusionBufferSize = vec2i(width, height);
+	int size = m_occlusionBufferSize.x * m_occlusionBufferSize.y;
+	m_occlusionDepth = new float[size];
+	m_occlusionCenterX = new float[size];
+	m_occlusionCenterY = new float[size];
+	m_occlusionDepthColor = new uint32_t[size];
+
+	constexpr float depthMax = std::numeric_limits<float>::min();
+	for (int i = 0; i < m_occlusionBufferSize.x; i++)
+		for (int j = 0; j < m_occlusionBufferSize.y; j++)
+		{
+			int id = j * m_occlusionBufferSize.x + i;
+			m_occlusionDepth[id] = depthMax;
+			m_occlusionCenterX[id] = (float)(i + 0.5f) / m_occlusionBufferSize.x;
+			m_occlusionCenterY[id] = (float)(j + 0.5f) / m_occlusionBufferSize.y;
+			m_occlusionDepthColor[id] = 0;
+		}
+
+	using TC = Texture::TextureConfiguration;
+	uint8_t config = (uint8_t)TC::TEXTURE_2D | (uint8_t)TC::MIN_NEAREST | (uint8_t)TC::MAG_NEAREST | (uint8_t)TC::WRAP_CLAMP;
+	occlusionTexture.initialize("occlusionTexture", vec3i(m_occlusionBufferSize.x, m_occlusionBufferSize.y, 0), 
+		m_occlusionDepthColor, config, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE);
+	ResourceManager::getInstance()->addResource(&occlusionTexture);
+
+	occlusionResultDraw = ResourceManager::getInstance()->getResource<Shader>("occlusionResult");
+}
 void Renderer::initGlobalUniformBuffers()
 {
+	// full screen quad 
+	glCreateVertexArrays(1, &fullscreenVAO);
+	glBindVertexArray(fullscreenVAO);
+	glBindVertexArray(0);
+
+	fullscreenTriangle = ResourceManager::getInstance()->getResource<Shader>("fullscreenTriangle");
+
 	// global matrices and camera position
 	m_globalMatrices.view = mat4f::identity;
 	m_globalMatrices.projection = mat4f::identity;
@@ -196,6 +247,19 @@ void Renderer::initGlobalUniformBuffers()
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 	glBindBufferRange(GL_UNIFORM_BUFFER, 2, m_lightsID, 0, sizeof(m_sceneLights));
 
+	// lights data
+	m_debugShaderUniform.vertexNormalColor = vec4f(0.0, 0.0, 1.0, 0.1);
+	m_debugShaderUniform.faceNormalColor = vec4f(0.0, 1.0, 1.0, 0.1);
+	m_debugShaderUniform.wireframeEdgeFactor = 0.4f;
+	m_debugShaderUniform.occlusionResultCuttoff = 50;
+	m_debugShaderUniform.occlusionResultDrawAlpha = 0.8f;
+
+	glGenBuffers(1, &m_DebugShaderUniformID);
+	glBindBuffer(GL_UNIFORM_BUFFER, m_DebugShaderUniformID);
+	glBufferData(GL_UNIFORM_BUFFER, sizeof(m_debugShaderUniform), NULL, GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+	glBindBufferRange(GL_UNIFORM_BUFFER, 3, m_DebugShaderUniformID, 0, sizeof(m_debugShaderUniform));
+
 	// end
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
@@ -206,19 +270,24 @@ void Renderer::updateGlobalUniformBuffers()
 
 	glBindBuffer(GL_UNIFORM_BUFFER, m_environementLightingID);
 	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(m_environementLighting), &m_environementLighting);
+
+	glBindBuffer(GL_UNIFORM_BUFFER, m_DebugShaderUniformID);
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(m_debugShaderUniform), &m_debugShaderUniform);
 }
 
 
 void Renderer::render(CameraComponent* renderCam)
 {
 	//	clear previous states
+	glBeginQuery(GL_TIME_ELAPSED, m_timerQueryID);
 	trianglesDrawn = 0;
 	instanceDrawn = 0;
 	drawCalls = 0;
+	occlusionCulledInstances = 0;
 	lastShader = nullptr;
 	lastVAO = 0;
 	if (!context || !camera || !world || !renderCam) return;
-	
+
 	//	bind matrix
 	m_globalMatrices.view = renderCam->getViewMatrix();
 	m_globalMatrices.projection = mat4f::perspective(renderCam->getVerticalFieldOfView(), context->getViewportRatio(), 0.1f, 1500.f);
@@ -248,111 +317,24 @@ void Renderer::render(CameraComponent* renderCam)
 		if (loc >= 0) glUniform4fv(loc, 1, (float*)&vec4f(-1.f, 0.f, 0.f, 1.f)[0]);
 	}
 
-	//	get instance list
-	float camFovVert = camera->getVerticalFieldOfView();
-	vec4f camPos, camFwd, camUp, camRight;
-	camera->getFrustrum(camPos, camFwd, camRight, camUp);
-	FrustrumSceneQuerry sceneTest(camPos, camFwd, camUp, -camRight, camFovVert, context->getViewportRatio());
-	VirtualEntityCollector collector;
-	collector.m_flags = (uint64_t)Entity::Flags::Fl_Drawable | (uint64_t)Entity::Flags::Fl_Light;
-	collector.m_exclusionFlags = (uint64_t)Entity::Flags::Fl_Hide;
-	world->getSceneManager().getEntities(&sceneTest, &collector);
-
 	m_sceneLights.m_tanFovY = tan(0.5f * camera->getVerticalFieldOfView());
 	m_sceneLights.m_tanFovX = m_sceneLights.m_tanFovY * context->getViewportRatio();
+	CollectEntitiesBindLights();
 
-
-	// first pass
-	// gather lights, compute entities hash, ...
-	uint64_t transparentMask = 1ULL << 63;
-	uint64_t faceCullingMask = 1ULL << 62;
-	bool doBatching = false;
-	renderQueue.clear();
-	m_sceneLights.m_lightCount = 0;
-	for (Entity* object : collector.getResult())
-	{
-		if (object->getFlags() & (uint64_t)Entity::Flags::Fl_Drawable)
-		{
-			DrawableComponent* comp = object->getComponent<DrawableComponent>();
-			bool ok = comp && comp->isValid();
-	#ifdef USE_IMGUI
-			ok &= comp->visible();
-	#endif
-			if (ok)
-			{
-				doBatching |= comp->getShader()->supportInstancing();
-				uint64_t queue = comp->getShader()->getRenderQueue();
-				queue = queue << 48;
-
-				vec4f v = object->getWorldPosition() - camPos;
-				uint32_t d = (uint32_t)(1000.f * v.getNorm());
-				if (queue & transparentMask)
-				{
-					//compute 2's complement of d
-					d = ~d; 
-					d++;
-				}
-
-				uint64_t hash = queue | d;
-				renderQueue.push_back({ hash, object, nullptr});
-			}
-
-
-		}
-		if ((object->getFlags() & (uint64_t)Entity::Flags::Fl_Light))
-		{
-			LightComponent* comp = object->getComponent<LightComponent>();
-			bool ok = comp && m_sceneLights.m_lightCount < MAX_LIGHT_COUNT;
-
-			#ifdef USE_IMGUI
-				if (ok && m_lightFrustrumCulling)
-					ok = sceneTest.TestSphere(object->getWorldPosition(), comp->getRange());
-			#else
-				if (ok)
-					ok = sceneTest.TestSphere(object->getWorldPosition(), comp->getRange());
-			#endif
-
-			if (ok)
-			{
-				int i = m_sceneLights.m_lightCount;
-				m_sceneLights.m_lights[i].m_color = comp->m_color;
-				m_sceneLights.m_lights[i].m_position = comp->getPosition();
-				m_sceneLights.m_lights[i].m_direction = comp->isPointLight() ? vec4f(0.f) : comp->getDirection();
-				m_sceneLights.m_lights[i].m_range = comp->m_range;
-				m_sceneLights.m_lights[i].m_intensity = comp->m_intensity;
-				m_sceneLights.m_lights[i].m_inCutOff = cos((float)DEG2RAD * comp->m_innerCutoffAngle);
-				m_sceneLights.m_lights[i].m_outCutOff = cos((float)DEG2RAD * comp->m_outerCutoffAngle);
-				comp->m_isUniformBufferDirty = false;
-				m_sceneLights.m_lightCount++;
-			}
-		}
-	}
-
-	// bind lights
-	//m_sceneLights.m_shadingConfiguration = m_lightClustering ? 0x03 : 0x02;
-	glBindBuffer(GL_UNIFORM_BUFFER, m_lightsID);
-	glBufferSubData(GL_UNIFORM_BUFFER, 0, m_sceneLights.m_lightCount * sizeof(Light) + 32, &m_sceneLights);
-	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 	if (lightClustering)
+		LightClustering();
+	if (m_enableOcclusionCulling && !m_occluders.empty() && m_occlusionDepth)
+		OcclusionCulling();
+	else
 	{
-		lightClustering->enable();
-
-		GLint lightClusterLocation = glGetUniformLocation(lightClustering->getProgram(), "lightClusters");
-		if (lightClusterLocation >= 0)
-		{
-			glUniform1i(lightClusterLocation, 0);
-			glActiveTexture(GL_TEXTURE0);
-			glBindImageTexture(0, lightClusterTexture.getTextureId(), 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32UI);
-		}
-
-		glDispatchCompute(16,12,16);
-		glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
-		lastShader = nullptr;
-		glUseProgram(0);
+		m_OcclusionAvgTime = 0.f;
+		m_OcclusionElapsedTime = 0.f;
 	}
 
 	//	sort
+	uint64_t transparentMask = 1ULL << 63;
+	uint64_t faceCullingMask = 1ULL << 62;
 	uint64_t compareMask = ~(transparentMask | faceCullingMask); // don't use the states bits for comparing entities
 	std::sort(renderQueue.begin(), renderQueue.end(), [compareMask](DrawElement& a, DrawElement& b)
 		{
@@ -360,79 +342,30 @@ void Renderer::render(CameraComponent* renderCam)
 		});
 
 	// batching
-	if (m_enableInstancing && doBatching)
-	{
-		// clear batches containers
-		for (auto it : batchClosedPool)
-		{
-			it->models.clear();
-			it->mesh = nullptr;
-			it->shader = nullptr;
-			batchFreePool.push_back(it);
-		}
-		batchClosedPool.clear();
-		for (auto it : batchOpened)
-		{
-			it.second->models.clear();
-			it.second->mesh = nullptr;
-			it.second->shader = nullptr;
-			batchFreePool.push_back(it.second);
-		}
-		batchOpened.clear();
+	if (m_enableInstancing && m_hasInstancingShaders)
+		DynamicBatching();
 
-		// second pass of renderqueue
-		int variantCode = Shader::computeVariantCode(true, false, renderOption == RenderOption::WIREFRAME);
-		for (auto& it : renderQueue)
-		{
-			DrawableComponent* comp = it.entity->getComponent<DrawableComponent>();
-			if (!comp->getShader()->supportInstancing())
-				continue;
-
-			Shader* shader = comp->getShader()->getVariant(variantCode);
-			Mesh* mesh = comp->getMesh();
-
-			// search insertion batch
-			Batch* batch;
-			bool isNewBatch = false;
-			std::pair<Shader*, Mesh*> key = {shader, mesh};
-			auto it2 = batchOpened.find(key);
-			if (it2 == batchOpened.end())
-			{
-				if (batchFreePool.empty())
-					batch = new Batch();
-				else
-				{
-					batch = batchFreePool.back();
-					batchFreePool.pop_back();
-				}
-
-				isNewBatch = true;
-				batch->shader = shader;
-				batch->mesh = mesh;
-				batchOpened[key] = batch;
-			}
-			else
-				batch = it2->second;
-
-			// insert object
-			batch->models.push_back({ it.entity->getWorldTransformMatrix() , it.entity->getNormalMatrix()});
-			it.batch = batch;
-
-			if (!isNewBatch)
-			{
-				it.entity = nullptr;
-				if (batch->models.size() >= MAX_INSTANCE)
-				{
-					batchClosedPool.push_back(batch);
-					batchOpened.erase(it2);
-				}
-			}
-		}
-	}
-
-	//	draw instance list
+	// state tracking
 	bool blendingEnabled = false;
 	bool faceCullingEnabled = true;
+	const auto SetBlending = [&blendingEnabled](bool state)
+	{
+		if (!blendingEnabled && state)
+			glEnable(GL_BLEND);
+		else if (blendingEnabled && !state)
+			glDisable(GL_BLEND);
+		blendingEnabled = state;
+	};
+	const auto SetCulling = [&faceCullingEnabled](bool state)
+	{
+		if (!faceCullingEnabled && state)
+			glEnable(GL_CULL_FACE);
+		else if (faceCullingEnabled && !state)
+			glDisable(GL_CULL_FACE);
+		faceCullingEnabled = state;
+	};
+
+	//	draw instance list
 	for (const auto& it : renderQueue)
 	{
 		// skip batched entities
@@ -440,35 +373,16 @@ void Renderer::render(CameraComponent* renderCam)
 			continue;
 
 		//	opengl states managing
-		bool isTransparent = (it.hash & transparentMask);
-		if (!blendingEnabled && isTransparent)
-		{
-			blendingEnabled = true;
-			glEnable(GL_BLEND);
-		}
-		else if (blendingEnabled && !isTransparent)
-		{
-			blendingEnabled = false;
-			glDisable(GL_BLEND);
-		}
-
-		bool needCulling = (it.hash & faceCullingMask);
-		if (!faceCullingEnabled && needCulling)
-		{
-			faceCullingEnabled = true;
-			glEnable(GL_CULL_FACE);
-		}
-		else if (faceCullingEnabled && !needCulling)
-		{
-			faceCullingEnabled = false;
-			glDisable(GL_CULL_FACE);
-		}
+		SetBlending(it.hash & transparentMask);
+		SetCulling(it.hash & faceCullingMask);
 
 		if (it.batch)
 			drawInstancedObject(it.batch->shader, it.batch->mesh, it.batch->models);
 		else
 			drawObject(it.entity);
 	}
+
+	glEndQuery(GL_TIME_ELAPSED);
 }
 void Renderer::renderHUD()
 {
@@ -526,6 +440,19 @@ void Renderer::renderHUD()
 		}
 	}
 	glDisable(GL_BLEND);
+}
+void Renderer::swap()
+{
+	int stopTimerAvailable = 0;
+	while (!stopTimerAvailable) 
+		glGetQueryObjectiv(m_timerQueryID, GL_QUERY_RESULT_AVAILABLE, &stopTimerAvailable);
+
+	GLuint64 elapsedGPUtimer;
+	glGetQueryObjectui64v(m_timerQueryID, GL_QUERY_RESULT, &elapsedGPUtimer);
+	m_GPUelapsedTime = (float)(elapsedGPUtimer) * 1E-06;
+	m_GPUavgTime = 0.95f * m_GPUavgTime + 0.05f * m_GPUelapsedTime;
+
+	Debug::getInstance()->clearVBOs();
 }
 //
 
@@ -597,6 +524,9 @@ unsigned int Renderer::getNbDrawnTriangles() const { return trianglesDrawn; }
 Renderer::RenderOption Renderer::getRenderOption() const { return renderOption; }
 
 
+double Renderer::getElapsedTime() const { return m_GPUelapsedTime; }
+double Renderer::getAvgElapsedTime() const { return m_GPUavgTime; }
+
 void Renderer::setEnvBackgroundColor(vec4f color)
 { 
 	m_environementLighting.m_backgroundColor = color;
@@ -616,9 +546,11 @@ vec4f Renderer::getEnvDirectionalLightColor() const { return m_environementLight
 void Renderer::drawImGui(World& world)
 {
 #ifdef USE_IMGUI
+	ImVec4 titleColor = ImVec4(1, 1, 0, 1);
+
 	ImGui::Begin("Rendering setings");
 	ImGui::PushID(this);
-	ImGui::TextColored(ImVec4(1, 1, 0, 1), "Environement lighting");
+	ImGui::TextColored(titleColor, "Environement lighting");
 	ImGui::DragFloat3("Directional light direction", &m_environementLighting.m_directionalLightDirection[0], 0.01f);
 	ImGui::ColorEdit3("Directional light color", &m_environementLighting.m_directionalLightColor[0]);
 	ImGui::ColorEdit3("Ambient color", &m_environementLighting.m_ambientColor[0]);
@@ -632,7 +564,7 @@ void Renderer::drawImGui(World& world)
 
 
 	ImGui::Spacing();
-	ImGui::TextColored(ImVec4(1, 1, 0, 1), "Rendering parameters");
+	ImGui::TextColored(titleColor, "Rendering parameters");
 	ImGui::Checkbox("Instancing enabled", &m_enableInstancing);
 	if (ImGui::BeginCombo("Render option", renderOptionPreviewValue))
 	{
@@ -663,21 +595,45 @@ void Renderer::drawImGui(World& world)
 				bitfield &= ~(1 << flag);
 		}
 	};
-
 	CheckboxFlag("Do light clustering", m_sceneLights.m_shadingConfiguration, 0);
 	CheckboxFlag("Draw light count heatmap", m_sceneLights.m_shadingConfiguration, 1);
 
+	ImGui::Checkbox("Occlusion culling", &m_enableOcclusionCulling);
 	ImGui::Checkbox("Draw light clusters", &m_drawClusters);
+	ImGui::Checkbox("Draw occlusion buffer", &m_drawOcclusionBuffer);
 
+	if (!m_drawOcclusionBuffer)
+	{
+		ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+		ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+	}
+
+	ImGui::SliderFloat("Occlusion buffer alpha", &m_debugShaderUniform.occlusionResultDrawAlpha, 0, 1);
+	ImGui::SliderFloat("Occlusion  gradiant cutoff", &m_debugShaderUniform.occlusionResultCuttoff, 1.f, m_sceneLights.m_far, "%.2f", ImGuiSliderFlags_Logarithmic);
+
+	if (!m_drawOcclusionBuffer)
+	{
+		ImGui::PopItemFlag();
+		ImGui::PopStyleVar();
+	}
 
 	ImGui::Spacing();
-	ImGui::TextColored(ImVec4(1, 1, 0, 1), "DrawInfos");
-	ImGui::Text("Drawcalls : %d", drawCalls);
-	ImGui::Text("Entities : %d", instanceDrawn);
-	ImGui::Text("Triangles : %d", trianglesDrawn);
-	ImGui::Text("Lights : %d", m_sceneLights.m_lightCount);
+	ImGui::TextColored(titleColor, "Debug shader uniforms");
+	ImGui::ColorEdit3("Vertex normal color", &m_debugShaderUniform.vertexNormalColor[0]);
+	ImGui::ColorEdit3("Face normal color", &m_debugShaderUniform.faceNormalColor[0]);
+	ImGui::SliderFloat("Vertex normal length", &m_debugShaderUniform.vertexNormalColor[3], 0.f, 1.f, "%.3f", ImGuiSliderFlags_Logarithmic);
+	ImGui::SliderFloat("Face normal length", &m_debugShaderUniform.faceNormalColor[3], 0.f, 1.f, "%.3f", ImGuiSliderFlags_Logarithmic);
+	ImGui::SliderFloat("Wireframe edge factor", &m_debugShaderUniform.wireframeEdgeFactor, 0.f, 1.f, "%.3f", ImGuiSliderFlags_Logarithmic);
 
-
+	ImGui::Spacing();
+	int columnWidth = 250;
+	ImGui::TextColored(titleColor, "DrawInfos");
+	ImGui::Text("Entities : %d", instanceDrawn);				ImGui::SameLine(columnWidth); ImGui::Text("Occluder triangles : %d", occluderTriangles);
+	ImGui::Text("Drawcalls : %d", drawCalls);					ImGui::SameLine(columnWidth); ImGui::Text("Occlusion rasterized triangles : %d", occluderRasterizedTriangles);
+	ImGui::Text("Triangles : %d", trianglesDrawn);				ImGui::SameLine(columnWidth); ImGui::Text("Occlusion pixel test : %d", occluderPixelsTest);
+	ImGui::Text("Lights : %d", m_sceneLights.m_lightCount);		ImGui::SameLine(columnWidth); ImGui::Text("Occlusion skipped : %d", occlusionCulledInstances);
+	ImGui::Text("Occlusion time : %d ms (%d)", (int)m_OcclusionAvgTime, (int)m_OcclusionElapsedTime);
+	
 	ImGui::PopID();
 	ImGui::End();
 
@@ -696,20 +652,78 @@ void Renderer::drawImGui(World& world)
 	}
 
 	CameraComponent* mainCamera = world.getMainCamera();
-	if (m_drawClusters && mainCamera && clustersMin && clustersMax)
+	if (m_drawClusters)
 	{
-		Debug::color = Debug::white;
-		const float shrink = 1.f;
-		vec3i imageSize = lightClusterTexture.size;
-		for (int i = 0; i < imageSize.x; i++)
-			for (int j = 0; j < imageSize.y; j++)
-				for (int k = 0; k < imageSize.z; k++)
-				{
-					int id = i * imageSize.y * imageSize.z + j * imageSize.z + k;
-					vec4f cellCenter = 0.5f * (clustersMax[id] + clustersMin[id]);
-					vec4f cellHalfSize = 0.5f *(clustersMax[id] - clustersMin[id]);
-					Debug::drawLineCube(mainCamera->getModelMatrix(), cellCenter - shrink * cellHalfSize, cellCenter + shrink * cellHalfSize);
-				}
+		static std::vector<Debug::Vertex> clusterLines;
+		if (clusterLines.empty())
+		{
+			vec4f color = Debug::white;
+			vec3i imageSize = lightClusterTexture.size;
+			int clusterCount = imageSize.x * imageSize.y * imageSize.z;
+			int rightClusterCount = imageSize.y * imageSize.z;
+			int topClusterCount = imageSize.x * imageSize.z;
+
+			int a = imageSize.x;
+			int b = imageSize.y;
+			int c = imageSize.z;
+			int size = 2 * (3 * a * b * c + 4 * a * b + 2 * b * c + 2 * a * c + c);
+			clusterLines.reserve(size);
+
+			for (int i = 0; i < imageSize.x; i++)
+				for (int j = 0; j < imageSize.y; j++)
+					for (int k = 0; k < imageSize.z; k++)
+					{
+						vec3f invImageSize = vec3f(1.0 / imageSize.x, 1.0 / imageSize.y, 1.0 / imageSize.z);
+						float nearFarRatio = m_sceneLights.m_far / m_sceneLights.m_near;
+						float maxDepthBound = -pow(nearFarRatio, (k + 1) * invImageSize.z) * m_sceneLights.m_near;
+						float minDepthBound;
+						if (k == 0) minDepthBound = 1.0;
+						else minDepthBound = -pow(nearFarRatio, k * invImageSize.z) * m_sceneLights.m_near;
+
+						vec2f frustrumSize = vec2f(-m_sceneLights.m_tanFovX * maxDepthBound, -m_sceneLights.m_tanFovY * maxDepthBound);
+						vec2f cellSize = 2.f * vec2f(frustrumSize.x * invImageSize.x, frustrumSize.y * invImageSize.y);
+
+						vec2f s = vec2f(i * cellSize.x, j * cellSize.y) - frustrumSize;
+						vec4f m = vec4f(s.x, s.y, minDepthBound, 1);
+						vec4f M = vec4f(s.x + cellSize.x, s.y + cellSize.y, maxDepthBound, 1);
+
+						clusterLines.push_back({ m, color }); clusterLines.push_back({ vec4f(M.x, m.y, m.z, 1.f) , color });
+						clusterLines.push_back({ m, color }); clusterLines.push_back({ vec4f(m.x, M.y, m.z, 1.f) , color });
+						clusterLines.push_back({ m, color }); clusterLines.push_back({ vec4f(m.x, m.y, M.z, 1.f) , color });
+
+						if (j == imageSize.y - 1)
+						{
+							clusterLines.push_back({ vec4f(m.x, M.y, m.z, 1.f), color }); clusterLines.push_back({ vec4f(M.x, M.y, m.z, 1.f) , color });
+							clusterLines.push_back({ vec4f(m.x, M.y, m.z, 1.f), color }); clusterLines.push_back({ vec4f(m.x, M.y, M.z, 1.f) , color });
+
+							if (i == imageSize.x - 1)
+							{
+								 clusterLines.push_back({ vec4f(M.x, M.y, m.z, 1.f), color }); 
+								 clusterLines.push_back({ M , color });
+							}
+						}
+						if (i == imageSize.x - 1)
+						{
+							clusterLines.push_back({ vec4f(M.x, m.y, m.z, 1.f), color }); clusterLines.push_back({ vec4f(M.x, M.y, m.z, 1.f) , color });
+							clusterLines.push_back({ vec4f(M.x, m.y, m.z, 1.f), color }); clusterLines.push_back({ vec4f(M.x, m.y, M.z, 1.f) , color });
+						}
+
+						if (k == imageSize.z - 1)
+						{
+							clusterLines.push_back({ vec4f(m.x, m.y, M.z, 1.f), color }); clusterLines.push_back({ vec4f(M.x, m.y, M.z, 1.f) , color });
+							clusterLines.push_back({ vec4f(m.x, m.y, M.z, 1.f), color }); clusterLines.push_back({ vec4f(m.x, M.y, M.z, 1.f) , color });
+							clusterLines.push_back({ vec4f(m.x, M.y, M.z, 1.f), color }); clusterLines.push_back({ vec4f(M.x, M.y, M.z, 1.f) , color });
+							clusterLines.push_back({ vec4f(M.x, m.y, M.z, 1.f), color }); clusterLines.push_back({ vec4f(M.x, M.y, M.z, 1.f) , color });
+						}
+					}
+		}
+
+		Debug::drawMultipleLines(clusterLines, mainCamera->getModelMatrix());
+	}
+
+	if (m_drawOcclusionBuffer)
+	{
+		fullScreenDraw(&occlusionTexture, occlusionResultDraw);
 	}
 #endif // USE_IMGUI
 }

@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Prop_Metal_Fence_Weak_01",
+        "meshName": "PolygonDungeon/SM_Prop_Metal_Fence_Weak_01",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

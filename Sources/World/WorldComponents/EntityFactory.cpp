@@ -12,6 +12,7 @@
 #include <Animation/AnimationComponent.h>
 #include <Physics/Shapes/Collider.h>
 #include <Renderer/Lighting/LightComponent.h>
+#include <Renderer/OccluderComponent.h>
 #include <Utiles/ConsoleColor.cpp>
 
 
@@ -283,8 +284,14 @@ Entity* EntityFactory::deepCopy(Entity* original)
 		if (element.type == DrawableComponent::getStaticClassID())
 		{
 			const DrawableComponent* original = static_cast<const DrawableComponent*>(element.comp);
-			DrawableComponent* drawable = new DrawableComponent(original->getMesh()->name, original->getShader()->name);
-			copy->addComponent(drawable);
+			DrawableComponent* copyComp = new DrawableComponent(original);
+			copy->addComponent(copyComp);
+		}
+		else if (element.type == OccluderComponent::getStaticClassID())
+		{
+			const OccluderComponent* original = static_cast<const OccluderComponent*>(element.comp);
+			OccluderComponent* copyComp = new OccluderComponent(original);
+			copy->addComponent(copyComp);
 		}
 		return false;
 	};
@@ -399,117 +406,30 @@ void EntityFactory::tryLoadComponents(Entity* object, Variant* variant, const st
 		auto it0 = variant->getMap().find("drawableComponent");
 		if (it0 != variant->getMap().end() && it0->second.getType() == Variant::MAP)
 		{
-			std::string secondHeader = " : DrawableComponent";
-
-			std::string meshName, shaderName, subMeshName;
-			auto it1 = it0->second.getMap().find("meshName");
-			if (it1 != it0->second.getMap().end() && it1->second.getType() == Variant::STRING)
-			{
-				meshName = it1->second.toString();
-				if (!meshName.empty())
-					meshName = assetPackName + "/" + meshName;
-				if (meshName.find('.') == std::string::npos)
-					meshName += ".fbx";
-			}
-
-			it1 = it0->second.getMap().find("subMeshName");
-			if (it1 != it0->second.getMap().end() && it1->second.getType() == Variant::STRING)
-			{
-				meshName = it1->second.toString();
-				/*if (ResourceManager::getInstance()->findResource<Mesh>(it1->second.toString()))
-				{
-					meshName = it1->second.toString();
-				}
-
-				meshName = it1->second.toString();
-				if (!meshName.empty())
-					meshName = assetPackName + "/" + meshName;
-				if (meshName.find('.') == std::string::npos)
-					meshName += ".fbx";*/
-			}
-
-			it1 = it0->second.getMap().find("shaderName");
-			if (it1 != it0->second.getMap().end() && it1->second.getType() == Variant::STRING)
-				shaderName = it1->second.toString();
-
-			if (!meshName.empty() && !shaderName.empty())
-			{
-				DrawableComponent* drawable = new DrawableComponent(meshName, shaderName);
+			DrawableComponent* drawable = new DrawableComponent();
+			if (drawable->load(it0->second, object->getName()))
 				object->addComponent(drawable);
-			}
-			else
-			{
-				if (meshName.empty())
-					printError(messageHeader + secondHeader, "no mesh name");
-				if (shaderName.empty())
-					printError(messageHeader + secondHeader, "no shader name");
-			}
+			else delete drawable;
 		}
 
 		// lightComponent
 		it0 = variant->getMap().find("lightComponent");
 		if (it0 != variant->getMap().end() && it0->second.getType() == Variant::MAP)
 		{
-			std::string secondHeader = " : LightComponent";
-			vec4f color = vec4f(1.f, 1.f, 1.f, 1.f);
-			float range = 10;
-			float intensity = 1;
-			float inCutOff = 28;
-			float outCutOff = 32;
-			int type = 0;
-
-			bool rangeOk = TryLoadAsFloat(it0->second, "range", range);
-			bool intensityOk = TryLoadAsFloat(it0->second, "intensity", intensity);
-			int colorOk = TryLoadAsVec4f(it0->second, "color", color);
-			bool typeOk = TryLoadInt(it0->second, "type", type);
-			bool inCutoffOk = TryLoadAsFloat(it0->second, "inCutOff", inCutOff);
-			bool outCutoffOk = TryLoadAsFloat(it0->second, "outCutOff", outCutOff);
-
-			if (!typeOk)
-				printError(messageHeader + secondHeader, "fail parsing light type");
-			else if ((type != 0) && (type != 1))
-			{
-				printWarning(messageHeader + secondHeader, "invalid light type, valid are 0=point, 1=spot. Was set to 0");
-				type = 0;
-			}
-			else if (type == 1)
-			{
-				if (!inCutoffOk)
-					printWarning(messageHeader + secondHeader, "fail parsing spot in cutoff angle, Was set to 28");
-				if (!outCutoffOk)
-					printWarning(messageHeader + secondHeader, "fail parsing spot in cutoff angle, Was set to 32");
-			}
-
-			if (!rangeOk)
-				printWarning(messageHeader + secondHeader, "fail parsing light range, was set to 10");
-			if (!intensityOk)
-				printWarning(messageHeader + secondHeader, "fail parsing light intensity, was set to 1");
-			if (colorOk < 3)
-				printWarning(messageHeader + secondHeader, "fail parsing light color, was set to white");
-			else
-			{
-				float maxValue = std::max(color.x, std::max(color.y, color.z));
-				if (maxValue > 1.f)
-					color *= 1.f / 255.f;
-				color.w = 1.f;
-			}
-			
-			if (typeOk)
-			{
-				LightComponent* light = new LightComponent();
-				light->setColor(color);
-				light->setRange(range);
-				light->setIntensity(intensity);
-				light->setPointLight(type == 0);
-
-				if (type == 1)
-				{
-					light->setInnerCutOffAngle(std::min(inCutOff, outCutOff));
-					light->setOuterCutOffAngle(std::max(inCutOff, outCutOff));
-				}
-
+			LightComponent* light = new LightComponent();
+			if (light->load(it0->second, object->getName()))
 				object->addComponent(light);
-			}
+			else delete light;
+		}
+
+		// occluderComponent
+		it0 = variant->getMap().find("occluderComponent");
+		if (it0 != variant->getMap().end() && it0->second.getType() == Variant::MAP)
+		{
+			OccluderComponent* occluder = new OccluderComponent();
+			if (occluder->load(it0->second, object->getName()))
+				object->addComponent(occluder);
+			else delete occluder;
 		}
 	}
 }
@@ -557,7 +477,6 @@ void EntityFactory::tryLoadHierarchy(Entity* object, Variant* variant, const std
 					object->addChild(child);
 					tryLoadTransform(child, &(*it2));
 					child->recomputeBoundingBox();
-					//child->setLocalTransformation(child->getLocalPosition(), child->getLocalScale(), child->getLocalOrientation());
 				}
 			}
 		}

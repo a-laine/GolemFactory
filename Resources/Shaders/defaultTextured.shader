@@ -58,7 +58,15 @@ DefaultTextured
 			float far;
 			float tanFovX;
 			float tanFovY;
-			Light lights[128];
+			Light lights[254];
+		};
+		layout(std140, binding = 3) uniform DebugShaderUniform
+		{
+			vec4 vertexNormalColor;
+			vec4 faceNormalColor;
+			float wireframeEdgeFactor;
+			float occlusionResultDrawAlpha;
+			float occlusionResultCuttoff;
 		};
 	};
 	vertex :
@@ -192,7 +200,6 @@ DefaultTextured
 			clusterIndex.xy = ivec2(floatIndex);
 			clusterIndex = clamp(clusterIndex, ivec3(0), clusterSize - ivec3(1));
 			return clusterIndex;
-			
 		}
 		void ProcessLight(int lightIndex, vec4 albedo, float metalic, vec4 viewDir)
 		{
@@ -229,8 +236,7 @@ DefaultTextured
 		void main()
 		{
 			#ifdef WIRED_MODE
-				float edgeMultiplier = 0.4; // lower for thiner edges;
-				vec3 a3 = smoothstep(vec3(0.0), fwidth(barycentricCoord) * edgeMultiplier , barycentricCoord);
+				vec3 a3 = smoothstep(vec3(0.0), fwidth(barycentricCoord) * wireframeEdgeFactor , barycentricCoord);
 				float edgeFactor = min(min(a3.x, a3.y), a3.z);
 				if(edgeFactor >= 1.0)
 					discard;

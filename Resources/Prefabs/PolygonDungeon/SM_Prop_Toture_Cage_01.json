@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Prop_Toture_Cage_01",
+        "meshName": "PolygonDungeon/SM_Prop_Toture_Cage_01",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

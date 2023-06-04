@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Prop_Wall_Banner_05",
+        "meshName": "PolygonDungeon/SM_Prop_Wall_Banner_05",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

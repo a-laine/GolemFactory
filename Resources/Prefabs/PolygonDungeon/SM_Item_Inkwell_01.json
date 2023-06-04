@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Item_Inkwell_01",
+        "meshName": "PolygonDungeon/SM_Item_Inkwell_01",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

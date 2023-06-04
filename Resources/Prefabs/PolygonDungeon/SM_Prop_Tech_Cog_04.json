@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Prop_Tech_Cog_04",
+        "meshName": "PolygonDungeon/SM_Prop_Tech_Cog_04",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

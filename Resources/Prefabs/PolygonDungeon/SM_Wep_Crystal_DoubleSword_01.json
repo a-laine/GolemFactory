@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Wep_Crystal_DoubleSword_01",
+        "meshName": "PolygonDungeon/SM_Wep_Crystal_DoubleSword_01",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Prop_Minecart_01",
+        "meshName": "PolygonDungeon/SM_Prop_Minecart_01",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": [
@@ -22,7 +22,7 @@
             "prefabName": "",
             "childs": [],
             "drawableComponent": {
-                "meshName": "SM_Prop_Minecart_Wheel_01",
+                "meshName": "PolygonDungeon/SM_Prop_Minecart_Wheel_01",
                 "shaderName": "defaultTextured"
             }
         },
@@ -44,7 +44,7 @@
             "prefabName": "",
             "childs": [],
             "drawableComponent": {
-                "meshName": "SM_Prop_Minecart_Wheel_02",
+                "meshName": "PolygonDungeon/SM_Prop_Minecart_Wheel_02",
                 "shaderName": "defaultTextured"
             }
         }

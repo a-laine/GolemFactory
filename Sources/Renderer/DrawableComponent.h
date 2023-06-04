@@ -1,9 +1,6 @@
 #pragma once
 
-#include <string>
-//#include <glm/glm.hpp>
-#include "Math/TMath.h"
-
+#include <Math/TMath.h>
 #include <EntityComponent\Component.hpp>
 
 
@@ -18,6 +15,9 @@ class DrawableComponent : public Component
 		DrawableComponent(const std::string& meshName = "default", const std::string& shaderName = "default");
 		virtual ~DrawableComponent() override;
 		DrawableComponent(const DrawableComponent* other);
+
+		bool load(Variant& jsonObject, const std::string& objectName) override;
+		void save(Variant& jsonObject) override;
 
 		void setShader(const std::string& shaderName);
 		void setShader(Shader* shader);

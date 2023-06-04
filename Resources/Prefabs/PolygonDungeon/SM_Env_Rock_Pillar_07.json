@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Env_Rock_Pillar_07",
+        "meshName": "PolygonDungeon/SM_Env_Rock_Pillar_07",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

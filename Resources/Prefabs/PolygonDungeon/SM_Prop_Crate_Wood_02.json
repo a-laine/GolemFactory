@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Prop_Crate_Wood_02",
+        "meshName": "PolygonDungeon/SM_Prop_Crate_Wood_02",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Prop_Crate_Metal_Open_01",
+        "meshName": "PolygonDungeon/SM_Prop_Crate_Metal_Open_01",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

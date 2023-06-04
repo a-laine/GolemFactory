@@ -75,6 +75,10 @@ void Renderer::drawObject(Entity* object)
 			loadModelMatrix(normalViewer, &modelMatrix);
 			loadVAO(drawableComp->getMesh()->getVAO());
 			glDrawElements(GL_TRIANGLES, (int)drawableComp->getMesh()->getFaces()->size(), GL_UNSIGNED_SHORT, NULL);
+
+			drawCalls++;
+			instanceDrawn++;
+			trianglesDrawn += drawableComp->getMesh()->getNumberFaces();
 		}
 	}
 	drawCalls++;
@@ -105,6 +109,17 @@ void Renderer::drawInstancedObject(Shader* s, Mesh* m, std::vector<ModelMatrix>&
 	{
 		loadVAO(m->getVAO());
 		glDrawElementsInstanced(GL_TRIANGLES, (int)m->getFaces()->size(), GL_UNSIGNED_SHORT, NULL, (unsigned short)models.size());
+
+		if (renderOption == RenderOption::NORMALS && normalViewer)
+		{
+			loadModelMatrix(normalViewer, models.data(), (int)models.size());
+			loadVAO(m->getVAO());
+			glDrawElementsInstanced(GL_TRIANGLES, (int)m->getFaces()->size(), GL_UNSIGNED_SHORT, NULL, (unsigned short)models.size());
+
+			drawCalls++;
+			instanceDrawn += (int)(models.size());
+			trianglesDrawn += (int)(models.size() * m->getNumberFaces());
+		}
 	}
 	drawCalls++;
 	instanceDrawn += (int)(models.size());
@@ -216,6 +231,33 @@ void Renderer::drawMap(Map* map, Shader* s)
 	}
 	color = vec4f(-1.f, 0.f, 0.f, 1.f);
 	if (loc >= 0) glUniform3fv(loc, 1, (float*)&color);
+}
+
+
+void Renderer::fullScreenDraw(Texture* texture, Shader* shader, float alpha)
+{
+	if (!texture)
+		return;
+	if (!shader && !fullscreenTriangle)
+		return;
+
+	lastShader = shader ? shader : fullscreenTriangle;
+	lastVAO = fullscreenVAO;
+	lastShader->enable();
+
+	glEnable(GL_BLEND);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texture->getTextureId());
+	int loc = lastShader->getUniformLocation("alpha");
+	if (loc >= 0)
+		glUniform1f(loc, alpha);
+
+	glBindVertexArray(fullscreenVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 3);
+
+	drawCalls++;
+	instanceDrawn++;
+	trianglesDrawn++;
 }
 //
 

@@ -37,12 +37,16 @@ class Texture : public ResourceVirtual
         //
 
         //  Default
+        explicit Texture();
         explicit Texture(const std::string& textureName, TextureConfiguration conf);
 		explicit Texture(const std::string& textureName, uint8_t conf = 0x0);
         ~Texture();
 
         void initialize(const vec3i& imageSize, const uint8_t* data, uint8_t config = 0);
         void initialize(const std::string& textureName, const vec3i& imageSize, const void* data, uint8_t config, unsigned int internalFormat, unsigned int pixelFormat, unsigned int colorFormat);
+
+        void update(const void* data, unsigned int pixelFormat, unsigned int colorFormat);
+
         void onDrawImGui() override;
         //
 

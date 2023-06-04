@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Item_Potion_07",
+        "meshName": "PolygonDungeon/SM_Item_Potion_07",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

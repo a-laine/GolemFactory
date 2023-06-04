@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Wep_Hammer_Large_Metal_010",
+        "meshName": "PolygonDungeon/SM_Wep_Hammer_Large_Metal_010",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

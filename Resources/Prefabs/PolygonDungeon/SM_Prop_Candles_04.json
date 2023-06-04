@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Prop_Candles_04",
+        "meshName": "PolygonDungeon/SM_Prop_Candles_04",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

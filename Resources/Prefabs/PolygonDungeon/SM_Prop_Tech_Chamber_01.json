@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Prop_Tech_Chamber_01",
+        "meshName": "PolygonDungeon/SM_Prop_Tech_Chamber_01",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": [
@@ -22,7 +22,7 @@
             "prefabName": "",
             "childs": [],
             "drawableComponent": {
-                "meshName": "SM_Prop_Tech_Chamber_Glass",
+                "meshName": "PolygonDungeon/SM_Prop_Tech_Chamber_Glass",
                 "shaderName": "transparentTextured"
             }
         }

@@ -18,6 +18,7 @@
 #include "Events/EventHandler.h"
 #include "Renderer/Renderer.h"
 #include "Renderer/DrawableComponent.h"
+#include "Renderer/CameraComponent.h"
 #include "Animation/Animator.h"
 #include "Generators/HouseGenerator.h"
 #include "Resources/Loader/SkeletonSaver.h"
@@ -269,7 +270,7 @@ void initManagers()
 	Renderer::getInstance()->setShader(Renderer::INSTANCE_ANIMATABLE_BB, ResourceManager::getInstance()->getResource<Shader>("skeletonBB"));
 
 	// Debug
-	Debug::getInstance()->initialize("Shapes/point", "Shapes/box", "Shapes/sphere", "Shapes/capsule", "Shapes/point", "Shapes/segment", "default", "wired");
+	Debug::getInstance()->initialize("Shapes/point", "Shapes/box", "Shapes/sphere", "Shapes/capsule", "Shapes/point", "Shapes/segment", "default", "wired", "Shapes/multipleSegment");
 
 	// Animator
 	Animator::getInstance();

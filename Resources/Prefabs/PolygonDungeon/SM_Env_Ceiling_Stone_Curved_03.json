@@ -1,7 +1,11 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Env_Ceiling_Stone_Curved_03",
+        "meshName": "PolygonDungeon/SM_Env_Ceiling_Stone_Curved_03",
         "shaderName": "defaultTextured"
     },
+	"occluderComponent": {
+		"meshName" : "PolygonDungeon/CeilingCurvedOccluder",
+		"backfaceCulling" : true
+	},
     "prefabEntities": []
 }

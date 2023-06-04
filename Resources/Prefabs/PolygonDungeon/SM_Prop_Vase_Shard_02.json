@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Prop_Vase_Shard_02",
+        "meshName": "PolygonDungeon/SM_Prop_Vase_Shard_02",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

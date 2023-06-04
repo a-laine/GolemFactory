@@ -1,7 +1,8 @@
-NormalViewer{
+NormalViewer
+{
 	uniform :
 	{
-		model : "mat4";
+		matrixArray : "struct array32"
 		
 		overrideColor : "vec4";
 	};
@@ -16,6 +17,14 @@ NormalViewer{
 			mat4 projection;
 			vec4 cameraPosition;
 		};
+		layout(std140, binding = 3) uniform DebugShaderUniform
+		{
+			vec4 vertexNormalColor;
+			vec4 faceNormalColor;
+			float wireframeEdgeFactor;
+			float occlusionResultDrawAlpha;
+			float occlusionResultCuttoff;
+		};
 	};
 	vertex : 
 	{
@@ -23,8 +32,14 @@ NormalViewer{
 		layout(location = 0) in vec4 position;
 		layout(location = 1) in vec4 normal;
 		layout(location = 2) in vec4 vertexcolor;
-
-		uniform mat4 model; 	// model matrix (has to be present at this location)
+		
+		#ifdef INSTANCING
+			#define MAX_INSTANCE 32
+			#define MAX_MATRIX (2 * MAX_INSTANCE)
+			uniform mat4 matrixArray[MAX_MATRIX];
+		#else
+			uniform mat4 matrixArray[2];
+		#endif
 
 		// output
 		out vec4 delta_gs;
@@ -32,8 +47,13 @@ NormalViewer{
 		// program
 		void main()
 		{
-			gl_Position = projection * view * model * position;
-			delta_gs = projection * view * model * (position + 0.1 * normal);
+			mat4 model = matrixArray[2 * gl_InstanceID];
+			mat4 normalMatrix = matrixArray[2 * gl_InstanceID + 1];
+			mat4 MVP = projection * view * model;
+			
+			gl_Position = MVP * position;
+			float mag = vertexNormalColor.w;
+			delta_gs = MVP * (position + 1.0 * normal);
 		}
 	};
 	geometry : 
@@ -48,24 +68,20 @@ NormalViewer{
 		out vec4 fragmentColor_fs;
 		out vec3 barycentricCoord;
 
-		vec4 normalVertexColor = vec4(0.0,0.0,1.0,1.0);
-		vec4 normalFaceColor = vec4(0.0,1.0,1.0,1.0);
-
-
 		void drawNormal(int p1, int p2)
 		{
 			gl_Position = gl_in[p1].gl_Position;
-			fragmentColor_fs = normalVertexColor;
+			fragmentColor_fs = vertexNormalColor;
 			barycentricCoord = vec3(1.0 , 0.0 , 0.0);
 			EmitVertex();
 			
-			gl_Position = delta_gs[p1];
-			fragmentColor_fs = normalVertexColor;
+			gl_Position = mix(gl_in[p1].gl_Position, delta_gs[p1], vertexNormalColor.w);
+			fragmentColor_fs = vertexNormalColor;
 			barycentricCoord = vec3(1.0 , 0.0 , 0.0);
 			EmitVertex();
 			
 			gl_Position = gl_in[p2].gl_Position;
-			fragmentColor_fs = normalVertexColor;
+			fragmentColor_fs = vertexNormalColor;
 			barycentricCoord = vec3(0.0 , 1.0 , 0.0);
 			EmitVertex();
 			
@@ -74,18 +90,21 @@ NormalViewer{
 
 		void drawFaceNormal()
 		{
-			gl_Position = 0.3 * (gl_in[0].gl_Position + gl_in[1].gl_Position + gl_in[2].gl_Position);
-			fragmentColor_fs = normalFaceColor;
+			vec4 p = 0.33 *  (gl_in[0].gl_Position + gl_in[1].gl_Position + gl_in[2].gl_Position);
+			vec4 pn = 0.33 * (delta_gs[0] + delta_gs[1] + delta_gs[2]);
+			
+			gl_Position = p;
+			fragmentColor_fs = faceNormalColor;
 			barycentricCoord = vec3(1.0 , 0.0 , 0.0);
 			EmitVertex();
 			
-			gl_Position = 0.3 * (delta_gs[0] + delta_gs[1] + delta_gs[2]);
-			fragmentColor_fs = normalFaceColor;
+			gl_Position = mix(p, pn, faceNormalColor.w);
+			fragmentColor_fs = faceNormalColor;
 			barycentricCoord = vec3(1.0 , 0.0 , 0.0);
 			EmitVertex();
 			
 			gl_Position = gl_in[0].gl_Position;
-			fragmentColor_fs = normalFaceColor;
+			fragmentColor_fs = faceNormalColor;
 			barycentricCoord = vec3(0.0 , 1.0 , 0.0);
 			EmitVertex();
 			

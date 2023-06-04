@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Trap_AcidHead_01",
+        "meshName": "PolygonDungeon/SM_Trap_AcidHead_01",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []

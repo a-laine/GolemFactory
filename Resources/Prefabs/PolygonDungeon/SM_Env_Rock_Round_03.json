@@ -1,6 +1,6 @@
 {
     "drawableComponent": {
-        "meshName": "SM_Env_Rock_Round_03",
+        "meshName": "PolygonDungeon/SM_Env_Rock_Round_03",
         "shaderName": "defaultTextured"
     },
     "prefabEntities": []
