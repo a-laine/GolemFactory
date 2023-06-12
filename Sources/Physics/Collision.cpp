@@ -49,8 +49,11 @@ void Collision::DispatchMatrixInit()
 	dispatchMatrix[(int)Shape::ShapeType::SPHERE][(int)Shape::ShapeType::POINT] = _SpherevsPoint;
 	dispatchMatrix[(int)Shape::ShapeType::SPHERE][(int)Shape::ShapeType::SEGMENT] = _SpherevsSegment;
 	dispatchMatrix[(int)Shape::ShapeType::SPHERE][(int)Shape::ShapeType::SPHERE] = _SpherevsSphere;
+	dispatchMatrix[(int)Shape::ShapeType::SPHERE][(int)Shape::ShapeType::ORIENTED_BOX] = _SpherevsOrientedBox;
 	dispatchMatrix[(int)Shape::ShapeType::SPHERE][(int)Shape::ShapeType::AXIS_ALIGNED_BOX] = _SpherevsAxisAlignedBox;
 	dispatchMatrix[(int)Shape::ShapeType::SPHERE][(int)Shape::ShapeType::CAPSULE] = _SpherevsCapsule;
+
+	dispatchMatrix[(int)Shape::ShapeType::ORIENTED_BOX][(int)Shape::ShapeType::SPHERE] = _OrientedBoxvsSphere;
 
 }
 
@@ -164,6 +167,12 @@ bool Collision::_SpherevsSphere(const Shape* a, const Shape* b, CollisionReport*
 	const Sphere& sphere2 = *(Sphere*)b;
 	return collide_SpherevsSphere(sphere1.center, sphere1.radius, sphere2.center, sphere2.radius, report);
 }
+bool Collision::_SpherevsOrientedBox(const Shape* a, const Shape* b, CollisionReport* report)
+{
+	const Sphere& sphere = *(Sphere*)a;
+	const OrientedBox& box = *(OrientedBox*)b;
+	return collide_SpherevsOrientedBox(sphere.center, sphere.radius, box.base, box.min, box.max, report);
+}
 bool Collision::_SpherevsAxisAlignedBox(const Shape* a, const Shape* b, CollisionReport* report)
 {
 	const Sphere& sphere = *(Sphere*)a;
@@ -177,7 +186,13 @@ bool Collision::_SpherevsCapsule(const Shape* a, const Shape* b, CollisionReport
 	return collide_SpherevsCapsule(sphere.center, sphere.radius, capsule.p1, capsule.p2, capsule.radius, report);
 }
 
-
+// OrientedBox dispatch
+bool Collision::_OrientedBoxvsSphere(const Shape* a, const Shape* b, CollisionReport* report)
+{
+	const Sphere& sphere = *(Sphere*)b;
+	const OrientedBox& box = *(OrientedBox*)a;
+	return collide_OrientedBoxvsSphere(sphere.center, sphere.radius, box.base, box.min, box.max, report);
+}
 
 
 

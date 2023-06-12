@@ -13,6 +13,7 @@
 #include <Utiles/Debug.h>
 #include <Utiles/ImguiConfig.h>
 #include <Physics/Shapes/Collider.h>
+#include <Renderer/CameraComponent.h>
 
 #define APPROXIMATION_FACTOR 10.f
 //#define EPSILON 0.000001f
@@ -40,7 +41,7 @@ bool Physics::drawClustersAABB = false;
 
 
 //  Default
-Physics::Physics() : gravity(0.f, 0.f, -9.81f, 0.f), proximityTest(vec4f(0), vec4f(0)), defaultFriction(0.7f)
+Physics::Physics() : gravity(0.f, -9.81f, 0.f, 0.f), proximityTest(vec4f(0), vec4f(0)), defaultFriction(0.7f)
 {
 	Collision::DispatchMatrixInit();
 }
@@ -164,24 +165,109 @@ void Physics::debugDraw()
 			}
 		}
 	}
+
+#ifdef USE_IMGUI
+	if (m_drawCollidersAround && PhysicDebugWindowEnable)
+	{
+		m_collidersQuery.getResult().clear();
+		auto& list = m_colliderColector.getResult();
+		Debug::setDepthTest(m_enableZtest);
+		Debug::setBlending(false);
+		
+		std::vector<Component*> entityColliders;
+		for (int i = 0; i < list.size(); i++)
+		{
+			if (list[i] == mainCameraEntity)
+				continue;
+
+			entityColliders.clear();
+			list[i]->getAllComponents<Collider>(entityColliders);
+			for (int j = 0; j < entityColliders.size(); j++)
+			{
+				Collider* collider = static_cast<Collider*>(entityColliders[j]);
+				collider->drawDebug(vec4f(0, 1, 0, 1), m_drawCollidersWired);
+			}
+		}
+	}
+#endif // USE_IMGUI
 }
 void Physics::drawImGui(World& world)
 {
 #ifdef USE_IMGUI
 	ImGui::Begin("Physics");
+	ImGui::PushID(this);
 
-	ImGui::Text("Options");
+	CameraComponent* mainCamera = world.getMainCamera();
+	ImVec4 titleColor = ImVec4(1, 1, 0, 1);
+
+	ImGui::TextColored(titleColor, "Options");
 	ImGui::Checkbox("Draw sweept boxes", &drawSweptBoxes);
 	ImGui::Checkbox("Draw collisions", &drawCollisions);
 	ImGui::Checkbox("Draw clusters", &drawClustersAABB);
+	ImGui::Checkbox("Draw colliders around", &m_drawCollidersAround);
+	ImGui::SliderFloat("Draw colliders query size", &m_drawCollidersQuerySize, 5.f, 300.f);
+	ImGui::Checkbox("Draw colliders as wired", &m_drawCollidersWired);
+	ImGui::Checkbox("Z test", &m_enableZtest);
 
 	if (ImGui::Button("One frame update"))
 	{
 		stepSimulation(0.016f, &world.getSceneManager());
 	}
 
+	ImGui::Spacing(); ImGui::Spacing(); ImGui::Spacing();
+	ImGui::TextColored(titleColor, "Object thrower");
 
+	ImGui::Combo("Shape code", &m_shapeCode, "Sphere\0Box\0\0");
+	ImGui::DragFloat("Velocity", &m_velocity, 0.01f, 0.f, 100000.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+	ImGui::DragFloat3("Size", &m_size[0], 0.01f, 0.00001f, 10.f);
+	if (ImGui::Button("Throw object !") && mainCamera)
+	{
+		std::string type;
+		switch (m_shapeCode)
+		{
+			case 1: type = "cube"; break;
+			default: type = "sphere"; break;
+		}
+
+		world.getEntityFactory().createObject(type, [&](Entity* object)
+			{
+				float radius = m_size.x;
+				object->setName("Throwed " + type);
+				object->setLocalTransformation(mainCamera->getParentEntity()->getWorldPosition() + mainCamera->getForward(), radius, quatf::identity);
+
+				RigidBody* rb = new RigidBody(RigidBody::DYNAMIC);
+				rb->setMass(radius * radius * radius);
+				rb->setBouncyness(0.05f);
+				rb->setFriction(0.2f);
+				rb->setDamping(0.001f);
+				rb->setGravityFactor(1.f);
+				rb->setLinearVelocity(m_velocity * mainCamera->getForward());
+				object->addComponent(rb);
+			});
+	}
+
+	ImGui::PopID();
 	ImGui::End();
+
+	if (m_drawCollidersAround)
+	{
+		m_collidersQuery.getResult().clear();
+		m_colliderColector.getResult().clear();
+		m_colliderColector.m_flags = (uint64_t)Entity::Flags::Fl_Collision;
+		m_colliderColector.m_exclusionFlags = 0;
+
+		if (mainCamera)
+		{
+			mainCameraEntity = mainCamera->getParentEntity();
+			vec4f center = mainCameraEntity->getWorldPosition();
+			vec4f hsize = vec4f(m_drawCollidersQuerySize);
+			m_collidersQuery.bbMin = center - hsize;
+			m_collidersQuery.bbMax = center + hsize;
+		}
+
+
+		world.getSceneManager().getEntities(&m_collidersQuery, &m_colliderColector);
+	}
 #endif // USE_IMGUI
 }
 //
@@ -239,6 +325,7 @@ void Physics::computeBoundingShapesAndDetectPairs(const float& elapsedTime, Scen
 		proximityTest.bbMin = box.min;
 		proximityTest.bbMax = box.max;
 		proximityList.result.clear();
+		proximityList.m_flags = (uint64_t)Entity::Flags::Fl_Collision;
 		scene->getEntities(&proximityTest, &proximityList);
 
 		bool collideOnDynamic = false;
@@ -250,7 +337,7 @@ void Physics::computeBoundingShapesAndDetectPairs(const float& elapsedTime, Scen
 
 			//	get shape of concurent entity
 			Entity* other = proximityList.result[i];
-			RigidBody* body2 = other->getComponent<RigidBody>();
+			RigidBody* body2 = (other->getFlags() & (uint64_t)Entity::Flags::Fl_Physics) ? other->getComponent<RigidBody>() : nullptr;
 			AxisAlignedBox* box2 = nullptr;
 			if (body2)
 				box2 = &body2->sweptBox;

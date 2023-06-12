@@ -22,25 +22,23 @@ const vec4f Debug::yellow = vec4f(1.f, 1.f, 0.f, 1.f);
 
 const vec4f Debug::darkBlue = vec4f(0.103f, 0.103f, 0.403f, 1.f);
 const vec4f Debug::darkGreen = vec4f(0.f, 0.25f, 0.f, 1.f);
-
 //
 
 //  Default
-Debug::Debug() : renderer(nullptr), pointMesh(nullptr), cubeMesh(nullptr), sphereMesh(nullptr), capsuleMesh(nullptr), pointShader(nullptr), 
-	segmentShader(nullptr), defaultShader(nullptr), wiredShader(nullptr), multipleSegmentShader(nullptr)
-{}
+Debug::Debug() : renderer(nullptr),  cubeMesh(nullptr), sphereMesh(nullptr), capsuleMesh(nullptr), 
+	 defaultShader(nullptr), wiredShader(nullptr), debug(nullptr), textureReinterpreter(nullptr)
+{
+	glGenFramebuffers(1, &textureReinterpreterFBO);
+}
 Debug::~Debug()
 {
-	ResourceManager::getInstance()->release(pointMesh);
 	ResourceManager::getInstance()->release(cubeMesh);
 	ResourceManager::getInstance()->release(sphereMesh);
 	ResourceManager::getInstance()->release(capsuleMesh);
 
-	ResourceManager::getInstance()->release(pointShader);
-	ResourceManager::getInstance()->release(segmentShader);
 	ResourceManager::getInstance()->release(defaultShader);
 	ResourceManager::getInstance()->release(wiredShader);
-	ResourceManager::getInstance()->release(multipleSegmentShader);
+	ResourceManager::getInstance()->release(debug);
 
 	for (auto& it : This->vertexScratchBuffers)
 	{
@@ -50,21 +48,20 @@ Debug::~Debug()
 //
 
 //	Public functions
-void Debug::initialize(const std::string& pointMeshName, const std::string& cubeMeshName, const std::string& sphereMeshName, 
-	const std::string& capsuleMeshName, const std::string& pointShaderName, const std::string& segmentShaderName, 
-	const std::string& defaultShaderName, const std::string& wiredShaderName, const std::string& multipleSegmentShaderName)
+void Debug::initialize(const std::string& cubeMeshName, const std::string& sphereMeshName, const std::string& capsuleMeshName, 
+	const std::string& defaultShaderName, const std::string& wiredShaderName, const std::string& multiplePrimitiveShaderName,
+	const std::string& textureReinterpreterShaderName)
 {
 	renderer = Renderer::getInstance();
-	pointMesh = ResourceManager::getInstance()->getResource<Mesh>(pointMeshName);
 	cubeMesh = ResourceManager::getInstance()->getResource<Mesh>(cubeMeshName);
 	sphereMesh = ResourceManager::getInstance()->getResource<Mesh>(sphereMeshName);
 	capsuleMesh = ResourceManager::getInstance()->getResource<Mesh>(capsuleMeshName);
 
-	pointShader = ResourceManager::getInstance()->getResource<Shader>(pointShaderName);
-	segmentShader = ResourceManager::getInstance()->getResource<Shader>(segmentShaderName);
 	defaultShader = ResourceManager::getInstance()->getResource<Shader>(defaultShaderName);
 	wiredShader = ResourceManager::getInstance()->getResource<Shader>(wiredShaderName);
-	multipleSegmentShader = ResourceManager::getInstance()->getResource<Shader>(multipleSegmentShaderName);
+	debug = ResourceManager::getInstance()->getResource<Shader>(multiplePrimitiveShaderName);
+
+	textureReinterpreter = ResourceManager::getInstance()->getResource<Shader>(textureReinterpreterShaderName);
 }
 void Debug::setDepthTest(bool enable)
 {
@@ -73,6 +70,25 @@ void Debug::setDepthTest(bool enable)
 	else
 		glDisable(GL_DEPTH_TEST);//glDepthFunc(GL_ALWAYS);
 }
+void Debug::setBlending(bool enable)
+{
+	if (enable)
+		glEnable(GL_BLEND);// glDepthFunc(GL_LESS);
+	else
+		glDisable(GL_BLEND);//glDepthFunc(GL_ALWAYS);
+}
+
+void Debug::drawPoint(const vec4f& p)
+{
+	Vertex point = {p, color};
+	drawMultiplePrimitive(&point, 1, mat4f::identity, GL_POINTS);
+}
+void Debug::drawLine(const vec4f& point1, const vec4f& point2)
+{
+	Vertex vertices[2];
+	vertices[0] = { point1, color }; vertices[1] = { point2, color };
+	drawMultiplePrimitive(vertices, 2, mat4f::identity, GL_LINES);
+}
 void Debug::drawLineCube(const mat4f& transform, const vec4f& size)
 {
 	vec4f x = size.x * vec4f(transform[0]);
@@ -80,75 +96,27 @@ void Debug::drawLineCube(const mat4f& transform, const vec4f& size)
 	vec4f z = size.z * vec4f(transform[2]);
 	vec4f center = vec4f(transform[3]);
 
-	std::vector<Vertex> vertices;
-	vertices.reserve(24);
-	vertices.push_back({ center + x + y + z, color }); vertices.push_back({ center + x + y - z, color });
-	vertices.push_back({ center + x - y + z, color }); vertices.push_back({ center + x - y - z, color });
-	vertices.push_back({ center - x + y + z, color }); vertices.push_back({ center - x + y - z, color });
-	vertices.push_back({ center - x - y + z, color }); vertices.push_back({ center - x - y - z, color });
+	Vertex vertices[24];
+	vertices[0] = { center + x + y + z, color }; vertices[1] = { center + x + y - z, color };
+	vertices[2] = { center + x - y + z, color }; vertices[3] = { center + x - y - z, color };
+	vertices[4] = { center - x + y + z, color }; vertices[5] = { center - x + y - z, color };
+	vertices[6] = { center - x - y + z, color }; vertices[7] = { center - x - y - z, color };
 
-	vertices.push_back({ center + x + y + z, color }); vertices.push_back({ center + x - y + z, color });
-	vertices.push_back({ center + x + y - z, color }); vertices.push_back({ center + x - y - z, color });
-	vertices.push_back({ center - x + y + z, color }); vertices.push_back({ center - x - y + z, color });
-	vertices.push_back({ center - x + y - z, color }); vertices.push_back({ center - x - y - z, color });
+	vertices[8] = { center + x + y + z, color }; vertices[9] = { center + x - y + z, color };
+	vertices[10] = { center + x + y - z, color }; vertices[11] = { center + x - y - z, color };
+	vertices[12] = { center - x + y + z, color }; vertices[13] = { center - x - y + z, color };
+	vertices[14] = { center - x + y - z, color }; vertices[15] = { center - x - y - z, color };
 
-	vertices.push_back({ center + x + y + z, color }); vertices.push_back({ center - x + y + z, color });
-	vertices.push_back({ center + x + y - z, color }); vertices.push_back({ center - x + y - z, color });
-	vertices.push_back({ center + x - y + z, color }); vertices.push_back({ center - x - y + z, color });
-	vertices.push_back({ center + x - y - z, color }); vertices.push_back({ center - x - y - z, color });
+	vertices[16] = { center + x + y + z, color }; vertices[17] = { center - x + y + z, color };
+	vertices[18] = { center + x + y - z, color }; vertices[19] = { center - x + y - z, color };
+	vertices[20] = { center + x - y + z, color }; vertices[21] = { center - x - y + z, color };
+	vertices[22] = { center + x - y - z, color }; vertices[23] = { center - x - y - z, color };
 
-	drawMultipleLines(vertices, mat4f::identity);
+	drawMultiplePrimitive(vertices, 24, mat4f::identity, GL_LINES);
 }
 //
 
 // real draw functions
-void Debug::point(const vec4f& p, Shader* shader)
-{
-	if (This->renderer && shader && This->pointMesh)
-	{
-		//	Get shader and prepare matrix
-		mat4f m = mat4f::translate(mat4f::identity, p);
-		Renderer::ModelMatrix modelMatrix = { m, mat4f::identity };
-		This->renderer->loadModelMatrix(shader, &modelMatrix);
-
-		//	override mesh color
-		int loc = shader->getUniformLocation("overrideColor");
-		if (loc >= 0) glUniform4fv(loc, 1, (float*)&color);
-
-		//	Draw mesh
-		This->renderer->loadVAO(This->pointMesh->getVAO());
-		glDrawElements(GL_POINTS, 1, GL_UNSIGNED_SHORT, NULL);
-
-		if (loc >= 0) glUniform4fv(loc, 1, (float*)&vec4f(-1.f, 0.f, 0.f, 1.f)[0]);
-	}
-	else
-	{
-
-	}
-}
-void Debug::line(const vec4f& point1, const vec4f& point2, Shader* shader)
-{
-	if (This->renderer && shader && This->pointMesh)
-	{
-		//	Get shader and prepare matrix
-		mat4f m = mat4f::translate(mat4f::identity, point1);
-		Renderer::ModelMatrix modelMatrix = { m, mat4f::identity };
-		This->renderer->loadModelMatrix(shader, &modelMatrix);
-
-		int loc = shader->getUniformLocation("vector");
-		if (loc >= 0) glUniform4fv(loc, 1, (float*)&(point2 - point1)[0]);
-
-		//	override mesh color
-		loc = shader->getUniformLocation("overrideColor");
-		if (loc >= 0) glUniform4fv(loc, 1, (float*)&color);
-
-		//	Draw mesh
-		This->renderer->loadVAO(This->pointMesh->getVAO());
-		glDrawElements(GL_POINTS, 1, GL_UNSIGNED_SHORT, NULL);
-
-		if (loc >= 0) glUniform4fv(loc, 1, (float*)&vec4f(-1.f, 0.f, 0.f, 1.f)[0]);
-	}
-}
 void Debug::capsule(const vec4f& point1, const vec4f& point2, const float& radius, Shader* shader)
 {
 	constexpr unsigned int quadrature = 32;										// capsule mesh was generated using this value
@@ -221,17 +189,17 @@ void Debug::mesh(const Mesh* const mesh, const mat4f& transform, Shader* shader)
 		if (loc >= 0) glUniform4fv(loc, 1, (float*)&vec4f(-1.f, 0.f, 0.f, 1.f)[0]);
 	}
 }
-void Debug::drawMultipleLines(const std::vector<Vertex>& points, const mat4f& model)
+void Debug::drawMultiplePrimitive(const Vertex* vertices, const int& verticesCount, const mat4f& model, int drawMode)
 {
-	if (!This->multipleSegmentShader || !This->renderer)
+	if (!This->debug || !This->renderer)
 		return;
 
 	Renderer::ModelMatrix modelMatrix = { model, model };
-	This->renderer->loadModelMatrix(This->multipleSegmentShader, &modelMatrix);
+	This->renderer->loadModelMatrix(This->debug, &modelMatrix);
 
 	constexpr size_t vboSize = sizeof(Vertex) * 4096;
-	uint8_t* startPtr = (uint8_t*)points.data();
-	uint8_t* endPtr = (uint8_t*)points.data() + sizeof(Vertex) * points.size();
+	uint8_t* startPtr = (uint8_t*)vertices;
+	uint8_t* endPtr = startPtr + sizeof(Vertex) * verticesCount;
 
 	while (startPtr < endPtr)
 	{
@@ -273,11 +241,63 @@ void Debug::drawMultipleLines(const std::vector<Vertex>& points, const mat4f& mo
 		glBufferSubData(GL_ARRAY_BUFFER, buffer->offset, range, startPtr);
 
 		glBindVertexArray(buffer->vao);
-		glDrawArrays(GL_LINES, (int)(buffer->offset / sizeof(Vertex)), (int)(range / sizeof(Vertex)));
+		glDrawArrays(drawMode, (int)(buffer->offset / sizeof(Vertex)), (int)(range / sizeof(Vertex)));
 
 		startPtr += range;
 		buffer->offset += range;
 	}
+}
+
+
+void Debug::reinterpreteTexture(const Texture* in, Texture* out, float layer)
+{
+	if (!This->renderer || !This->textureReinterpreter)
+		return;
+
+	// resize out
+	if (out->size.x != in->size.x || out->size.y != in->size.y)
+	{
+		out->size.x = in->size.x;
+		out->size.y = in->size.y;
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, out->getTextureId());
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, in->size.x, in->size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+	}
+
+	// bing framebuffer
+	glBindFramebuffer(GL_FRAMEBUFFER, This->textureReinterpreterFBO);
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, out->getTextureId(), 0);
+	GLenum DrawBuffers[1] = { GL_COLOR_ATTACHMENT0 };
+	glDrawBuffers(1, DrawBuffers);
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+	{
+		std::cout << "Debug::reinterpreteTexture" << std::endl;
+		return;
+	}
+
+	// draw
+	glViewport(0, 0, in->size.x, in->size.y);
+	This->renderer->lastShader = This->textureReinterpreter;
+	This->renderer->lastVAO = This->renderer->fullscreenVAO;
+	This->textureReinterpreter->enable();
+
+	if (in->m_internalFormat == GL_DEPTH_COMPONENT32F && in->size.z > 0)
+	{
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D_ARRAY, in->getTextureId());
+	}
+
+	int loc = This->textureReinterpreter->getUniformLocation("layer");
+	if (loc >= 0)
+		glUniform1f(loc, layer);
+
+
+	glBindVertexArray(This->renderer->lastVAO);
+	glDrawArrays(GL_TRIANGLES, 0, 3);
+
+	// end
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 //
 

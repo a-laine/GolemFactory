@@ -7,5 +7,10 @@
 		"meshName" : "PolygonDungeon/SM_Env_Wall_01_Texture",
 		"backfaceCulling" : true
 	},
+	"colliderComponent" :{
+		"shapeType" : "AxisAlignedBox",
+		"center" : [-2.5, 2.5, 0.06],
+		"halfSize" : [2.5, 2.5, 0.22]
+	},
     "prefabEntities": []
 }

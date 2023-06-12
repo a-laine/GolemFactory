@@ -44,9 +44,10 @@ class Collision
 		static bool _SpherevsSegment(const Shape* a, const Shape* b, CollisionReport* report);
 		static bool _SpherevsSphere(const Shape* a, const Shape* b, CollisionReport* report);
 		static bool _SpherevsAxisAlignedBox(const Shape* a, const Shape* b, CollisionReport* report);
-		//static bool _SpherevsOrientedBox(const Shape* a, const Shape* b, CollisionReport* report);
+		static bool _SpherevsOrientedBox(const Shape* a, const Shape* b, CollisionReport* report);
 		static bool _SpherevsCapsule(const Shape* a, const Shape* b, CollisionReport* report);
 
+		static bool _OrientedBoxvsSphere(const Shape* a, const Shape* b, CollisionReport* report);
 
 	public:
 		//	Specialized functions : point vs all other
@@ -96,8 +97,8 @@ class Collision
 		static bool collide_SpherevsAxisAlignedBox(const vec4f& boxMin, const vec4f& boxMax, const vec4f& sphereCenter, const float& sphereRadius, CollisionReport* report = nullptr);
 		static bool collide_AxisAlignedBoxvsSphere(const vec4f& boxMin, const vec4f& boxMax, const vec4f& sphereCenter, const float& sphereRadius, CollisionReport* report = nullptr);
 
-		static bool collide_SpherevsOrientedBox(const vec4f& boxMin, const vec4f& boxMax, const vec4f& sphereCenter, const float& sphereRadius, CollisionReport* report = nullptr);
-		static bool collide_OrientedBoxvsSphere(const vec4f& boxMin, const vec4f& boxMax, const vec4f& sphereCenter, const float& sphereRadius, CollisionReport* report = nullptr);
+		static bool collide_SpherevsOrientedBox(const vec4f& sphereCenter, const float& sphereRadius, const mat4f& boxTranform, const vec4f& boxMin, const vec4f& boxMax, CollisionReport* report = nullptr);
+		static bool collide_OrientedBoxvsSphere(const vec4f& sphereCenter, const float& sphereRadius, const mat4f& boxTranform, const vec4f& boxMin, const vec4f& boxMax, CollisionReport* report = nullptr);
 
 		//	Specialized functions : Axis Aligned Box vs all other (except previous Shape)
 		//static bool collide_AxisAlignedBoxvsAxisAlignedBox(const vec4f& box1Min, const vec4f& box1Max, const vec4f& box2Min, const vec4f& box2Max);

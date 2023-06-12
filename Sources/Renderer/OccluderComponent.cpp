@@ -5,6 +5,7 @@
 #include <Utiles/Debug.h>
 #include <Utiles/Parser/Variant.h>
 #include <Utiles/ConsoleColor.h>
+#include <imgui_internal.h>
 
 
 OccluderComponent::OccluderComponent(const std::string& meshName)
@@ -106,7 +107,7 @@ void OccluderComponent::onDrawImGui()
 #ifdef USE_IMGUI
 	const ImVec4 componentColor = ImVec4(1, 0.5, 0, 1);
 	std::ostringstream unicName;
-	unicName << "Drawable component##" << (uintptr_t)this;
+	unicName << "Occluder component##" << (uintptr_t)this;
 
 	if (ImGui::TreeNodeEx(unicName.str().c_str(), ImGuiTreeNodeFlags_DefaultOpen))
 	{
@@ -117,9 +118,37 @@ void OccluderComponent::onDrawImGui()
 		ImGui::Text("faces count : %d", m_mesh->getNumberFaces());
 		ImGui::Unindent();
 
+		ImGui::TextColored(componentColor, "Params");
+		ImGui::Indent();
+		ImGui::Checkbox("Backface culling", &m_backfaceCulling);
+		ImGui::Unindent();
 
+		ImGui::TextColored(componentColor, "Debug");
+		ImGui::Indent();
+		ImGui::Checkbox("Draw mesh", &m_drawMesh);
+
+		if (!m_drawMesh)
+		{
+			ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+			ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+		}
+		ImGui::Checkbox("Use Z test", &m_drawZtest);
+		if (!m_drawMesh)
+		{
+			ImGui::PopItemFlag();
+			ImGui::PopStyleVar();
+		}
+		ImGui::Unindent();
 
 		ImGui::TreePop();
+
+		if (m_drawMesh)
+		{
+			Debug::color = Debug::white;
+			Debug::setDepthTest(m_drawZtest);
+			Debug::drawMesh(m_mesh, getParentEntity()->getWorldTransformMatrix());
+			Debug::setDepthTest(true);
+		}
 	}
 #endif // USE_IMGUI
 }

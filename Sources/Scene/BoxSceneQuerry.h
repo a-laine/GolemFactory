@@ -9,6 +9,7 @@ class BoxSceneQuerry : public VirtualSceneQuerry
 	friend class Physics;
 
 	public:
+		BoxSceneQuerry();
 		BoxSceneQuerry(const vec4f& cornerMin, const vec4f& cornerMax);
 
 		VirtualSceneQuerry::CollisionType operator() (const NodeVirtual* node) override;

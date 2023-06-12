@@ -95,6 +95,121 @@ bool Collision::collide_CapsulevsSphere(const vec4f& sphereCenter, const float& 
 	}
 }
 
+bool Collision::collide_SpherevsOrientedBox(const vec4f& sphereCenter, const float& sphereRadius, const mat4f& boxTranform, const vec4f& boxMin, const vec4f& boxMax, CollisionReport* report)
+{
+	vec4f bx = boxTranform[0];
+	vec4f by = boxTranform[1];
+	vec4f bz = boxTranform[2];
+
+	vec4f center = boxTranform * (0.5f * (boxMax + boxMin));
+	vec4f halfSize = 0.5f * vec4f::abs(boxMax - boxMin);
+	vec4f p = sphereCenter - center;
+
+	float px = clamp(vec4f::dot(p, bx), -halfSize.x, halfSize.x);
+	float py = clamp(vec4f::dot(p, by), -halfSize.y, halfSize.y);
+	float pz = clamp(vec4f::dot(p, bz), -halfSize.z, halfSize.z);
+	vec4f closest = center + bx * px + by * py + bz * pz;
+	vec4f delta = sphereCenter - closest;
+	float distance2 = delta.getNorm2();
+	
+	if (distance2 > sphereRadius * sphereRadius)
+		return false;
+	else
+	{
+		if (report)
+		{
+			report->collision = true;
+
+			if (distance2 < COLLISION_EPSILON * COLLISION_EPSILON)
+			{
+				delta = halfSize - vec4f::abs(vec4f(px, py, pz, 0));
+				if (delta.x < delta.y && delta.x < delta.z)
+				{
+					report->depths.push_back(sphereRadius + delta.x);
+					report->normal = px > 0.f ? -bx : bx;
+				}
+				else if (delta.y < delta.x&& delta.y < delta.z)
+				{
+					report->depths.push_back(sphereRadius + delta.y);
+					report->normal = py > 0.f ? -by : by;
+				}
+				else
+				{
+					report->depths.push_back(sphereRadius + delta.z);
+					report->normal = pz > 0.f ? -bz : bz;
+				}
+				report->points.push_back(sphereCenter - sphereRadius * report->normal);
+			}
+			else
+			{
+				float distance = sqrt(distance2);
+				report->normal = (-1.f / distance) * delta;
+				report->depths.push_back(sphereRadius - distance);
+				report->points.push_back(sphereCenter + sphereRadius * report->normal);
+			}
+		}
+		return true;
+	}
+}
+bool Collision::collide_OrientedBoxvsSphere(const vec4f& sphereCenter, const float& sphereRadius, const mat4f& boxTranform, const vec4f& boxMin, const vec4f& boxMax, CollisionReport* report)
+{
+	vec4f bx = boxTranform[0];
+	vec4f by = boxTranform[1];
+	vec4f bz = boxTranform[2];
+
+	vec4f center = boxTranform * (0.5f * (boxMax + boxMin));
+	vec4f halfSize = 0.5f * vec4f::abs(boxMax - boxMin);
+	vec4f p = sphereCenter - center;
+
+	float px = clamp(vec4f::dot(p, bx), -halfSize.x, halfSize.x);
+	float py = clamp(vec4f::dot(p, by), -halfSize.y, halfSize.y);
+	float pz = clamp(vec4f::dot(p, bz), -halfSize.z, halfSize.z);
+	vec4f closest = center + bx * px + by * py + bz * pz;
+	vec4f delta = sphereCenter - closest;
+	float distance2 = delta.getNorm2();
+
+	if (distance2 > sphereRadius * sphereRadius)
+		return false;
+	else
+	{
+		if (report)
+		{
+			report->collision = true;
+
+			if (distance2 < COLLISION_EPSILON * COLLISION_EPSILON)
+			{
+				delta = halfSize - vec4f::abs(vec4f(px, py, pz, 0));
+				if (delta.x < delta.y && delta.x < delta.z)
+				{
+					report->depths.push_back(sphereRadius + delta.x);
+					report->normal = px > 0.f ? bx : -bx;
+					report->points.push_back(center - halfSize.x * report->normal);
+				}
+				else if (delta.y < delta.x&& delta.y < delta.z)
+				{
+					report->depths.push_back(sphereRadius + delta.y);
+					report->normal = py > 0.f ? by : -by;
+					report->points.push_back(center - halfSize.y * report->normal);
+				}
+				else
+				{
+					report->depths.push_back(sphereRadius + delta.z);
+					report->normal = pz > 0.f ? bz : -bz;
+					report->points.push_back(center - halfSize.z * report->normal);
+				}
+			}
+			else
+			{
+				float distance = sqrt(distance2);
+				report->normal = (1.f / distance) * delta;
+				report->depths.push_back(sphereRadius - distance);
+				report->points.push_back(closest);
+			}
+		}
+		return true;
+	}
+}
+
 bool Collision::collide_AxisAlignedBoxvsSphere(const vec4f& boxMin, const vec4f& boxMax, const vec4f& sphereCenter, const float& sphereRadius, CollisionReport* report)
 {
 	if (Collision::collide_AxisAlignedBoxvsPoint(sphereCenter, boxMin, boxMax, report))

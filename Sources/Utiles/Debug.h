@@ -23,21 +23,23 @@ class Debug : public Singleton<Debug>
 		
 
 		// Public functions
-		void initialize(const std::string& pointMeshName, const std::string& cubeMeshName, const std::string& sphereMeshName, const std::string& capsuleMeshName, 
-			const std::string& pointShaderName, const std::string& segmentShaderName, const std::string& defaultShaderName, const std::string& wiredShaderName,
-			const std::string& multipleSegmentShaderName);
+		void initialize(const std::string& cubeMeshName, const std::string& sphereMeshName, const std::string& capsuleMeshName, 
+			const std::string& defaultShaderName, const std::string& wiredShaderName, const std::string& multiplePrimitiveShaderName,
+			const std::string& textureReinterpreterShaderName);
 		//
 
 		//  Draw functions
 		static void setDepthTest(bool enable);
+		static void setBlending(bool enable);
 
-		static void drawPoint(const vec4f& p) { Debug::point(p, This->pointShader); };
+		static void drawPoint(const vec4f& p);
 		static void drawCube(const mat4f& transform, const vec4f& size) { Debug::mesh(This->cubeMesh, mat4f::scale(transform, size), This->defaultShader); };
 		static void drawSphere(const vec4f& center, const float& radius) { Debug::mesh(This->sphereMesh, mat4f::scale(mat4f::translate(mat4f::identity, center), vec4f(radius)), This->defaultShader); };
-		static void drawLine(const vec4f& point1, const vec4f& point2) { Debug::line(point1, point2, This->segmentShader); };
-		static void drawCapsule(const vec4f& point1, const vec4f& point2, const float& radius) { Debug::capsule(point1, point2, radius, This->wiredShader); };
-		static void drawMesh(const Mesh* const mesh, const mat4f& transform) { Debug::mesh(mesh, transform, This->wiredShader); };
-		static void drawMultipleLines(const std::vector<Vertex>& points, const mat4f& model);
+		static void drawLine(const vec4f& point1, const vec4f& point2);
+		static void drawCapsule(const vec4f& point1, const vec4f& point2, const float& radius) { Debug::capsule(point1, point2, radius, This->defaultShader); };
+		static void drawMesh(const Mesh* const mesh, const mat4f& transform) { Debug::mesh(mesh, transform, This->defaultShader); };
+
+		static void drawMultiplePrimitive(const Vertex* vertices, const int& verticesCount, const mat4f& model, int drawMode);
 
 		static void drawWiredCube(const mat4f& transform, const vec4f& size) { Debug::mesh(This->cubeMesh, mat4f::scale(transform, size), This->wiredShader); };
 		static void drawWiredCube(const mat4f& transform, const vec4f& min, const vec4f& max)
@@ -53,6 +55,8 @@ class Debug : public Singleton<Debug>
 		{
 			Debug::drawLineCube(transform * mat4f::translate(mat4f::identity, 0.5f * (max + min)), 0.5f * (max - min));
 		}
+
+		static void reinterpreteTexture(const Texture* in, Texture* out, float layer = 0.f);
 		//
 
 		//	Log fuctions
@@ -88,8 +92,8 @@ class Debug : public Singleton<Debug>
 		//
 
 		// real draw functions
-		static void point(const vec4f& p, Shader* shader);
-		static void line(const vec4f& point1, const vec4f& point2, Shader* shader);
+		//static void point(const vec4f& p, Shader* shader);
+		//static void line(const vec4f& point1, const vec4f& point2, Shader* shader);
 		static void capsule(const vec4f& point1, const vec4f& point2, const float& radius, Shader* shader);
 		static void mesh(const Mesh* const mesh, const mat4f& transform, Shader* shader);
 		//
@@ -101,16 +105,13 @@ class Debug : public Singleton<Debug>
 		// Attributes
 		Renderer* renderer;
 
-		Mesh* pointMesh;
 		Mesh* cubeMesh;
 		Mesh* sphereMesh;
 		Mesh* capsuleMesh;
 
-		Shader* pointShader;
-		Shader* segmentShader;
 		Shader* defaultShader;
 		Shader* wiredShader;
-		Shader* multipleSegmentShader;
+		Shader* debug;
 
 		struct VertexVBO
 		{
@@ -118,5 +119,9 @@ class Debug : public Singleton<Debug>
 			int offset;
 		};
 		std::list<VertexVBO> vertexScratchBuffers;
+
+
+		Shader* textureReinterpreter;
+		GLuint textureReinterpreterFBO;
 		//
 };

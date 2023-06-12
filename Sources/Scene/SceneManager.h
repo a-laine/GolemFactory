@@ -74,6 +74,8 @@ class SceneManager
 		bool isEmptyNode(const NodeVirtual& _node);
 
 		ImGuiTextFilter m_nameFilter;
+		uint64_t m_flagFilter = 0xFFFFFFFFFFFFFFFF;
+		bool m_allFlagFilter = true;
 		std::set<Entity*> m_selectedEntities;
 		NodeVirtual* m_selectedSceneNode = nullptr;
 

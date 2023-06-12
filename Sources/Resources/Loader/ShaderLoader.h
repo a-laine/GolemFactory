@@ -43,7 +43,7 @@ class ShaderLoader : public IResourceLoader
         uint16_t renderQueue;
 
         std::map<std::string, std::string> attributesType;
-        std::vector<std::string> textureNames;
+        std::vector<std::pair<std::string, std::string>> textures;
         std::vector<Texture*> textureResources;
 
         bool isComputeShader;

@@ -35,5 +35,6 @@ class OccluderComponent : public Component
 
 #ifdef USE_IMGUI
 		bool m_drawMesh = false;
+		bool m_drawZtest = false;
 #endif
 };

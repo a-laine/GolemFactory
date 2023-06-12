@@ -35,8 +35,17 @@ class Shader : public ResourceVirtual
 
             COMPUTE_SH = 7      //!< compute shader
         };
-
         static std::string toString(ShaderType shaderType);
+
+        struct TextureInfos
+        {
+            std::string identifier;
+            std::string defaultResource;
+            uint8_t unit;
+            GLuint location;
+            bool isGlobalAttribute;
+            Texture* texture;
+        };
         //
 
         //  Default
@@ -46,8 +55,8 @@ class Shader : public ResourceVirtual
 
         //  Public functions
         void initialize(GLuint vertexSh, GLuint fragSh, GLuint geomShr, GLuint tessControlSh, GLuint tessEvalSh, GLuint prog,
-            const std::map<std::string, std::string>& attType, const std::vector<std::string>& textures, uint16_t queue);
-        void initialize(GLuint computeSh, GLuint prog, const std::map<std::string, std::string>& attType, const std::vector<std::string>& textures);
+            const std::map<std::string, std::string>& attType, const std::vector<std::pair<std::string, std::string>>& textures, uint16_t queue);
+        void initialize(GLuint computeSh, GLuint prog, const std::map<std::string, std::string>& attType, const std::vector<std::pair<std::string, std::string>>& textures);
         void enable();
 
 		//void setInstanciable(Shader* instaciedVersion);
@@ -58,6 +67,7 @@ class Shader : public ResourceVirtual
         GLuint getShaderID(ShaderType shaderType) const;
 		bool useShaderType(ShaderType shaderType) const;
         uint16_t getRenderQueue() const;
+        uint8_t getGlobalTextureUnit(std::string _name) const;
 
 		int getUniformLocation(const std::string& uniform);
 		std::string getUniformType(const std::string& uniform);
@@ -67,15 +77,18 @@ class Shader : public ResourceVirtual
 
         std::string getIdentifier() const override;
         std::string getLoaderId(const std::string& resourceName) const;
-        void pushTexture(Texture* texture);
+        //void pushTexture(Texture* texture);
 
-        const std::vector<Texture*>& getTextures() const { return textures; }
+        const std::vector<TextureInfos>& getTextures() const { return m_textures; }
         const std::map<std::string, std::string>& getUniforms() const {return attributesType; }
 
         void onDrawImGui() override;
         //
 
     private:
+        void loadGlobalTexture(const std::string& type, const std::string& identifier, GLuint location, uint8_t unit);
+
+
         static std::string defaultName;
 
         //  Attributes
@@ -85,14 +98,14 @@ class Shader : public ResourceVirtual
                 tessControlShader,							//!< Tesselation control shader opengl id
                 tessEvalShader,								//!< Tesselation evaluation shader opengl id
                 program;									//!< Program opengl id
-        uint8_t textureCount;								//!< The number of texture use by the program
+        //uint8_t textureCount;								//!< The number of texture use by the program
         uint16_t renderQueue;
         bool m_isComputeShader;
         std::map<std::string, GLint> attributesLocation;	//!< The shader attribute map with their opengl location
 		std::map<std::string, std::string> attributesType;
-        std::vector<std::string> textureIdentifiers;
-        std::vector<Texture*> textures;
-
+        //std::vector<std::string> textureIdentifiers;
+        //std::vector<Texture*> textures;
+        std::vector<TextureInfos> m_textures;
         std::map<int, Shader*> variants;
 
 #ifdef USE_IMGUI

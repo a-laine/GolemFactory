@@ -69,7 +69,7 @@ Entity* freeflyCamera = nullptr;
 Entity* frustrumCamera = nullptr;
 //Shader* normalShader = nullptr;
 
-float physicsTimeSpeed = 0.f;
+float physicsTimeSpeed = 1.f;
 
 double completeTime = 16.;
 double averageCompleteTime = 16.;
@@ -133,12 +133,6 @@ int main()
 				object->setName("FreeFlyCam");
 				object->setWorldPosition(vec4f(10, 10, 5, 1));
 
-
-				Collider* collider = new Collider(new Sphere(vec4f(0.f), 0.1f));
-				object->addComponent(collider);
-				object->recomputeBoundingBox();
-
-				//object->setShape(new Sphere());
 				CameraComponent* ffCam = new CameraComponent(true);
 				object->addComponent(ffCam);
 				ffCam->setDirection(vec4f(1, 0, 0, 0));
@@ -153,7 +147,6 @@ int main()
 				object->addComponent(collider);
 				object->recomputeBoundingBox();
 
-				//object->setShape(new Sphere());
 				CameraComponent* cam = new CameraComponent(true);
 				object->addComponent(cam);
 				Renderer::getInstance()->setCamera(cam);
@@ -699,6 +692,8 @@ void initManagers()
 	NodeVirtual::debugWorld = &world;
 	world.getSceneManager().init(worldPos - worldHalfSize, worldPos + worldHalfSize, vec3i(4, 1, 4), 2);
 	world.setMaxObjectCount(400000);
+	
+	if(false)
 	{
 		Entity* groundAndWalls = world.getEntityFactory().createObject([](Entity* object)
 			{
@@ -770,9 +765,10 @@ void initManagers()
 	Renderer::getInstance()->lightClustering = ResourceManager::getInstance()->getResource<Shader>("lightClustering");
 	Renderer::getInstance()->initializeLightClusterBuffer(64, 36, 128);
 	Renderer::getInstance()->initializeOcclusionBuffers(256, 144);
+	Renderer::getInstance()->initializeShadowCascades(1024, 1024);// (8192, 8192);//8196 => 1Go VRAM !, but give a good quality 
 	
 	// Debug
-	Debug::getInstance()->initialize("Shapes/point", "Shapes/box", "Shapes/sphere.obj", "Shapes/capsule", "Shapes/point", "Shapes/segment", "default", "wired", "Shapes/multipleSegment");
+	Debug::getInstance()->initialize("Shapes/box", "Shapes/sphere.obj", "Shapes/capsule", "default", "wired", "debug", "textureReinterpreter");
 
 	// Animator
 	Animator::getInstance();

@@ -2,17 +2,18 @@ LightClustering
 {
 	computeShader : true;
 	
-	includes :
+	compute :
 	{
 		#version 430
 		
+		// input uniforms
 		layout(std140, binding = 0) uniform GlobalMatrices
 		{
 			mat4 view;
 			mat4 projection;
 			vec4 cameraPosition;
+			mat4 shadowCascadeProjections[4];
 		};
-		
 		struct Light
 		{
 			vec4 m_position;
@@ -34,14 +35,11 @@ LightClustering
 			float tanFovX;
 			float tanFovY;
 			Light lights[254];
-		};
-	};
-	compute :
-	{
-		layout (local_size_x = 4 , local_size_y = 3 , local_size_z = 8) in;
-
+		};	
+	
 		layout(r32ui, binding = 0) restrict uniform uimage3D lightClusters;
-
+		
+		layout (local_size_x = 4 , local_size_y = 3 , local_size_z = 8) in;
 		void main()
 		{
 			// aliases

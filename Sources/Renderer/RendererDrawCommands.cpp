@@ -19,22 +19,27 @@
 
 
 //	Drawing functions
-void Renderer::drawObject(Entity* object)
+void Renderer::drawObject(Entity* object, Shader* forceShader)
 {
 	DrawableComponent* drawableComp = object->getComponent<DrawableComponent>();
 	SkeletonComponent* skeletonComp = object->getComponent<SkeletonComponent>();
 	bool isSkinned = skeletonComp && skeletonComp->isValid();
 
-	Shader* shaderToUse;
-	if (renderOption == RenderOption::BOUNDING_BOX)
-		shaderToUse = isSkinned ? defaultShader[INSTANCE_ANIMATABLE_BB] : defaultShader[INSTANCE_DRAWABLE_BB];
-	else 
-		shaderToUse = drawableComp->getShader()->getVariant(Shader::computeVariantCode(false, false, renderOption == RenderOption::WIREFRAME));
+	Shader* shaderToUse = forceShader;
+	if (!shaderToUse)
+	{
+		if (renderOption == RenderOption::BOUNDING_BOX)
+			shaderToUse = isSkinned ? defaultShader[INSTANCE_ANIMATABLE_BB] : defaultShader[INSTANCE_DRAWABLE_BB];
+		else 
+			shaderToUse = drawableComp->getShader()->getVariant(Shader::computeVariantCode(false, false, renderOption == RenderOption::WIREFRAME));
+	}
 
 	ModelMatrix modelMatrix = {object->getWorldTransformMatrix(), object->getNormalMatrix()};
 	loadModelMatrix(shaderToUse, &modelMatrix);
 	if (!shaderToUse)
 		return;
+
+	loadGlobalUniforms(shaderToUse);
 
 	// animation uniforms
 	if (isSkinned)
@@ -99,6 +104,8 @@ void Renderer::drawInstancedObject(Shader* s, Mesh* m, std::vector<ModelMatrix>&
 	if (!shaderToUse)
 		return;
 
+	loadGlobalUniforms(shaderToUse);
+
 	//	Draw instanced
 	if (renderOption == RenderOption::BOUNDING_BOX)
 	{
@@ -133,6 +140,7 @@ void Renderer::drawMap(Map* map, Shader* s)
 
 	// raw
 	loadModelMatrix(map->getShader(), &modelMatrix);
+	loadGlobalUniforms(map->getShader());
 	vec4i exclusion = map->getExclusionZone();
 	int loc = map->getShader()->getUniformLocation("exclusion");
 	//if (loc >= 0) glUniform4iv(loc, 1, (int*)&exclusion);
@@ -234,7 +242,7 @@ void Renderer::drawMap(Map* map, Shader* s)
 }
 
 
-void Renderer::fullScreenDraw(Texture* texture, Shader* shader, float alpha)
+void Renderer::fullScreenDraw(const Texture* texture, Shader* shader, float alpha, bool bindIntoImage)
 {
 	if (!texture)
 		return;
@@ -247,7 +255,15 @@ void Renderer::fullScreenDraw(Texture* texture, Shader* shader, float alpha)
 
 	glEnable(GL_BLEND);
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, texture->getTextureId());
+	if (bindIntoImage)
+	{
+		glBindImageTexture(0, texture->getTextureId(), 0, texture->size.z > 0, 0, GL_READ_ONLY, texture->m_internalFormat);
+	}
+	else
+	{
+		glBindTexture(GL_TEXTURE_2D, texture->getTextureId());
+	}
+
 	int loc = lastShader->getUniformLocation("alpha");
 	if (loc >= 0)
 		glUniform1f(loc, alpha);

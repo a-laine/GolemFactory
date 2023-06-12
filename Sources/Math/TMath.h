@@ -402,6 +402,12 @@ glm::tmat4x4<T, P> glm::tmat4x4<T, P>::lookAt(const glm::tvec4<T, P>& forward, g
 }
 
 template <typename T, glm::precision P>
+glm::tmat4x4<T, P> glm::tmat4x4<T, P>::ortho(const T left, const T right, const T bottom, const T top, const T zNear, const T zFar)
+{
+	return glm::ortho(left, right, bottom, top, zNear, zFar);
+}
+
+template <typename T, glm::precision P>
 glm::tmat4x4<T, P> glm::tmat4x4<T, P>::inverse(const glm::tmat4x4<T, P>& m)
 {
 	return glm::inverse(m);

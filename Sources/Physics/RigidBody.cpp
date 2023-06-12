@@ -200,6 +200,6 @@ void RigidBody::drawColliders(vec4f color) const
 	for (const Component* comp : colliders)
 	{
 		const Collider* collider = static_cast<const Collider*>(comp);
-		collider->drawDebug(color);
+		collider->drawDebug(color, true);
 	}
 }

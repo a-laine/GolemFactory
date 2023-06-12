@@ -4,6 +4,7 @@
 
 #include <sstream>
 #include <Utiles/Debug.h>
+#include <Utiles/ConsoleColor.h>
 
 
 
@@ -11,12 +12,122 @@
 Collider::Collider(Shape* _shape) : m_shape(_shape)
 {}
 
+Collider::Collider(const Collider* other)
+{
+	m_shape = other->m_shape->duplicate();
+}
+
 Collider::~Collider()
 {
 	if (m_shape)
 		delete m_shape;
 }
 //
+
+bool Collider::load(Variant& jsonObject, const std::string& objectName)
+{
+	const auto PrintWarning = [&](const char* msg)
+	{
+		if (ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::WARNINGS)
+		{
+			std::cout << ConsoleColor::getColorString(ConsoleColor::Color::RED) << "WARNING : " << objectName <<
+				" : ColliderComponent loading : " << msg << std::flush;
+			std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
+		}
+	};
+	const auto TryLoadAsVec4f = [](Variant& variant, const char* label, vec4f& destination)
+	{
+		int sucessfullyParsed = 0;
+		auto it0 = variant.getMap().find(label);
+		if (it0 != variant.getMap().end() && it0->second.getType() == Variant::ARRAY)
+		{
+			auto varray = it0->second.getArray();
+			vec4f parsed = destination;
+			for (int i = 0; i < 4 && i < varray.size(); i++)
+			{
+				auto& element = varray[i];
+				if (element.getType() == Variant::FLOAT)
+				{
+					parsed[i] = element.toFloat();
+					sucessfullyParsed++;
+				}
+				else if (element.getType() == Variant::DOUBLE)
+				{
+					parsed[i] = element.toDouble();
+					sucessfullyParsed++;
+				}
+				else if (element.getType() == Variant::INT)
+				{
+					parsed[i] = element.toInt();
+					sucessfullyParsed++;
+				}
+			}
+			destination = parsed;
+		}
+		return sucessfullyParsed;
+	};
+
+	if (jsonObject.getType() == Variant::MAP)
+	{
+		std::string shapeType;
+		auto it1 = jsonObject.getMap().find("shapeType");
+		if (it1 != jsonObject.getMap().end() && it1->second.getType() == Variant::STRING)
+			shapeType = it1->second.toString();
+
+		if (!shapeType.empty())
+		{
+			if (shapeType == "AxisAlignedBox")
+			{
+				AxisAlignedBox* shape = new AxisAlignedBox(vec4f(-1, -1, -1, 1), vec4f(1, 1, 1, 1));
+				vec4f center, hsize;
+				int centerOk = TryLoadAsVec4f(jsonObject, "center", center);
+				int hsizeOk = TryLoadAsVec4f(jsonObject, "halfSize", hsize);
+
+				if (centerOk && hsizeOk)
+				{
+					shape->min = center - hsize;
+					shape->max = center + hsize;
+					m_shape = shape;
+					return true;
+				}
+				else
+				{
+					PrintWarning("parsing center and halfSize attributes");
+				}
+			}
+			else if (shapeType == "Box")
+			{
+				OrientedBox* shape = new OrientedBox(mat4f::identity, vec4f(-1, -1, -1, 1), vec4f(1, 1, 1, 1));
+				vec4f center, hsize;
+				int centerOk = TryLoadAsVec4f(jsonObject, "center", center);
+				int hsizeOk = TryLoadAsVec4f(jsonObject, "halfSize", hsize);
+
+				if (centerOk && hsizeOk)
+				{
+					shape->min = center - hsize;
+					shape->max = center + hsize;
+					shape->min.w = shape->max.w = 1.f;
+					m_shape = shape;
+					return true;
+				}
+				else
+				{
+					PrintWarning("parsing center and halfSize attributes");
+				}
+			}
+			else
+			{
+				PrintWarning("shape not implemented yet");
+			}
+		}
+	}
+	return false;
+}
+
+void Collider::save(Variant& jsonObject)
+{
+
+}
 
 void Collider::onAddToEntity(Entity* entity)
 {
@@ -126,7 +237,7 @@ void Collider::onDrawImGui()
 #endif // USE_IMGUI
 }
 
-void Collider::drawDebug(vec4f color) const
+void Collider::drawDebug(vec4f color, bool wired) const
 {
 	if (m_shape)
 	{
@@ -150,39 +261,65 @@ void Collider::drawDebug(vec4f color) const
 			case Shape::ShapeType::TRIANGLE:
 				{
 					const Triangle* triangle = static_cast<const Triangle*>(m_shape);
-					Debug::drawLine(transform * triangle->p1, transform * triangle->p2);
-					Debug::drawLine(transform * triangle->p2, transform * triangle->p3);
-					Debug::drawLine(transform * triangle->p3, transform * triangle->p1);
+					Debug::Vertex corners[3];
+					corners[0] = { triangle->p1, color };
+					corners[0] = { triangle->p1, color };
+					corners[0] = { triangle->p1, color };
+
+					Debug::drawMultiplePrimitive(corners, 3, transform, wired ? GL_LINE_LOOP : GL_TRIANGLES);
 				}
 				break;
 			case Shape::ShapeType::SPHERE:
 				{
 					const Sphere* sphere = static_cast<const Sphere*>(m_shape);
-					Debug::drawWiredSphere(transform * sphere->center, scale * sphere->radius);
+					if (wired)
+						Debug::drawWiredSphere(transform * sphere->center, scale * sphere->radius);
+					else
+						Debug::drawSphere(transform * sphere->center, scale * sphere->radius);
 				}
 				break;
 			case Shape::ShapeType::AXIS_ALIGNED_BOX:
 				{
 					const AxisAlignedBox* aabb = static_cast<const AxisAlignedBox*>(m_shape);
-					Debug::drawLineCube(transform, aabb->min, aabb->max);
+					if (wired)
+						Debug::drawLineCube(transform, aabb->min, aabb->max);
+					else
+					{
+						vec4f center = 0.5f * (aabb->max + aabb->min);
+						vec4f hsize = 0.5f * (aabb->max - aabb->min);
+						Debug::drawCube(mat4f::translate(transform, center), hsize);
+					}
 				}
 				break;
 			case Shape::ShapeType::ORIENTED_BOX:
 				{
 					const OrientedBox* box = static_cast<const OrientedBox*>(m_shape);
-					Debug::drawLineCube(transform * box->base, box->min, box->max);
+					if (wired)
+						Debug::drawLineCube(transform * box->base, box->min, box->max);
+					else
+					{
+						vec4f center = 0.5f * (box->max + box->min);
+						vec4f hsize = 0.5f * (box->max - box->min);
+						Debug::drawCube(mat4f::translate(transform * box->base, center), hsize);
+					}
 				}
 				break;
 			case Shape::ShapeType::CAPSULE:
 				{
 					const Capsule* capsule = static_cast<const Capsule*>(m_shape);
-					Debug::drawWiredCapsule(transform * capsule->p1, transform * capsule->p2, scale * capsule->radius);
+					if (wired)
+						Debug::drawWiredCapsule(transform * capsule->p1, transform * capsule->p2, scale * capsule->radius);
+					else
+						Debug::drawCapsule(transform * capsule->p1, transform * capsule->p2, scale * capsule->radius);
 				}
 				break;
 			case Shape::ShapeType::HULL:
 				{
 					const Hull* hull = static_cast<const Hull*>(m_shape);
-					Debug::drawWiredMesh(hull->mesh, transform * hull->base);
+					if (wired)
+						Debug::drawWiredMesh(hull->mesh, transform * hull->base);
+					else
+						Debug::drawMesh(hull->mesh, transform * hull->base);
 				}
 				break;
 			default:

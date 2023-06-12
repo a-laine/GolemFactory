@@ -246,24 +246,6 @@ Entity* EntityFactory::instantiatePrefab(std::string prefabName, bool _addToScen
 	auto it = prefabs.find(prefabName);
 	if (it != prefabs.end())
 	{
-		/*Entity* copy = createEntity();
-		copy->setName(prefabName + " (copy)");
-
-		auto ComponentVisitor = [&](const EntityBase::Element& element)
-		{
-			if (element.type == DrawableComponent::getStaticClassID())
-			{
-				const DrawableComponent* original = static_cast<const DrawableComponent*>(element.comp);
-				DrawableComponent* drawable = new DrawableComponent(original->getMesh()->name, original->getShader()->name);
-				copy->addComponent(drawable);
-			}
-			return false;
-		};
-
-		it->second->allComponentsVisitor(ComponentVisitor);
-		copy->recomputeBoundingBox();*/
-
-
 		Entity* copy = deepCopy(it->second);
 		copy->setWorldTransformation(vec4f(0, 0, 0, 1), it->second->getWorldScale(), quatf(1, 0, 0, 0));
 		if (_addToScene)
@@ -291,6 +273,12 @@ Entity* EntityFactory::deepCopy(Entity* original)
 		{
 			const OccluderComponent* original = static_cast<const OccluderComponent*>(element.comp);
 			OccluderComponent* copyComp = new OccluderComponent(original);
+			copy->addComponent(copyComp);
+		}
+		else if (element.type == Collider::getStaticClassID())
+		{
+			const Collider* original = static_cast<const Collider*>(element.comp);
+			Collider* copyComp = new Collider(original);
 			copy->addComponent(copyComp);
 		}
 		return false;
@@ -427,6 +415,16 @@ void EntityFactory::tryLoadComponents(Entity* object, Variant* variant, const st
 		if (it0 != variant->getMap().end() && it0->second.getType() == Variant::MAP)
 		{
 			OccluderComponent* occluder = new OccluderComponent();
+			if (occluder->load(it0->second, object->getName()))
+				object->addComponent(occluder);
+			else delete occluder;
+		}
+
+		// colliderComponent
+		it0 = variant->getMap().find("colliderComponent");
+		if (it0 != variant->getMap().end() && it0->second.getType() == Variant::MAP)
+		{
+			Collider* occluder = new Collider();
 			if (occluder->load(it0->second, object->getName()))
 				object->addComponent(occluder);
 			else delete occluder;

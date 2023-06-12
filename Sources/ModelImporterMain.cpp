@@ -270,7 +270,7 @@ void initManagers()
 	Renderer::getInstance()->setShader(Renderer::INSTANCE_ANIMATABLE_BB, ResourceManager::getInstance()->getResource<Shader>("skeletonBB"));
 
 	// Debug
-	Debug::getInstance()->initialize("Shapes/point", "Shapes/box", "Shapes/sphere", "Shapes/capsule", "Shapes/point", "Shapes/segment", "default", "wired", "Shapes/multipleSegment");
+	Debug::getInstance()->initialize("Shapes/box", "Shapes/sphere", "Shapes/capsule", "default", "wired", "debug", "textureReinterpreter");
 
 	// Animator
 	Animator::getInstance();

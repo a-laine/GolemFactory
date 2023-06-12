@@ -1,7 +1,9 @@
+#include "SceneManager.h"
+#include "imgui_internal.h"
+
 #include <iostream>
 #include <algorithm>
 
-#include "SceneManager.h"
 #include <Utiles/Assert.hpp>
 #include <Utiles/Debug.h>
 #include <Utiles/ImguiConfig.h>
@@ -10,7 +12,7 @@
 
 
 #ifdef USE_IMGUI
-bool HierarchyWindowEnable = true;
+bool HierarchyWindowEnable = false;
 bool SpatialPartitionningWindowEnable = false;
 #endif // USE_IMGUI
 
@@ -276,6 +278,44 @@ void SceneManager::drawImGuiHierarchy(World& world)
 	ImGui::Spacing(); ImGui::Spacing(); ImGui::Spacing();
 	ImGui::TextColored(ImVec4(1, 1, 0, 1), "Filters");
 	m_nameFilter.Draw();
+	if (ImGui::TreeNode("Flags"))
+	{
+		constexpr int columnIndent = 200;
+		if (ImGui::Checkbox("All", &m_allFlagFilter))
+		{
+			if (m_allFlagFilter)
+				m_flagFilter = 0xFFFFFFFFFFFFFFFF;
+		}
+		ImGui::SameLine(columnIndent);
+
+		bool boolean;
+		int items = 1;
+		if (m_allFlagFilter)
+		{
+			ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+			ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+		}
+
+		#define FLAG_MACRO(name,value)                    \
+			boolean = m_flagFilter&(##value);	          \
+			if (ImGui::Checkbox("Fl_"#name , &boolean)) { \
+				if (boolean) m_flagFilter |= (##value);   \
+				else  m_flagFilter &= ~(##value);}        \
+			items++;									  \
+			if (items && (items % 2) != 0)				  \
+				ImGui::SameLine(columnIndent);\
+
+		#include <EntityComponent/EntityFlags.h>
+		#undef FLAG_MACRO
+
+
+		if (m_allFlagFilter)
+		{
+			ImGui::PopItemFlag();
+			ImGui::PopStyleVar();
+		}
+		ImGui::TreePop();
+	}
 
 	ImGui::Spacing(); ImGui::Spacing(); ImGui::Spacing();
 	ImGui::TextColored(ImVec4(1, 1, 0, 1), "Hierarchy");
@@ -377,14 +417,16 @@ void SceneManager::selectEntity(World& world, Entity* entity)
 
 void SceneManager::drawRecursiveImGuiEntity(World& world, Entity* entity, int depth)
 {
-	const auto ChildrenFilter = [&](Entity* e)
+	const auto FilterTest = [&](Entity* e)
 	{
-		return m_nameFilter.PassFilter(e->getName().c_str());
+		bool nameOk = m_nameFilter.PassFilter(e->getName().c_str());
+		bool flagOk = m_flagFilter & e->getFlags();
+		return nameOk && flagOk;
 	};
 
-	bool passFilter = m_nameFilter.PassFilter(entity->getName().c_str());
+	bool passFilter = FilterTest(entity);
 	if (!passFilter)
-		passFilter = entity->recursiveChildVisitor(ChildrenFilter);
+		passFilter = entity->recursiveChildVisitor(FilterTest);
 	if (!passFilter)
 		return;
 

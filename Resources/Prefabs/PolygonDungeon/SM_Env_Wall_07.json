@@ -3,5 +3,10 @@
         "meshName": "PolygonDungeon/SM_Env_Wall_07",
         "shaderName": "defaultTextured"
     },
+	"colliderComponent" :{
+		"shapeType" : "Box",
+		"center" : [-2.5, 2.5, 0.06],
+		"halfSize" : [2.5, 2.5, 0.22]
+	},
     "prefabEntities": []
 }

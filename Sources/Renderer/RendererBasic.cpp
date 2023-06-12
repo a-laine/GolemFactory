@@ -47,6 +47,10 @@ Renderer::Renderer() :
 	drawGrid = true;
 	batchFreePool.reserve(512);
 
+	m_environementLighting.m_shadowFarPlanes = vec4f(20.f, 50.f, 150.f, 400.f);
+	shadowAreaMargin = 10.f; 
+	shadowAreaMarginLightDirection = 50.f;
+
 	glGenQueries(1, &m_timerQueryID);
 
 	initGlobalUniformBuffers();
@@ -179,7 +183,7 @@ void Renderer::initializeLightClusterBuffer(int width, int height, int depth)
 	float logRatio = imageSize.z / log(m_sceneLights.m_far / m_sceneLights.m_near);
 	m_sceneLights.m_clusterDepthScale = logRatio;
 	m_sceneLights.m_clusterDepthBias = logRatio * log(m_sceneLights.m_near);
-	m_sceneLights.m_shadingConfiguration = 0x01;
+	m_sceneLights.m_shadingConfiguration = (1 << eUseLightClustering) |(1 << eUseShadow);
 }
 void Renderer::initializeOcclusionBuffers(int width, int height)
 {
@@ -204,7 +208,7 @@ void Renderer::initializeOcclusionBuffers(int width, int height)
 	using TC = Texture::TextureConfiguration;
 	uint8_t config = (uint8_t)TC::TEXTURE_2D | (uint8_t)TC::MIN_NEAREST | (uint8_t)TC::MAG_NEAREST | (uint8_t)TC::WRAP_CLAMP;
 	occlusionTexture.initialize("occlusionTexture", vec3i(m_occlusionBufferSize.x, m_occlusionBufferSize.y, 0), 
-		m_occlusionDepthColor, config, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE);
+		m_occlusionDepthColor, config, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
 	ResourceManager::getInstance()->addResource(&occlusionTexture);
 
 	occlusionResultDraw = ResourceManager::getInstance()->getResource<Shader>("occlusionResult");
@@ -230,9 +234,9 @@ void Renderer::initGlobalUniformBuffers()
 	glBindBufferRange(GL_UNIFORM_BUFFER, 0, m_globalMatricesID, 0, sizeof(m_globalMatrices));
 
 	// environment lighting settings
-	m_environementLighting.m_directionalLightDirection = vec4f(-10, -20, 10, 0);
-	m_environementLighting.m_directionalLightColor = vec4f(0.15, 0.15, 0.15, 1.0);
-	m_environementLighting.m_ambientColor = vec4f(0.05, 0.05, 0.05, 1.0);
+	m_environementLighting.m_directionalLightDirection = vec4f(-10, -20, 0, 0);
+	m_environementLighting.m_directionalLightColor = vec4f(1.f);// vec4f(0.15, 0.15, 0.15, 1.0);
+	m_environementLighting.m_ambientColor = vec4f(0);// 0.05, 0.05, 0.05, 1.0);
 
 	glGenBuffers(1, &m_environementLightingID);
 	glBindBuffer(GL_UNIFORM_BUFFER, m_environementLightingID);
@@ -259,9 +263,49 @@ void Renderer::initGlobalUniformBuffers()
 	glBufferData(GL_UNIFORM_BUFFER, sizeof(m_debugShaderUniform), NULL, GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 	glBindBufferRange(GL_UNIFORM_BUFFER, 3, m_DebugShaderUniformID, 0, sizeof(m_debugShaderUniform));
-
-	// end
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
+void Renderer::initializeShadowCascades(int width, int height)
+{
+	// shadow cascade
+	using TC = Texture::TextureConfiguration;
+	uint8_t config = (uint8_t)TC::TEXTURE_ARRAY | (uint8_t)TC::WRAP_CLAMP;
+	shadowCascadeTexture.initialize("shadowCascadeTexture", vec3i(width, height, 4),
+		nullptr, config, GL_DEPTH_COMPONENT32F, GL_DEPTH_COMPONENT, GL_FLOAT);
+
+	const auto CheckError = [](const char* label)
+	{
+		GLenum error = glGetError();
+		if (!label)
+			return false;
+		switch (error)
+		{
+			case GL_INVALID_ENUM: std::cout << "initializeShadowCascades" << " : " << label << " : GL_INVALID_ENUM" << std::endl; break;
+			case GL_INVALID_VALUE: std::cout <<  "initializeShadowCascades" << " : " << label << " : GL_INVALID_VALUE" << std::endl; break;
+			case GL_INVALID_OPERATION: std::cout <<  "initializeShadowCascades" << " : " << label << " : GL_INVALID_OPERATION" << std::endl; break;
+			case GL_INVALID_FRAMEBUFFER_OPERATION: std::cout << "initializeShadowCascades"<< label << " : GL_INVALID_FRAMEBUFFER_OPERATION" << std::endl; break;
+			case GL_OUT_OF_MEMORY: std::cout <<  "initializeShadowCascades" << " : " << label << " : GL_OUT_OF_MEMORY" << std::endl; break;
+			case GL_STACK_UNDERFLOW: std::cout <<  "initializeShadowCascades" << " : " << label << " : GL_STACK_UNDERFLOW" << std::endl; break;
+			case GL_STACK_OVERFLOW: std::cout <<  "initializeShadowCascades" << " : " << label << " : GL_STACK_OVERFLOW" << std::endl; break;
+			default: break;
+		}
+		return error != GL_NO_ERROR;
+	};
+	glBindTexture(GL_TEXTURE_2D_ARRAY, shadowCascadeTexture.getTextureId());
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE); CheckError("GL_TEXTURE_COMPARE_MODE");
+	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL); CheckError("GL_TEXTURE_COMPARE_FUNC");
+	glBindTexture(GL_TEXTURE_2D_ARRAY, 0);
+
+	ResourceManager::getInstance()->addResource(&shadowCascadeTexture);
+
+	glGenFramebuffers(1, &m_ShadowFBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, m_ShadowFBO);
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, shadowCascadeTexture.getTextureId(), 0);
+	glDrawBuffer(GL_NONE);
+	glReadBuffer(GL_NONE);
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete !" << std::endl;
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 void Renderer::updateGlobalUniformBuffers()
 {
@@ -274,27 +318,112 @@ void Renderer::updateGlobalUniformBuffers()
 	glBindBuffer(GL_UNIFORM_BUFFER, m_DebugShaderUniformID);
 	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(m_debugShaderUniform), &m_debugShaderUniform);
 }
+void Renderer::updateShadowCascadeMatrices(CameraComponent* renderCam, float viewportRatio)
+{
+	vec4f nears = vec4f(0.f, m_environementLighting.m_shadowFarPlanes.x, m_environementLighting.m_shadowFarPlanes.y, m_environementLighting.m_shadowFarPlanes.z);
+	m_environementLighting.m_shadowBlendMargin = shadowAreaMargin;
+
+	// compute frustrum params and base direction matrix
+	vec4f u1, u2, u3, u4, pos;
+	mat4f lightOrientation;
+	{
+		pos = camera->getPosition();
+		vec4f dir = camera->getForward();
+		vec4f left = -camera->getRight();
+		vec4f up = camera->getUp();
+		float a1 = 0.5f * camera->getVerticalFieldOfView();
+		float ca1 = cos(a1);
+		float sa1 = sin(a1);
+		float sa2 = viewportRatio * sa1;
+		vec4f tdir = ca1 * dir;
+		u1 = tdir + sa2 * left + sa1 * up;
+		u2 = tdir - sa2 * left + sa1 * up;
+		u3 = tdir + sa2 * left - sa1 * up;
+		u4 = tdir - sa2 * left - sa1 * up;
+
+		vec4f lightForward = -m_environementLighting.m_directionalLightDirection.getNormal();
+		vec4f lightUp = std::abs(lightForward.x) > std::abs(lightForward.z) ? vec4f(lightForward.y, -lightForward.x, 0, 0) : vec4f(0, lightForward.z, -lightForward.y, 0);
+		lightUp.normalize();
+		vec4f lightRight = vec4f::cross(lightUp, lightForward);
+		lightOrientation[0] = lightRight;
+		lightOrientation[1] = lightUp;
+		lightOrientation[2] = lightForward;
+	}
+
+	// compute matrices
+	vec4f corners[8];
+	for (int i = 0; i < 4; i++)
+	{
+		// frustrum area corner
+		corners[0] = pos + nears[i] * u1;
+		corners[1] = pos + nears[i] * u2;
+		corners[2] = pos + nears[i] * u3;
+		corners[3] = pos + nears[i] * u4;
+		corners[4] = pos + m_environementLighting.m_shadowFarPlanes[i] * u1;
+		corners[5] = pos + m_environementLighting.m_shadowFarPlanes[i] * u2;
+		corners[6] = pos + m_environementLighting.m_shadowFarPlanes[i] * u3;
+		corners[7] = pos + m_environementLighting.m_shadowFarPlanes[i] * u4;
+
+		// compute area center and a radius to fit the frustrum area
+		vec4f center = pos + (0.5f * (m_environementLighting.m_shadowFarPlanes[i] + nears[i])) * camera->getForward();
+		float R = 0;
+		for (int j = 0; j < 8; j++)
+			R = std::max(R, (center - corners[j]).getNorm2());
+		vec4f max = vec4f(std::sqrt(R));
+		vec4f min = -max;
+
+		// snap the center to a texel size
+		mat4f invView = mat4f::transpose(lightOrientation);
+		vec4f lightSpaceCenter = -(invView * center);
+		float texelSize = (max.x - min.x) / shadowCascadeTexture.size.x;
+		float invTexelSize = 1.f / texelSize;
+		lightSpaceCenter *= invTexelSize;
+		vec4f snapedCenter = texelSize * vec4f(vec4i(lightSpaceCenter));
+		snapedCenter.w = 1.f;
+		invView[3] = snapedCenter;
+
+		// aply offset on Z axis
+		mat4f view = lightOrientation;
+		view[3] = center;
+		float zoffset = std::max(0.f, shadowAreaMarginLightDirection - shadowAreaMargin);
+		shadowAreaBoxes[i].base = view;
+		shadowAreaBoxes[i].min = min;
+		shadowAreaBoxes[i].max = max;
+		shadowAreaBoxes[i].max.z = max.z + zoffset;
+		shadowAreaBoxes[i].min.z = min.z - shadowAreaMargin;
+		shadowAreaBoxes[i].min.w = 1;
+		shadowAreaBoxes[i].max.w = 1;
+
+		// end
+		mat4f lightProjection = mat4f::ortho(min.x, max.x, min.y, max.y, min.z - zoffset, max.z + shadowAreaMargin);
+		m_environementLighting.m_shadowCascadeProjections[i] = lightProjection * invView;
+	}
+}
 
 
 void Renderer::render(CameraComponent* renderCam)
 {
 	//	clear previous states
-	glBeginQuery(GL_TIME_ELAPSED, m_timerQueryID);
 	trianglesDrawn = 0;
 	instanceDrawn = 0;
 	drawCalls = 0;
 	occlusionCulledInstances = 0;
 	lastShader = nullptr;
 	lastVAO = 0;
-	if (!context || !camera || !world || !renderCam) return;
+	if (!context || !camera || !world || !renderCam)
+		return;
+
+	glBeginQuery(GL_TIME_ELAPSED, m_timerQueryID);
 
 	//	bind matrix
 	m_globalMatrices.view = renderCam->getViewMatrix();
 	m_globalMatrices.projection = mat4f::perspective(renderCam->getVerticalFieldOfView(), context->getViewportRatio(), 0.1f, 1500.f);
 	m_globalMatrices.cameraPosition = renderCam->getPosition();
+	updateShadowCascadeMatrices(camera, context->getViewportRatio());
 	updateGlobalUniformBuffers();
 	
 	//	opengl state
+	//glViewport(0, 0, context->getViewportSize().x, context->getViewportSize().y);
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 	glEnable(GL_CULL_FACE);
@@ -308,6 +437,7 @@ void Renderer::render(CameraComponent* renderCam)
 		shader->enable();
 		ModelMatrix modelMatrix = {mat4f::identity, mat4f::identity};
 		loadModelMatrix(shader, &modelMatrix);
+		loadGlobalUniforms(shader);
 		int loc = shader->getUniformLocation("overrideColor");
 		if (loc >= 0) glUniform4fv(loc, 1, &m_gridColor[0]);
 
@@ -321,7 +451,6 @@ void Renderer::render(CameraComponent* renderCam)
 	m_sceneLights.m_tanFovX = m_sceneLights.m_tanFovY * context->getViewportRatio();
 	CollectEntitiesBindLights();
 
-
 	if (lightClustering)
 		LightClustering();
 	if (m_enableOcclusionCulling && !m_occluders.empty() && m_occlusionDepth)
@@ -331,6 +460,9 @@ void Renderer::render(CameraComponent* renderCam)
 		m_OcclusionAvgTime = 0.f;
 		m_OcclusionElapsedTime = 0.f;
 	}
+
+	if (m_sceneLights.m_shadingConfiguration & (1 << eUseShadow))
+		ShadowCasting();
 
 	//	sort
 	uint64_t transparentMask = 1ULL << 63;
@@ -366,6 +498,7 @@ void Renderer::render(CameraComponent* renderCam)
 	};
 
 	//	draw instance list
+	glViewport(0, 0, context->getViewportSize().x, context->getViewportSize().y);
 	for (const auto& it : renderQueue)
 	{
 		// skip batched entities
@@ -395,12 +528,14 @@ void Renderer::renderHUD()
 	updateGlobalUniformBuffers();
 
 	//	change opengl states
+	glViewport(0, 0, context->getViewportSize().x, context->getViewportSize().y);
 	glClear(GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	glEnable(GL_STENCIL_TEST);
 	glEnable(GL_BLEND);
 	glDisable(GL_CULL_FACE);
 
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glActiveTexture(GL_TEXTURE0);
 	uint8_t stencilMask = 0x00;
 
@@ -429,6 +564,8 @@ void Renderer::renderHUD()
 						if (!shader)
 							continue;
 
+						//loadGlobalUniforms(shader);
+
 						//	Draw
 						(*it2)->draw(shader, stencilMask, model);
 						drawCalls;
@@ -439,7 +576,7 @@ void Renderer::renderHUD()
 			}
 		}
 	}
-	glDisable(GL_BLEND);
+	//glDisable(GL_BLEND);
 }
 void Renderer::swap()
 {
@@ -462,25 +599,41 @@ void Renderer::loadModelMatrix(Shader* shader, const ModelMatrix* model, const i
 {
 	if (shader)
 	{
+		shaderJustActivated = shader != lastShader;
 		if (shader != lastShader)
-		{
 			shader->enable();
-
-			GLint lightClusterLocation = glGetUniformLocation(shader->getProgram(), "lightClusters");
-			if (lightClusterLocation >= 0)
-			{
-				glUniform1i(lightClusterLocation, 0);
-				glActiveTexture(GL_TEXTURE0);
-				glBindImageTexture(0, lightClusterTexture.getTextureId(), 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32UI);
-			}
-		}
 		lastShader = shader;
 
 		int loc = shader->getUniformLocation("matrixArray");
 		if (loc >= 0)
 			glUniformMatrix4fv(loc, 2 * modelSize, GL_FALSE, (const float*)model);
 	}
-	else  lastShader = nullptr;
+	else 
+	{
+		shaderJustActivated = false;
+		lastShader = nullptr;
+	}
+}
+void Renderer::loadGlobalUniforms(Shader* shader)
+{
+	if (shader && shaderJustActivated)
+	{
+		int loc = shader->getUniformLocation("_globalLightClusters");
+		if (loc >= 0)
+		{
+			uint8_t unit = shader->getGlobalTextureUnit("_globalLightClusters");
+			glActiveTexture(GL_TEXTURE0 + unit);
+			glBindImageTexture(unit, lightClusterTexture.getTextureId(), 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32UI);
+		}
+
+		loc = shader->getUniformLocation("_globalShadowCascades");
+		if (loc >= 0)
+		{
+			uint8_t unit = shader->getGlobalTextureUnit("_globalShadowCascades");
+			glActiveTexture(GL_TEXTURE0 + unit);
+			glBindTexture(GL_TEXTURE_2D_ARRAY, shadowCascadeTexture.getTextureId());
+		}
+	}
 }
 void Renderer::loadVAO(const GLuint& vao)
 {
@@ -595,8 +748,8 @@ void Renderer::drawImGui(World& world)
 				bitfield &= ~(1 << flag);
 		}
 	};
-	CheckboxFlag("Do light clustering", m_sceneLights.m_shadingConfiguration, 0);
-	CheckboxFlag("Draw light count heatmap", m_sceneLights.m_shadingConfiguration, 1);
+	CheckboxFlag("Do light clustering", m_sceneLights.m_shadingConfiguration, eUseLightClustering);
+	CheckboxFlag("Draw light count heatmap", m_sceneLights.m_shadingConfiguration, eLightCountHeatmap);
 
 	ImGui::Checkbox("Occlusion culling", &m_enableOcclusionCulling);
 	ImGui::Checkbox("Draw light clusters", &m_drawClusters);
@@ -607,11 +760,32 @@ void Renderer::drawImGui(World& world)
 		ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
 		ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
 	}
-
-	ImGui::SliderFloat("Occlusion buffer alpha", &m_debugShaderUniform.occlusionResultDrawAlpha, 0, 1);
-	ImGui::SliderFloat("Occlusion  gradiant cutoff", &m_debugShaderUniform.occlusionResultCuttoff, 1.f, m_sceneLights.m_far, "%.2f", ImGuiSliderFlags_Logarithmic);
-
+	{
+		ImGui::SliderFloat("Occlusion buffer alpha", &m_debugShaderUniform.occlusionResultDrawAlpha, 0, 1);
+		ImGui::SliderFloat("Occlusion  gradiant cutoff", &m_debugShaderUniform.occlusionResultCuttoff, 1.f, m_sceneLights.m_far, "%.2f", ImGuiSliderFlags_Logarithmic);
+	}
 	if (!m_drawOcclusionBuffer)
+	{
+		ImGui::PopItemFlag();
+		ImGui::PopStyleVar();
+	}
+
+
+	ImGui::TextColored(titleColor, "Shadows");
+	CheckboxFlag("Shadow cascades", m_sceneLights.m_shadingConfiguration, eUseShadow);
+	if (!(m_sceneLights.m_shadingConfiguration & (1 << eUseShadow)))
+	{
+		ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+		ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+	}
+	{
+		ImGui::Checkbox("Stable fit", &m_shadowStableFit);
+		ImGui::DragFloat4("Shadow far planes", &m_environementLighting.m_shadowFarPlanes[0], 0.3f, 0.5f, 2000.f);
+		CheckboxFlag("Draw shadow cascades", m_sceneLights.m_shadingConfiguration, eDrawShadowCascades);
+		ImGui::DragFloat("Shadow projection margin", &shadowAreaMargin, 0.1f, 0.f, 20.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+		ImGui::DragFloat("Shadow light direction margin", &shadowAreaMarginLightDirection, 0.1f, 0.f, 100.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+	}
+	if (!(m_sceneLights.m_shadingConfiguration & (1 << eUseShadow)))
 	{
 		ImGui::PopItemFlag();
 		ImGui::PopStyleVar();
@@ -649,6 +823,16 @@ void Renderer::drawImGui(World& world)
 				vec4f p = vec4f(5 * i, 0, 5 * j, 1.f);
 				Debug::drawLine(p, p - 100.f * d);
 			}
+	}
+	if (m_sceneLights.m_shadingConfiguration & (1 << eDrawShadowCascades))
+	{
+		vec4f nears = vec4f(-1.f, m_environementLighting.m_shadowFarPlanes.x, m_environementLighting.m_shadowFarPlanes.y, m_environementLighting.m_shadowFarPlanes.z);
+		for (int i = 0; i < 4; i++)
+		{
+			camera->drawDebug(Debug::viewportRatio, nears[i], m_environementLighting.m_shadowFarPlanes[i], Debug::white);
+			Debug::color = Debug::yellow;
+			Debug::drawLineCube(shadowAreaBoxes[i].base, shadowAreaBoxes[i].min, shadowAreaBoxes[i].max);
+		}
 	}
 
 	CameraComponent* mainCamera = world.getMainCamera();
@@ -718,7 +902,7 @@ void Renderer::drawImGui(World& world)
 					}
 		}
 
-		Debug::drawMultipleLines(clusterLines, mainCamera->getModelMatrix());
+		Debug::drawMultiplePrimitive(clusterLines.data(), clusterLines.size(), mainCamera->getModelMatrix(), GL_LINES);
 	}
 
 	if (m_drawOcclusionBuffer)

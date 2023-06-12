@@ -4,7 +4,7 @@ Default
 	
 	uniform :
 	{
-		matrixArray : "struct array32"
+		matrixArray : "struct array32";
 		overrideColor : "vec4";
 	};
 	
@@ -229,7 +229,8 @@ Default
 			
 			// compute base color depending on environement light (directional)
 			vec4 albedoColor = vec4(1.0);
-			vec4 diffuse = clamp(dot(normalize(fragmentNormal), normalize(-m_directionalLightDirection)), 0 , 1 ) * m_directionalLightColor;
+			float diffuseDot = clamp(dot(normalize(fragmentNormal), normalize(-m_directionalLightDirection)), 0 , 1 );
+			vec4 diffuse = diffuseDot * m_directionalLightColor;
 			vec4 metalicParam = vec4(0.4 , 0.0 , 0.0 , 0.0);
 			
 			vec4 viewDir = normalize(cameraPosition - fragmentPosition);
@@ -294,9 +295,11 @@ Default
 					}
 				}
 			}
-			
-			if (overrideColor.x >= 0.0)
-				fragmentColor = overrideColor;
+			else if (overrideColor.x >= 0.0)
+			{
+				fragmentColor = (0.5 * diffuseDot  + 0.5) * overrideColor;
+				fragmentColor.w = 1.0;
+			}
 			
 			if ((shadingConfiguration & 0x02) != 0)
 				fragColor = 0.5 * fragmentColor + 0.5 * clusterColor;

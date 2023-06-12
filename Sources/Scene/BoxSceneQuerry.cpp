@@ -2,8 +2,12 @@
 #include <Physics/Collision.h>
 
 
+BoxSceneQuerry::BoxSceneQuerry() : bbMin(0), bbMax(0)
+{}
+
 BoxSceneQuerry::BoxSceneQuerry(const vec4f& cornerMin, const vec4f& cornerMax) : bbMin(cornerMin), bbMax(cornerMax)
 {}
+
 VirtualSceneQuerry::CollisionType BoxSceneQuerry::operator() (const NodeVirtual* node)
 {
 	const float s = 1.01f * node->getAllowanceSize();

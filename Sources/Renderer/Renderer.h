@@ -52,6 +52,7 @@ class Renderer : public Singleton<Renderer>
 			mat4f view;
 			mat4f projection;
 			vec4f cameraPosition;
+
 		};
 		struct EnvironementLighting
 		{
@@ -59,6 +60,17 @@ class Renderer : public Singleton<Renderer>
 			vec4f m_ambientColor;
 			vec4f m_directionalLightDirection;
 			vec4f m_directionalLightColor;
+
+			mat4f m_shadowCascadeProjections[4];
+			vec4f m_shadowFarPlanes;
+			float m_shadowBlendMargin;
+		};
+		enum ShadingConfig
+		{
+			eUseLightClustering = 0,
+			eLightCountHeatmap = 1,
+			eUseShadow = 2,
+			eDrawShadowCascades = 3,
 		};
 		struct Light
 		{
@@ -97,6 +109,7 @@ class Renderer : public Singleton<Renderer>
 		void initializeGrid(const unsigned int& gridSize, const float& elementSize = 1.f, const vec4f& color = vec4f(0.4f, 0.2f, 0.1f, 1.f));
 		void initializeLightClusterBuffer(int width, int height, int depth);
 		void initializeOcclusionBuffers(int width, int height);
+		void initializeShadowCascades(int width, int height);
 		void render(CameraComponent* renderCam);
 		void renderHUD();
 		void swap();
@@ -133,11 +146,11 @@ class Renderer : public Singleton<Renderer>
 		vec4f getEnvDirectionalLightDirection() const;
 		vec4f getEnvDirectionalLightColor() const;
 
-		void fullScreenDraw(Texture* texture, Shader* shader = nullptr, float alpha = 1.f);
+		void fullScreenDraw(const Texture* texture, Shader* shader = nullptr, float alpha = 1.f, bool bindIntoImage = false);
 		//
 
 		//	Render function
-		void drawObject(Entity* object);
+		void drawObject(Entity* object, Shader* forceShader = nullptr);
 		void drawMap(Map* map, Shader* s = nullptr);
 		// 
 		
@@ -172,15 +185,23 @@ class Renderer : public Singleton<Renderer>
 			Entity* entity;
 			Batch* batch;
 		};
+		struct ShadowDrawElement
+		{
+			float distance;
+			Entity* entity;
+			Batch* batch;
+		};
 		//
 
 		//	Protected functions
 		void loadModelMatrix(Shader* shader, const ModelMatrix* model, const int& modelSize = 1);
+		void loadGlobalUniforms(Shader* shader);
 		void loadVAO(const GLuint& vao);
 
 		void drawInstancedObject(Shader* s, Mesh* m, std::vector<ModelMatrix>& models);
 
 		void initGlobalUniformBuffers();
+		void updateShadowCascadeMatrices(CameraComponent* renderCam, float viewportRatio);
 		void updateGlobalUniformBuffers();
 		//
 
@@ -189,6 +210,7 @@ class Renderer : public Singleton<Renderer>
 		void LightClustering();
 		void DynamicBatching();
 		void OcclusionCulling();
+		void ShadowCasting();
 		//
 
 		//  Attributes
@@ -206,6 +228,7 @@ class Renderer : public Singleton<Renderer>
 		unsigned int instanceDrawn, drawCalls, trianglesDrawn;
 		GLuint lastVAO, fullscreenVAO;
 		Shader* lastShader;
+		bool shaderJustActivated;
 		Shader* fullscreenTriangle;
 		Shader* occlusionResultDraw;
 
@@ -217,6 +240,7 @@ class Renderer : public Singleton<Renderer>
 		// batching - instancing
 		bool m_enableInstancing = true;
 		bool m_hasInstancingShaders = false;
+		bool m_hasShadowCaster = false;
 		std::map<std::pair<Shader*, Mesh*>, Batch*> batchOpened;
 		std::vector<Batch*> batchFreePool;
 		std::vector<Batch*> batchClosedPool;
@@ -234,14 +258,20 @@ class Renderer : public Singleton<Renderer>
 		unsigned int occluderTriangles, occluderRasterizedTriangles, occluderPixelsTest, occlusionCulledInstances;
 
 		// global params
-		GLuint m_globalMatricesID, m_environementLightingID, m_lightsID, m_clustersID, m_DebugShaderUniformID;
+		GLuint m_globalMatricesID, m_environementLightingID, m_lightsID, m_clustersID, m_DebugShaderUniformID, m_ShadowFBO;
 		GlobalMatrices m_globalMatrices;
 		EnvironementLighting m_environementLighting;
 		SceneLights m_sceneLights;
 		DebugShaderUniform m_debugShaderUniform;
 
-		// light clustering param
+		// light clustering param and shadows
+		bool m_shadowStableFit = true;
 		Texture lightClusterTexture;
+		Texture shadowCascadeTexture;
+		std::vector<ShadowDrawElement> shadowQueue;
+		OrientedBox shadowAreaBoxes[4];
+		float shadowAreaMargin;
+		float shadowAreaMarginLightDirection;
 
 		// timing
 		unsigned int m_timerQueryID;
@@ -254,10 +284,6 @@ class Renderer : public Singleton<Renderer>
 		bool m_lightFrustrumCulling = true;
 		bool m_drawClusters = false;
 		bool m_drawOcclusionBuffer = false;
-
-		//vec4f* clustersMin = nullptr;
-		//vec4f* clustersMax = nullptr;
-		//std::vector<Debug::Vertex> clusterLines;
 #endif //USE_IMGUI
 		//
 };

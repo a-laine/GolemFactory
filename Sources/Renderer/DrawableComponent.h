@@ -23,11 +23,13 @@ class DrawableComponent : public Component
 		void setShader(Shader* shader);
 		void setMesh(const std::string& meshName);
 		void setMesh(Mesh* mesh);
+		void setCastShadow(bool enabled);
 
 		Shader* getShader() const;
 		Mesh* getMesh() const;
 
         bool isValid() const;
+		bool castShadow() const;
 
         bool hasSkeleton() const;
 		vec4f getMeshBBMax() const;
@@ -43,6 +45,8 @@ class DrawableComponent : public Component
 	private:
 		Mesh* m_mesh;
 		Shader* m_shader;
+
+		bool m_castShadow;
 
 #ifdef USE_IMGUI
 		bool m_drawMeshBoundingBox = false;

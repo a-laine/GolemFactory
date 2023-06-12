@@ -341,11 +341,11 @@ bool ShaderLoader::load(const std::string& resourceDirectory, const std::string&
                     if (nameVariant != it2->getMap().end() && resourceVariant != it2->getMap().end() &&
                         nameVariant->second.getType() == Variant::STRING && resourceVariant->second.getType() == Variant::STRING)
                     {
-                        textureNames.push_back(nameVariant->second.toString());
                         std::string texFileName = resourceVariant->second.toString();
-                        textureResources.push_back(ResourceManager::getInstance()->getResource<Texture>(texFileName,
+                        textures.push_back({ nameVariant->second.toString(), texFileName });
+                        /*textureResources.push_back(ResourceManager::getInstance()->getResource<Texture>(texFileName,
                             (uint8_t)Texture::TextureConfiguration::TEXTURE_2D | (uint8_t)Texture::TextureConfiguration::USE_MIPMAP |
-                            (uint8_t)Texture::TextureConfiguration::WRAP_REPEAT));
+                            (uint8_t)Texture::TextureConfiguration::WRAP_REPEAT));*/
                     }
                     else hasError = true;
                 }
@@ -368,19 +368,19 @@ void ShaderLoader::initialize(ResourceVirtual* resource)
     Shader* baseShader = static_cast<Shader*>(resource);
     if (isComputeShader)
     {
-        baseShader->initialize(compute, computeProgram, attributesType, textureNames);
+        baseShader->initialize(compute, computeProgram, attributesType, textures);
 
-        for (int i = 0; i < textureResources.size(); i++)
-            baseShader->pushTexture(textureResources[i]);
+        //for (int i = 0; i < textureResources.size(); i++)
+        //    baseShader->pushTexture(textureResources[i]);
     }
     else
     {
         ShaderStruct& base = shaderVariants.front();
         baseShader->initialize(base.vertexShader, base.fragmentShader, base.geometricShader, base.tessControlShader, base.tessEvalShader, base.program,
-            attributesType, textureNames, renderQueue);
+            attributesType, textures, renderQueue);
 
-        for (int i = 0; i < textureResources.size(); i++)
-            baseShader->pushTexture(textureResources[i]);
+        //for (int i = 0; i < textureResources.size(); i++)
+        //    baseShader->pushTexture(textureResources[i]);
 
         for (int i = 1; i < shaderVariants.size(); i++)
         {
@@ -391,9 +391,9 @@ void ShaderLoader::initialize(ResourceVirtual* resource)
 
             Shader* variantShader = new Shader(variantName);
             variantShader->initialize(variant.vertexShader, variant.fragmentShader, variant.geometricShader, variant.tessControlShader, variant.tessEvalShader, variant.program,
-                attributesType, textureNames, renderQueue);
-            for (int i = 0; i < textureResources.size(); i++)
-                variantShader->pushTexture(textureResources[i]);
+                attributesType, textures, renderQueue);
+            //for (int i = 0; i < textureResources.size(); i++)
+            //    variantShader->pushTexture(textureResources[i]);
 
             baseShader->addVariant(variant.variantCode, variantShader);
         }
@@ -421,7 +421,7 @@ void ShaderLoader::clear()
     computeProgram = 0;
     isComputeShader = false;
     attributesType.clear();
-    textureNames.clear();
+    textures.clear();
     textureResources.clear();
     includes.clear();
     shaderVariants.clear();

@@ -100,7 +100,23 @@ class Physics
 			std::vector<Cluster> clusters;
 			EntityGraph clusterFinder;
 
-			/// narrow phase
-
 		//
+
+
+#ifdef USE_IMGUI
+			// options
+			bool m_drawCollidersAround = false;
+			bool m_drawCollidersWired = false;
+			bool m_enableZtest = true;
+			float m_drawCollidersQuerySize = 100.f;
+			BoxSceneQuerry m_collidersQuery;
+			VirtualEntityCollector m_colliderColector;
+			Entity* mainCameraEntity;
+
+			// obj thrower
+			int m_shapeCode;
+			float m_velocity = 20;
+			vec3f m_size = vec3f(0.5f);
+
+#endif
 };

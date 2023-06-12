@@ -16,7 +16,7 @@ Shader::Shader(const std::string& shaderName)
     : ResourceVirtual(shaderName, ResourceVirtual::ResourceType::SHADER)
     , vertexShader(0), fragmentShader(0), geometricShader(0)
     , tessControlShader(0), tessEvalShader(0), program(0)
-    , textureCount(0), renderQueue(1000), m_isComputeShader(false)
+    , renderQueue(1000), m_isComputeShader(false)
 {
 #ifdef USE_IMGUI
     dynamicQueue = 1000;
@@ -26,8 +26,8 @@ Shader::~Shader()
 {
     glDeleteProgram(program);
 
-    for (int i = 0; i < textures.size(); i++)
-        ResourceManager::getInstance()->release(textures[i]);
+    for (int i = 0; i < m_textures.size(); i++)
+        ResourceManager::getInstance()->release(m_textures[i].texture);
 
     for (auto it = variants.begin(); it != variants.end(); it++)
         delete it->second;
@@ -37,7 +37,7 @@ Shader::~Shader()
 
 //  Public functions
 void Shader::initialize(GLuint  vertexSh, GLuint fragSh, GLuint geomShr, GLuint tessControlSh, GLuint tessEvalSh, GLuint prog,
-    const std::map<std::string, std::string>& attType, const std::vector<std::string>& textures, uint16_t queue)
+    const std::map<std::string, std::string>& attType, const std::vector<std::pair<std::string, std::string>>& textures, uint16_t queue)
 {
     GF_ASSERT(state == INVALID);
     state = LOADING;
@@ -50,7 +50,6 @@ void Shader::initialize(GLuint  vertexSh, GLuint fragSh, GLuint geomShr, GLuint 
     tessControlShader = tessControlSh;
     tessEvalShader = tessEvalSh;
     program = prog;
-    textureCount = 0;
     attributesType = attType;
     renderQueue = queue;
 
@@ -58,54 +57,62 @@ void Shader::initialize(GLuint  vertexSh, GLuint fragSh, GLuint geomShr, GLuint 
     dynamicQueue = (renderQueue & ~(0x03 << 14));
 #endif
 
+    //  Binding texture to sample
+    glUseProgram(program);
+    if(!textures.empty())
+    {
+        using TC = Texture::TextureConfiguration;
+        uint8_t std2Dconfig = (uint8_t)TC::TEXTURE_2D | (uint8_t)TC::USE_MIPMAP | (uint8_t)TC::WRAP_REPEAT;
+
+
+        for (int i = 0; i < textures.size(); i++)
+        {
+            TextureInfos tex;
+            tex.identifier = textures[i].first;
+            tex.defaultResource = textures[i].second;
+            tex.location = glGetUniformLocation(program, tex.identifier.c_str());
+            tex.texture = ResourceManager::getInstance()->getResource<Texture>(tex.defaultResource, std2Dconfig);
+            tex.unit = m_textures.size();
+            tex.isGlobalAttribute = false;
+            glUniform1i(tex.location, tex.unit);
+
+            m_textures.push_back(tex);
+        }
+    }
+
     //	get attributes location
     for(auto it = attType.begin(); it != attType.end(); it++)
     {
         const std::string& uniformName = it->first;
-        const std::string& type = it->first;
+        const std::string& type = it->second;
 
+        GLint uniformLocation = glGetUniformLocation(program, uniformName.c_str());
+        attributesLocation[uniformName] = uniformLocation;
+        if (uniformLocation < 0)
         {
-            GLint uniformLocation = glGetUniformLocation(program, uniformName.c_str());
-            attributesLocation[uniformName] = uniformLocation;
-            if(uniformLocation < 0)
-            {
-                if(uniformName.size() >= 3 && uniformName[0] == 'g' && uniformName[1] == 'l' && uniformName[2] == '_' && 
-                    ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
-                    std::cerr << "ERROR : loading shader : " << name << " : error in loading '" << uniformName << "' : name format not allowed, remove the 'gl_' prefix." << std::endl;
-                else if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
-                    std::cerr << "ERROR : loading shader : " << name << " : ERROR in loading '" << uniformName << "' variable location : " << uniformLocation << "; maybe the variable name does not correspond to an active uniform variable" << std::endl;
-            }
+            if (uniformName.size() >= 3 && uniformName[0] == 'g' && uniformName[1] == 'l' && uniformName[2] == '_' &&
+                ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
+                std::cerr << "ERROR : loading shader : " << name << " : error in loading '" << uniformName << "' : name format not allowed, remove the 'gl_' prefix." << std::endl;
+            else if (ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
+                std::cerr << "ERROR : loading shader : " << name << " : ERROR in loading '" << uniformName << "' variable location : " << uniformLocation << "; maybe the variable name does not correspond to an active uniform variable" << std::endl;
+            
+            continue;
         }
+
+        if (type == "_globalLightClusters")
+            loadGlobalTexture(type, uniformName, uniformLocation, 0);
+        else if (type == "_globalShadowCascades")
+            loadGlobalTexture(type, uniformName, uniformLocation, m_textures.size());
     }
 
-    //  Binding texture to sample
-    if(!textures.empty())
-    {
-        glUseProgram(program);
-        try
-        {
-            textureCount = (uint8_t) textures.size();
-            GLuint location;
-            for(int i = 0; i < textureCount; i++)
-            {
-                location = glGetUniformLocation(program, textures[i].c_str());
-                attributesLocation[textures[i]] = location;
-                glUniform1i(location, i);
-            }
-        }
-        catch(std::exception&) { textureCount = 0; }
-        glUseProgram(0);
-
-        textureIdentifiers = textures;
-    }
-
+    glUseProgram(0);
     if(glIsProgram(program))
         state = VALID;
     else
         state = INVALID;
 }
 
-void Shader::initialize(GLuint computeSh, GLuint prog, const std::map<std::string, std::string>& attType, const std::vector<std::string>& textures)
+void Shader::initialize(GLuint computeSh, GLuint prog, const std::map<std::string, std::string>& attType, const std::vector<std::pair<std::string, std::string>>& textures)
 {
     GF_ASSERT(state == INVALID);
     state = LOADING;
@@ -114,70 +121,95 @@ void Shader::initialize(GLuint computeSh, GLuint prog, const std::map<std::strin
     vertexShader = computeSh;
     program = prog;
 
+    //  Binding texture to sample
+    glUseProgram(program);
+    if (!textures.empty())
+    {
+        using TC = Texture::TextureConfiguration;
+        uint8_t std2Dconfig = (uint8_t)TC::TEXTURE_2D | (uint8_t)TC::USE_MIPMAP | (uint8_t)TC::WRAP_REPEAT;
+
+
+        for (int i = 0; i < textures.size(); i++)
+        {
+            TextureInfos tex;
+            tex.identifier = textures[i].first;
+            tex.defaultResource = textures[i].second;
+            tex.location = glGetUniformLocation(program, tex.identifier.c_str());
+            tex.texture = ResourceManager::getInstance()->getResource<Texture>(tex.defaultResource, std2Dconfig);
+            tex.unit = m_textures.size();
+            tex.isGlobalAttribute = false;
+            glUniform1i(tex.location, tex.unit);
+
+            m_textures.push_back(tex);
+        }
+    }
+
     //	get attributes location
     for (auto it = attType.begin(); it != attType.end(); it++)
     {
         const std::string& uniformName = it->first;
-        const std::string& type = it->first;
+        const std::string& type = it->second;
 
+        GLint uniformLocation = glGetUniformLocation(program, uniformName.c_str());
+        attributesLocation[uniformName] = uniformLocation;
+        if (uniformLocation < 0)
         {
-            GLint uniformLocation = glGetUniformLocation(program, uniformName.c_str());
-            attributesLocation[uniformName] = uniformLocation;
-            if (uniformLocation < 0)
-            {
-                if (uniformName.size() >= 3 && uniformName[0] == 'g' && uniformName[1] == 'l' && uniformName[2] == '_' &&
-                    ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
-                    std::cerr << "ERROR : loading shader : " << name << " : error in loading '" << uniformName << "' : name format not allowed, remove the 'gl_' prefix." << std::endl;
-                else if (ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
-                    std::cerr << "ERROR : loading shader : " << name << " : ERROR in loading '" << uniformName << "' variable location : " << uniformLocation << "; maybe the variable name does not correspond to an active uniform variable" << std::endl;
-            }
+            if (uniformName.size() >= 3 && uniformName[0] == 'g' && uniformName[1] == 'l' && uniformName[2] == '_' &&
+                ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
+                std::cerr << "ERROR : loading shader : " << name << " : error in loading '" << uniformName << "' : name format not allowed, remove the 'gl_' prefix." << std::endl;
+            else if (ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
+                std::cerr << "ERROR : loading shader : " << name << " : ERROR in loading '" << uniformName << "' variable location : " << uniformLocation << "; maybe the variable name does not correspond to an active uniform variable" << std::endl;
         }
+
+        if (type == "_globalLightClusters")
+            loadGlobalTexture(type, uniformName, uniformLocation, 0);
+        else if (type == "_globalShadowCascades")
+            loadGlobalTexture(type, uniformName, uniformLocation, m_textures.size());
     }
 
-    //  Binding texture to sample
-    if (!textures.empty())
-    {
-        glUseProgram(program);
-        try
-        {
-            textureCount = (uint8_t)textures.size();
-            GLuint location;
-            for (int i = 0; i < textureCount; i++)
-            {
-                location = glGetUniformLocation(program, textures[i].c_str());
-                attributesLocation[textures[i]] = location;
-                glUniform1i(location, i);
-            }
-        }
-        catch (std::exception&) { textureCount = 0; }
-        glUseProgram(0);
-
-        textureIdentifiers = textures;
-    }
-
+    glUseProgram(0);
     if (glIsProgram(program))
         state = VALID;
     else
         state = INVALID;
+}
+void Shader::loadGlobalTexture(const std::string& type, const std::string& identifier, GLuint location, uint8_t unit)
+{
+    attributesLocation[type] = location;
+
+    TextureInfos tex;
+    tex.identifier = identifier;
+    tex.defaultResource = type;
+    tex.location = location;
+    tex.texture = nullptr;
+    tex.unit = unit;
+    tex.isGlobalAttribute = true;
+
+    glUniform1i(tex.location, tex.unit);
+
+    m_textures.push_back(tex);
 }
 
 void Shader::enable()
 {
     glUseProgram(program);
 
-    for (int i = 0; i < textures.size(); i++)
+    for (int i = 0; i < m_textures.size(); i++)
     {
-        glActiveTexture(GL_TEXTURE0 + i);
-        glBindTexture(GL_TEXTURE_2D, textures[i]->getTextureId());
+        if (!m_textures[i].isGlobalAttribute)
+        {
+            glActiveTexture(GL_TEXTURE0 + m_textures[i].unit);
+            glBindTexture(GL_TEXTURE_2D, m_textures[i].texture->getTextureId());
+        }
     }
 }
-//void Shader::setInstanciable(Shader* instaciedVersion) { instanciable = instaciedVersion; }
+
 void Shader::addVariant(int variantCode, Shader* variantShader)
 {
     variants[variantCode] = variantShader;
 }
 GLuint Shader::getProgram() const { return program; }
-int Shader::getTextureCount() const { return textureCount; }
+int Shader::getTextureCount() const { return m_textures.size(); }
 GLuint Shader::getShaderID(ShaderType shaderType) const
 {
     switch(shaderType)
@@ -212,6 +244,15 @@ int Shader::getUniformLocation(const std::string& uniform)
 	if (it != attributesLocation.end())
 		return (int) it->second;
 	else return -1;
+}
+uint8_t Shader::getGlobalTextureUnit(std::string _name) const
+{
+    for (const auto& tex : m_textures)
+    {
+        if (_name == tex.defaultResource)
+            return tex.unit;
+    }
+    return -1;
 }
 std::string Shader::getUniformType(const std::string& uniform)
 {
@@ -261,11 +302,6 @@ bool Shader::isComputeShader() const
 
 const std::string& Shader::getDefaultName() { return defaultName; }
 void Shader::setDefaultName(const std::string& name) { defaultName = name; }
-
-void Shader::pushTexture(Texture* texture)
-{
-    textures.push_back(texture);
-}
 
 void Shader::onDrawImGui()
 {
@@ -317,47 +353,51 @@ void Shader::onDrawImGui()
         }
     }
 
-    if (!textures.empty())
+    if (!m_textures.empty())
     {
         ImGui::Spacing();
         ImGui::TextColored(ImVec4(1, 1, 0.5, 1), "Samplers");
-        for (int i = 0; i < textures.size(); i++)
+        for (int i = 0; i < m_textures.size(); i++)
         {
-            if (ImGui::TreeNode(textureIdentifiers[i].c_str()))
+            if (ImGui::TreeNode(m_textures[i].identifier.c_str()))
             {
-                ImGui::Text("Location : %d", i);
-                //ImGui::Text("File : %s", textures[i]->name.c_str());
+                ImGui::Text("Texture Unit : %d", m_textures[i].unit);
+                ImGui::Text("Default resource : %s", m_textures[i].defaultResource.c_str());
+                ImGui::Text("Uniform location : %d", m_textures[i].location);
 
                 // file & file selection
-                std::vector<std::string> textureList = ResourceManager::getInstance()->getAllResourceName(ResourceVirtual::ResourceType::TEXTURE);
-                if (ImGui::BeginCombo("File : ", textures[i]->name.c_str(), 0))
+                if (!m_textures[i].isGlobalAttribute)
                 {
-                    int currentId = 0;
-                    for (int n = 0; n < textureList.size(); n++)
+                    std::vector<std::string> textureList = ResourceManager::getInstance()->getAllResourceName(ResourceVirtual::ResourceType::TEXTURE);
+                    if (ImGui::BeginCombo("File : ", m_textures[i].texture->name.c_str(), 0))
                     {
-                        const bool is_selected = textureList[n] == textures[i]->name;
-                        if (ImGui::Selectable(textureList[n].c_str(), is_selected))
+                        int currentId = 0;
+                        for (int n = 0; n < textureList.size(); n++)
                         {
-                            Texture* previous = textures[i];
-                            textures[i] = ResourceManager::getInstance()->getResource<Texture>(textureList[n]);
-                            ResourceManager::getInstance()->release(previous);
+                            const bool is_selected = textureList[n] == m_textures[i].texture->name;
+                            if (ImGui::Selectable(textureList[n].c_str(), is_selected))
+                            {
+                                Texture* previous = m_textures[i].texture;
+                                m_textures[i].texture = ResourceManager::getInstance()->getResource<Texture>(textureList[n]);
+                                ResourceManager::getInstance()->release(previous);
 
-                            for (auto it = variants.begin(); it != variants.end(); it++)
-                                it->second->textures[i] = textures[i];
+                                for (auto it = variants.begin(); it != variants.end(); it++)
+                                    it->second->m_textures[i].texture = m_textures[i].texture;
+                            }
+
+                            if (is_selected)
+                                ImGui::SetItemDefaultFocus();
                         }
-
-                        if (is_selected)
-                            ImGui::SetItemDefaultFocus();
+                        ImGui::EndCombo();
                     }
-                    ImGui::EndCombo();
-                }
 
-                // overview
-                float ratio = (ImGui::GetContentRegionAvail().x - 5) / textures[i]->size.x;
-                ImGui::Spacing();
-                ImGui::TextColored(ImVec4(1, 1, 0.5, 1), "Overview");
-                ImGui::Image((void*)textures[i]->getTextureId(), ImVec2(textures[i]->size.x * ratio, textures[i]->size.y * ratio), 
-                    ImVec2(0, 0), ImVec2(1, 1), ImColor(255, 255, 255, 255), ImColor(255, 255, 255, 128));
+                    // overview
+                    float ratio = (ImGui::GetContentRegionAvail().x - 5) / m_textures[i].texture->size.x;
+                    ImGui::Spacing();
+                    ImGui::TextColored(ImVec4(1, 1, 0.5, 1), "Overview");
+                    ImGui::Image((void*)m_textures[i].texture->getTextureId(), ImVec2(m_textures[i].texture->size.x * ratio, m_textures[i].texture->size.y * ratio),
+                        ImVec2(0, 0), ImVec2(1, 1), ImColor(255, 255, 255, 255), ImColor(255, 255, 255, 128));
+                }
 
                 ImGui::TreePop();
             }

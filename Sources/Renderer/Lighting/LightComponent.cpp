@@ -43,7 +43,7 @@ bool LightComponent::load(Variant& jsonObject, const std::string& objectName)
 		auto it0 = variant.getMap().find(label);
 		if (it0 != variant.getMap().end() && it0->second.getType() == Variant::ARRAY)
 		{
-			auto varray = it0->second.getArray();
+			auto& varray = it0->second.getArray();
 			vec4f parsed = destination;
 			for (int i = 0; i < 4 && i < varray.size(); i++)
 			{

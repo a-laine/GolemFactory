@@ -1,8 +1,8 @@
 #pragma once
 
 #include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
-
+//#include <glm/glm.hpp>
+#include <Math/TMath.h>
 
 
 class RenderContext
@@ -16,7 +16,7 @@ class RenderContext
 		// getters
 		GLFWwindow* getParentWindow();
 		const GLFWwindow* getParentWindow() const;
-		void getViewportSize(glm::ivec2& size) const;
+		vec2i getViewportSize() const;
 		float getViewportRatio() const;
 
 		// context related
@@ -26,10 +26,10 @@ class RenderContext
 		void swapBuffers();
 		void setVSync(bool enable);
 
-		void updateViewportSize(glm::ivec2 size);
+		void updateViewportSize(vec2i size);
 
 	private:
 		GLFWwindow* m_window;
 		bool m_isOffScreen;
-		glm::ivec2 m_viewportSize;
+		vec2i m_viewportSize;
 };

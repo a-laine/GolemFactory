@@ -4,7 +4,9 @@ DefaultTextured
 	
 	uniform :
 	{
-		matrixArray : "struct array32"
+		matrixArray : "struct array32";
+		lightClusters : "_globalLightClusters";
+		cascadedShadow : "_globalShadowCascades";
 	};
 	
 	textures : [
@@ -36,6 +38,10 @@ DefaultTextured
 			vec4 m_ambientColor;
 			vec4 m_directionalLightDirection;
 			vec4 m_directionalLightColor;
+			
+			mat4 shadowCascadeProjections[4];
+			vec4 shadowFarPlanes;
+			float m_shadowBlendMargin;
 		};
 		
 		struct Light
@@ -91,9 +97,13 @@ DefaultTextured
 			out vec4 fragmentNormal_gs;
 			out vec4 fragmentUv_gs;
 		#else
-			out vec4 fragmentPosition;
-			out vec4 fragmentNormal;
-			out vec4 fragmentUv;
+			#ifdef SHADOW_PASS
+				// nothing to out more than 'gl_Position'
+			#else
+				out vec4 fragmentPosition;
+				out vec4 fragmentNormal;
+				out vec4 fragmentUv;
+			#endif
 		#endif
 		
 		// program
@@ -108,66 +118,92 @@ DefaultTextured
 				fragmentNormal_gs = normalize(normalMatrix * normal);
 				fragmentUv_gs = uv;
 			#else
-				fragmentPosition = model * position;
-				gl_Position = projection * view * fragmentPosition;
-				fragmentNormal = normalize(normalMatrix * normal);
-				fragmentUv = uv;
+				#ifdef SHADOW_PASS
+					gl_Position = model * position;
+				#else
+					fragmentPosition = model * position;
+					gl_Position = projection * view * fragmentPosition;
+					fragmentNormal = normalize(normalMatrix * normal);
+					fragmentUv = uv;
+				#endif
 			#endif
 		}
 	};
 	geometry : 
 	{
 		#pragma WIRED_MODE
+		#pragma SHADOW_PASS
 		
-		layout(triangles) in;
-		layout(triangle_strip, max_vertices = 3) out;
+		#ifdef WIRED_MODE
+			layout(triangles) in;
+			layout(triangle_strip, max_vertices = 3) out;
 
-		// input
-		in vec4 fragmentPosition_gs[];
-		in vec4 fragmentNormal_gs[];
-		in vec4 fragmentUv_gs[];
+			// input
+			in vec4 fragmentPosition_gs[];
+			in vec4 fragmentNormal_gs[];
+			in vec4 fragmentUv_gs[];
 
-		// output
-		out vec4 fragmentNormal;
-		out vec4 fragmentPosition;
-		out vec4 fragmentUv;
-		out vec3 barycentricCoord;
+			// output
+			out vec4 fragmentNormal;
+			out vec4 fragmentPosition;
+			out vec4 fragmentUv;
+			out vec3 barycentricCoord;
 
-		void main()
-		{
-			gl_Position = gl_in[0].gl_Position;
-			fragmentPosition = fragmentPosition_gs[0];
-			fragmentNormal = fragmentNormal_gs[0];
-			fragmentUv = fragmentUv_gs[0];
-			barycentricCoord = vec3(1.0 , 0.0 , 0.0);
-			EmitVertex();
-			
-			gl_Position = gl_in[1].gl_Position;
-			fragmentPosition = fragmentPosition_gs[1];
-			fragmentNormal = fragmentNormal_gs[1];
-			fragmentUv = fragmentUv_gs[1];
-			barycentricCoord = vec3(0.0 , 1.0 , 0.0);
-			EmitVertex();
-			
-			gl_Position = gl_in[2].gl_Position;
-			fragmentPosition = fragmentPosition_gs[2];
-			fragmentNormal = fragmentNormal_gs[2];
-			fragmentUv = fragmentUv_gs[2];
-			barycentricCoord = vec3(0.0 , 0.0 , 1.0);
-			EmitVertex();
-			
-			EndPrimitive();
-		}
+			void main()
+			{
+				gl_Position = gl_in[0].gl_Position;
+				fragmentPosition = fragmentPosition_gs[0];
+				fragmentNormal = fragmentNormal_gs[0];
+				fragmentUv = fragmentUv_gs[0];
+				barycentricCoord = vec3(1.0 , 0.0 , 0.0);
+				EmitVertex();
+				
+				gl_Position = gl_in[1].gl_Position;
+				fragmentPosition = fragmentPosition_gs[1];
+				fragmentNormal = fragmentNormal_gs[1];
+				fragmentUv = fragmentUv_gs[1];
+				barycentricCoord = vec3(0.0 , 1.0 , 0.0);
+				EmitVertex();
+				
+				gl_Position = gl_in[2].gl_Position;
+				fragmentPosition = fragmentPosition_gs[2];
+				fragmentNormal = fragmentNormal_gs[2];
+				fragmentUv = fragmentUv_gs[2];
+				barycentricCoord = vec3(0.0 , 0.0 , 1.0);
+				EmitVertex();
+				
+				EndPrimitive();
+			}
+		#else
+			layout(triangles, invocations = 4) in;
+			layout(triangle_strip, max_vertices = 3) out;
+				
+			void main()
+			{          
+				for (int i = 0; i < 3; ++i)
+				{
+					gl_Position = shadowCascadeProjections[ gl_InvocationID ] * gl_in[i].gl_Position;
+					gl_Layer = gl_InvocationID;
+					EmitVertex();
+				}
+				EndPrimitive();
+			}
+		#endif
 	};
 	fragment :
 	{
+	#ifdef SHADOW_PASS
+		void main() { }
+	#else
 		// textures
-		uniform sampler2D albedo;   //texture unit 0
-		uniform sampler2D emmisive; //texture unit 1
-		uniform sampler2D metalic;  //texture unit 2
+		uniform sampler2D albedo;   //sampler unit 0
+		uniform sampler2D emmisive; //sampler unit 1
+		uniform sampler2D metalic;  //sampler unit 2
+		
+		uniform sampler2DArrayShadow  cascadedShadow;
 		
 		// images
-		layout(rgba32ui, binding = 3) readonly uniform uimage3D lightClusters;
+		layout(rgba32ui) readonly uniform uimage3D lightClusters;	// image unit 0
 		
 		// input
 		in vec4 fragmentPosition;
@@ -184,9 +220,17 @@ DefaultTextured
 		// usefull
 		vec4 fragmentColor= vec4(0.0);
 		vec4 clusterColor = vec4(0.0);
+		vec4 cascadeIndexAll = vec4(0,1,2,3);
+		vec4 cascadeColor = vec4(0.0);
+		
 		float map(float value, float min1, float max1, float min2, float max2)
 		{
 		  return min2 + (value - min1) * (max2 - min2) / max(max1 - min1, 0.0001);
+		}
+		float mix3(float a, float b, float x)
+		{
+			x = x < 0.5 ? 2 * x * x : 1 - pow(-2 * x + 2, 2) / 2;
+			return mix(a, b, x);
 		}
 		ivec3 ComputeClusterIndex()
 		{
@@ -231,6 +275,38 @@ DefaultTextured
 			// additive blending
 			fragmentColor += (spotAttenuation * attenuation) * ((diffuse + specular) * albedo);
 		}
+		int ComputeCascadeIndex(vec4 worldPosition)
+		{
+			float dist = abs(view * worldPosition).z;
+			int index = 4;
+			for (int i = 0; i < 4; ++i)
+				if (shadowFarPlanes[i] > dist)
+				{
+					index = i;
+					break;
+				}
+				
+			if (index < 3)
+				cascadeColor[index] = 1;
+			else if (index == 3)
+				cascadeColor = vec4(1 , 1 , 0 , 1);
+			return index;
+		}
+		
+		float GetShadowAttenuation(vec4 worldPosition, int cascadeIndex, float bias)
+		{
+			if (cascadeIndex >= 4)
+				return 0.0;
+				
+			vec4 shadowPosition = shadowCascadeProjections[cascadeIndex] * worldPosition;
+			vec4 shadowCoord = shadowPosition / shadowPosition.w;
+			shadowCoord = shadowCoord * 0.5 + 0.5;
+			
+			float shadow = texture(cascadedShadow, vec4(shadowCoord.xy, cascadeIndex, shadowCoord.z - bias));
+			
+			return shadow;
+		}
+		
 		
 		// program
 		void main()
@@ -245,14 +321,22 @@ DefaultTextured
 			// compute base color depending on environement light (directional)
 			vec4 albedoColor = texture(albedo, vec2(fragmentUv.x, fragmentUv.y));
 			vec4 emmisiveColor = texture(emmisive, fragmentUv.xy);
-			vec4 diffuse = clamp(dot(normalize(fragmentNormal), normalize(-m_directionalLightDirection)), 0 , 1 ) * m_directionalLightColor;
+			float ndotl = dot(normalize(fragmentNormal), normalize(-m_directionalLightDirection));
+			vec4 diffuse = clamp(ndotl, 0 , 1 ) * m_directionalLightColor;
 			vec4 metalicParam = texture(metalic, vec2(fragmentUv.x, fragmentUv.y));
+			
+			float shadowAttenuation = 1.0;
+			if ((shadingConfiguration & 0x04) != 0 && ndotl > 0.0)
+			{
+				int cascadeIndex = ComputeCascadeIndex(fragmentPosition);
+				shadowAttenuation = GetShadowAttenuation(fragmentPosition, cascadeIndex, max(0.005 * (1.0 - ndotl), 0.0005));			
+			}
 			
 			vec4 viewDir = normalize(cameraPosition - fragmentPosition);
 			vec4 reflectDir = reflect(normalize(m_directionalLightDirection), fragmentNormal);  
 			float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
 			vec4 specular = metalicParam.x * spec * m_directionalLightColor;  
-			fragmentColor = (diffuse + m_ambientColor + specular) * albedoColor + emmisiveColor;
+			fragmentColor = (m_ambientColor + shadowAttenuation * (diffuse + specular)) * albedoColor + emmisiveColor;
 			
 			// process cluster data
 			if (lightCount > 0)
@@ -313,8 +397,11 @@ DefaultTextured
 			
 			if ((shadingConfiguration & 0x02) != 0)
 				fragColor = 0.5 * fragmentColor + 0.5 * clusterColor;
+			else if((shadingConfiguration & 0x08) != 0)
+				fragColor = 0.5 * fragmentColor + 0.5 * cascadeColor;
 			else
 				fragColor = fragmentColor;
 		}
+	#endif
 	};
 } 

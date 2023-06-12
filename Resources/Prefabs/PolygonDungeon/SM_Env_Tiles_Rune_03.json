@@ -7,5 +7,10 @@
 		"meshName" : "PolygonDungeon/SM_Env_Tile_Simple_01",
 		"backfaceCulling" : true
 	},
+	"colliderComponent" :{
+		"shapeType" : "Box",
+		"center" : [-2.5, 0.05, 2.5],
+		"halfSize" : [2.5, 0.05, 2.5]
+	},
     "prefabEntities": []
 }

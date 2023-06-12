@@ -30,9 +30,9 @@ const GLFWwindow* RenderContext::getParentWindow() const
 	return m_window;
 }
 
-void RenderContext::getViewportSize(glm::ivec2& size) const
+vec2i RenderContext::getViewportSize() const
 {
-	size = m_viewportSize;
+	return m_viewportSize;
 }
 
 float RenderContext::getViewportRatio() const
@@ -68,7 +68,7 @@ void RenderContext::setVSync(bool enable)
 	glfwSwapInterval(enable ? 1 : 0);
 }
 
-void RenderContext::updateViewportSize(glm::ivec2 size)
+void RenderContext::updateViewportSize(vec2i size)
 {
 	if (isCurrentContext())
 		glViewport(0, 0, size.x, size.y);

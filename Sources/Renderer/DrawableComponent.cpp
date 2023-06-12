@@ -8,13 +8,13 @@
 #include <Utiles/ConsoleColor.h>
 
 
-DrawableComponent::DrawableComponent(const std::string& meshName, const std::string& shaderName)
+DrawableComponent::DrawableComponent(const std::string& meshName, const std::string& shaderName) : m_castShadow(true)
 {
 	m_mesh = ResourceManager::getInstance()->getResource<Mesh>(meshName);
 	m_shader = ResourceManager::getInstance()->getResource<Shader>(shaderName);
 }
 
-DrawableComponent::DrawableComponent(const DrawableComponent* other)
+DrawableComponent::DrawableComponent(const DrawableComponent* other) : m_castShadow(true)
 {
 	m_mesh = ResourceManager::getInstance()->getResource<Mesh>(other->m_mesh->name);
 	m_shader = ResourceManager::getInstance()->getResource<Shader>(other->m_shader->name);
@@ -99,6 +99,11 @@ void DrawableComponent::setMesh(Mesh* mesh)
 	else m_mesh = nullptr;
 }
 
+void DrawableComponent::setCastShadow(bool enabled)
+{
+	m_castShadow = enabled;
+}
+
 Shader* DrawableComponent::getShader() const
 {
 	return m_shader;
@@ -112,6 +117,11 @@ Mesh* DrawableComponent::getMesh() const
 bool DrawableComponent::isValid() const
 {
     return m_mesh && m_mesh->isValid() && m_shader && m_shader->isValid();
+}
+
+bool DrawableComponent::castShadow() const
+{
+	return m_castShadow;
 }
 
 bool DrawableComponent::hasSkeleton() const
@@ -152,6 +162,10 @@ void DrawableComponent::onDrawImGui()
 		ImGui::Text("name : %s", m_mesh->name.c_str());
 		ImGui::Text("vertices count : %d", m_mesh->getNumberVertices());
 		ImGui::Text("faces count : %d", m_mesh->getNumberFaces());
+		vec4f center = 0.5f * (m_mesh->getBoundingBox().max + m_mesh->getBoundingBox().min);
+		vec4f size = 0.5f * (m_mesh->getBoundingBox().max - m_mesh->getBoundingBox().min);
+		ImGui::Text("local aabb center : %.2f, %.2f, %.2f", center.x, center.y, center.z);
+		ImGui::Text("local aabb size : %.2f, %.2f, %.2f", size.x, size.y, size.z);
 		ImGui::Unindent();
 
 		ImGui::Spacing();
@@ -166,7 +180,7 @@ void DrawableComponent::onDrawImGui()
 			ImGui::Indent();
 			for (int i = 0; i < textures.size(); i++)
 			{
-				ImGui::Text("Location %d : %s", i, textures[i]->name.c_str());
+				ImGui::Text("Location %d : %s", i, textures[i].texture->name.c_str());
 			}
 			ImGui::Unindent();
 		}

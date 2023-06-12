@@ -299,6 +299,19 @@ Tmat4<T> Tmat4<T>::lookAt(const Tvec4<T>& forward, Tvec4<T> up)
 }
 
 template<typename T>
+Tmat4<T> Tmat4<T>::ortho(const T left, const T right, const T bottom, const T top, const T zNear, const T zFar)
+{
+	Tmat4<T> result;
+	result[0][0] = static_cast<T>(2) / (right - left);
+	result[1][1] = static_cast<T>(2) / (top - bottom);
+	result[2][2] = -static_cast<T>(2) / (zFar - zNear);
+	result[3][0] = -(right + left) / (right - left);
+	result[3][1] = -(top + bottom) / (top - bottom);
+	result[3][2] = -(zFar + zNear) / (zFar - zNear);
+	return result;
+}
+
+template<typename T>
 Tmat4<T> Tmat4<T>::TRS(const Tvec4<T>& t, const Tquat<T> q, const Tvec4<T>& s)
 {
 	Tmat4<T> result = Tmat4<T>::translate(Tmat4<T>::identity, t);

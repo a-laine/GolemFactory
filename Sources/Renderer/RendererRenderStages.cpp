@@ -4,6 +4,7 @@
 #include <Renderer/DrawableComponent.h>
 #include <Renderer/Lighting/LightComponent.h>
 #include <Renderer/OccluderComponent.h>
+#include <Utiles/Debug.h>
 
 
 #define MAX_INSTANCE 32
@@ -27,8 +28,10 @@ void Renderer::CollectEntitiesBindLights()
 
 	uint64_t transparentMask = 1ULL << 63;
 	uint64_t faceCullingMask = 1ULL << 62;
-	m_hasInstancingShaders = false; 
+	m_hasInstancingShaders = false;
+	m_hasShadowCaster = false;
 	renderQueue.clear();
+	shadowQueue.clear();
 	m_occluders.clear();
 	std::vector<std::pair<float, LightComponent*>> tmpLights;
 
@@ -58,6 +61,13 @@ void Renderer::CollectEntitiesBindLights()
 
 				uint64_t hash = queue | d;
 				renderQueue.push_back({ hash, object, nullptr });
+
+				if ((queue & transparentMask) == 0 && comp->castShadow())
+				{
+					m_hasShadowCaster = true;
+					float projected = vec4f::dot(object->getWorldPosition(), camFwd);
+					shadowQueue.push_back({ projected, object, nullptr });
+				}
 			}
 		}
 
@@ -278,6 +288,7 @@ void Renderer::OcclusionCulling()
 				}
 		}
 	}
+
 	occlusionTexture.update(m_occlusionDepthColor, GL_RGBA, GL_UNSIGNED_BYTE);
 
 	for (auto& it : renderQueue)
@@ -449,4 +460,112 @@ void Renderer::DynamicBatching()
 	}
 }
 
+void Renderer::ShadowCasting()
+{
+	std::sort(shadowQueue.begin(), shadowQueue.end(), [](ShadowDrawElement& a, ShadowDrawElement& b) { return a.distance < b.distance; });
+	int shadowCode = Shader::computeVariantCode(false, true, false);
 
+	// batching
+	if (m_enableInstancing && m_hasInstancingShaders)
+	{
+		// clear batches containers
+		for (auto it : batchClosedPool)
+		{
+			it->models.clear();
+			it->mesh = nullptr;
+			it->shader = nullptr;
+			batchFreePool.push_back(it);
+		}
+		batchClosedPool.clear();
+		for (auto it : batchOpened)
+		{
+			it.second->models.clear();
+			it.second->mesh = nullptr;
+			it.second->shader = nullptr;
+			batchFreePool.push_back(it.second);
+		}
+		batchOpened.clear();
+
+		int instancedShadowCode = Shader::computeVariantCode(true, true, false);
+
+		for (auto& it : shadowQueue)
+		{
+			if (!it.entity)
+				continue;
+			DrawableComponent* comp = it.entity->getComponent<DrawableComponent>();
+			if (!comp->getShader()->supportInstancing())
+				continue;
+
+			Shader* shader = comp->getShader()->getVariant(instancedShadowCode);
+			Mesh* mesh = comp->getMesh();
+
+			// search insertion batch
+			Batch* batch;
+			bool isNewBatch = false;
+			std::pair<Shader*, Mesh*> key = { shader, mesh };
+			auto it2 = batchOpened.find(key);
+			if (it2 == batchOpened.end())
+			{
+				if (batchFreePool.empty())
+					batch = new Batch();
+				else
+				{
+					batch = batchFreePool.back();
+					batchFreePool.pop_back();
+				}
+
+				isNewBatch = true;
+				batch->shader = shader;
+				batch->mesh = mesh;
+				batchOpened[key] = batch;
+			}
+			else
+				batch = it2->second;
+
+			// insert object
+			batch->models.push_back({ it.entity->getWorldTransformMatrix() , it.entity->getNormalMatrix() });
+			it.batch = batch;
+
+			if (!isNewBatch)
+			{
+				it.entity = nullptr;
+				if (batch->models.size() >= MAX_INSTANCE)
+				{
+					batchClosedPool.push_back(batch);
+					batchOpened.erase(it2);
+				}
+			}
+		}
+	}
+
+	// draw shadows
+	glViewport(0, 0, shadowCascadeTexture.size.x, shadowCascadeTexture.size.y);
+	glBindFramebuffer(GL_FRAMEBUFFER, m_ShadowFBO);
+	//glFramebufferTexture(GL_FRAMEBUFFER, GL_TEXTURE_2D_ARRAY, shadowCascadeTexture.getTextureId(), 0);
+	//glClearBufferfv()
+	glClear(GL_DEPTH_BUFFER_BIT);
+
+	glDisable(GL_BLEND);
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_FRONT);  // peter panning
+
+	//	draw instance list
+	for (const auto& it : shadowQueue)
+	{
+		// skip batched entities
+		if (!it.entity)
+			continue;
+
+		if (it.batch)
+			drawInstancedObject(it.batch->shader, it.batch->mesh, it.batch->models);
+		else
+		{
+			DrawableComponent* drawableComp = it.entity->getComponent<DrawableComponent>();
+			drawObject(it.entity, drawableComp->getShader()->getVariant(shadowCode));
+		}
+	}
+
+	glCullFace(GL_BACK);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+}

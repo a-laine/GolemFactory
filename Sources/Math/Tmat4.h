@@ -90,6 +90,7 @@ class Tmat4
 		static Tmat4 TRS(const Tvec4<T>& t, const Tquat<T> q, const Tvec4<T>& s);
 		static Tmat4 fromTo(const Tvec4<T>& from, const Tvec4<T>& to);
 		static Tmat4 lookAt(const Tvec4<T>& forward, Tvec4<T> up = Tvec4(0, 1, 0, 0));
+		static Tmat4 ortho(const T left, const T right, const T bottom, const T top, const T zNear, const T zFar);
 		static Tmat4 inverse(const Tmat4& m);
 		static Tmat4 transpose(const Tmat4& m);
 		static Tmat4 perspective(T fovy, T aspect, T zNear, T zFar);

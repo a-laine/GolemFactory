@@ -3,9 +3,9 @@
 #include <atomic>
 #include <string>
 
-#include <glm/glm.hpp>
-#include <glm/gtx/quaternion.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+//#include <glm/glm.hpp>
+//#include <glm/gtx/quaternion.hpp>
+//#include <glm/gtc/matrix_transform.hpp>
 
 #include <Physics/BoundingVolume.h>
 #include <EntityComponent/Component.hpp>
