@@ -12,6 +12,10 @@ class BoxSceneQuerry : public VirtualSceneQuerry
 		BoxSceneQuerry();
 		BoxSceneQuerry(const vec4f& cornerMin, const vec4f& cornerMax);
 
+		void Set(const vec4f& cornerMin, const vec4f& cornerMax);
+
+		bool TestAABB(vec4f min, vec4f max);
+
 		VirtualSceneQuerry::CollisionType operator() (const NodeVirtual* node) override;
 
 	private:

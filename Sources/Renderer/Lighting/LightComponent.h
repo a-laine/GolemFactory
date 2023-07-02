@@ -20,6 +20,7 @@ public:
 
 	// setter geter
 	void setPointLight(bool _isPointLight);
+	void setCastShadow(bool _enableShadow);
 	void setRange(float _range);
 	void setIntensity(float _intensity);
 	void setColor(vec4f _color);
@@ -30,6 +31,7 @@ public:
 	vec4f getDirection();
 	vec4f getPosition();
 	bool isPointLight() const;
+	bool castShadow() const;
 	float getRange() const;
 	float getIntensity() const;
 	float getInnerCutOffAngle() const;
@@ -41,8 +43,8 @@ public:
 	//
 
 protected:
-	bool m_isUniformBufferDirty;
 	bool m_isPointLight;
+	bool m_castShadow;
 
 	vec4f m_color;
 	float m_range;

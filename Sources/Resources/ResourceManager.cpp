@@ -4,6 +4,7 @@
 
 #include <Utiles/ToolBox.h>
 #include <World/World.h>
+#include <Utiles/ProfilerConfig.h>
 
 #ifdef USE_IMGUI
 bool ResourcesWindowEnable = true;
@@ -167,6 +168,8 @@ std::vector<std::string> ResourceManager::getAllResourceName(ResourceVirtual::Re
 void ResourceManager::drawImGui(World& world)
 {
 #ifdef USE_IMGUI
+    SCOPED_CPU_MARKER("ResourceManager");
+
     mutexList.lock();
     ImGui::Begin("Resource manager");
     ImGui::PushID(this);
@@ -198,15 +201,29 @@ void ResourceManager::drawImGui(World& world)
                     bool noResourceLoaded = true;
                     for (const auto& it : resources)
                     {
-                        if (it.second->getType() != TabTypes[i])
+                        if (!it.second || it.second->getType() != TabTypes[i])
                             continue;
                         if (!m_nameFilter.PassFilter(it.second->getIdentifier().c_str()))
                             continue;
 
                         noResourceLoaded = false;
                         bool b = selectedRes == it.second;
+
+                        bool popColor = false;
+                        if (TabTypes[i] == ResourceVirtual::ResourceType::TEXTURE)
+                        {
+                            Texture* tex = (Texture*)it.second;
+                            if (tex->isEnginePrivate)
+                            {
+                                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 0.5, 0, 1));
+                                popColor = true;
+                            }
+                        }
+
                         if (ImGui::Selectable(it.second->name.c_str(), &b))
                             selectedResources[TabTypes[i]] = it.second;
+                        if (popColor)
+                            ImGui::PopStyleColor();
                     }
 
                     if (noResourceLoaded)

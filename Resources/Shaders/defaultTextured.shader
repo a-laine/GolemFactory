@@ -7,6 +7,8 @@ DefaultTextured
 		matrixArray : "struct array32";
 		lightClusters : "_globalLightClusters";
 		cascadedShadow : "_globalShadowCascades";
+		omniShadowArray : "_globalOmniShadow";
+		omniBaseLayer = "int"
 	};
 	
 	textures : [
@@ -22,61 +24,14 @@ DefaultTextured
 		}
 	];
 	
-	includes :
+	includes : 
 	{
 		#version 430
-		
-		layout(std140, binding = 0) uniform GlobalMatrices
-		{
-			mat4 view;
-			mat4 projection;
-			vec4 cameraPosition;
-		};
-		layout(std140, binding = 1) uniform EnvironementLighting
-		{
-			vec4 m_backgroundColor;
-			vec4 m_ambientColor;
-			vec4 m_directionalLightDirection;
-			vec4 m_directionalLightColor;
-			
-			mat4 shadowCascadeProjections[4];
-			vec4 shadowFarPlanes;
-			float m_shadowBlendMargin;
-		};
-		
-		struct Light
-		{
-			vec4 m_position;
-			vec4 m_direction;
-			vec4 m_color;
-			float m_range;
-			float m_intensity;
-			float m_inCutOff;
-			float m_outCutOff;
-		};
-		layout(std140, binding = 2) uniform Lights
-		{
-		    int lightCount;
-			uint shadingConfiguration;
-			float clusterDepthScale;
-			float clusterDepthBias;
-			float near;
-			float far;
-			float tanFovX;
-			float tanFovY;
-			Light lights[254];
-		};
-		layout(std140, binding = 3) uniform DebugShaderUniform
-		{
-			vec4 vertexNormalColor;
-			vec4 faceNormalColor;
-			float wireframeEdgeFactor;
-			float occlusionResultDrawAlpha;
-			float occlusionResultCuttoff;
-		};
 	};
 	vertex :
 	{
+		#include "UniformBuffers.cginc"
+	
 		// input
 		layout(location = 0) in vec4 position;
 		layout(location = 1) in vec4 normal;
@@ -134,6 +89,8 @@ DefaultTextured
 		#pragma WIRED_MODE
 		#pragma SHADOW_PASS
 		
+		#include "UniformBuffers.cginc"
+		
 		#ifdef WIRED_MODE
 			layout(triangles) in;
 			layout(triangle_strip, max_vertices = 3) out;
@@ -175,23 +132,44 @@ DefaultTextured
 				EndPrimitive();
 			}
 		#else
-			layout(triangles, invocations = 4) in;
+			#ifndef GEOMETRY_INVOCATION
+				#define GEOMETRY_INVOCATION 4
+			#endif
+		
+			layout(triangles, invocations = GEOMETRY_INVOCATION) in;
 			layout(triangle_strip, max_vertices = 3) out;
-				
+			
+			uniform int omniBaseLayer = 0;
+			
 			void main()
-			{          
-				for (int i = 0; i < 3; ++i)
+			{
+				if ((shadingConfiguration & (1<<4)) != 0)
 				{
-					gl_Position = shadowCascadeProjections[ gl_InvocationID ] * gl_in[i].gl_Position;
-					gl_Layer = gl_InvocationID;
-					EmitVertex();
+					for (int i = 0; i < 3; ++i)
+					{
+						gl_Layer = 6 * omniBaseLayer + gl_InvocationID;
+						gl_Position = omniShadowProjections[ gl_Layer ] * gl_in[i].gl_Position;
+						EmitVertex();
+					}
+					EndPrimitive();
 				}
-				EndPrimitive();
+				else
+				{
+					for (int i = 0; i < 3; ++i)
+					{
+						gl_Position = shadowCascadeProjections[ gl_InvocationID ] * gl_in[i].gl_Position;
+						gl_Layer = gl_InvocationID;
+						EmitVertex();
+					}
+					EndPrimitive();				
+				}
 			}
 		#endif
 	};
 	fragment :
 	{
+		#include "UniformBuffers.cginc"
+		
 	#ifdef SHADOW_PASS
 		void main() { }
 	#else
@@ -201,6 +179,7 @@ DefaultTextured
 		uniform sampler2D metalic;  //sampler unit 2
 		
 		uniform sampler2DArrayShadow  cascadedShadow;
+		uniform samplerCubeArray omniShadowArray;
 		
 		// images
 		layout(rgba32ui) readonly uniform uimage3D lightClusters;	// image unit 0
@@ -245,17 +224,54 @@ DefaultTextured
 			clusterIndex = clamp(clusterIndex, ivec3(0), clusterSize - ivec3(1));
 			return clusterIndex;
 		}
+		float GetOmniShadowAttenuation(int lightIndex, int omniIndex, vec4 rayLight, float currentDistance, float lightNear)
+		{
+			float range = lights[lightIndex].m_range;
+			vec4 dir = abs(rayLight);
+			float maxDir = max(dir.x, max(dir.y, dir.z));
+			float currentDepth = (1 / maxDir - 1 / lightNear) / (1 / range - 1 / lightNear);
+			
+			vec3 ray = rayLight.xyz / currentDistance;
+			vec3 u = abs(ray.x) > abs(ray.z) ? vec3(ray.y, -ray.x, 0) : vec3(0, ray.z, -ray.y);
+			normalize(u);
+			vec3 v = cross(ray, u);
+			
+			float shadow = 0.0;
+			float texelSize = 1.0 / textureSize(omniShadowArray, 0).x;
+			u *= texelSize;  v *= texelSize;
+			for(int i = -2; i <= 2; i++)
+				for(int j = -2; j <= 2; j++)
+				{
+					shadow += texture(omniShadowArray, vec4(ray + i * u + j * v, omniIndex)).r < currentDepth ? 0.0 : 1.0;
+				}
+			shadow /= 25;
+			
+			return shadow;
+		}
 		void ProcessLight(int lightIndex, vec4 albedo, float metalic, vec4 viewDir)
 		{
-			//if (lightIndex >= lightCount) return; // useless if clustering is well done
+			// search for shadow
+			vec4 lightRay = fragmentPosition - lights[lightIndex].m_position;
+			float currentDistance = length(lightRay);
+			float shadowAttenuation = 1.0;
+			for(int i = 0; i < 4; i++)
+			{
+				if (omniShadowIndexLow[i] == lightIndex)
+				{
+					shadowAttenuation = GetOmniShadowAttenuation(lightIndex, i, lightRay, currentDistance, omniShadowNearLow[i]);
+					break;
+				}
+				else if (omniShadowIndexHigh[i] == lightIndex)
+				{
+					shadowAttenuation = GetOmniShadowAttenuation(lightIndex, 4 * i, lightRay, currentDistance, omniShadowNearHigh[i]);
+					break;
+				}
+			}
 		
 			// point light computation
-			vec4 lightRay = fragmentPosition - lights[lightIndex].m_position;
-			float d = length(lightRay);
-			float u = d / lights[lightIndex].m_range;
-			//if (u > 1.0) return; // not that usefull if clustering is well done
+			float u = currentDistance / lights[lightIndex].m_range;
 			
-			lightRay /= d;
+			lightRay /= currentDistance;
 			vec4 lightColor = lights[lightIndex].m_color;
 			vec4 diffuse = clamp(dot(normalize(fragmentNormal), normalize(-lightRay)), 0 , 1 ) * lightColor;
 			float spec = pow(max(dot(viewDir, lightRay), 0.0), 32);
@@ -273,11 +289,11 @@ DefaultTextured
 			float spotAttenuation = max(isSpotMultiplier, cutoff01);
 			
 			// additive blending
-			fragmentColor += (spotAttenuation * attenuation) * ((diffuse + specular) * albedo);
+			fragmentColor += (shadowAttenuation * spotAttenuation * attenuation) * ((diffuse + specular) * albedo);
 		}
-		int ComputeCascadeIndex(vec4 worldPosition)
+		int ComputeCascadeIndex()
 		{
-			float dist = abs(view * worldPosition).z;
+			float dist = abs(view * fragmentPosition).z;
 			int index = 4;
 			for (int i = 0; i < 4; ++i)
 				if (shadowFarPlanes[i] > dist)
@@ -293,12 +309,12 @@ DefaultTextured
 			return index;
 		}
 		
-		float GetShadowAttenuation(vec4 worldPosition, int cascadeIndex, float bias)
+		float GetShadowAttenuation(int cascadeIndex, float bias)
 		{
 			if (cascadeIndex >= 4)
-				return 0.0;
+				return 1.0;
 				
-			vec4 shadowPosition = shadowCascadeProjections[cascadeIndex] * worldPosition;
+			vec4 shadowPosition = shadowCascadeProjections[cascadeIndex] * fragmentPosition;
 			vec4 shadowCoord = shadowPosition / shadowPosition.w;
 			shadowCoord = shadowCoord * 0.5 + 0.5;
 			
@@ -328,8 +344,8 @@ DefaultTextured
 			float shadowAttenuation = 1.0;
 			if ((shadingConfiguration & 0x04) != 0 && ndotl > 0.0)
 			{
-				int cascadeIndex = ComputeCascadeIndex(fragmentPosition);
-				shadowAttenuation = GetShadowAttenuation(fragmentPosition, cascadeIndex, max(0.005 * (1.0 - ndotl), 0.0005));			
+				int cascadeIndex = ComputeCascadeIndex();
+				shadowAttenuation = GetShadowAttenuation(cascadeIndex, max(0.005 * (1.0 - ndotl), 0.0005));			
 			}
 			
 			vec4 viewDir = normalize(cameraPosition - fragmentPosition);

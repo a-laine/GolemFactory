@@ -158,12 +158,16 @@ bool Collision::collide_OrientedBoxvsSphere(const vec4f& sphereCenter, const flo
 	vec4f bz = boxTranform[2];
 
 	vec4f center = boxTranform * (0.5f * (boxMax + boxMin));
-	vec4f halfSize = 0.5f * vec4f::abs(boxMax - boxMin);
+	vec4f localHalfSize = 0.5f * vec4f::abs(boxMax - boxMin);
+	bx *= std::abs(localHalfSize.x);
+	by *= std::abs(localHalfSize.y);
+	bz *= std::abs(localHalfSize.z);
+
 	vec4f p = sphereCenter - center;
 
-	float px = clamp(vec4f::dot(p, bx), -halfSize.x, halfSize.x);
-	float py = clamp(vec4f::dot(p, by), -halfSize.y, halfSize.y);
-	float pz = clamp(vec4f::dot(p, bz), -halfSize.z, halfSize.z);
+	float px = clamp(vec4f::dot(p, bx), -1.f, 1.f);
+	float py = clamp(vec4f::dot(p, by), -1.f, 1.f);
+	float pz = clamp(vec4f::dot(p, bz), -1.f, 1.f);
 	vec4f closest = center + bx * px + by * py + bz * pz;
 	vec4f delta = sphereCenter - closest;
 	float distance2 = delta.getNorm2();
@@ -178,23 +182,27 @@ bool Collision::collide_OrientedBoxvsSphere(const vec4f& sphereCenter, const flo
 
 			if (distance2 < COLLISION_EPSILON * COLLISION_EPSILON)
 			{
+				vec4f halfSize = vec4f(bx.getNorm(), by.getNorm(), bz.getNorm(), 0.f);
 				delta = halfSize - vec4f::abs(vec4f(px, py, pz, 0));
 				if (delta.x < delta.y && delta.x < delta.z)
 				{
 					report->depths.push_back(sphereRadius + delta.x);
 					report->normal = px > 0.f ? bx : -bx;
+					report->normal.normalize();
 					report->points.push_back(center - halfSize.x * report->normal);
 				}
 				else if (delta.y < delta.x&& delta.y < delta.z)
 				{
 					report->depths.push_back(sphereRadius + delta.y);
 					report->normal = py > 0.f ? by : -by;
+					report->normal.normalize();
 					report->points.push_back(center - halfSize.y * report->normal);
 				}
 				else
 				{
 					report->depths.push_back(sphereRadius + delta.z);
 					report->normal = pz > 0.f ? bz : -bz;
+					report->normal.normalize();
 					report->points.push_back(center - halfSize.z * report->normal);
 				}
 			}

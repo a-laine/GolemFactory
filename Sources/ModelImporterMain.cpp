@@ -31,7 +31,7 @@
 #include <Resources/Shader.h>
 #include <Resources/Mesh.h>
 #include <Resources/Skeleton.h>
-#include <Resources/Animation.h>
+#include <Resources/AnimationClip.h>
 #include <Resources/Loader/AnimationLoader.h>
 #include <Resources/Loader/FontLoader.h>
 #include <Resources/Loader/AssimpLoader.h>
@@ -235,10 +235,11 @@ void initManagers()
 	Shader::setDefaultName("default");
 	Mesh::setDefaultName("cube2.obj");
 	Skeleton::setDefaultName("human");
-	Animation::setDefaultName("human");
+	AnimationClip::setDefaultName("male_idle_breath");
 	ResourceManager::getInstance()->addNewResourceLoader(".animation", new AnimationLoader());
 	ResourceManager::getInstance()->addNewResourceLoader(".font", new FontLoader());
-	ResourceManager::getInstance()->addNewResourceLoader("assimp", new AssimpLoader(AssimpLoader::ResourceType::MESH));
+	ResourceManager::getInstance()->addNewResourceLoader("assimpMesh", new AssimpLoader(AssimpLoader::ResourceType::MESH));
+	ResourceManager::getInstance()->addNewResourceLoader("assimpSkel", new AssimpLoader(AssimpLoader::ResourceType::SKELETON));
 	ResourceManager::getInstance()->addNewResourceLoader(".mesh", new MeshLoader());
 	ResourceManager::getInstance()->addNewResourceLoader(".shader", new ShaderLoader());
 	ResourceManager::getInstance()->addNewResourceLoader(".skeleton", new SkeletonLoader());
@@ -273,7 +274,7 @@ void initManagers()
 	Debug::getInstance()->initialize("Shapes/box", "Shapes/sphere", "Shapes/capsule", "default", "wired", "debug", "textureReinterpreter");
 
 	// Animator
-	Animator::getInstance();
+	//Animator::getInstance();
 
 	//	HUD
 	WidgetManager::getInstance()->setInitialViewportRatio(context->getViewportRatio());

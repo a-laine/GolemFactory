@@ -29,7 +29,7 @@ bool RayEntityCollector::operator() (Entity* entity)
 		vec4f scale(entity->getWorldScale());
 		float smax = std::max(scale.x, std::max(scale.y, scale.z));
 		const std::vector<mat4f> pose = entity->getComponent<SkeletonComponent>()->getPose();
-		const std::vector<vec2i>& segments = entity->getComponent<SkeletonComponent>()->getSegmentsIndex();
+		/*const std::vector<vec2i>& segments = entity->getComponent<SkeletonComponent>()->getSegmentsIndex();
 		const std::vector<float>& radius = entity->getComponent<SkeletonComponent>()->getSegmentsRadius();
 
 		bool collision = false;
@@ -43,7 +43,7 @@ bool RayEntityCollector::operator() (Entity* entity)
 				break;
 			}
 		}
-		if (!collision) return false;
+		if (!collision) */return false;
 	}
 	else
 	{
@@ -107,17 +107,21 @@ bool RayEntityCollector::operator() (Entity* entity)
 	}
 	else
 	{
+		CollisionReport report;
+		vec4f rayEnd = position + distance * direction;
 		for (unsigned int i = 0; i < faces.size(); i += 3)
 		{
 			vec4f p1 = model * vertices[faces[i]];
 			vec4f p2 = model * vertices[faces[i + 1]];
 			vec4f p3 = model * vertices[faces[i + 2]];
 
-			if (Collision::collide_SegmentvsTriangle(position, position + distance*direction, p1, p2, p3))
+			if (Collision::collide_SegmentvsTriangle(position, rayEnd, p1, p2, p3, &report))
 			{
-				vec4f normal = vec4f::cross(p2 - p1, p3 - p1);
-				normal.normalize();
-				collisionDistance = std::min(collisionDistance, vec4f::dot(normal, p1 - position) / vec4f::dot(normal, direction));
+				collisionDistance = std::min(collisionDistance, (report.points[0] - position).getNorm());
+				//vec4f normal = vec4f::cross(p2 - p1, p3 - p1);
+				//normal.normalize();
+				//collisionDistance = std::min(collisionDistance, vec4f::dot(normal, p1 - position) / vec4f::dot(normal, direction));
+				report.clear();
 			}
 		}
 		if (collisionDistance == std::numeric_limits<float>::max()) return false;

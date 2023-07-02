@@ -14,19 +14,10 @@ OcclusionResult
 	fragment :
 	{
 		#version 430
+		#include "UniformBuffers.cginc"
 		
 		// textures
 		uniform sampler2D tex;   //texture unit 0
-		
-		// uniforms
-		layout(std140, binding = 3) uniform DebugShaderUniform
-		{
-			vec4 vertexNormalColor;
-			vec4 faceNormalColor;
-			float wireframeEdgeFactor;
-			float occlusionResultDrawAlpha;
-			float occlusionResultCuttoff;
-		};
 		
 		// input
 		in vec2 fragmentUv;
@@ -37,13 +28,8 @@ OcclusionResult
 		void main()
 		{
 			// compute depth in m
-			vec4 texColor = texture(tex, fragmentUv);
-			float depth = texColor.a;
-			depth = 256 * depth + texColor.b;
-			depth = 256 * depth + texColor.g;
-			depth = 256 * depth + texColor.r;
-			depth *= 256;
 			
+			float depth = -texture(tex, vec2(fragmentUv.x, fragmentUv.y)).r;
 			float normalizedDepth = min(depth / occlusionResultCuttoff, 1.0);
 			
 			vec4 color = vec4(normalizedDepth);

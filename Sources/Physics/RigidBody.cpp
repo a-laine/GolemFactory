@@ -180,6 +180,36 @@ void RigidBody::onDrawImGui()
 	unicName << "RigidBody component##" << (uintptr_t)this;
 	if (ImGui::TreeNodeEx(unicName.str().c_str(), ImGuiTreeNodeFlags_DefaultOpen))
 	{
+		ImGui::TextColored(componentColor, "Attributes");
+		ImGui::Indent();
+
+		switch (type)
+		{
+			case RigidBody::DYNAMIC: ImGui::Text("Type : DYNAMIC"); break;
+			case RigidBody::STATIC: ImGui::Text("Type : STATIC"); break;
+			case RigidBody::KINEMATICS: ImGui::Text("Type : KINEMATICS"); break;
+			default: ImGui::Text("Type : ??"); break;
+		}
+		switch (solver)
+		{
+			case SolverType::DISCRETE: ImGui::Text("Type : DISCRETE"); break;
+			case SolverType::CONTINUOUS: ImGui::Text("Type : CONTINUOUS"); break;
+			case SolverType::SUPERSAMPLING: ImGui::Text("Type : SUPERSAMPLING"); break;
+			default: ImGui::Text("Type : ??"); break;
+		}
+
+		float m = mass;
+		if (ImGui::DragFloat("Mass", &mass, 0.1f, 0.01f, 3000.f, "%.3f", ImGuiSliderFlags_AlwaysClamp | ImGuiSliderFlags_Logarithmic) && !ImGui::IsItemActive())
+		{
+			inertia *= mass / m;
+			inverseInertia = mat4f::inverse(inertia);
+		}
+
+		ImGui::SliderFloat("Bouncyness", &bouncyness, 0.f, 1.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+		ImGui::SliderFloat("Friction", &friction, 0.f, 1.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+		ImGui::SliderFloat("Damping", &damping, 0.f, 1.f, "%.3f", ImGuiSliderFlags_AlwaysClamp | ImGuiSliderFlags_Logarithmic);
+		ImGui::Unindent();
+
 		ImGui::Spacing();
 		ImGui::TextColored(componentColor, "Gizmos");
 		ImGui::Indent();

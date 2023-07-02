@@ -8,6 +8,10 @@
 #include <Utiles/ConsoleColor.h>
 
 
+DrawableComponent::DrawableComponent() : m_mesh(nullptr), m_shader(nullptr)
+{
+
+}
 DrawableComponent::DrawableComponent(const std::string& meshName, const std::string& shaderName) : m_castShadow(true)
 {
 	m_mesh = ResourceManager::getInstance()->getResource<Mesh>(meshName);
@@ -28,6 +32,10 @@ DrawableComponent::~DrawableComponent()
 
 bool DrawableComponent::load(Variant& jsonObject, const std::string& objectName)
 {
+	return load(jsonObject, objectName, nullptr);
+}
+bool DrawableComponent::load(Variant& jsonObject, const std::string& objectName, const Skeleton* skeleton)
+{
 	if (jsonObject.getType() == Variant::MAP)
 	{
 		std::string meshName, shaderName;
@@ -46,6 +54,7 @@ bool DrawableComponent::load(Variant& jsonObject, const std::string& objectName)
 		if (!meshName.empty() && !shaderName.empty())
 		{
 			m_mesh = ResourceManager::getInstance()->getResource<Mesh>(meshName);
+			if (skeleton) m_mesh->retargetSkin(skeleton);
 			m_shader = ResourceManager::getInstance()->getResource<Shader>(shaderName);
 			return true;
 		}
@@ -164,6 +173,7 @@ void DrawableComponent::onDrawImGui()
 		ImGui::Text("faces count : %d", m_mesh->getNumberFaces());
 		vec4f center = 0.5f * (m_mesh->getBoundingBox().max + m_mesh->getBoundingBox().min);
 		vec4f size = 0.5f * (m_mesh->getBoundingBox().max - m_mesh->getBoundingBox().min);
+		ImGui::Text("skinned : %s", m_mesh->hasSkeleton() ? "true" : "false");
 		ImGui::Text("local aabb center : %.2f, %.2f, %.2f", center.x, center.y, center.z);
 		ImGui::Text("local aabb size : %.2f, %.2f, %.2f", size.x, size.y, size.z);
 		ImGui::Unindent();
@@ -180,7 +190,10 @@ void DrawableComponent::onDrawImGui()
 			ImGui::Indent();
 			for (int i = 0; i < textures.size(); i++)
 			{
-				ImGui::Text("Location %d : %s", i, textures[i].texture->name.c_str());
+				if (textures[i].texture)
+					ImGui::Text("Location %d : %s", i, textures[i].texture->name.c_str());
+				else if (textures[i].isGlobalAttribute)
+					ImGui::Text("Global : %s", textures[i].defaultResource.c_str());
 			}
 			ImGui::Unindent();
 		}

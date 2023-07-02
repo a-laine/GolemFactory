@@ -2,12 +2,12 @@
 
 #include <vector>
 #include <GL/glew.h>
-//#include <glm/glm.hpp>
 
 #include "ResourceVirtual.h"
 #include "Physics/BoundingVolume.h"
 #include "Math/TMath.h"
 
+class Skeleton;
 
 class Mesh : public ResourceVirtual
 {
@@ -42,9 +42,8 @@ class Mesh : public ResourceVirtual
 		virtual void initializeVBO();
 		virtual void initializeVAO();
 
-		/*virtual void draw();
-		virtual void drawGroup(unsigned short groupCount);
-		virtual void drawBB();*/
+		void setBoneNames(std::vector<std::string>& names);
+		void retargetSkin(const Skeleton* skeleton);
         //
 
         //  Set/get functions
@@ -109,5 +108,13 @@ class Mesh : public ResourceVirtual
         GLuint wBBoxBuffer, bBBoxBuffer;
         std::vector<vec4i> bBBox;
         std::vector<vec4f> wBBox;
+		std::vector<std::string> boneNames;
         //
+
+#ifdef USE_IMGUI
+		float overviewAngle0 = 0.f;
+		float overviewAngle1 = 0.f;
+		float overviewAngleSpeed = 0.03f;
+		ImVec2 clickPos;
+#endif
 };

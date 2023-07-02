@@ -10,7 +10,7 @@
 #include "Math/TMath.h"
 #include <assimp/scene.h>
 
-#include "Resources/Joint.h"
+#include "Resources/Skeleton.h"
 #include "Resources/IResourceLoader.h"
 
 
@@ -57,7 +57,7 @@ class AssimpLoader : public IResourceLoader
         //
 
         //	Debug
-        void printJoint(unsigned int joint, int depth);
+        void printJoint(Skeleton::Bone* bone, int depth);
         //
 
 
@@ -77,7 +77,7 @@ class AssimpLoader : public IResourceLoader
 
         mat4f globalMatrix;
         std::vector<unsigned int> roots;
-        std::vector<Joint> joints;
+        std::vector<Skeleton::Bone> joints;
 
-        std::vector<KeyFrame> animations;
+        //std::vector<KeyFrame> animations;
 };

@@ -127,20 +127,20 @@ void Font::onDrawImGui()
 #ifdef USE_IMGUI
     ResourceVirtual::onDrawImGui();
 
-    ImGui::TextColored(ImVec4(1, 1, 0.5, 1), "Type infos");
+    ImGui::TextColored(ResourceVirtual::titleColorDraw, "Type infos");
     ImGui::Text("Fallback resource name : %s", defaultName.c_str());
     ImGui::Text("Directory : %s", directory);
     ImGui::Text("File extension : %s", extension);
 
     ImGui::Spacing();
-    ImGui::TextColored(ImVec4(1, 1, 0.5, 1), "Font infos");
+    ImGui::TextColored(ResourceVirtual::titleColorDraw, "Font infos");
     ImGui::Text("Texture width : %d", (int)size.x);
     ImGui::Text("Texture height : %d", (int)size.y);
 
     // overview
     float ratio = (ImGui::GetContentRegionAvail().x - 5) / size.x;
     ImGui::Spacing();
-    ImGui::TextColored(ImVec4(1, 1, 0.5, 1), "Overview");
+    ImGui::TextColored(ResourceVirtual::titleColorDraw, "Overview");
     ImGui::Image((void*)texture, ImVec2(size.x * ratio, size.y * ratio), ImVec2(0, 0), ImVec2(1, 1), ImColor(255, 255, 255, 255), ImColor(255, 255, 255, 128));
 #endif
 }

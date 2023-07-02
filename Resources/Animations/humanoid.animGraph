@@ -1,0 +1,86 @@
+"humanoid" :
+{
+	"entryState" : "idle",
+	"states" : [
+		{
+			"name" : "idle"
+		},
+		{
+			"name" : "walk_front"
+		},
+		{
+			"name" : "walk_back"
+		},
+	],
+	"parameters" : [
+		{ "name" : "movement", "type" : "int", "value" : 0 }
+	],
+	"transitions" : [
+		{
+			"from" : "idle",
+			"to" : "walk_front",
+			"duration" : 1.0,
+			"conditions" : [
+				{ "paramName" : "movement", "comparison" : "greater", "value" : 0 }
+			]
+		},
+		{
+			"from" : "idle",
+			"to" : "walk_back",
+			"duration" : 1.0,
+			"conditions" : [
+				{ "paramName" : "movement", "comparison" : "less", "value" : 0 }
+			]
+		},
+		{
+			"from" : "walk_front",
+			"to" : "idle",
+			"duration" : 1.0,
+			"conditions" : [
+				{ "paramName" : "movement", "comparison" : "equals", "value" : 0 }
+			]
+		},
+		{
+			"from" : "walk_front",
+			"to" : "walk_back",
+			"duration" : 1.0,
+			"conditions" : [
+				{ "paramName" : "movement", "comparison" : "less", "value" : 0 }
+			]
+		},
+		{
+			"from" : "walk_back",
+			"to" : "idle",
+			"duration" : 1.0,
+			"conditions" : [
+				{ "paramName" : "movement", "comparison" : "equals", "value" : 0 }
+			]
+		},
+		{
+			"from" : "walk_back",
+			"to" : "walk_front",
+			"duration" : 1.0,
+			"conditions" : [
+				{ "paramName" : "movement", "comparison" : "greater", "value" : 0 }
+			]
+		}
+	],
+	"variants" : [
+		{
+			"name" : "male",
+			"statesData" : [
+				{ "clip" : "male_idle_breath", "speed" : 0.4 },
+				{ "clip" : "male_move_walk_front", "speed" : 0.4 },
+				{ "clip" : "male_move_walk_back", "speed" : 0.4 }
+			]
+		},
+		{
+			"name" : "female",
+			"statesData" : [
+				{ "clip" : "male_idle_breath", "speed" : 0.4 },
+				{ "clip" : "female_move_walk_front", "speed" : 0.4 },
+				{ "clip" : "male_move_walk_back", "speed" : 0.4 }
+			]
+		}
+	]
+}

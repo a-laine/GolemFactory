@@ -13722,6 +13722,26 @@
                 "meshName": "PolygonDungeon/SM_Env_Gem_Large_01",
                 "shaderName": "defaultTextured"
             }
+        },
+        {
+            "name": "CharacterTest",
+            "id": 624,
+            "position": [
+                0.0,
+                0.0,
+                0.0
+            ],
+            "rotation": [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+            ],
+            "scale": 1.0,
+            "drawableComponent": {
+                "meshName": "PolygonDungeon/Characters/Character_Skeleton_Soldier_02",
+                "shaderName": "defaultTextured"
+            }
         }
     ]
 }

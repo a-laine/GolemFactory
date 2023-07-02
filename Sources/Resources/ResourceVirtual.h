@@ -39,7 +39,8 @@ class ResourceVirtual
             SHADER,
             SKELETON,
             ANIMATION,
-            FONT
+            FONT,
+            ANIMATION_GRAPH
 		};
 		//
 
@@ -62,6 +63,10 @@ class ResourceVirtual
         virtual void onDrawImGui();
 
         static void printErrorLog(const std::string& resourceName, const int& errorLine, bool& printHeader);
+
+    #ifdef USE_IMGUI
+        ImVec4 titleColorDraw = ImVec4(1, 1, 0.5, 1);
+    #endif
 
     protected:
         enum State

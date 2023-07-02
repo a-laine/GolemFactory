@@ -8,6 +8,7 @@
 
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+#include <Utiles/ProfilerConfig.h>
 
 #include <iostream>
 #include <list>
@@ -33,7 +34,7 @@
 #include <Resources/Shader.h>
 #include <Resources/Mesh.h>
 #include <Resources/Skeleton.h>
-#include <Resources/Animation.h>
+#include <Resources/AnimationClip.h>
 #include <Resources/Loader/AnimationLoader.h>
 #include <Resources/Loader/FontLoader.h>
 #include <Resources/Loader/AssimpLoader.h>
@@ -42,6 +43,7 @@
 #include <Resources/Loader/SkeletonLoader.h>
 #include <Resources/Loader/ImageLoader.h>
 #include <Resources/Loader/TextureLoader.h>
+#include <Resources/Loader/AnimationGraphLoader.h>
 
 #include "Physics/Physics.h"
 #include "Physics/RigidBody.h"
@@ -110,18 +112,13 @@ int main()
 	Application application;
 	context = application.createWindow("Thibault test", 1600, 900);
 	context->makeCurrent();
-	context->setVSync(true);
+	context->setVSync(false);
 	application.initGLEW(1);
 	initManagers();
 
-	//	Collision test
-		//WidgetManager::getInstance()->setActiveHUD("debug");
-		//normalShader = ResourceManager::getInstance()->getResource<Shader>("normalViewer");
+	AnimationGraph* animgraph = ResourceManager::getInstance()->getResource<AnimationGraph>("humanoid");
 
 	//	Test scene
-		Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("wired"));
-		//initializePhysicsScene(0);
-
 		EventHandler::getInstance()->setCursorMode(true);
 
 		initializeSyntyScene();
@@ -131,11 +128,11 @@ int main()
 		freeflyCamera = world.getEntityFactory().createObject([](Entity* object)
 			{
 				object->setName("FreeFlyCam");
-				object->setWorldPosition(vec4f(10, 10, 5, 1));
+				object->setWorldPosition(vec4f(2.5, -1.5, 75, 1));
 
 				CameraComponent* ffCam = new CameraComponent(true);
 				object->addComponent(ffCam);
-				ffCam->setDirection(vec4f(1, 0, 0, 0));
+				ffCam->setDirection(vec4f(-1, 0, 0, 0));
 			
 				currentCamera = ffCam;
 			});
@@ -175,11 +172,17 @@ int main()
 
 
 	//	game loop
+	THREAD_MARKER("MainThread");
+	unsigned long frameCount = 0;
 	std::cout << "game loop initiated" << std::endl;
 	while (!application.shouldExit())
 	{
 		// begin loop
 		double startTime = glfwGetTime();
+
+		std::ostringstream unicFrameName;
+		unicFrameName << "Frame " << frameCount;
+		FRAME_MARKER(unicFrameName.str().c_str());
 
 #ifdef USE_IMGUI
 		ImGui_ImplOpenGL3_NewFrame();
@@ -226,22 +229,31 @@ int main()
 		completeTime = 1000.0*(glfwGetTime() - startTime);
 
 #ifdef USE_IMGUI
-		ImGui::Render();
-		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-		ImGuiIO& io = ImGui::GetIO();
-		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 		{
-			GLFWwindow* backup_current_context = glfwGetCurrentContext();
-			ImGui::UpdatePlatformWindows();
-			ImGui::RenderPlatformWindowsDefault();
-			glfwMakeContextCurrent(backup_current_context);
+			SCOPED_CPU_MARKER("ImGui rendering");
+
+			ImGui::Render();
+			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+			ImGuiIO& io = ImGui::GetIO();
+			if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+			{
+				GLFWwindow* backup_current_context = glfwGetCurrentContext();
+				ImGui::UpdatePlatformWindows();
+				ImGui::RenderPlatformWindowsDefault();
+				glfwMakeContextCurrent(backup_current_context);
+			}
 		}
 #endif
+		{
+			SCOPED_CPU_MARKER("Swap buffers and clear");
 
-		Renderer::getInstance()->swap();
-		context->swapBuffers();
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+			Renderer::getInstance()->swap();
+			context->swapBuffers();
+
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+		}
+
 
 		elapseTime = 1000.0*(glfwGetTime() - startTime);
 	}
@@ -676,15 +688,19 @@ void initManagers()
     Shader::setDefaultName("default");
     Mesh::setDefaultName("cube2.obj");
     Skeleton::setDefaultName("human");
-    Animation::setDefaultName("human");
+    AnimationClip::setDefaultName("male_idle_breath");
+	AnimationGraph::setDefaultName("humanoid");
+
     ResourceManager::getInstance()->addNewResourceLoader(".animation", new AnimationLoader());
     ResourceManager::getInstance()->addNewResourceLoader(".font", new FontLoader());
-    ResourceManager::getInstance()->addNewResourceLoader("assimp", new AssimpLoader(AssimpLoader::ResourceType::MESH));
+    ResourceManager::getInstance()->addNewResourceLoader("assimpMesh", new AssimpLoader(AssimpLoader::ResourceType::MESH));
+    ResourceManager::getInstance()->addNewResourceLoader("assimpSkel", new AssimpLoader(AssimpLoader::ResourceType::SKELETON));
     ResourceManager::getInstance()->addNewResourceLoader(".mesh", new MeshLoader());
     ResourceManager::getInstance()->addNewResourceLoader(".shader", new ShaderLoader());
     ResourceManager::getInstance()->addNewResourceLoader(".skeleton", new SkeletonLoader());
     ResourceManager::getInstance()->addNewResourceLoader("image", new ImageLoader());
     ResourceManager::getInstance()->addNewResourceLoader(".texture", new TextureLoader());
+    ResourceManager::getInstance()->addNewResourceLoader(".animGraph", new AnimationGraphLoader());
 
 	// Init world
 	const vec4f worldHalfSize = vec4f(GRID_SIZE * GRID_ELEMENT_SIZE, 128.f, GRID_SIZE * GRID_ELEMENT_SIZE, 0) * 0.5f;
@@ -757,21 +773,21 @@ void initManagers()
 	//	Renderer
 	Renderer::getInstance()->setContext(context);
 	Renderer::getInstance()->setWorld(&world);
-	Renderer::getInstance()->initializeGrid(GRID_SIZE, GRID_ELEMENT_SIZE, vec4f(24 / 255.f, 202 / 255.f, 230 / 255.f, 1.f));	// blue tron
+	Renderer::getInstance()->setShader(Renderer::DEFAULT, ResourceManager::getInstance()->getResource<Shader>("default"));
 	Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("greenGrass"));
-	Renderer::getInstance()->setShader(Renderer::INSTANCE_DRAWABLE_BB, ResourceManager::getInstance()->getResource<Shader>("wired"));
 	Renderer::getInstance()->setShader(Renderer::INSTANCE_ANIMATABLE_BB, ResourceManager::getInstance()->getResource<Shader>("skeletonBB"));
+	Renderer::getInstance()->initializeGrid(GRID_SIZE, GRID_ELEMENT_SIZE, vec4f(24 / 255.f, 202 / 255.f, 230 / 255.f, 1.f));	// blue tron
 
-	Renderer::getInstance()->lightClustering = ResourceManager::getInstance()->getResource<Shader>("lightClustering");
 	Renderer::getInstance()->initializeLightClusterBuffer(64, 36, 128);
 	Renderer::getInstance()->initializeOcclusionBuffers(256, 144);
-	Renderer::getInstance()->initializeShadowCascades(1024, 1024);// (8192, 8192);//8196 => 1Go VRAM !, but give a good quality 
+	Renderer::getInstance()->initializeShadows(1024, 1024, 1024, 1024);
+	Renderer::getInstance()->initializeOverviewRenderer(512, 512);
 	
 	// Debug
 	Debug::getInstance()->initialize("Shapes/box", "Shapes/sphere.obj", "Shapes/capsule", "default", "wired", "debug", "textureReinterpreter");
 
 	// Animator
-	Animator::getInstance();
+	//Animator::getInstance();
 
 	//	HUD
 	WidgetManager::getInstance()->setInitialViewportRatio(context->getViewportRatio());
@@ -779,18 +795,36 @@ void initManagers()
 }
 void picking()
 {
-	vec4f cameraPos = currentCamera->getPosition();
-	vec4f cameraForward = currentCamera->getForward(); // no rotations
+	SCOPED_CPU_MARKER("Picking");
 
-	RaySceneQuerry test(cameraPos, cameraForward, 10000);
-	RayEntityCollector collector(cameraPos, cameraForward, 10000);
+	vec4f cameraPos = currentCamera->getPosition();
+	vec4f direction = currentCamera->getForward(); // no rotations
+
+	if (EventHandler::getInstance()->getCursorMode())
+	{
+		vec2f cursor = EventHandler::getInstance()->getCursorPositionAbsolute();
+		vec2i vpsize = context->getViewportSize();
+		vec4f up = currentCamera->getUp();
+		vec4f right = currentCamera->getRight();
+		float tanfov = tan(0.5f * currentCamera->getVerticalFieldOfView());
+		float ratio = (float)vpsize.x / vpsize.y;
+		float nearPlane = 0.1f;
+
+		direction = nearPlane * currentCamera->getForward() + (nearPlane * tanfov * ratio * ( 2.f * cursor.x / vpsize.x - 1.f)) * right + (nearPlane * tanfov * (1.f - 2.f * cursor.y / vpsize.y)) * up;
+		direction.normalize();
+
+		//std::cout << c.x << ' ' << c.y << std::endl;
+	}
+
+	RaySceneQuerry test(cameraPos, direction, 10000);
+	RayEntityCollector collector(cameraPos, direction, 10000);
 	world.getSceneManager().getEntities(&test, &collector);
 
 	//std::sort(collector.getSortedResult().begin(), collector.getSortedResult().end(), [](std::pair<float, unsigned int> a, std::pair<float, unsigned int> b) { return a.first > b.first; });
 
 	if (!collector.getSortedResult().empty())
 	{
-		std::sort(collector.getSortedResult().begin(), collector.getSortedResult().end(), [](std::pair<float, unsigned int> a, std::pair<float, unsigned int> b) { return a.first > b.first; });
+		std::sort(collector.getSortedResult().begin(), collector.getSortedResult().end(), [](std::pair<float, unsigned int> a, std::pair<float, unsigned int> b) { return a.first < b.first; });
 		float distance = collector.getSortedResult().front().first;
 		Entity* entity = collector.getResult()[collector.getSortedResult().front().second];
 
@@ -800,12 +834,15 @@ void picking()
 		if(compAnim)       type = "animatable";
 		else if(compDraw)  type = "drawable";
 		else               type = "empty entity";
-		vec4f p = cameraPos + distance * cameraForward;
+		vec4f p = cameraPos + distance * direction;
+
+		Debug::color = Debug::red;
+		Debug::drawSphere(p, 0.03);
 		
 		WidgetManager::getInstance()->setString("interaction", "Distance : " + ToolBox::to_string_with_precision(distance, 5) +
 			" m\nPosition : (" + ToolBox::to_string_with_precision(p.x, 5) + " , " + ToolBox::to_string_with_precision(p.y, 5) + " , " + ToolBox::to_string_with_precision(p.z, 5) +
 			")\nInstance on ray : " + std::to_string(collector.getResult().size()) +
-			"\nFirst instance pointed id : " + std::to_string(entity->getId()) +
+			"\nFirst entity : " + entity->getName() +
 			"\n  type : " + type);
 
 		if (WidgetManager::getInstance()->getBoolean("BBpicking"))
@@ -824,6 +861,8 @@ void picking()
 }
 void events()
 {
+	SCOPED_CPU_MARKER("Events");
+
 	EventHandler::getInstance()->handleEvent();
 	std::vector<UserEventType> v;
 	EventHandler::getInstance()->getFrameEvent(v);
@@ -871,7 +910,7 @@ void events()
 		}
 
 		//	avatar related
-		else if (v[i] == SLOT1 && avatar) Animator::getInstance()->launchAnimation(avatar, "hello");
+		/*else if (v[i] == SLOT1 && avatar) Animator::getInstance()->launchAnimation(avatar, "hello");
 		else if (v[i] == SLOT2 && avatar) Animator::getInstance()->launchAnimation(avatar, "yes");
 		else if (v[i] == SLOT3 && avatar) Animator::getInstance()->launchAnimation(avatar, "no");
 		else if (v[i] == FORWARD || v[i] == BACKWARD || v[i] == LEFT || v[i] == RIGHT)
@@ -903,7 +942,7 @@ void events()
 				if (EventHandler::getInstance()->isActivated(FORWARD) && isTrackBall)
 					Animator::getInstance()->launchAnimation(avatar, "walk");
 			}
-		}
+		}*/
 
 		//	debug action
 		else if (v[i] == HELP) WidgetManager::getInstance()->setActiveHUD((WidgetManager::getInstance()->getActiveHUD() == "help" ? "" : "help"));
@@ -918,9 +957,11 @@ void events()
 }
 void updates(float elapseTime)
 {
+	SCOPED_CPU_MARKER("Updates");
+
 	//	animate avatar
-	if(avatar)
-		Animator::getInstance()->animate(avatar, elapseTime);
+	//if(avatar)
+	//	Animator::getInstance()->animate(avatar, elapseTime);
 
 	//	Compute HUD picking parameters
 	if (EventHandler::getInstance()->getCursorMode())
@@ -969,10 +1010,10 @@ void updates(float elapseTime)
 			direction.normalize();
 
 		float speed = 0.f;
-		if (Animator::getInstance()->isAnimationRunning(avatar, "run"))
+		/*if (Animator::getInstance()->isAnimationRunning(avatar, "run"))
 			speed = 0.1f;
 		else if (Animator::getInstance()->isAnimationRunning(avatar, "walk"))
-			speed = 0.025f;
+			speed = 0.025f;*/
 
 		avatar->setWorldPosition(avatar->getWorldPosition() + speed * direction);
 		if (direction.x != 0.f && direction.y != 0.f)
@@ -1049,6 +1090,19 @@ void updates(float elapseTime)
 		world.updateObject(frustrumCamera);
 	}
 
+	extern std::vector<AnimationComponent*> g_allAnimations;
+	for (AnimationComponent* comp : g_allAnimations)
+	{
+		if (comp && comp->isValid())
+			comp->update(0.033f);
+	}
+	extern std::vector<Animator*> g_allAnimator;
+	for (Animator* comp : g_allAnimator)
+	{
+		if (comp && comp->isValid())
+			comp->update(0.033f);
+	}
+
 	// Map streaming
 	world.getMapPtr()->update(freeflyCamera->getWorldPosition());
 }
@@ -1087,6 +1141,8 @@ void ImGuiMenuBar()
 void ImGuiSystemDraw()
 {
 #ifdef USE_IMGUI
+	SCOPED_CPU_MARKER("ImGui pass");
+
 	extern bool PhysicDebugWindowEnable; 
 	extern bool HierarchyWindowEnable;
 	extern bool SpatialPartitionningWindowEnable;

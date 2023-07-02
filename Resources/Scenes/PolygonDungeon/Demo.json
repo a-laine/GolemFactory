@@ -1975,9 +1975,10 @@
             "scale": 1.0,
             "lightComponent": {
 				"type" : 0,
-				"range" : 15,
+				"range" : 40,
 				"intensity" : 5.85,
 				"color" : [255,197,111],
+				"castShadow" : true,
             }
         },
         {
@@ -2742,7 +2743,7 @@
             "XXX_prefabName": "SM_Env_Gem_Spike_02",
             "drawableComponent": {
                 "meshName": "PolygonDungeon/SM_Env_Gem_Spike_02",
-                "shaderName": "defaultTextured02"
+                "shaderName": "defaultTextured"
             }
         },
         {
@@ -2910,7 +2911,7 @@
             "XXX_prefabName": "SM_Env_Gem_Spike_02",
             "drawableComponent": {
                 "meshName": "PolygonDungeon/SM_Env_Gem_Spike_02",
-                "shaderName": "defaultTextured02"
+                "shaderName": "defaultTextured"
             }
         },
         {
@@ -2952,7 +2953,7 @@
             "XXX_prefabName": "SM_Env_Gem_Spike_01",
             "drawableComponent": {
                 "meshName": "PolygonDungeon/SM_Env_Gem_Spike_01",
-                "shaderName": "defaultTextured03"
+                "shaderName": "defaultTextured"
             }
         },
         {
@@ -3183,7 +3184,7 @@
             "XXX_prefabName": "SM_Env_Gem_Spike_02",
             "drawableComponent": {
                 "meshName": "PolygonDungeon/SM_Env_Gem_Spike_02",
-                "shaderName": "defaultTextured02"
+                "shaderName": "defaultTextured"
             }
         },
         {
@@ -3326,7 +3327,7 @@
             "XXX_prefabName": "SM_Env_Gem_Spike_01",
             "drawableComponent": {
                 "meshName": "PolygonDungeon/SM_Env_Gem_Spike_01",
-                "shaderName": "defaultTextured02"
+                "shaderName": "defaultTextured"
             }
         },
         {
@@ -3557,7 +3558,7 @@
             "XXX_prefabName": "SM_Env_Gem_Spike_01",
             "drawableComponent": {
                 "meshName": "PolygonDungeon/SM_Env_Gem_Spike_01",
-                "shaderName": "defaultTextured03"
+                "shaderName": "defaultTextured"
             }
         },
         {
@@ -3704,7 +3705,7 @@
             "XXX_prefabName": "SM_Env_Gem_Large_01",
             "drawableComponent": {
                 "meshName": "PolygonDungeon/SM_Env_Gem_Large_01",
-                "shaderName": "defaultTextured02"
+                "shaderName": "defaultTextured"
             }
         },
         {
@@ -11922,7 +11923,7 @@
             "XXX_prefabName": "SM_Env_Gem_Spike_01",
             "drawableComponent": {
                 "meshName": "PolygonDungeon/SM_Env_Gem_Spike_01",
-                "shaderName": "defaultTextured02"
+                "shaderName": "defaultTextured"
             }
         },
         {
@@ -11943,7 +11944,7 @@
             "XXX_prefabName": "SM_Env_Gem_Spike_02",
             "drawableComponent": {
                 "meshName": "PolygonDungeon/SM_Env_Gem_Spike_02",
-                "shaderName": "defaultTextured02"
+                "shaderName": "defaultTextured"
             }
         },
         {
@@ -11964,7 +11965,7 @@
             "XXX_prefabName": "SM_Env_Gem_Large_02",
             "drawableComponent": {
                 "meshName": "PolygonDungeon/SM_Env_Gem_Large_02",
-                "shaderName": "defaultTextured03"
+                "shaderName": "defaultTextured"
             }
         },
         {
@@ -11985,7 +11986,7 @@
             "XXX_prefabName": "SM_Env_Gem_Large_01",
             "drawableComponent": {
                 "meshName": "PolygonDungeon/SM_Env_Gem_Large_01",
-                "shaderName": "defaultTextured02"
+                "shaderName": "defaultTextured"
             }
         },
         {
@@ -77654,6 +77655,61 @@
                 "meshName": "PolygonDungeon/Plane",
                 "shaderName": "fog"
             }
+        },
+        {
+            "name": "CharacterTest",
+            "id": 3543,
+            "position": [
+                5.0,
+                -3.2,
+                80.5
+            ],
+            "rotation": [
+                0.0,
+                1.0,
+                0.0,
+                0.0
+            ],
+            "scale": 1.0,
+            "drawableComponent": {
+                "meshName": "PolygonDungeon/Characters/Character_Hero_Knight_Female",
+                "shaderName": "skinnedTextured"
+            },
+			"skeletonComponent" : {
+				"skeletonName" : "PolygonDungeonCharacters"
+			},
+			"animationComponent" : {
+				"animationName" : "male_move_walk_front",
+				"looped" : true,
+				"speed" : 0.5,
+			}
+        },
+        {
+            "name": "CharacterTest2",
+            "id": 3544,
+            "position": [
+                0.0,
+                -3.2,
+                80.5
+            ],
+            "rotation": [
+                0.0,
+                1.0,
+                0.0,
+                0.0
+            ],
+            "scale": 1.0,
+            "drawableComponent": {
+                "meshName": "PolygonDungeon/Characters/Character_Hero_Knight_Male",
+                "shaderName": "skinnedTextured"
+            },
+			"skeletonComponent" : {
+				"skeletonName" : "PolygonDungeonCharacters"
+			},
+			"animator" : {
+				"graphName" : "humanoid",
+				"variant" : "male",
+			}
         }
     ]
 }

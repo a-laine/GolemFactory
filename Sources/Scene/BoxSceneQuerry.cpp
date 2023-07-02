@@ -8,6 +8,19 @@ BoxSceneQuerry::BoxSceneQuerry() : bbMin(0), bbMax(0)
 BoxSceneQuerry::BoxSceneQuerry(const vec4f& cornerMin, const vec4f& cornerMax) : bbMin(cornerMin), bbMax(cornerMax)
 {}
 
+void BoxSceneQuerry::Set(const vec4f& cornerMin, const vec4f& cornerMax)
+{
+	bbMin = cornerMin;
+	bbMax = cornerMax;
+}
+
+bool BoxSceneQuerry::TestAABB(vec4f min, vec4f max)
+{
+	if (vec4b::any(vec4f::greaterThan(bbMin, max)) || vec4b::any(vec4f::greaterThan(min, bbMax)))
+		return false;
+	return true;
+}
+
 VirtualSceneQuerry::CollisionType BoxSceneQuerry::operator() (const NodeVirtual* node)
 {
 	const float s = 1.01f * node->getAllowanceSize();

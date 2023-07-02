@@ -3,6 +3,7 @@
 #include "Physics/Shapes/Collider.h"
 #include "Renderer/DrawableComponent.h"
 #include "Renderer/Lighting/LightComponent.h"
+#include "Animation/SkeletonComponent.h"
 #include "World/World.h"
 
 #include <Utiles/Debug.h>
@@ -199,7 +200,7 @@ void Entity::recomputeBoundingBox()
 			else m_localBoundingBox.add(collider->m_shape->toAxisAlignedBox());
 			firstshape = false;
 		}
-		else if (element.type == DrawableComponent::getStaticClassID())
+		else if (element.type == DrawableComponent::getStaticClassID() && (getFlags()&(uint64_t)Flags::Fl_Skinned) == 0)
 		{
 			const DrawableComponent* drawable = static_cast<const DrawableComponent*>(element.comp);
 			if (firstshape)
@@ -213,6 +214,14 @@ void Entity::recomputeBoundingBox()
 			vec4f radius4 = vec4f(light->getRange());
 			m_localBoundingBox.min = vec4f::min(m_localBoundingBox.min, -radius4);
 			m_localBoundingBox.max = vec4f::max(m_localBoundingBox.max, radius4);
+			firstshape = false;
+		}
+		else if (element.type == SkeletonComponent::getStaticClassID())
+		{
+			const SkeletonComponent* skeleton = static_cast<const SkeletonComponent*>(element.comp);
+			if (firstshape)
+				m_localBoundingBox = skeleton->getBoundingBox();
+			else m_localBoundingBox.add(skeleton->getBoundingBox());
 			firstshape = false;
 		}
 		return false;

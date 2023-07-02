@@ -178,13 +178,13 @@ bool ShaderLoader::load(const std::string& resourceDirectory, const std::string&
     }
     else renderQueue |= faceCullingBit;
 
-    // load vertex source
-    loadSourceCode(shaderMap, "vertex", vertexSourceCode, fileName);
-    loadSourceCode(shaderMap, "fragment", fragmentSourceCode, fileName);
-    loadSourceCode(shaderMap, "geometry", geometrySourceCode, fileName);
-    loadSourceCode(shaderMap, "evaluation", evaluationSourceCode, fileName);
-    loadSourceCode(shaderMap, "control", controlSourceCode, fileName);
-    loadSourceCode(shaderMap, "compute", computeSourceCode, fileName);
+    // load sources
+    loadSourceCode(shaderMap, "vertex", vertexSourceCode, fileName, resourceDirectory);
+    loadSourceCode(shaderMap, "fragment", fragmentSourceCode, fileName, resourceDirectory);
+    loadSourceCode(shaderMap, "geometry", geometrySourceCode, fileName, resourceDirectory);
+    loadSourceCode(shaderMap, "evaluation", evaluationSourceCode, fileName, resourceDirectory);
+    loadSourceCode(shaderMap, "control", controlSourceCode, fileName, resourceDirectory);
+    loadSourceCode(shaderMap, "compute", computeSourceCode, fileName, resourceDirectory);
 
     // it's a compute shader, do special loading and return
     if (isComputeShader)
@@ -343,9 +343,6 @@ bool ShaderLoader::load(const std::string& resourceDirectory, const std::string&
                     {
                         std::string texFileName = resourceVariant->second.toString();
                         textures.push_back({ nameVariant->second.toString(), texFileName });
-                        /*textureResources.push_back(ResourceManager::getInstance()->getResource<Texture>(texFileName,
-                            (uint8_t)Texture::TextureConfiguration::TEXTURE_2D | (uint8_t)Texture::TextureConfiguration::USE_MIPMAP |
-                            (uint8_t)Texture::TextureConfiguration::WRAP_REPEAT));*/
                     }
                     else hasError = true;
                 }
@@ -512,24 +509,59 @@ std::vector<std::string> ShaderLoader::extractPragmas(std::string& source)
     }
     return result;
 }
-bool ShaderLoader::loadSourceCode(Variant& shaderMap, const std::string& key, std::string& destination, const std::string& filename)
+bool ShaderLoader::loadSourceCode(Variant& shaderMap, const std::string& key, std::string& destination, const std::string& filename, const std::string& resourceDirectory)
 {
+    // source string
     auto it = shaderMap.getMap().find(key);
     if (it != shaderMap.getMap().end())
     {
         destination = it->second.toString();
         if (!destination.empty())
             destination[0] = ' ';
-        //if (!includes.empty())
-        //    destination = includes + destination;
-        return true;
     }
     else if ((key == "vertex" || key == "fragment") && !isComputeShader)
     {
         std::string msg = "no " + key + " codeblock found";
         PrintError(filename.c_str(), msg.c_str());
+        return false;
     }
-    return false;
+    else if (key == "compute" && isComputeShader)
+    {
+        std::string msg = "no " + key + " codeblock found";
+        PrintError(filename.c_str(), msg.c_str());
+        return false;
+    }
+
+    // search for includes
+    std::string includeToken = "#include";
+    std::vector<std::string> result;
+
+    int index = 0;
+    while ((index = destination.find(includeToken, index)) != std::string::npos)
+    {
+        int start = index + includeToken.size() + 1;
+        int index2 = start;
+        while (destination[index2] != '\n')
+            index2++;
+
+        std::string includeName = destination.substr(start + 1, index2 - start - 2);
+        destination.erase(index, index2 - index);
+
+        std::string includeFullPath = resourceDirectory + Shader::directory + includeName;
+        std::string file = getFile(includeFullPath);
+        destination.insert(index, file);
+        index += file.size();
+        //result.push_back(destination.substr(start, index2 - start));
+    }
+
+    return true;
+}
+std::string ShaderLoader::getFile(std::string& filename)
+{
+    std::ifstream f(filename);
+    std::stringstream buffer;
+    buffer << f.rdbuf();
+    return buffer.str();
 }
 bool ShaderLoader::shouldAttachStage(std::vector<std::string>& stagePragmas, std::vector<std::string>& defines)
 {
@@ -567,8 +599,8 @@ std::vector<ShaderLoader::InternalVariantDefine> ShaderLoader::createVariantDefi
         if (source.empty())
             return;
         instancing |= source.find("INSTANCING") != std::string::npos;
-        instancing |= source.find("SHADOW_PASS") != std::string::npos;
-        instancing |= source.find("WIRED_MODE") != std::string::npos;
+        shadow |= source.find("SHADOW_PASS") != std::string::npos;
+        wired |= source.find("WIRED_MODE") != std::string::npos;
     };
 
     testPragma(vertexPragmas);
@@ -584,12 +616,12 @@ std::vector<ShaderLoader::InternalVariantDefine> ShaderLoader::createVariantDefi
 
     std::vector<ShaderLoader::InternalVariantDefine> result;
     result.emplace_back();
-    result.back().shaderCode = Shader::computeVariantCode(false, false, false);
+    result.back().shaderCode = Shader::computeVariantCode(false, 0, false);
 
     if (instancing)
     {
         result.emplace_back();
-        result.back().shaderCode = Shader::computeVariantCode(true, false, false);
+        result.back().shaderCode = Shader::computeVariantCode(true, 0, false);
         result.back().defines.push_back("#define INSTANCING\n");
         result.back().allDefines = "INSTANCING";
     }
@@ -597,31 +629,44 @@ std::vector<ShaderLoader::InternalVariantDefine> ShaderLoader::createVariantDefi
     if (shadow)
     {
         result.emplace_back();
-        result.back().shaderCode = Shader::computeVariantCode(false, true, false);
+        result.back().shaderCode = Shader::computeVariantCode(false, 1, false);
         result.back().defines.push_back("#define SHADOW_PASS\n");
         result.back().allDefines = "SHADOW_PASS";
+
+        result.emplace_back();
+        result.back().shaderCode = Shader::computeVariantCode(false, 2, false);
+        result.back().defines.push_back("#define SHADOW_PASS\n");
+        result.back().defines.push_back("#define GEOMETRY_INVOCATION 6\n");
+        result.back().allDefines = "SHADOW_OMNI_PASS";
 
         if (instancing)
         {
             result.emplace_back();
-            result.back().shaderCode = Shader::computeVariantCode(true, true, false);
+            result.back().shaderCode = Shader::computeVariantCode(true, 1, false);
             result.back().defines.push_back("#define INSTANCING\n");
             result.back().defines.push_back("#define SHADOW_PASS\n");
             result.back().allDefines = "INSTANCING+SHADOW_PASS";
+
+            result.emplace_back();
+            result.back().shaderCode = Shader::computeVariantCode(false, 2, false);
+            result.back().defines.push_back("#define INSTANCING\n");
+            result.back().defines.push_back("#define SHADOW_PASS\n");
+            result.back().defines.push_back("#define GEOMETRY_INVOCATION 6\n");
+            result.back().allDefines = "SHADOW_OMNI_PASS";
         }
     }
 
     if (wired)
     {
         result.emplace_back();
-        result.back().shaderCode = Shader::computeVariantCode(false, false, true);
+        result.back().shaderCode = Shader::computeVariantCode(false, 0, true);
         result.back().defines.push_back("#define WIRED_MODE\n");
         result.back().allDefines = "WIRED_MODE";
 
         if (instancing)
         {
             result.emplace_back();
-            result.back().shaderCode = Shader::computeVariantCode(true, false, true);
+            result.back().shaderCode = Shader::computeVariantCode(true, 0, true);
             result.back().defines.push_back("#define INSTANCING\n");
             result.back().defines.push_back("#define WIRED_MODE\n");
             result.back().allDefines = "INSTANCING+WIRED_MODE";

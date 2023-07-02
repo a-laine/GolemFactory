@@ -23,7 +23,8 @@ class Texture : public ResourceVirtual
             TEXTURE_1D = 1,         //!< 1 dimension texture
             TEXTURE_2D = 2,         //!< 2 dimensions texture
             TEXTURE_3D = 3,         //!< 3 dimensions texture
-            TEXTURE_ARRAY = 4,      //!< 3 dimensions texture
+            TEXTURE_ARRAY = 4,
+            CUBEMAP_ARRAY = 5,  
             TYPE_MASK = 0x07,       //!< the type mask byte
 
             MIN_NEAREST = 1 << 3,     //!< if not the GL_LINEAR criterion is used for minify
@@ -64,6 +65,11 @@ class Texture : public ResourceVirtual
         //  Attributes
         vec3i size;                     //!< Texture size
         unsigned int m_internalFormat;
+        unsigned int m_type;
+
+#ifdef USE_IMGUI
+        bool isEnginePrivate = false;
+#endif
         //
 
     private:

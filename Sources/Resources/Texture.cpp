@@ -119,7 +119,7 @@ void Texture::initialize(const std::string& textureName, const vec3i& imageSize,
             case GL_INVALID_ENUM: std::cout << textureName << " : " << label << " : GL_INVALID_ENUM" << std::endl; break;
             case GL_INVALID_VALUE: std::cout << textureName << " : " << label << " : GL_INVALID_VALUE" << std::endl; break;
             case GL_INVALID_OPERATION: std::cout << textureName << " : " << label << " : GL_INVALID_OPERATION" << std::endl; break;
-            case GL_INVALID_FRAMEBUFFER_OPERATION: std::cout << label << " : GL_INVALID_FRAMEBUFFER_OPERATION" << std::endl; break;
+            case GL_INVALID_FRAMEBUFFER_OPERATION: std::cout << textureName << " : " << label << " : GL_INVALID_FRAMEBUFFER_OPERATION" << std::endl; break;
             case GL_OUT_OF_MEMORY: std::cout << textureName << " : " << label << " : GL_OUT_OF_MEMORY" << std::endl; break;
             case GL_STACK_UNDERFLOW: std::cout << textureName << " : " << label << " : GL_STACK_UNDERFLOW" << std::endl; break;
             case GL_STACK_OVERFLOW: std::cout << textureName << " : " << label << " : GL_STACK_OVERFLOW" << std::endl; break;
@@ -164,6 +164,13 @@ void Texture::initialize(const std::string& textureName, const vec3i& imageSize,
             type = GL_TEXTURE_2D_ARRAY;
             break;
 
+        case TextureConfiguration::CUBEMAP_ARRAY:
+            glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, texture); CheckError("glBindTexture");
+            glTexImage3D(GL_TEXTURE_CUBE_MAP_ARRAY, 0, internalFormat, (int)size.x, (int)size.y, 6 * (int)size.z,
+                0, pixelFormat, colorFormat, data);
+            type = GL_TEXTURE_CUBE_MAP_ARRAY;
+            break;
+
         default:
             if (logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
                 std::cerr << "ERROR : loading texture : " << textureName << " : unknown type" << std::endl;
@@ -172,6 +179,7 @@ void Texture::initialize(const std::string& textureName, const vec3i& imageSize,
             state = INVALID;
             return;
     }
+    m_type = type;
 
     if (configuration & (uint8_t)TextureConfiguration::USE_MIPMAP)
     {
@@ -271,30 +279,50 @@ void Texture::initialize(const std::string& textureName, const vec3i& imageSize,
 
 void Texture::update(const void* data, unsigned int pixelFormat, unsigned int colorFormat)
 {
+    auto& n = name;
+    const auto CheckError = [n](const char* label)
+    {
+        GLenum error = glGetError();
+        if (!label)
+            return false;
+        switch (error)
+        {
+        case GL_INVALID_ENUM: std::cout << n << " : " << label << " : GL_INVALID_ENUM" << std::endl; break;
+        case GL_INVALID_VALUE: std::cout << n << " : " << label << " : GL_INVALID_VALUE" << std::endl; break;
+        case GL_INVALID_OPERATION: std::cout << n << " : " << label << " : GL_INVALID_OPERATION" << std::endl; break;
+        case GL_INVALID_FRAMEBUFFER_OPERATION: std::cout << n << label << " : GL_INVALID_FRAMEBUFFER_OPERATION" << std::endl; break;
+        case GL_OUT_OF_MEMORY: std::cout << n << " : " << label << " : GL_OUT_OF_MEMORY" << std::endl; break;
+        case GL_STACK_UNDERFLOW: std::cout << n << " : " << label << " : GL_STACK_UNDERFLOW" << std::endl; break;
+        case GL_STACK_OVERFLOW: std::cout << n << " : " << label << " : GL_STACK_OVERFLOW" << std::endl; break;
+        default: break;
+        }
+        return error != GL_NO_ERROR;
+    };
+
     unsigned int type = GL_TEXTURE_2D;
     switch ((TextureConfiguration)(configuration & (uint8_t)TextureConfiguration::TYPE_MASK))
     {
         case TextureConfiguration::TEXTURE_1D:
             glBindTexture(GL_TEXTURE_1D, texture);
-            glTexSubImage1D(GL_TEXTURE_1D, 0, 0, size.x, pixelFormat, colorFormat, data);
+            glTexSubImage1D(GL_TEXTURE_1D, 0, 0, size.x, pixelFormat, colorFormat, data); CheckError("glTexSubImage1D");
             type = GL_TEXTURE_1D;
             break;
 
         case TextureConfiguration::TEXTURE_2D:
             glBindTexture(GL_TEXTURE_2D, texture);
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, size.x, size.y, pixelFormat, colorFormat, data);
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, size.x, size.y, pixelFormat, colorFormat, data); CheckError("glTexSubImage2D");
             type = GL_TEXTURE_2D;
             break;
 
         case TextureConfiguration::TEXTURE_3D:
             glBindTexture(GL_TEXTURE_3D, texture);
-            glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, size.x, size.y, size.z, pixelFormat, colorFormat, data);
+            glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, size.x, size.y, size.z, pixelFormat, colorFormat, data); CheckError("glTexSubImage3D");
             type = GL_TEXTURE_3D;
             break;
 
         case TextureConfiguration::TEXTURE_ARRAY:
             glBindTexture(GL_TEXTURE_2D_ARRAY, texture);
-            glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, size.x, size.y, size.z, pixelFormat, colorFormat, data);
+            glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, size.x, size.y, size.z, pixelFormat, colorFormat, data); CheckError("glTexSubImage3D");
             type = GL_TEXTURE_2D_ARRAY;
             break;
 
@@ -399,13 +427,13 @@ void Texture::onDrawImGui()
 #ifdef USE_IMGUI
     ResourceVirtual::onDrawImGui();
 
-    ImGui::TextColored(ImVec4(1, 1, 0.5, 1), "Type infos");
+    ImGui::TextColored(ResourceVirtual::titleColorDraw, "Type infos");
     ImGui::Text("Fallback resource name : %s", defaultName.c_str());
     ImGui::Text("Directory : %s", directory);
     ImGui::Text("File extension : %s", extension);
 
     ImGui::Spacing();
-    ImGui::TextColored(ImVec4(1, 1, 0.5, 1), "Texture infos");
+    ImGui::TextColored(ResourceVirtual::titleColorDraw, "Texture infos");
 
     // type
     TextureConfiguration type = (TextureConfiguration)(configuration & (uint8_t)TextureConfiguration::TYPE_MASK);
@@ -470,7 +498,7 @@ void Texture::onDrawImGui()
     // overview
     float ratio = (ImGui::GetContentRegionAvail().x - 5) / size.x;
     ImGui::Spacing();
-    ImGui::TextColored(ImVec4(1, 1, 0.5, 1), "Overview");
+    ImGui::TextColored(ResourceVirtual::titleColorDraw, "Overview");
 
     if (type == Texture::TextureConfiguration::TEXTURE_2D && IsInternalFormatOverviewable(m_internalFormat))
     {
@@ -488,12 +516,18 @@ void Texture::onDrawImGui()
         {
             Texture::sharedTextureOverview = new Texture("sharedTextureOverview", Texture::TextureConfiguration::TEXTURE_2D);
             Texture::sharedTextureOverview->initialize(vec3i(size.x, size.y, 0), nullptr, (uint8_t)Texture::TextureConfiguration::TEXTURE_2D);
+            ResourceManager::getInstance()->addResource(Texture::sharedTextureOverview);
+            Texture::sharedTextureOverview->isEnginePrivate = true;
         }
 
         float layer = 0;
         if (size.z > 0)
         {
-            ImGui::SliderInt("Layer", &layerOverview, 0, size.z - 1);
+            int layerCount = size.z;
+            //if (m_type == GL_TEXTURE_CUBE_MAP_ARRAY)
+            //    layerCount = 6 * size.z;
+
+            ImGui::SliderInt("Layer", &layerOverview, 0, layerCount - 1);
             layer = layerOverview;
         }
 

@@ -62,11 +62,13 @@ class ShaderLoader : public IResourceLoader
         void clear();
 
         std::vector<std::string> extractPragmas(std::string& source);
-        bool loadSourceCode(Variant& shaderMap, const std::string& key, std::string& destination, const std::string& filename);
+        bool loadSourceCode(Variant& shaderMap, const std::string& key, std::string& destination, const std::string& filename, const std::string& resourceDirectory);
         bool compileSource(Shader::ShaderType shaderType, std::string source, std::vector<std::string> defines, GLuint& shader, const std::string& errorHeader);
         bool shouldAttachStage(std::vector<std::string>& stagePragmas, std::vector<std::string>& defines);
         //void getVariants(bool& instance, bool& shadow, bool& wired);
         std::vector<InternalVariantDefine> createVariantDefines();
+
+        std::string getFile(std::string& filename);
         //
 
         // Private attributes

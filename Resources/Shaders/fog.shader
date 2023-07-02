@@ -13,16 +13,11 @@ Fog
 	includes :
 	{
 		#version 420
-		
-		layout(std140, binding = 0) uniform GlobalMatrices
-		{
-			mat4 view;
-			mat4 projection;
-			vec4 cameraPosition;
-		};
 	};
 	vertex :
 	{
+		#include "UniformBuffers.cginc"
+		
 		// input
 		layout(location = 0) in vec4 position;
 		layout(location = 1) in vec4 normal;

@@ -1,203 +1,411 @@
 #include "AnimationComponent.h"
 
 #include <Resources/ResourceManager.h>
+#include <EntityComponent/Entity.hpp>
 #include <Resources/Skeleton.h>
-#include <Resources/Animation.h>
+#include <Animation/SkeletonComponent.h>
+#include <Resources/AnimationClip.h>
 #include <Resources/Mesh.h>
+#include <Utiles/ProfilerConfig.h>
+#include <Scene/SceneManager.h>
+#include <World/World.h>
 
 
 
-AnimationComponent::AnimationComponent(const std::string& animationName)
+std::vector<AnimationComponent*> g_allAnimations;
+
+
+AnimationComponent::AnimationComponent()
 {
-	m_animation = ResourceManager::getInstance()->getResource<Animation>(animationName);
+	m_speed = 1.f;
+	m_currentTime = 0.f;
+	m_running = false;
+	m_looped = true;
+	m_animation = nullptr;
+	m_skeleton = nullptr;
+	m_skeletonComponent = nullptr;
 }
 
 AnimationComponent::~AnimationComponent()
 {
 	ResourceManager::getInstance()->release(m_animation);
+	ResourceManager::getInstance()->release(m_skeleton);
+}
+
+bool AnimationComponent::load(Variant& jsonObject, const std::string& objectName)
+{
+	const auto TryLoadAsFloat = [](Variant& variant, const char* label, float& destination)
+	{
+		if (variant.getMap().find(label) != variant.getMap().end())
+		{
+			auto& v = variant[label];
+			if (v.getType() == Variant::FLOAT)
+				destination = v.toFloat();
+			else if (v.getType() == Variant::DOUBLE)
+				destination = v.toDouble();
+			else if (v.getType() == Variant::INT)
+				destination = v.toInt();
+			else
+				return false;
+			return true;
+		}
+		return false;
+	};
+
+	if (jsonObject.getType() == Variant::MAP)
+	{
+		std::string animationName;
+		auto it1 = jsonObject.getMap().find("animationName");
+		if (it1 != jsonObject.getMap().end() && it1->second.getType() == Variant::STRING)
+			animationName = it1->second.toString();
+
+		if (!animationName.empty())
+		{
+			setAnimation(animationName);
+			
+			it1 = jsonObject.getMap().find("looped");
+			if (it1 != jsonObject.getMap().end() && it1->second.getType() == Variant::BOOL)
+				m_looped = it1->second.toBool();
+
+			TryLoadAsFloat(jsonObject, "speed", m_speed);
+
+
+			m_currentTime = 0.f;
+			it1 = jsonObject.getMap().find("randomStart");
+			if (it1 != jsonObject.getMap().end() && it1->second.getType() == Variant::BOOL && it1->second.toBool() && m_animation)
+			{
+				srand((uintptr_t)this);
+				int r = rand() % 10000;
+				m_currentTime = 0.0001f * r * m_animation->m_duration;
+			}
+
+			resumeAnimation();
+			return true;
+		}
+	}
+	return false;
+}
+
+void AnimationComponent::save(Variant& jsonObject)
+{
+
 }
 
 void AnimationComponent::setAnimation(std::string animationName)
 {
-	currentAnimations.clear();
+	m_states.clear();
+	m_skeletonFinalPose.clear();
+
 	ResourceManager::getInstance()->release(m_animation);
-	m_animation = ResourceManager::getInstance()->getResource<Animation>(animationName);
+	m_animation = ResourceManager::getInstance()->getResource<AnimationClip>(animationName);
+
+	for (int i = 0; i < m_animation->m_boneCurves.size(); i++)
+	{
+		BoneCurvesState state;
+		state.m_boneName = m_animation->m_boneCurves[i].m_boneName;
+		state.m_posKey = state.m_rotKey = state.m_scaleKey = 0;
+		//state.m_posSubTime = state.m_rotSubTime = state.m_scaleSubTime = 0.f;
+
+		state.m_position = m_animation->m_boneCurves[i].m_positionCurve[0].m_value;
+		const vec4f v = m_animation->m_boneCurves[i].m_rotationCurve[0].m_value;
+		state.m_rotation = quatf(v.w, v.x, v.y, v.z);
+		state.m_scale = m_animation->m_boneCurves[i].m_scaleCurve[0].m_value;
+		state.m_skeletonBoneIndex = m_skeleton ? (m_skeleton->getBoneId(state.m_boneName)) : -1;
+
+		m_states.push_back(state);
+	}
+	TryInitSkeletonPose();
 }
 
-void AnimationComponent::setAnimation(Animation* animation)
+void AnimationComponent::setAnimation(AnimationClip* animation)
 {
-	currentAnimations.clear();
-	ResourceManager::getInstance()->release(m_animation);
-	if(animation)
-		m_animation = ResourceManager::getInstance()->getResource<Animation>(animation);
+	if (animation)
+		setAnimation(animation->name);
 	else
+	{
+		stopAnimation();
+		ResourceManager::getInstance()->release(m_animation);
 		m_animation = nullptr;
+	}
 }
 
-Animation* AnimationComponent::getAnimation() const
+AnimationClip* AnimationComponent::getCurrentAnimation() const
 {
 	return m_animation;
 }
 
-bool AnimationComponent::isValid() const
-{
-    return m_animation && m_animation->isValid();
-}
 
-void AnimationComponent::launchAnimation(const std::string& labelName, unsigned int nbJoints, const bool& flaged)
+void AnimationComponent::onAddToEntity(Entity* entity)
 {
-	GF_ASSERT(isValid());
-
-	//	create and add a new track to current animation
-	std::map<std::string, KeyLabel>::iterator it = m_animation->labels.find(labelName);
-	if(it != m_animation->labels.end())
+	Component::onAddToEntity(entity);
+	if (entity)
 	{
-		AnimationTrack at(nbJoints, labelName);
-		at.start = it->second.start;
-		at.stop = it->second.stop;
-		at.exit = it->second.exit_key;
-		at.loop = it->second.loop;
-		at.flag = flaged;
-		at.previous = it->second.entry_key;
-		at.next = at.previous + 1;
-		currentAnimations.insert(currentAnimations.end(), at);
+		m_skeletonComponent = entity->getComponent<SkeletonComponent>();
+		if (m_skeletonComponent)
+			m_skeleton = m_skeletonComponent->getSkeleton();
+		g_allAnimations.push_back(this);
+		TryInitSkeletonPose();
 	}
 }
 
-void AnimationComponent::stopAnimation(const std::string& labelName)
+bool AnimationComponent::isValid() const
 {
-	for(std::list<AnimationTrack>::iterator it = currentAnimations.begin(); it != currentAnimations.end(); ++it)
-		if(it->animationName == labelName)
-			it->loop = false;
+	return m_animation && m_animation->isValid();
+}
+
+void AnimationComponent::startAnimation(float speed, bool loop) 
+{
+	m_speed = speed;
+	m_looped = loop;
+	m_currentTime = 0.f;
+	resumeAnimation();
+}
+
+void AnimationComponent::resumeAnimation()
+{
+	if (m_animation && !m_states.empty())
+		m_running = true;
+}
+
+void AnimationComponent::stopAnimation() 
+{
+	m_running = false;
 }
 
 bool AnimationComponent::isAnimationRunning()
 {
-	return !currentAnimations.empty();
+	return m_running;
+}
+bool AnimationComponent::hasSkeletonAnimation() const
+{
+	return m_skeleton && !m_skeletonFinalPose.empty();
+}
+const std::vector<mat4f>& AnimationComponent::getSkeletonPose() const
+{
+	return m_skeletonFinalPose;
 }
 
-bool AnimationComponent::isAnimationRunning(const std::string& animationName)
-{
-	for(std::list<AnimationTrack>::iterator it = currentAnimations.begin(); it != currentAnimations.end(); ++it)
-		if(it->animationName == animationName && it->uselessTime <= 0.f)
-			return true;
-	return false;
-}
 
-void AnimationComponent::updateAnimations(float step)
+
+
+
+
+
+
+void AnimationComponent::update(float elapsedTime)
 {
-    GF_ASSERT(isValid());
-	for(std::list<AnimationTrack>::iterator it = currentAnimations.begin(); it != currentAnimations.end();)
+	SCOPED_CPU_MARKER("AnimationComponent");
+	if (!m_running)
+		return;
+
+	float dt = m_speed * elapsedTime;
+	m_currentTime += dt;
+	if (m_currentTime >= m_animation->m_duration)
 	{
-		it->jointCounter = 0;
-		if(it->animate(step, this))
+		if (!m_looped)
 		{
-			if(it->flag) std::cout << "end animation " << it->animationName << std::endl;
-			it = currentAnimations.erase(it);
+			m_currentTime = m_animation->m_duration;
+			return;
 		}
-		else ++it;
-	}
-}
 
-void AnimationComponent::blendAnimations(std::vector<JointPose>& result)
-{
-	for(unsigned int i = 0; i < result.size(); i++)
-	{
-		//	check for highest priority animation track
-		float pl = -1.f; float ph = -1.f;
-		std::list<AnimationTrack>::iterator pl_it = currentAnimations.begin();
-		std::list<AnimationTrack>::iterator ph_it = currentAnimations.begin();
-		for(std::list<AnimationTrack>::iterator it = currentAnimations.begin(); it != currentAnimations.end(); ++it)
+		while (m_currentTime >= m_animation->m_duration)
+			m_currentTime -= m_animation->m_duration;
+
+		for (int i = 0; i < m_states.size(); i++)
 		{
-			if(it->pose[i].priority > ph)
+			BoneCurvesState& state = m_states[i];
+			const AnimationClip::BoneCurves& curve = m_animation->m_boneCurves[i];
+
+			for (int j = 1; j < curve.m_positionCurve.size(); j++)
 			{
-				pl = ph;
-				ph = it->pose[i].priority;
-				pl_it = ph_it;
-				ph_it = it;
+				if (curve.m_positionCurve[j].m_time > m_currentTime)
+				{
+					state.m_posKey = j - 1;
+					break;
+				}
+			}
+			for (int j = 1; j < curve.m_scaleCurve.size(); j++)
+			{
+				if (curve.m_scaleCurve[j].m_time > m_currentTime)
+				{
+					state.m_scaleKey = j - 1;
+					break;
+				}
+			}
+			for (int j = 1; j < curve.m_rotationCurve.size(); j++)
+			{
+				if (curve.m_rotationCurve[j].m_time > m_currentTime)
+				{
+					state.m_rotKey = j - 1;
+					break;
+				}
+			}
+		}
+	}
+
+	for (int i = 0; i < m_states.size(); i++)
+	{
+		BoneCurvesState& state = m_states[i];
+		const AnimationClip::BoneCurves& curve = m_animation->m_boneCurves[i];
+		
+		// change curve keyframes if needed
+		if (m_currentTime > curve.m_positionCurve[state.m_posKey + 1].m_time)
+		{
+			for (int j = state.m_posKey + 2; j < curve.m_positionCurve.size(); j++)
+			{
+				if (curve.m_positionCurve[j].m_time > m_currentTime)
+				{
+					state.m_posKey = j - 1;
+					break;
+				}
+			}
+		}
+		if (m_currentTime > curve.m_rotationCurve[state.m_rotKey + 1].m_time)
+		{
+			for (int j = state.m_rotKey + 2; j < curve.m_rotationCurve.size(); j++)
+			{
+				if (curve.m_rotationCurve[j].m_time > m_currentTime)
+				{
+					state.m_rotKey = j - 1;
+					break;
+				}
+			}
+		}
+		if (m_currentTime > curve.m_scaleCurve[state.m_scaleKey + 1].m_time)
+		{
+			for (int j = state.m_scaleKey + 2; j < curve.m_scaleCurve.size(); j++)
+			{
+				if (curve.m_scaleCurve[j].m_time > m_currentTime)
+				{
+					state.m_scaleKey = j - 1;
+					break;
+				}
 			}
 		}
 
-		//	interpolate between the two highest priority animation track or just get the highest one
-		if(ph - (int) ph > 0.f && pl > 0.f && ph - pl < 1.f)
-		{
-			result[i].position = vec4f::lerp(pl_it->pose[i].position, ph_it->pose[i].position, ph - pl);
-			result[i].rotation = quatf::slerp(pl_it->pose[i].rotation, ph_it->pose[i].rotation, ph - pl);
-			result[i].scale = vec4f::lerp(pl_it->pose[i].scale, ph_it->pose[i].scale, ph - pl);
-			pl_it->jointCounter++;
-			ph_it->jointCounter++;
-			pl_it->uselessTime = 0.f;
-			ph_it->uselessTime = 0.f;
-		}
-		else if(ph_it != currentAnimations.end())
-		{
-			result[i].position = ph_it->pose[i].position;
-			result[i].scale = ph_it->pose[i].scale;
-			result[i].rotation = ph_it->pose[i].rotation;
-			ph_it->jointCounter++;
-			ph_it->uselessTime = 0.f;
-		}
-	}
-}
+		// evaluate segments
+		float t = (m_currentTime - curve.m_positionCurve[state.m_posKey].m_time) / (curve.m_positionCurve[state.m_posKey + 1].m_time - curve.m_positionCurve[state.m_posKey].m_time);
+		state.m_position = vec4f::lerp(curve.m_positionCurve[state.m_posKey].m_value, curve.m_positionCurve[state.m_posKey + 1].m_value, t);
 
-void AnimationComponent::cleanAnimationTracks(float step)
-{
-	for(std::list<AnimationTrack>::iterator it = currentAnimations.begin(); it != currentAnimations.end();)
+		t = (m_currentTime - curve.m_rotationCurve[state.m_rotKey].m_time) / (curve.m_rotationCurve[state.m_rotKey + 1].m_time - curve.m_rotationCurve[state.m_rotKey].m_time);
+		vec4f v0 = curve.m_rotationCurve[state.m_rotKey].m_value;
+		vec4f v1 = curve.m_rotationCurve[state.m_rotKey + 1].m_value;
+		state.m_rotation = quatf::slerp(quatf(v0.w, v0.x, v0.y, v0.z), quatf(v1.w, v1.x, v1.y, v1.z), t);
+
+		t = (m_currentTime - curve.m_scaleCurve[state.m_scaleKey].m_time) / (curve.m_scaleCurve[state.m_scaleKey + 1].m_time - curve.m_scaleCurve[state.m_scaleKey].m_time);
+		state.m_scale = lerp(curve.m_scaleCurve[state.m_scaleKey].m_value, curve.m_scaleCurve[state.m_scaleKey + 1].m_value, t);
+	}
+
+	computePoseMatrices();
+	m_skeletonComponent->setPose(m_skeletonFinalPose);
+	m_skeletonComponent->recomputeBoundingBox();
+	if (getParentEntity())
 	{
-		if(it->jointCounter == 0 && it->uselessTime >= 1.f) it = currentAnimations.erase(it);
-		else if(it->jointCounter == 0)
-		{
-			it->uselessTime += step/1000.f;
-			++it;
-		}
-		else ++it;
+		getParentEntity()->recomputeBoundingBox();
+		getParentEntity()->getParentWorld()->getSceneManager().updateObject(getParentEntity());
 	}
 }
 
-
-
-AnimationComponent::AnimationTrack::AnimationTrack(const unsigned int& poseSize, const std::string& animation)
-	: animationName(animation)
-	, start(0), stop(0), exit(0), previous(0), next(0)
-	, time(0.f), uselessTime(0.f)
-	, loop(false)
-	, flag(false)
-	, jointCounter(0)
+void AnimationComponent::TryInitSkeletonPose()
 {
-	pose.assign(poseSize, JointPose());
-}
+	m_bones2state.clear();
+	m_skeletonFinalPose.clear();
+	if (!m_skeleton || m_states.empty())
+		return;
 
-bool AnimationComponent::AnimationTrack::animate(const float& step, const AnimationComponent* const parent)
-{
-	//	Increment time and create aliases
-	time += step / 1000.f;
-	const std::vector<KeyFrame>& animationSet = parent->m_animation->timeLine;
-	float dt = animationSet[next].time - animationSet[previous].time;
 
-	//	end of keyframes interpolation
-	if(time > dt)
+	for (int i = 0; i < m_states.size(); i++)
 	{
-		std::pair<int, int> bound = parent->m_animation->getBoundingKeyFrameIndex(animationSet[previous].time + time);
-		time -= dt;
-		if(loop && (bound.first >= stop || bound.first < 0))
+		m_states[i].m_skeletonBoneIndex = m_skeleton ? (m_skeleton->getBoneId(m_states[i].m_boneName)) : -1;
+	}
+
+	const int boneCount = m_skeleton->getBones().size();
+	for (int i = 0; i < boneCount; i++)
+	{
+		int index = -1;
+		for (int j = 0; j < m_states.size(); j++)
 		{
-			bound = parent->m_animation->getBoundingKeyFrameIndex(animationSet[start].time + time);
+			if (m_states[j].m_skeletonBoneIndex == i)
+			{
+				index = j;
+				break;
+			}
 		}
-		else if(!loop && (bound.first >= exit || bound.first < 0))
-			return true;
-		previous = bound.first;
-		next = bound.second;
+		m_bones2state.push_back(index);
+		m_skeletonFinalPose.push_back(mat4f::identity);
 	}
-
-	//	interpolate joint parameters
-	float t = time / (animationSet[next].time - animationSet[previous].time);
-	for(unsigned int i = 0; i < pose.size(); i++)
-	{
-		pose[i].priority = lerp(animationSet[previous].poses[i].priority, animationSet[next].poses[i].priority, t);
-		pose[i].position = vec4f::lerp(animationSet[previous].poses[i].position, animationSet[next].poses[i].position, t);
-		pose[i].rotation = quatf::slerp(animationSet[previous].poses[i].rotation, animationSet[next].poses[i].rotation, t);
-		pose[i].scale = vec4f::lerp(animationSet[previous].poses[i].scale, animationSet[next].poses[i].scale, t);
-	}
-	return false;
+	computePoseMatrices();
 }
 
+void AnimationComponent::computePoseMatrices()
+{
+	const std::vector<Skeleton::Bone>& bones = m_skeleton->m_bones;
+	for (int i = 0; i < bones.size(); i++)
+	{
+		mat4f parent = bones[i].parent ? m_skeletonFinalPose[bones[i].parent->id] : mat4f::identity;
+		mat4f trs;
+		if (m_bones2state[i] >= 0)
+		{
+			const BoneCurvesState& state = m_states[m_bones2state[i]];
+			trs = mat4f::TRS(state.m_position, state.m_rotation, vec4f(state.m_scale));
+		}
+		else 
+			trs = bones[i].relativeBindTransform;
+		m_skeletonFinalPose[i] = parent * trs;
+	}
+}
+
+void AnimationComponent::onDrawImGui()
+{
+#ifdef USE_IMGUI
+	const ImVec4 componentColor = ImVec4(0.7, 0.7, 0.5, 1);
+	std::ostringstream unicName;
+	unicName << "Animation component##" << (uintptr_t)this;
+	if (ImGui::TreeNodeEx(unicName.str().c_str(), ImGuiTreeNodeFlags_DefaultOpen))
+	{
+		ImGui::TextColored(componentColor, "Animation");
+		ImGui::Indent();
+		ImGui::Text("Animation name : %s", m_animation->name.c_str());
+		ImGui::Text("Animation curves count : %d", m_states.size());
+		ImGui::DragFloat("Speed", &m_speed, 0.01f, 0.f, 100.f, "%.2f");
+		if (ImGui::SliderFloat("Time", &m_currentTime, 0.f, m_animation->m_duration, "%.3f", ImGuiSliderFlags_AlwaysClamp))
+		{
+			for (int i = 0; i < m_states.size(); i++)
+			{
+				BoneCurvesState& state = m_states[i];
+				const AnimationClip::BoneCurves& curve = m_animation->m_boneCurves[i];
+
+				for (int j = 1; j < curve.m_positionCurve.size(); j++)
+				{
+					if (curve.m_positionCurve[j].m_time > m_currentTime)
+					{
+						state.m_posKey = j - 1;
+						break;
+					}
+				}
+				for (int j = 1; j < curve.m_scaleCurve.size(); j++)
+				{
+					if (curve.m_scaleCurve[j].m_time > m_currentTime)
+					{
+						state.m_scaleKey = j - 1;
+						break;
+					}
+				}
+				for (int j = 1; j < curve.m_rotationCurve.size(); j++)
+				{
+					if (curve.m_rotationCurve[j].m_time > m_currentTime)
+					{
+						state.m_rotKey = j - 1;
+						break;
+					}
+				}
+			}
+		}
+		ImGui::Checkbox("Running", &m_running);
+		ImGui::Checkbox("Looped", &m_looped);
+		ImGui::Unindent();
+
+		ImGui::TreePop();
+	}
+#endif // USE_IMGUI
+}

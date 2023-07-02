@@ -12,38 +12,11 @@ WaterSewer
 	includes :
 	{
 		#version 420
-		
-		layout(std140, binding = 0) uniform GlobalMatrices
-		{
-			mat4 view;
-			mat4 projection;
-			vec4 cameraPosition;
-		};
-		layout(std140, binding = 1) uniform EnvironementLighting
-		{
-			vec4 m_backgroundColor;
-			vec4 m_ambientColor;
-			vec4 m_directionalLightDirection;
-			vec4 m_directionalLightColor;
-		};
-		
-		struct Light
-		{
-			vec4 m_position;
-			vec4 m_direction;
-			vec4 m_color;
-			float m_range;
-			float m_intensity;
-			float m_inCutOff;
-			float m_outCutOff;
-		};
-		layout(std140, binding = 2) uniform Lights
-		{
-			Light lights[128];
-		};
 	};
 	vertex :
 	{
+		#include "UniformBuffers.cginc"
+		
 		// input
 		layout(location = 0) in vec4 position;
 		layout(location = 1) in vec4 normal;
@@ -64,7 +37,7 @@ WaterSewer
 	};
 	fragment :
 	{
-		uniform int lightCount;
+		#include "UniformBuffers.cginc"
 		
 		// input
 		in vec4 fragmentPosition;

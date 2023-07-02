@@ -11,7 +11,7 @@
 #include <Utiles/Assert.hpp>
 #include <Resources/Mesh.h>
 #include <Resources/Skeleton.h>
-#include <Resources/Animation.h>
+#include <Resources/AnimationClip.h>
 #include <Utiles/ConsoleColor.h>
 
 
@@ -75,6 +75,12 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
     bool hasPrintedMeshTooLarge = false;
     bool hasPrintedFaceIndexOutOfBound = false;
     bool hasPrintedNoUV = false;
+
+    if (fileName.find("Characters/Character_Skeleton_Soldier_02") != std::string::npos)
+    {
+        int toto = 0;
+    }
+
 
     //	Load mesh
     for(unsigned int i = 0; i < scene->mNumMeshes; i++)
@@ -152,14 +158,18 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
                 std::string boneName(scene->mMeshes[i]->mBones[j]->mName.C_Str());
                 if(boneMap.find(boneName) == boneMap.end())
                 {
-                    joints.push_back(Joint(boneName));
+                    joints.push_back(Skeleton::Bone());
+                    joints.back().name = boneName;
+                    joints.back().id = joints.size() - 1;
+                    joints.back().parent = nullptr;
+                    joints.back().relativeBindTransform = mat4f::identity;
 					boneMap[boneName] = (int)boneMap.size();
                 }
             }
 
         //	import bone index & weight for each vertex
         bones.assign(vertices.size(), vec4i(-1, -1, -1, -1));
-        weights.assign(vertices.size(), vec4f(0.f, 0.f, 0.f, 1.f));
+        weights.assign(vertices.size(), vec4f(0.f, 0.f, 0.f, 0.f));
         for(unsigned int i = 0; i < scene->mNumMeshes; i++)
         {
             aiMesh* mesh = scene->mMeshes[i];
@@ -186,10 +196,15 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
                         bones[vertexIndex].z = boneMap[boneName];
                         weights[vertexIndex].z = vertexWeight;
                     }
+                    else if(bones[vertexIndex].w < 0)
+                    {
+                        bones[vertexIndex].w = boneMap[boneName];
+                        weights[vertexIndex].w = vertexWeight;
+                    }
                     else if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
                     {
                         std::cerr << "ERROR : AssimpLoader : vertex at position " << vertices[vertexIndex].x << ' ' << vertices[vertexIndex].y << ' ' << vertices[vertexIndex].z;
-                        std::cerr << ": more than 3 bones weights defined" << std::endl;
+                        std::cerr << ": more than 4 bones weights defined" << std::endl;
                     }
                 }
             }
@@ -198,15 +213,34 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
         // replace negative value by 0 (for shader simplifaction)
         for(unsigned int i = 0; i < bones.size(); i++)
         {
-            if(bones[i].x < 0) bones[i].x = 0;
-            if(bones[i].y < 0) bones[i].y = 0;
-            if(bones[i].z < 0) bones[i].z = 0;
+            if (bones[i].x < 0)
+            {
+                std::cerr << "ERROR : AssimpLoader : a vertex has no bone id at index X" << std::endl;
+            }
+            if (weights[i].x <= 0.f)
+            {
+                std::cerr << "ERROR : AssimpLoader : a vertex has a weight of zero on bone X" << std::endl;
+            }
+
+
+            float sum = 0.f;
+            for (int k = 0; k < 4; k++)
+            {
+                if (weights[i][k] > 0.f)
+                    sum += weights[i][k];
+            }
+            if (sum > 0.f)
+                weights[i] /= sum;
+
+            //if(bones[i].x < 0) bones[i].x = 0;
+            //if(bones[i].y < 0) bones[i].y = 0;
+            //if(bones[i].z < 0) bones[i].z = 0;
+            //if(bones[i].w < 0) bones[i].w = 0;
         }
 
         //	read scene hierarchy for importing skeleton
-        if(scene->mRootNode) readSceneHierarchy(scene->mRootNode);
-        for(unsigned int i = 0; i < joints.size(); i++)
-            if(joints[i].parent == (unsigned int) -1) roots.push_back(i);
+        if(scene->mRootNode) 
+            readSceneHierarchy(scene->mRootNode);
     }
 
     //	Load animation
@@ -260,7 +294,7 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
         rotationBM.sort([](tupleQuat a, tupleQuat b) { return std::get<float>(a) < std::get<float>(b); });
 
         // read lists in time and create keyframes
-        KeyFrame currentKeyFrame;
+        /*KeyFrame currentKeyFrame;
         currentKeyFrame.time = 0.f;
         currentKeyFrame.poses.assign(joints.size(), JointPose());
         BidirectionnalVectorMap::iterator itPos = positionBM.begin();
@@ -310,7 +344,7 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
                 if(currentKeyFrame.time == FLT_MAX) break;
             }
         }
-        animations.push_back(currentKeyFrame);
+        animations.push_back(currentKeyFrame);*/
 
         /*	Warnning :
         if multiple animation are attached to mesh they will be all stacked into "animations" attributes
@@ -330,20 +364,27 @@ void AssimpLoader::initialize(ResourceVirtual* resource)
         {
             Mesh* mesh = static_cast<Mesh*>(resource);
             mesh->initialize(vertices, normales, uvs, faces, bones, weights);
+            if (!bones.empty() || !weights.empty())
+            {
+                std::vector<std::string> boneNames;
+                for (int i = 0; i < joints.size(); i++)
+                    boneNames.push_back(joints[i].name);
+                mesh->setBoneNames(boneNames);
+            }
             break;
         }
         case ResourceType::SKELETON:
         {
             Skeleton* skeleton = static_cast<Skeleton*>(resource);
-            skeleton->initialize(roots, joints);
+            skeleton->initialize(joints);
             break;
         }
-        case ResourceType::ANIMATION:
+        /*case ResourceType::ANIMATION:
         {
             Animation* animation = static_cast<Animation*>(resource);
             animation->initialize(animations);
             break;
-        }
+        }*/
         default:
             GF_ASSERT(0);
     }
@@ -351,27 +392,20 @@ void AssimpLoader::initialize(ResourceVirtual* resource)
 
 void AssimpLoader::getResourcesToRegister(std::vector<ResourceVirtual*>& resourceList)
 {
-    resourceList.reserve(2);
-    if(firstResource != ResourceType::MESH)
-    {
-        Mesh* mesh = new Mesh(resourceName);
-        mesh->initialize(vertices, normales, uvs, faces, bones, weights);
-        resourceList.push_back(mesh);
-    }
-    /*
-    if(firstResource != ResourceType::SKELETON)
+    // need to load skeleton too
+    /*if (firstResource == ResourceType::MESH && !bones.empty())
     {
         Skeleton* skeleton = new Skeleton(resourceName);
         skeleton->initialize(roots, joints);
         resourceList.push_back(skeleton);
-    }
-    if(firstResource != ResourceType::ANIMATION)
-    {
-        Animation* animation = new Animation(resourceName);
-        animation->initialize(animations);
-        resourceList.push_back(animation);
-    }
-    */
+
+        if (!animations.empty())
+        {
+            Animation* animation = new Animation(resourceName);
+            animation->initialize(animations);
+            resourceList.push_back(animation);
+        }
+    }*/
 }
 
 std::string AssimpLoader::getFileName(const std::string& resourceDirectory, const std::string& fileName) const
@@ -403,17 +437,17 @@ void AssimpLoader::clear()
     roots.clear();
     joints.clear();
 
-    animations.clear();
+    //animations.clear();
 }
 void AssimpLoader::readSceneHierarchy(const aiNode* node, int depth)
 {
-    int parentIndex = -1;
-    Joint* joint = nullptr;
+    //int parentIndex = -1;
+    Skeleton::Bone* joint = nullptr;
     for(unsigned int j = 0; j < joints.size(); j++)
         if(joints[j].name == std::string(node->mName.C_Str()))
         {
             joint = &joints[j];
-            parentIndex = j;
+            //parentIndex = j;
 
             for(int l = 0; l < 4; l++)
                 for(int m = 0; m < 4; m++)
@@ -426,8 +460,8 @@ void AssimpLoader::readSceneHierarchy(const aiNode* node, int depth)
         for(unsigned int j = 0; joint && j < joints.size(); j++)
             if(joints[j].name == std::string(node->mChildren[i]->mName.C_Str()))
             {
-                joint->sons.push_back(j);
-                joints[j].parent = parentIndex;
+                joint->sons.push_back(&joints[j]);
+                joints[j].parent = joint;
                 break;
             }
         readSceneHierarchy(node->mChildren[i], depth + 1);
@@ -436,13 +470,13 @@ void AssimpLoader::readSceneHierarchy(const aiNode* node, int depth)
 //
 
 //
-void AssimpLoader::printJoint(unsigned int joint, int depth)
+void AssimpLoader::printJoint(Skeleton::Bone* bone, int depth)
 {
     for(int i = 0; i < depth; i++)
         std::cout << "  ";
-    std::cout << joints[joint].name << std::endl;
+    std::cout << bone->name << std::endl;
 
-    for(unsigned int i = 0; i < joints[joint].sons.size(); i++)
-        printJoint(joints[joint].sons[i], depth + 1);
+    for(unsigned int i = 0; i < bone->sons.size(); i++)
+        printJoint(bone->sons[i], depth + 1);
 }
 //

@@ -4,9 +4,16 @@
 #include <Resources/Skeleton.h>
 #include <Resources/Mesh.h>
 #include <EntityComponent/Entity.hpp>
+#include <Utiles/ConsoleColor.h>
+#include <Utiles/Debug.h>
+#include <functional>
+#include <Renderer/DrawableComponent.h>
 
 
-
+SkeletonComponent::SkeletonComponent() : m_skeleton(nullptr)
+{
+	skinnedBoundingRadius = -1.f;
+}
 SkeletonComponent::SkeletonComponent(const std::string& skeletonName)
 {
 	m_skeleton = ResourceManager::getInstance()->getResource<Skeleton>(skeletonName);
@@ -17,11 +24,48 @@ SkeletonComponent::SkeletonComponent(const std::string& skeletonName)
 SkeletonComponent::~SkeletonComponent()
 {
 	ResourceManager::getInstance()->release(m_skeleton);
-
-	glDeleteBuffers(1, &segIndexBuffer);
-	glDeleteBuffers(1, &segRadiusBuffer);
-	glDeleteVertexArrays(1, &vao);
 }
+
+
+
+bool SkeletonComponent::load(Variant& jsonObject, const std::string& objectName)
+{
+	if (jsonObject.getType() == Variant::MAP)
+	{
+		std::string skeletonName;
+		auto it1 = jsonObject.getMap().find("skeletonName");
+		if (it1 != jsonObject.getMap().end() && it1->second.getType() == Variant::STRING)
+		{
+			skeletonName = it1->second.toString();
+		}
+
+		if (!skeletonName.empty())
+		{
+			m_skeleton = ResourceManager::getInstance()->getResource<Skeleton>(skeletonName);
+			if (m_skeleton)
+				pose = m_skeleton->getBindPose();
+			return true;
+		}
+		else
+		{
+			if (ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
+			{
+				if (skeletonName.empty())
+				{
+					std::cout << ConsoleColor::getColorString(ConsoleColor::Color::RED) << "ERROR   : EntityFactory : " << objectName << " : SkeletonComponent loading : no skeleton name" << std::flush;
+					std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
+				}
+			}
+		}
+	}
+	return false;
+}
+
+void SkeletonComponent::save(Variant& jsonObject)
+{
+
+}
+
 
 void SkeletonComponent::setSkeleton(std::string skeletonName)
 {
@@ -30,20 +74,20 @@ void SkeletonComponent::setSkeleton(std::string skeletonName)
 
 	locker.lock();
 	pose.clear();
-	capsules.clear();
-	locker.lock();
+	locker.unlock();
 }
 
 void SkeletonComponent::setSkeleton(Skeleton* skeleton)
 {
 	ResourceManager::getInstance()->release(m_skeleton);
-	if(skeleton) m_skeleton = ResourceManager::getInstance()->getResource<Skeleton>(skeleton);
-	else m_skeleton = nullptr;
+	if(skeleton) 
+		m_skeleton = ResourceManager::getInstance()->getResource<Skeleton>(skeleton);
+	else 
+		m_skeleton = nullptr;
 
 	locker.lock();
 	pose.clear();
-	capsules.clear();
-	locker.lock();
+	locker.unlock();
 }
 
 Skeleton* SkeletonComponent::getSkeleton() const
@@ -51,10 +95,10 @@ Skeleton* SkeletonComponent::getSkeleton() const
 	return m_skeleton;
 }
 
-unsigned int SkeletonComponent::getNbJoints() const
+unsigned int SkeletonComponent::getNbBones() const
 {
     GF_ASSERT(isValid());
-	return (unsigned int) m_skeleton->joints.size();
+	return (unsigned int) m_skeleton->m_bones.size();
 }
 
 const std::vector<mat4f>& SkeletonComponent::getPose() const
@@ -62,53 +106,107 @@ const std::vector<mat4f>& SkeletonComponent::getPose() const
 	return pose;
 }
 
-std::vector<mat4f> SkeletonComponent::getInverseBindPose() const
+void SkeletonComponent::setPose(std::vector<mat4f> _pose)
+{
+	pose = _pose;
+}
+
+const std::vector<mat4f>& SkeletonComponent::getInverseBindPose() const
 {
     GF_ASSERT(isValid());
     return m_skeleton->getInverseBindPose();
 }
 
-vec4f SkeletonComponent::getJointPosition(const std::string& jointName)
+vec4f SkeletonComponent::getBonePosition(const std::string& jointName)
 {
     GF_ASSERT(isValid());
+	vec4f result = vec4f::zero;
 
 	locker.lock();
-	bool emptyPose = pose.empty();
-	locker.lock();
-
-	if(emptyPose)
-		return vec4f::zero;
-	int index = -1;
-	for(unsigned int i = 0; i < m_skeleton->joints.size(); i++)
+	for(unsigned int i = 0; i < m_skeleton->m_bones.size(); i++)
 	{
-		if(m_skeleton->joints[i].name == jointName)
+		if(m_skeleton->m_bones[i].name == jointName)
 		{
-			index = i;
+			//index = i;
+			result = pose[i][3];
 			break;
 		}
 	}
-	if(index < 0)
-		return vec4f::zero;
+	locker.unlock();
 
-	locker.lock();
-	vec4f p = vec4f(pose[index][3][0], pose[index][3][1], pose[index][3][2], 1.f);
-	locker.lock();
-	return p;
+	return result;
 }
 
-/*const std::vector<float>& SkeletonComponent::getCapsules() const
+const AxisAlignedBox& SkeletonComponent::getBoundingBox() const
 {
-	return capsules;
-}*/
-
-const std::vector<vec2i>& SkeletonComponent::getSegmentsIndex() const
-{
-	return segmentIndex;
+	return boundingBox;
 }
-
-const std::vector<float>& SkeletonComponent::getSegmentsRadius() const
+void SkeletonComponent::recomputeBoundingBox()
 {
-	return segmentRadius;
+	if (pose.empty())
+	{
+		boundingBox.min = boundingBox.max = vec4f(0.f, 0.f, 0.f, 1.f);
+	}
+	else
+	{
+		constexpr float maxValue = std::numeric_limits<float>::max();
+		boundingBox.min = vec4f(maxValue);
+		boundingBox.max = -boundingBox.min;
+
+		for (int i = 0; i < pose.size(); i++)
+		{
+			vec4f v = pose[i][3];
+			boundingBox.min = vec4f::min(boundingBox.min, v);
+			boundingBox.max = vec4f::max(boundingBox.max, v);
+		}
+		boundingBox.min.w = boundingBox.max.w = 1.f;
+	}
+
+	if (skinnedBoundingRadius < 0.f && m_skeleton && getParentEntity())
+	{
+		DrawableComponent* drawable = getParentEntity()->getComponent<DrawableComponent>();
+		if (drawable && drawable->getMesh() && drawable->getMesh()->hasSkeleton() && !pose.empty())
+		{
+			const auto& vertices = *drawable->getMesh()->getVertices();
+			const auto& boneIds = *drawable->getMesh()->getBones();
+			const auto& invBind = m_skeleton->getInverseBindPose();
+			for (int i = 0; i < vertices.size(); i++)
+			{
+				vec4f p = invBind[boneIds[i].x] * vertices[i];
+				vec4f v = pose[boneIds[i].x] * vec4f(p.x, p.y, p.z, 0);
+				float d = v.getNorm2();
+
+				if (boneIds[i].y >= 0)
+				{
+					p = invBind[boneIds[i].y] * vertices[i];
+					v = pose[boneIds[i].y] * vec4f(p.x, p.y, p.z, 0);
+					d = std::max(d, v.getNorm2());
+
+					if (boneIds[i].z >= 0)
+					{
+						p = invBind[boneIds[i].z] * vertices[i];
+						v = pose[boneIds[i].z] * vec4f(p.x, p.y, p.z, 0);
+						d = std::max(d, v.getNorm2());
+
+						if (boneIds[i].w >= 0)
+						{
+							p = invBind[boneIds[i].w] * vertices[i];
+							v = pose[boneIds[i].w] * vec4f(p.x, p.y, p.z, 0);
+							d = std::max(d, v.getNorm2());
+						}
+					}
+				}
+
+				skinnedBoundingRadius = std::max(d, skinnedBoundingRadius);
+			}
+			skinnedBoundingRadius = std::sqrt(skinnedBoundingRadius);
+		}
+	}
+
+	float f = std::max(skinnedBoundingRadius, 0.3f);
+	vec4f margin = vec4f(f, f, f, 0.f);
+	boundingBox.min -= margin;
+	boundingBox.max += margin;
 }
 
 bool SkeletonComponent::isValid() const
@@ -116,131 +214,78 @@ bool SkeletonComponent::isValid() const
     return m_skeleton && m_skeleton->isValid();
 }
 
-void SkeletonComponent::initToBindPose()
-{
-    GF_ASSERT(isValid());
-	locker.lock();
-	pose = m_skeleton->getBindPose();
-	locker.unlock();
-}
-
-void SkeletonComponent::computePose(const std::vector<JointPose>& input)
-{
-    GF_ASSERT(isValid());
-	std::vector<mat4f> blendMatrix(input.size(), mat4f::identity);
-	for(unsigned int i = 0; i < m_skeleton->roots.size(); i++)
-		computePose(blendMatrix, input, mat4f::identity, m_skeleton->roots[i]);
-
-	locker.lock();
-	pose = blendMatrix;
-	locker.unlock();
-}
-
-void SkeletonComponent::computeCapsules(Mesh* mesh)
-{
-    GF_ASSERT(isValid());
-	if(!capsules.empty()) capsules.clear();
-	if(!mesh || !mesh->getBones() || !mesh->getWeights())
-		return;
-
-	//	get all lists
-	std::vector<mat4f> ibind = m_skeleton->getInverseBindPose();
-	const std::vector<vec4f>& vertices = *mesh->getVertices();
-	const std::vector<vec4i>* bones = mesh->getBones();
-	const std::vector<vec4f>* weights = mesh->getWeights();
-	std::vector<Joint> joints = m_skeleton->getJoints();
-	if(ibind.empty() || pose.empty() || !bones || !weights || joints.empty())
-		return;
-	capsules.assign(m_skeleton->getJoints().size(), 0.f);
-
-	//	inflating bones
-	for(unsigned int i = 0; i < vertices.size(); i++)
-	{
-		float maxDistance = 0.f;
-		for(int j = 0; j < 3; j++)
-		{
-			int bone = (*bones)[i][j];
-			vec4f v = ibind[bone] * vertices[i];
-			if(joints[bone].sons.size() == 1)
-			{
-				vec4f end = joints[joints[bone].sons[0]].relativeBindTransform[3];
-				float d = vec4f::dot(v, end) / end.getNorm();
-				if(d < 0.f) maxDistance += (*weights)[i][j] * v.getNorm();
-				else if(d > 1.f) maxDistance += (*weights)[i][j] * (v - end).getNorm();
-				else maxDistance += (*weights)[i][j] * (v - d * end.getNormal()).getNorm();
-			}
-			else maxDistance += (*weights)[i][j] * v.getNorm();
-		}
-		for(int j = 0; j < 3; j++)
-			capsules[(*bones)[i][j]] = std::max(capsules[(*bones)[i][j]], maxDistance);
-	}
-
-	//	contruct capsule drawing buffers
-	for(unsigned int i = 0; i < joints.size(); i++)
-	{
-		if(joints[i].sons.empty())
-		{
-			segmentIndex.push_back(vec2i(i, i));
-			segmentRadius.push_back(capsules[i]);
-		}
-		else
-		{
-			for(unsigned int j = 0; j < joints[i].sons.size(); j++)
-			{
-				segmentIndex.push_back(vec2i(i, joints[i].sons[j]));
-				segmentRadius.push_back(capsules[i]);
-			}
-		}
-	}
-}
-
-void SkeletonComponent::initializeVBOVAO()
-{
-    GF_ASSERT(isValid());
-
-	//	generate vbo
-	glGenBuffers(1, &segIndexBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, segIndexBuffer);
-	glBufferData(GL_ARRAY_BUFFER, segmentIndex.size() * sizeof(vec2i), segmentIndex.data(), GL_STATIC_DRAW);
-
-	glGenBuffers(1, &segRadiusBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, segRadiusBuffer);
-	glBufferData(GL_ARRAY_BUFFER, segmentRadius.size() * sizeof(float), segmentRadius.data(), GL_STATIC_DRAW);
-
-	//	generate vao
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
-
-	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, segIndexBuffer);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, NULL);
-
-	glEnableVertexAttribArray(1);
-	glBindBuffer(GL_ARRAY_BUFFER, segRadiusBuffer);
-	glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 0, NULL);
-
-	glBindVertexArray(0);
-}
-
-void SkeletonComponent::drawBB()
-{
-    GF_ASSERT(isValid());
-	glBindVertexArray(vao);
-	glDrawArrays(GL_POINTS, 0, (int)segmentIndex.size());
-}
-
-const GLuint SkeletonComponent::getCapsuleVAO() const { return vao; }
-
-void SkeletonComponent::computePose(std::vector<mat4f>& result, const std::vector<JointPose>& input, const mat4f& parentPose, unsigned int joint)
-{
-    GF_ASSERT(isValid());
-	result[joint] = parentPose * mat4f::translate(mat4f::identity, input[joint].position) * mat4f(input[joint].rotation) * mat4f::scale(mat4f::identity, input[joint].scale);
-	for(unsigned int i = 0; i < m_skeleton->joints[joint].sons.size(); i++)
-		computePose(result, input, result[joint], m_skeleton->joints[joint].sons[i]);
-}
-
 void SkeletonComponent::onAddToEntity(Entity* entity)
 {
 	Component::onAddToEntity(entity);
 	entity->setFlags((uint64_t)Entity::Flags::Fl_Drawable | (uint64_t)Entity::Flags::Fl_Skinned);
+}
+
+static float frameLength = 4.f;
+void SkeletonComponent::onDrawImGui()
+{
+#ifdef USE_IMGUI
+
+
+	const ImVec4 componentColor = ImVec4(0.5, 0.5, 1, 1);
+	std::ostringstream unicName;
+	unicName << "Skeleton component##" << (uintptr_t)this;
+
+	if (ImGui::TreeNodeEx(unicName.str().c_str(), ImGuiTreeNodeFlags_DefaultOpen))
+	{
+		ImGui::TextColored(componentColor, "Skeleton");
+		ImGui::Indent();
+		ImGui::Text("name : %s", m_skeleton->name.c_str());
+		ImGui::Text("bone count : %d", m_skeleton->m_bones.size());
+		ImGui::Unindent();
+
+		ImGui::Spacing();
+		ImGui::TextColored(componentColor, "Gizmos");
+		ImGui::Indent();
+		ImGui::Checkbox("Draw skeleton", &m_drawSkeleton);
+		ImGui::Checkbox("Draw boundingbox", &m_drawBoundingBox);
+		ImGui::SliderFloat("Frame length", &frameLength, 0.f, 100.f, "%.3f", ImGuiSliderFlags_Logarithmic);
+		ImGui::Unindent();
+
+		ImGui::TreePop();
+	}
+
+	if (m_drawSkeleton && m_skeleton && pose.size() == getNbBones())
+	{
+		std::vector<Debug::Vertex> vertices;
+		const std::vector<Skeleton::Bone>& joints = m_skeleton->m_bones;
+		vertices.reserve(8 * m_skeleton->m_bones.size());
+		vec4f color = vec4f(componentColor.x, componentColor.y, componentColor.z, 1.f);
+
+
+		std::function<void(Skeleton::Bone*, mat4f)> RecursiveJointDraw = [&](Skeleton::Bone* bone, const mat4f& parentMatrix)
+		{
+			mat4f m = pose[bone->id];
+
+			vertices.push_back({ parentMatrix[3], color });
+			vertices.push_back({ m[3], color });
+			vertices.push_back({ m[3], Debug::red });
+			vertices.push_back({ m[3] + frameLength * m[0], Debug::red });
+			vertices.push_back({ m[3], Debug::green });
+			vertices.push_back({ m[3] + frameLength * m[1], Debug::green });
+			vertices.push_back({ m[3], Debug::blue });
+			vertices.push_back({ m[3] + frameLength * m[2], Debug::blue });
+
+			for (int i = 0; i < bone->sons.size(); i++)
+				RecursiveJointDraw(bone->sons[i], m);
+		};
+
+		const std::vector<Skeleton::Bone*>& roots = m_skeleton->getRoots();
+		for (int j = 0; j < roots.size(); j++)
+			RecursiveJointDraw(roots[j], mat4f::identity);
+
+		Debug::setDepthTest(false);
+		Debug::drawMultiplePrimitive(vertices.data(), vertices.size(), getParentEntity()->getWorldTransformMatrix(), GL_LINES);
+		Debug::setDepthTest(true);
+	}
+	if (m_drawBoundingBox)
+	{
+		Debug::color = vec4f(0.6f * componentColor.x, 0.6f * componentColor.y, 0.6f * componentColor.z, 1.f);
+		Debug::drawLineCube(getParentEntity()->getWorldTransformMatrix(), boundingBox.min, boundingBox.max);
+	}
+#endif // USE_IMGUI
 }

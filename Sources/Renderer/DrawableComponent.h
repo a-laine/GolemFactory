@@ -6,17 +6,19 @@
 
 class Shader;
 class Mesh;
-
+class Skeleton;
 
 class DrawableComponent : public Component
 {
 	GF_DECLARE_COMPONENT_CLASS(DrawableComponent, Component)
 	public:
-		DrawableComponent(const std::string& meshName = "default", const std::string& shaderName = "default");
+		explicit DrawableComponent();
+		explicit DrawableComponent(const std::string& meshName, const std::string& shaderName);
 		virtual ~DrawableComponent() override;
 		DrawableComponent(const DrawableComponent* other);
 
 		bool load(Variant& jsonObject, const std::string& objectName) override;
+		bool load(Variant& jsonObject, const std::string& objectName, const Skeleton* skeleton = nullptr);
 		void save(Variant& jsonObject) override;
 
 		void setShader(const std::string& shaderName);

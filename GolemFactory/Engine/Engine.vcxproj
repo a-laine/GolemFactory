@@ -230,9 +230,11 @@
     <ClCompile Include="..\..\Sources\Renderer\RendererBasic.cpp" />
     <ClCompile Include="..\..\Sources\Renderer\RendererDrawCommands.cpp" />
     <ClCompile Include="..\..\Sources\Renderer\RendererRenderStages.cpp" />
-    <ClCompile Include="..\..\Sources\Resources\Animation.cpp" />
+    <ClCompile Include="..\..\Sources\Resources\AnimationClip.cpp" />
+    <ClCompile Include="..\..\Sources\Resources\AnimationGraph.cpp" />
     <ClCompile Include="..\..\Sources\Resources\Font.cpp" />
     <ClCompile Include="..\..\Sources\Resources\Joint.cpp" />
+    <ClCompile Include="..\..\Sources\Resources\Loader\AnimationGraphLoader.cpp" />
     <ClCompile Include="..\..\Sources\Resources\Loader\AnimationLoader.cpp" />
     <ClCompile Include="..\..\Sources\Resources\Loader\AnimationSaver.cpp" />
     <ClCompile Include="..\..\Sources\Resources\Loader\AssimpLoader.cpp" />
@@ -357,10 +359,12 @@
     <ClInclude Include="..\..\Sources\Renderer\Lighting\LightComponent.h" />
     <ClInclude Include="..\..\Sources\Renderer\OccluderComponent.h" />
     <ClInclude Include="..\..\Sources\Renderer\Renderer.h" />
-    <ClInclude Include="..\..\Sources\Resources\Animation.h" />
+    <ClInclude Include="..\..\Sources\Resources\AnimationClip.h" />
+    <ClInclude Include="..\..\Sources\Resources\AnimationGraph.h" />
     <ClInclude Include="..\..\Sources\Resources\Font.h" />
     <ClInclude Include="..\..\Sources\Resources\IResourceLoader.h" />
     <ClInclude Include="..\..\Sources\Resources\Joint.h" />
+    <ClInclude Include="..\..\Sources\Resources\Loader\AnimationGraphLoader.h" />
     <ClInclude Include="..\..\Sources\Resources\Loader\AnimationLoader.h" />
     <ClInclude Include="..\..\Sources\Resources\Loader\AnimationSaver.h" />
     <ClInclude Include="..\..\Sources\Resources\Loader\AssimpLoader.h" />
@@ -402,6 +406,7 @@
     <ClInclude Include="..\..\Sources\Utiles\Parser\Reader.h" />
     <ClInclude Include="..\..\Sources\Utiles\Parser\Variant.h" />
     <ClInclude Include="..\..\Sources\Utiles\Parser\Writer.h" />
+    <ClInclude Include="..\..\Sources\Utiles\ProfilerConfig.h" />
     <ClInclude Include="..\..\Sources\Utiles\QuickHull.h" />
     <ClInclude Include="..\..\Sources\Utiles\SafeFoxwardList.h" />
     <ClInclude Include="..\..\Sources\Utiles\Singleton.h" />

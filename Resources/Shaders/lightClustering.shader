@@ -5,38 +5,8 @@ LightClustering
 	compute :
 	{
 		#version 430
+		#include "UniformBuffers.cginc"
 		
-		// input uniforms
-		layout(std140, binding = 0) uniform GlobalMatrices
-		{
-			mat4 view;
-			mat4 projection;
-			vec4 cameraPosition;
-			mat4 shadowCascadeProjections[4];
-		};
-		struct Light
-		{
-			vec4 m_position;
-			vec4 m_direction;
-			vec4 m_color;
-			float m_range;
-			float m_intensity;
-			float m_inCutOff;
-			float m_outCutOff;
-		};
-		layout(std140, binding = 2) uniform Lights
-		{
-		    int lightCount;
-			uint shadingConfiguration;
-			float clusterDepthScale;
-			float clusterDepthBias;
-			float near;
-			float far;
-			float tanFovX;
-			float tanFovY;
-			Light lights[254];
-		};	
-	
 		layout(r32ui, binding = 0) restrict uniform uimage3D lightClusters;
 		
 		layout (local_size_x = 4 , local_size_y = 3 , local_size_z = 8) in;

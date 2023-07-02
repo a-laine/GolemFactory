@@ -3,7 +3,7 @@
 #include <Utiles/ToolBox.h>
 
 //	Public functions
-void AnimationSaver::save(Animation* animation, const std::string& resourcesPath, std::string fileName)
+/*void AnimationSaver::save(Animation* animation, const std::string& resourcesPath, std::string fileName)
 {
 	if (!animation) return;
 
@@ -67,9 +67,6 @@ void AnimationSaver::save(Animation* animation, const std::string& resourcesPath
 			{
 				insertion++;
 				joint.insert("t", ToolBox::getFromVec4f(timeLine[i].poses[j].position));
-				/*joint.insert("t", Variant::ArrayType());
-				for (int k = 0; k < 3; k++)
-					joint["t"].getArray().push_back(Variant(timeLine[i].poses[j].position[k]));*/
 			}
 
 			//	save joint scale
@@ -77,9 +74,6 @@ void AnimationSaver::save(Animation* animation, const std::string& resourcesPath
 			{
 				insertion++;
 				joint.insert("s", ToolBox::getFromVec4f(timeLine[i].poses[j].scale));
-				/*joint.insert("s", Variant::ArrayType());
-				for (int k = 0; k < 3; k++)
-					joint["s"].getArray().push_back(Variant(timeLine[i].poses[j].scale[k]));*/
 			}
 
 			//	save joint rotation
@@ -87,9 +81,6 @@ void AnimationSaver::save(Animation* animation, const std::string& resourcesPath
 			{
 				insertion++;
 				joint.insert("r", ToolBox::getFromQuatf(timeLine[i].poses[j].rotation));
-				/*joint.insert("r", Variant::ArrayType());
-				for (int k = 0; k < 4; k++)
-					joint["r"].getArray().push_back(Variant(timeLine[i].poses[j].rotation[k]));*/
 			}
 
 			//
@@ -121,7 +112,7 @@ void AnimationSaver::save(Animation* animation, const std::string& resourcesPath
 	file.precision(5);
 	writer.setInlineArray(true);
 	writer.write(rootVariant);
-}
+}*/
 //
 
 //	Protected functions

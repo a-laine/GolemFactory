@@ -4,6 +4,7 @@
 
 #include <Resources/IResourceLoader.h>
 #include <Resources/Joint.h>
+#include <Resources/Skeleton.h>
 
 
 
@@ -18,6 +19,6 @@ class SkeletonLoader : public IResourceLoader
         std::string getFileName(const std::string& resourceDirectory, const std::string& fileName) const;
 
         std::vector<unsigned int> roots;
-        std::vector<Joint> joints;
+        std::vector<Skeleton::Bone> bones;
 };
 

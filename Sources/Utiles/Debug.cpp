@@ -58,7 +58,7 @@ void Debug::initialize(const std::string& cubeMeshName, const std::string& spher
 	capsuleMesh = ResourceManager::getInstance()->getResource<Mesh>(capsuleMeshName);
 
 	defaultShader = ResourceManager::getInstance()->getResource<Shader>(defaultShaderName);
-	wiredShader = ResourceManager::getInstance()->getResource<Shader>(wiredShaderName);
+	wiredShader = defaultShader->getVariant(Shader::computeVariantCode(false, 0, true));// ResourceManager::getInstance()->getResource<Shader>(wiredShaderName);
 	debug = ResourceManager::getInstance()->getResource<Shader>(multiplePrimitiveShaderName);
 
 	textureReinterpreter = ResourceManager::getInstance()->getResource<Shader>(textureReinterpreterShaderName);
@@ -117,6 +117,7 @@ void Debug::drawLineCube(const mat4f& transform, const vec4f& size)
 //
 
 // real draw functions
+const vec4f defaultColorUniform = vec4f(-1.f, 0.f, 0.f, 1.f);
 void Debug::capsule(const vec4f& point1, const vec4f& point2, const float& radius, Shader* shader)
 {
 	constexpr unsigned int quadrature = 32;										// capsule mesh was generated using this value
@@ -165,7 +166,7 @@ void Debug::capsule(const vec4f& point1, const vec4f& point2, const float& radiu
 		This->renderer->loadModelMatrix(shader, &modelMatrix);
 		glDrawElements(GL_TRIANGLES, (int)This->capsuleMesh->getFaces()->size(), GL_UNSIGNED_SHORT, (void*)((hemisphereFaces + cylinderFaces) * sizeof(unsigned short)));
 
-		if (loc >= 0) glUniform4fv(loc, 1, (float*)&vec4f(-1.f, 0.f, 0.f, 1.f)[0]);
+		if (loc >= 0) glUniform4fv(loc, 1, &defaultColorUniform[0]);
 	}
 }
 void Debug::mesh(const Mesh* const mesh, const mat4f& transform, Shader* shader)
@@ -183,10 +184,11 @@ void Debug::mesh(const Mesh* const mesh, const mat4f& transform, Shader* shader)
 			glUniform4fv(loc, 1, (float*)&color);
 
 		//	Draw mesh
+		//glBindVertexArray(mesh->getVAO());
 		This->renderer->loadVAO(mesh->getVAO());
 		glDrawElements(GL_TRIANGLES, (int)mesh->getFaces()->size(), GL_UNSIGNED_SHORT, NULL);
 
-		if (loc >= 0) glUniform4fv(loc, 1, (float*)&vec4f(-1.f, 0.f, 0.f, 1.f)[0]);
+		if (loc >= 0) glUniform4fv(loc, 1, &defaultColorUniform[0]);
 	}
 }
 void Debug::drawMultiplePrimitive(const Vertex* vertices, const int& verticesCount, const mat4f& model, int drawMode)
@@ -282,10 +284,41 @@ void Debug::reinterpreteTexture(const Texture* in, Texture* out, float layer)
 	This->renderer->lastVAO = This->renderer->fullscreenVAO;
 	This->textureReinterpreter->enable();
 
-	if (in->m_internalFormat == GL_DEPTH_COMPONENT32F && in->size.z > 0)
+	if (in->m_internalFormat == GL_DEPTH_COMPONENT32F)
 	{
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D_ARRAY, in->getTextureId());
+		if (in->size.z > 0)
+		{
+			if (in->m_type == GL_TEXTURE_2D_ARRAY)
+			{
+				glActiveTexture(GL_TEXTURE0);
+				glBindTexture(GL_TEXTURE_2D_ARRAY, in->getTextureId());
+
+				int loc = This->textureReinterpreter->getUniformLocation("type");
+				if (loc >= 0)
+					glUniform1f(loc, 0);
+			}
+			else if (in->m_type == GL_TEXTURE_CUBE_MAP_ARRAY)
+			{
+				glActiveTexture(GL_TEXTURE1);
+				glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, in->getTextureId());
+
+				int loc = This->textureReinterpreter->getUniformLocation("type");
+				if (loc >= 0)
+					glUniform1f(loc, 1);
+			}
+		}
+		else
+		{
+			if (in->m_type == GL_TEXTURE_2D)
+			{
+				glActiveTexture(GL_TEXTURE2);
+				glBindTexture(GL_TEXTURE_2D, in->getTextureId());
+
+				int loc = This->textureReinterpreter->getUniformLocation("type");
+				if (loc >= 0)
+					glUniform1f(loc, 2);
+			}
+		}
 	}
 
 	int loc = This->textureReinterpreter->getUniformLocation("layer");

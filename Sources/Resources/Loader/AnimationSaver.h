@@ -4,14 +4,14 @@
 //#include <glm/glm.hpp>
 #include "Math/TMath.h"
 
-#include <Resources/Animation.h>
+#include <Resources/AnimationClip.h>
 #include <Utiles/Parser/Variant.h>
 
 class AnimationSaver
 {
 	public:
 		//	Public functions
-		static void save(Animation* animation, const std::string& resourcesPath, std::string fileName = "");
+		static void save(AnimationClip* animation, const std::string& resourcesPath, std::string fileName = "");
 		//
 
 	protected:

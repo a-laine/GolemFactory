@@ -9,6 +9,7 @@
 #include <Core/RenderContext.h>
 #include <Utiles/Singleton.h>
 #include <World/World.h>
+#include <Utiles/ProfilerConfig.h>
 
 #include <Scene/FrustrumSceneQuerry.h>
 
@@ -17,6 +18,7 @@
 #define CLUSTER_SIZE_X 64
 #define CLUSTER_SIZE_Y 36
 #define CLUSTER_SIZE_Z 128
+#define MAX_OMNILIGHT_SHADOW_COUNT 8
 
 class Shader;
 class Mesh;
@@ -39,6 +41,8 @@ class Renderer : public Singleton<Renderer>
 
 			INSTANCE_DRAWABLE_BB,
 			INSTANCE_ANIMATABLE_BB,
+
+			DEFAULT
 		};
 		enum class RenderOption
 		{
@@ -47,6 +51,7 @@ class Renderer : public Singleton<Renderer>
 			WIREFRAME,
 			NORMALS
 		};
+		
 		struct GlobalMatrices
 		{
 			mat4f view;
@@ -54,54 +59,20 @@ class Renderer : public Singleton<Renderer>
 			vec4f cameraPosition;
 
 		};
-		struct EnvironementLighting
-		{
-			vec4f m_backgroundColor;
-			vec4f m_ambientColor;
-			vec4f m_directionalLightDirection;
-			vec4f m_directionalLightColor;
-
-			mat4f m_shadowCascadeProjections[4];
-			vec4f m_shadowFarPlanes;
-			float m_shadowBlendMargin;
-		};
+		
 		enum ShadingConfig
 		{
 			eUseLightClustering = 0,
 			eLightCountHeatmap = 1,
 			eUseShadow = 2,
 			eDrawShadowCascades = 3,
+			eOmniShadowPass = 4
 		};
-		struct Light
-		{
-			vec4f m_position;
-			vec4f m_direction;
-			vec4f m_color;
-			float m_range;
-			float m_intensity;
-			float m_inCutOff;
-			float m_outCutOff;
-		};
-		struct SceneLights
-		{
-			int m_lightCount;
-			unsigned int m_shadingConfiguration;;
-			float m_clusterDepthScale;
-			float m_clusterDepthBias;
-			float m_near;
-			float m_far;
-			float m_tanFovX;
-			float m_tanFovY;
 
-			Light m_lights[MAX_LIGHT_COUNT];
-		};
-		struct DebugShaderUniform
+		struct ModelMatrix
 		{
-			vec4f vertexNormalColor;
-			vec4f faceNormalColor;
-			float wireframeEdgeFactor;
-			float occlusionResultDrawAlpha;
-			float occlusionResultCuttoff;
+			mat4f model;
+			mat4f normalMatrix;
 		};
 		//
 
@@ -109,7 +80,7 @@ class Renderer : public Singleton<Renderer>
 		void initializeGrid(const unsigned int& gridSize, const float& elementSize = 1.f, const vec4f& color = vec4f(0.4f, 0.2f, 0.1f, 1.f));
 		void initializeLightClusterBuffer(int width, int height, int depth);
 		void initializeOcclusionBuffers(int width, int height);
-		void initializeShadowCascades(int width, int height);
+		void initializeShadows(int cascadesWidth, int cascadesHeight, int omniWidth, int omniHeight);
 		void render(CameraComponent* renderCam);
 		void renderHUD();
 		void swap();
@@ -150,16 +121,20 @@ class Renderer : public Singleton<Renderer>
 		//
 
 		//	Render function
+		void loadModelMatrix(Shader* shader, const ModelMatrix* model, const int& modelSize = 1);
 		void drawObject(Entity* object, Shader* forceShader = nullptr);
 		void drawMap(Map* map, Shader* s = nullptr);
 		// 
 		
 		//	Debug
 		void drawImGui(World& world);
+
+		void initializeOverviewRenderer(int width, int height);
+		GLuint renderMeshOverview(Mesh* mesh, float angle0, float angle1);
+		vec2i getOverviewTextureSize() const;
 		//
 
 		Shader* normalViewer;
-		Shader* lightClustering;
 
 	private:
 		//  Default
@@ -168,11 +143,6 @@ class Renderer : public Singleton<Renderer>
 		//
 
 		//	Miscellaneous
-		struct ModelMatrix
-		{
-			mat4f model;
-			mat4f normalMatrix;
-		};
 		struct Batch
 		{
 			Shader* shader;
@@ -194,7 +164,6 @@ class Renderer : public Singleton<Renderer>
 		//
 
 		//	Protected functions
-		void loadModelMatrix(Shader* shader, const ModelMatrix* model, const int& modelSize = 1);
 		void loadGlobalUniforms(Shader* shader);
 		void loadVAO(const GLuint& vao);
 
@@ -203,6 +172,8 @@ class Renderer : public Singleton<Renderer>
 		void initGlobalUniformBuffers();
 		void updateShadowCascadeMatrices(CameraComponent* renderCam, float viewportRatio);
 		void updateGlobalUniformBuffers();
+
+		void computeOmniShadowProjection(LightComponent* light, int omniIndex);
 		//
 
 		// Render stages
@@ -214,70 +185,150 @@ class Renderer : public Singleton<Renderer>
 		//
 
 		//  Attributes
-		CameraComponent* camera;
-		World* world;
-		RenderContext* context;
-		std::map<ShaderIdentifier, Shader*> defaultShader;
-		RenderOption renderOption;
 
-		// grid and usefull opengl
-		bool drawGrid;
-		unsigned int vboGridSize;
-		GLuint gridVAO, vertexbuffer, arraybuffer, colorbuffer, normalbuffer;
-		vec4f m_gridColor;
-		unsigned int instanceDrawn, drawCalls, trianglesDrawn;
-		GLuint lastVAO, fullscreenVAO;
-		Shader* lastShader;
-		bool shaderJustActivated;
-		Shader* fullscreenTriangle;
-		Shader* occlusionResultDraw;
+		#pragma region General_Attributes
 
-		// render queue - queries - collector
-		std::vector<DrawElement> renderQueue;
-		FrustrumSceneQuerry sceneQuery;
-		VirtualEntityCollector collector;
+				CameraComponent* camera;
+				World* world;
+				RenderContext* context;
+				std::map<ShaderIdentifier, Shader*> defaultShader;
+				RenderOption renderOption;
 
-		// batching - instancing
-		bool m_enableInstancing = true;
-		bool m_hasInstancingShaders = false;
-		bool m_hasShadowCaster = false;
-		std::map<std::pair<Shader*, Mesh*>, Batch*> batchOpened;
-		std::vector<Batch*> batchFreePool;
-		std::vector<Batch*> batchClosedPool;
+				std::vector<DrawElement> renderQueue;
+				FrustrumSceneQuerry sceneQuery;
+				VirtualEntityCollector collector;
+		#pragma endregion
 
-		// occlusion
-		bool m_enableOcclusionCulling = true;
-		std::vector<std::pair<float, OccluderComponent*>> m_occluders;
-		vec2i m_occlusionBufferSize;
-		float* m_occlusionCenterX = nullptr;
-		float* m_occlusionCenterY = nullptr;
-		float* m_occlusionDepth = nullptr;
-		std::vector<vec4f> occluderScreenVertices;
-		uint32_t* m_occlusionDepthColor = nullptr;
-		Texture occlusionTexture;
-		unsigned int occluderTriangles, occluderRasterizedTriangles, occluderPixelsTest, occlusionCulledInstances;
+		#pragma region Grid
 
-		// global params
-		GLuint m_globalMatricesID, m_environementLightingID, m_lightsID, m_clustersID, m_DebugShaderUniformID, m_ShadowFBO;
-		GlobalMatrices m_globalMatrices;
-		EnvironementLighting m_environementLighting;
-		SceneLights m_sceneLights;
-		DebugShaderUniform m_debugShaderUniform;
+				bool drawGrid;
+				unsigned int vboGridSize;
+				GLuint gridVAO, vertexbuffer, arraybuffer, colorbuffer, normalbuffer;
+				vec4f m_gridColor;
+		#pragma endregion
 
-		// light clustering param and shadows
-		bool m_shadowStableFit = true;
-		Texture lightClusterTexture;
-		Texture shadowCascadeTexture;
-		std::vector<ShadowDrawElement> shadowQueue;
-		OrientedBox shadowAreaBoxes[4];
-		float shadowAreaMargin;
-		float shadowAreaMarginLightDirection;
+		#pragma region OpenGL_States
 
-		// timing
-		unsigned int m_timerQueryID;
-		float m_GPUelapsedTime, m_GPUavgTime;
-		float m_OcclusionElapsedTime, m_OcclusionAvgTime;
+				GLuint lastVAO, fullscreenVAO;
+				Shader* lastShader;
+				bool shaderJustActivated;
+				Shader* fullscreenTriangle;
+				Shader* occlusionResultDraw;
+		#pragma endregion
 
+		#pragma region Batching_Instancing
+
+				bool m_enableInstancing = true;
+				bool m_hasInstancingShaders = false;
+				bool m_hasShadowCaster = false;
+				std::map<std::pair<Shader*, Mesh*>, Batch*> batchOpened;
+				std::vector<Batch*> batchFreePool;
+				std::vector<Batch*> batchClosedPool;
+
+				GLuint m_globalMatricesID;
+				GlobalMatrices m_globalMatrices;
+		#pragma endregion
+
+		#pragma region Occlusion_Culling
+
+				bool m_enableOcclusionCulling = true;
+				std::vector<std::pair<float, OccluderComponent*>> m_occluders;
+				vec2i m_occlusionBufferSize;
+				float* m_occlusionCenterX = nullptr;
+				float* m_occlusionCenterY = nullptr;
+				float* m_occlusionDepth = nullptr;
+				std::vector<vec4f> occluderScreenVertices;
+				Texture occlusionTexture;
+				unsigned int occluderTriangles, occluderRasterizedTriangles, occluderPixelsTest, occlusionCulledInstances;
+				float m_OcclusionElapsedTime, m_OcclusionAvgTime;
+		#pragma endregion
+
+		#pragma region Lights_And_LightClustering
+
+				struct EnvironementLighting
+				{
+					vec4f m_backgroundColor;
+					vec4f m_ambientColor;
+					vec4f m_directionalLightDirection;
+					vec4f m_directionalLightColor;
+
+					mat4f m_shadowCascadeProjections[4];
+					vec4f m_shadowFarPlanes;
+					float m_shadowBlendMargin;
+				};
+				struct Light
+				{
+					vec4f m_position;
+					vec4f m_direction;
+					vec4f m_color;
+					float m_range;
+					float m_intensity;
+					float m_inCutOff;
+					float m_outCutOff;
+				};
+				struct SceneLights
+				{
+					int m_lightCount;
+					unsigned int m_shadingConfiguration;
+					float m_clusterDepthScale;
+					float m_clusterDepthBias;
+					float m_near;
+					float m_far;
+					float m_tanFovX;
+					float m_tanFovY;
+
+					Light m_lights[MAX_LIGHT_COUNT];
+				};
+
+				GLuint m_environementLightingID, m_lightsID, m_clustersID;
+				SceneLights m_sceneLights;
+				EnvironementLighting m_environementLighting;
+				Texture lightClusterTexture;
+				Shader* lightClustering;
+		#pragma endregion
+
+		#pragma region Shadows
+				struct OmniShadows
+				{
+					int m_omniShadowLightIndexes[MAX_OMNILIGHT_SHADOW_COUNT];
+					float m_omniShadowLightNear[MAX_OMNILIGHT_SHADOW_COUNT];
+					mat4f m_shadowOmniProjections[6 * MAX_OMNILIGHT_SHADOW_COUNT];
+
+				};
+
+				bool m_shadowStableFit = true;
+				GLuint m_omniShadowsID, m_ShadowCascadeFBO, m_ShadowOmniFBO;
+				OmniShadows m_OmniShadows;
+				Texture shadowCascadeTexture;
+				Texture shadowOmniTextures;
+				std::vector<ShadowDrawElement> shadowCascadeQueue;
+				std::vector<LightComponent*> shadowOmniCaster;
+				BoxSceneQuerry omniLightQuery;
+				VirtualEntityCollector omniLightCollector;
+				OrientedBox shadowAreaBoxes[4];
+				float shadowAreaMargin;
+				float shadowAreaMarginLightDirection;
+				int baseLayerUniform;
+		#pragma endregion
+
+		#pragma region Metrics_And_Debug
+				struct DebugShaderUniform
+				{
+					vec4f vertexNormalColor;
+					vec4f faceNormalColor;
+					float wireframeEdgeFactor;
+					float occlusionResultDrawAlpha;
+					float occlusionResultCuttoff;
+				};
+
+				unsigned int m_timerQueryID;
+				unsigned int instanceDrawn, drawCalls, trianglesDrawn;
+				float m_GPUelapsedTime, m_GPUavgTime;
+				DebugShaderUniform m_debugShaderUniform;
+				GLuint m_DebugShaderUniformID, overviewFBO;
+				Texture overviewTexture;
+				Texture overviewDepth;
+		#pragma endregion
 
 #ifdef USE_IMGUI
 		bool m_drawLightDirection = false;

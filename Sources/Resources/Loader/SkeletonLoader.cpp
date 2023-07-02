@@ -22,92 +22,129 @@ bool SkeletonLoader::load(const std::string& resourceDirectory, const std::strin
             std::cerr << "ERROR : loading skeleton : " << fileName << " : fail to open file" << std::endl;
         return false;
     }
+    Variant& skelMap = *tmp;
+    if (skelMap.getType() != Variant::MAP)
+    {
+        PrintError(fileName.c_str(), "wrong file formating");
+        return false;
+    }
 
     //	import data
-    Joint joint;
-    try
+    const auto TryLoadAsVec4f = [](Variant& variant, const char* label, vec4f& destination)
     {
-		Variant& skeletonMap = *tmp;
-
-        //	Prevent parsing errors
-        if(skeletonMap.getMap().find("order") == skeletonMap.getMap().end())
-            throw std::runtime_error("no order array defined");
-        if(skeletonMap.getMap().find("jointList") == skeletonMap.getMap().end())
-            throw std::runtime_error("no joint array defined");
-
-        for(unsigned int i = 0; i < skeletonMap.getMap()["order"].getArray().size(); i++)
+        int sucessfullyParsed = 0;
+        auto it0 = variant.getMap().find(label);
+        if (it0 != variant.getMap().end() && it0->second.getType() == Variant::ARRAY)
         {
-            //	extract name & currentvariant alias
-            joint.sons.clear();
-            joint.name = skeletonMap.getMap()["order"].getArray()[i].toString();
-            Variant& jointVariant = skeletonMap.getMap()["jointList"].getMap()[joint.name];
-
-            //	extract relative bind position
-            if(jointVariant.getMap().find("relativeBindTransform") == jointVariant.getMap().end())
-                throw std::runtime_error("no relative transform defined for at least one joint");
-            for(int j = 0; j < 4; j++)
-                for(int k = 0; k < 4; k++)
-                    joint.relativeBindTransform[j][k] = (float) jointVariant.getMap()["relativeBindTransform"].getArray()[4 * j + k].toDouble();
-
-            //	search and extract parent index
-            try
+            auto varray = it0->second.getArray();
+            vec4f parsed = destination;
+            for (int i = 0; i < 4 && i < varray.size(); i++)
             {
-                std::string parentName = jointVariant.getMap()["parent"].toString();
-                for(unsigned int j = 0; j < skeletonMap.getMap()["order"].getArray().size(); j++)
-                    if(skeletonMap.getMap()["order"].getArray()[j].toString() == parentName)
-                    {
-                        joint.parent = (int) j;
-                        break;
-                    }
-            }
-            catch(std::exception&)
-            {
-                roots.push_back(i);
-                joint.parent = -1;
-            }
-
-            //	search and extract all sons index
-            try
-            {
-                for(unsigned int j = 0; j < jointVariant.getMap()["sons"].getArray().size(); j++)
+                auto& element = varray[i];
+                if (element.getType() == Variant::FLOAT)
                 {
-                    std::string sonName = jointVariant.getMap()["sons"].getArray()[j].toString();
-                    for(unsigned int k = 0; k < skeletonMap.getMap()["order"].getArray().size(); k++)
-                        if(skeletonMap.getMap()["order"].getArray()[k].toString() == sonName)
-                        {
-                            joint.sons.push_back(k);
-                            break;
-                        }
+                    parsed[i] = element.toFloat();
+                    sucessfullyParsed++;
+                }
+                else if (element.getType() == Variant::DOUBLE)
+                {
+                    parsed[i] = element.toDouble();
+                    sucessfullyParsed++;
+                }
+                else if (element.getType() == Variant::INT)
+                {
+                    parsed[i] = element.toInt();
+                    sucessfullyParsed++;
                 }
             }
-            catch(std::exception&) {}
+            destination = parsed;
+        }
+        return sucessfullyParsed;
+    };
+    const auto TryLoadAsFloat = [](Variant& variant, const char* label, float& destination)
+    {
+        auto it0 = variant.getMap().find(label);
+        if (it0 != variant.getMap().end())
+        {
+            if (it0->second.getType() == Variant::FLOAT)
+                destination = it0->second.toFloat();
+            else if (it0->second.getType() == Variant::DOUBLE)
+                destination = it0->second.toDouble();
+            else if (it0->second.getType() == Variant::INT)
+                destination = it0->second.toInt();
+            else return false;
+            return true;
+        }
+        return false;
+    };
 
-            //	add successfully parsed joint to list
-            joints.push_back(joint);
+    bones.clear();
+    auto it0 = skelMap.getMap().find("bones");
+    if (it0 != skelMap.getMap().end() && it0->second.getType() == Variant::ARRAY)
+    {
+        auto& vbones = it0->second.getArray();
+        int boneCount = 0;
+        for (int i = 0; i < vbones.size(); i++)
+        {
+            if (vbones[i].getType() != Variant::MAP)
+                continue;
+            boneCount++;
+        }
+        bones.assign(boneCount, Skeleton::Bone());
+
+        int index = 0;
+        for (int i = 0; i < vbones.size(); i++)
+        {
+            if (vbones[i].getType() != Variant::MAP)
+                continue;
+
+            auto& vbone = vbones[i];
+
+            //bones.push_back(Skeleton::Bone());
+            Skeleton::Bone& bone = bones[index];
+            bone.id = index;
+
+            auto it1 = vbone.getMap().find("boneName");
+            if (it1 != vbone.getMap().end() && it1->second.getType() == Variant::STRING)
+                bone.name = it1->second.toString();
+
+            float scale = 1.f;
+            vec4f position = vec4f(0, 0, 0, 1);
+            vec4f rotation = vec4f(0, 0, 0, 1);
+
+            TryLoadAsFloat(vbone, "scale", scale);
+            TryLoadAsVec4f(vbone, "pos", position);
+            TryLoadAsVec4f(vbone, "rot", rotation);
+            bone.relativeBindTransform = mat4f::TRS(position, quatf(rotation.w, rotation.x, rotation.y, rotation.z), vec4f(scale));
+
+            std::string parentName;
+            it1 = vbone.getMap().find("parentName");
+            if (it1 != vbone.getMap().end() && it1->second.getType() == Variant::STRING)
+                parentName = it1->second.toString();
+            if (!parentName.empty())
+            {
+                for (int j = 0; j < bones.size() - 1; j++)
+                {
+                    if (bones[j].name == parentName)
+                    {
+                        bone.parent = &bones[j];
+                        bones[j].sons.push_back(&bone);
+                        break;
+                    }
+                }
+            }
+
+            index++;
         }
     }
-    catch(const std::exception& e)
-    {
-        if(ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
-            std::cerr << "ERROR : loading shader : " << fileName << " : " << e.what() << std::endl;
-        roots.clear();
-        joints.clear();
-        return false;
-    }
-    if(roots.empty() || joints.empty())
-    {
-        roots.clear();
-        joints.clear();
-        return false;
-    }
 
-    return true;
+    return !bones.empty();
 }
 
 void SkeletonLoader::initialize(ResourceVirtual* resource)
 {
     Skeleton* skeleton = static_cast<Skeleton*>(resource);
-    skeleton->initialize(std::move(roots), std::move(joints));
+    skeleton->initialize(bones);
 }
 
 void SkeletonLoader::getResourcesToRegister(std::vector<ResourceVirtual*>& resourceList)

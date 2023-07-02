@@ -14,15 +14,12 @@
 #include <Utiles/ImguiConfig.h>
 #include <Physics/Shapes/Collider.h>
 #include <Renderer/CameraComponent.h>
+#include <Utiles/ProfilerConfig.h>
 
-#define APPROXIMATION_FACTOR 10.f
-//#define EPSILON 0.000001f
-#define SUPERSAMPLING_DELTA 0.01f
-
-#define SOLVER_MAX_ITERATIONS 5000
-#define SOLVER_ITERATION_NORMAL_GAIN 0.8f
-#define SOLVER_ITERATION_TANGENT_GAIN 0.5f
+//#define APPROXIMATION_FACTOR 10.f
+//#define SUPERSAMPLING_DELTA 0.01f
 #define SOLVER_ITERATION_THRESHOLD 10E-06f
+
 
 /*
 	https://www.sidefx.com/docs/houdini/nodes/dop/rigidbodysolver.html
@@ -67,6 +64,7 @@ void Physics::addMovingEntity(Entity* e)
 //	Public functions
 void Physics::stepSimulation(const float& elapsedTime, SceneManager* scene)
 {
+	SCOPED_CPU_MARKER("Physics Update");
 	if (elapsedTime == 0.f)
 		return;
 
@@ -106,176 +104,14 @@ void Physics::stepSimulation(const float& elapsedTime, SceneManager* scene)
 	clearTempoaryStruct(scene);
 }
 
-void Physics::debugDraw()
-{
-	if (!PhysicDebugWindowEnable)
-		return;
-
-	const vec4f clustersOffset = vec4f(0.004f);
-	const vec4f sweptOffset = vec4f(0.004f);
-	const float pointRadius = 0.01f;
-	const float depthLength = 10.f;
-	const float tangentLength = 0.3f;
-
-	for (unsigned int i = 0; i < clusters.size(); i++)
-	{
-		const Cluster& cluster = clusters[i];
-
-		if (drawClustersAABB)
-		{
-			Debug::color = Debug::magenta;
-			AxisAlignedBox box = cluster.dynamicEntities[0]->getParentEntity()->m_worldBoundingBox;
-			for (int j = 1; j < cluster.dynamicEntities.size(); j++)
-				box.add(cluster.dynamicEntities[j]->getParentEntity()->m_worldBoundingBox);
-			Debug::drawLineCube(mat4f::identity, box.min - clustersOffset, box.max + clustersOffset);
-		}
-
-		if (drawSweptBoxes)
-		{
-			for (const RigidBody* dynamicBody : cluster.dynamicEntities)
-			{
-				Debug::color = Debug::yellow;
-				Debug::drawLineCube(mat4f::identity, dynamicBody->sweptBox.min - sweptOffset, dynamicBody->sweptBox.max + sweptOffset);
-			}
-		}
-
-		if (drawCollisions)
-		{
-			for (const Constraint& constraint : cluster.constraints)
-			{
-				// point and collision frame
-				Debug::color = Debug::red;
-				Debug::drawSphere(constraint.worldPoint, pointRadius);
-				Debug::drawLine(constraint.worldPoint, constraint.worldPoint - (constraint.depth * depthLength) * constraint.axis[0]);
-				Debug::color = Debug::green;
-				Debug::drawLine(constraint.worldPoint, constraint.worldPoint + tangentLength * constraint.axis[1]);
-				Debug::color = Debug::blue;
-				Debug::drawLine(constraint.worldPoint, constraint.worldPoint + tangentLength * constraint.axis[2]);
-
-				// closing velocity
-				Debug::color = Debug::orange;
-				Debug::drawLine(constraint.worldPoint, constraint.worldPoint + constraint.computeClosingVelocity());
-
-				// computed impulse
-				Debug::color = Debug::yellow;
-				vec4f impulse = vec4f(0.f);
-				for (int k = 0; k < constraint.axisCount; k++)
-					impulse += constraint.accumulationLinear[k] * constraint.axis[k];
-				Debug::drawLine(constraint.worldPoint, constraint.worldPoint + impulse);
-			}
-		}
-	}
-
-#ifdef USE_IMGUI
-	if (m_drawCollidersAround && PhysicDebugWindowEnable)
-	{
-		m_collidersQuery.getResult().clear();
-		auto& list = m_colliderColector.getResult();
-		Debug::setDepthTest(m_enableZtest);
-		Debug::setBlending(false);
-		
-		std::vector<Component*> entityColliders;
-		for (int i = 0; i < list.size(); i++)
-		{
-			if (list[i] == mainCameraEntity)
-				continue;
-
-			entityColliders.clear();
-			list[i]->getAllComponents<Collider>(entityColliders);
-			for (int j = 0; j < entityColliders.size(); j++)
-			{
-				Collider* collider = static_cast<Collider*>(entityColliders[j]);
-				collider->drawDebug(vec4f(0, 1, 0, 1), m_drawCollidersWired);
-			}
-		}
-	}
-#endif // USE_IMGUI
-}
-void Physics::drawImGui(World& world)
-{
-#ifdef USE_IMGUI
-	ImGui::Begin("Physics");
-	ImGui::PushID(this);
-
-	CameraComponent* mainCamera = world.getMainCamera();
-	ImVec4 titleColor = ImVec4(1, 1, 0, 1);
-
-	ImGui::TextColored(titleColor, "Options");
-	ImGui::Checkbox("Draw sweept boxes", &drawSweptBoxes);
-	ImGui::Checkbox("Draw collisions", &drawCollisions);
-	ImGui::Checkbox("Draw clusters", &drawClustersAABB);
-	ImGui::Checkbox("Draw colliders around", &m_drawCollidersAround);
-	ImGui::SliderFloat("Draw colliders query size", &m_drawCollidersQuerySize, 5.f, 300.f);
-	ImGui::Checkbox("Draw colliders as wired", &m_drawCollidersWired);
-	ImGui::Checkbox("Z test", &m_enableZtest);
-
-	if (ImGui::Button("One frame update"))
-	{
-		stepSimulation(0.016f, &world.getSceneManager());
-	}
-
-	ImGui::Spacing(); ImGui::Spacing(); ImGui::Spacing();
-	ImGui::TextColored(titleColor, "Object thrower");
-
-	ImGui::Combo("Shape code", &m_shapeCode, "Sphere\0Box\0\0");
-	ImGui::DragFloat("Velocity", &m_velocity, 0.01f, 0.f, 100000.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
-	ImGui::DragFloat3("Size", &m_size[0], 0.01f, 0.00001f, 10.f);
-	if (ImGui::Button("Throw object !") && mainCamera)
-	{
-		std::string type;
-		switch (m_shapeCode)
-		{
-			case 1: type = "cube"; break;
-			default: type = "sphere"; break;
-		}
-
-		world.getEntityFactory().createObject(type, [&](Entity* object)
-			{
-				float radius = m_size.x;
-				object->setName("Throwed " + type);
-				object->setLocalTransformation(mainCamera->getParentEntity()->getWorldPosition() + mainCamera->getForward(), radius, quatf::identity);
-
-				RigidBody* rb = new RigidBody(RigidBody::DYNAMIC);
-				rb->setMass(radius * radius * radius);
-				rb->setBouncyness(0.05f);
-				rb->setFriction(0.2f);
-				rb->setDamping(0.001f);
-				rb->setGravityFactor(1.f);
-				rb->setLinearVelocity(m_velocity * mainCamera->getForward());
-				object->addComponent(rb);
-			});
-	}
-
-	ImGui::PopID();
-	ImGui::End();
-
-	if (m_drawCollidersAround)
-	{
-		m_collidersQuery.getResult().clear();
-		m_colliderColector.getResult().clear();
-		m_colliderColector.m_flags = (uint64_t)Entity::Flags::Fl_Collision;
-		m_colliderColector.m_exclusionFlags = 0;
-
-		if (mainCamera)
-		{
-			mainCameraEntity = mainCamera->getParentEntity();
-			vec4f center = mainCameraEntity->getWorldPosition();
-			vec4f hsize = vec4f(m_drawCollidersQuerySize);
-			m_collidersQuery.bbMin = center - hsize;
-			m_collidersQuery.bbMax = center + hsize;
-		}
-
-
-		world.getSceneManager().getEntities(&m_collidersQuery, &m_colliderColector);
-	}
-#endif // USE_IMGUI
-}
 //
 
 
 //	Pipeline
 void Physics::predictTransform(const float& elapsedTime)
 {
+	SCOPED_CPU_MARKER("PredictTransform");
+
 	for (std::set<Entity*>::iterator it = movingEntity.begin(); it != movingEntity.end();)
 	{
 		Entity* entity = *it;
@@ -315,6 +151,8 @@ void Physics::predictTransform(const float& elapsedTime)
 }
 void Physics::computeBoundingShapesAndDetectPairs(const float& elapsedTime, SceneManager* scene)
 {
+	SCOPED_CPU_MARKER("Update shapes and detect pairs");
+
 	for (std::set<Entity*>::iterator it = movingEntity.begin(); it != movingEntity.end(); ++it)
 	{
 		Entity* entity = *it;
@@ -386,6 +224,8 @@ void Physics::computeBoundingShapesAndDetectPairs(const float& elapsedTime, Scen
 }
 void Physics::computeDynamicClusters()
 {
+	SCOPED_CPU_MARKER("Create clusters");
+
 	std::set<Entity*> nodes;
 	for (auto it = dynamicPairs.begin(); it != dynamicPairs.end(); ++it)
 		nodes.insert(it->first);
@@ -432,6 +272,8 @@ void Physics::computeDynamicClusters()
 
 void Physics::createConstraint(const unsigned int& clusterIndex, const float& deltaTime)
 {
+	SCOPED_CPU_MARKER("CreateConstraint");
+
 	Cluster* cluster = &clusters[clusterIndex];
 
 	CollisionReport report;
@@ -523,10 +365,15 @@ void Physics::clearTempoaryStruct(SceneManager* scene)
 //
 
 //  Solveurs
+int g_maxIterationCount = 200;
+float g_contactNormalRelaxation = 0.8f;
+float g_contactTangentRelaxation = 0.5f;
 void Physics::solveConstraint(const unsigned int& clusterIndex, const float& deltaTime)
  {
+	SCOPED_CPU_MARKER("SolveConstraint");
+
 	Cluster* cluster = &clusters[clusterIndex];
-	for (int i = 0; i < SOLVER_MAX_ITERATIONS; i++)
+	for (int i = 0; i < g_maxIterationCount; i++)
 	{
 		float maxImpulseCorrection = 0.f;
 		for (unsigned int j = 0; j < cluster->constraints.size(); j++)
@@ -537,7 +384,7 @@ void Physics::solveConstraint(const unsigned int& clusterIndex, const float& del
 
 			if (std::abs(error) > SOLVER_ITERATION_THRESHOLD)
 			{
-				float impulseLength = SOLVER_ITERATION_NORMAL_GAIN * error / constraint.velocityChangePerAxis[0];
+				float impulseLength = g_contactNormalRelaxation * error / constraint.velocityChangePerAxis[0];
 				float totalImpulse = constraint.accumulationLinear[0] + impulseLength;
 				totalImpulse = clamp(totalImpulse, constraint.accumulationLinearMin[0], constraint.accumulationLinearMax[0]);
 				impulseLength = totalImpulse - constraint.accumulationLinear[0];
@@ -555,10 +402,10 @@ void Physics::solveConstraint(const unsigned int& clusterIndex, const float& del
 			}
 
 			error = constraint.targetLinearVelocity[1] - vec4f::dot(velocity, constraint.axis[1]);
-			float impulseLength1 = SOLVER_ITERATION_TANGENT_GAIN * error / constraint.velocityChangePerAxis[1];
+			float impulseLength1 = g_contactTangentRelaxation * error / constraint.velocityChangePerAxis[1];
 
 			error = constraint.targetLinearVelocity[2] - vec4f::dot(velocity, constraint.axis[2]);
-			float impulseLength2 = SOLVER_ITERATION_TANGENT_GAIN * error / constraint.velocityChangePerAxis[2];
+			float impulseLength2 = g_contactTangentRelaxation * error / constraint.velocityChangePerAxis[2];
 
 			if (constraint.frictionLimit)
 			{
@@ -685,5 +532,215 @@ void Physics::EntityGraph::getNeighbours(Entity* node, std::vector<Entity*>& res
 	}
 	else if(itnode == graph.end())
 		result.push_back(node);
+}
+//
+
+// Debug
+void Physics::debugDraw()
+{
+	SCOPED_CPU_MARKER("Physics Debug Draw");
+
+	if (!PhysicDebugWindowEnable)
+		return;
+
+	const vec4f clustersOffset = vec4f(0.004f);
+	const vec4f sweptOffset = vec4f(0.004f);
+	const float pointRadius = 0.01f;
+	const float depthLength = 10.f;
+	const float tangentLength = 0.3f;
+
+	for (unsigned int i = 0; i < clusters.size(); i++)
+	{
+		const Cluster& cluster = clusters[i];
+
+		if (drawClustersAABB)
+		{
+			Debug::color = Debug::magenta;
+			AxisAlignedBox box = cluster.dynamicEntities[0]->getParentEntity()->m_worldBoundingBox;
+			for (int j = 1; j < cluster.dynamicEntities.size(); j++)
+				box.add(cluster.dynamicEntities[j]->getParentEntity()->m_worldBoundingBox);
+			Debug::drawLineCube(mat4f::identity, box.min - clustersOffset, box.max + clustersOffset);
+		}
+
+		if (drawSweptBoxes)
+		{
+			for (const RigidBody* dynamicBody : cluster.dynamicEntities)
+			{
+				Debug::color = Debug::yellow;
+				Debug::drawLineCube(mat4f::identity, dynamicBody->sweptBox.min - sweptOffset, dynamicBody->sweptBox.max + sweptOffset);
+			}
+		}
+
+		if (drawCollisions)
+		{
+			std::vector<Debug::Vertex> debugCache;
+			debugCache.reserve(cluster.constraints.size() * 10);
+			Debug::color = Debug::red;
+			for (const Constraint& constraint : cluster.constraints)
+			{
+				Debug::drawPoint(constraint.worldPoint);
+				// point and collision frame
+				/*Debug::color = Debug::red;
+				//Debug::drawSphere(constraint.worldPoint, pointRadius);
+				Debug::drawLine(constraint.worldPoint, constraint.worldPoint - (constraint.depth * depthLength) * constraint.axis[0]);
+				Debug::color = Debug::green;
+				Debug::drawLine(constraint.worldPoint, constraint.worldPoint + tangentLength * constraint.axis[1]);
+				Debug::color = Debug::blue;
+				Debug::drawLine(constraint.worldPoint, constraint.worldPoint + tangentLength * constraint.axis[2]);
+
+				// closing velocity
+				Debug::color = Debug::orange;
+				Debug::drawLine(constraint.worldPoint, constraint.worldPoint + constraint.computeClosingVelocity());*/
+
+				// computed impulse
+				//Debug::color = Debug::yellow;
+				vec4f impulse = vec4f(0.f);
+				for (int k = 0; k < constraint.axisCount; k++)
+					impulse += constraint.accumulationLinear[k] * constraint.axis[k];
+				//Debug::drawLine(constraint.worldPoint, constraint.worldPoint + impulse);
+
+
+				debugCache.push_back({ constraint.worldPoint,  Debug::red });
+				debugCache.push_back({ constraint.worldPoint - (constraint.depth * depthLength) * constraint.axis[0],  Debug::red });
+				debugCache.push_back({ constraint.worldPoint,  Debug::green });
+				debugCache.push_back({ constraint.worldPoint + tangentLength * constraint.axis[1],  Debug::green });
+				debugCache.push_back({ constraint.worldPoint,  Debug::blue });
+				debugCache.push_back({ constraint.worldPoint + tangentLength * constraint.axis[2],  Debug::blue });
+				debugCache.push_back({ constraint.worldPoint,  Debug::orange });
+				debugCache.push_back({ constraint.worldPoint + constraint.computeClosingVelocity(),  Debug::orange });
+				debugCache.push_back({ constraint.worldPoint,  Debug::orange });
+				debugCache.push_back({ constraint.worldPoint + impulse,  Debug::yellow });
+			}
+			Debug::drawMultiplePrimitive(debugCache.data(), debugCache.size(), mat4f::identity, GL_LINES);
+		}
+	}
+
+#ifdef USE_IMGUI
+	if (m_drawCollidersAround && PhysicDebugWindowEnable)
+	{
+		m_collidersQuery.getResult().clear();
+		auto& list = m_colliderColector.getResult();
+		Debug::setDepthTest(m_enableZtest);
+		Debug::setBlending(false);
+		
+		std::vector<Component*> entityColliders;
+		for (int i = 0; i < list.size(); i++)
+		{
+			if (list[i] == mainCameraEntity)
+				continue;
+
+			entityColliders.clear();
+			list[i]->getAllComponents<Collider>(entityColliders);
+			for (int j = 0; j < entityColliders.size(); j++)
+			{
+				Collider* collider = static_cast<Collider*>(entityColliders[j]);
+				collider->drawDebug(vec4f(0, 1, 0, 1), m_drawCollidersWired);
+			}
+		}
+	}
+#endif // USE_IMGUI
+}
+
+#ifdef USE_IMGUI
+unsigned int g_GeneratedEntitiesIdCount = 0;
+Entity* g_GeneratedObjContainer = nullptr;
+#endif
+void Physics::drawImGui(World& world)
+{
+#ifdef USE_IMGUI
+	SCOPED_CPU_MARKER("Physics");
+
+	ImGui::Begin("Physics");
+	ImGui::PushID(this);
+
+	CameraComponent* mainCamera = world.getMainCamera();
+	ImVec4 titleColor = ImVec4(1, 1, 0, 1);
+
+	ImGui::TextColored(titleColor, "Infos");
+	ImGui::Text("Object count : %d", movingEntity.size());
+	ImGui::Text("Cluster count : %d", clusters.size());
+	ImGui::Spacing();
+
+	ImGui::TextColored(titleColor, "Options");
+	ImGui::SliderInt("Solver max iteration", &g_maxIterationCount, 5, 1000, "%d", ImGuiSliderFlags_AlwaysClamp);
+	ImGui::SliderFloat("Contact normal relaxation", &g_contactNormalRelaxation, 0.1f, 0.99f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+	ImGui::SliderFloat("Contact tangent relaxation", &g_contactTangentRelaxation, 0.1f, 0.99f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+	ImGui::Checkbox("Draw sweept boxes", &drawSweptBoxes);
+	ImGui::Checkbox("Draw collisions", &drawCollisions);
+	ImGui::Checkbox("Draw clusters", &drawClustersAABB);
+	ImGui::Checkbox("Draw colliders around", &m_drawCollidersAround);
+	ImGui::SliderFloat("Draw colliders query size", &m_drawCollidersQuerySize, 5.f, 300.f);
+	ImGui::Checkbox("Draw colliders as wired", &m_drawCollidersWired);
+	ImGui::Checkbox("Z test", &m_enableZtest);
+
+	if (ImGui::Button("One frame update"))
+	{
+		stepSimulation(0.016f, &world.getSceneManager());
+	}
+
+	ImGui::Spacing(); ImGui::Spacing(); ImGui::Spacing();
+	ImGui::TextColored(titleColor, "Object thrower");
+
+	ImGui::Combo("Shape code", &m_shapeCode, "Sphere\0Box\0\0");
+	ImGui::DragFloat("Velocity", &m_velocity, 0.01f, 0.f, 100000.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+	ImGui::DragFloat3("Size", &m_size[0], 0.01f, 0.00001f, 10.f);
+	if (ImGui::Button("Throw object !") && mainCamera)
+	{
+		std::string type;
+		switch (m_shapeCode)
+		{
+			case 1: type = "cube"; break;
+			default: type = "sphere"; break;
+		}
+
+		if (!g_GeneratedObjContainer)
+		{
+			g_GeneratedObjContainer = world.getEntityFactory().createEntity();
+			g_GeneratedObjContainer->setName("PhysicsObjectsGeneratedContainer");
+			g_GeneratedObjContainer->setLocalTransformation(vec4f::zero, 1.f, quatf::identity);
+			world.getSceneManager().addToRootList(g_GeneratedObjContainer);
+		}
+
+		world.getEntityFactory().createObject(type, [&](Entity* object)
+			{
+				float radius = m_size.x;
+				object->setName("Throwed " + type + " (" + std::to_string(g_GeneratedEntitiesIdCount++) + ")");
+				g_GeneratedObjContainer->addChild(object);
+				object->setLocalTransformation(mainCamera->getParentEntity()->getWorldPosition() + mainCamera->getForward(), radius, quatf::identity);
+
+				RigidBody* rb = new RigidBody(RigidBody::DYNAMIC);
+				rb->setMass(radius * radius * radius);
+				rb->setBouncyness(0.01f);
+				rb->setFriction(0.2f);
+				rb->setDamping(0.001f);
+				rb->setGravityFactor(1.f);
+				rb->setLinearVelocity(m_velocity * mainCamera->getForward());
+				object->addComponent(rb);
+			});
+	}
+
+	ImGui::PopID();
+	ImGui::End();
+
+	if (m_drawCollidersAround)
+	{
+		m_collidersQuery.getResult().clear();
+		m_colliderColector.getResult().clear();
+		m_colliderColector.m_flags = (uint64_t)Entity::Flags::Fl_Collision;
+		m_colliderColector.m_exclusionFlags = 0;
+
+		if (mainCamera)
+		{
+			mainCameraEntity = mainCamera->getParentEntity();
+			vec4f center = mainCameraEntity->getWorldPosition();
+			vec4f hsize = vec4f(m_drawCollidersQuerySize);
+			m_collidersQuery.bbMin = center - hsize;
+			m_collidersQuery.bbMax = center + hsize;
+		}
+
+
+		world.getSceneManager().getEntities(&m_collidersQuery, &m_colliderColector);
+	}
+#endif // USE_IMGUI
 }
 //

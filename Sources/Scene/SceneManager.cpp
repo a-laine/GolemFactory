@@ -9,10 +9,11 @@
 #include <Utiles/ImguiConfig.h>
 #include <Scene/FrustrumSceneQuerry.h>
 #include <Renderer/CameraComponent.h>
+#include <Utiles/ProfilerConfig.h>
 
 
 #ifdef USE_IMGUI
-bool HierarchyWindowEnable = false;
+bool HierarchyWindowEnable = true;
 bool SpatialPartitionningWindowEnable = false;
 #endif // USE_IMGUI
 
@@ -236,6 +237,7 @@ void SceneManager::getSceneNodes(VirtualSceneQuerry* collisionTest)
 }
 void SceneManager::getEntities(VirtualSceneQuerry* collisionTest, VirtualEntityCollector* entityCollector)
 {
+	SCOPED_CPU_MARKER("Scene querry");
 	getSceneNodes(collisionTest);
 	std::vector<const NodeVirtual*>& nodeList = collisionTest->getResult();
 
@@ -271,6 +273,8 @@ void SceneManager::drawSceneNodes()
 void SceneManager::drawImGuiHierarchy(World& world)
 {
 #ifdef USE_IMGUI
+	SCOPED_CPU_MARKER("SceneManager Hierarchy");
+
 	ImGui::Begin("Scene hierarchy");
 	ImGui::PushID(this);
 	ImGui::TextColored(ImVec4(1, 1, 0, 1), "Options");
@@ -348,6 +352,8 @@ void SceneManager::drawImGuiHierarchy(World& world)
 void SceneManager::drawImGuiSpatialPartitioning(World& _world)
 {
 #ifdef USE_IMGUI
+	SCOPED_CPU_MARKER("SceneManager Partitioning");
+
 	class DebugQuery : public FrustrumSceneQuerry
 	{
 		public:

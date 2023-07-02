@@ -7,6 +7,7 @@
 #include <EntityComponent/Component.hpp>
 #include <Resources/Joint.h>
 #include <Utiles/Mutex.h>
+#include <Physics/BoundingVolume.h>
 
 
 class Skeleton;
@@ -16,6 +17,7 @@ class SkeletonComponent : public Component
 {
 	GF_DECLARE_COMPONENT_CLASS(SkeletonComponent, Component)
 	public:
+		explicit SkeletonComponent();
 		explicit SkeletonComponent(const std::string& skeletonName);
 		virtual ~SkeletonComponent() override;
 
@@ -23,37 +25,33 @@ class SkeletonComponent : public Component
 		void setSkeleton(Skeleton* skeleton);
 
 		Skeleton* getSkeleton() const;
-		unsigned int getNbJoints() const;
+		unsigned int getNbBones() const;
 		const std::vector<mat4f>& getPose() const;
-        std::vector<mat4f> getInverseBindPose() const;
-		vec4f getJointPosition(const std::string& jointName);
-		//const std::vector<float>& getCapsules() const;
-		const std::vector<vec2i>& getSegmentsIndex() const;
-		const std::vector<float>& getSegmentsRadius() const;
+		void setPose(std::vector<mat4f> _pose);
+		const std::vector<mat4f>& getInverseBindPose() const;
+		vec4f getBonePosition(const std::string& jointName);
 
         bool isValid() const;
-		
-		void initToBindPose();
-		void computePose(const std::vector<JointPose>& input);
-		void computeCapsules(Mesh* mesh);
-		void initializeVBOVAO();
 
-		void drawBB();
-		const GLuint getCapsuleVAO() const;
-
+		bool load(Variant& jsonObject, const std::string& objectName) override;
+		void save(Variant& jsonObject) override;
 
 		void onAddToEntity(Entity* entity) override;
+		void onDrawImGui() override;
+
+		void recomputeBoundingBox();
+		const AxisAlignedBox& getBoundingBox() const;
 
 	private:
-		void computePose(std::vector<mat4f>& result, const std::vector<JointPose>& input, const mat4f& parentPose, unsigned int joint);
-
 		Skeleton* m_skeleton;
 
 		Mutex locker;
 		std::vector<mat4f> pose;
-		std::vector<float> capsules;
+		AxisAlignedBox boundingBox;
+		float skinnedBoundingRadius;
 
-		std::vector<vec2i> segmentIndex;
-		std::vector<float> segmentRadius;
-		GLuint  vao, segIndexBuffer, segRadiusBuffer;
+#ifdef USE_IMGUI
+		bool m_drawSkeleton = false;
+		bool m_drawBoundingBox = false;
+#endif
 };

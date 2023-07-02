@@ -13,7 +13,7 @@
 #include <glm/gtx/transform.hpp>*/
 
 
-struct Joint
+/*struct Joint
 {
 	Joint(const std::string& jointName = "unknown joint");
 
@@ -47,4 +47,4 @@ struct KeyLabel
 	unsigned int entry_key;
 	unsigned int exit_key;
 	bool loop;
-};
+};*/

@@ -12,53 +12,70 @@
 
 
 class Skeleton;
-class Animation;
+class AnimationClip;
 class Mesh;
+class SkeletonComponent;
 
 class AnimationComponent : public Component
 {
 	GF_DECLARE_COMPONENT_CLASS(AnimationComponent, Component)
 
-	friend struct AnimationTrack;
-
 	public:
-		explicit AnimationComponent(const std::string& animationName = "unknown");
+		explicit AnimationComponent();
 		virtual ~AnimationComponent() override;
 
 		void setAnimation(std::string animationName);
-		void setAnimation(Animation* animation);
-		Animation* getAnimation() const;
+		void setAnimation(AnimationClip* animation);
+		AnimationClip* getCurrentAnimation() const;
 
         bool isValid() const;
 
-		void launchAnimation(const std::string& labelName, unsigned int nbPoses, const bool& flaged = false);
-		void stopAnimation(const std::string& labelName);
+		void startAnimation(float speed, bool loop = true);
+		void stopAnimation();
+		void resumeAnimation();
+		void update(float elapsedTime);
 		bool isAnimationRunning();
-		bool isAnimationRunning(const std::string& animationName);
 
-		void updateAnimations(float step);
-		void blendAnimations(std::vector<JointPose>& result);
-		void cleanAnimationTracks(float step);
+		const std::vector<mat4f>& getSkeletonPose() const;
+		bool hasSkeletonAnimation() const;
+
+		bool load(Variant& jsonObject, const std::string& objectName) override;
+		void save(Variant& jsonObject) override;
+		void onAddToEntity(Entity* entity) override;
+		void onDrawImGui() override;
 
 
 	private:
-		struct AnimationTrack
+		//
+		void TryInitSkeletonPose();
+		void computePoseMatrices();
+		//
+
+
+		bool m_running;
+		bool m_looped;
+		float m_currentTime;
+		float m_speed;
+		
+		SkeletonComponent* m_skeletonComponent;
+		Skeleton* m_skeleton;
+		AnimationClip* m_animation;
+
+		struct BoneCurvesState
 		{
-			explicit AnimationTrack(const unsigned int& poseSize, const std::string& animation = "");
-			bool animate(const float& step, const AnimationComponent* const parent);
+			std::string m_boneName;
+			int m_skeletonBoneIndex;
 
-			std::string animationName;
-			int start, stop, exit, previous, next;
-			float time, uselessTime;
-			bool loop, flag;
-			std::vector<JointPose> pose;
-			unsigned int jointCounter;
+			int m_scaleKey;
+			int m_rotKey;
+			int m_posKey;
+
+			float m_scale;
+			vec4f m_position;
+			quatf m_rotation;
 		};
+		std::vector<BoneCurvesState> m_states;
 
-
-		//Skeleton* m_skeleton;		//!< Skeleton resource pointer
-		Animation* m_animation;	//!< Animation resource
-
-		std::list<AnimationTrack> currentAnimations;
+		std::vector<int> m_bones2state;
+		std::vector<mat4f> m_skeletonFinalPose;
 };
-

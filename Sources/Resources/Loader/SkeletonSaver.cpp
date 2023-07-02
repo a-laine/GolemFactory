@@ -21,28 +21,20 @@ void SkeletonSaver::save(Skeleton* skeleton, const std::string& resourcesPath, s
 	rootVariant.insert("order", Variant::ArrayType());
 
 	//	fill root variant structure
-	std::vector<Joint> jointList = skeleton->getJoints();
+	const std::vector<Skeleton::Bone>& jointList = skeleton->getBones();
 	for (unsigned int i = 0; i < jointList.size(); i++)
 	{
-		//	save skeleton joint vector order (!important)
-		rootVariant.getMap()["order"].getArray().push_back(Variant(jointList[i].name));
-
-		//	create joint variant
-		rootVariant.getMap()["jointList"].insert(jointList[i].name, Variant::MapType());
-		Variant& jointVariant = rootVariant.getMap()["jointList"].getMap()[jointList[i].name];
-
-		//	create parent attribute
-		if (jointList[i].parent >= 0)
-			jointVariant.insert("parent", Variant(jointList[jointList[i].parent].name));
-
-		//	create sons array attributes
-		if (!jointList[i].sons.empty())
-			jointVariant.insert("sons", Variant(Variant::ArrayType()));
-		for (unsigned int j = 0; j < jointList[i].sons.size(); j++)
-			jointVariant["sons"].getArray().push_back(Variant(jointList[jointList[i].sons[j]].name));
-
-		//	create bind matrix array
-		jointVariant.insert("relativeBindTransform", ToolBox::getFromMat4f(jointList[i].relativeBindTransform));
+		const Skeleton::Bone& bone = jointList[i];
+		Variant& boneVariant = rootVariant.getMap()["boneList"].insert(bone.name, Variant::MapType());
+		if (bone.parent)
+			boneVariant.insert("parent", bone.parent->name);
+		if (!bone.sons.empty())
+		{
+			auto& sons = boneVariant.insert("sons", Variant(Variant::ArrayType())).getArray();
+			for (unsigned int j = 0; j < bone.sons.size(); j++)
+				sons.push_back(Variant(bone.sons[j]->name));
+			boneVariant.insert("relativeBindTransform", ToolBox::getFromMat4f(bone.relativeBindTransform));
+		}
 	}
 
 	//	save into file

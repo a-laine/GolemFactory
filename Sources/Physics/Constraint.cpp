@@ -38,7 +38,7 @@ void Constraint::createFromReport(CollisionReport& report, const int& pointIndex
 	body1 = report.body1;
 	body2 = report.body2;
 	worldPoint = report.points[pointIndex];
-	depth = report.depths[pointIndex];
+	depth = std::min(report.depths[pointIndex], 0.02f);
 
 	axisCount = 3;
 

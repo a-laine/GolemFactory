@@ -145,6 +145,8 @@ void Collider::onDrawImGui()
 	{
 		if (m_shape)
 		{
+			ImGui::TextColored(componentColor, "Attributes");
+			ImGui::Indent();
 			bool edited = false;
 			switch (m_shape->type)
 			{
@@ -223,9 +225,12 @@ void Collider::onDrawImGui()
 				default:
 					break;
 			}
+			ImGui::Unindent();
 
-
+			ImGui::TextColored(componentColor, "Gizmos");
+			ImGui::Indent();
 			ImGui::Checkbox("Draw shape", &m_drawShape);
+			ImGui::Unindent();
 		}
 		ImGui::TreePop();
 	}

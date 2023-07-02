@@ -19,7 +19,7 @@ class Shader : public ResourceVirtual
         static const std::string& getDefaultName();
         static void setDefaultName(const std::string& name);
 
-        static int computeVariantCode(bool instanced, bool shadow, bool wireframe);
+        static int computeVariantCode(bool instanced, int shadow, bool wireframe);
 
         //  Miscellaneous
         enum class ShaderType

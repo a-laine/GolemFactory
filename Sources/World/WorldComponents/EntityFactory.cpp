@@ -14,6 +14,7 @@
 #include <Renderer/Lighting/LightComponent.h>
 #include <Renderer/OccluderComponent.h>
 #include <Utiles/ConsoleColor.cpp>
+#include <Animation/Animator.h>
 
 
 
@@ -146,12 +147,12 @@ void EntityFactory::createAnimatable(Entity* object, const std::string& meshName
 {
 	DrawableComponent* drawable = new DrawableComponent(meshName, shaderName);
 	SkeletonComponent* skeleton = new SkeletonComponent(skeletonName);
-	AnimationComponent* animation = new AnimationComponent(animationName);
-	skeleton->computeCapsules(drawable->getMesh());
-	skeleton->initializeVBOVAO();
+	//AnimationComponent* animation = new AnimationComponent(animationName);
+	//skeleton->computeCapsules(drawable->getMesh());
+	//skeleton->initializeVBOVAO();
 	object->addComponent(drawable);
 	object->addComponent(skeleton);
-	object->addComponent(animation);
+	//object->addComponent(animation);
 	
 	Collider* collider = new Collider(new Sphere(vec4f(0.f), 0.5f * (drawable->getMeshBBMax() - drawable->getMeshBBMin()).getNorm()));
 	object->addComponent(collider);
@@ -328,74 +329,33 @@ void EntityFactory::tryLoadTransform(Entity* object, Variant* variant)
 void EntityFactory::tryLoadComponents(Entity* object, Variant* variant, const std::string& assetPackName)
 {
 	// helpers
-	const auto TryLoadAsFloat = [](Variant& variant, const char* label, float& destination)
-	{
-		if (variant.getMap().find(label) != variant.getMap().end())
-		{
-			auto& v = variant[label];
-			if (v.getType() == Variant::FLOAT)
-				destination = v.toFloat();
-			else if (v.getType() == Variant::DOUBLE)
-				destination = v.toDouble();
-			else if (v.getType() == Variant::INT)
-				destination = v.toInt();
-			else
-				return false;
-			return true;
-		}
-		return false;
-	};
-	const auto TryLoadAsVec4f = [](Variant& variant, const char* label, vec4f& destination)
-	{
-		int sucessfullyParsed = 0;
-		auto it0 = variant.getMap().find(label);
-		if (it0 != variant.getMap().end() && it0->second.getType() == Variant::ARRAY)
-		{
-			auto varray = it0->second.getArray();
-			vec4f parsed = destination;
-			for (int i = 0; i < 4 && i < varray.size(); i++)
-			{
-				auto& element = varray[i];
-				if (element.getType() == Variant::FLOAT)
-				{
-					parsed[i] = element.toFloat();
-					sucessfullyParsed++;
-				}
-				else if (element.getType() == Variant::DOUBLE)
-				{
-					parsed[i] = element.toDouble();
-					sucessfullyParsed++;
-				}
-				else if (element.getType() == Variant::INT)
-				{
-					parsed[i] = element.toInt();
-					sucessfullyParsed++;
-				}
-			}
-			destination = parsed;
-		}
-		return sucessfullyParsed;
-	};
-	const auto TryLoadInt = [](Variant& variant, const char* label, int& destination)
-	{
-		auto it0 = variant.getMap().find(label);
-		if (it0 != variant.getMap().end() && it0->second.getType() == Variant::INT)
-		{
-			destination = it0->second.toInt();
-			return true;
-		}
-		return false;
-	};
-
 	std::string messageHeader = "Loading components of " + object->getName();
 	if (variant->getType() == Variant::MAP)
 	{
+		// skeletonComponent always before because :
+		//     - drawable component in order to retarget the mesh,
+		//     - animation component will do stuff if target entity has skeleton component,
+		//     - animator do the same,
+		SkeletonComponent* skeleton = nullptr;
+		auto it0 = variant->getMap().find("skeletonComponent");
+		if (it0 != variant->getMap().end() && it0->second.getType() == Variant::MAP)
+		{
+			skeleton = new SkeletonComponent();
+			if (skeleton->load(it0->second, object->getName()))
+				object->addComponent(skeleton);
+			else 
+			{
+				delete skeleton;
+				skeleton = nullptr;
+			}
+		}
+
 		// drawableComponent
-		auto it0 = variant->getMap().find("drawableComponent");
+		it0 = variant->getMap().find("drawableComponent");
 		if (it0 != variant->getMap().end() && it0->second.getType() == Variant::MAP)
 		{
 			DrawableComponent* drawable = new DrawableComponent();
-			if (drawable->load(it0->second, object->getName()))
+			if (drawable->load(it0->second, object->getName(), skeleton ? skeleton->getSkeleton() : nullptr))
 				object->addComponent(drawable);
 			else delete drawable;
 		}
@@ -428,6 +388,26 @@ void EntityFactory::tryLoadComponents(Entity* object, Variant* variant, const st
 			if (occluder->load(it0->second, object->getName()))
 				object->addComponent(occluder);
 			else delete occluder;
+		}
+
+		// animationComponent
+		it0 = variant->getMap().find("animationComponent");
+		if (it0 != variant->getMap().end() && it0->second.getType() == Variant::MAP)
+		{
+			AnimationComponent* animation = new AnimationComponent();
+			if (animation->load(it0->second, object->getName()))
+				object->addComponent(animation);
+			else delete animation;
+		}
+
+		// animator
+		it0 = variant->getMap().find("animator");
+		if (it0 != variant->getMap().end() && it0->second.getType() == Variant::MAP)
+		{
+			Animator* animator = new Animator();
+			if (animator->load(it0->second, object->getName()))
+				object->addComponent(animator);
+			else delete animator;
 		}
 	}
 }

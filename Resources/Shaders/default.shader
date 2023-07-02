@@ -6,59 +6,19 @@ Default
 	{
 		matrixArray : "struct array32";
 		overrideColor : "vec4";
+		lightClusters : "_globalLightClusters";
+		cascadedShadow : "_globalShadowCascades";
+		omniShadowArray : "_globalOmniShadow";
 	};
 	
-	includes :
+	includes : 
 	{
 		#version 430
-		
-		layout(std140, binding = 0) uniform GlobalMatrices
-		{
-			mat4 view;
-			mat4 projection;
-			vec4 cameraPosition;
-		};
-		layout(std140, binding = 1) uniform EnvironementLighting
-		{
-			vec4 m_backgroundColor;
-			vec4 m_ambientColor;
-			vec4 m_directionalLightDirection;
-			vec4 m_directionalLightColor;
-		};
-		
-		struct Light
-		{
-			vec4 m_position;
-			vec4 m_direction;
-			vec4 m_color;
-			float m_range;
-			float m_intensity;
-			float m_inCutOff;
-			float m_outCutOff;
-		};
-		layout(std140, binding = 2) uniform Lights
-		{
-		    int lightCount;
-			uint shadingConfiguration;
-			float clusterDepthScale;
-			float clusterDepthBias;
-			float near;
-			float far;
-			float tanFovX;
-			float tanFovY;
-			Light lights[254];
-		};
-		layout(std140, binding = 3) uniform DebugShaderUniform
-		{
-			vec4 vertexNormalColor;
-			vec4 faceNormalColor;
-			float wireframeEdgeFactor;
-			float occlusionResultDrawAlpha;
-			float occlusionResultCuttoff;
-		};
 	};
 	vertex : 
 	{
+		#include "UniformBuffers.cginc"
+		
 		// input
 		layout(location = 0) in vec4 position;
 		layout(location = 1) in vec4 normal;
@@ -105,6 +65,8 @@ Default
 	};
 	geometry : 
 	{
+		#include "UniformBuffers.cginc"
+		
 		#pragma WIRED_MODE
 		
 		layout(triangles) in;
@@ -149,6 +111,8 @@ Default
 	};
 	fragment : 
 	{
+		#include "UniformBuffers.cginc"
+		
 		// images and uniforms
 		layout(rgba32ui, binding = 3) readonly uniform uimage3D lightClusters;
 		uniform vec4 overrideColor = vec4(-1.0 , 0.0 , 0.0 , 0.0);
@@ -228,10 +192,10 @@ Default
 			#endif
 			
 			// compute base color depending on environement light (directional)
-			vec4 albedoColor = vec4(1.0);
+			vec4 albedoColor = vec4(0.9 , 0.9 , 0.9 , 1.0);
 			float diffuseDot = clamp(dot(normalize(fragmentNormal), normalize(-m_directionalLightDirection)), 0 , 1 );
 			vec4 diffuse = diffuseDot * m_directionalLightColor;
-			vec4 metalicParam = vec4(0.4 , 0.0 , 0.0 , 0.0);
+			vec4 metalicParam = vec4(0.0 , 0.0 , 0.0 , 0.0);
 			
 			vec4 viewDir = normalize(cameraPosition - fragmentPosition);
 			vec4 reflectDir = reflect(normalize(m_directionalLightDirection), fragmentNormal);  
@@ -297,7 +261,7 @@ Default
 			}
 			else if (overrideColor.x >= 0.0)
 			{
-				fragmentColor = (0.5 * diffuseDot  + 0.5) * overrideColor;
+				fragmentColor = (0.5 * diffuseDot + 0.3) * overrideColor;
 				fragmentColor.w = 1.0;
 			}
 			

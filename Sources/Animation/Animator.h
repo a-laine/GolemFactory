@@ -2,23 +2,38 @@
 
 #include <string>
 
-#include <Utiles/Singleton.h>
+
+#include <EntityComponent/Component.hpp>
+#include <Resources/AnimationGraph.h>
 
 
-class Entity;
+class Skeleton;
+class AnimationClip;
+class Mesh;
+class SkeletonComponent;
 
-class Animator : public Singleton<Animator>
+class Animator : public Component
 {
-	friend class Singleton<Animator>;
-
 	public:
-		void animate(Entity* object, float step);
-		void launchAnimation(Entity* object, const std::string& labelName, bool flaged = false);
-		void stopAnimation(Entity* object, const std::string& labelName);
-		bool isAnimationRunning(Entity* object, const std::string& animationName);
+		explicit Animator();
+		virtual ~Animator() override;
+
+		bool load(Variant& jsonObject, const std::string& objectName) override;
+		void save(Variant& jsonObject) override;
+		void onAddToEntity(Entity* entity) override;
+		void onDrawImGui() override;
+
+		bool isValid() const;
+		void update(float elapsedTime);
+
+		const std::vector<mat4f>& getSkeletonPose() const;
 
 	private:
-		Animator() = default;
-		~Animator() = default;
+		SkeletonComponent* m_skeletonComponent;
+		Skeleton* m_skeleton;
+		AnimationGraph* m_graph;
+		AnimationGraphData* m_graphData;
+		AnimationGraphRuntimeData m_runtimeData;
+		bool m_immutableData;
 };
 

@@ -1,6 +1,11 @@
 #include "Mesh.h"
 #include "Loader/MeshLoader.h"
 #include "Loader/AssimpLoader.h"
+#include "Skeleton.h"
+
+#ifdef USE_IMGUI
+    #include <Renderer/Renderer.h>
+#endif
 
 #include <Utiles/Assert.hpp>
 
@@ -244,6 +249,67 @@ void Mesh::initializeVAO()
 	glBindVertexArray(0);
 }
 
+void  Mesh::setBoneNames(std::vector<std::string>& names)
+{
+    boneNames.swap(names);
+}
+void Mesh::retargetSkin(const Skeleton* skeleton)
+{
+    if (!skeleton || !hasSkeleton())
+        return;
+
+    bool canRemap = true;
+    bool needRemap = false;
+    const std::vector<Skeleton::Bone>& skelBones = skeleton->getBones();
+    std::vector<std::string> newBoneNames;
+    newBoneNames.assign(skelBones.size(), "-unused-");
+    std::map<int, int> remapTable;
+
+    for (int i = 0; i < boneNames.size(); i++)
+    {
+        if (i < skelBones.size() && boneNames[i] == skelBones[i].name)
+        {
+            remapTable[i] = skelBones[i].id;
+            newBoneNames[i] = skelBones[i].name;
+        }
+        else
+        {
+            needRemap = true;
+            int targetIndex = -1;
+            for (int j = 0; j < skelBones.size(); j++)
+            {
+                if (boneNames[i] == skelBones[j].name)
+                {
+                    targetIndex = j;
+                    newBoneNames[j] = skelBones[j].name;
+                    break;
+                }
+            }
+
+            canRemap = targetIndex >= 0;
+            remapTable[i] = targetIndex;
+        }
+    }
+
+    if (!canRemap || !needRemap)
+        return;
+
+    boneNames.swap(newBoneNames);
+
+    for (int i = 0; i < bones.size(); i++)
+    {
+        for (int j = 0; j < 4; j++)
+        {
+            if (bones[i][j] < 0)
+                break;
+            bones[i][j] = remapTable[bones[i][j]];
+        }
+    }
+
+    glBindBuffer(GL_ARRAY_BUFFER, bonesBuffer);
+    glBufferData(GL_ARRAY_BUFFER, bones.size() * sizeof(vec4i), bones.data(), GL_STATIC_DRAW);
+}
+
 const GLuint Mesh::getVAO() const { return vao;}
 const GLuint Mesh::getBBoxVAO() const { return BBoxVao; }
 //
@@ -276,7 +342,7 @@ std::string Mesh::getLoaderId(const std::string& resourceName) const
 {
     size_t ext = resourceName.find_last_of('.');
     if(ext != std::string::npos && resourceName.substr(ext) != Mesh::extension)
-        return "assimp";
+        return "assimpMesh";
     else
         return extension;
 }
@@ -335,14 +401,59 @@ void Mesh::onDrawImGui()
 #ifdef USE_IMGUI
     ResourceVirtual::onDrawImGui();
 
-    ImGui::TextColored(ImVec4(1, 1, 0.5, 1), "Type infos");
+    ImGui::TextColored(ResourceVirtual::titleColorDraw, "Type infos");
     ImGui::Text("Fallback resource name : %s", defaultName.c_str());
     ImGui::Text("Directory : %s", directory);
     ImGui::Text("File extension : %s", extension);
 
     ImGui::Spacing();
-    ImGui::TextColored(ImVec4(1, 1, 0.5, 1), "Mesh infos");
+    ImGui::TextColored(ResourceVirtual::titleColorDraw, "Mesh infos");
     ImGui::Text("Vertices count : %d", getNumberVertices());
     ImGui::Text("Vaces count : %d", getNumberFaces());
+    ImGui::Spacing();
+
+    // overview
+    overviewAngle0 += overviewAngleSpeed;
+    if (overviewAngle0 > PI)
+        overviewAngle0 -= 2 * PI;
+
+    GLuint texid = Renderer::getInstance()->renderMeshOverview(this, overviewAngle0, overviewAngle1);
+    vec2i texSize = Renderer::getInstance()->getOverviewTextureSize();
+
+    if (!boneNames.empty())
+    {
+        ImGui::TextColored(ResourceVirtual::titleColorDraw, "Skin mapping");
+        for (int i = 0; i < boneNames.size(); i++)
+            ImGui::Text("%d : %s", i, boneNames[i].c_str());
+        ImGui::Spacing();
+    }
+
+    ImGui::TextColored(ResourceVirtual::titleColorDraw, "Overview");
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0, 0, 0, 0));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0, 0, 0, 0));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0, 0, 0, 0));
+
+    float ratio = (ImGui::GetContentRegionAvail().x - 5) / texSize.x;
+    ImGui::ImageButton((void*)texid, ImVec2(texSize.x * ratio, texSize.y * ratio), ImVec2(0, 0), ImVec2(1, 1), -1, ImColor(25, 25, 25, 255), ImColor(255,255,255,255));
+    ImGui::PopStyleColor(3);
+
+    ImVec2 mousePositionAbsolute = ImGui::GetMousePos();
+    ImVec2 screenPositionAbsolute = ImGui::GetItemRectMin();
+    ImVec2 mousePositionRelative = ImVec2(mousePositionAbsolute.x - screenPositionAbsolute.x, mousePositionAbsolute.y - screenPositionAbsolute.y);
+    if (ImGui::IsItemHovered())
+    {
+        if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+        {
+            clickPos = mousePositionRelative;
+        }
+        if (ImGui::IsMouseDown(ImGuiMouseButton_Left))
+        {
+            overviewAngle0 = 0.02f * (mousePositionRelative.x - clickPos.x);
+            overviewAngle1 = 0.02f * (mousePositionRelative.y - clickPos.y);
+            overviewAngle1 = clamp(overviewAngle1, -1.2f, 1.2f);
+        }
+    }
+    ImGui::SliderFloat("Rotation speed", &overviewAngleSpeed, 0.f, 0.1f);
+
 #endif
 }

@@ -12,7 +12,7 @@
 
 //int GJK::max_iteration = 50;
 bool GJK::verbose = false;
-bool GJK::gizmos = true;
+bool GJK::gizmos = false;
 
 
 //	Public functions

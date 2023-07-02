@@ -123,7 +123,7 @@ void HouseGenerator::getHouse(Entity* house, unsigned int seed, int d, int p)
     mesh->initialize(verticesArray, normalesArray, uvArray, facesArray, bonesArray, weightsArray);
 	ResourceManager::getInstance()->addResource(mesh);				//	add mesh to resources manager for instance creation
 
-	DrawableComponent* drawable = new DrawableComponent(houseName);
+	DrawableComponent* drawable = new DrawableComponent(houseName, "default");
 	house->addComponent(drawable);
 
 	Collider* collider = new Collider(new OrientedBox(mat4f::identity, drawable->getMeshBBMin(), drawable->getMeshBBMax()));

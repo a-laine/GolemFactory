@@ -43,7 +43,7 @@ void ResourceVirtual::assign(const ResourceVirtual* other)
 void ResourceVirtual::onDrawImGui()
 {
 #ifdef USE_IMGUI
-    ImGui::TextColored(ImVec4(1, 1, 0.5, 1), "Sharable infos");
+    ImGui::TextColored(ResourceVirtual::titleColorDraw, "Sharable infos");
     ImGui::Text("Name : %s", name.c_str());
     ImGui::Text("Reference count : %d", count.load());
     ImGui::Spacing();

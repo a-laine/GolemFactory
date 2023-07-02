@@ -188,7 +188,7 @@
     <ClCompile Include="..\..\Sources\Scene\VirtualSceneQuerry.cpp">
       <Filter>Fichiers sources\Scene</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Sources\Resources\Animation.cpp">
+    <ClCompile Include="..\..\Sources\Resources\AnimationClip.cpp">
       <Filter>Fichiers sources\Resources</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Sources\Resources\Font.cpp">
@@ -403,6 +403,12 @@
     </ClCompile>
     <ClCompile Include="..\..\Sources\Renderer\RendererRenderStages.cpp">
       <Filter>Fichiers sources\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Sources\Resources\AnimationGraph.cpp">
+      <Filter>Fichiers sources\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Sources\Resources\Loader\AnimationGraphLoader.cpp">
+      <Filter>Fichiers sources\Resources\Loader</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -736,7 +742,7 @@
     <ClInclude Include="..\..\Sources\Resources\Texture.h">
       <Filter>Fichiers sources\Resources</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Sources\Resources\Animation.h">
+    <ClInclude Include="..\..\Sources\Resources\AnimationClip.h">
       <Filter>Fichiers sources\Resources</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Sources\Resources\Font.h">
@@ -804,6 +810,15 @@
     </ClInclude>
     <ClInclude Include="..\..\Sources\Renderer\OccluderComponent.h">
       <Filter>Fichiers sources\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Utiles\ProfilerConfig.h">
+      <Filter>Fichiers sources\Utiles</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Resources\AnimationGraph.h">
+      <Filter>Fichiers sources\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Resources\Loader\AnimationGraphLoader.h">
+      <Filter>Fichiers sources\Resources\Loader</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
