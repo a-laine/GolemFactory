@@ -77679,9 +77679,9 @@
 				"skeletonName" : "PolygonDungeonCharacters"
 			},
 			"animationComponent" : {
-				"animationName" : "male_move_walk_front",
+				"animationName" : "male_move_walk_front_left",
 				"looped" : true,
-				"speed" : 0.5,
+				"speed" : 1.0,
 			}
         },
         {

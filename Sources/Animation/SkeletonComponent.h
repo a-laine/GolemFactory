@@ -27,7 +27,8 @@ class SkeletonComponent : public Component
 		Skeleton* getSkeleton() const;
 		unsigned int getNbBones() const;
 		const std::vector<mat4f>& getPose() const;
-		void setPose(std::vector<mat4f> _pose);
+		void setPose(const std::vector<mat4f>& _pose);
+		void swapPose(std::vector<mat4f>& _pose);
 		const std::vector<mat4f>& getInverseBindPose() const;
 		vec4f getBonePosition(const std::string& jointName);
 

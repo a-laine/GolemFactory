@@ -13,7 +13,7 @@
 
 
 #ifdef USE_IMGUI
-bool HierarchyWindowEnable = true;
+bool HierarchyWindowEnable = false;
 bool SpatialPartitionningWindowEnable = false;
 #endif // USE_IMGUI
 

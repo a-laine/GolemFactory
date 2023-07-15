@@ -116,7 +116,7 @@ int main()
 	application.initGLEW(1);
 	initManagers();
 
-	AnimationGraph* animgraph = ResourceManager::getInstance()->getResource<AnimationGraph>("humanoid");
+	//AnimationGraph* animgraph = ResourceManager::getInstance()->getResource<AnimationGraph>("humanoid");
 
 	//	Test scene
 		EventHandler::getInstance()->setCursorMode(true);
@@ -1090,18 +1090,23 @@ void updates(float elapseTime)
 		world.updateObject(frustrumCamera);
 	}
 
-	extern std::vector<AnimationComponent*> g_allAnimations;
-	for (AnimationComponent* comp : g_allAnimations)
+	if (physicsTimeSpeed != 0.f)
 	{
-		if (comp && comp->isValid())
-			comp->update(0.033f);
+		float dt = 0.001f * elapseTime;
+		extern std::vector<AnimationComponent*> g_allAnimations;
+		for (AnimationComponent* comp : g_allAnimations)
+		{
+			if (comp && comp->isValid())
+				comp->update(dt);
+		}
+		extern std::vector<Animator*> g_allAnimator;
+		for (Animator* comp : g_allAnimator)
+		{
+			if (comp && comp->isValid())
+				comp->update(dt);
+		}
 	}
-	extern std::vector<Animator*> g_allAnimator;
-	for (Animator* comp : g_allAnimator)
-	{
-		if (comp && comp->isValid())
-			comp->update(0.033f);
-	}
+
 
 	// Map streaming
 	world.getMapPtr()->update(freeflyCamera->getWorldPosition());

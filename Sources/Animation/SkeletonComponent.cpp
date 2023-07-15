@@ -106,7 +106,12 @@ const std::vector<mat4f>& SkeletonComponent::getPose() const
 	return pose;
 }
 
-void SkeletonComponent::setPose(std::vector<mat4f> _pose)
+void SkeletonComponent::setPose(const std::vector<mat4f>& _pose)
+{
+	pose = _pose;
+}
+
+void SkeletonComponent::swapPose(std::vector<mat4f>& _pose)
 {
 	pose = _pose;
 }

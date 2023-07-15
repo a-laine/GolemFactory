@@ -12,6 +12,7 @@ class AnimationClip : public ResourceVirtual
 {
 	friend class AnimationComponent;
     friend class AnimationGraph;
+    //friend class AnimationGraph::StateMachine;
     public:
         static char const * const directory;
         static char const * const extension;
@@ -48,6 +49,8 @@ class AnimationClip : public ResourceVirtual
             std::vector<Curve4DData> m_positionCurve; // ->faster if we have w
             std::vector<Curve4DData> m_rotationCurve; // ->vector will be casted as Quat
         };
+        std::vector<BoneCurves> m_boneCurves;
+        float m_duration;
         //
 
         //  Default
@@ -73,7 +76,5 @@ class AnimationClip : public ResourceVirtual
     protected:
         //	Attributes
         static std::string defaultName;
-        float m_duration;
-        std::vector<BoneCurves> m_boneCurves;
 		//
 };

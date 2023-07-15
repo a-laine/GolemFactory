@@ -7,7 +7,7 @@
 #include <Utiles/ProfilerConfig.h>
 
 #ifdef USE_IMGUI
-bool ResourcesWindowEnable = true;
+bool ResourcesWindowEnable = false;
 #endif
 
 //  Default
@@ -180,10 +180,10 @@ void ResourceManager::drawImGui(World& world)
 
     ImGui::Spacing(); ImGui::Spacing();
 
-    const char* TabNames[] = { "Meshes", "Materials",  "Textures" ,"Shaders", "Skeletons", "Animations", "Fonts" };
+    const char* TabNames[] = { "Meshes", "Materials",  "Textures" ,"Shaders", "Skeletons", "Animations", "Fonts", "AnimGraph"};
     ResourceVirtual::ResourceType TabTypes[] = { ResourceVirtual::ResourceType::MESH, ResourceVirtual::ResourceType::MATERIAL,
         ResourceVirtual::ResourceType::TEXTURE, ResourceVirtual::ResourceType::SHADER, ResourceVirtual::ResourceType::SKELETON,
-        ResourceVirtual::ResourceType::ANIMATION, ResourceVirtual::ResourceType::FONT };
+        ResourceVirtual::ResourceType::ANIMATION, ResourceVirtual::ResourceType::FONT, ResourceVirtual::ResourceType::ANIMATION_GRAPH };
     
     if (ImGui::BeginTabBar("ResourceTabBar", ImGuiTabBarFlags_None))
     {

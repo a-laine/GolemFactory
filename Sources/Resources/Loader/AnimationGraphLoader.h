@@ -18,10 +18,14 @@ class AnimationGraphLoader : public IResourceLoader
     private:
         std::string getFileName(const std::string& resourceDirectory, const std::string& fileName) const;
 
-        unsigned int m_entryState;
-        std::vector<AnimationGraphState> m_states;
-        std::vector<AnimationGraphTransition> m_transitions;
+        void loadStateMachine(const std::string& fileName, Variant& variant, std::vector<AG::StateMachine>& targetArray, std::vector<std::string>& _subGrapTarget);
+        void loadStateMachineData(const std::string& fileName, Variant& variant, std::vector<AG::StateMachine::StateMachineData>& targetData);
+        void loadBlendTree(const std::string& fileName, Variant& variant, std::vector<AG::BlendTree>& targetArray, std::vector<std::string>& _subGrapTarget);
+        void loadBlendTreeData(const std::string& fileName, Variant& variant, std::vector<AG::BlendTree::BlendTreeData>& targetData);
 
-        std::map<std::string, AnimationGraphData> m_dataVariant;
-        std::vector<AnimationGraphParameter> m_parameters;
+        std::map<std::string, int> paramIds;
+
+        std::vector<AnimationGraph::Layer> m_layers;
+        std::map<std::string, std::vector<AnimationGraph::LayerData>> m_variants;
+        std::vector<AnimationParameter> m_parameters;
 };

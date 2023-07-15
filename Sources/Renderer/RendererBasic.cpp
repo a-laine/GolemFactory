@@ -22,7 +22,7 @@
 #define MAX_INSTANCE 32
 
 #ifdef USE_IMGUI
-bool RenderingWindowEnable = false;
+bool RenderingWindowEnable = true;
 #endif
 
 

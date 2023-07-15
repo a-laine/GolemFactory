@@ -30,6 +30,7 @@ class Debug : public Singleton<Debug>
 
 		//  Draw functions
 		static void setDepthTest(bool enable);
+		static void setFaceCulling(bool enable);
 		static void setBlending(bool enable);
 
 		static void drawPoint(const vec4f& p);

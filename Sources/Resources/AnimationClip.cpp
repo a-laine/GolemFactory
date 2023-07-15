@@ -3,9 +3,10 @@
 
 #include <Utiles/Assert.hpp>
 
-//#include "imgui_plot.h"
-#define IMGUI_DEFINE_MATH_OPERATORS
-#include <imgui_internal.h>
+#ifdef USE_IMGUI
+    #define IMGUI_DEFINE_MATH_OPERATORS
+    #include <imgui_internal.h>
+#endif
 
 //  Static attributes
 char const * const AnimationClip::directory = "Animations/";
@@ -22,52 +23,6 @@ AnimationClip::~AnimationClip() {}
 //
 
 //	Public functions
-/*void AnimationClip::initialize(const std::vector<KeyFrame>& AnimationClips)
-{
-    GF_ASSERT(state == INVALID);
-    if(!AnimationClips.empty())
-    {
-        //state = LOADING;
-        timeLine = AnimationClips;
-        state = VALID;
-    }
-}
-
-void AnimationClip::initialize(std::vector<KeyFrame>&& AnimationClips)
-{
-    GF_ASSERT(state == INVALID);
-    if(!AnimationClips.empty())
-    {
-        //state = LOADING;
-        timeLine = std::move(AnimationClips);
-        state = VALID;
-    }
-}
-
-void AnimationClip::initialize(const std::vector<KeyFrame>& AnimationClips, const std::map<std::string, KeyLabel>& names)
-{
-    GF_ASSERT(state == INVALID);
-    if(!AnimationClips.empty())
-    {
-        //state = LOADING;
-        timeLine = AnimationClips;
-        labels = names;
-        state = VALID;
-    }
-}
-
-void AnimationClip::initialize(std::vector<KeyFrame>&& AnimationClips, std::map<std::string, KeyLabel>&& names)
-{
-    GF_ASSERT(state == INVALID);
-    if(!AnimationClips.empty())
-    {
-        //state = LOADING;
-        timeLine = std::move(AnimationClips);
-        labels = std::move(names);
-        state = VALID;
-    }
-}*/
-
 void AnimationClip::initialize(std::vector<BoneCurves>& _boneCurves, float _duration)
 {
     m_boneCurves.swap(_boneCurves);
@@ -85,31 +40,6 @@ void AnimationClip::clear()
         state = INVALID;
     }
 }
-
-/*std::vector<mat4f> AnimationClip::getKeyPose(const unsigned int& keyFrame, const std::vector<unsigned int>& roots, const std::vector<Joint>& hierarchy) const
-{
-	std::vector<mat4f> pose(timeLine[0].poses.size(), mat4f(1.f));
-	for (unsigned int i = 0; i < roots.size() && keyFrame < timeLine.size(); i++)
-		computePose(keyFrame, pose, mat4f(1.f), roots[i], hierarchy);
-	return pose;
-}
-std::pair<int, int> AnimationClip::getBoundingKeyFrameIndex(float time) const
-{
-	int previous = -1;
-	int next = -1;
-	for (unsigned int i = 0; i < timeLine.size(); i++)
-	{
-		if (timeLine[i].time >= time)
-		{
-			previous = i - 1;
-			next = i;
-			break;
-		}
-	}
-	return std::pair<int, int>(previous, next);
-}
-const std::vector<KeyFrame>& AnimationClip::getTimeLine() const { return timeLine; }
-const std::map<std::string, KeyLabel>& AnimationClip::getLabels() const { return labels; }*/
 
 std::string AnimationClip::getIdentifier(const std::string& resourceName)
 {
@@ -130,19 +60,6 @@ float AnimationClip::getDuration() const { return m_duration; }
 
 const std::string& AnimationClip::getDefaultName() { return defaultName; }
 void AnimationClip::setDefaultName(const std::string& name) { defaultName = name; }
-//
-
-//	Protected functions
-/*void AnimationClip::computePose(const unsigned int& keyFrame, std::vector<mat4f>& pose, const mat4f& parentPose, unsigned int joint, const std::vector<Joint>& hierarchy) const
-{
-	mat4f t = mat4f::translate(mat4f::identity, timeLine[keyFrame].poses[joint].position);
-    mat4f r = mat4f(timeLine[keyFrame].poses[joint].rotation);
-    mat4f s = mat4f::scale(mat4f::identity, timeLine[keyFrame].poses[joint].scale);
-
-	pose[joint] = parentPose * t * r * s;
-	for (unsigned int i = 0; i < hierarchy[joint].sons.size(); i++)
-		computePose(keyFrame, pose, pose[joint], hierarchy[joint].sons[i], hierarchy);
-}*/
 //
 
 //

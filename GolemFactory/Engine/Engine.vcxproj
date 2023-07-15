@@ -232,6 +232,9 @@
     <ClCompile Include="..\..\Sources\Renderer\RendererRenderStages.cpp" />
     <ClCompile Include="..\..\Sources\Resources\AnimationClip.cpp" />
     <ClCompile Include="..\..\Sources\Resources\AnimationGraph.cpp" />
+    <ClCompile Include="..\..\Sources\Resources\AnimationGraphStateMachine.cpp" />
+    <ClCompile Include="..\..\Sources\Resources\AnimationGraphStructs.cpp" />
+    <ClCompile Include="..\..\Sources\Resources\AnimationGraphBlendTree.cpp" />
     <ClCompile Include="..\..\Sources\Resources\Font.cpp" />
     <ClCompile Include="..\..\Sources\Resources\Joint.cpp" />
     <ClCompile Include="..\..\Sources\Resources\Loader\AnimationGraphLoader.cpp" />
@@ -361,6 +364,9 @@
     <ClInclude Include="..\..\Sources\Renderer\Renderer.h" />
     <ClInclude Include="..\..\Sources\Resources\AnimationClip.h" />
     <ClInclude Include="..\..\Sources\Resources\AnimationGraph.h" />
+    <ClInclude Include="..\..\Sources\Resources\AnimationGraphStateMachine.h" />
+    <ClInclude Include="..\..\Sources\Resources\AnimationGraphStructs.h" />
+    <ClInclude Include="..\..\Sources\Resources\AnimationGraphBlendTree.h" />
     <ClInclude Include="..\..\Sources\Resources\Font.h" />
     <ClInclude Include="..\..\Sources\Resources\IResourceLoader.h" />
     <ClInclude Include="..\..\Sources\Resources\Joint.h" />

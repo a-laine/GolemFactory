@@ -1,134 +1,64 @@
 #pragma once
 
 #include "ResourceVirtual.h"
-#include <Resources/AnimationClip.h>
+#include "AnimationClip.h"
+#include "AnimationGraphStructs.h"
 #include <Utiles/Parser/Variant.h>
 
-
-// GRAPH STRUCTURE (all sharable by instances)
-struct AnimationGraphTransition;
-
-struct AnimationGraphState
-{
-	std::string m_name;
-	unsigned int id; // id in vector<AnimationGraphState>
-	std::vector<AnimationGraphTransition*> m_transitionOut;
-};
-
-struct AnimationGraphParameter
-{
-	static const char* g_ParameterTypeCombo;
-	enum ParameterType { TRIGGER = 0, BOOL, INT, FLOAT };
-	ParameterType m_type;
-
-	typedef union
-	{
-		bool Bool;
-		int Int;
-		float Float;
-	} Param;
-	Param m_value;
-	std::string m_name;
-};
-struct AnimationGraphCondition
-{
-	unsigned int parameterId; // in order to get the right param for evaluation
-	enum ComparisonType { GREATER, LESS, EQUALS, NOT_EQUALS };
-	ComparisonType m_comparisonType;
-	AnimationGraphParameter m_parameter;
-
-	bool evaluate(const AnimationGraphParameter& _comparisonParameter) const;
-};
-
-struct AnimationGraphTransition
-{
-	AnimationGraphState* m_stateFrom;
-	AnimationGraphState* m_stateTo;
-
-	float m_duration;
-	std::vector<AnimationGraphCondition> m_conditions;
-};
+#include "AnimationGraphStateMachine.h"
+#include "AnimationGraphBlendTree.h"
 
 
-
-
-
-// OVERRIDE / VARIANTS (sharable per instance but permit some indirection, or can be copied to full override per instance)
-struct AnimationGraphStateData
-{
-	AnimationClip* m_animation;
-	float m_speed;
-};
-
-struct AnimationGraphData
-{
-	~AnimationGraphData();
-
-	std::string m_name;
-	std::vector<AnimationGraphStateData> m_statesData; // same size and order as graph.m_states
-};
-
-
-// RUNTIME DATA (not sharable per instances)
 class Skeleton;
-struct AnimationGraphRuntimeData
-{
-	struct BoneCurvesState
-	{
-		std::string m_boneName;
-		int m_skeletonBoneIndex;
-
-		int m_scaleKey;
-		int m_rotKey;
-		int m_posKey;
-
-		float m_scale;
-		vec4f m_position;
-		quatf m_rotation;
-	};
-
-	std::vector<AnimationGraphParameter> m_parameters;
-
-	float m_stateTime;
-	unsigned int m_currentStateIndex;
-	std::vector<BoneCurvesState> m_currentStateEvaluation;
-	std::vector<int> m_bones2currentStateEvaluation;
-
-	float m_transitionTime, m_targetStateTime;
-	AnimationGraphTransition* m_currentTransition;
-	std::vector<BoneCurvesState> m_currentTargetEvaluation;
-	std::vector<int> m_bones2currentTargetEvaluation;
-
-	Skeleton* m_skeleton;
-	std::vector<mat4f> m_skeletonFinalPose;
-};
-
-
 class AnimationGraph : public ResourceVirtual
 {
 	public:
+		using Evaluation = std::vector<BoneCurvesState>;
+		using ParamList = std::vector<AnimationParameter>;
 		static char const* const directory;
 		static char const* const extension;
 
+		struct Layer
+		{
+			std::string m_name;
+			std::vector<AG::StateMachine> m_stateMachines;
+			std::vector<AG::BlendTree> m_blendTrees;
+			std::vector<std::string> m_subGraphNames;
+			int stateMachineEntryId;
+			int m_blendTreeEntryId;
+		};
+		struct LayerData
+		{
+			std::vector<AG::StateMachine::StateMachineData> m_stateMachinesData;
+			std::vector<AG::BlendTree::BlendTreeData> m_blendTreesData;
+		};
+		struct LayerRuntime
+		{
+			std::vector<AG::StateMachine::StateMachineRuntime> m_stateMachinesRuntime;
+			std::vector<AG::BlendTree::BlendTreeRuntime> m_blendTreesRuntime;
+		};
+
+
+
+		// constructor / destructor
 		AnimationGraph(const std::string& _graphName = "unknown");
 		~AnimationGraph();
 
 		// initialization
-		void initialize(std::vector<AnimationGraphState>& _states, std::vector<AnimationGraphTransition>& _transitions, unsigned int _entryState);
-		void setDefaultParameters(std::vector<AnimationGraphParameter>& _parameters);
-		void setVariants(std::map<std::string, AnimationGraphData>& _variants);
-		//void addVariant(const std::string& _variantName, AnimationGraphData* _variantData);
+		void initialize(std::vector<Layer>& _layers);
+		void setParameters(std::vector<AnimationParameter>& _parameters);
+		void setVariants(std::map<std::string, std::vector<LayerData>>& _variants);
+		void getRuntime(const std::vector<LayerData>& _data, std::vector<LayerRuntime>& _targetRuntime) const;
+
+		// set / get
+		const std::vector<Layer>& getLayers() const;
 
 		// instance copy functions
-		std::vector<AnimationGraphParameter> getParametersCopy() const;
-		const AnimationGraphData* getVariant(const std::string& _name) const;
-		unsigned int getEntryState() const;
+		std::vector<AnimationParameter> getParametersCopy() const;
+		const std::vector<LayerData>* getVariant(const std::string& _name) const;
 
 		// evaluation of the graph
-		const std::vector<AnimationGraphState>& getStates() const;
-		bool setState(unsigned int _stateId, const AnimationGraphData& _data, AnimationGraphRuntimeData& _runtimeData) const;
-		bool setState(const std::string& _stateName, const AnimationGraphData& _data, AnimationGraphRuntimeData& _runtimeData) const;
-		void evaluate(float _elapsedTime, const AnimationGraphData& _data, AnimationGraphRuntimeData& _runtimeData) const;
+		void evaluate(float _elapsedTime, const ParamList& _paramList, const std::vector<LayerData>& _data, std::vector<LayerRuntime>& _runtime, Evaluation& _result) const;
 
 		// resource stuff
 		static std::string getIdentifier(const std::string& resourceName);
@@ -141,14 +71,9 @@ class AnimationGraph : public ResourceVirtual
 		void onDrawImGui() override;
 
 	protected:
-		void setTransition(AnimationGraphTransition* _transition, const AnimationGraphData& _data, AnimationGraphRuntimeData& _runtimeData) const;
-
 		static std::string defaultName;
 
-		unsigned int m_entryState;
-		std::vector<AnimationGraphState> m_states;
-		std::vector<AnimationGraphTransition> m_transitions;
-
-		std::map<std::string, AnimationGraphData> m_dataVariant;
-		std::vector<AnimationGraphParameter> m_defaultParameters;
+		std::vector<Layer> m_layers;
+		std::map<std::string, std::vector<LayerData>> m_variants;
+		std::vector<AnimationParameter> m_defaultParameters;
 };

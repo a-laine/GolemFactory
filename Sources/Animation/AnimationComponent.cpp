@@ -200,16 +200,17 @@ void AnimationComponent::update(float elapsedTime)
 
 	float dt = m_speed * elapsedTime;
 	m_currentTime += dt;
-	if (m_currentTime >= m_animation->m_duration)
+	const float duration = m_animation->m_duration;
+	if (m_currentTime >= duration)
 	{
 		if (!m_looped)
 		{
-			m_currentTime = m_animation->m_duration;
+			m_currentTime = duration;
 			return;
 		}
 
-		while (m_currentTime >= m_animation->m_duration)
-			m_currentTime -= m_animation->m_duration;
+		while (m_currentTime >= duration)
+			m_currentTime -= duration;
 
 		for (int i = 0; i < m_states.size(); i++)
 		{
@@ -249,8 +250,32 @@ void AnimationComponent::update(float elapsedTime)
 		const AnimationClip::BoneCurves& curve = m_animation->m_boneCurves[i];
 		
 		// change curve keyframes if needed
-		if (m_currentTime > curve.m_positionCurve[state.m_posKey + 1].m_time)
+		/*for (int k = 1; k < curve.m_positionCurve.size(); k++)
 		{
+			if (curve.m_positionCurve[k].m_time > m_currentTime)
+			{
+				state.m_posKey = k - 1;
+				break;
+			}
+		}
+		for (int k = 1; k < curve.m_scaleCurve.size(); k++)
+		{
+			if (curve.m_scaleCurve[k].m_time > m_currentTime)
+			{
+				state.m_scaleKey = k - 1;
+				break;
+			}
+		}
+		for (int k = 1; k < curve.m_rotationCurve.size(); k++)
+		{
+			if (curve.m_rotationCurve[k].m_time > m_currentTime)
+			{
+				state.m_rotKey = k - 1;
+				break;
+			}
+		}*/
+		if (m_currentTime > curve.m_positionCurve[state.m_posKey + 1].m_time)
+		 {
 			for (int j = state.m_posKey + 2; j < curve.m_positionCurve.size(); j++)
 			{
 				if (curve.m_positionCurve[j].m_time > m_currentTime)
@@ -288,9 +313,9 @@ void AnimationComponent::update(float elapsedTime)
 		state.m_position = vec4f::lerp(curve.m_positionCurve[state.m_posKey].m_value, curve.m_positionCurve[state.m_posKey + 1].m_value, t);
 
 		t = (m_currentTime - curve.m_rotationCurve[state.m_rotKey].m_time) / (curve.m_rotationCurve[state.m_rotKey + 1].m_time - curve.m_rotationCurve[state.m_rotKey].m_time);
-		vec4f v0 = curve.m_rotationCurve[state.m_rotKey].m_value;
-		vec4f v1 = curve.m_rotationCurve[state.m_rotKey + 1].m_value;
-		state.m_rotation = quatf::slerp(quatf(v0.w, v0.x, v0.y, v0.z), quatf(v1.w, v1.x, v1.y, v1.z), t);
+		const quatf& v0 = *(const quatf*)&curve.m_rotationCurve[state.m_rotKey].m_value;
+		const quatf& v1 = *(const quatf*)&curve.m_rotationCurve[state.m_rotKey + 1].m_value;
+		state.m_rotation = quatf::slerp(v0, v1, t);
 
 		t = (m_currentTime - curve.m_scaleCurve[state.m_scaleKey].m_time) / (curve.m_scaleCurve[state.m_scaleKey + 1].m_time - curve.m_scaleCurve[state.m_scaleKey].m_time);
 		state.m_scale = lerp(curve.m_scaleCurve[state.m_scaleKey].m_value, curve.m_scaleCurve[state.m_scaleKey + 1].m_value, t);
@@ -342,7 +367,7 @@ void AnimationComponent::computePoseMatrices()
 	const std::vector<Skeleton::Bone>& bones = m_skeleton->m_bones;
 	for (int i = 0; i < bones.size(); i++)
 	{
-		mat4f parent = bones[i].parent ? m_skeletonFinalPose[bones[i].parent->id] : mat4f::identity;
+		const mat4f& parent = bones[i].parent ? m_skeletonFinalPose[bones[i].parent->id] : mat4f::identity;
 		mat4f trs;
 		if (m_bones2state[i] >= 0)
 		{

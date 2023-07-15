@@ -410,6 +410,15 @@
     <ClCompile Include="..\..\Sources\Resources\Loader\AnimationGraphLoader.cpp">
       <Filter>Fichiers sources\Resources\Loader</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Sources\Resources\AnimationGraphBlendTree.cpp">
+      <Filter>Fichiers sources\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Sources\Resources\AnimationGraphStructs.cpp">
+      <Filter>Fichiers sources\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Sources\Resources\AnimationGraphStateMachine.cpp">
+      <Filter>Fichiers sources\Resources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Sources\Math\TMath.h">
@@ -819,6 +828,15 @@
     </ClInclude>
     <ClInclude Include="..\..\Sources\Resources\Loader\AnimationGraphLoader.h">
       <Filter>Fichiers sources\Resources\Loader</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Resources\AnimationGraphBlendTree.h">
+      <Filter>Fichiers sources\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Resources\AnimationGraphStructs.h">
+      <Filter>Fichiers sources\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Resources\AnimationGraphStateMachine.h">
+      <Filter>Fichiers sources\Resources</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -66,16 +66,25 @@ void Debug::initialize(const std::string& cubeMeshName, const std::string& spher
 void Debug::setDepthTest(bool enable)
 {
 	if (enable)
-		glEnable(GL_DEPTH_TEST);// glDepthFunc(GL_LESS);
+		glEnable(GL_DEPTH_TEST);
 	else
-		glDisable(GL_DEPTH_TEST);//glDepthFunc(GL_ALWAYS);
+		glDisable(GL_DEPTH_TEST);
+}
+void Debug::setFaceCulling(bool enable)
+{
+	if (enable)
+		glEnable(GL_CULL_FACE);
+	else
+		glDisable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
+	glFrontFace(GL_CW);
 }
 void Debug::setBlending(bool enable)
 {
 	if (enable)
-		glEnable(GL_BLEND);// glDepthFunc(GL_LESS);
+		glEnable(GL_BLEND);
 	else
-		glDisable(GL_BLEND);//glDepthFunc(GL_ALWAYS);
+		glDisable(GL_BLEND);
 }
 
 void Debug::drawPoint(const vec4f& p)

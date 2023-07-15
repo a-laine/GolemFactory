@@ -27,7 +27,7 @@
 */
 
 #ifdef USE_IMGUI
-	bool PhysicDebugWindowEnable = false;
+	bool PhysicDebugWindowEnable = true;
 #endif // USE_IMGUI
 
 
@@ -621,6 +621,7 @@ void Physics::debugDraw()
 		m_collidersQuery.getResult().clear();
 		auto& list = m_colliderColector.getResult();
 		Debug::setDepthTest(m_enableZtest);
+		Debug::setFaceCulling(true);
 		Debug::setBlending(false);
 		
 		std::vector<Component*> entityColliders;

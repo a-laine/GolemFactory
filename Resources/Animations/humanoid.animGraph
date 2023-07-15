@@ -1,86 +1,269 @@
 "humanoid" :
 {
-	"entryState" : "idle",
-	"states" : [
-		{
-			"name" : "idle"
-		},
-		{
-			"name" : "walk_front"
-		},
-		{
-			"name" : "walk_back"
-		},
-	],
 	"parameters" : [
-		{ "name" : "movement", "type" : "int", "value" : 0 }
+		{ "name" : "moveX", "type" : "float", "value" : 0.0 },
+		{ "name" : "moveZ", "type" : "float", "value" : 0.0 },
+		{ "name" : "grounded", "type" : "bool", "value" : true },
+		{ "name" : "jump", "type" : "trigger", "value" : false },
+		{ "name" : "immobileDuration", "type" : "float", "value" : 0.0 },
+		{ "name" : "doAction", "type" : "trigger", "value" : false },
+		{ "name" : "action", "type" : "int", "value" : -1 },
 	],
-	"transitions" : [
+	"layers" : [
 		{
-			"from" : "idle",
-			"to" : "walk_front",
-			"duration" : 1.0,
-			"conditions" : [
-				{ "paramName" : "movement", "comparison" : "greater", "value" : 0 }
-			]
-		},
-		{
-			"from" : "idle",
-			"to" : "walk_back",
-			"duration" : 1.0,
-			"conditions" : [
-				{ "paramName" : "movement", "comparison" : "less", "value" : 0 }
-			]
-		},
-		{
-			"from" : "walk_front",
-			"to" : "idle",
-			"duration" : 1.0,
-			"conditions" : [
-				{ "paramName" : "movement", "comparison" : "equals", "value" : 0 }
-			]
-		},
-		{
-			"from" : "walk_front",
-			"to" : "walk_back",
-			"duration" : 1.0,
-			"conditions" : [
-				{ "paramName" : "movement", "comparison" : "less", "value" : 0 }
-			]
-		},
-		{
-			"from" : "walk_back",
-			"to" : "idle",
-			"duration" : 1.0,
-			"conditions" : [
-				{ "paramName" : "movement", "comparison" : "equals", "value" : 0 }
-			]
-		},
-		{
-			"from" : "walk_back",
-			"to" : "walk_front",
-			"duration" : 1.0,
-			"conditions" : [
-				{ "paramName" : "movement", "comparison" : "greater", "value" : 0 }
+			"name" : "Base layer",
+			"entryName" : "BaseStateMachine",
+			"stateMachines" : [
+				{
+					"name" : "BaseStateMachine",
+					"entryState" : "locomotion",
+					"states" : [
+						{
+							"name" : "locomotion",
+							"subgraphName" : "locomotionTree",
+							"transitions" : [
+								{
+									"to" : 1,
+									"duration" : 0.08,
+									"conditions" : [ { "paramName" : "jump" } ]
+								},
+								{
+									"to" : 2,
+									"duration" : 0.1,
+									"conditions" : [ { "paramName" : "grounded", "comparison" : "notEquals", "value" : true } ]
+								},
+								{
+									"to" : 4,
+									"duration" : 0.4,
+									"conditions" : [ { "paramName" : "immobileDuration", "comparison" : "greater", "value" : 3.0 } ]
+								}
+							]
+						},
+						{
+							"name" : "jump",
+							"exitTime" : 0.2,
+							"transitions" : [ { "to" : 2, "duration" : 0.2 } ]
+						},
+						{
+							"name" : "falling",
+							"transitions" : [
+								{
+									"to" : 3,
+									"duration" : 0.1,
+									"conditions" : [ { "paramName" : "grounded", "comparison" : "equals", "value" : true } ]
+								}
+							]
+						},
+						{
+							"name" : "landing",
+							"transitions" : [ { "to" : 0, "duration" : 0.1 } ]
+						},
+						{
+							"name" : "idle",
+							"transitions" : [
+								{
+									"to" : 0,
+									"duration" : 0.4,
+									"conditions" : [ { "paramName" : "immobileDuration", "comparison" : "less", "value" : 0.1 } ]
+								}
+							]
+						},
+						{
+							"name" : "_anyState",
+							"transitions" : [
+								{
+									"to" : 7,
+									"duration" : 0.0,
+									"conditions" : [ { "paramName" : "doAction" } ]
+								}
+							]
+						},
+						{
+							"name" : "actionExit",
+							"id" : 6,
+							"transitions" : [ { "to" : 0, "duration" : 1.0 } ]
+						},
+						{
+							"name" : "actionChoose",
+							"transitions" : [
+								{
+									"to" : 8,
+									"duration" : 1.0,
+									"conditions" : [ { "paramName" : "action", "comparison" : "equals", "value" : 0 } ]
+								},
+								{
+									"to" : 9,
+									"duration" : 0.4,
+									"conditions" : [ { "paramName" : "action", "comparison" : "equals", "value" : 1 } ]
+								},
+								{
+									"to" : 10,
+									"duration" : 0.4,
+									"conditions" : [ { "paramName" : "action", "comparison" : "equals", "value" : 2 } ]
+								},
+								{
+									"to" : 11,
+									"duration" : 0.4,
+									"conditions" : [ { "paramName" : "action", "comparison" : "equals", "value" : 3 } ]
+								},
+								{
+									"to" : 12,
+									"duration" : 0.3,
+									"conditions" : [ { "paramName" : "action", "comparison" : "equals", "value" : 4 } ]
+								}
+								{ "to" : 6, "duration" : 0.0 }
+							]
+						},
+						{
+							"name" : "dance",
+							"transitions" : [
+								{
+									"to" : 6,
+									"duration" : 1.0,
+									"conditions" : [ { "paramName" : "action", "comparison" : "notEquals", "value" : 0 } ]
+								}
+							]
+						},
+						{
+							"name" : "yes",
+							"exitTime" : 0.7,
+							"transitions" : [ { "to" : 0, "duration" : 0.4 } ]
+						},
+						{
+							"name" : "no",
+							"exitTime" : 1.2,
+							"transitions" : [ { "to" : 0, "duration" : 0.4 } ]
+						},
+						{
+							"name" : "handshake",
+							"exitTime" : 1.2,
+							"transitions" : [ { "to" : 0, "duration" : 0.4 } ]
+						},
+						{
+							"name" : "sit-down",
+							"exitTime" : 0.6,
+							"transitions" : [ { "to" : 13, "duration" : 0.3 } ]
+						},
+						{
+							"name" : "idle sitted",
+							"id" : 13,
+							"transitions" : [
+								{
+									"to" : 14,
+									"duration" : 0.5,
+									"conditions" : [ { "paramName" : "action", "comparison" : "notEquals", "value" : 4 } ]
+								}
+							]
+						},
+						{
+							"name" : "stand-up",
+							"exitTime" : 0.6,
+							"transitions" : [ { "to" : 0, "duration" : 0.3 } ]
+						}
+					]
+				}
+			],
+			"blendTrees" : [
+				{
+					"name" : "locomotionTree",
+					"entryNode" : "locomotion",
+					"nodes" : [
+						{
+							"name" : "locomotion",
+							
+							"globalInfluence" : 0.5,
+							"blendParameters" : [ "moveX", "moveZ" ],
+							"blendPoints" : [
+								[0.0, 0.0],
+								[0.0, 1.0], [0.707, 0.707], [-0.707, 0.707], [1.0, 0.0], [-1.0, 0.0], [0.0, -1.0], [0.707, -0.707], [-0.707, -0.707],
+								[0.0, 2.0], [1.414, 1.414], [-1.414, 1.414], [2.0, 0.0], [-2.0, 0.0], [0.0, -2.0], [1.414, -1.414], [-1.414, -1.414],
+								[0.0, 3.0]
+							],
+							"blendInfluences" : [1.0, 0.76, 0.76, 0.76, 0.76, 0.76, 0.76, 0.76, 0.76, 1.3, 1.3, 1.3, 1.3, 1.3, 1.3, 1.3, 1.3, 1.3],
+							"childrenIds" : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]
+						},
+						{ "parentId" : 0, "name" : "idle" },
+						{ "parentId" : 0, "name" : "walk_front" },
+						{ "parentId" : 0, "name" : "walk_front_left" },
+						{ "parentId" : 0, "name" : "walk_front_right" },
+						{ "parentId" : 0, "name" : "walk_left" },
+						{ "parentId" : 0, "name" : "walk_right" },
+						{ "parentId" : 0, "name" : "walk_back" },
+						{ "parentId" : 0, "name" : "walk_back_left" },
+						{ "parentId" : 0, "name" : "walk_back_right" },
+						{ "parentId" : 0, "name" : "run_front" },
+						{ "parentId" : 0, "name" : "run_front_left" },
+						{ "parentId" : 0, "name" : "run_front_right" },
+						{ "parentId" : 0, "name" : "run_left" },
+						{ "parentId" : 0, "name" : "run_right" },
+						{ "parentId" : 0, "name" : "run_back" },
+						{ "parentId" : 0, "name" : "run_back_left" },
+						{ "parentId" : 0, "name" : "run_back_right" },
+						{ "parentId" : 0, "name" : "sprint" }
+					]
+				}
 			]
 		}
 	],
 	"variants" : [
 		{
 			"name" : "male",
-			"statesData" : [
-				{ "clip" : "male_idle_breath", "speed" : 0.4 },
-				{ "clip" : "male_move_walk_front", "speed" : 0.4 },
-				{ "clip" : "male_move_walk_back", "speed" : 0.4 }
+			"layersData" : [
+				{
+					"layerName" : "Base layer",
+					"blendTreeData" : [
+						{
+							"blendTreeName" : "locomotionTree",
+							"nodesData" : [
+								{},
+								{ "clip" : "male_idle_breath", "speed" : 0.6 },
+					
+								{ "clip" : "male_move_walk_front", "speed" : 0.4 },
+								{ "clip" : "male_move_walk_front_left", "speed" : 0.4 },
+								{ "clip" : "male_move_walk_front_right", "speed" : 0.4 },
+								{ "clip" : "male_move_walk_left", "speed" : 0.4 },
+								{ "clip" : "male_move_walk_right", "speed" : 0.4 },
+								{ "clip" : "male_move_walk_back", "speed" : 0.4 },
+								{ "clip" : "male_move_walk_back_left", "speed" : 0.4 },
+								{ "clip" : "male_move_walk_back_right", "speed" : 0.4 },
+								
+								{ "clip" : "male_move_run_front", "speed" : 0.4 },
+								{ "clip" : "male_move_run_front_left", "speed" : 0.4 },
+								{ "clip" : "male_move_run_front_right", "speed" : 0.4 },
+								{ "clip" : "male_move_run_left", "speed" : 0.4 },
+								{ "clip" : "male_move_run_right", "speed" : 0.4 },
+								{ "clip" : "male_move_run_back", "speed" : 0.4 },
+								{ "clip" : "male_move_run_back_left", "speed" : 0.4 },
+								{ "clip" : "male_move_run_back_right", "speed" : 0.4 },
+								
+								{ "clip" : "male_move_run_sprint", "speed" : 0.4 }
+							]
+						}
+					],
+					"stateMachineData" : [
+						{
+							"stateMachineName" : "BaseStateMachine",
+							"statesData" : [
+								{},
+								{ "clip" : "male_jump", "speed" : 1.0 },
+								{ "clip" : "male_falling", "speed" : 0.02 },
+								{ "clip" : "male_landing", "speed" : 1.0 },
+								{ "clip" : "male_idle_breath", "speed" : 0.4 },
+								{},
+								{},
+								{},
+								{ "clip" : "male_act_dance_01", "speed" : 1.0 },
+								{ "clip" : "male_say_yes", "speed" : 1.0 },
+								{ "clip" : "male_say_no", "speed" : 1.0 },
+								{ "clip" : "male_handshake", "speed" : 1.0 },
+								{ "clip" : "male_act_sit_on_chair", "speed" : 1.0 },
+								{ "clip" : "male_idle_on_chair", "speed" : 1.0 },
+								{ "clip" : "male_act_standup_chair", "speed" : 1.0 },
+							]
+						}
+					]
+				}
 			]
 		},
-		{
-			"name" : "female",
-			"statesData" : [
-				{ "clip" : "male_idle_breath", "speed" : 0.4 },
-				{ "clip" : "female_move_walk_front", "speed" : 0.4 },
-				{ "clip" : "male_move_walk_back", "speed" : 0.4 }
-			]
-		}
 	]
 }
