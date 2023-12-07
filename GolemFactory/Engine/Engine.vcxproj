@@ -172,6 +172,7 @@
     <ClCompile Include="..\..\Sources\Animation\SkeletonComponent.cpp" />
     <ClCompile Include="..\..\Sources\Core\Application.cpp" />
     <ClCompile Include="..\..\Sources\Core\RenderContext.cpp" />
+    <ClCompile Include="..\..\Sources\EntityComponent\ComponentUpdater.cpp" />
     <ClCompile Include="..\..\Sources\EntityComponent\Entity.cpp" />
     <ClCompile Include="..\..\Sources\EntityComponent\EntityBase.cpp" />
     <ClCompile Include="..\..\Sources\Events\Event.cpp" />
@@ -289,6 +290,7 @@
     <ClInclude Include="..\..\Sources\Core\Application.h" />
     <ClInclude Include="..\..\Sources\Core\RenderContext.h" />
     <ClInclude Include="..\..\Sources\EntityComponent\Component.hpp" />
+    <ClInclude Include="..\..\Sources\EntityComponent\ComponentUpdater.h" />
     <ClInclude Include="..\..\Sources\EntityComponent\Entity.hpp" />
     <ClInclude Include="..\..\Sources\EntityComponent\EntityBase.hpp" />
     <ClInclude Include="..\..\Sources\EntityComponent\EntityFlags.h" />
@@ -427,6 +429,9 @@
     <ProjectReference Include="..\ImGui\ImGui.vcxproj">
       <Project>{fca02728-867e-406d-b00a-f59aba1fc350}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\DefaultProperties.props" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -45,6 +45,8 @@
 #include <Resources/Loader/TextureLoader.h>
 #include <Resources/Loader/AnimationGraphLoader.h>
 
+#include <EntityComponent/ComponentUpdater.h>
+
 #include "Physics/Physics.h"
 #include "Physics/RigidBody.h"
 #include "Physics/Shapes/Collider.h"
@@ -57,9 +59,13 @@
 #include "Physics/GJK.h"
 #include <Utiles/ConsoleColor.h>
 
+
+#include <GameSpecific/TPSCameraComponent.h>
+#include <GameSpecific/PlayerMovement.h>
+
 #define GRID_SIZE 512
 #define GRID_ELEMENT_SIZE 1.f
-#define DEBUG_LEVEL 0
+#define DEBUG_LEVEL 1
 
 
 
@@ -68,8 +74,8 @@ RenderContext* context = nullptr;
 World world;
 Entity* avatar = nullptr;
 Entity* freeflyCamera = nullptr;
-Entity* frustrumCamera = nullptr;
-//Shader* normalShader = nullptr;
+Entity* tpsCamera = nullptr;
+//Entity* frustrumCamera = nullptr;
 
 float physicsTimeSpeed = 1.f;
 
@@ -80,6 +86,7 @@ float avatarZeroHeight;
 vec4f avatarspeed(0.f);
 
 CameraComponent* currentCamera = nullptr;
+CameraComponent* debugFreeflyCam = nullptr;
 struct {
 	float radius = 2.f;
 	vec4f target;
@@ -114,6 +121,7 @@ int main()
 	context->makeCurrent();
 	context->setVSync(false);
 	application.initGLEW(1);
+	THREAD_MARKER("MainThread");
 	initManagers();
 
 	//AnimationGraph* animgraph = ResourceManager::getInstance()->getResource<AnimationGraph>("humanoid");
@@ -124,21 +132,36 @@ int main()
 		initializeSyntyScene();
 
 		Renderer::getInstance()->setGridVisible(true);
+		Entity* player = world.getSceneManager().searchEntity("CharacterTest999");
 		
+		if (player)
+		{
+			player->setFlags((uint64_t)Entity::Flags::Fl_Player);
+
+			Capsule* capsule = new Capsule();
+			capsule->radius = 0.4f;
+			capsule->p1 = vec4f(0, capsule->radius, 0, 1);
+			capsule->p2 = vec4f(0, 1.8f - capsule->radius, 0, 1);
+			player->addComponent(new Collider(capsule));
+
+			RigidBody* rb = new RigidBody(RigidBody::KINEMATICS);
+			rb->setBouncyness(0.f);
+			rb->setFriction(0.2f);
+			rb->setDamping(0.001f);
+			rb->setGravityFactor(1.f);
+			rb->setAngularVelocity(vec4f::zero);
+			player->addComponent(rb);
+			world.getPhysics().addMovingEntity(player);
+			rb->initialize(80.f);
+
+			PlayerMovement* playerController = new PlayerMovement();
+			player->addComponent(playerController);
+		}
+
 		freeflyCamera = world.getEntityFactory().createObject([](Entity* object)
 			{
 				object->setName("FreeFlyCam");
-				object->setWorldPosition(vec4f(2.5, -1.5, 75, 1));
-
-				CameraComponent* ffCam = new CameraComponent(true);
-				object->addComponent(ffCam);
-				ffCam->setDirection(vec4f(-1, 0, 0, 0));
-			
-				currentCamera = ffCam;
-			});
-		frustrumCamera = world.getEntityFactory().createObject([&](Entity* object)
-			{
-				object->setName("FrustrumCam");
+				object->setWorldPosition(vec4f(0, 7, -30, 1));
 
 				Collider* collider = new Collider(new Sphere(vec4f(0.f), 0.01f));
 				object->addComponent(collider);
@@ -146,14 +169,48 @@ int main()
 
 				CameraComponent* cam = new CameraComponent(true);
 				object->addComponent(cam);
-				Renderer::getInstance()->setCamera(cam);
-				cam->setOrientation(currentCamera->getOrientation());
-				cam->setPosition(currentCamera->getPosition());
+				cam->setDirection(vec4f(-1, 0, 0, 0));
+				currentCamera = cam;
 				world.setMainCamera(cam);
+				Renderer::getInstance()->setCamera(cam);
+			});
+		Entity* freeflyCamera2 = world.getEntityFactory().createObject([](Entity* object)
+			{
+				object->setName("FreeFlyCam2");
+				object->setWorldPosition(vec4f(0, 7, -30, 1));
+
+
+				CameraComponent* cam = new CameraComponent(true);
+				object->addComponent(cam);
+				cam->setDirection(vec4f(-1, 0, 0, 0));
+				//currentCamera = cam;
+				debugFreeflyCam = cam;
 			});
 
+		/*tpsCamera = world.getEntityFactory().createObject([&](Entity* object)
+			{
+				object->setName("TPSCam");
+
+				Collider* collider = new Collider(new Sphere(vec4f(0.f), 0.01f));
+				object->addComponent(collider);
+				object->recomputeBoundingBox();
+
+				TPSCameraComponent* cam = new TPSCameraComponent();
+				object->addComponent(cam);
+				Renderer::getInstance()->setCamera(cam);
+				cam->setDirection(vec4f(-1, 0, 0, 0));
+				cam->setTargetCharacter(player);
+				playerController->setCamera(cam);
+				object->setWorldPosition(vec4f(0, 7, -30, 1));
+
+				//cam->setOrientation(currentCamera->getOrientation());
+				//cam->setPosition(currentCamera->getPosition());
+				world.setMainCamera(cam);
+				currentCamera = cam;
+			});*/
+
 		world.getSceneManager().addToRootList(freeflyCamera);
-		world.getSceneManager().addToRootList(frustrumCamera);
+		world.getSceneManager().addToRootList(freeflyCamera2);
 
 		WidgetManager::getInstance()->setBoolean("BBpicking", false);
 		WidgetManager::getInstance()->setBoolean("wireframe", false);
@@ -172,7 +229,6 @@ int main()
 
 
 	//	game loop
-	THREAD_MARKER("MainThread");
 	unsigned long frameCount = 0;
 	std::cout << "game loop initiated" << std::endl;
 	while (!application.shouldExit())
@@ -197,8 +253,8 @@ int main()
 
 
 		Debug::viewportRatio = context->getViewportRatio();
-		Debug::view = currentCamera->getViewMatrix();
-		Debug::projection = mat4f::perspective(currentCamera->getVerticalFieldOfView(), context->getViewportRatio(), 0.1f, 30000.f);  //far = 1500.f
+		Debug::view = debugFreeflyCam->getViewMatrix();
+		Debug::projection = mat4f::perspective(debugFreeflyCam->getVerticalFieldOfView(), context->getViewportRatio(), 0.1f, 30000.f);  //far = 1500.f
 
 		//	physics
 		world.getPhysics().stepSimulation(physicsTimeSpeed * 0.016f, &world.getSceneManager());
@@ -209,7 +265,7 @@ int main()
 		else if (WidgetManager::getInstance()->getBoolean("wireframe"))
 			Renderer::getInstance()->setRenderOption(Renderer::RenderOption::WIREFRAME);
 		else Renderer::getInstance()->setRenderOption(Renderer::RenderOption::DEFAULT);*/
-		Renderer::getInstance()->render(currentCamera);
+		Renderer::getInstance()->render(debugFreeflyCam);
 		 
 		//Renderer::getInstance()->drawMap(world.getMapPtr(), normalShader);
 		
@@ -490,6 +546,37 @@ void initializeSyntyScene()
 #endif
 
 
+	const auto TryLoadAsVec4f = [](Variant& variant, vec4f& destination)
+	{
+		int sucessfullyParsed = 0;
+		if (variant.getType() == Variant::ARRAY)
+		{
+			auto varray = variant.getArray();
+			vec4f parsed = destination;
+			for (int i = 0; i < 4 && i < varray.size(); i++)
+			{
+				auto& element = varray[i];
+				if (element.getType() == Variant::FLOAT)
+				{
+					parsed[i] = element.toFloat();
+					sucessfullyParsed++;
+				}
+				else if (element.getType() == Variant::DOUBLE)
+				{
+					parsed[i] = element.toDouble();
+					sucessfullyParsed++;
+				}
+				else if (element.getType() == Variant::INT)
+				{
+					parsed[i] = element.toInt();
+					sucessfullyParsed++;
+				}
+			}
+			destination = parsed;
+		}
+		return sucessfullyParsed;
+	};
+
 
 
 	// load file and parse JSON
@@ -528,11 +615,14 @@ void initializeSyntyScene()
 	{
 		if (sceneMap["sceneEntities"].getType() == Variant::ARRAY)
 		{
+			SCOPED_CPU_MARKER("initializeSyntyScene");
+
 			// load all prefabs and instanciate
 			for (auto it = sceneMap["sceneEntities"].getArray().begin(); it != sceneMap["sceneEntities"].getArray().end(); it++)
 			{
 				if (it->getType() == Variant::MAP)
 				{
+
 					// get id and name
 					int id = (*it)["id"].toInt();
 					std::string prefabName = "";
@@ -581,16 +671,11 @@ void initializeSyntyScene()
 					newObject->recomputeBoundingBox();
 
 					// transform load
-					vec4f position = vec4f(
-						(*it)["position"].getArray()[0].toDouble(),
-						(*it)["position"].getArray()[1].toDouble(),
-						(*it)["position"].getArray()[2].toDouble(),
-						1.f);
-					quatf rotation = quatf(
-						(*it)["rotation"].getArray()[3].toDouble(),
-						(*it)["rotation"].getArray()[0].toDouble(),
-						(*it)["rotation"].getArray()[1].toDouble(),
-						(*it)["rotation"].getArray()[2].toDouble());
+					vec4f position, tmp;
+					TryLoadAsVec4f((*it)["position"], position);
+					position.w = 1.f;
+					TryLoadAsVec4f((*it)["rotation"], tmp);
+					quatf rotation = quatf(tmp.w, tmp.x, tmp.y, tmp.z);
 					rotation.normalize();
 
 					float scale = 1.f;
@@ -670,6 +755,8 @@ std::string checkResourcesDirectory()
 
 void initManagers()
 {
+	SCOPED_CPU_MARKER("initManagers");
+
 	std::string resourceRepository = checkResourcesDirectory();
 	if (DEBUG_LEVEL) std::cout << "Found resources folder at : " << resourceRepository << std::endl;
 
@@ -797,20 +884,20 @@ void picking()
 {
 	SCOPED_CPU_MARKER("Picking");
 
-	vec4f cameraPos = currentCamera->getPosition();
-	vec4f direction = currentCamera->getForward(); // no rotations
+	vec4f cameraPos = debugFreeflyCam->getPosition();
+	vec4f direction = debugFreeflyCam->getForward(); // no rotations
 
 	if (EventHandler::getInstance()->getCursorMode())
 	{
 		vec2f cursor = EventHandler::getInstance()->getCursorPositionAbsolute();
 		vec2i vpsize = context->getViewportSize();
-		vec4f up = currentCamera->getUp();
-		vec4f right = currentCamera->getRight();
-		float tanfov = tan(0.5f * currentCamera->getVerticalFieldOfView());
+		vec4f up = debugFreeflyCam->getUp();
+		vec4f right = debugFreeflyCam->getRight();
+		float tanfov = tan(0.5f * debugFreeflyCam->getVerticalFieldOfView());
 		float ratio = (float)vpsize.x / vpsize.y;
 		float nearPlane = 0.1f;
 
-		direction = nearPlane * currentCamera->getForward() + (nearPlane * tanfov * ratio * ( 2.f * cursor.x / vpsize.x - 1.f)) * right + (nearPlane * tanfov * (1.f - 2.f * cursor.y / vpsize.y)) * up;
+		direction = nearPlane * debugFreeflyCam->getForward() + (nearPlane * tanfov * ratio * ( 2.f * cursor.x / vpsize.x - 1.f)) * right + (nearPlane * tanfov * (1.f - 2.f * cursor.y / vpsize.y)) * up;
 		direction.normalize();
 
 		//std::cout << c.x << ' ' << c.y << std::endl;
@@ -876,12 +963,13 @@ void events()
 		else if (v[i] == SLOT9) GJK::max_iteration--;
 
 		//	micselenious
-		else */if (v[i] == QUIT) glfwSetWindowShouldClose(context->getParentWindow(), GL_TRUE);
+		else */
+		if (v[i] == QUIT) glfwSetWindowShouldClose(context->getParentWindow(), GL_TRUE);
 		else if (v[i] == CHANGE_CURSOR_MODE)
 		{
 			EventHandler::getInstance()->setCursorMode(!EventHandler::getInstance()->getCursorMode());
 		}
-		else if (v[i] == ACTION && avatar != nullptr)
+		/*else if (v[i] == ACTION && avatar != nullptr)
 		{
 			if (isTrackBall)
 			{
@@ -899,7 +987,7 @@ void events()
 			}
 
 			isTrackBall = currentCamera->getParentEntity() == avatar;
-		}
+		}*/
 
 		else if (v[i] == PAUSE)
 		{
@@ -994,7 +1082,7 @@ void updates(float elapseTime)
 	WidgetManager::getInstance()->update((float)elapseTime, EventHandler::getInstance()->isActivated(USE1));
 
 	//	Move avatar if needed
-	if (avatar && currentCamera->getParentEntity() == avatar)
+	/*if (avatar && currentCamera->getParentEntity() == avatar)
 	{
 		//	compute direction and speed
 		vec4f direction = vec4f(0.f);
@@ -1010,10 +1098,6 @@ void updates(float elapseTime)
 			direction.normalize();
 
 		float speed = 0.f;
-		/*if (Animator::getInstance()->isAnimationRunning(avatar, "run"))
-			speed = 0.1f;
-		else if (Animator::getInstance()->isAnimationRunning(avatar, "walk"))
-			speed = 0.025f;*/
 
 		avatar->setWorldPosition(avatar->getWorldPosition() + speed * direction);
 		if (direction.x != 0.f && direction.y != 0.f)
@@ -1040,17 +1124,24 @@ void updates(float elapseTime)
 			}
 		}
 	}
-	else
+	else*/
 	{
 		CameraComponent* ffCam = freeflyCamera->getComponent<CameraComponent>();
 		
 		// Rotation
-		if (!EventHandler::getInstance()->getCursorMode())
+		if (!EventHandler::getInstance()->getCursorMode() && WidgetManager::getInstance()->getBoolean("syncCamera"))
 		{
 			float sensitivity = 0.2f;
 			float yaw = -(float)DEG2RAD * sensitivity * EventHandler::getInstance()->getCursorPositionRelative().x;
 			float pitch = -(float)DEG2RAD * sensitivity * EventHandler::getInstance()->getCursorPositionRelative().y;
 			ffCam->rotate(pitch, yaw);
+
+			// FOV
+			float angle = ffCam->getVerticalFieldOfView() + (float)DEG2RAD * EventHandler::getInstance()->getScrollingRelative().y;
+			if (angle > 1.5f) angle = 1.5f;
+			else if (angle < 0.05f) angle = 0.05f;
+
+			ffCam->setVerticalFieldOfView(angle);
 		}
 
 		// Translation
@@ -1072,27 +1163,23 @@ void updates(float elapseTime)
 			freeflyCamera->setWorldPosition(freeflyCamera->getWorldPosition() + direction*elapseTime*speed);
 			world.updateObject(freeflyCamera);
 		}
-
-		// FOV
-		float angle = ffCam->getVerticalFieldOfView() + (float)DEG2RAD * EventHandler::getInstance()->getScrollingRelative().y;
-		if (angle > 1.5f) angle = 1.5f;
-		else if (angle < 0.05f) angle = 0.05f;
-
-		ffCam->setVerticalFieldOfView(angle);
 	}
 
 	if (WidgetManager::getInstance()->getBoolean("syncCamera"))
 	{
-		CameraComponent* cam = frustrumCamera->getComponent<CameraComponent>();
-		cam->setOrientation(currentCamera->getOrientation());
-		cam->setVerticalFieldOfView(currentCamera->getVerticalFieldOfView());
-		frustrumCamera->setWorldPosition(currentCamera->getPosition());
-		world.updateObject(frustrumCamera);
+		//CameraComponent* cam = frustrumCamera->getComponent<CameraComponent>();
+		debugFreeflyCam->setOrientation(currentCamera->getOrientation());
+		debugFreeflyCam->setVerticalFieldOfView(currentCamera->getVerticalFieldOfView());
+		debugFreeflyCam->getParentEntity()->setWorldPosition(currentCamera->getPosition());
+		world.updateObject(debugFreeflyCam->getParentEntity());
 	}
 
 	if (physicsTimeSpeed != 0.f)
 	{
-		float dt = 0.001f * elapseTime;
+		float dt = 0.001f * elapseTime * physicsTimeSpeed;
+		ComponentUpdater::getInstance()->update(dt);
+
+		/*float dt = 0.001f * elapseTime;
 		extern std::vector<AnimationComponent*> g_allAnimations;
 		for (AnimationComponent* comp : g_allAnimations)
 		{
@@ -1104,7 +1191,7 @@ void updates(float elapseTime)
 		{
 			if (comp && comp->isValid())
 				comp->update(dt);
-		}
+		}*/
 	}
 
 

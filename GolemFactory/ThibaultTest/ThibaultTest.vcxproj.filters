@@ -13,10 +13,27 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Fichiers sources\GameSpecific">
+      <UniqueIdentifier>{456c3ff9-fad9-4bec-b595-20455766033e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\Sources\GolemFactoryApplicationThibault.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Sources\GameSpecific\TPSCameraComponent.cpp">
+      <Filter>Fichiers sources\GameSpecific</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Sources\GameSpecific\PlayerMovement.cpp">
+      <Filter>Fichiers sources\GameSpecific</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\Sources\GameSpecific\TPSCameraComponent.h">
+      <Filter>Fichiers sources\GameSpecific</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\GameSpecific\PlayerMovement.h">
+      <Filter>Fichiers sources\GameSpecific</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

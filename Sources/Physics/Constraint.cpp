@@ -65,11 +65,18 @@ void Constraint::createFromReport(CollisionReport& report, const int& pointIndex
 		mat4f M = mat4f(body1->getParentEntity()->getWorldOrientation());
 		mat4f iM = mat4f::transpose(M);
 
-		vec4f torquePerUnitImpulse = vec4f::cross(localPoint1, axis[i]);
-		rotationPerUnitImpulse1[i] = M * body1->getInverseInertia() * iM * torquePerUnitImpulse;
-		rotationPerUnitImpulse1[i].w = 0;
-		vec4f velocityPerUnitImpulse = vec4f::cross(rotationPerUnitImpulse1[i], localPoint1);
-		velocityChangePerAxis[i] += vec4f::dot(velocityPerUnitImpulse, axis[i]);
+		if (body1->getType() == RigidBody::RigidBodyType::DYNAMIC)
+		{
+			vec4f torquePerUnitImpulse = vec4f::cross(localPoint1, axis[i]);
+			rotationPerUnitImpulse1[i] = M * body1->getInverseInertia() * iM * torquePerUnitImpulse;
+			rotationPerUnitImpulse1[i].w = 0;
+			vec4f velocityPerUnitImpulse = vec4f::cross(rotationPerUnitImpulse1[i], localPoint1);
+			velocityChangePerAxis[i] += vec4f::dot(velocityPerUnitImpulse, axis[i]);
+		}
+		else
+		{
+			rotationPerUnitImpulse1[i] = vec4f::zero;
+		}
 
 		if (body2)
 		{
@@ -77,11 +84,18 @@ void Constraint::createFromReport(CollisionReport& report, const int& pointIndex
 			M = mat4f(body2->getParentEntity()->getWorldOrientation());
 			iM = mat4f::transpose(M);
 
-			torquePerUnitImpulse = vec4f::cross(localPoint2, axis[i]);
-			rotationPerUnitImpulse2[i] = M * body2->getInverseInertia() * iM * torquePerUnitImpulse;
-			rotationPerUnitImpulse2[i].w = 0;
-			velocityPerUnitImpulse = vec4f::cross(rotationPerUnitImpulse2[i], localPoint2);
-			velocityChangePerAxis[i] += vec4f::dot(velocityPerUnitImpulse, axis[i]);
+			if (body2->getType() == RigidBody::RigidBodyType::DYNAMIC)
+			{
+				vec4f torquePerUnitImpulse = vec4f::cross(localPoint2, axis[i]);
+				rotationPerUnitImpulse2[i] = M * body2->getInverseInertia() * iM * torquePerUnitImpulse;
+				rotationPerUnitImpulse2[i].w = 0;
+				vec4f velocityPerUnitImpulse = vec4f::cross(rotationPerUnitImpulse2[i], localPoint2);
+				velocityChangePerAxis[i] += vec4f::dot(velocityPerUnitImpulse, axis[i]);
+			}
+			else
+			{
+				rotationPerUnitImpulse2[i] = vec4f::zero;
+			}
 		}
 	}
 }

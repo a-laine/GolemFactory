@@ -313,7 +313,7 @@ void Collider::drawDebug(vec4f color, bool wired) const
 				{
 					const Capsule* capsule = static_cast<const Capsule*>(m_shape);
 					if (wired)
-						Debug::drawWiredCapsule(transform * capsule->p1, transform * capsule->p2, scale * capsule->radius);
+						Debug::drawLineCapsule(transform * capsule->p1, transform * capsule->p2, scale * capsule->radius);
 					else
 						Debug::drawCapsule(transform * capsule->p1, transform * capsule->p2, scale * capsule->radius);
 				}

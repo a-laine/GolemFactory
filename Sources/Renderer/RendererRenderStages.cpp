@@ -5,6 +5,7 @@
 #include <Renderer/Lighting/LightComponent.h>
 #include <Renderer/OccluderComponent.h>
 #include <Utiles/Debug.h>
+#include <Animation/SkeletonComponent.h>
 
 
 #define MAX_INSTANCE 32

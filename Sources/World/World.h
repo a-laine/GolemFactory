@@ -5,6 +5,7 @@
 #include "World/WorldComponents/Map.h"
 #include <Scene/SceneManager.h>
 #include <Physics/Physics.h>
+#include <Utiles/Singleton.h>
 
 class CameraComponent;
 class World

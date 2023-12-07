@@ -109,6 +109,8 @@ vec2f CollisionUtils::getBarycentricCoordinates(const vec4f& v1, const vec4f& v2
 {
 	float crossDot = vec4f::dot(v1, v2);
 	float magnitute = vec4f::dot(v1, v1) * vec4f::dot(v2, v2) - crossDot * crossDot;
+	if (std::abs(magnitute) < 10E-07f)
+		return vec2f::zero;
 	vec2f barry;
 
 	barry.x = (vec4f::dot(v2, v2) * vec4f::dot(point, v1) - crossDot * vec4f::dot(point, v2)) / magnitute;

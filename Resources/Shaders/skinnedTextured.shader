@@ -71,7 +71,7 @@ SkinnedTextured
 				}
 			}
 
-			vec4 transformPosition = boneTransform * position;//vec4(position.x, position.y, -position.z,position.w);
+			vec4 transformPosition = boneTransform * position;
 			vec4 transformNormal = boneTransform * normal;
 			
 			// end

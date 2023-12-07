@@ -56,6 +56,7 @@ class Debug : public Singleton<Debug>
 		{
 			Debug::drawLineCube(transform * mat4f::translate(mat4f::identity, 0.5f * (max + min)), 0.5f * (max - min));
 		}
+		static void drawLineCapsule(const vec4f& point1, const vec4f& point2, const float& radius);
 
 		static void reinterpreteTexture(const Texture* in, Texture* out, float layer = 0.f);
 		//

@@ -8,7 +8,7 @@
 #include <Utiles/ConsoleColor.h>
 
 
-DrawableComponent::DrawableComponent() : m_mesh(nullptr), m_shader(nullptr)
+DrawableComponent::DrawableComponent() : m_mesh(nullptr), m_shader(nullptr), m_castShadow(true)
 {
 
 }

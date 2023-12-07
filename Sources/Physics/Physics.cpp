@@ -104,6 +104,66 @@ void Physics::stepSimulation(const float& elapsedTime, SceneManager* scene)
 	clearTempoaryStruct(scene);
 }
 
+bool Physics::collisionTest(const Shape& _shape, SceneManager* scene, uint64_t flags, uint64_t noFlags, CollisionReport* _report)
+{
+	SCOPED_CPU_MARKER("Physics collisionTest");
+
+	auto aabb = _shape.toAxisAlignedBox();
+	proximityTest.result.clear();
+	proximityTest.bbMin = aabb.min;
+	proximityTest.bbMax = aabb.max;
+	proximityList.result.clear();
+	proximityList.m_flags = flags;
+	proximityList.m_exclusionFlags = noFlags;
+	scene->getEntities(&proximityTest, &proximityList);
+
+	CollisionReport bestReport;
+	float maxDepth = -1.f;
+
+	for (unsigned int i = 0; i < proximityList.result.size(); i++)
+	{
+		Entity* entity = proximityList.result[i];
+
+		auto colliderVisitor = [&](Component* componentCollider)
+		{
+			const Collider* collider = static_cast<const Collider*>(componentCollider);
+			if (collider)
+			{
+				Shape* tmp = collider->m_shape->duplicate();
+				tmp->transform(entity->getWorldPosition(), vec4f(entity->getWorldScale()), entity->getWorldOrientation());
+
+				if (Collision::collide(&_shape, tmp, _report))
+				{
+					if (_report)
+					{
+						float d = -1.f;
+						for (int i = 0; i < _report->depths.size(); i++)
+							d = std::max(_report->depths[i], d);
+						if (d > maxDepth)
+						{
+							maxDepth = d;
+							bestReport = *_report;
+							bestReport.shape1 = (Shape*)&_shape;
+							bestReport.shape2 = _report->shape2;
+							bestReport.entity2 = entity;
+						}
+						_report->clear();
+					}
+					else
+					{
+						maxDepth = 1.f;
+						return true;
+					}
+				}
+				delete tmp;
+			}
+			return false;
+		};
+
+		entity->componentsVisitor(Collider::getStaticClassID(), colliderVisitor);
+	}
+	return maxDepth >= 0.f;
+}
 //
 
 
@@ -123,27 +183,47 @@ void Physics::predictTransform(const float& elapsedTime)
 		}
 		else
 		{
-			rigidbody->previousPosition = rigidbody->getPosition();
-			rigidbody->previousOrientation = rigidbody->getOrientation();
+			if (rigidbody->getType() == RigidBody::RigidBodyType::DYNAMIC)
+			{
+				rigidbody->previousPosition = rigidbody->getPosition();
+				rigidbody->previousOrientation = rigidbody->getOrientation();
 
-			rigidbody->linearAcceleration = gravity * rigidbody->gravityFactor;							// gravity
-			rigidbody->linearAcceleration += rigidbody->inverseMass * rigidbody->externalForces;		// other forces
-			rigidbody->angularAcceleration = rigidbody->inverseInertia * rigidbody->externalTorques;	// other torques
+				rigidbody->linearAcceleration = gravity * rigidbody->gravityFactor;							// gravity
+				rigidbody->linearAcceleration += rigidbody->inverseMass * rigidbody->externalForces;		// other forces
+				rigidbody->angularAcceleration = rigidbody->inverseInertia * rigidbody->externalTorques;	// other torques
 
-			rigidbody->linearVelocity += elapsedTime * rigidbody->linearAcceleration;
-			rigidbody->angularVelocity += elapsedTime * rigidbody->angularAcceleration;
+				rigidbody->linearVelocity += elapsedTime * rigidbody->linearAcceleration;
+				rigidbody->angularVelocity += elapsedTime * rigidbody->angularAcceleration;
 
-			vec4f newPosition = rigidbody->previousPosition + elapsedTime * rigidbody->linearVelocity;
-			quatf dq = quatf(0.f, rigidbody->angularVelocity.x, rigidbody->angularVelocity.y, rigidbody->angularVelocity.z);
-			quatf newOrientation = rigidbody->getOrientation() + (0.5f * elapsedTime) * dq * rigidbody->getOrientation();
-			newOrientation.normalize();
+				vec4f newPosition = rigidbody->previousPosition + elapsedTime * rigidbody->linearVelocity;
+				quatf dq = quatf(0.f, rigidbody->angularVelocity.x, rigidbody->angularVelocity.y, rigidbody->angularVelocity.z);
+				quatf newOrientation = rigidbody->getOrientation() + (0.5f * elapsedTime) * dq * rigidbody->getOrientation();
+				newOrientation.normalize();
 
-			rigidbody->sweptBox = entity->m_worldBoundingBox;
-			AxisAlignedBox end = entity->m_localBoundingBox;
-			end.transform(newPosition, vec4f(entity->getWorldScale()), newOrientation);
-			rigidbody->sweptBox.add(end);
+				rigidbody->sweptBox = entity->m_worldBoundingBox;
+				AxisAlignedBox end = entity->m_localBoundingBox;
+				end.transform(newPosition, vec4f(entity->getWorldScale()), newOrientation);
+				rigidbody->sweptBox.add(end);
 
-			entity->setWorldTransformation(newPosition, entity->getWorldScale(), newOrientation);
+				entity->setWorldTransformation(newPosition, entity->getWorldScale(), newOrientation);
+			}
+			else if (rigidbody->getType() == RigidBody::RigidBodyType::KINEMATICS)
+			{
+				rigidbody->previousPosition = rigidbody->getPosition();
+				rigidbody->previousOrientation = rigidbody->getOrientation();
+				rigidbody->linearAcceleration = gravity * rigidbody->gravityFactor;
+				rigidbody->linearVelocity += elapsedTime * rigidbody->linearAcceleration;
+				rigidbody->angularVelocity = vec4f::zero;
+				rigidbody->angularAcceleration = vec4f::zero;
+
+				vec4f newPosition = rigidbody->previousPosition + elapsedTime * rigidbody->linearVelocity;
+				rigidbody->sweptBox = entity->m_worldBoundingBox;
+				AxisAlignedBox end = entity->m_localBoundingBox;
+				end.transform(newPosition, vec4f(entity->getWorldScale()), rigidbody->previousOrientation);
+				rigidbody->sweptBox.add(end);
+
+				entity->setWorldPosition(newPosition);
+			}
 
 			++it;
 		}
@@ -210,6 +290,9 @@ void Physics::computeBoundingShapesAndDetectPairs(const float& elapsedTime, Scen
 			// small cluster of one dynamic object
 			clusters.push_back(Cluster());
 			Cluster& cluster = clusters.back();
+			cluster.constraints.clear();
+			cluster.dynamicEntities.clear();
+			cluster.staticEntities.clear();
 			cluster.dynamicEntities.push_back(rigidbody);
 			rigidbody->computeWorldShapes();
 
@@ -307,9 +390,8 @@ void Physics::createConstraint(const unsigned int& clusterIndex, const float& de
 								cluster->constraints.push_back(constraint);
 							}
 						}
-
-						report.clear();
 					}
+					report.clear();
 				}
 		}
 
@@ -329,6 +411,7 @@ void Physics::createConstraint(const unsigned int& clusterIndex, const float& de
 					tmp->transform(entity2->getWorldPosition(), vec4f(entity2->getWorldScale()), entity2->getWorldOrientation());
 
 					for (unsigned int k = 0; k < body1->worldShapes.size(); k++)
+					{
 						if (Collision::collide(body1->worldShapes[k], tmp, &report))
 						{
 							report.entity1 = body1->getParentEntity();
@@ -345,9 +428,10 @@ void Physics::createConstraint(const unsigned int& clusterIndex, const float& de
 									cluster->constraints.push_back(constraint);
 								}
 							}
-
-							report.clear();
 						}
+						report.clear();
+					}
+						
 
 					delete tmp;
 				}
@@ -467,6 +551,42 @@ void Physics::solveConstraint(const unsigned int& clusterIndex, const float& del
 		}
 
 		if (maxImpulseCorrection < SOLVER_ITERATION_THRESHOLD)
+			break;
+	}
+
+	for (int i = 0; i < g_maxIterationCount; i++)
+	{
+		float maxCorrection = 0.f;
+		for (unsigned int j = 0; j < cluster->constraints.size(); j++)
+		{
+			Constraint& constraint = cluster->constraints[j];
+			vec4f pos1 = constraint.body1->getPosition();
+			vec4f p1 = pos1 + constraint.body1->getOrientation() * constraint.localPoint1;
+			vec4f p2 = constraint.worldPoint;
+			if (constraint.body2)
+				p2 = constraint.body2->getPosition() + constraint.body2->getOrientation() * constraint.localPoint2;
+			float depth = constraint.depth + vec4f::dot(p2 - p1, constraint.axis[0]);
+			if (std::abs(depth) < SOLVER_ITERATION_THRESHOLD)
+				continue;
+
+			float invMassSum = constraint.body1->inverseMass;
+			if (constraint.body2)
+				invMassSum += constraint.body2->inverseMass;
+			if (invMassSum < 10E-06f)
+				continue;
+
+			float correction = depth * g_contactNormalRelaxation / invMassSum;
+			maxCorrection = std::max(maxCorrection, correction);
+			float slack = correction * constraint.body1->inverseMass;
+			constraint.body1->setPosition(pos1 + slack * constraint.axis[0]);
+			if (constraint.body2)
+			{
+				slack = correction * constraint.body2->inverseMass;
+				constraint.body1->setPosition(constraint.body2->getPosition() - slack * constraint.axis[0]);
+			}
+		}
+
+		if (maxCorrection < SOLVER_ITERATION_THRESHOLD)
 			break;
 	}
 }

@@ -8,14 +8,20 @@
 #include <Scene/SceneManager.h>
 #include <World/World.h>
 #include <Utiles/ProfilerConfig.h>
+#include <EntityComponent/ComponentUpdater.h>
 
 #ifdef USE_IMGUI
 	#define IMGUI_DEFINE_MATH_OPERATORS
 	#include <imgui_internal.h>
 #endif
 
-std::vector<Animator*> g_allAnimator;
+extern std::map<Component::UpdatePass, std::vector<Component::ComponentUpdateData>> gComponentUpdateList;
 
+void AnimatorUpdate(void* componentPtr, float dt)
+{
+	Animator* animator = (Animator * )componentPtr;
+	animator->update(dt);
+}
 
 Animator::Animator()
 {
@@ -79,7 +85,8 @@ void Animator::onAddToEntity(Entity* entity)
 		m_skeletonComponent = entity->getComponent<SkeletonComponent>();
 		if (m_skeletonComponent)
 			m_skeleton = m_skeletonComponent->getSkeleton();
-		g_allAnimator.push_back(this);
+
+		ComponentUpdater::getInstance()->add(Component::eCommon, &AnimatorUpdate, this);
 	}
 }
 
@@ -91,6 +98,52 @@ bool Animator::isValid() const
 	if (!m_skeleton) return false;
 	return true;
 }
+
+
+bool Animator::setParameter(const std::string& _name, float _value)
+{
+	for (auto& param : m_graphParameters)
+	{
+		if (param.m_name == _name)
+		{
+			if (param.m_type != AnimationParameter::ParameterType::FLOAT)
+				return false;
+			param.m_value.Float = _value;
+			return true;
+		}
+	}
+	return false;
+}
+bool Animator::setParameter(const std::string& _name, bool _value)
+{
+	for (auto& param : m_graphParameters)
+	{
+		if (param.m_name == _name)
+		{
+			if (param.m_type != AnimationParameter::ParameterType::BOOL && 
+				param.m_type != AnimationParameter::ParameterType::TRIGGER)
+				return false;
+			param.m_value.Bool = _value;
+			return true;
+		}
+	}
+	return false;
+}
+bool Animator::setParameter(const std::string& _name, int _value)
+{
+	for (auto& param : m_graphParameters)
+	{
+		if (param.m_name == _name)
+		{
+			if (param.m_type != AnimationParameter::ParameterType::INT)
+				return false;
+			param.m_value.Int = _value;
+			return true;
+		}
+	}
+	return false;
+}
+
 void Animator::update(float elapsedTime)
 {
 	SCOPED_CPU_MARKER("Animator");

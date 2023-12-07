@@ -35,7 +35,7 @@
 								{
 									"to" : 4,
 									"duration" : 0.4,
-									"conditions" : [ { "paramName" : "immobileDuration", "comparison" : "greater", "value" : 3.0 } ]
+									"conditions" : [ { "paramName" : "immobileDuration", "comparison" : "greater", "value" : 10.0 } ]
 								}
 							]
 						},

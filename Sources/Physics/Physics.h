@@ -30,6 +30,8 @@ class Physics
 		//	Public functions
 		void stepSimulation(const float& elapsedTime, SceneManager* scene);
 
+		bool collisionTest(const Shape& _shape, SceneManager* scene, uint64_t flags, uint64_t noFlags, CollisionReport* _report = nullptr);
+
 		void debugDraw();
 		void drawImGui(World& world);
 		//

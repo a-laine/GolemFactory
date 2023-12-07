@@ -14,7 +14,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>opengl32.lib;glfw3.lib;glew32.lib;assimp-vc140-mt.lib;OptickCore.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(SolutionDir)..\Externals\1-GLFW\lib $(PlatformArchitecture);$(SolutionDir)..\Externals\2-GLEW\lib $(PlatformArchitecture);$(SolutionDir)..\Externals\4-ASSIMP\lib $(PlatformArchitecture) $(ConfigurationName);$(SolutionDir)..\Externals\5-FREETYPE\lib $(PlatformArchitecture);$(SolutionDir)..\Externals\OptickProfiler\lib\x64\release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\Externals\1-GLFW\lib $(PlatformArchitecture);$(SolutionDir)..\Externals\2-GLEW\lib $(PlatformArchitecture);$(SolutionDir)..\Externals\4-ASSIMP\lib $(PlatformArchitecture) Release;$(SolutionDir)..\Externals\5-FREETYPE\lib $(PlatformArchitecture);$(SolutionDir)..\Externals\OptickProfiler\lib\x64\release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>call $(SolutionDir)PostBuild.bat $(TargetExt) $(TargetDir) $(SolutionDir)..\Externals\ $(Configuration) $(PlatformArchitecture)</Command>

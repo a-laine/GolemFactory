@@ -46,10 +46,12 @@ bool GJK::collide(const Shape& a, const Shape& b, CollisionReport* report)
 				if (simplex.size() >= 4)
 				{
 					expandSimplex(a, b, report, simplex);
+					return report->collision;
 				}
 				else
 				{
 					std::cout << "WTF" << std::endl;// error
+					return false;
 				}
 			}
 			return true;

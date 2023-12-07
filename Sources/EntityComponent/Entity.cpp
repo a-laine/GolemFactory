@@ -61,8 +61,12 @@ void Entity::setWorldPosition(const vec4f& position)
 	m_worldPosition = position;
 	m_worldPosition.w = 1.f;
 	if (m_parentEntity)
+	{
 		m_localPosition = (1.f / m_parentEntity->m_worldScale) * (conjugate(m_parentEntity->m_worldOrientation) * (position - m_parentEntity->m_worldPosition));
-	m_localPosition.w = 1.f;
+		m_localPosition.w = 1.f;
+	}
+	else
+		m_localPosition = m_worldPosition;
 
 	m_transformIsDirty = true;
 	recomputeWorldBoundingBox();
@@ -83,8 +87,12 @@ void Entity::setWorldOrientation(const quatf& orientation)
 	m_worldOrientation = orientation;
 	m_worldOrientation.normalize();
 	if (m_parentEntity)
+	{
 		m_localOrientation = conjugate(m_parentEntity->m_worldOrientation) * orientation;
-	m_localOrientation.normalize();
+		m_localOrientation.normalize();
+	}
+	else
+		m_localOrientation = m_worldOrientation;
 
 	m_transformIsDirty = true;
 	recomputeWorldBoundingBox();

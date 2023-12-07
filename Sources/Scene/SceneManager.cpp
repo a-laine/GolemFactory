@@ -171,6 +171,22 @@ std::vector<Entity*> SceneManager::getAllObjects()
 	return std::vector<Entity*>(result.getResult());
 }
 
+Entity* SceneManager::searchEntity(const std::string& _name)
+{
+	for (Entity* e : roots)
+		if (e->getName() == _name)
+			return e;
+
+	VirtualSceneQuerry getAllTest;
+	VirtualEntityCollector result;
+	result.getResult();
+	for (Entity* e : result.getResult())
+		if (e->getName() == _name)
+			return e;
+
+	return nullptr;
+}
+
 std::vector<Entity*> SceneManager::getObjectsOnRay(const vec4f& position, const vec4f& direction, float maxDistance)
 {
 	/*if(world.empty())

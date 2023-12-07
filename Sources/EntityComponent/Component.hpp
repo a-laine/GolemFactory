@@ -39,6 +39,18 @@ class Variant;
 class Component
 {
 	public:
+		enum UpdatePass
+		{
+			ePlayer,
+			eCommon
+		};
+		typedef void(*UpdateCallback)(void*, float);
+		struct ComponentUpdateData
+		{
+			UpdateCallback updateFunction;
+			void* component;
+		};
+
 		static ClassID getStaticClassID() { return 0; }
 
 

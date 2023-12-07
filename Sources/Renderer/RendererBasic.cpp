@@ -493,10 +493,10 @@ void Renderer::render(CameraComponent* renderCam)
 	occlusionCulledInstances = 0;
 	lastShader = nullptr;
 	lastVAO = 0;
+	glBeginQuery(GL_TIME_ELAPSED, m_timerQueryID);
+
 	if (!context || !camera || !world || !renderCam)
 		return;
-
-	glBeginQuery(GL_TIME_ELAPSED, m_timerQueryID);
 
 	//	bind matrix
 	m_globalMatrices.view = renderCam->getViewMatrix();
@@ -671,13 +671,19 @@ void Renderer::renderHUD()
 void Renderer::swap()
 {
 	int stopTimerAvailable = 0;
-	while (!stopTimerAvailable) 
+	int timeout = 3;
+	while (!stopTimerAvailable)
+	{
 		glGetQueryObjectiv(m_timerQueryID, GL_QUERY_RESULT_AVAILABLE, &stopTimerAvailable);
+	}
 
-	GLuint64 elapsedGPUtimer;
-	glGetQueryObjectui64v(m_timerQueryID, GL_QUERY_RESULT, &elapsedGPUtimer);
-	m_GPUelapsedTime = (float)(elapsedGPUtimer) * 1E-06;
-	m_GPUavgTime = 0.95f * m_GPUavgTime + 0.05f * m_GPUelapsedTime;
+	if (timeout)
+	{
+		GLuint64 elapsedGPUtimer;
+		glGetQueryObjectui64v(m_timerQueryID, GL_QUERY_RESULT, &elapsedGPUtimer);
+		m_GPUelapsedTime = (float)(elapsedGPUtimer) * 1E-06;
+		m_GPUavgTime = 0.95f * m_GPUavgTime + 0.05f * m_GPUelapsedTime;
+	}
 
 	Debug::getInstance()->clearVBOs();
 }

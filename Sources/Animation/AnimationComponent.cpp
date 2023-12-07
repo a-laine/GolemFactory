@@ -9,10 +9,9 @@
 #include <Utiles/ProfilerConfig.h>
 #include <Scene/SceneManager.h>
 #include <World/World.h>
+#include <EntityComponent/ComponentUpdater.h>
 
 
-
-std::vector<AnimationComponent*> g_allAnimations;
 
 
 AnimationComponent::AnimationComponent()
@@ -134,6 +133,11 @@ AnimationClip* AnimationComponent::getCurrentAnimation() const
 	return m_animation;
 }
 
+void AnimationComponentUpdate(void* componentPtr, float dt)
+{
+	AnimationComponent* animation = (AnimationComponent*)componentPtr;
+	animation->update(dt);
+}
 
 void AnimationComponent::onAddToEntity(Entity* entity)
 {
@@ -143,8 +147,9 @@ void AnimationComponent::onAddToEntity(Entity* entity)
 		m_skeletonComponent = entity->getComponent<SkeletonComponent>();
 		if (m_skeletonComponent)
 			m_skeleton = m_skeletonComponent->getSkeleton();
-		g_allAnimations.push_back(this);
 		TryInitSkeletonPose();
+
+		ComponentUpdater::getInstance()->add(Component::eCommon, &AnimationComponentUpdate, this);
 	}
 }
 

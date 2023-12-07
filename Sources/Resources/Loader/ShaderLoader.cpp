@@ -648,7 +648,7 @@ std::vector<ShaderLoader::InternalVariantDefine> ShaderLoader::createVariantDefi
             result.back().allDefines = "INSTANCING+SHADOW_PASS";
 
             result.emplace_back();
-            result.back().shaderCode = Shader::computeVariantCode(false, 2, false);
+            result.back().shaderCode = Shader::computeVariantCode(true, 2, false);
             result.back().defines.push_back("#define INSTANCING\n");
             result.back().defines.push_back("#define SHADOW_PASS\n");
             result.back().defines.push_back("#define GEOMETRY_INVOCATION 6\n");

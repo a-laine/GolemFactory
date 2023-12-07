@@ -26,6 +26,9 @@ class Animator : public Component
 		bool isValid() const;
 		void update(float elapsedTime);
 
+		bool setParameter(const std::string& _name, float _value);
+		bool setParameter(const std::string& _name, bool _value);
+		bool setParameter(const std::string& _name, int _value);
 
 	private:
 		using GraphData = std::vector<AnimationGraph::LayerData>;

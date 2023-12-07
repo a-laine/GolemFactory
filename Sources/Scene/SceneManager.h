@@ -35,6 +35,7 @@ class SceneManager
 		void addToRootList(Entity* object);
 
 		std::vector<Entity*> getAllObjects();
+		Entity* searchEntity(const std::string& _name);
 		std::vector<Entity*> getObjectsOnRay(const vec4f& position, const vec4f& direction, float maxDistance);
 		std::vector<Entity*> getObjectsInBox(const vec4f& bbMin, const vec4f& bbMax);
 

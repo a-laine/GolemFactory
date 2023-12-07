@@ -419,6 +419,9 @@
     <ClCompile Include="..\..\Sources\Resources\AnimationGraphStateMachine.cpp">
       <Filter>Fichiers sources\Resources</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Sources\EntityComponent\ComponentUpdater.cpp">
+      <Filter>Fichiers sources\EntityComponent</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Sources\Math\TMath.h">
@@ -838,5 +841,13 @@
     <ClInclude Include="..\..\Sources\Resources\AnimationGraphStateMachine.h">
       <Filter>Fichiers sources\Resources</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Sources\EntityComponent\ComponentUpdater.h">
+      <Filter>Fichiers sources\EntityComponent</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\DefaultProperties.props">
+      <Filter>Fichiers de ressources</Filter>
+    </None>
   </ItemGroup>
 </Project>

@@ -1,9 +1,5 @@
 #pragma once
 
-//#include <glm/glm.hpp>
-//#include <glm/gtc/matrix_transform.hpp>
-//#include <glm/gtx/quaternion.hpp>
-
 #include <EntityComponent/Component.hpp>
 #include <Math/TMath.h>
 
@@ -41,9 +37,10 @@ public:
 	void lookAt(const vec4f& target, float distance);
 
 	void onDrawImGui() override;
+	void internalImGuiDraw();
 	void drawDebug(float viewportRatio, float farDistance = 10.f, float nearDistance = 1.f, vec4f color = vec4f(1.f)) const;
 
-private:
+protected:
 	float m_verticalFov;
 
 #ifdef USE_IMGUI

@@ -100,7 +100,8 @@ void CameraComponent::setDirection(vec4f direction)
 	mat4f view(direction, up, right, vec4f(0, 0, 0, 1));
 	quatf q = quatf(view);
 	q.normalize();
-	getParentEntity()->setWorldTransformation(getParentEntity()->getWorldPosition(), getParentEntity()->getWorldScale(), q);
+	//getParentEntity()->setWorldTransformation(getParentEntity()->getWorldPosition(), getParentEntity()->getWorldScale(), q);
+	getParentEntity()->setWorldOrientation(q);
 }
 
 void CameraComponent::translate(const vec4f& direction)
@@ -132,7 +133,8 @@ void CameraComponent::rotate(float verticalDelta, float horizontalDelta)
 	mat4f view(right, up, front, vec4f(0, 0, 0, 1));
 	quatf q = quatf(view);
 	q.normalize();
-	getParentEntity()->setWorldTransformation(getParentEntity()->getWorldPosition(), getParentEntity()->getWorldScale(), q);
+	//getParentEntity()->setWorldTransformation(getParentEntity()->getWorldPosition(), getParentEntity()->getWorldScale(), q);
+	getParentEntity()->setWorldOrientation(q);
 }
 
 void CameraComponent::rotateAround(const vec4f& target, float pitch, float yaw)
@@ -145,7 +147,8 @@ void CameraComponent::rotateAround(const vec4f& target, float pitch, float yaw)
 void CameraComponent::rotateAround(const vec4f& target, float pitch, float yaw, float distance)
 {
 	rotate(pitch, yaw);
-	getParentEntity()->getWorldPosition() = target - distance * getForward();
+	vec4f fwd = getForward();
+	getParentEntity()->setWorldPosition(target - distance * getForward());
 }
 
 void CameraComponent::lookAt(const vec4f& target)
@@ -167,22 +170,7 @@ void CameraComponent::onDrawImGui()
 	unicName << "Camera component##" << (uintptr_t)this;
 	if (ImGui::TreeNodeEx(unicName.str().c_str(), ImGuiTreeNodeFlags_DefaultOpen))
 	{
-		ImGui::TextColored(componentColor, "Parameters");
-		ImGui::Indent();
-		constexpr float rangeMin = (float)RAD2DEG * 0.05f;
-		constexpr float rangeMax = (float)RAD2DEG * 1.5f;
-		float fov = (float)RAD2DEG * m_verticalFov;
-		if (ImGui::SliderFloat("Vertical Fov", &fov, rangeMin, rangeMax, "%.3frad"))
-			m_verticalFov = (float)RAD2DEG * fov;
-		ImGui::Unindent();
-
-		ImGui::Spacing();
-		ImGui::TextColored(componentColor, "Gizmos");
-		ImGui::Indent();
-		ImGui::Checkbox("Draw frustrum shape", &m_drawFrustrum);
-		ImGui::DragFloat2("Debug range", &m_nearFarDistance[0], 0.1f, 0.f, 1000.f, "%.3f");
-		ImGui::Unindent();
-
+		internalImGuiDraw();
 		ImGui::TreePop();
 	}
 
@@ -191,6 +179,28 @@ void CameraComponent::onDrawImGui()
 		drawDebug(Debug::viewportRatio, m_nearFarDistance.x, m_nearFarDistance.y, 
 			vec4f(componentColor.x, componentColor.y, componentColor.z, componentColor.w));
 	}
+#endif // USE_IMGUI
+}
+
+void CameraComponent::internalImGuiDraw()
+{
+#ifdef USE_IMGUI
+	const ImVec4 componentColor = ImVec4(0.5, 0.5, 0.7, 1);
+	ImGui::TextColored(componentColor, "Camera parameters");
+	ImGui::Indent();
+	constexpr float rangeMin = (float)RAD2DEG * 0.05f;
+	constexpr float rangeMax = (float)RAD2DEG * 1.5f;
+	float fov = (float)RAD2DEG * m_verticalFov;
+	if (ImGui::SliderFloat("Vertical Fov", &fov, rangeMin, rangeMax, "%.3frad"))
+		m_verticalFov = (float)RAD2DEG * fov;
+	ImGui::Unindent();
+
+	ImGui::Spacing();
+	ImGui::TextColored(componentColor, "Camera gizmos");
+	ImGui::Indent();
+	ImGui::Checkbox("Draw frustrum shape", &m_drawFrustrum);
+	ImGui::DragFloat2("Debug range", &m_nearFarDistance[0], 0.1f, 0.f, 1000.f, "%.3f");
+	ImGui::Unindent();
 #endif // USE_IMGUI
 }
 

@@ -15,6 +15,7 @@
 #include <Renderer/OccluderComponent.h>
 #include <Utiles/ConsoleColor.cpp>
 #include <Animation/Animator.h>
+#include <Utiles/ProfilerConfig.h>
 
 
 
@@ -194,6 +195,8 @@ bool EntityFactory::loadPrefab(const std::string& resourceDirectory, const std::
 {
 	if (containPrefab(fileName))
 		return true;
+
+	SCOPED_CPU_MARKER("EntityFactory::loadPrefab");
 
 	// load file and parse JSON
 	std::string fullFileName = resourceDirectory + "/Prefabs/"+ assetPackName + "/" + fileName + ".json";
