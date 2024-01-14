@@ -200,7 +200,7 @@ void Animator::update(float elapsedTime)
 void Animator::onDrawImGui()
 {
 #ifdef USE_IMGUI
-	const ImVec4 componentColor = ImVec4(0.7, 0.7, 0.5, 1);
+	const ImVec4 componentColor = ImVec4(0.7f, 0.7f, 0.5f, 1.f);
 	std::ostringstream unicName;
 	unicName << "Animator##" << (uintptr_t)this;
 	if (ImGui::TreeNodeEx(unicName.str().c_str(), ImGuiTreeNodeFlags_DefaultOpen))
@@ -302,7 +302,7 @@ void Animator::drawImGui(int _stateId, const AG::StateMachine& _graph, const AG:
 #ifdef USE_IMGUI
 	using ptype = AnimationParameter::ParameterType;
 	using ctype = AG::StateMachine::Condition::ComparisonType;
-	const ImVec4 componentColor = isSubgraph ? ImVec4(0.4, 0.75, 0.2, 1) : ImVec4(0.75, 0.4, 0.0, 1);
+	const ImVec4 componentColor = isSubgraph ? ImVec4(0.4f, 0.75f, 0.2f, 1.f) : ImVec4(0.75f, 0.4f, 0.f, 1.f);
 	std::string header = isSubgraph ? "Sub state Machine overview" : "State Machine overview";
 	ImGui::TextColored(componentColor, header.c_str());
 
@@ -385,7 +385,7 @@ void Animator::drawImGui(int _nodeId, const AG::BlendTree& _tree, const AG::Blen
 	AG::BlendTree::BlendTreeRuntime& _runtime, bool isSubgraph)
 {
 #ifdef USE_IMGUI
-	const ImVec4 componentColor = isSubgraph ? ImVec4(0.4, 0.75, 0.2, 1) : ImVec4(0.75, 0.4, 0.0, 1);
+	const ImVec4 componentColor = isSubgraph ? ImVec4(0.4f, 0.75f, 0.2f, 1.f) : ImVec4(0.75f, 0.4f, 0.f, 1.f);
 	std::string header = isSubgraph ? "Sub blend tree overview" : "Blend tree overview";
 	ImGui::TextColored(componentColor, header.c_str());
 	ImGui::Indent();

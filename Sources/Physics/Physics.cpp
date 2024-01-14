@@ -27,7 +27,7 @@
 */
 
 #ifdef USE_IMGUI
-	bool PhysicDebugWindowEnable = true;
+	bool PhysicDebugWindowEnable = false;
 #endif // USE_IMGUI
 
 
@@ -660,8 +660,10 @@ void Physics::debugDraw()
 {
 	SCOPED_CPU_MARKER("Physics Debug Draw");
 
+#ifdef USE_IMGUI
 	if (!PhysicDebugWindowEnable)
 		return;
+#endif
 
 	const vec4f clustersOffset = vec4f(0.004f);
 	const vec4f sweptOffset = vec4f(0.004f);
@@ -731,7 +733,7 @@ void Physics::debugDraw()
 				debugCache.push_back({ constraint.worldPoint,  Debug::orange });
 				debugCache.push_back({ constraint.worldPoint + impulse,  Debug::yellow });
 			}
-			Debug::drawMultiplePrimitive(debugCache.data(), debugCache.size(), mat4f::identity, GL_LINES);
+			Debug::drawMultiplePrimitive(debugCache.data(), (unsigned int)debugCache.size(), mat4f::identity, GL_LINES);
 		}
 	}
 

@@ -257,7 +257,7 @@ void AG::StateMachine::evaluate(float _elapsedTime, const StateMachineData& _dat
                 _runtimeData.m_finalEvaluation[i].m_scale = lerp(state0.m_scale, state1.m_scale, t);
             }
         }
-        for (int i = _runtimeData.m_currentStateEvaluation.size(); i < _runtimeData.m_finalEvaluation.size(); i++)
+        for (int i = (int)_runtimeData.m_currentStateEvaluation.size(); i < (int)_runtimeData.m_finalEvaluation.size(); i++)
         {
             const BoneCurvesState& state1 = _runtimeData.m_targetStateEvaluation[_runtimeData.m_finalEvaluation[i].m_skeletonBoneIndex];
             _runtimeData.m_finalEvaluation[i].m_position = state1.m_position;
@@ -469,28 +469,28 @@ void AG::StateMachine::evaluateClipState(float& _time, const  State& _state, con
 
 void AG::StateMachine::initializeMatchingTable(Evaluation& _curentEvaluation, Evaluation& _targetEvaluation, Evaluation& _finalEvaluation) const
 {
-    int finalEvalSize = _curentEvaluation.size() + _targetEvaluation.size();
-    for (int i = 0; i < _curentEvaluation.size(); i++)
+    size_t finalEvalSize = _curentEvaluation.size() + _targetEvaluation.size();
+    for (size_t i = 0; i < _curentEvaluation.size(); i++)
         _curentEvaluation[i].m_skeletonBoneIndex = -1;
-    for (int i = 0; i < _targetEvaluation.size(); i++)
+    for (size_t i = 0; i < _targetEvaluation.size(); i++)
         _targetEvaluation[i].m_skeletonBoneIndex = -1;
 
-    for (int i = 0; i < _curentEvaluation.size(); i++)
+    for (size_t i = 0; i < _curentEvaluation.size(); i++)
     {
         if (i < _targetEvaluation.size() && _curentEvaluation[i].m_boneName == _targetEvaluation[i].m_boneName)
         {
-            _targetEvaluation[i].m_skeletonBoneIndex = i;
-            _curentEvaluation[i].m_skeletonBoneIndex = i;
+            _targetEvaluation[i].m_skeletonBoneIndex = (int)i;
+            _curentEvaluation[i].m_skeletonBoneIndex = (int)i;
             finalEvalSize--;
         }
         else
         {
-            for (int j = 0; j < _targetEvaluation.size(); j++)
+            for (size_t j = 0; j < _targetEvaluation.size(); j++)
             {
                 if (_curentEvaluation[i].m_boneName == _targetEvaluation[j].m_boneName)
                 {
-                    _targetEvaluation[j].m_skeletonBoneIndex = i;
-                    _curentEvaluation[i].m_skeletonBoneIndex = j;
+                    _targetEvaluation[j].m_skeletonBoneIndex = (int)i;
+                    _curentEvaluation[i].m_skeletonBoneIndex = (int)j;
                     finalEvalSize--;
                     break;
                 }
@@ -499,17 +499,17 @@ void AG::StateMachine::initializeMatchingTable(Evaluation& _curentEvaluation, Ev
     }
 
     _finalEvaluation.resize(finalEvalSize);
-    for (int i = 0; i < _curentEvaluation.size(); i++)
+    for (size_t i = 0; i < _curentEvaluation.size(); i++)
         _finalEvaluation[i] = _curentEvaluation[i];
     if (finalEvalSize != _curentEvaluation.size())
     {
-        int id = _curentEvaluation.size();
+        size_t id = _curentEvaluation.size();
         for (int i = 0; i < _targetEvaluation.size(); i++)
         {
             if (_targetEvaluation[i].m_skeletonBoneIndex == -1)
             {
                 _finalEvaluation[id] = _targetEvaluation[i];
-                _finalEvaluation[id].m_skeletonBoneIndex = i;
+                _finalEvaluation[id].m_skeletonBoneIndex = (int)i;
             }
         }
     }

@@ -7,7 +7,7 @@
 #include <Utiles/ProfilerConfig.h>
 
 #ifdef USE_IMGUI
-bool ResourcesWindowEnable = false;
+bool ResourcesWindowEnable = true;
 #endif
 
 //  Default

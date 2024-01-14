@@ -72,7 +72,7 @@ void Shader::initialize(GLuint  vertexSh, GLuint fragSh, GLuint geomShr, GLuint 
             tex.defaultResource = textures[i].second;
             tex.location = glGetUniformLocation(program, tex.identifier.c_str());
             tex.texture = ResourceManager::getInstance()->getResource<Texture>(tex.defaultResource, std2Dconfig);
-            tex.unit = m_textures.size();
+            tex.unit = (uint8_t)m_textures.size();
             tex.isGlobalAttribute = false;
             glUniform1i(tex.location, tex.unit);
 
@@ -102,9 +102,9 @@ void Shader::initialize(GLuint  vertexSh, GLuint fragSh, GLuint geomShr, GLuint 
         if (type == "_globalLightClusters")
             loadGlobalTexture(type, uniformName, uniformLocation, 0);
         else if (type == "_globalShadowCascades")
-            loadGlobalTexture(type, uniformName, uniformLocation, m_textures.size());
+            loadGlobalTexture(type, uniformName, uniformLocation, (uint8_t)m_textures.size());
         else if (type == "_globalOmniShadow")
-            loadGlobalTexture(type, uniformName, uniformLocation, m_textures.size());
+            loadGlobalTexture(type, uniformName, uniformLocation, (uint8_t)m_textures.size());
     }
 
     glUseProgram(0);
@@ -138,7 +138,7 @@ void Shader::initialize(GLuint computeSh, GLuint prog, const std::map<std::strin
             tex.defaultResource = textures[i].second;
             tex.location = glGetUniformLocation(program, tex.identifier.c_str());
             tex.texture = ResourceManager::getInstance()->getResource<Texture>(tex.defaultResource, std2Dconfig);
-            tex.unit = m_textures.size();
+            tex.unit = (uint8_t)m_textures.size();
             tex.isGlobalAttribute = false;
             glUniform1i(tex.location, tex.unit);
 
@@ -166,9 +166,9 @@ void Shader::initialize(GLuint computeSh, GLuint prog, const std::map<std::strin
         if (type == "_globalLightClusters")
             loadGlobalTexture(type, uniformName, uniformLocation, 0);
         else if (type == "_globalShadowCascades")
-            loadGlobalTexture(type, uniformName, uniformLocation, m_textures.size());
+            loadGlobalTexture(type, uniformName, uniformLocation, (uint8_t)m_textures.size());
         else if (type == "_globalOmniShadow")
-            loadGlobalTexture(type, uniformName, uniformLocation, m_textures.size());
+            loadGlobalTexture(type, uniformName, uniformLocation, (uint8_t)m_textures.size());
     }
 
     glUseProgram(0);
@@ -213,7 +213,7 @@ void Shader::addVariant(int variantCode, Shader* variantShader)
     variants[variantCode] = variantShader;
 }
 GLuint Shader::getProgram() const { return program; }
-int Shader::getTextureCount() const { return m_textures.size(); }
+int Shader::getTextureCount() const { return (int)m_textures.size(); }
 GLuint Shader::getShaderID(ShaderType shaderType) const
 {
     switch(shaderType)
@@ -403,7 +403,7 @@ void Shader::onDrawImGui()
                     ImGui::Spacing();
                     ImGui::TextColored(ResourceVirtual::titleColorDraw, "Overview");
                     ImGui::Image((void*)m_textures[i].texture->getTextureId(), ImVec2(m_textures[i].texture->size.x * ratio, m_textures[i].texture->size.y * ratio),
-                        ImVec2(0, 0), ImVec2(1, 1), ImColor(255, 255, 255, 255), ImColor(255, 255, 255, 128));
+                        ImVec2(0.f, 0.f), ImVec2(1.f, 1.f), ImColor(255, 255, 255, 255), ImColor(255, 255, 255, 128));
                 }
 
                 ImGui::TreePop();

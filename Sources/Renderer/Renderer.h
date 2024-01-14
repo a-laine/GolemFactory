@@ -3,14 +3,15 @@
 #include <GL/glew.h>
 
 
-#include <glm/glm.hpp>
+#include "Math/TMath.h"
+//#include <glm/glm.hpp>
 
 #include <Utiles/Mutex.h>
 #include <Core/RenderContext.h>
 #include <Utiles/Singleton.h>
 #include <World/World.h>
 #include <Utiles/ProfilerConfig.h>
-
+#include <Resources/Texture.h>
 #include <Scene/FrustrumSceneQuerry.h>
 
 #define MAX_LIGHT_COUNT 255
@@ -123,7 +124,6 @@ class Renderer : public Singleton<Renderer>
 		//	Render function
 		void loadModelMatrix(Shader* shader, const ModelMatrix* model, const int& modelSize = 1);
 		void drawObject(Entity* object, Shader* forceShader = nullptr);
-		void drawMap(Map* map, Shader* s = nullptr);
 		// 
 		
 		//	Debug
@@ -213,7 +213,10 @@ class Renderer : public Singleton<Renderer>
 				Shader* lastShader;
 				bool shaderJustActivated;
 				Shader* fullscreenTriangle;
-				Shader* occlusionResultDraw;
+
+				#ifdef USE_IMGUI
+					Shader* occlusionResultDraw;
+				#endif
 		#pragma endregion
 
 		#pragma region Batching_Instancing
@@ -238,7 +241,11 @@ class Renderer : public Singleton<Renderer>
 				float* m_occlusionCenterY = nullptr;
 				float* m_occlusionDepth = nullptr;
 				std::vector<vec4f> occluderScreenVertices;
-				Texture occlusionTexture;
+
+				#ifdef USE_IMGUI
+					Texture occlusionTexture;
+				#endif
+
 				unsigned int occluderTriangles, occluderRasterizedTriangles, occluderPixelsTest, occlusionCulledInstances;
 				float m_OcclusionElapsedTime, m_OcclusionAvgTime;
 		#pragma endregion

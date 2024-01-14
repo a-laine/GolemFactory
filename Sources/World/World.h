@@ -2,10 +2,10 @@
 
 #include "World/WorldComponents/EntityFactory.h"
 #include "World/WorldComponents/EntityManager.h"
-#include "World/WorldComponents/Map.h"
 #include <Scene/SceneManager.h>
 #include <Physics/Physics.h>
 #include <Utiles/Singleton.h>
+#include <Terrain/TerrainVirtualTexture.h>
 
 class CameraComponent;
 class World
@@ -36,9 +36,8 @@ class World
 		const EntityFactory& getEntityFactory() const;
 		Physics& getPhysics();
 		const Physics& getPhysics() const;
-		Map& getMap();
-		const Map& getMap() const;
-		Map* getMapPtr();
+
+		TerrainVirtualTexture& getTerrainVirtualTexture() { return m_terrainVirtualTexture; };
 
 		bool addToScene(Entity* object);
 
@@ -58,7 +57,10 @@ class World
 		SceneManager sceneManager;
 		EntityFactory entityFactory;
 		EntityManager entityManager;
-		Map map;
 		CameraComponent* m_mainCamera;
+
+
+
+		TerrainVirtualTexture m_terrainVirtualTexture;
 };
 

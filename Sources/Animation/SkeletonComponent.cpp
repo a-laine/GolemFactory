@@ -284,7 +284,7 @@ void SkeletonComponent::onDrawImGui()
 			RecursiveJointDraw(roots[j], mat4f::identity);
 
 		Debug::setDepthTest(false);
-		Debug::drawMultiplePrimitive(vertices.data(), vertices.size(), getParentEntity()->getWorldTransformMatrix(), GL_LINES);
+		Debug::drawMultiplePrimitive(vertices.data(), (unsigned int)vertices.size(), getParentEntity()->getWorldTransformMatrix(), GL_LINES);
 		Debug::setDepthTest(true);
 	}
 	if (m_drawBoundingBox)

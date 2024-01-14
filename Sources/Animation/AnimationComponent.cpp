@@ -41,9 +41,9 @@ bool AnimationComponent::load(Variant& jsonObject, const std::string& objectName
 			if (v.getType() == Variant::FLOAT)
 				destination = v.toFloat();
 			else if (v.getType() == Variant::DOUBLE)
-				destination = v.toDouble();
+				destination = (float)v.toDouble();
 			else if (v.getType() == Variant::INT)
-				destination = v.toInt();
+				destination = (float)v.toInt();
 			else
 				return false;
 			return true;
@@ -73,7 +73,7 @@ bool AnimationComponent::load(Variant& jsonObject, const std::string& objectName
 			it1 = jsonObject.getMap().find("randomStart");
 			if (it1 != jsonObject.getMap().end() && it1->second.getType() == Variant::BOOL && it1->second.toBool() && m_animation)
 			{
-				srand((uintptr_t)this);
+				srand((unsigned int)(uintptr_t)this);
 				int r = rand() % 10000;
 				m_currentTime = 0.0001f * r * m_animation->m_duration;
 			}
@@ -349,11 +349,11 @@ void AnimationComponent::TryInitSkeletonPose()
 		m_states[i].m_skeletonBoneIndex = m_skeleton ? (m_skeleton->getBoneId(m_states[i].m_boneName)) : -1;
 	}
 
-	const int boneCount = m_skeleton->getBones().size();
+	const int boneCount = (int)m_skeleton->getBones().size();
 	for (int i = 0; i < boneCount; i++)
 	{
 		int index = -1;
-		for (int j = 0; j < m_states.size(); j++)
+		for (unsigned int j = 0; j < m_states.size(); j++)
 		{
 			if (m_states[j].m_skeletonBoneIndex == i)
 			{
@@ -388,7 +388,7 @@ void AnimationComponent::computePoseMatrices()
 void AnimationComponent::onDrawImGui()
 {
 #ifdef USE_IMGUI
-	const ImVec4 componentColor = ImVec4(0.7, 0.7, 0.5, 1);
+	const ImVec4 componentColor = ImVec4(0.7f, 0.7f, 0.5f, 1.f);
 	std::ostringstream unicName;
 	unicName << "Animation component##" << (uintptr_t)this;
 	if (ImGui::TreeNodeEx(unicName.str().c_str(), ImGuiTreeNodeFlags_DefaultOpen))

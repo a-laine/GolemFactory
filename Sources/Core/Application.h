@@ -29,6 +29,7 @@ class Application
 		RenderContext* createFullscreenWindow(const char* title, GLFWmonitor* monitor, int width = 0, int height = 0);
 		RenderContext* createOffscreenContext();
 		void closeWindow(GLFWwindow* window);
+		void maximizeMainWindow();
 
 		void changeIcon(const std::string& iconName);
 

@@ -147,7 +147,7 @@ void PlayerMovement::onAddToEntity(Entity* entity)
 void PlayerMovement::onDrawImGui()
 {
 #ifdef USE_IMGUI
-	const ImVec4 componentColor = ImVec4(0.7, 0.0, 0.0, 1);
+	const ImVec4 componentColor = ImVec4(0.7f, 0.f, 0.f, 1.f);
 	std::ostringstream unicName;
 	unicName << "Player movement##" << (uintptr_t)this;
 	if (ImGui::TreeNodeEx(unicName.str().c_str(), ImGuiTreeNodeFlags_DefaultOpen))

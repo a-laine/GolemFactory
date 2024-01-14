@@ -9,7 +9,9 @@ char const * const Texture::directory = "Textures/";
 char const * const Texture::extension = ".texture";
 std::string Texture::defaultName;
 
+#ifdef USE_IMGUI
 Texture* Texture::sharedTextureOverview = nullptr;
+#endif
 //
 
 //  Default
@@ -277,7 +279,7 @@ void Texture::initialize(const std::string& textureName, const vec3i& imageSize,
     else state = INVALID;
 }
 
-void Texture::update(const void* data, unsigned int pixelFormat, unsigned int colorFormat)
+void Texture::update(const void* data, unsigned int pixelFormat, unsigned int colorFormat, vec3i offset, vec3i subSize)
 {
     auto& n = name;
     const auto CheckError = [n](const char* label)
@@ -299,30 +301,35 @@ void Texture::update(const void* data, unsigned int pixelFormat, unsigned int co
         return error != GL_NO_ERROR;
     };
 
+    vec3i updateSize = vec3i::min(size, subSize);
     unsigned int type = GL_TEXTURE_2D;
     switch ((TextureConfiguration)(configuration & (uint8_t)TextureConfiguration::TYPE_MASK))
     {
         case TextureConfiguration::TEXTURE_1D:
             glBindTexture(GL_TEXTURE_1D, texture);
-            glTexSubImage1D(GL_TEXTURE_1D, 0, 0, size.x, pixelFormat, colorFormat, data); CheckError("glTexSubImage1D");
+            glTexSubImage1D(GL_TEXTURE_1D, 0, offset.x, updateSize.x, pixelFormat, colorFormat, data);
+            CheckError("glTexSubImage1D");
             type = GL_TEXTURE_1D;
             break;
 
         case TextureConfiguration::TEXTURE_2D:
             glBindTexture(GL_TEXTURE_2D, texture);
-            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, size.x, size.y, pixelFormat, colorFormat, data); CheckError("glTexSubImage2D");
+            glTexSubImage2D(GL_TEXTURE_2D, 0, offset.x, offset.y, updateSize.x, updateSize.y, pixelFormat, colorFormat, data);
+            CheckError("glTexSubImage2D");
             type = GL_TEXTURE_2D;
             break;
 
         case TextureConfiguration::TEXTURE_3D:
             glBindTexture(GL_TEXTURE_3D, texture);
-            glTexSubImage3D(GL_TEXTURE_3D, 0, 0, 0, 0, size.x, size.y, size.z, pixelFormat, colorFormat, data); CheckError("glTexSubImage3D");
+            glTexSubImage3D(GL_TEXTURE_3D, 0, offset.x, offset.y, offset.z, updateSize.x, updateSize.y, updateSize.z, pixelFormat, colorFormat, data);
+            CheckError("glTexSubImage3D");
             type = GL_TEXTURE_3D;
             break;
 
         case TextureConfiguration::TEXTURE_ARRAY:
             glBindTexture(GL_TEXTURE_2D_ARRAY, texture);
-            glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, 0, size.x, size.y, size.z, pixelFormat, colorFormat, data); CheckError("glTexSubImage3D");
+            glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, offset.x, offset.y, offset.z, updateSize.x, updateSize.y, updateSize.z, pixelFormat, colorFormat, data);
+            CheckError("glTexSubImage3D");
             type = GL_TEXTURE_2D_ARRAY;
             break;
 
@@ -524,17 +531,18 @@ void Texture::onDrawImGui()
         if (size.z > 0)
         {
             int layerCount = size.z;
-            //if (m_type == GL_TEXTURE_CUBE_MAP_ARRAY)
-            //    layerCount = 6 * size.z;
-
             ImGui::SliderInt("Layer", &layerOverview, 0, layerCount - 1);
-            layer = layerOverview;
+            layer = (float)layerOverview;
+        }
+        else if (m_internalFormat == GL_RGBA16UI && m_type == GL_TEXTURE_2D && isEnginePrivate) // terrain virtual texture
+        {
+            // 5 "layer" : height, water, normal, material, hole
+            ImGui::SliderInt("Layer", &layerOverview, 0, 4);
+            layer = (float)layerOverview;
         }
 
         Debug::reinterpreteTexture(this, sharedTextureOverview, layer);
         ImGui::Image((void*)sharedTextureOverview->getTextureId(), ImVec2(size.x * ratio, size.y * ratio), ImVec2(0, 0), ImVec2(1, 1), ImColor(255, 255, 255, 255), ImColor(255, 255, 255, 128));
-
-        //ImGui::Text("-Texture type or format invalid for overview-");
     }
 
 #endif

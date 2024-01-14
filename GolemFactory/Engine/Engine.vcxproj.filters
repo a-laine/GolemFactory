@@ -158,9 +158,6 @@
     <ClCompile Include="..\..\Sources\Renderer\RendererDrawCommands.cpp">
       <Filter>Fichiers sources\Renderer</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Sources\Terrain\Chunk.cpp">
-      <Filter>Fichiers sources\Terrain</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\Sources\Scene\BoxSceneQuerry.cpp">
       <Filter>Fichiers sources\Scene</Filter>
     </ClCompile>
@@ -279,9 +276,6 @@
       <Filter>Fichiers sources\World\WorldComponent</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Sources\World\WorldComponents\EntityManager.cpp">
-      <Filter>Fichiers sources\World\WorldComponent</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\World\WorldComponents\Map.cpp">
       <Filter>Fichiers sources\World\WorldComponent</Filter>
     </ClCompile>
     <ClCompile Include="..\..\Sources\World\World.cpp">
@@ -421,6 +415,15 @@
     </ClCompile>
     <ClCompile Include="..\..\Sources\EntityComponent\ComponentUpdater.cpp">
       <Filter>Fichiers sources\EntityComponent</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Sources\Terrain\TerrainVirtualTexture.cpp">
+      <Filter>Fichiers sources\Terrain</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Sources\Terrain\TerrainArea.cpp">
+      <Filter>Fichiers sources\Terrain</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Sources\Terrain\Terrain.cpp">
+      <Filter>Fichiers sources\Terrain</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -649,9 +652,6 @@
     <ClInclude Include="..\..\Sources\World\World.h">
       <Filter>Fichiers sources\World</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Sources\World\WorldComponents\Map.h">
-      <Filter>Fichiers sources\World\WorldComponent</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Sources\World\WorldComponents\EntityFactory.h">
       <Filter>Fichiers sources\World\WorldComponent</Filter>
     </ClInclude>
@@ -711,9 +711,6 @@
     </ClInclude>
     <ClInclude Include="..\..\Sources\Utiles\Parser\Writer.h">
       <Filter>Fichiers sources\Utiles\Parser</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Terrain\Chunk.h">
-      <Filter>Fichiers sources\Terrain</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Sources\Scene\BoxSceneQuerry.h">
       <Filter>Fichiers sources\Scene</Filter>
@@ -843,6 +840,15 @@
     </ClInclude>
     <ClInclude Include="..\..\Sources\EntityComponent\ComponentUpdater.h">
       <Filter>Fichiers sources\EntityComponent</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Terrain\TerrainVirtualTexture.h">
+      <Filter>Fichiers sources\Terrain</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Terrain\TerrainArea.h">
+      <Filter>Fichiers sources\Terrain</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Terrain\Terrain.h">
+      <Filter>Fichiers sources\Terrain</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

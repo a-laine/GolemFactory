@@ -392,6 +392,27 @@ void WidgetManager::setActiveHUD(const std::string& name)
 	//	swap
 	activeHud = name;
 }
+void WidgetManager::disableAllHUD()
+{
+	for (auto& it : hudList)
+	{
+		for (Layer* layer : it.second)
+		{
+			layer->setVisibility(false);
+
+			vec4f direction = layer->getScreenPosition();
+			if (direction == vec4f::zero)
+				direction = vec4f(0.f, 0.f, 1.f, 0.f);
+			else
+				direction.normalize();
+
+			vec4f p = layer->getScreenPosition() + 0.1f * direction;
+			layer->setTargetPosition(p);
+			layer->setPosition(p);
+		}
+	}
+	activeHud = "";
+}
 void WidgetManager::setPickingParameters(const mat4f& base, const vec4f& ray)
 {
 	pickingRay = ray;

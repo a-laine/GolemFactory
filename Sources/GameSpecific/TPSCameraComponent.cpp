@@ -62,7 +62,7 @@ void TPSCameraComponent::onAddToEntity(Entity* entity)
 void TPSCameraComponent::onDrawImGui()
 {
 #ifdef USE_IMGUI
-	const ImVec4 componentColor = ImVec4(0.5, 0.5, 0.7, 1);
+	const ImVec4 componentColor = ImVec4(0.5f, 0.5f, 0.7f, 1.f);
 	std::ostringstream unicName;
 	unicName << "TPS Camera component##" << (uintptr_t)this;
 	if (ImGui::TreeNodeEx(unicName.str().c_str(), ImGuiTreeNodeFlags_DefaultOpen))
@@ -89,7 +89,7 @@ void TPSCameraComponent::onDrawImGui()
 	if (m_drawDebug)
 	{
 		const float l = 0.15f;
-		const float sinA = 0.34 * l;
+		const float sinA = 0.34f * l;
 
 		vec4f o = m_targetCharacter->getWorldPosition();
 		vec4f v = m_targetCharacter->getWorldOrientation() * m_targetOffset;

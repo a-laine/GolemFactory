@@ -22,7 +22,7 @@
 #define MAX_INSTANCE 32
 
 #ifdef USE_IMGUI
-bool RenderingWindowEnable = true;
+bool RenderingWindowEnable = false;
 #endif
 
 
@@ -208,9 +208,9 @@ void Renderer::initializeOcclusionBuffers(int width, int height)
 			m_occlusionDepth[id] = depthMax;
 			m_occlusionCenterX[id] = (float)(i + 0.5f) / m_occlusionBufferSize.x;
 			m_occlusionCenterY[id] = (float)(j + 0.5f) / m_occlusionBufferSize.y;
-			//m_occlusionDepthColor[id] = 0;
 		}
 
+#ifdef USE_IMGUI
 	using TC = Texture::TextureConfiguration;
 	uint8_t config = (uint8_t)TC::TEXTURE_2D | (uint8_t)TC::MIN_NEAREST | (uint8_t)TC::MAG_NEAREST | (uint8_t)TC::WRAP_CLAMP;
 	occlusionTexture.initialize("occlusionTexture", vec3i(m_occlusionBufferSize.x, m_occlusionBufferSize.y, 0),
@@ -218,6 +218,7 @@ void Renderer::initializeOcclusionBuffers(int width, int height)
 	ResourceManager::getInstance()->addResource(&occlusionTexture);
 	occlusionTexture.isEnginePrivate = true;
 	occlusionResultDraw = ResourceManager::getInstance()->getResource<Shader>("occlusionResult");
+#endif
 }
 void Renderer::initGlobalUniformBuffers()
 {
@@ -506,7 +507,6 @@ void Renderer::render(CameraComponent* renderCam)
 	updateGlobalUniformBuffers();
 	
 	//	opengl state
-	//glViewport(0, 0, context->getViewportSize().x, context->getViewportSize().y);
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
 	glEnable(GL_CULL_FACE);
@@ -625,7 +625,6 @@ void Renderer::renderHUD()
 	glDisable(GL_CULL_FACE);
 
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glActiveTexture(GL_TEXTURE0);
 	uint8_t stencilMask = 0x00;
 
@@ -654,8 +653,6 @@ void Renderer::renderHUD()
 						if (!shader)
 							continue;
 
-						//loadGlobalUniforms(shader);
-
 						//	Draw
 						(*it2)->draw(shader, stencilMask, model);
 						drawCalls;
@@ -666,7 +663,6 @@ void Renderer::renderHUD()
 			}
 		}
 	}
-	//glDisable(GL_BLEND);
 }
 void Renderer::swap()
 {
@@ -681,7 +677,7 @@ void Renderer::swap()
 	{
 		GLuint64 elapsedGPUtimer;
 		glGetQueryObjectui64v(m_timerQueryID, GL_QUERY_RESULT, &elapsedGPUtimer);
-		m_GPUelapsedTime = (float)(elapsedGPUtimer) * 1E-06;
+		m_GPUelapsedTime = (float)(elapsedGPUtimer) * 1E-06f;
 		m_GPUavgTime = 0.95f * m_GPUavgTime + 0.05f * m_GPUelapsedTime;
 	}
 
@@ -879,6 +875,7 @@ void Renderer::drawImGui(World& world)
 	ImGui::Checkbox("Occlusion culling", &m_enableOcclusionCulling);
 	ImGui::Checkbox("Draw light clusters", &m_drawClusters);
 	ImGui::Checkbox("Draw occlusion buffer", &m_drawOcclusionBuffer);
+	ImGui::Checkbox("Draw grid", &drawGrid);
 
 	if (!m_drawOcclusionBuffer)
 	{
@@ -925,7 +922,7 @@ void Renderer::drawImGui(World& world)
 	ImGui::SliderFloat("Wireframe edge factor", &m_debugShaderUniform.wireframeEdgeFactor, 0.f, 1.f, "%.3f", ImGuiSliderFlags_Logarithmic);
 
 	ImGui::Spacing();
-	int columnWidth = 250;
+	float columnWidth = 250.f;
 	ImGui::TextColored(titleColor, "DrawInfos");
 	ImGui::Text("Entities : %d", instanceDrawn);				ImGui::SameLine(columnWidth); ImGui::Text("Occluder triangles : %d", occluderTriangles);
 	ImGui::Text("Drawcalls : %d", drawCalls);					ImGui::SameLine(columnWidth); ImGui::Text("Occlusion rasterized triangles : %d", occluderRasterizedTriangles);
@@ -1027,7 +1024,7 @@ void Renderer::drawImGui(World& world)
 					}
 		}
 
-		Debug::drawMultiplePrimitive(clusterLines.data(), clusterLines.size(), mainCamera->getModelMatrix(), GL_LINES);
+		Debug::drawMultiplePrimitive(clusterLines.data(), (unsigned int)clusterLines.size(), mainCamera->getModelMatrix(), GL_LINES);
 	}
 
 	if (m_drawOcclusionBuffer)

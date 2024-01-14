@@ -2,11 +2,7 @@
 
 #define USE_GLM
 
-#ifndef USE_GLM
-
-#include "Tmat4.h"
-
-#else
+#ifdef USE_GLM
 
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
@@ -16,10 +12,10 @@
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 
-#define EPSILON 1E-6
-#define PI 3.14159265359
-#define DEG2RAD (PI / 180.0)
-#define RAD2DEG (180.0 / PI)
+#define EPSILON 1E-6f
+#define PI 3.14159265359f
+#define DEG2RAD (PI / 180.f)
+#define RAD2DEG (180.f / PI)
 
 typedef glm::fvec4 vec4f;
 typedef glm::fvec3 vec3f;
@@ -372,7 +368,6 @@ glm::tmat4x4<T, P> glm::tmat4x4<T, P>::rotate(const glm::tmat4x4<T, P>& m, const
 template <typename T, glm::precision P>
 glm::tmat4x4<T, P> glm::tmat4x4<T, P>::rotate(const glm::tmat4x4<T, P>& m, const glm::tvec3<T, P> euler)
 {
-	//return glm::toMat4(glm::tquat<T, P>(euler)) * m;
 	return glm::eulerAngleXYZ(euler.x, euler.y, euler.z) * m;
 }
 
@@ -385,8 +380,6 @@ glm::tmat4x4<T, P> glm::tmat4x4<T, P>::TRS(const glm::tvec4<T, P>& t, const glm:
 	result[2] *= s[2];
 	result[3] = t;
 	return result;
-	//glm::tmat4x4<T, P> result = glm::toMat4(q) * glm::translate(glm::tmat4x4<T, P>::identity, (tvec3<T, P>)t);
-	//return glm::scale(result, (tvec3<T, P>)s);
 }
 
 template <typename T, glm::precision P>
@@ -442,6 +435,10 @@ template<typename T>
 T clamp(const T& a, const T& min, const T& max) {
 	return a < min ? min : (a > max ? max : a);
 }
+
+#else
+
+#include "Tmat4.h"
 
 #endif
 

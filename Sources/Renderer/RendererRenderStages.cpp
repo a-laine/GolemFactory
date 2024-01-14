@@ -6,6 +6,7 @@
 #include <Renderer/OccluderComponent.h>
 #include <Utiles/Debug.h>
 #include <Animation/SkeletonComponent.h>
+#include <Resources/Shader.h>
 
 
 #define MAX_INSTANCE 32
@@ -44,9 +45,12 @@ void Renderer::CollectEntitiesBindLights()
 		{
 			DrawableComponent* comp = object->getComponent<DrawableComponent>();
 			bool ok = comp && comp->isValid();
+
 #ifdef USE_IMGUI
-			ok &= comp->visible();
+			if (ok)
+				ok &= comp->visible();
 #endif
+
 			if (ok)
 			{
 				m_hasInstancingShaders |= comp->getShader()->supportInstancing();
@@ -131,7 +135,7 @@ void Renderer::CollectEntitiesBindLights()
 		if (comp->castShadow() && shadowOmniCaster.size() < MAX_OMNILIGHT_SHADOW_COUNT)
 		{
 			m_OmniShadows.m_omniShadowLightIndexes[shadowOmniCaster.size()] = m_sceneLights.m_lightCount;
-			computeOmniShadowProjection(comp, shadowOmniCaster.size());
+			computeOmniShadowProjection(comp, (int)shadowOmniCaster.size());
 			shadowOmniCaster.push_back(comp);
 		}
 
@@ -309,7 +313,9 @@ void Renderer::OcclusionCulling()
 		}
 	}
 
+#ifdef USE_IMGUI
 	occlusionTexture.update(m_occlusionDepth, GL_RED, GL_FLOAT);
+#endif
 
 	for (auto& it : renderQueue)
 	{

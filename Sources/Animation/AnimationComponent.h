@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 #include <list>
-#include <glm/glm.hpp>
+//#include <glm/glm.hpp>
 #include <GL/glew.h>
 
 #include <EntityComponent/Component.hpp>

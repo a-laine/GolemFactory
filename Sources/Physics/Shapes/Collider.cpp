@@ -53,12 +53,12 @@ bool Collider::load(Variant& jsonObject, const std::string& objectName)
 				}
 				else if (element.getType() == Variant::DOUBLE)
 				{
-					parsed[i] = element.toDouble();
+					parsed[i] = (float)element.toDouble();
 					sucessfullyParsed++;
 				}
 				else if (element.getType() == Variant::INT)
 				{
-					parsed[i] = element.toInt();
+					parsed[i] = (float)element.toInt();
 					sucessfullyParsed++;
 				}
 			}

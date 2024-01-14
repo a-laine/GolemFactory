@@ -22,9 +22,12 @@ TextureReinterpreter
 		#version 430
 		
 		// textures & uniforms
-		layout(binding = 0) uniform sampler2DArray shadowArray;
-		layout(binding = 1) uniform samplerCubeArray omniShadowArray;
-		layout(binding = 2) uniform sampler2D depthTexture;
+		layout(binding = 0) uniform sampler2DArray shadowArray;			//sampler unit 0
+		layout(binding = 1) uniform samplerCubeArray omniShadowArray;	//sampler unit 1
+		layout(binding = 2) uniform sampler2D depthTexture;				//sampler unit 2
+		
+		layout(rgba16ui) readonly uniform uimage2D terrainData;			// image unit 0
+		
 		uniform float layer;
 		uniform float type;
 		
@@ -97,12 +100,57 @@ TextureReinterpreter
 					fragColor = vec4(depth, depth, depth, 1.0);
 				}
 			}
-			else if (type == 2)
+			else if (type == 2) // occlusion 
 			{
 				float f = texture(depthTexture, vec2(fragmentUv.x, 1.0 - fragmentUv.y)).r;
 				
 				float depth = 2 * (1.0 - f);
 				fragColor = vec4(depth, depth, depth, 1.0);
+			}
+			else if (type == 3) // terrain heightmap
+			{
+				ivec2 terrainDataSize = imageSize(terrainData);
+				ivec2 uv = ivec2(fragmentUv.x * terrainDataSize.x, (1.0 - fragmentUv.y) * terrainDataSize.y);
+				uvec4 data = imageLoad(terrainData, uv);
+				
+				uint height = data.r;
+				uint water = data.g;
+				uint normalx = data.b >> 5;
+				uint normalz = ((data.b & 0x1F) << 5) | (data.a >> 10);
+				uint material = (data.a & 0x3FC) >> 2;
+				uint hole = data.a & 0x03;
+				
+				if (layer == 0)
+				{
+					float h = height / 65536.0;
+					fragColor = vec4(h, h, h, 1);
+				}
+				else if (layer == 1)
+				{
+					float h = water / 65536.0;
+					fragColor = vec4(h, h, h, 1);
+				}
+				else if (layer == 2)
+				{
+					float x = normalx / 2048.0 - 0.5;
+					float z = normalz / 2048.0 - 0.5;
+					float y = sqrt(1.0 - min(x * x + z * z, 1.0));
+					fragColor = vec4(x, y, z, 1);
+				}
+				else if (layer == 3)
+				{
+					float r = 0.125 * (material & 0x03);
+					float g = 0.125 * ((material & 0x38) >> 3);
+					float b = 0.25 * ((material & 0xC0) >> 6);
+					fragColor = vec4(r, g, b, 1);
+				}
+				else if (layer == 4)
+				{
+					float h = 0.33 * hole;
+					fragColor = vec4(h, h, h, 1);
+				}
+				else
+					fragColor = vec4(0, 0, 0, 1);
 			}
 		}
 	};

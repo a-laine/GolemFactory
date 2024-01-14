@@ -131,6 +131,31 @@ RenderContext* Application::createFullscreenWindow(const char* title, GLFWmonito
 	if (window != nullptr)
 	{
 		context = new RenderContext(window, false);
+		if (m_mainWindow == nullptr)
+		{
+			m_mainWindow = window;
+			context->makeCurrent();
+
+#ifdef USE_IMGUI
+			IMGUI_CHECKVERSION();
+			ImGui::CreateContext();
+
+			ImGuiIO& io = ImGui::GetIO();
+			io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_ViewportsEnable;
+
+			ImGui::StyleColorsDark();
+
+			ImGuiStyle& style = ImGui::GetStyle();
+			if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+			{
+				style.WindowRounding = 0.0f;
+				style.Colors[ImGuiCol_WindowBg].w = 1.0f;
+			}
+
+			ImGui_ImplGlfw_InitForOpenGL(window, true);
+			ImGui_ImplOpenGL3_Init("#version 130");
+#endif
+		}
 		m_windows.push_back(window);
 		m_contexts.push_back(context);
 	}
@@ -180,6 +205,11 @@ void Application::closeWindow(GLFWwindow* window)
 		m_contexts.erase(itContext);
 		delete context;
 	}
+}
+
+void Application::maximizeMainWindow()
+{
+	glfwMaximizeWindow(m_mainWindow);
 }
 
 void Application::ImGuiShut()

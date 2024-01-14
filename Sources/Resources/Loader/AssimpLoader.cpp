@@ -160,7 +160,7 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
                 {
                     joints.push_back(Skeleton::Bone());
                     joints.back().name = boneName;
-                    joints.back().id = joints.size() - 1;
+                    joints.back().id = (int)joints.size() - 1;
                     joints.back().parent = nullptr;
                     joints.back().relativeBindTransform = mat4f::identity;
 					boneMap[boneName] = (int)boneMap.size();

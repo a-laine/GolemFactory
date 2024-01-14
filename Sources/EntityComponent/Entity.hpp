@@ -95,7 +95,7 @@ class Entity : public EntityBase
 		//
 
 		//	Debug
-		bool drawImGui(World& world);
+		bool drawImGui(World& world, bool inChildWindow);
 		//
 
 	private:

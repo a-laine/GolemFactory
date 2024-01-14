@@ -40,7 +40,7 @@ class Debug : public Singleton<Debug>
 		static void drawCapsule(const vec4f& point1, const vec4f& point2, const float& radius) { Debug::capsule(point1, point2, radius, This->defaultShader); };
 		static void drawMesh(const Mesh* const mesh, const mat4f& transform) { Debug::mesh(mesh, transform, This->defaultShader); };
 
-		static void drawMultiplePrimitive(const Vertex* vertices, const int& verticesCount, const mat4f& model, int drawMode);
+		static void drawMultiplePrimitive(const Vertex* vertices, const unsigned int& verticesCount, const mat4f& model, unsigned int drawMode);
 
 		static void drawWiredCube(const mat4f& transform, const vec4f& size) { Debug::mesh(This->cubeMesh, mat4f::scale(transform, size), This->wiredShader); };
 		static void drawWiredCube(const mat4f& transform, const vec4f& min, const vec4f& max)

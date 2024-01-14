@@ -56,9 +56,6 @@ EntityFactory& World::getEntityFactory() { return entityFactory; }
 const EntityFactory& World::getEntityFactory() const { return entityFactory; }
 Physics& World::getPhysics() { return physics; }
 const Physics& World::getPhysics() const { return physics; }
-Map& World::getMap() { return map; }
-const Map& World::getMap() const { return map; }
-Map* World::getMapPtr() { return &map; }
 
 
 bool World::addToScene(Entity* object)

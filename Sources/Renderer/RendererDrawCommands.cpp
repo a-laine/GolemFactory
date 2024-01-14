@@ -14,7 +14,7 @@
 #include <Animation/SkeletonComponent.h>
 
 
-#include <World/WorldComponents/Map.h>
+//#include <World/WorldComponents/Map.h>
 #include <Terrain/Chunk.h>
 #include <Animation/AnimationComponent.h>
 
@@ -132,7 +132,7 @@ void Renderer::drawInstancedObject(Shader* s, Mesh* m, std::vector<ModelMatrix>&
 	instanceDrawn += (int)(models.size());
 	trianglesDrawn += (int)(models.size() * m->getNumberFaces());
 }
-void Renderer::drawMap(Map* map, Shader* s)
+/*void Renderer::drawMap(Map* map, Shader* s)
 {
 	mat4f scale = mat4f::scale(mat4f::identity, map->getScale());
 	mat4f model = scale * map->getModelMatrix();
@@ -239,7 +239,7 @@ void Renderer::drawMap(Map* map, Shader* s)
 	}
 	color = vec4f(-1.f, 0.f, 0.f, 1.f);
 	if (loc >= 0) glUniform3fv(loc, 1, (float*)&color);
-}
+}*/
 
 
 void Renderer::fullScreenDraw(const Texture* texture, Shader* shader, float alpha, bool bindIntoImage)

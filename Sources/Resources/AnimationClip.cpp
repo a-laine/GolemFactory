@@ -130,7 +130,7 @@ void AnimationClip::onDrawImGui()
 
         ImGui::RenderFrame(frame_bb.Min, frame_bb.Max, bgColor, true, style.FrameRounding);
 
-        int item_count = curve.size() - 1;
+        int item_count = (int)curve.size() - 1;
         int res_w = std::min((int)graph_size.x, item_count) -1;
         for (int i = 0; i < item_count; i++)
         {
@@ -191,7 +191,7 @@ void AnimationClip::onDrawImGui()
 
         ImGui::RenderFrame(frame_bb.Min, frame_bb.Max, bgColor, true, style.FrameRounding);
 
-        int item_count = curve.size() - 1;
+        int item_count = (int)curve.size() - 1;
         int res_w = std::min((int)graph_size.x, item_count) -1;
 
         for (int i = 0; i < item_count; i++)

@@ -186,7 +186,7 @@ void DrawableComponent::onDrawImGui()
 		const auto& textures = m_shader->getTextures();
 		if (!textures.empty())
 		{
-			ImGui::TextColored(ImVec4(0.7, 1, 0.7, 1), "Binded textures :");
+			ImGui::TextColored(ImVec4(0.7f, 1.f, 0.7f, 1.f), "Binded textures :");
 			ImGui::Indent();
 			for (int i = 0; i < textures.size(); i++)
 			{
@@ -200,7 +200,7 @@ void DrawableComponent::onDrawImGui()
 		const auto& uniforms = m_shader->getUniforms();
 		if (!uniforms.empty())
 		{
-			ImGui::TextColored(ImVec4(0.7, 1, 0.7, 1), "Parameters :");
+			ImGui::TextColored(ImVec4(0.7f, 1.f, 0.7f, 1.f), "Parameters :");
 			ImGui::Indent();
 			for (auto it = uniforms.begin(); it != uniforms.end(); it++)
 			{

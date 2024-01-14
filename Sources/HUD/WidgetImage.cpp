@@ -38,6 +38,7 @@ void WidgetImage::initialize()
 	batchList.push_back(quad);
 	initializeVBO(BATCH_INDEX_QUAD, GL_STATIC_DRAW);
 	initializeVAOs();
+	//setVisibility(false);
 }
 //
 

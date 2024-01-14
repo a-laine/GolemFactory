@@ -41,6 +41,7 @@ std::string Entity::getFlagName(uint64_t flag)
 	bool first = true;
 	std::string result = "";
 
+#ifdef USE_IMGUI
 #define FLAG_MACRO(name,value)    \
 	if (flag&(##value)){            \
 		if (!first) result += '+';\
@@ -50,7 +51,7 @@ std::string Entity::getFlagName(uint64_t flag)
 
 #include "EntityFlags.h"
 #undef FLAG_MACRO
-
+#endif
 	return result;
 }
 
@@ -352,13 +353,23 @@ void Entity::recomputeWorldChildTransforms()
 //
 
 // Debug
-bool Entity::drawImGui(World& world)
+bool Entity::drawImGui(World& world, bool inChildWindow)
 {
+#ifdef USE_IMGUI
 	// new window
 	ImGui::PushID(this);
 	std::ostringstream unicName;
 	unicName << m_name << "##" << (uintptr_t)this;
-	ImGui::Begin(unicName.str().c_str(), &m_isDebugSelected);
+	if (inChildWindow)
+	{
+		ImGui::BeginChild(unicName.str().c_str());
+		//ImGui::SeparatorText("Child windows");
+	}
+	else
+	{
+		
+		ImGui::Begin(unicName.str().c_str(), &m_isDebugSelected);
+	}
 
 	// base
 	ImGui::Text("Name : %s", m_name.c_str());
@@ -366,7 +377,7 @@ bool Entity::drawImGui(World& world)
 	ImGui::Checkbox("Draw boundingBox", &m_drawBoundingBox);
 
 	// transform
-	const ImVec4 sectionColor = ImVec4(1, 0.9, 0.5, 1);
+	const ImVec4 sectionColor = ImVec4(1.f, 0.9f, 0.5f, 1.f);
 	const auto ColoredTreeNode = [](ImVec4 color, const char* label, void* id, ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_None)
 	{
 		ImGui::PushStyleColor(ImGuiCol_Text, color);
@@ -475,7 +486,14 @@ bool Entity::drawImGui(World& world)
 	}
 
 	// end window
-	ImGui::End();
+	if (inChildWindow)
+	{
+		ImGui::EndChild();
+	}
+	else
+	{
+		ImGui::End();
+	}
 	ImGui::PopID();
 
 	const auto DrawTransform = [](vec4f p, quatf o)
@@ -521,5 +539,6 @@ bool Entity::drawImGui(World& world)
 	}
 
 	return !m_isDebugSelected;
+#endif // USE_IMGUI
 }
 //

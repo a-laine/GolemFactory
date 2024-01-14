@@ -196,6 +196,7 @@ Layer* WidgetLoader::deserialize(const Variant& variant, const std::string& vari
 		return nullptr;
 	}
 
+	layer->setVisibility(false);
 	return layer;
 }
 //

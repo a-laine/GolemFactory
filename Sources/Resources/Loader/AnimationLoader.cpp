@@ -49,12 +49,12 @@ bool AnimationLoader::load(const std::string& resourceDirectory, const std::stri
                 }
                 else if (element.getType() == Variant::DOUBLE)
                 {
-                    parsed[i] = element.toDouble();
+                    parsed[i] = (float)element.toDouble();
                     sucessfullyParsed++;
                 }
                 else if (element.getType() == Variant::INT)
                 {
-                    parsed[i] = element.toInt();
+                    parsed[i] = (float)element.toInt();
                     sucessfullyParsed++;
                 }
             }
@@ -70,9 +70,9 @@ bool AnimationLoader::load(const std::string& resourceDirectory, const std::stri
             if (it0->second.getType() == Variant::FLOAT)
                 destination = it0->second.toFloat();
             else if (it0->second.getType() == Variant::DOUBLE)
-                destination = it0->second.toDouble();
+                destination = (float)it0->second.toDouble();
             else if (it0->second.getType() == Variant::INT)
-                destination = it0->second.toInt();
+                destination = (float)it0->second.toInt();
             else return false;
             return true;
         }
@@ -112,7 +112,7 @@ bool AnimationLoader::load(const std::string& resourceDirectory, const std::stri
                         {
                             AnimationClip::Curve4DData data;
                             bool ok = TryLoadAsFloat(element, "t", data.m_time);
-                            ok |= TryLoadAsVec4f(element, "pos", data.m_value);
+                            ok |= TryLoadAsVec4f(element, "pos", data.m_value) >= 3;
 
                             if (ok)
                             {
@@ -134,7 +134,7 @@ bool AnimationLoader::load(const std::string& resourceDirectory, const std::stri
                         {
                             AnimationClip::Curve4DData data;
                             bool ok = TryLoadAsFloat(element, "t", data.m_time);
-                            ok |= TryLoadAsVec4f(element, "rot", data.m_value);
+                            ok |= TryLoadAsVec4f(element, "rot", data.m_value) == 4;
 
                             if (ok)
                                 tmpCurve.m_rotationCurve.push_back(data);

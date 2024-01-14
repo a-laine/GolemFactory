@@ -117,7 +117,8 @@ int main()
 {
 	std::cout << "Application start" << std::endl;
 	Application application;
-	context = application.createWindow("Thibault test", 1600, 900);
+	context = application.createFullscreenWindow("Thibault test", 1600, 900);
+	//context = application.createFullscreenWindow("Thibault test", glfwGetPrimaryMonitor(), 1600, 900);
 	context->makeCurrent();
 	context->setVSync(false);
 	application.initGLEW(1);
@@ -214,7 +215,6 @@ int main()
 
 		WidgetManager::getInstance()->setBoolean("BBpicking", false);
 		WidgetManager::getInstance()->setBoolean("wireframe", false);
-		Renderer::getInstance()->normalViewer = ResourceManager::getInstance()->getResource<Shader>("normalViewer");
 
 		
 
@@ -563,12 +563,12 @@ void initializeSyntyScene()
 				}
 				else if (element.getType() == Variant::DOUBLE)
 				{
-					parsed[i] = element.toDouble();
+					parsed[i] = (float)element.toDouble();
 					sucessfullyParsed++;
 				}
 				else if (element.getType() == Variant::INT)
 				{
-					parsed[i] = element.toInt();
+					parsed[i] = (float)element.toInt();
 					sucessfullyParsed++;
 				}
 			}
@@ -681,11 +681,11 @@ void initializeSyntyScene()
 					float scale = 1.f;
 					auto& scaleVariant = (*it)["scale"];
 					if (scaleVariant.getType() == Variant::INT)
-						scale = scaleVariant.toInt();
+						scale = (float)scaleVariant.toInt();
 					else if (scaleVariant.getType() == Variant::FLOAT)
 						scale = scaleVariant.toFloat();
 					else if (scaleVariant.getType() == Variant::DOUBLE)
-						scale = scaleVariant.toDouble();
+						scale = (float)scaleVariant.toDouble();
 
 					if (!prefabName.empty())
 						scale *= newObject->getWorldScale();
@@ -795,6 +795,8 @@ void initManagers()
 	NodeVirtual::debugWorld = &world;
 	world.getSceneManager().init(worldPos - worldHalfSize, worldPos + worldHalfSize, vec3i(4, 1, 4), 2);
 	world.setMaxObjectCount(400000);
+
+	world.getTerrainVirtualTexture().initialize(2048);
 	
 	if(false)
 	{
@@ -854,7 +856,7 @@ void initManagers()
 			});
 	}
 
-	world.getMap().setShader(ResourceManager::getInstance()->getResource<Shader>("map"));
+	//world.getMap().setShader(ResourceManager::getInstance()->getResource<Shader>("map"));
 	//world.getMap().loadFromHeightmap(resourceRepository + "Textures/", "mountains512.png"); /// >> CREATE BUGS WITH TRANSPARENT ?
 
 	//	Renderer
@@ -863,6 +865,7 @@ void initManagers()
 	Renderer::getInstance()->setShader(Renderer::DEFAULT, ResourceManager::getInstance()->getResource<Shader>("default"));
 	Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("greenGrass"));
 	Renderer::getInstance()->setShader(Renderer::INSTANCE_ANIMATABLE_BB, ResourceManager::getInstance()->getResource<Shader>("skeletonBB"));
+	Renderer::getInstance()->normalViewer = ResourceManager::getInstance()->getResource<Shader>("normalViewer");
 	Renderer::getInstance()->initializeGrid(GRID_SIZE, GRID_ELEMENT_SIZE, vec4f(24 / 255.f, 202 / 255.f, 230 / 255.f, 1.f));	// blue tron
 
 	Renderer::getInstance()->initializeLightClusterBuffer(64, 36, 128);
@@ -924,7 +927,7 @@ void picking()
 		vec4f p = cameraPos + distance * direction;
 
 		Debug::color = Debug::red;
-		Debug::drawSphere(p, 0.03);
+		Debug::drawSphere(p, 0.03f);
 		
 		WidgetManager::getInstance()->setString("interaction", "Distance : " + ToolBox::to_string_with_precision(distance, 5) +
 			" m\nPosition : (" + ToolBox::to_string_with_precision(p.x, 5) + " , " + ToolBox::to_string_with_precision(p.y, 5) + " , " + ToolBox::to_string_with_precision(p.z, 5) +
@@ -1196,7 +1199,7 @@ void updates(float elapseTime)
 
 
 	// Map streaming
-	world.getMapPtr()->update(freeflyCamera->getWorldPosition());
+	//world.getMapPtr()->update(freeflyCamera->getWorldPosition());
 }
 void ImGuiMenuBar()
 {
@@ -1247,7 +1250,7 @@ void ImGuiSystemDraw()
 		world.getPhysics().debugDraw();
 	}
 	if (HierarchyWindowEnable)
-		world.getSceneManager().drawImGuiHierarchy(world);
+		world.getSceneManager().drawImGuiHierarchy(world, true);
 	if (SpatialPartitionningWindowEnable)
 		world.getSceneManager().drawImGuiSpatialPartitioning(world);
 	if (RenderingWindowEnable)

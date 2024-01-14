@@ -14,8 +14,8 @@ LightComponent::LightComponent()
 
 	m_color = vec4f(1.f);
 	m_intensity = 1.f;
-	m_innerCutoffAngle = DEG2RAD * 28.0;
-	m_outerCutoffAngle = DEG2RAD * 35.0;
+	m_innerCutoffAngle = (float)DEG2RAD * 28.f;
+	m_outerCutoffAngle = (float)DEG2RAD * 35.f;
 }
 
 bool LightComponent::load(Variant& jsonObject, const std::string& objectName)
@@ -29,9 +29,9 @@ bool LightComponent::load(Variant& jsonObject, const std::string& objectName)
 			if (v.getType() == Variant::FLOAT)
 				destination = v.toFloat();
 			else if (v.getType() == Variant::DOUBLE)
-				destination = v.toDouble();
+				destination = (float)v.toDouble();
 			else if (v.getType() == Variant::INT)
-				destination = v.toInt();
+				destination = (float)v.toInt();
 			else
 				return false;
 			return true;
@@ -56,12 +56,12 @@ bool LightComponent::load(Variant& jsonObject, const std::string& objectName)
 				}
 				else if (element.getType() == Variant::DOUBLE)
 				{
-					parsed[i] = element.toDouble();
+					parsed[i] = (float)element.toDouble();
 					sucessfullyParsed++;
 				}
 				else if (element.getType() == Variant::INT)
 				{
-					parsed[i] = element.toInt();
+					parsed[i] = (float)element.toInt();
 					sucessfullyParsed++;
 				}
 			}
@@ -208,7 +208,7 @@ float LightComponent::getOuterCutOffAngle() const { return m_outerCutoffAngle; }
 void LightComponent::onDrawImGui()
 {
 #ifdef USE_IMGUI
-	const ImVec4 componentColor = ImVec4(0.7, 0.7, 0.5, 1);
+	const ImVec4 componentColor = ImVec4(0.7f, 0.7f, 0.5f, 1.f);
 	std::ostringstream unicName;
 	unicName << "Light component##" << (uintptr_t)this;
 	if (ImGui::TreeNodeEx(unicName.str().c_str(), ImGuiTreeNodeFlags_DefaultOpen))
@@ -224,7 +224,7 @@ void LightComponent::onDrawImGui()
 		if (!m_isPointLight)
 			ImGui::DragFloatRange2("CutOff angles", &m_innerCutoffAngle, &m_outerCutoffAngle, 0.1f, 0.f, 180.f, "%.3fdeg");
 		ImGui::ColorEdit3("Color", &m_color[0]);
-		ImGui::DragFloat("Intensity", &m_intensity, 0.01, 0.0001f, 100.f);
+		ImGui::DragFloat("Intensity", &m_intensity, 0.01f, 0.0001f, 100.f);
 		ImGui::Checkbox("Cast shadow", &m_castShadow);
 		
 		ImGui::Unindent();

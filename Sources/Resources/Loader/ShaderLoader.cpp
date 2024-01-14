@@ -496,11 +496,11 @@ std::vector<std::string> ShaderLoader::extractPragmas(std::string& source)
     std::string pragmaToken = "#pragma";
     std::vector<std::string> result;
 
-    int index = 0;
+    size_t index = 0;
     while ((index = source.find(pragmaToken, index)) != std::string::npos)
     {
-        int start = index + pragmaToken.size() + 1;
-        int index2 = start;
+        size_t start = index + (int)pragmaToken.size() + 1;
+        size_t index2 = start;
         while (source[index2] != '\n')
             index2++;
 
@@ -536,11 +536,11 @@ bool ShaderLoader::loadSourceCode(Variant& shaderMap, const std::string& key, st
     std::string includeToken = "#include";
     std::vector<std::string> result;
 
-    int index = 0;
+    size_t index = 0;
     while ((index = destination.find(includeToken, index)) != std::string::npos)
     {
-        int start = index + includeToken.size() + 1;
-        int index2 = start;
+        size_t start = index + (int)includeToken.size() + 1;
+        size_t index2 = start;
         while (destination[index2] != '\n')
             index2++;
 
@@ -551,7 +551,6 @@ bool ShaderLoader::loadSourceCode(Variant& shaderMap, const std::string& key, st
         std::string file = getFile(includeFullPath);
         destination.insert(index, file);
         index += file.size();
-        //result.push_back(destination.substr(start, index2 - start));
     }
 
     return true;

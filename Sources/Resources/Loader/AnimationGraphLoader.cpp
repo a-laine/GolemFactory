@@ -74,9 +74,9 @@ bool AnimationGraphLoader::load(const std::string& resourceDirectory, const std:
             if (it0->second.getType() == Variant::FLOAT)
                 destination = it0->second.toFloat();
             else if (it0->second.getType() == Variant::DOUBLE)
-                destination = it0->second.toDouble();
+                destination = (float)it0->second.toDouble();
             else if (it0->second.getType() == Variant::INT)
-                destination = it0->second.toInt();
+                destination = (float)it0->second.toInt();
             else return false;
             return true;
         }
@@ -160,9 +160,9 @@ bool AnimationGraphLoader::load(const std::string& resourceDirectory, const std:
                                 if (it1->second.getType() == Variant::FLOAT)
                                     parameter.m_value.Float = it1->second.toFloat();
                                 else if (it1->second.getType() == Variant::DOUBLE)
-                                    parameter.m_value.Float = it1->second.toDouble();
+                                    parameter.m_value.Float = (float)it1->second.toDouble();
                                 else if (it1->second.getType() == Variant::INT)
-                                    parameter.m_value.Float = it1->second.toInt();
+                                    parameter.m_value.Float = (float)it1->second.toInt();
                                 else
                                 {
                                     std::string msg = parameter.m_name + " : has an invalid value";
@@ -194,7 +194,7 @@ bool AnimationGraphLoader::load(const std::string& resourceDirectory, const std:
                     parameter.m_value.Int = 0;
                 }
 
-                paramIds[parameter.m_name] = m_parameters.size();
+                paramIds[parameter.m_name] = (int)m_parameters.size();
                 m_parameters.push_back(parameter);
             }
         }
@@ -240,7 +240,7 @@ bool AnimationGraphLoader::load(const std::string& resourceDirectory, const std:
                             loadStateMachine(fileName, v1, layer.m_stateMachines, layer.m_subGraphNames);
                             if (layer.m_stateMachines.back().m_name == entryName)
                             {
-                                layer.stateMachineEntryId = layer.m_stateMachines.size() - 1;
+                                layer.stateMachineEntryId = (int)layer.m_stateMachines.size() - 1;
                                 layer.m_blendTreeEntryId = -1;
                             }
                         }
@@ -261,7 +261,7 @@ bool AnimationGraphLoader::load(const std::string& resourceDirectory, const std:
                             if (layer.m_blendTrees.back().m_name == entryName)
                             {
                                 layer.stateMachineEntryId = -1;
-                                layer.m_blendTreeEntryId = layer.m_blendTrees.size() - 1;
+                                layer.m_blendTreeEntryId = (int)layer.m_blendTrees.size() - 1;
                             }
                         }
                     }
@@ -602,9 +602,9 @@ void AnimationGraphLoader::loadStateMachine(const std::string& fileName, Variant
             if (it0->second.getType() == Variant::FLOAT)
                 destination = it0->second.toFloat();
             else if (it0->second.getType() == Variant::DOUBLE)
-                destination = it0->second.toDouble();
+                destination = (float)it0->second.toDouble();
             else if (it0->second.getType() == Variant::INT)
-                destination = it0->second.toInt();
+                destination = (float)it0->second.toInt();
             else return false;
             return true;
         }
@@ -637,7 +637,7 @@ void AnimationGraphLoader::loadStateMachine(const std::string& fileName, Variant
             if (v0.getType() == Variant::MAP)
             {
                 AGSM::State state;
-                state.m_id = stateMachine.m_states.size();
+                state.m_id = (int)stateMachine.m_states.size();
                 state.m_subgraphId = -1;
                 state.m_exitTime = -1.f;
 
@@ -653,7 +653,7 @@ void AnimationGraphLoader::loadStateMachine(const std::string& fileName, Variant
                 it1 = v0.getMap().find("subgraphName");
                 if (it1 != v0.getMap().end() && it1->second.getType() == Variant::STRING)
                 {
-                    state.m_subgraphId = _subGrapTarget.size(); 
+                    state.m_subgraphId = (int)_subGrapTarget.size(); 
                     _subGrapTarget.push_back(it1->second.toString());
                 }
 
@@ -763,7 +763,7 @@ void AnimationGraphLoader::loadStateMachine(const std::string& fileName, Variant
                                                     if (it3->second.getType() == Variant::FLOAT)
                                                         condition.m_parameter.m_value.Float = it3->second.toFloat();
                                                     else if (it3->second.getType() == Variant::DOUBLE)
-                                                        condition.m_parameter.m_value.Float = it3->second.toDouble();
+                                                        condition.m_parameter.m_value.Float = (float)it3->second.toDouble();
                                                     else
                                                     {
                                                         std::string msg = "condition on " + condition.m_parameter.m_name + " : has an invalid test value";
@@ -813,9 +813,9 @@ void AnimationGraphLoader::loadStateMachineData(const std::string& fileName, Var
             if (it0->second.getType() == Variant::FLOAT)
                 destination = it0->second.toFloat();
             else if (it0->second.getType() == Variant::DOUBLE)
-                destination = it0->second.toDouble();
+                destination = (float)it0->second.toDouble();
             else if (it0->second.getType() == Variant::INT)
-                destination = it0->second.toInt();
+                destination = (float)it0->second.toInt();
             else return false;
             return true;
         }
@@ -863,9 +863,9 @@ void AnimationGraphLoader::loadBlendTree(const std::string& fileName, Variant& v
             if (it0->second.getType() == Variant::FLOAT)
                 destination = it0->second.toFloat();
             else if (it0->second.getType() == Variant::DOUBLE)
-                destination = it0->second.toDouble();
+                destination = (float)it0->second.toDouble();
             else if (it0->second.getType() == Variant::INT)
-                destination = it0->second.toInt();
+                destination = (float)it0->second.toInt();
             else return false;
             return true;
         }
@@ -888,12 +888,12 @@ void AnimationGraphLoader::loadBlendTree(const std::string& fileName, Variant& v
                 }
                 else if (element.getType() == Variant::DOUBLE)
                 {
-                    parsed[i] = element.toDouble();
+                    parsed[i] = (float)element.toDouble();
                     sucessfullyParsed++;
                 }
                 else if (element.getType() == Variant::INT)
                 {
-                    parsed[i] = element.toInt();
+                    parsed[i] = (float)element.toInt();
                     sucessfullyParsed++;
                 }
             }
@@ -927,7 +927,7 @@ void AnimationGraphLoader::loadBlendTree(const std::string& fileName, Variant& v
             if (v0.getType() == Variant::MAP)
             {
                 AGBT::Node node;
-                node.m_id = blendTree.m_nodes.size();
+                node.m_id = (int)blendTree.m_nodes.size();
                 node.m_globalInfluence = 1.f;
                 node.m_subgraphId = -1;
 
@@ -942,7 +942,7 @@ void AnimationGraphLoader::loadBlendTree(const std::string& fileName, Variant& v
                 it1 = v0.getMap().find("subgraphName");
                 if (it1 != v0.getMap().end() && it1->second.getType() == Variant::STRING)
                 {
-                    node.m_subgraphId = _subGrapTarget.size();
+                    node.m_subgraphId = (int)_subGrapTarget.size();
                     _subGrapTarget.push_back(it1->second.toString());
                 }
 
@@ -1020,9 +1020,9 @@ void AnimationGraphLoader::loadBlendTree(const std::string& fileName, Variant& v
                         if (v1.getType() == Variant::FLOAT)
                             influence = v1.toFloat();
                         else if (v1.getType() == Variant::DOUBLE)
-                            influence = v1.toDouble();
+                            influence = (float)v1.toDouble();
                         else if (v1.getType() == Variant::INT)
-                            influence = v1.toInt();
+                            influence = (float)v1.toInt();
 
                         node.m_childrenInfluence.push_back(influence);
                     }
@@ -1048,9 +1048,9 @@ void AnimationGraphLoader::loadBlendTreeData(const std::string& fileName, Varian
             if (it0->second.getType() == Variant::FLOAT)
                 destination = it0->second.toFloat();
             else if (it0->second.getType() == Variant::DOUBLE)
-                destination = it0->second.toDouble();
+                destination = (float)it0->second.toDouble();
             else if (it0->second.getType() == Variant::INT)
-                destination = it0->second.toInt();
+                destination = (float)it0->second.toInt();
             else return false;
             return true;
         }

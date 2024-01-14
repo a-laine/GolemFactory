@@ -158,7 +158,7 @@ void AG::BlendTree::evaluateNodeWeights(const Node& _node, const BlendTreeData& 
             continue;
 
         const AnimationParameter& param = _paramList[_node.m_parameterIds[i]];
-        if (!param.m_type == AnimationParameter::ParameterType::FLOAT)
+        if (param.m_type != AnimationParameter::ParameterType::FLOAT)
             continue;
 
         runtime.m_blendPoint[i] = param.m_value.Float;

@@ -17,6 +17,7 @@
 	QUIT,
 
 //  miscellaneous,
+	ALT,
 	CLICK_LEFT,
 	CLICK_RIGHT,
 	CLICK_MIDDLE,

@@ -231,7 +231,7 @@ bool EntityFactory::loadPrefab(const std::string& resourceDirectory, const std::
 
 	float scale = 1.f;
 	if (prefabMap.getMap().find("scale") != prefabMap.getMap().end())
-		scale = prefabMap["scale"].toDouble();
+		scale = (float)prefabMap["scale"].toDouble();
 
 	prefab->setWorldTransformation(vec4f(0, 0, 0, 1), scale, quatf(1, 0, 0, 0));
 	prefabs.emplace(fileName, prefab);
@@ -306,25 +306,25 @@ void EntityFactory::tryLoadTransform(Entity* object, Variant* variant)
 {
 	// transform load
 	vec4f position = vec4f(
-		(*variant)["position"].getArray()[0].toDouble(),
-		(*variant)["position"].getArray()[1].toDouble(),
-		(*variant)["position"].getArray()[2].toDouble(),
+		(float)(*variant)["position"].getArray()[0].toDouble(),
+		(float)(*variant)["position"].getArray()[1].toDouble(),
+		(float)(*variant)["position"].getArray()[2].toDouble(),
 		1.f);
 	quatf rotation = quatf(
-		(*variant)["rotation"].getArray()[3].toDouble(),
-		(*variant)["rotation"].getArray()[0].toDouble(),
-		(*variant)["rotation"].getArray()[1].toDouble(),
-		(*variant)["rotation"].getArray()[2].toDouble());
+		(float)(*variant)["rotation"].getArray()[3].toDouble(),
+		(float)(*variant)["rotation"].getArray()[0].toDouble(),
+		(float)(*variant)["rotation"].getArray()[1].toDouble(),
+		(float)(*variant)["rotation"].getArray()[2].toDouble());
 	rotation.normalize();
 
 	float scale = 1.f;
 	auto& scaleVariant = (*variant)["scale"];
 	if (scaleVariant.getType() == Variant::INT)
-		scale = scaleVariant.toInt();
+		scale = (float)scaleVariant.toInt();
 	else if (scaleVariant.getType() == Variant::FLOAT)
 		scale = scaleVariant.toFloat();
 	else if (scaleVariant.getType() == Variant::DOUBLE)
-		scale = scaleVariant.toDouble();
+		scale = (float)scaleVariant.toDouble();
 
 	object->setLocalTransformation(position, scale, rotation);
 }

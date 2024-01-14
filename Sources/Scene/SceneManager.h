@@ -36,6 +36,7 @@ class SceneManager
 
 		std::vector<Entity*> getAllObjects();
 		Entity* searchEntity(const std::string& _name);
+		Entity* getLastSelectedEntity()const;
 		std::vector<Entity*> getObjectsOnRay(const vec4f& position, const vec4f& direction, float maxDistance);
 		std::vector<Entity*> getObjectsInBox(const vec4f& bbMin, const vec4f& bbMax);
 
@@ -44,7 +45,7 @@ class SceneManager
 		//
 
 		//	Debug
-		void drawImGuiHierarchy(World& world);
+		void drawImGuiHierarchy(World& world, bool drawSelectedEntityWindow);
 		void drawImGuiSpatialPartitioning(World& world);
 		void drawSceneNodes();
 		void selectEntity(World& world, Entity* entity);
@@ -78,6 +79,7 @@ class SceneManager
 		uint64_t m_flagFilter = 0xFFFFFFFFFFFFFFFF;
 		bool m_allFlagFilter = true;
 		std::set<Entity*> m_selectedEntities;
+		Entity* m_lastSelectedEntity;
 		NodeVirtual* m_selectedSceneNode = nullptr;
 
 		bool m_showEmptyNodes = true;
@@ -86,6 +88,7 @@ class SceneManager
 		bool m_printEmptyNodes = true;
 		bool m_showfrustrum = false;
 		bool m_openAll = false;
+		float m_nodeShrinkFactor;
 		vec4f m_emptyNodeColor = vec4f(0,0,0,1);
 		vec4f m_defaultNodeColor = vec4f(1,0,0,1);
 		vec4f m_testBoxNodeColor = vec4f(1,1,1,1);

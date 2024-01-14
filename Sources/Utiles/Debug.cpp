@@ -180,7 +180,7 @@ void Debug::drawLineCapsule(const vec4f& point1, const vec4f& point2, const floa
 			vertices.push_back(c8);  vertices.push_back(c10);
 		}
 	}
-	drawMultiplePrimitive(vertices.data(), vertices.size(), mat4f::identity, GL_LINES);
+	drawMultiplePrimitive(vertices.data(), (unsigned int)vertices.size(), mat4f::identity, GL_LINES);
 }
 //
 
@@ -267,7 +267,7 @@ void Debug::mesh(const Mesh* const mesh, const mat4f& transform, Shader* shader)
 		if (loc >= 0) glUniform4fv(loc, 1, &defaultColorUniform[0]);
 	}
 }
-void Debug::drawMultiplePrimitive(const Vertex* vertices, const int& verticesCount, const mat4f& model, int drawMode)
+void Debug::drawMultiplePrimitive(const Vertex* vertices, const unsigned int& verticesCount, const mat4f& model, unsigned int drawMode)
 {
 	if (!This->debug || !This->renderer)
 		return;
@@ -313,7 +313,7 @@ void Debug::drawMultiplePrimitive(const Vertex* vertices, const int& verticesCou
 		}
 
 		glBindVertexArray(0);
-		int range = std::min((size_t)(endPtr - startPtr), vboSize - buffer->offset);
+		int range = (int)std::min((size_t)(endPtr - startPtr), vboSize - buffer->offset);
 
 		glBindBuffer(GL_ARRAY_BUFFER, buffer->vbo);
 		glBufferSubData(GL_ARRAY_BUFFER, buffer->offset, range, startPtr);
@@ -394,6 +394,19 @@ void Debug::reinterpreteTexture(const Texture* in, Texture* out, float layer)
 				if (loc >= 0)
 					glUniform1f(loc, 2);
 			}
+		}
+	}
+	else if (in->m_internalFormat == GL_RGBA16UI)
+	{
+		if (in->m_type == GL_TEXTURE_2D)
+		{
+
+			glActiveTexture(GL_TEXTURE0);
+			glBindImageTexture(0, in->getTextureId(), 0, GL_TRUE, 0, GL_READ_ONLY, in->m_internalFormat);
+
+			int loc = This->textureReinterpreter->getUniformLocation("type");
+			if (loc >= 0)
+				glUniform1f(loc, 3);
 		}
 	}
 

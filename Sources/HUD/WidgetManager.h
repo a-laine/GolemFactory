@@ -55,6 +55,7 @@ class WidgetManager : public Singleton<WidgetManager>
 		//	Set / get functions
 		void setInitialViewportRatio(float viewportRatio);
 		void setActiveHUD(const std::string& s);
+		void disableAllHUD();
 		void setPickingParameters(const mat4f& base, const vec4f& ray);// , const glm::vec3& origin);
 
 		std::string getActiveHUD() const;

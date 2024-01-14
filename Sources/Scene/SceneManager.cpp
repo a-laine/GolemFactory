@@ -19,7 +19,9 @@ bool SpatialPartitionningWindowEnable = false;
 
 
 SceneManager::SceneManager()
-{}
+{
+	m_lastSelectedEntity = nullptr;
+}
 SceneManager::SceneManager(SceneManager&& other) : world(std::move(other.world)), instanceTracking(std::move(other.instanceTracking))
 {
 	other.world.clear();
@@ -187,6 +189,11 @@ Entity* SceneManager::searchEntity(const std::string& _name)
 	return nullptr;
 }
 
+Entity* SceneManager::getLastSelectedEntity() const
+{
+	return m_lastSelectedEntity;
+}
+
 std::vector<Entity*> SceneManager::getObjectsOnRay(const vec4f& position, const vec4f& direction, float maxDistance)
 {
 	/*if(world.empty())
@@ -286,7 +293,7 @@ void SceneManager::drawSceneNodes()
 	}
 }
 
-void SceneManager::drawImGuiHierarchy(World& world)
+void SceneManager::drawImGuiHierarchy(World& world, bool drawSelectedEntityWindow)
 {
 #ifdef USE_IMGUI
 	SCOPED_CPU_MARKER("SceneManager Hierarchy");
@@ -347,17 +354,26 @@ void SceneManager::drawImGuiHierarchy(World& world)
 		ImGui::PopID();
 	}
 
-	std::set<Entity*> toremove;
-	for (auto& entity : m_selectedEntities)
+	if (drawSelectedEntityWindow)
 	{
-		if (entity->drawImGui(world))
-			toremove.insert(entity);
+		std::set<Entity*> toremove;
+		for (auto& entity : m_selectedEntities)
+		{
+			if (entity->drawImGui(world, false))
+				toremove.insert(entity);
+		}
+		for (auto& entity : toremove)
+		{
+			if (m_selectedEntities.erase(entity) > 0)
+			{
+				world.releaseOwnership(entity);
+				if (!m_selectedEntities.empty())
+					m_lastSelectedEntity = *m_selectedEntities.begin();
+				else m_lastSelectedEntity = nullptr;
+			}
+		}
 	}
-	for (auto& entity : toremove)
-	{
-		if (m_selectedEntities.erase(entity) > 0)
-			world.releaseOwnership(entity);
-	}
+
 	ImGui::PopID();
 	ImGui::End();
 #endif // USE_IMGUI
@@ -400,6 +416,7 @@ void SceneManager::drawImGuiSpatialPartitioning(World& _world)
 	ImGui::Checkbox("Print entities", &m_printEntities);
 	ImGui::Checkbox("Print empty nodes", &m_printEmptyNodes);
 	ImGui::Checkbox("Show frustrum", &m_showfrustrum);
+	ImGui::SliderFloat("Shrink factor", &m_nodeShrinkFactor, 0.f, 0.02f, "%.4f", ImGuiSliderFlags_AlwaysClamp);
 
 	CameraComponent* mainCamera = _world.getMainCamera(); 
 	if (mainCamera && ImGui::Button("Select camera entity"))
@@ -431,12 +448,16 @@ void SceneManager::drawImGuiSpatialPartitioning(World& _world)
 
 void SceneManager::selectEntity(World& world, Entity* entity)
 {
+#ifdef USE_IMGUI
+	m_lastSelectedEntity = entity;
 	const auto& it = m_selectedEntities.insert(entity);
 	if (it.second)
 		world.getOwnership(entity);
 	entity->m_isDebugSelected = true;
+#endif
 }
 
+#ifdef USE_IMGUI
 void SceneManager::drawRecursiveImGuiEntity(World& world, Entity* entity, int depth)
 {
 	const auto FilterTest = [&](Entity* e)
@@ -463,6 +484,7 @@ void SceneManager::drawRecursiveImGuiEntity(World& world, Entity* entity, int de
 			entity->m_isDebugSelected = !entity->m_isDebugSelected;
 			if (entity->m_isDebugSelected)
 			{
+				m_lastSelectedEntity = entity;
 				const auto& it = m_selectedEntities.insert(entity);
 				if (it.second)
 					world.getOwnership(entity);
@@ -470,7 +492,12 @@ void SceneManager::drawRecursiveImGuiEntity(World& world, Entity* entity, int de
 			else
 			{
 				if (m_selectedEntities.erase(entity) > 0)
+				{
 					world.releaseOwnership(entity);
+					if (!m_selectedEntities.empty())
+						m_lastSelectedEntity = *m_selectedEntities.begin();
+					else m_lastSelectedEntity = nullptr;
+				}
 			}
 		}
 	};
@@ -516,7 +543,7 @@ void SceneManager::drawRecursiveImGuiSceneNode(World& _world, std::map<const Nod
 
 	// helpers
 	bool hovered = false;
-	const ImVec4 sectionColor = ImVec4(1, 0.9, 0.5, 1);
+	const ImVec4 sectionColor = ImVec4(1.f, 0.9f, 0.5f, 1.f);
 	const auto HoveredSelectedDrawing = [&]() {
 		Debug::color = Debug::magenta;
 		Debug::drawLineCube(mat4f::identity, node->getBBMin(), node->getBBMax());
@@ -567,6 +594,7 @@ void SceneManager::drawRecursiveImGuiSceneNode(World& _world, std::map<const Nod
 							e->m_isDebugSelected = !e->m_isDebugSelected;
 							if (e->m_isDebugSelected)
 							{
+								m_lastSelectedEntity = e;
 								const auto& it = m_selectedEntities.insert(e);
 								if (it.second)
 									_world.getOwnership(e);
@@ -574,7 +602,12 @@ void SceneManager::drawRecursiveImGuiSceneNode(World& _world, std::map<const Nod
 							else
 							{
 								if (m_selectedEntities.erase(e) > 0)
+								{
 									_world.releaseOwnership(e);
+									if (!m_selectedEntities.empty())
+										m_lastSelectedEntity = *m_selectedEntities.begin();
+									else m_lastSelectedEntity = nullptr;
+								}
 							}
 						}
 						if (ImGui::IsItemHovered())
@@ -660,7 +693,7 @@ void SceneManager::drawRecursiveImGuiSceneNode(World& _world, std::map<const Nod
 				default: Debug::color = Debug::grey; break;
 			}
 
-			vec4f hs = (float)pow(0.99f, depth) * node->getHalfSize();
+			vec4f hs = (float)pow(1.f - m_nodeShrinkFactor, depth) * node->getHalfSize();
 			Debug::drawLineCube(mat4f::identity, node->getCenter() - hs, node->getCenter() + hs);
 		}
 	}
@@ -677,3 +710,4 @@ bool SceneManager::isEmptyNode(const NodeVirtual& _node)
 			return false;
 	return true;
 }
+#endif

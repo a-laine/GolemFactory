@@ -265,7 +265,9 @@
     <ClCompile Include="..\..\Sources\Scene\SceneManager.cpp" />
     <ClCompile Include="..\..\Sources\Scene\VirtualEntityCollector.cpp" />
     <ClCompile Include="..\..\Sources\Scene\VirtualSceneQuerry.cpp" />
-    <ClCompile Include="..\..\Sources\Terrain\Chunk.cpp" />
+    <ClCompile Include="..\..\Sources\Terrain\Terrain.cpp" />
+    <ClCompile Include="..\..\Sources\Terrain\TerrainArea.cpp" />
+    <ClCompile Include="..\..\Sources\Terrain\TerrainVirtualTexture.cpp" />
     <ClCompile Include="..\..\Sources\Utiles\ConsoleColor.cpp" />
     <ClCompile Include="..\..\Sources\Utiles\Debug.cpp" />
     <ClCompile Include="..\..\Sources\Utiles\DirectoryWatcher.cpp" />
@@ -281,7 +283,6 @@
     <ClCompile Include="..\..\Sources\World\World.cpp" />
     <ClCompile Include="..\..\Sources\World\WorldComponents\EntityFactory.cpp" />
     <ClCompile Include="..\..\Sources\World\WorldComponents\EntityManager.cpp" />
-    <ClCompile Include="..\..\Sources\World\WorldComponents\Map.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Sources\Animation\AnimationComponent.h" />
@@ -400,7 +401,9 @@
     <ClInclude Include="..\..\Sources\Scene\SceneManager.h" />
     <ClInclude Include="..\..\Sources\Scene\VirtualEntityCollector.h" />
     <ClInclude Include="..\..\Sources\Scene\VirtualSceneQuerry.h" />
-    <ClInclude Include="..\..\Sources\Terrain\Chunk.h" />
+    <ClInclude Include="..\..\Sources\Terrain\Terrain.h" />
+    <ClInclude Include="..\..\Sources\Terrain\TerrainArea.h" />
+    <ClInclude Include="..\..\Sources\Terrain\TerrainVirtualTexture.h" />
     <ClInclude Include="..\..\Sources\Utiles\Assert.hpp" />
     <ClInclude Include="..\..\Sources\Utiles\ConsoleColor.h" />
     <ClInclude Include="..\..\Sources\Utiles\Debug.h" />
@@ -423,7 +426,6 @@
     <ClInclude Include="..\..\Sources\World\World.h" />
     <ClInclude Include="..\..\Sources\World\WorldComponents\EntityFactory.h" />
     <ClInclude Include="..\..\Sources\World\WorldComponents\EntityManager.h" />
-    <ClInclude Include="..\..\Sources\World\WorldComponents\Map.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ImGui\ImGui.vcxproj">

@@ -4,7 +4,7 @@
 #include <Utiles/Debug.h>
 
 
-CameraComponent::CameraComponent(bool freeRotations) : m_verticalFov(0.88)
+CameraComponent::CameraComponent(bool freeRotations) : m_verticalFov(0.88f)
 {
 }
 
@@ -165,7 +165,7 @@ void CameraComponent::lookAt(const vec4f& target, float distance)
 void CameraComponent::onDrawImGui()
 {
 #ifdef USE_IMGUI
-	const ImVec4 componentColor = ImVec4(0.5, 0.5, 0.7, 1);
+	const ImVec4 componentColor = ImVec4(0.5f, 0.5f, 0.7f, 1.f);
 	std::ostringstream unicName;
 	unicName << "Camera component##" << (uintptr_t)this;
 	if (ImGui::TreeNodeEx(unicName.str().c_str(), ImGuiTreeNodeFlags_DefaultOpen))
@@ -185,7 +185,7 @@ void CameraComponent::onDrawImGui()
 void CameraComponent::internalImGuiDraw()
 {
 #ifdef USE_IMGUI
-	const ImVec4 componentColor = ImVec4(0.5, 0.5, 0.7, 1);
+	const ImVec4 componentColor = ImVec4(0.5f, 0.5f, 0.7f, 1.f);
 	ImGui::TextColored(componentColor, "Camera parameters");
 	ImGui::Indent();
 	constexpr float rangeMin = (float)RAD2DEG * 0.05f;

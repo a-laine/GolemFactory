@@ -48,12 +48,12 @@ bool SkeletonLoader::load(const std::string& resourceDirectory, const std::strin
                 }
                 else if (element.getType() == Variant::DOUBLE)
                 {
-                    parsed[i] = element.toDouble();
+                    parsed[i] = (float)element.toDouble();
                     sucessfullyParsed++;
                 }
                 else if (element.getType() == Variant::INT)
                 {
-                    parsed[i] = element.toInt();
+                    parsed[i] = (float)element.toInt();
                     sucessfullyParsed++;
                 }
             }
@@ -69,9 +69,9 @@ bool SkeletonLoader::load(const std::string& resourceDirectory, const std::strin
             if (it0->second.getType() == Variant::FLOAT)
                 destination = it0->second.toFloat();
             else if (it0->second.getType() == Variant::DOUBLE)
-                destination = it0->second.toDouble();
+                destination = (float)it0->second.toDouble();
             else if (it0->second.getType() == Variant::INT)
-                destination = it0->second.toInt();
+                destination = (float)it0->second.toInt();
             else return false;
             return true;
         }
