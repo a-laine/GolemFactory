@@ -1,11 +1,11 @@
 #pragma once
 
 #include <GL/glew.h>
-//#include <glm/glm.hpp>
 
 #include "Math/TMath.h"
 #include <EntityComponent/Entity.hpp>
 #include <Scene/VirtualEntityCollector.h>
+#include <Physics/Shapes/AxisAlignedBox.h>
 
 class World;
 
@@ -24,7 +24,7 @@ class NodeVirtual
 			friend class NodeVirtual;
 
 			public:
-				explicit NodeRange(std::vector<NodeVirtual>& nodes) : begin(nodes.data()), end(nodes.data() + nodes.size()) {}
+				explicit NodeRange(std::vector<NodeVirtual*>& nodes) : begin(*nodes.data()), end(*nodes.data() + nodes.size()) {}
 				NodeRange(NodeVirtual* first, NodeVirtual* last) : begin(first), end(last) {}
 				void next() { if(begin != end) ++begin; }
 				NodeVirtual* get() { return begin; }
@@ -42,10 +42,9 @@ class NodeVirtual
 		virtual ~NodeVirtual();
 
 		//	Public fonctions
-		void init(const vec4f bbMin, const vec4f bbMax, const vec3i& nodeDivision, unsigned int depth);
-		void clearChildren();
-		void split(unsigned int newDepth);
-		void merge(unsigned int newDepth);
+		void init(const vec4f bbMin, const vec4f bbMax, const vec3i& nodeDivision);
+		void split();
+		void merge();
 		//
 
 		//	Set / get functions
@@ -66,8 +65,6 @@ class NodeVirtual
 		//
 		
 		//	Hierarchy related function
-		void addNode(NodeVirtual* node);
-		bool removeNode(NodeVirtual* node);
 		NodeVirtual* getChildAt(const vec4f& pos);
 		void getChildren(std::vector<NodeVirtual*>& result);
 		void getChildren(std::vector<NodeRange>& result);
@@ -93,19 +90,21 @@ class NodeVirtual
 
 	private:
 		//	Attributes
-		float allowanceSize;
 		vec4f position;							//!< Node position in scene coordinate
 		vec4f halfSize;							//!< Half of node size
+
+		//AxisAlignedBox boundingBox;
+
 		vec4f inflatedHalfSize;
+		float allowanceSize;
 		vec3i division;
 
-		std::vector<NodeVirtual> children;			//!< Subdivision children container (empty if leaf)
-		std::vector<NodeVirtual*> adoptedChildren;	//!< Children added to, for special tree
+		std::vector<NodeVirtual*> children;			//!< Subdivision children container (empty if leaf)
 		std::vector<Entity*> objectList;			//!< Instance container (list of instance attached to node)
 
 		//std::vector<Swept*> sweptObject;			//!< Physics entities (has to be only used by the physics engine)
 
-		Entity* debugCube;							//!< A 3D cube to represent the node area
+		//Entity* debugCube;							//!< A 3D cube to represent the node area
 		//
 };
 

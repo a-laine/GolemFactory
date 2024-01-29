@@ -8,6 +8,7 @@
 #endif
 
 #include <Utiles/Assert.hpp>
+#include <Utiles/ConsoleColor.h>
 
 
 //  Static attributes
@@ -21,10 +22,13 @@ Mesh::Mesh(const std::string& meshName)
     : ResourceVirtual(meshName, ResourceVirtual::ResourceType::MESH)
     , boundingBox(vec4f::zero, vec4f::zero)
     , vao(0), verticesBuffer(0), uvsBuffer(0), normalsBuffer(0), facesBuffer(0)
+    , faceType(GL_UNSIGNED_BYTE), faceIndicesCount(0), faceIndicesElementSize(0), faceIndicesArray(nullptr)
     , BBoxVao(0), vBBoxBuffer(0), fBBoxBuffer(0)
     , weightsBuffer(0), bonesBuffer(0)
     , wBBoxBuffer(0), bBBoxBuffer(0)
-{}
+{
+
+}
 Mesh::~Mesh()
 {
 	clear();
@@ -34,64 +38,115 @@ Mesh::~Mesh()
 
 //	Public functions
 void Mesh::initialize(const std::vector<vec4f>& verticesArray, const std::vector<vec4f>& normalsArray,
-    const std::vector<vec4f>& uvArray, const std::vector<unsigned short>& facesArray,
+    const std::vector<vec4f>& uvArray, const std::vector<unsigned int>& facesArray,
     const std::vector<vec4i>& bonesArray, const std::vector<vec4f>& weightsArray)
 {
     GF_ASSERT(state == INVALID);
     state = LOADING;
 
-    if (verticesArray.size() > 65000)
+    /*if (verticesArray.size() > 65000)
     {
-        std::cout << ".............................................." << verticesArray.size() << std::endl;
-    }
+        std::cout << ConsoleColor::getColorString(ConsoleColor::Color::RED) << "ERROR   : Mesh::initialize : " << name << 
+            " : indice overflow, too much vertices (" << verticesArray.size() << ")" << std::flush;
+        std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
+    }*/
 
     vertices = verticesArray;
     normals = normalsArray;
     uvs = uvArray;
-    faces = facesArray;
     bones = bonesArray;
     weights = weightsArray;
+
+    if (verticesArray.size() < 0xFF)
+    {
+        faceType = GL_UNSIGNED_BYTE;
+        faceIndicesElementSize = sizeof(uint8_t);
+        faceIndicesCount = facesArray.size();
+        faceIndicesArray = new uint8_t[faceIndicesCount];
+        for (unsigned int i = 0; i < faceIndicesCount; i++)
+            faceIndicesArray[i] = (uint8_t)facesArray[i];
+    }
+    else if (verticesArray.size() < 0xFFFF)
+    {
+        faceType = GL_UNSIGNED_SHORT;
+        faceIndicesElementSize = sizeof(uint16_t);
+        faceIndicesCount = facesArray.size();
+        faceIndicesArray = (uint8_t*)(new uint16_t[faceIndicesCount]);
+        uint16_t* castedArray = (uint16_t*)faceIndicesArray;
+        for (unsigned int i = 0; i < faceIndicesCount; i++)
+            castedArray[i] = (uint16_t)facesArray[i];
+    }
+    else
+    {
+        faceType = GL_UNSIGNED_INT;
+        faceIndicesElementSize = sizeof(uint32_t);
+        faceIndicesCount = facesArray.size();
+        faceIndicesArray = (uint8_t*)(new uint32_t[faceIndicesCount]);
+        uint32_t* castedArray = (uint32_t*)faceIndicesArray;
+        for (unsigned int i = 0; i < faceIndicesCount; i++)
+            castedArray[i] = facesArray[i];
+    }
 
     computeBoundingBox();
     initializeVBO();
     initializeVAO();
-
-    if(!glIsBuffer(verticesBuffer) || !glIsBuffer(normalsBuffer) || !glIsBuffer(uvsBuffer) || !glIsBuffer(facesBuffer) || !glIsVertexArray(vao) ||
-        (hasSkeleton() && (!glIsBuffer(bonesBuffer) || !glIsBuffer(weightsBuffer))))
-    {
-        clear();
-        state = INVALID;
-    }
-    else
-        state = VALID;
+    checkValidity();
 }
 
 void Mesh::initialize(std::vector<vec4f>* verticesArray, std::vector<vec4f>* normalsArray,
-    std::vector<vec4f>* uvArray, std::vector<unsigned short>* facesArray,
+    std::vector<vec4f>* uvArray, std::vector<unsigned int>* facesArray,
     std::vector<vec4i>* bonesArray, std::vector<vec4f>* weightsArray)
 {
     GF_ASSERT(state == INVALID);
     state = LOADING;
 
+    /*if (verticesArray->size() > 65000)
+    {
+        std::cout << ConsoleColor::getColorString(ConsoleColor::Color::RED) << "ERROR   : Mesh::initialize : " << name <<
+            " : indice overflow, too much vertices (" << verticesArray->size() << ")" << std::flush;
+        std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
+    }*/
+
     vertices = *verticesArray;
     normals = *normalsArray;
     uvs = *uvArray;
-    faces = *facesArray;
     bones = *bonesArray;
     weights = *weightsArray;
+
+    if (verticesArray->size() < 0xFF)
+    {
+        faceType = GL_UNSIGNED_BYTE;
+        faceIndicesElementSize = sizeof(uint8_t);
+        faceIndicesCount = facesArray->size();
+        faceIndicesArray = new uint8_t[faceIndicesCount];
+        for (unsigned int i = 0; i < faceIndicesCount; i++)
+            faceIndicesArray[i] = (uint8_t)(*facesArray)[i];
+    }
+    else if (verticesArray->size() < 0xFFFF)
+    {
+        faceType = GL_UNSIGNED_SHORT;
+        faceIndicesElementSize = sizeof(uint16_t);
+        faceIndicesCount = facesArray->size();
+        faceIndicesArray = (uint8_t*)(new uint16_t[faceIndicesCount]);
+        uint16_t* castedArray = (uint16_t*)faceIndicesArray;
+        for (unsigned int i = 0; i < faceIndicesCount; i++)
+            castedArray[i] = (uint16_t)(*facesArray)[i];
+    }
+    else
+    {
+        faceType = GL_UNSIGNED_INT;
+        faceIndicesElementSize = sizeof(uint32_t);
+        faceIndicesCount = facesArray->size();
+        faceIndicesArray = (uint8_t*)(new uint32_t[faceIndicesCount]);
+        uint32_t* castedArray = (uint32_t*)faceIndicesArray;
+        for (unsigned int i = 0; i < faceIndicesCount; i++)
+            castedArray[i] = (*facesArray)[i];
+    }
 
     computeBoundingBox();
     initializeVBO();
     initializeVAO();
-
-    if(!glIsBuffer(verticesBuffer) || !glIsBuffer(normalsBuffer) || !glIsBuffer(uvsBuffer) || !glIsBuffer(facesBuffer) || !glIsVertexArray(vao) ||
-        (hasSkeleton() && (!glIsBuffer(bonesBuffer) || !glIsBuffer(weightsBuffer))))
-    {
-        clear();
-        state = INVALID;
-    }
-    else
-        state = VALID;
+    checkValidity();
 }
 
 void Mesh::computeBoundingBox()
@@ -152,17 +207,23 @@ void Mesh::initializeVBO()
 	glBindBuffer(GL_ARRAY_BUFFER, verticesBuffer);
 	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(vec4f), vertices.data(), GL_STATIC_DRAW);
 
-	glGenBuffers(1, &normalsBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, normalsBuffer);
-	glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(vec4f), normals.data(), GL_STATIC_DRAW);
+    if (!normals.empty())
+    {
+	    glGenBuffers(1, &normalsBuffer);
+	    glBindBuffer(GL_ARRAY_BUFFER, normalsBuffer);
+	    glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(vec4f), normals.data(), GL_STATIC_DRAW);
+    }
 
-	glGenBuffers(1, &uvsBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, uvsBuffer);
-	glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(vec4f), uvs.data(), GL_STATIC_DRAW);
+    if (!uvs.empty())
+    {
+	    glGenBuffers(1, &uvsBuffer);
+	    glBindBuffer(GL_ARRAY_BUFFER, uvsBuffer);
+	    glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(vec4f), uvs.data(), GL_STATIC_DRAW);
+    }
 
-	glGenBuffers(1, &facesBuffer);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, facesBuffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, faces.size() * sizeof(unsigned short), faces.data(), GL_STATIC_DRAW);
+    glGenBuffers(1, &facesBuffer);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, facesBuffer);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, faceIndicesCount * faceIndicesElementSize, faceIndicesArray, GL_STATIC_DRAW);
 
 	//	bounding box
 	glGenBuffers(1, &vBBoxBuffer);
@@ -204,15 +265,21 @@ void Mesh::initializeVAO()
 	glBindBuffer(GL_ARRAY_BUFFER, verticesBuffer);
 	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, NULL);
 
-	glEnableVertexAttribArray(1);
-	glBindBuffer(GL_ARRAY_BUFFER, normalsBuffer);
-	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, NULL);
+    if (!normals.empty())
+    {
+        glEnableVertexAttribArray(1);
+        glBindBuffer(GL_ARRAY_BUFFER, normalsBuffer);
+        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, NULL);
+    }
 
-	glEnableVertexAttribArray(2);
-	glBindBuffer(GL_ARRAY_BUFFER, uvsBuffer);
-	glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, NULL);
+    if (!uvs.empty())
+    {
+        glEnableVertexAttribArray(2);
+        glBindBuffer(GL_ARRAY_BUFFER, uvsBuffer);
+        glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, NULL);
+    }
 
-    if(hasSkeleton())
+    if (hasSkeleton())
     {
         glEnableVertexAttribArray(3);
         glBindBuffer(GL_ARRAY_BUFFER, bonesBuffer);
@@ -317,12 +384,23 @@ const GLuint Mesh::getBBoxVAO() const { return BBoxVao; }
 
 //  Set/get functions
 unsigned int Mesh::getNumberVertices() const { return (unsigned int)vertices.size(); }
-unsigned int Mesh::getNumberFaces() const { return (unsigned int)faces.size() / 6; }
+unsigned int Mesh::getNumberFaces() const { return faceIndicesCount / 3; }
+unsigned int Mesh::getNumberIndices() const { return faceIndicesCount; }
+unsigned int Mesh::getFaceIndiceAt(unsigned int i) const
+{
+    if (faceType == GL_UNSIGNED_BYTE)
+        return faceIndicesArray[i];
+    if (faceType == GL_UNSIGNED_SHORT)
+        return ((uint16_t*)faceIndicesArray)[i];
+    else
+        return ((uint32_t*)faceIndicesArray)[i];
+}
 const std::vector<vec4f>* Mesh::getBBoxVertices() const { return &vBBox; }
 const std::vector<unsigned short>* Mesh::getBBoxFaces() const { return &fBBox; }
 const std::vector<vec4f>* Mesh::getVertices() const { return &vertices; }
 const std::vector<vec4f>* Mesh::getNormals() const { return &normals; }
-const std::vector<unsigned short>* Mesh::getFaces() const { return &faces; }
+const uint8_t* Mesh::getFaces() const { return faceIndicesArray; }
+GLuint Mesh::getIndicesType() const { return faceType; }
 const std::vector<vec4i>* Mesh::getBones() const { return &bones; }
 const std::vector<vec4f>* Mesh::getWeights() const { return &weights; }
 const AxisAlignedBox& Mesh::getBoundingBox() const { return boundingBox; };
@@ -357,7 +435,13 @@ void Mesh::clear()
     vertices.clear();
     normals.clear();
     uvs.clear();
-    faces.clear();
+
+    faceIndicesCount = 0;
+    if (faceIndicesArray)
+    {
+        delete[] faceIndicesArray;
+        faceIndicesArray = nullptr;
+    }
 
     glDeleteBuffers(1, &verticesBuffer);
     glDeleteBuffers(1, &normalsBuffer);
@@ -395,6 +479,31 @@ void Mesh::clear()
     }
 }
 
+void Mesh::checkValidity()
+{
+    if (!glIsBuffer(verticesBuffer) || !glIsBuffer(facesBuffer) || !glIsVertexArray(vao))
+    {
+        clear();
+        state = INVALID;
+    }
+    else if (hasSkeleton() && (!glIsBuffer(bonesBuffer) || !glIsBuffer(weightsBuffer)))
+    {
+        clear();
+        state = INVALID;
+    }
+    else if (!normals.empty() && !glIsBuffer(normalsBuffer))
+    {
+        clear();
+        state = INVALID;
+    }
+    else if (!uvs.empty() && !glIsBuffer(uvsBuffer))
+    {
+        clear();
+        state = INVALID;
+    }
+    else
+        state = VALID;
+}
 
 void Mesh::onDrawImGui()
 {
@@ -409,7 +518,13 @@ void Mesh::onDrawImGui()
     ImGui::Spacing();
     ImGui::TextColored(ResourceVirtual::titleColorDraw, "Mesh infos");
     ImGui::Text("Vertices count : %d", getNumberVertices());
-    ImGui::Text("Vaces count : %d", getNumberFaces());
+    ImGui::Text("Faces count : %d", getNumberFaces());
+    if (faceType == GL_UNSIGNED_BYTE)
+        ImGui::Text("indiceType : BYTE", getNumberFaces());
+    if (faceType == GL_UNSIGNED_SHORT)
+        ImGui::Text("indiceType : SHORT", getNumberFaces());
+    else
+        ImGui::Text("indiceType : INT", getNumberFaces());
     ImGui::Spacing();
 
     // overview

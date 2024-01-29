@@ -262,7 +262,7 @@ void Debug::mesh(const Mesh* const mesh, const mat4f& transform, Shader* shader)
 		//	Draw mesh
 		//glBindVertexArray(mesh->getVAO());
 		This->renderer->loadVAO(mesh->getVAO());
-		glDrawElements(GL_TRIANGLES, (int)mesh->getFaces()->size(), GL_UNSIGNED_SHORT, NULL);
+		glDrawElements(GL_TRIANGLES, mesh->getNumberIndices(), mesh->getIndicesType(), NULL);
 
 		if (loc >= 0) glUniform4fv(loc, 1, &defaultColorUniform[0]);
 	}

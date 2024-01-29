@@ -56,7 +56,7 @@ bool RayEntityCollector::operator() (Entity* entity)
 
 	//	second test -> test ray vs all object triangles
 	const std::vector<vec4f>& vertices = *mesh->getVertices();
-	const std::vector<unsigned short>& faces = *mesh->getFaces();
+	unsigned int indiceCount = mesh->getNumberIndices();
 	mat4f model = entity->getWorldTransformMatrix();
 	float collisionDistance = std::numeric_limits<float>::max();
 
@@ -68,8 +68,13 @@ bool RayEntityCollector::operator() (Entity* entity)
 		const std::vector<vec4f>* weights = mesh->getWeights();
 		if (ibind.empty() || pose.empty() || !bones || !weights) return false;
 
-		for (unsigned int i = 0; i < faces.size(); i += 3)
+		for (unsigned int i = 0; i < indiceCount; i += 3)
 		{
+			// indices
+			unsigned int i0 = mesh->getFaceIndiceAt(i);
+			unsigned int i1 = mesh->getFaceIndiceAt(i + 1);
+			unsigned int i2 = mesh->getFaceIndiceAt(i + 2);
+
 			//	compute pose bones contribution matrix
 			mat4f m1(0.f);
 			mat4f m2(0.f);
@@ -85,15 +90,15 @@ bool RayEntityCollector::operator() (Entity* entity)
 				(*weights)[alpha][j] -> define composante j (x, y, or z), of weight vector definition for vertex alpha
 				*/
 
-				m1 += pose[(*bones)[faces[i]][j]] * ibind[(*bones)[faces[i]][j]] * (*weights)[(*bones)[faces[i]][j]][j];
-				m2 += pose[(*bones)[faces[i + 1]][j]] * ibind[(*bones)[faces[i + 1]][j]] * (*weights)[(*bones)[faces[i + 1]][j]][j];
-				m3 += pose[(*bones)[faces[i + 2]][j]] * ibind[(*bones)[faces[i + 2]][j]] * (*weights)[(*bones)[faces[i + 2]][j]][j];
+				m1 += pose[(*bones)[i0][j]] * ibind[(*bones)[i0][j]] * (*weights)[(*bones)[i0][j]][j];
+				m2 += pose[(*bones)[i1][j]] * ibind[(*bones)[i1][j]] * (*weights)[(*bones)[i1][j]][j];
+				m3 += pose[(*bones)[i2][j]] * ibind[(*bones)[i2][j]] * (*weights)[(*bones)[i2][j]][j];
 			}
 
 			//	compute triangle position
-			vec4f p1 = model * m1 * vertices[faces[i]];
-			vec4f p2 = model * m2 * vertices[faces[i + 1]];
-			vec4f p3 = model * m3 * vertices[faces[i + 2]];
+			vec4f p1 = model * m1 * vertices[i0];
+			vec4f p2 = model * m2 * vertices[i1];
+			vec4f p3 = model * m3 * vertices[i2];
 
 			//	collision detection
 			if (Collision::collide_SegmentvsTriangle(position, position + distance*direction, p1, p2, p3))
@@ -109,11 +114,16 @@ bool RayEntityCollector::operator() (Entity* entity)
 	{
 		CollisionReport report;
 		vec4f rayEnd = position + distance * direction;
-		for (unsigned int i = 0; i < faces.size(); i += 3)
+		for (unsigned int i = 0; i < indiceCount; i += 3)
 		{
-			vec4f p1 = model * vertices[faces[i]];
-			vec4f p2 = model * vertices[faces[i + 1]];
-			vec4f p3 = model * vertices[faces[i + 2]];
+			// indices
+			unsigned int i0 = mesh->getFaceIndiceAt(i);
+			unsigned int i1 = mesh->getFaceIndiceAt(i + 1);
+			unsigned int i2 = mesh->getFaceIndiceAt(i + 2);
+
+			vec4f p1 = model * vertices[i0];
+			vec4f p2 = model * vertices[i1];
+			vec4f p3 = model * vertices[i2];
 
 			if (Collision::collide_SegmentvsTriangle(position, rayEnd, p1, p2, p3, &report))
 			{

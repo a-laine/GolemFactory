@@ -187,12 +187,12 @@ Variant ToolBox::getFromMat4f(const mat4f& mat)
 void ToolBox::optimizeStaticMesh(std::vector<vec4f>& verticesArray,
 	std::vector<vec4f>& normalesArray,
 	std::vector<vec4f>& colorArray,
-	std::vector<unsigned short>&facesArray)
+	std::vector<unsigned int>&facesArray)
 {
 	std::vector<vec4f> verticesBuffer;
 	std::vector<vec4f> normalesBuffer;
 	std::vector<vec4f> colorBuffer;
-	std::vector<unsigned short> facesBuffer;
+	std::vector<unsigned int> facesBuffer;
 
 	//	an ordered vertex data (position, normal and color)
 	struct OrderedVertex
@@ -225,8 +225,8 @@ void ToolBox::optimizeStaticMesh(std::vector<vec4f>& verticesArray,
 		};
 	};
 
-	std::map<OrderedVertex, unsigned short> vertexAlias;
-	std::map<OrderedVertex, unsigned short>::iterator alias;
+	std::map<OrderedVertex, unsigned int> vertexAlias;
+	std::map<OrderedVertex, unsigned int>::iterator alias;
 	OrderedVertex current;
 
 	for (unsigned int i = 0; i < facesArray.size(); i++)
@@ -241,9 +241,9 @@ void ToolBox::optimizeStaticMesh(std::vector<vec4f>& verticesArray,
 			verticesBuffer.push_back(verticesArray[facesArray[i]]);
 			normalesBuffer.push_back(normalesArray[facesArray[i]]);
 			colorBuffer.push_back(colorArray[facesArray[i]]);
-			facesBuffer.push_back((unsigned short)vertexAlias.size());
+			facesBuffer.push_back(vertexAlias.size());
 
-			vertexAlias[current] = (unsigned short)vertexAlias.size();
+			vertexAlias[current] = vertexAlias.size();
 		}
 		else facesBuffer.push_back(alias->second);
 	}
@@ -257,13 +257,12 @@ void ToolBox::optimizeHullMesh(Mesh* mesh)
 {
 	//	copy current array of mesh
 	const std::vector<vec4f>& verticesArray = *mesh->getVertices();
-	const std::vector<vec4f>& normalesArray = *mesh->getNormals();
-	const std::vector<unsigned short>& facesArray = *mesh->getFaces();
+	const std::vector<vec4f>& normalsArray = *mesh->getNormals();
 
 	// create result output
 	std::vector<vec4f> verticesBuffer;
 	std::vector<vec4f> normalBuffer;
-	std::vector<unsigned short> facesBuffer;
+	std::vector<unsigned int> facesBuffer;
 
 	//	struct to be able to sort vertices
 	struct OrderedVertex
@@ -287,22 +286,23 @@ void ToolBox::optimizeHullMesh(Mesh* mesh)
 	};
 
 	//	association table "vertex <-> index"
-	std::map<OrderedVertex, unsigned short> aliases;
-	std::map<OrderedVertex, unsigned short>::iterator alias;
+	std::map<OrderedVertex, unsigned int> aliases;
+	std::map<OrderedVertex, unsigned int>::iterator alias;
 	OrderedVertex current;
+	unsigned int faceArrayCount = mesh->getNumberIndices();
 
-	for (unsigned int i = 0; i < facesArray.size(); i++)
+	for (unsigned int i = 0; i < faceArrayCount; i++)
 	{
-		current.position = verticesArray[facesArray[i]];
+		current.position = verticesArray[mesh->getFaceIndiceAt(i)];
 		if ((i % 3) == 0)
-			normalBuffer.push_back(normalesArray[facesArray[i]]);
+			normalBuffer.push_back(normalsArray[mesh->getFaceIndiceAt(i)]);
 
 		alias = aliases.find(current);
 		if (alias == aliases.end())	// no alias found for current vertex (so create one)
 		{
-			aliases[current] = (unsigned short)verticesBuffer.size();
-			facesBuffer.push_back((unsigned short)verticesBuffer.size());
-			verticesBuffer.push_back(verticesArray[facesArray[i]]);
+			aliases[current] = verticesBuffer.size();
+			facesBuffer.push_back(verticesBuffer.size());
+			verticesBuffer.push_back(verticesArray[mesh->getFaceIndiceAt(i)]);
 		}
 		else facesBuffer.push_back(alias->second); // use the alias found instead
 	}
@@ -311,6 +311,36 @@ void ToolBox::optimizeHullMesh(Mesh* mesh)
 	mesh->uvs.clear();
 	mesh->vertices = verticesBuffer;
 	mesh->normals = normalBuffer;
-	mesh->faces = facesBuffer;
+	//mesh->faces = facesBuffer;
+
+	if (verticesArray.size() < 0xFF)
+	{
+		mesh->faceType = GL_UNSIGNED_BYTE;
+		mesh->faceIndicesElementSize = sizeof(uint8_t);
+		mesh->faceIndicesCount = facesBuffer.size();
+		mesh->faceIndicesArray = new uint8_t[facesBuffer.size()];
+		for (unsigned int i = 0; i < facesBuffer.size(); i++)
+			mesh->faceIndicesArray[i] = (uint8_t)facesBuffer[i];
+	}
+	else if (verticesArray.size() < 0xFFFF)
+	{
+		mesh->faceType = GL_UNSIGNED_SHORT;
+		mesh->faceIndicesElementSize = sizeof(uint16_t);
+		mesh->faceIndicesCount = facesBuffer.size();
+		mesh->faceIndicesArray = (uint8_t*)(new uint16_t[facesBuffer.size()]);
+		uint16_t* castedArray = (uint16_t*)mesh->faceIndicesArray;
+		for (unsigned int i = 0; i < facesBuffer.size(); i++)
+			castedArray[i] = (uint16_t)facesBuffer[i];
+	}
+	else
+	{
+		mesh->faceType = GL_UNSIGNED_INT;
+		mesh->faceIndicesElementSize = sizeof(uint32_t);
+		mesh->faceIndicesCount = facesBuffer.size();
+		mesh->faceIndicesArray = (uint8_t*)(new uint32_t[facesBuffer.size()]);
+		uint32_t* castedArray = (uint32_t*)mesh->faceIndicesArray;
+		for (unsigned int i = 0; i < facesBuffer.size(); i++)
+			castedArray[i] = facesBuffer[i];
+	}
 }
 //

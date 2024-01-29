@@ -13,7 +13,7 @@ Mesh* ReferenceMeshGenerator::getReferenceCapsule(const unsigned int& quadrature
 	std::vector<vec4f> vertices;
 	std::vector<vec4f> normals;
 	std::vector<vec4f> colors;
-	std::vector<unsigned short int> faces;
+	std::vector<unsigned int> faces;
 
 	//	cylinder part
 	float pi2 = 2 * (float)PI;
@@ -50,13 +50,13 @@ Mesh* ReferenceMeshGenerator::getReferenceCapsule(const unsigned int& quadrature
 		normals.push_back(vec4f(vertices.back().x, vertices.back().y, 0, 0).getNormal());
 		colors.push_back(vec4f(1.f, 1.f, 1.f, 1.f));
 
-		faces.push_back((unsigned short int)vertices.size() - 4);
-		faces.push_back((unsigned short int)vertices.size() - 3);
-		faces.push_back((unsigned short int)vertices.size() - 2);
+		faces.push_back(vertices.size() - 4);
+		faces.push_back(vertices.size() - 3);
+		faces.push_back(vertices.size() - 2);
 
-		faces.push_back((unsigned short int)vertices.size() - 3);
-		faces.push_back((unsigned short int)vertices.size() - 2);
-		faces.push_back((unsigned short int)vertices.size() - 1);
+		faces.push_back(vertices.size() - 3);
+		faces.push_back(vertices.size() - 2);
+		faces.push_back(vertices.size() - 1);
 
 		previous = tmp;
 	}
@@ -97,13 +97,13 @@ Mesh* ReferenceMeshGenerator::getReferenceCapsule(const unsigned int& quadrature
 			normals.push_back(vertices.back().getNormal());
 			colors.push_back(white);
 
-			faces.push_back((unsigned short int)vertices.size() - 4);
-			faces.push_back((unsigned short int)vertices.size() - 3);
-			faces.push_back((unsigned short int)vertices.size() - 2);
+			faces.push_back(vertices.size() - 4);
+			faces.push_back(vertices.size() - 3);
+			faces.push_back(vertices.size() - 2);
 
-			faces.push_back((unsigned short int)vertices.size() - 3);
-			faces.push_back((unsigned short int)vertices.size() - 2);
-			faces.push_back((unsigned short int)vertices.size() - 1);
+			faces.push_back(vertices.size() - 3);
+			faces.push_back(vertices.size() - 2);
+			faces.push_back(vertices.size() - 1);
 
 			//	vector shift
 			v4 = v1;
@@ -145,13 +145,13 @@ Mesh* ReferenceMeshGenerator::getReferenceCapsule(const unsigned int& quadrature
 			colors.push_back(white);
 
 
-			faces.push_back((unsigned short int)vertices.size() - 4);
-			faces.push_back((unsigned short int)vertices.size() - 3);
-			faces.push_back((unsigned short int)vertices.size() - 2);
+			faces.push_back(vertices.size() - 4);
+			faces.push_back(vertices.size() - 3);
+			faces.push_back(vertices.size() - 2);
 
-			faces.push_back((unsigned short int)vertices.size() - 3);
-			faces.push_back((unsigned short int)vertices.size() - 2);
-			faces.push_back((unsigned short int)vertices.size() - 1);
+			faces.push_back(vertices.size() - 3);
+			faces.push_back(vertices.size() - 2);
+			faces.push_back(vertices.size() - 1);
 
 			//	vector shift
 			v4 = v1;

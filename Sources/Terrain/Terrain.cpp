@@ -1,5 +1,7 @@
 #include "Terrain.h"
 
+#include <Resources/ResourceManager.h>
+
 // Default
 Terrain::Terrain() : m_gridSize(0), m_grid(nullptr)
 {
@@ -10,13 +12,13 @@ Terrain::~Terrain()
 	m_areas.clear();
 	RecomputeGrid();
 
-	for (auto& clipmap : m_clipmaps)
+	for (auto& clipmap : m_clipmapMeshes)
 	{
-		glDeleteVertexArrays(1, &clipmap.m_VAO);
-		glDeleteBuffers(1, &clipmap.m_vertexbuffer);
-		glDeleteBuffers(1, &clipmap.m_arraybuffer);
+		//glDeleteVertexArrays(1, &clipmap.m_VAO);
+		//glDeleteBuffers(1, &clipmap.m_vertexbuffer);
+		//glDeleteBuffers(1, &clipmap.m_arraybuffer);
 	}
-	m_clipmaps.clear();
+	m_clipmapMeshes.clear();
 }
 //
 
@@ -27,12 +29,15 @@ void Terrain::initializeClipmaps()
 	constexpr int lodCount = sizeof(lodFaceCount) / sizeof(int);
 
 	std::vector<vec4f> vertices;
-	std::vector<uint16_t> indices;
+	std::vector<vec4f> dummyArrayVec4f;
+	std::vector<vec4i> dummyArrayVec4i;
+	std::vector<uint32_t> indices;
 	vertices.reserve((lodFaceCount[0] + 1) * (lodFaceCount[0] + 1));
 	indices.reserve(lodFaceCount[0] * lodFaceCount[0] * 6);
 
-	m_clipmaps.clear();
-	m_clipmaps.resize(lodCount);
+	//m_clipmaps.clear();
+	//m_clipmaps.resize(lodCount);
+	m_clipmapMeshes.reserve(lodCount);
 
 	for (int lod = 0; lod < lodCount; lod++)
 	{
@@ -77,8 +82,14 @@ void Terrain::initializeClipmaps()
 				}
 			}
 
+		Mesh* clipmap = new Mesh("internalClipmapMeshLod" + std::to_string(lod));
+		clipmap->initialize(vertices, dummyArrayVec4f, dummyArrayVec4f, indices, dummyArrayVec4i, dummyArrayVec4f);
+		clipmap->isEnginePrivate = true;
+		ResourceManager::getInstance()->addResource(clipmap);
+		m_clipmapMeshes.push_back(clipmap);
+
 		//	initialize VBO
-		glGenBuffers(1, &m_clipmaps[lod].m_vertexbuffer);
+		/*glGenBuffers(1, &m_clipmaps[lod].m_vertexbuffer);
 		glBindBuffer(GL_ARRAY_BUFFER, m_clipmaps[lod].m_vertexbuffer);
 		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(vec4f), vertices.data(), GL_STATIC_DRAW);
 
@@ -95,7 +106,7 @@ void Terrain::initializeClipmaps()
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_clipmaps[lod].m_arraybuffer);
-		glBindVertexArray(0);
+		glBindVertexArray(0);*/
 	}
 }
 

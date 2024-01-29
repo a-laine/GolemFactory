@@ -460,8 +460,12 @@ void initializeSyntyScene()
 }
 std::string checkResourcesDirectory()
 {
+	//	check relative from executable
+	std::string directory = "./Resources/";
+	if (ToolBox::isPathExist(directory)) return directory;
+
 	//	check for home repository
-	std::string directory = "C:/Users/Thibault/Documents/Github/GolemFactory/Resources/";
+	directory = "C:/Users/Thibault/Documents/Github/GolemFactory/Resources/";
 	if (ToolBox::isPathExist(directory)) return directory;
 
 	//	return the default resource path for portable applications
@@ -505,11 +509,20 @@ void initManagers()
 	ResourceManager::getInstance()->addNewResourceLoader(".animGraph", new AnimationGraphLoader());
 
 	// Init world
-	const vec4f worldHalfSize = vec4f(GRID_SIZE * GRID_ELEMENT_SIZE, 128.f, GRID_SIZE * GRID_ELEMENT_SIZE, 0) * 0.5f;
+	const vec4f worldHalfSize = vec4f(64000, 128.f, 64000, 0);// vec4f(GRID_SIZE * GRID_ELEMENT_SIZE, 128.f, GRID_SIZE * GRID_ELEMENT_SIZE, 0) * 0.5f;
 	const vec4f worldPos = vec4f(0, 0.5f * worldHalfSize.y, 0, 1);
 	NodeVirtual::debugWorld = &world;
-	world.getSceneManager().init(worldPos - worldHalfSize, worldPos + worldHalfSize, vec3i(4, 1, 4), 2);
+
+	world.getSceneManager().addStreamingRadius(625000, 0);
+	world.getSceneManager().addStreamingRadius(625000, 1);
+	world.getSceneManager().addStreamingRadius(125000, 2);
+	world.getSceneManager().addStreamingRadius( 25000, 3);
+	world.getSceneManager().addStreamingRadius(  5000, 4);
+	world.getSceneManager().addStreamingRadius(  1000, 5);
+	world.getSceneManager().addStreamingRadius(   200, 6);
+	world.getSceneManager().init(worldPos - worldHalfSize, worldPos + worldHalfSize, vec3i(4, 1, 4));
 	world.setMaxObjectCount(400000);
+	world.getSceneManager().update(vec4f::zero, false);
 
 	//	Renderer
 	Renderer::getInstance()->setContext(context);
@@ -658,6 +671,8 @@ void events()
 void updates(float elapseTime)
 {
 	SCOPED_CPU_MARKER("Updates");
+
+	world.getSceneManager().update(currentCamera->getPosition());
 
 	//	Compute HUD picking parameters
 	if (EventHandler::getInstance()->getCursorMode())

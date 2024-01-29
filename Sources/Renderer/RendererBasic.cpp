@@ -533,6 +533,7 @@ void Renderer::render(CameraComponent* renderCam)
 	m_sceneLights.m_tanFovY = tan(0.5f * camera->getVerticalFieldOfView());
 	m_sceneLights.m_tanFovX = m_sceneLights.m_tanFovY * context->getViewportRatio();
 	CollectEntitiesBindLights();
+	CollectTerrainQueueData();
 
 	if (lightClustering)
 		LightClustering();

@@ -178,6 +178,7 @@ class Renderer : public Singleton<Renderer>
 
 		// Render stages
 		void CollectEntitiesBindLights();
+		void CollectTerrainQueueData();
 		void LightClustering();
 		void DynamicBatching();
 		void OcclusionCulling();

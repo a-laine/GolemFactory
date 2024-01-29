@@ -2,9 +2,14 @@
 #include <World/World.h>
 #include <Utiles/Assert.hpp>
 #include <Utiles/Debug.h>
+#include <Utiles/ObjectPool.h>
 
 //#include <glm/gtx/component_wise.hpp>
 #include <algorithm>
+
+
+ObjectPool<NodeVirtual> g_nodePool;
+
 
 #define ALLOWANCE_SIZE_FACTOR 0.33f
 
@@ -12,24 +17,13 @@ World* NodeVirtual::debugWorld = nullptr;
 
 
 //	Default
-NodeVirtual::NodeVirtual() : position(0.f) , halfSize(0.f) , division(0) , allowanceSize(1.f), debugCube(nullptr){}
+NodeVirtual::NodeVirtual() : position(0.f) , halfSize(0.f) , division(0) , allowanceSize(1.f){}
 NodeVirtual::~NodeVirtual()
 {
-	//	free instance
-	for (unsigned int i = 0; i < objectList.size(); i++)
-	{
-		World* world = objectList[i]->getParentWorld();
-		world->releaseOwnership(objectList[i]);
-	}
-	/*if(debugWorld && debugCube)
-		debugWorld->releaseOwnership(debugCube);*/
-
-	//	delete all children
-	for (unsigned int i = 0; i < adoptedChildren.size(); i++)
-		delete adoptedChildren[i];
+	merge();
 }
 
-void NodeVirtual::init(const vec4f bbMin, const vec4f bbMax, const vec3i& nodeDivision, unsigned int depth)
+void NodeVirtual::init(const vec4f bbMin, const vec4f bbMax, const vec3i& nodeDivision)
 {
 	GF_ASSERT(children.empty());
 	position = (bbMax + bbMin) * 0.5f;
@@ -41,68 +35,50 @@ void NodeVirtual::init(const vec4f bbMin, const vec4f bbMax, const vec3i& nodeDi
 	allowanceSize = compMin * ALLOWANCE_SIZE_FACTOR;
 	inflatedHalfSize = halfSize + vec4f(allowanceSize);
 	inflatedHalfSize.w = 0.f;
+	division = nodeDivision;
+}
 
-	/*if(debugWorld)
-		debugCube = debugWorld->getEntityFactory().createObject("cube", position, halfSize, glm::quat(1, 0, 0, 0));*/
 
-	if(depth > 0)
+void NodeVirtual::split()
+{
+	children.resize((size_t)division.x * division.y * division.z);
+	vec4f bbmin = position - halfSize;
+	vec4f min;
+	vec4f childSize = getSize() / vec4f((vec3f)division, 1.f);
+	unsigned int index = 0;
+	for (int x = 0; x < division.x; x++)
 	{
-		division = nodeDivision;
-		children.resize(nodeDivision.x * nodeDivision.y * nodeDivision.z);
-		vec4f min;
-		vec4f childSize = getSize() / vec4f((vec3f)nodeDivision, 1.f);
-		unsigned int index = 0;
-		for(int x = 0; x < nodeDivision.x; x++)
+		min.x = bbmin.x + x * childSize.x;
+		for (int y = 0; y < division.y; y++)
 		{
-			min.x = bbMin.x + x * childSize.x;
-			for(int y = 0; y < nodeDivision.y; y++)
+			min.y = bbmin.y + y * childSize.y;
+			for (int z = 0; z < division.z; z++)
 			{
-				min.y = bbMin.y + y * childSize.y;
-				for(int z = 0; z < nodeDivision.z; z++)
-				{
-					min.z = bbMin.z + z * childSize.z;
-					children[index].init(min, min + childSize, nodeDivision, depth - 1);
-					index++;
-				}
+				min.z = bbmin.z + z * childSize.z;
+				children[index] = g_nodePool.getFreeObject();
+				children[index]->init(min, min + childSize, division);
+				index++;
 			}
 		}
 	}
 }
 
-void NodeVirtual::clearChildren()
+void NodeVirtual::merge()
 {
+	for (NodeVirtual* n : children)
+	{
+		n->merge();
+		g_nodePool.releaseObject(n);
+	}
 	children.clear();
-}
 
-void NodeVirtual::split(unsigned int newDepth)
-{
-	if(newDepth > 0)
+	for (unsigned int i = 0; i < objectList.size(); i++)
 	{
-		if(children.empty())
-		{
-			init(getBBMin(), getBBMax(), division, newDepth);
-		}
-		else
-		{
-			for(NodeVirtual& node : children)
-				node.split(newDepth - 1);
-		}
+		World* world = objectList[i]->getParentWorld();
+		world->releaseOwnership(objectList[i]);
 	}
+	objectList.clear();
 }
-
-void NodeVirtual::merge(unsigned int newDepth)
-{
-	if(newDepth > 0)
-	{
-		for(NodeVirtual& node : children)
-			node.merge(newDepth - 1);
-	}
-	else
-	{
-		clearChildren();
-	}
-}
-
 
 vec4f NodeVirtual::getCenter() const { return position; }
 vec4f NodeVirtual::getSize() const { return halfSize * 2.f; }
@@ -110,7 +86,7 @@ vec4f NodeVirtual::getHalfSize() const { return halfSize; }
 vec4f NodeVirtual::getInflatedHalfSize() const { return inflatedHalfSize; }
 vec4f NodeVirtual::getBBMax() const { return position + halfSize; }
 vec4f NodeVirtual::getBBMin() const { return position - halfSize; }
-int NodeVirtual::getChildrenCount() const { return (int)(children.size() + adoptedChildren.size()); }
+int NodeVirtual::getChildrenCount() const { return (int)(children.size()); }
 bool NodeVirtual::isLeaf() const { return children.empty(); }
 
 bool NodeVirtual::isInside(const vec4f& point) const
@@ -160,21 +136,6 @@ unsigned int  NodeVirtual::getObjectCount() const
 	return (unsigned int)objectList.size();
 }
 
-void NodeVirtual::addNode(NodeVirtual* node)
-{
-	adoptedChildren.push_back(node);
-}
-
-bool NodeVirtual::removeNode(NodeVirtual* node)
-{
-	auto it = std::find(adoptedChildren.begin(), adoptedChildren.end(), node);
-	if(it != adoptedChildren.end())
-	{
-		adoptedChildren.erase(it);
-		return true;
-	}
-	else return false;
-}
 
 
 NodeVirtual* NodeVirtual::getChildAt(const vec4f& pos)
@@ -183,14 +144,13 @@ NodeVirtual* NodeVirtual::getChildAt(const vec4f& pos)
 	const vec4f childSizeInv = fdiv / getSize();
 	const vec4i result = (pos - getBBMin()) * childSizeInv;
 	int index = division.z * division.y * result.x + division.z * result.y + result.z;
-	return children.data() + index;
+	return children[index];
 }
 
 void NodeVirtual::getChildren(std::vector<NodeVirtual*>& result)
 {
 	for (auto& n : children)
-		result.push_back(&n);
-	//std::transform(children.begin(), children.end(), result.end(), [](NodeVirtual& n) { return &n; });
+		result.push_back(n);
 }
 
 void NodeVirtual::getChildren(std::vector<NodeRange>& result)
@@ -214,7 +174,7 @@ void NodeVirtual::getChildrenInBox(std::vector<NodeVirtual*>& result, const vec4
 			for(int z = childMin.z; z < childMax.z; z++)
 			{
 				unsigned int index = division.z * division.y * x + division.z * y + z;
-				result.push_back(children.data() + index);
+				result.push_back(children[index]);
 			}
 }
 
@@ -234,8 +194,8 @@ void NodeVirtual::getChildrenInBox(std::vector<NodeRange>& result, const vec4f& 
 		for(int y = childMin.y; y < childMax.y; y++)
 		{
 			int index = division.z * division.y * x + division.z * y;
-			NodeVirtual* first = children.data() + (index + childMin.z);
-			NodeVirtual* last  = children.data() + (index + childMax.z);
+			NodeVirtual* first = children[index + childMin.z];
+			NodeVirtual* last  = children[index + childMax.z];
 			if(!result.empty() && result.back().end == first)
 				result.back().end = last;
 			else
@@ -244,32 +204,7 @@ void NodeVirtual::getChildrenInBox(std::vector<NodeRange>& result, const vec4f& 
 	}
 }
 
-
-/*NodeVirtual* NodeVirtual::addSwept(Swept* object)
-{
-	sweptObject.push_back(object);
-	return this;
-}
-bool NodeVirtual::removeSwept(Swept* object)
-{
-	std::remove(sweptObject.begin(), sweptObject.end(), object);
-}
-void NodeVirtual::clearSwept()
-{
-	sweptObject.clear();
-}
-void NodeVirtual::getPhysicsArtefactsList(std::vector<PhysicsArtefacts>& collector)
-{
-	for (auto it = objectList.begin(); it != objectList.end(); ++it)
-		collector.insert(collector.end(), PhysicsArtefacts(*it));
-	for (auto it = sweptObject.begin(); it != sweptObject.end(); ++it)
-		collector.insert(collector.end(), PhysicsArtefacts(*it));
-}*/
-
 const std::vector<Entity*>& NodeVirtual::getEntitiesList() const { return objectList; }
-
-
-Entity* NodeVirtual::getDebugCube() { return debugCube; }
 
 void NodeVirtual::draw() const 
 {

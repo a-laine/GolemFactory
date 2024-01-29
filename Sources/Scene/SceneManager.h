@@ -22,7 +22,9 @@ class SceneManager
 		//
 
 		//	Public functions
-		void init(const vec4f& bbMin, const vec4f& bbMax, const vec3i& nodeDivision, unsigned int depth);
+		void init(const vec4f& bbMin, const vec4f& bbMax, const vec3i& nodeDivision);
+		void addStreamingRadius(float radius, int depth);
+		void update(vec4f playerPosition, bool continueOnUpdate = true);
 		void clear();
 		void reserveInstanceTrack(const unsigned int& count);
 		unsigned int getObjectCount() const;
@@ -58,6 +60,12 @@ class SceneManager
 			vec4f position;
 			NodeVirtual* owner;
 		};
+		struct StreamingRadius
+		{
+			int depth;
+			float radius;
+			float sqRadius;
+		};
 
 		//	Protected functions
 		//vec4f getObjectSize(const Entity* entity) const;
@@ -67,13 +75,14 @@ class SceneManager
 		std::vector<NodeVirtual*> world;
 		std::unordered_map<Entity*, InstanceTrack> instanceTracking;
 		std::vector<Entity*> roots;
+		std::vector<StreamingRadius> streamingRadius;
 		//
 
 		//	Debug
 #ifdef USE_IMGUI
 		void drawRecursiveImGuiEntity(World& world, Entity* entity, int depth);
 		void drawRecursiveImGuiSceneNode(World& world, std::map<const NodeVirtual*, VirtualSceneQuerry::CollisionType>& collisionResults, NodeVirtual* node, vec3i nodeIndex, int depth);
-		bool isEmptyNode(const NodeVirtual& _node);
+		bool isEmptyNode(const NodeVirtual* _node);
 
 		ImGuiTextFilter m_nameFilter;
 		uint64_t m_flagFilter = 0xFFFFFFFFFFFFFFFF;

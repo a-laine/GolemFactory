@@ -110,7 +110,7 @@ class HouseGenerator
 		std::vector<vec4f> verticesArray;
 		std::vector<vec4f> normalesArray;
 		std::vector<vec4f> uvArray;
-		std::vector<unsigned short> facesArray;
+		std::vector<unsigned int> facesArray;
 
 		std::map<std::string, Mesh*> assetLibrary;
 		std::vector<vec3i> blockLibrary;

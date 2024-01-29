@@ -28,6 +28,7 @@ void Renderer::CollectEntitiesBindLights()
 		collector.m_flags |= (uint64_t)Entity::Flags::Fl_Occluder;
 
 	collector.m_exclusionFlags = (uint64_t)Entity::Flags::Fl_Hide;
+	auto aaaa = VirtualSceneQuerry();
 	world->getSceneManager().getEntities(&sceneQuery, &collector);
 
 	uint64_t transparentMask = 1ULL << 63;
@@ -152,6 +153,11 @@ void Renderer::CollectEntitiesBindLights()
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
+void Renderer::CollectTerrainQueueData()
+{
+
+}
+
 void Renderer::LightClustering()
 {
 	SCOPED_CPU_MARKER("Light clustering");
@@ -215,14 +221,14 @@ void Renderer::OcclusionCulling()
 		vec2f min, max;
 		vec2i imin = vec2i::zero;
 		vec2i imax = vec2i::zero;
-		const std::vector<unsigned short>& faces = *mesh->getFaces();
-		for (int f = 0; f < faces.size(); f += 3)
+		unsigned int indiceCount = mesh->getNumberIndices();
+		for (unsigned int f = 0; f < indiceCount; f += 3)
 		{
 			occluderTriangles++;
-
-			vec4f p1 = occluderScreenVertices[faces[f]];
-			vec4f p2 = occluderScreenVertices[faces[f + 1]];
-			vec4f p3 = occluderScreenVertices[faces[f + 2]];
+			unsigned int vertexIndex = mesh->getFaceIndiceAt(f);
+			vec4f p1 = occluderScreenVertices[mesh->getFaceIndiceAt(f)];
+			vec4f p2 = occluderScreenVertices[mesh->getFaceIndiceAt(f + 1)];
+			vec4f p3 = occluderScreenVertices[mesh->getFaceIndiceAt(f + 2)];
 
 			float depthMin = std::min(p1.z, std::min(p2.z, p3.z));
 			float depthMax = std::max(p1.z, std::max(p2.z, p3.z));

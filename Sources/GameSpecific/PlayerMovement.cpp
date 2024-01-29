@@ -131,8 +131,7 @@ void PlayerMovement::update(float _dt)
 	m_animator->setParameter("grounded", m_grounded);
 
 	// integrate velocity
-	float pow = sqrt(m_smoothedVelocity.x * m_smoothedVelocity.x + m_smoothedVelocity.z * m_smoothedVelocity.z);
-	m_rigidbody->setLinearVelocity(vec4f(pow * m_smoothedVelocity.x, m_rigidbody->getLinearVelocity().y, pow * m_smoothedVelocity.z, 0));
+	m_rigidbody->setLinearVelocity(vec4f(m_smoothedVelocity.x, m_rigidbody->getLinearVelocity().y, m_smoothedVelocity.z, 0));
 }
 
 void PlayerMovement::onAddToEntity(Entity* entity)

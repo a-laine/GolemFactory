@@ -932,8 +932,8 @@ void HouseGenerator::pushMesh(Mesh* m, const vec4f& p, const vec4f& o, const vec
 		normalesArray.push_back(orientation * m->normals[i]);
 	for (unsigned int i = 0; i < m->uvs.size(); i++)
 		uvArray.push_back(m->uvs[i]);
-	for (unsigned int i = 0; i < m->faces.size(); i++)
-		facesArray.push_back(facesStart + m->faces[i]);
+	for (unsigned int i = 0; i < m->getNumberIndices(); i++)
+		facesArray.push_back(facesStart + m->getFaceIndiceAt(i));
 }
 void HouseGenerator::pushGround(float px1, float py1, float pz1, float px2, float py2, float pz2, vec4f color)
 {

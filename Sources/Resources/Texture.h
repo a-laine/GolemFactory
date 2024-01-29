@@ -68,8 +68,9 @@ class Texture : public ResourceVirtual
         unsigned int m_internalFormat;
         unsigned int m_type;
 
-        bool isEnginePrivate = false;
-        //
+        #ifdef USE_IMGUI
+            bool isEnginePrivate = false;
+        #endif
 
     private:
         static std::string defaultName;

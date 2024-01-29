@@ -34,10 +34,10 @@ class Mesh : public ResourceVirtual
 		void computeBoundingBox();
 
         void initialize(const std::vector<vec4f>& verticesArray, const std::vector<vec4f>& normalsArray,
-            const std::vector<vec4f>& uvArray, const std::vector<unsigned short>& facesArray,
+            const std::vector<vec4f>& uvArray, const std::vector<unsigned int>& facesArray,
             const std::vector<vec4i>& bonesArray, const std::vector<vec4f>& weightsArray);
         void initialize(std::vector<vec4f>* verticesArray, std::vector<vec4f>* normalsArray,
-            std::vector<vec4f>* uvArray, std::vector<unsigned short>* facesArray,
+            std::vector<vec4f>* uvArray, std::vector<unsigned int>* facesArray,
             std::vector<vec4i>* bonesArray, std::vector<vec4f>* weightsArray);
 		virtual void initializeVBO();
 		virtual void initializeVAO();
@@ -54,13 +54,15 @@ class Mesh : public ResourceVirtual
 
         unsigned int getNumberVertices() const;
         unsigned int getNumberFaces() const;
+        unsigned int getNumberIndices() const;
+		GLuint getIndicesType() const;
+		unsigned int getFaceIndiceAt(unsigned int i) const;
 
 		const std::vector<vec4f>* getBBoxVertices() const;
 		const std::vector<unsigned short>* getBBoxFaces() const;
 		const std::vector<vec4f>* getVertices() const;
 		const std::vector<vec4f>* getNormals() const;
-		const std::vector<vec4f>* getUVs() const;
-		const std::vector<unsigned short>* getFaces() const;
+		const uint8_t* getFaces() const;
 		const std::vector<vec4i>* getBones() const;
 		const std::vector<vec4f>* getWeights() const;
 		const AxisAlignedBox& getBoundingBox() const;
@@ -71,11 +73,16 @@ class Mesh : public ResourceVirtual
 		void onDrawImGui() override;
         //
 
+
+		#ifdef USE_IMGUI
+			bool isEnginePrivate = false;
+		#endif
+
 	private:
         static std::string defaultName;
 
         void clear();
-
+		void checkValidity();
 
 		//	Temporary loading structures
 		struct gfvertex { int v, vn, c; };
@@ -94,7 +101,11 @@ class Mesh : public ResourceVirtual
         std::vector<vec4f> vertices;
 		std::vector<vec4f> normals;
 		std::vector<vec4f> uvs;
-        std::vector<unsigned short> faces;
+
+		GLuint faceType;
+		unsigned int faceIndicesElementSize;
+		unsigned int faceIndicesCount;
+		uint8_t* faceIndicesArray;
 
 		GLuint  BBoxVao, vBBoxBuffer, fBBoxBuffer;
 		std::vector<vec4f> vBBox;

@@ -15,7 +15,7 @@
 
 
 //#include <World/WorldComponents/Map.h>
-#include <Terrain/Chunk.h>
+//#include <Terrain/Chunk.h>
 #include <Animation/AnimationComponent.h>
 
 
@@ -57,6 +57,7 @@ void Renderer::drawObject(Entity* object, Shader* forceShader)
 	}
 
 	//	Draw mesh
+	const Mesh* mesh = drawableComp->getMesh();
 	if (renderOption == RenderOption::BOUNDING_BOX)
 	{
 		if (isSkinned)
@@ -66,29 +67,29 @@ void Renderer::drawObject(Entity* object, Shader* forceShader)
 		}
 		else
 		{
-			loadVAO(drawableComp->getMesh()->getBBoxVAO());
-			glDrawElements(GL_TRIANGLES, (int)drawableComp->getMesh()->getBBoxFaces()->size(), GL_UNSIGNED_SHORT, NULL);
+			loadVAO(mesh->getBBoxVAO());
+			glDrawElements(GL_TRIANGLES, (int)mesh->getBBoxFaces()->size(), GL_UNSIGNED_SHORT, NULL);
 		}
 	}
 	else
 	{
-		loadVAO(drawableComp->getMesh()->getVAO());
-		glDrawElements(GL_TRIANGLES, (int)drawableComp->getMesh()->getFaces()->size(), GL_UNSIGNED_SHORT, NULL);
+		loadVAO(mesh->getVAO());
+		glDrawElements(GL_TRIANGLES, mesh->getNumberIndices(), mesh->getIndicesType(), NULL);
 
 		if (renderOption == RenderOption::NORMALS && normalViewer)
 		{
 			loadModelMatrix(normalViewer, &modelMatrix);
-			loadVAO(drawableComp->getMesh()->getVAO());
-			glDrawElements(GL_TRIANGLES, (int)drawableComp->getMesh()->getFaces()->size(), GL_UNSIGNED_SHORT, NULL);
+			loadVAO(mesh->getVAO());
+			glDrawElements(GL_TRIANGLES, mesh->getNumberIndices(), mesh->getIndicesType(), NULL);
 
 			drawCalls++;
 			instanceDrawn++;
-			trianglesDrawn += drawableComp->getMesh()->getNumberFaces();
+			trianglesDrawn += mesh->getNumberFaces();
 		}
 	}
 	drawCalls++;
 	instanceDrawn++;
-	trianglesDrawn += drawableComp->getMesh()->getNumberFaces();
+	trianglesDrawn += mesh->getNumberFaces();
 }
 void Renderer::drawInstancedObject(Shader* s, Mesh* m, std::vector<ModelMatrix>& models)
 {
@@ -115,13 +116,13 @@ void Renderer::drawInstancedObject(Shader* s, Mesh* m, std::vector<ModelMatrix>&
 	else
 	{
 		loadVAO(m->getVAO());
-		glDrawElementsInstanced(GL_TRIANGLES, (int)m->getFaces()->size(), GL_UNSIGNED_SHORT, NULL, (unsigned short)models.size());
+		glDrawElementsInstanced(GL_TRIANGLES, m->getNumberIndices(), m->getIndicesType(), NULL, (unsigned short)models.size());
 
 		if (renderOption == RenderOption::NORMALS && normalViewer)
 		{
 			loadModelMatrix(normalViewer, models.data(), (int)models.size());
 			loadVAO(m->getVAO());
-			glDrawElementsInstanced(GL_TRIANGLES, (int)m->getFaces()->size(), GL_UNSIGNED_SHORT, NULL, (unsigned short)models.size());
+			glDrawElementsInstanced(GL_TRIANGLES, m->getNumberIndices(), m->getIndicesType(), NULL, (unsigned short)models.size());
 
 			drawCalls++;
 			instanceDrawn += (int)(models.size());
@@ -315,7 +316,7 @@ GLuint Renderer::renderMeshOverview(Mesh* mesh, float angle0, float angle1)
 		glUniform4fv(loc, 1, (float*)&color);
 
 	glBindVertexArray(mesh->getVAO());
-	glDrawElements(GL_TRIANGLES, (int)mesh->getFaces()->size(), GL_UNSIGNED_SHORT, NULL);
+	glDrawElements(GL_TRIANGLES, mesh->getNumberIndices(), mesh->getIndicesType(), NULL);
 
 	if (loc >= 0) glUniform4fv(loc, 1, (float*)&vec4f(-1.f, 0.f, 0.f, 1.f)[0]);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);

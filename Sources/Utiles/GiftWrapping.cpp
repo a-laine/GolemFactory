@@ -52,7 +52,9 @@ Mesh* GiftWrapping::getConvexHull(Mesh* m)
 	if (degenerated)
 	{
 		std::cout << "  degenerated mesh !" << std::endl;
-		mesh->initialize(std::vector<vec4f>(), std::vector<vec4f>(), std::vector<vec4f>(), std::vector<unsigned short>(), std::vector<vec4i>(), std::vector<vec4f>());
+
+		std::vector<vec4f> dummy;
+		mesh->initialize(dummy, dummy, dummy, std::vector<unsigned int>(), std::vector<vec4i>(), dummy);
 	}
 	else
 	{
@@ -61,13 +63,13 @@ Mesh* GiftWrapping::getConvexHull(Mesh* m)
 		std::vector<vec4f> vertices;
 		std::vector<vec4f> normales;
 		std::vector<vec4f> colors;
-		std::vector<unsigned short> faces;
+		std::vector<unsigned int> faces;
 
 		for (auto it = hullFaces.begin(); it != hullFaces.end(); it++)
 		{
-			faces.push_back((unsigned short)vertices.size());  vertices.push_back(it->p1);
-			faces.push_back((unsigned short)vertices.size());  vertices.push_back(it->p2);
-			faces.push_back((unsigned short)vertices.size());  vertices.push_back(it->p3);
+			faces.push_back(vertices.size());  vertices.push_back(it->p1);
+			faces.push_back(vertices.size());  vertices.push_back(it->p2);
+			faces.push_back(vertices.size());  vertices.push_back(it->p3);
 
 			colors.push_back(hullColor);
 			colors.push_back(hullColor);

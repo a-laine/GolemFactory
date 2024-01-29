@@ -44,7 +44,7 @@ void MeshSaver::saveStatic(Mesh* mesh, std::ofstream& file, vec4f scaleModifier)
 	file << "# Vertex count : " << vertices.size() << std::endl;
 	file << "# Normals count : " << normales.size() << std::endl;
 	file << "# Uvs count : " << uvs.size() << std::endl;
-	file << "# Faces count : " << mesh->faces.size() << std::endl;
+	file << "# Faces count : " << mesh->getNumberFaces() << std::endl;
 	file << "# Static mesh" << std::endl << std::endl << std::endl;
 
 
@@ -68,15 +68,17 @@ void MeshSaver::saveStatic(Mesh* mesh, std::ofstream& file, vec4f scaleModifier)
 
 	//	faces
 	file << "#  triangles" << std::endl;
-	for (unsigned int i = 0; i < mesh->faces.size(); i += 3)
+	unsigned int indiceCount = mesh->getNumberIndices();
+	for (unsigned int i = 0; i < indiceCount; i += 3)
 	{
 		file << "f ";
 		for (int j = 0; j < 3; j++)
 		{
 			//	get attributes proxy
-			vec4f v = getTruncatedAlias(mesh->vertices[mesh->faces[i + j]], truncature);
-			vec4f vn = getTruncatedAlias(mesh->normals[mesh->faces[i + j]], truncature);
-			vec4f c = getTruncatedAlias(mesh->uvs[mesh->faces[i + j]], truncature);
+			unsigned int vertexIndex = mesh->getFaceIndiceAt(i + j);
+			vec4f v = getTruncatedAlias(mesh->vertices[vertexIndex], truncature);
+			vec4f vn = getTruncatedAlias(mesh->normals[vertexIndex], truncature);
+			vec4f c = getTruncatedAlias(mesh->uvs[vertexIndex], truncature);
 
 			//	search vertex index
 			int index = 0;
@@ -129,7 +131,7 @@ void MeshSaver::saveAnimated(Mesh* mesh, std::ofstream& file, vec4f scaleModifie
 	file << "# Uvs count : " << uvs.size() << std::endl;
 	file << "# Weights count : " << weights.size() << std::endl;
 	file << "# Bones count : " << bones.size() << std::endl;
-	file << "# Faces count : " << mesh->faces.size() << std::endl;
+	file << "# Faces count : " << mesh->getNumberFaces() << std::endl;
 	file << "# Animatable mesh" << std::endl << std::endl << std::endl;
 
 
@@ -165,17 +167,19 @@ void MeshSaver::saveAnimated(Mesh* mesh, std::ofstream& file, vec4f scaleModifie
 
 	//	faces
 	file << "#  triangles" << std::endl;
-	for (unsigned int i = 0; i < mesh->faces.size(); i += 3)
+	unsigned int indiceCount = mesh->getNumberIndices();
+	for (unsigned int i = 0; i < indiceCount; i += 3)
 	{
 		file << "f ";
 		for (int j = 0; j < 3; j++)
 		{
 			//	get attributes proxy
-			vec4f v = getTruncatedAlias(mesh->vertices[mesh->faces[i + j]], truncature);
-			vec4f vn = getTruncatedAlias(mesh->normals[mesh->faces[i + j]], truncature);
-			vec4f c = getTruncatedAlias(mesh->uvs[mesh->faces[i + j]], truncature);
-			vec4f w = getTruncatedAlias(mesh->weights[mesh->faces[i + j]], truncature);
-			vec4i b = mesh->bones[mesh->faces[i + j]];
+			unsigned int vertexIndex = mesh->getFaceIndiceAt(i + j);
+			vec4f v = getTruncatedAlias(mesh->vertices[vertexIndex], truncature);
+			vec4f vn = getTruncatedAlias(mesh->normals[vertexIndex], truncature);
+			vec4f c = getTruncatedAlias(mesh->uvs[vertexIndex], truncature);
+			vec4f w = getTruncatedAlias(mesh->weights[vertexIndex], truncature);
+			vec4i b = mesh->bones[vertexIndex];
 
 			//	search vertex index
 			int index = 0;

@@ -10,12 +10,15 @@
 #include <Scene/FrustrumSceneQuerry.h>
 #include <Renderer/CameraComponent.h>
 #include <Utiles/ProfilerConfig.h>
+#include <Utiles/ObjectPool.h>
 
 
 #ifdef USE_IMGUI
 bool HierarchyWindowEnable = false;
 bool SpatialPartitionningWindowEnable = false;
 #endif // USE_IMGUI
+
+extern ObjectPool<NodeVirtual> g_nodePool;
 
 
 SceneManager::SceneManager()
@@ -47,22 +50,86 @@ SceneManager& SceneManager::operator=(SceneManager&& other)
 }
 
 
-void SceneManager::init(const vec4f& bbMin, const vec4f& bbMax, const vec3i& nodeDivision, unsigned int depth)
+void SceneManager::init(const vec4f& bbMin, const vec4f& bbMax, const vec3i& nodeDivision)
 {
 	GF_ASSERT(world.empty());
-	NodeVirtual* n = new NodeVirtual();
-	n->init(bbMin, bbMax, nodeDivision, depth);
-	world.push_back(n);
+
+	NodeVirtual* root = g_nodePool.getFreeObject();
+	root->init(bbMin, bbMax, nodeDivision);
+	world.push_back(root);
+}
+void SceneManager::addStreamingRadius(float radius, int depth)
+{
+	streamingRadius.push_back({ depth, radius, radius * radius});
+	std::sort(streamingRadius.begin(), streamingRadius.end(), [](StreamingRadius& a, StreamingRadius& b) { return a.radius > b.radius; });
 }
 void SceneManager::clear()
 {
-	for(unsigned int i = 0; i < world.size(); i++)
-		delete world[i];
+	for (unsigned int i = 0; i < world.size(); i++)
+	{
+		world[i]->merge();
+		g_nodePool.releaseObject(world[i]);
+	}
 	world.clear();
 	instanceTracking.clear();
+	streamingRadius.clear();
 }
 void SceneManager::reserveInstanceTrack(const unsigned int& count) { instanceTracking.reserve(count); }
 unsigned int SceneManager::getObjectCount() const { return (unsigned int)instanceTracking.size(); }
+
+void SceneManager::update(vec4f playerPosition, bool continueOnUpdate)
+{
+	SCOPED_CPU_MARKER("SceneManager::update");
+	NodeVirtual* node = world[0];
+
+	// init stacks
+	std::vector<NodeVirtual*> path;
+	std::vector<int> pathDepth;
+	path.push_back(node);
+	pathDepth.push_back(0);
+
+	while (!path.empty())
+	{
+		// pop node
+		node = path.back();
+		int depth = pathDepth.back();
+		path.pop_back();
+		pathDepth.pop_back();
+
+		// too much depth -> merge node
+		if (depth >= streamingRadius.size())
+		{
+			node->merge();
+			if (continueOnUpdate)
+				continue;
+		}
+
+		// merge or split depending on distance
+		vec4f delta = playerPosition - node->position;
+		delta = vec4f::clamp(delta, -node->halfSize, node->halfSize) - delta;
+		float sqDistance = delta.getNorm2();
+		const auto& streamingData = streamingRadius[depth];
+		if (sqDistance > 1.2f * streamingData.sqRadius && !node->children.empty())
+		{
+			node->merge();
+			//if (continueOnUpdate)
+			//	continue;
+		}
+		if (sqDistance < streamingData.sqRadius && node->children.empty())
+		{
+			node->split();
+			//if (continueOnUpdate)
+			//	continue;
+		}
+
+		// push children
+		for (NodeVirtual* n : node->children)
+		{
+			path.push_back(n);
+			pathDepth.push_back(depth + 1);
+		}
+	}
+}
 
 
 bool SceneManager::addObject(Entity* object)
@@ -71,15 +138,17 @@ bool SceneManager::addObject(Entity* object)
 	if (world.empty() || instanceTracking.count(object) != 0)
 		return false;
 
+	//world[0]->addObject(object); return true;
+
 	const AxisAlignedBox& box = object->m_worldBoundingBox;
 	const vec4f objSize = 0.5f * (box.max - box.min);
 	const vec4f objPos = 0.5f * (box.max + box.min);
 	NodeVirtual* node = world[0];
 	NodeVirtual* pNode = node;
 	{
-		vec4f p = objPos - world[0]->getCenter();
-		vec4f s = 0.5f * world[0]->getSize() - vec4f(EPSILON);
-		if (!(std::abs(p.x) < s.x && std::abs(p.y) < s.y && std::abs(p.z) < s.z))
+		vec4f p = objPos - world[0]->position;
+		vec4f s = world[0]->halfSize - vec4f(EPSILON);
+		if (std::abs(p.x) > s.x || std::abs(p.y) > s.y || std::abs(p.z) > s.z)
 			return false;
 	}
 
@@ -89,11 +158,9 @@ bool SceneManager::addObject(Entity* object)
 		node = node->getChildAt(objPos);
 	}
 
-	NodeVirtual* finalNode;
-	if (node->isTooBig(objSize))
-		finalNode = pNode;
-	else
-		finalNode = node;
+	NodeVirtual* finalNode = pNode;
+	//if (node->isTooBig(objSize))
+	//	finalNode = pNode;
 
 	finalNode->addObject(object);
 	instanceTracking[object] = { objPos, finalNode };
@@ -217,50 +284,59 @@ std::vector<Entity*> SceneManager::getObjectsInBox(const vec4f& bbMin, const vec
 
 void SceneManager::getSceneNodes(VirtualSceneQuerry* collisionTest)
 {
+	SCOPED_CPU_MARKER("SceneManager::getSceneNodes");
+
 	//	initialize and test root
-	NodeVirtual* node = world[0];
-	VirtualSceneQuerry::CollisionType collision = (VirtualSceneQuerry::CollisionType)(*collisionTest)(node);
-	if (collision == VirtualSceneQuerry::CollisionType::NONE)
-		return;
-
-	//	init path and iterate on tree
-	std::vector<NodeVirtual*> path;
-	std::vector<bool> parentIsInsideStack;
-
-	if (!node->isLeaf())
-		node->getChildren(path);
-	for (int i = 0; i < node->getChildrenCount(); i++)
-		parentIsInsideStack.push_back(collision == VirtualSceneQuerry::CollisionType::INSIDE);
-
-	while (!path.empty())
+	for (NodeVirtual* node : world)
 	{
-		// process node
-		node = path.back();
-		bool parentIsInside = parentIsInsideStack.back();
-		path.pop_back();
-		parentIsInsideStack.pop_back();
+		//NodeVirtual* node = world[j];
+		VirtualSceneQuerry::CollisionType collision = (VirtualSceneQuerry::CollisionType)(*collisionTest)(node);
+		if (collision == VirtualSceneQuerry::CollisionType::NONE)
+			return;
 
-		// perform collision if needed
-		if (parentIsInside)
-		{
-			collision = VirtualSceneQuerry::CollisionType::INSIDE;
-			collisionTest->addNodeToResult(node);
-		}
-		else
-			collision = (VirtualSceneQuerry::CollisionType)(*collisionTest)(node);
+		//	init path and iterate on tree
+		std::vector<NodeVirtual*> path;
+		std::vector<bool> parentIsInsideStack;
+		path.push_back(node);
+		parentIsInsideStack.push_back(false);
 
-		//	iterate
-		if (!node->isLeaf() && collision != VirtualSceneQuerry::CollisionType::NONE)
-		{
+		/*if (!node->children.empty())
 			node->getChildren(path);
-			for (int i = 0; i < node->getChildrenCount(); i++)
-				parentIsInsideStack.push_back(collision == VirtualSceneQuerry::CollisionType::INSIDE);
+		for (int i = 0; i < node->getChildrenCount(); i++)
+			parentIsInsideStack.push_back(collision == VirtualSceneQuerry::CollisionType::INSIDE);*/
+
+		while (!path.empty())
+		{
+			// process node
+			node = path.back();
+			bool parentIsInside = parentIsInsideStack.back();
+			path.pop_back();
+			parentIsInsideStack.pop_back();
+
+			// perform collision if needed
+			if (parentIsInside)
+			{
+				collision = VirtualSceneQuerry::CollisionType::INSIDE;
+				collisionTest->addNodeToResult(node);
+			}
+			else
+				collision = (VirtualSceneQuerry::CollisionType)(*collisionTest)(node);
+
+			//	iterate
+			if (!node->children.empty() && collision != VirtualSceneQuerry::CollisionType::NONE)
+			{
+				node->getChildren(path);
+				for (int i = 0; i < node->getChildrenCount(); i++)
+					parentIsInsideStack.push_back(collision == VirtualSceneQuerry::CollisionType::INSIDE);
+			}
 		}
 	}
+	
 }
 void SceneManager::getEntities(VirtualSceneQuerry* collisionTest, VirtualEntityCollector* entityCollector)
 {
-	SCOPED_CPU_MARKER("Scene querry");
+	SCOPED_CPU_MARKER("SceneManager::getEntities");
+
 	getSceneNodes(collisionTest);
 	std::vector<const NodeVirtual*>& nodeList = collisionTest->getResult();
 
@@ -537,7 +613,7 @@ void SceneManager::drawRecursiveImGuiEntity(World& world, Entity* entity, int de
 void SceneManager::drawRecursiveImGuiSceneNode(World& _world, std::map<const NodeVirtual*, VirtualSceneQuerry::CollisionType>& collisionResults, NodeVirtual* node, vec3i nodeIndex, int depth)
 {
 	// fast reject
-	bool isEmpty = isEmptyNode(*node);
+	bool isEmpty = isEmptyNode(node);
 	if (!m_printEmptyNodes && isEmpty)
 		return;
 
@@ -659,7 +735,7 @@ void SceneManager::drawRecursiveImGuiSceneNode(World& _world, std::map<const Nod
 						for (int z = 0; z < division.z; z++)
 						{
 							int index = x * division.z * division.y + y * division.z + z;
-							drawRecursiveImGuiSceneNode(_world, collisionResults, &node->children[index], vec3i(x, y, z), depth + 1);
+							drawRecursiveImGuiSceneNode(_world, collisionResults, node->children[index], vec3i(x, y, z), depth + 1);
 						}
 				ImGui::TreePop();
 			}
@@ -701,11 +777,11 @@ void SceneManager::drawRecursiveImGuiSceneNode(World& _world, std::map<const Nod
 		HoveredSelectedDrawing();
 }
 
-bool SceneManager::isEmptyNode(const NodeVirtual& _node)
+bool SceneManager::isEmptyNode(const NodeVirtual* _node)
 {
-	if (_node.getObjectCount() > 0)
+	if (_node->getObjectCount() > 0)
 		return false;
-	for (const NodeVirtual& n : _node.children)
+	for (const NodeVirtual* n : _node->children)
 		if (!isEmptyNode(n))
 			return false;
 	return true;

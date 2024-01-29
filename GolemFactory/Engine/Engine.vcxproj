@@ -413,6 +413,7 @@
     <ClInclude Include="..\..\Sources\Utiles\ImguiConfig.h" />
     <ClInclude Include="..\..\Sources\Utiles\IncrementalHull.h" />
     <ClInclude Include="..\..\Sources\Utiles\Mutex.h" />
+    <ClInclude Include="..\..\Sources\Utiles\ObjectPool.h" />
     <ClInclude Include="..\..\Sources\Utiles\OpenSaveFileDialog.h" />
     <ClInclude Include="..\..\Sources\Utiles\Parser\Reader.h" />
     <ClInclude Include="..\..\Sources\Utiles\Parser\Variant.h" />

@@ -28,7 +28,7 @@ class MeshLoader : public IResourceLoader
         std::vector<vec4f> vertices;
         std::vector<vec4f> normals;
         std::vector<vec4f> uvs;
-        std::vector<unsigned short> faces;
+        std::vector<unsigned int> faces;
         std::vector<vec4i> bones;
         std::vector<vec4f> weights;
 };

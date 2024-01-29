@@ -151,9 +151,9 @@ bool MeshLoader::loadFromFile_static(const std::string& resourceDirectory, const
                 if(outrange) ResourceVirtual::printErrorLog(fileName, lineIndex, errorOccured);
                 else
                 {
-                    faces.push_back((unsigned short) vertices.size());
-                    faces.push_back((unsigned short) vertices.size() + 1);
-                    faces.push_back((unsigned short) vertices.size() + 2);
+                    faces.push_back(vertices.size());
+                    faces.push_back(vertices.size() + 1);
+                    faces.push_back(vertices.size() + 2);
 
                     vertices.push_back(tmpv[v1.v]);		vertices.push_back(tmpv[v2.v]);		vertices.push_back(tmpv[v3.v]);
                     normals.push_back(tmpvn[v1.vn]);	normals.push_back(tmpvn[v2.vn]);	normals.push_back(tmpvn[v3.vn]);
@@ -275,9 +275,9 @@ bool MeshLoader::loadFromFile_animated(const std::string& resourceDirectory, con
                 if(outrange) ResourceVirtual::printErrorLog(fileName, lineIndex, errorOccured);
                 else
                 {
-                    faces.push_back((unsigned short) vertices.size());
-                    faces.push_back((unsigned short) vertices.size() + 1);
-                    faces.push_back((unsigned short) vertices.size() + 2);
+                    faces.push_back(vertices.size());
+                    faces.push_back(vertices.size() + 1);
+                    faces.push_back(vertices.size() + 2);
 
                     vertices.push_back(tmpv[v1.v]);		vertices.push_back(tmpv[v2.v]);		vertices.push_back(tmpv[v3.v]);
                     normals.push_back(tmpvn[v1.vn]);	normals.push_back(tmpvn[v2.vn]);	normals.push_back(tmpvn[v3.vn]);

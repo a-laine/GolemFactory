@@ -219,6 +219,15 @@ void ResourceManager::drawImGui(World& world)
                                 popColor = true;
                             }
                         }
+                        else if (TabTypes[i] == ResourceVirtual::ResourceType::MESH)
+                        {
+                            Mesh* mesh = (Mesh*)it.second;
+                            if (mesh->isEnginePrivate)
+                            {
+                                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1, 0.5, 0, 1));
+                                popColor = true;
+                            }
+                        }
 
                         if (ImGui::Selectable(it.second->name.c_str(), &b))
                             selectedResources[TabTypes[i]] = it.second;

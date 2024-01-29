@@ -71,7 +71,7 @@ class AssimpLoader : public IResourceLoader
         std::vector<vec4f> uvs;
         std::vector<vec4i> bones;
         std::vector<vec4f> weights;
-        std::vector<unsigned short> faces;
+        std::vector<unsigned int> faces;
 
         std::map<std::string, int> boneMap;
 

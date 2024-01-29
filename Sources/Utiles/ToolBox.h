@@ -39,7 +39,7 @@ class ToolBox
 		static void optimizeStaticMesh( std::vector<vec4f>& verticesArray,
 									    std::vector<vec4f>& normalesArray,
 										std::vector<vec4f>& colorArray,
-										std::vector<unsigned short>&facesArray );
+										std::vector<unsigned int>&facesArray );
 
 		//	hull mesh optimazer
 		static void optimizeHullMesh(Mesh* mesh);

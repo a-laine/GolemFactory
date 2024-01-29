@@ -107,7 +107,7 @@ bool Collision::_PointvsHull(const Shape* a, const Shape* b, CollisionReport* re
 {
 	const Point& point = *(Point*)a;
 	const Hull& hull = *(Hull*)b;
-	return collide_PointvsHull(point.p, *hull.mesh->getVertices(), *hull.mesh->getNormals(), *hull.mesh->getFaces(), hull.base, report);
+	return false;// collide_PointvsHull(point.p, *hull.mesh->getVertices(), *hull.mesh->getNormals(), *hull.mesh->getFaces(), hull.base, report);
 }
 bool Collision::_PointvsAxisAlignedBox(const Shape* a, const Shape* b, CollisionReport* report)
 {

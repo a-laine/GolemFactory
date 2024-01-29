@@ -85,12 +85,11 @@ void Hull::getFacingFace(const vec4f& direction, std::vector<vec4f>& points) con
 {
 	vec4f localDirection = mat4f::inverse(base) * direction;
 	const std::vector<vec4f>& vertices = *mesh->getVertices();
-	const std::vector<unsigned short>& faces = *mesh->getFaces();
 	const std::vector<vec4f>& normals = *mesh->getNormals();
 	float dotMax = std::numeric_limits<float>::min();
 	
 	unsigned int mostFace = 0;
-	for (unsigned int i = 0; i < faces.size(); i += 3)
+	for (unsigned int i = 0; i < mesh->getNumberIndices(); i += 3)
 	{
 		float dot = vec4f::dot(normals[i], localDirection);
 		if (dot > dotMax)

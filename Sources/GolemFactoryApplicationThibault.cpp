@@ -133,32 +133,7 @@ int main()
 		initializeSyntyScene();
 
 		Renderer::getInstance()->setGridVisible(true);
-		Entity* player = world.getSceneManager().searchEntity("CharacterTest999");
 		
-		if (player)
-		{
-			player->setFlags((uint64_t)Entity::Flags::Fl_Player);
-
-			Capsule* capsule = new Capsule();
-			capsule->radius = 0.4f;
-			capsule->p1 = vec4f(0, capsule->radius, 0, 1);
-			capsule->p2 = vec4f(0, 1.8f - capsule->radius, 0, 1);
-			player->addComponent(new Collider(capsule));
-
-			RigidBody* rb = new RigidBody(RigidBody::KINEMATICS);
-			rb->setBouncyness(0.f);
-			rb->setFriction(0.2f);
-			rb->setDamping(0.001f);
-			rb->setGravityFactor(1.f);
-			rb->setAngularVelocity(vec4f::zero);
-			player->addComponent(rb);
-			world.getPhysics().addMovingEntity(player);
-			rb->initialize(80.f);
-
-			PlayerMovement* playerController = new PlayerMovement();
-			player->addComponent(playerController);
-		}
-
 		freeflyCamera = world.getEntityFactory().createObject([](Entity* object)
 			{
 				object->setName("FreeFlyCam");
@@ -188,27 +163,52 @@ int main()
 				debugFreeflyCam = cam;
 			});
 
-		/*tpsCamera = world.getEntityFactory().createObject([&](Entity* object)
-			{
-				object->setName("TPSCam");
+		Entity* player = world.getSceneManager().searchEntity("PlayerTest");
+		if (player)
+		{
+			player->setFlags((uint64_t)Entity::Flags::Fl_Player);
 
-				Collider* collider = new Collider(new Sphere(vec4f(0.f), 0.01f));
-				object->addComponent(collider);
-				object->recomputeBoundingBox();
+			Capsule* capsule = new Capsule();
+			capsule->radius = 0.4f;
+			capsule->p1 = vec4f(0, capsule->radius, 0, 1);
+			capsule->p2 = vec4f(0, 1.8f - capsule->radius, 0, 1);
+			player->addComponent(new Collider(capsule));
 
-				TPSCameraComponent* cam = new TPSCameraComponent();
-				object->addComponent(cam);
-				Renderer::getInstance()->setCamera(cam);
-				cam->setDirection(vec4f(-1, 0, 0, 0));
-				cam->setTargetCharacter(player);
-				playerController->setCamera(cam);
-				object->setWorldPosition(vec4f(0, 7, -30, 1));
+			RigidBody* rb = new RigidBody(RigidBody::KINEMATICS);
+			rb->setBouncyness(0.f);
+			rb->setFriction(0.2f);
+			rb->setDamping(0.001f);
+			rb->setGravityFactor(1.f);
+			rb->setAngularVelocity(vec4f::zero);
+			player->addComponent(rb);
+			world.getPhysics().addMovingEntity(player);
+			rb->initialize(80.f);
 
-				//cam->setOrientation(currentCamera->getOrientation());
-				//cam->setPosition(currentCamera->getPosition());
-				world.setMainCamera(cam);
-				currentCamera = cam;
-			});*/
+			PlayerMovement* playerController = new PlayerMovement();
+			player->addComponent(playerController);
+
+			tpsCamera = world.getEntityFactory().createObject([&](Entity* object)
+				{
+					object->setName("TPSCam");
+
+					Collider* collider = new Collider(new Sphere(vec4f(0.f), 0.01f));
+					object->addComponent(collider);
+					object->recomputeBoundingBox();
+
+					TPSCameraComponent* cam = new TPSCameraComponent();
+					object->addComponent(cam);
+					Renderer::getInstance()->setCamera(cam);
+					cam->setDirection(vec4f(-1, 0, 0, 0));
+					cam->setTargetCharacter(player);
+					playerController->setCamera(cam);
+					object->setWorldPosition(vec4f(0, 7, -30, 1));
+
+					//cam->setOrientation(currentCamera->getOrientation());
+					//cam->setPosition(currentCamera->getPosition());
+					world.setMainCamera(cam);
+					currentCamera = cam;
+				});
+		}
 
 		world.getSceneManager().addToRootList(freeflyCamera);
 		world.getSceneManager().addToRootList(freeflyCamera2);
@@ -582,7 +582,7 @@ void initializeSyntyScene()
 	// load file and parse JSON
 	std::string repository = ResourceManager::getInstance()->getRepository();
 	std::string packageName = "PolygonDungeon";
-	std::string sceneName = "Demo";
+	std::string sceneName = "Demo"; // "Demo"; // "TestInterior";
 	std::string fullFileName = repository + "Scenes/" + packageName + "/" + sceneName + ".json";
 	Variant v; Variant* tmp = nullptr;
 	try
@@ -739,12 +739,12 @@ void initializeSyntyScene()
 }
 std::string checkResourcesDirectory()
 {
-	//	check for home repository
-	std::string directory = "C:/Users/Thibault/Documents/Github/GolemFactory/Resources/";
+	//	check relative from executable
+	std::string directory = "./Resources/";
 	if (ToolBox::isPathExist(directory)) return directory;
 
-	//	check for work repository
-	directory = "C:/Users/Thibault-SED/Documents/Github/GolemFactory/Resources/";
+	//	check for home repository
+	directory = "C:/Users/Thibault/Documents/Github/GolemFactory/Resources/";
 	if (ToolBox::isPathExist(directory)) return directory;
 	
 	//	return the default resource path for portable applications
@@ -789,12 +789,23 @@ void initManagers()
     ResourceManager::getInstance()->addNewResourceLoader(".texture", new TextureLoader());
     ResourceManager::getInstance()->addNewResourceLoader(".animGraph", new AnimationGraphLoader());
 
-	// Init world
-	const vec4f worldHalfSize = vec4f(GRID_SIZE * GRID_ELEMENT_SIZE, 128.f, GRID_SIZE * GRID_ELEMENT_SIZE, 0) * 0.5f;
+	// Init world -> 100Km²
+	const vec4f worldHalfSize = vec4f(64000, 128.f, 64000, 0);//vec4f(GRID_SIZE * GRID_ELEMENT_SIZE, 128.f, GRID_SIZE * GRID_ELEMENT_SIZE, 0) * 0.5f;
 	const vec4f worldPos = vec4f(0, 0.5f * worldHalfSize.y, 0, 1);
 	NodeVirtual::debugWorld = &world;
-	world.getSceneManager().init(worldPos - worldHalfSize, worldPos + worldHalfSize, vec3i(4, 1, 4), 2);
+
+
+	world.getSceneManager().addStreamingRadius(625000, 0);
+	world.getSceneManager().addStreamingRadius(625000, 1);
+	world.getSceneManager().addStreamingRadius(125000, 2);
+	world.getSceneManager().addStreamingRadius(25000, 3);
+	world.getSceneManager().addStreamingRadius(5000, 4);
+	world.getSceneManager().addStreamingRadius(1000, 5);
+	world.getSceneManager().addStreamingRadius(200, 6);
+	world.getSceneManager().addStreamingRadius(40, 7);
+	world.getSceneManager().init(worldPos - worldHalfSize, worldPos + worldHalfSize, vec3i(4, 1, 4));
 	world.setMaxObjectCount(400000);
+	world.getSceneManager().update(vec4f(0, 7, -30, 1), false);
 
 	world.getTerrainVirtualTexture().initialize(2048);
 	
@@ -926,8 +937,8 @@ void picking()
 		else               type = "empty entity";
 		vec4f p = cameraPos + distance * direction;
 
-		Debug::color = Debug::red;
-		Debug::drawSphere(p, 0.03f);
+		//Debug::color = Debug::red;
+		//Debug::drawSphere(p, 0.03f);
 		
 		WidgetManager::getInstance()->setString("interaction", "Distance : " + ToolBox::to_string_with_precision(distance, 5) +
 			" m\nPosition : (" + ToolBox::to_string_with_precision(p.x, 5) + " , " + ToolBox::to_string_with_precision(p.y, 5) + " , " + ToolBox::to_string_with_precision(p.z, 5) +
@@ -1049,6 +1060,7 @@ void events()
 void updates(float elapseTime)
 {
 	SCOPED_CPU_MARKER("Updates");
+	world.getSceneManager().update(debugFreeflyCam->getPosition());
 
 	//	animate avatar
 	//if(avatar)

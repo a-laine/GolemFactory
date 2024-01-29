@@ -4,6 +4,7 @@
 
 #include <map>
 #include <vector>
+#include <Resources/Mesh.h>
 
 class Terrain
 {
@@ -51,6 +52,7 @@ class Terrain
 		vec2i m_gridSize, m_gridMinIndex;
 		TerrainArea*** m_grid;
 
-		std::vector<Clipmap> m_clipmaps;
+		//std::vector<Clipmap> m_clipmaps;
+		std::vector<Mesh*> m_clipmapMeshes;
 		//
 };
