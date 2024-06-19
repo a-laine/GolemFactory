@@ -86,6 +86,7 @@ void Shader::initialize(GLuint  vertexSh, GLuint fragSh, GLuint geomShr, GLuint 
         const std::string& uniformName = it->first;
         const std::string& type = it->second;
 
+
         GLint uniformLocation = glGetUniformLocation(program, uniformName.c_str());
         attributesLocation[uniformName] = uniformLocation;
         if (uniformLocation < 0 && false)
@@ -95,13 +96,17 @@ void Shader::initialize(GLuint  vertexSh, GLuint fragSh, GLuint geomShr, GLuint 
                 std::cerr << "ERROR : loading shader : " << name << " : error in loading '" << uniformName << "' : name format not allowed, remove the 'gl_' prefix." << std::endl;
             else if (ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
                 std::cerr << "ERROR : loading shader : " << name << " : ERROR in loading '" << uniformName << "' variable location : " << uniformLocation << "; maybe the variable name does not correspond to an active uniform variable" << std::endl;
-            
+
             continue;
         }
 
         if (type == "_globalLightClusters")
             loadGlobalTexture(type, uniformName, uniformLocation, 0);
+        else if (type == "_terrainVirtualTexture")
+            loadGlobalTexture(type, uniformName, uniformLocation, 1);
         else if (type == "_globalShadowCascades")
+            loadGlobalTexture(type, uniformName, uniformLocation, (uint8_t)m_textures.size());
+        else if (type == "_globalTerrainMaterialCollection")
             loadGlobalTexture(type, uniformName, uniformLocation, (uint8_t)m_textures.size());
         else if (type == "_globalOmniShadow")
             loadGlobalTexture(type, uniformName, uniformLocation, (uint8_t)m_textures.size());
@@ -165,7 +170,11 @@ void Shader::initialize(GLuint computeSh, GLuint prog, const std::map<std::strin
 
         if (type == "_globalLightClusters")
             loadGlobalTexture(type, uniformName, uniformLocation, 0);
+        else if (type == "_terrainVirtualTexture")
+            loadGlobalTexture(type, uniformName, uniformLocation, 1);
         else if (type == "_globalShadowCascades")
+            loadGlobalTexture(type, uniformName, uniformLocation, (uint8_t)m_textures.size());
+        else if (type == "_globalTerrainMaterialCollection")
             loadGlobalTexture(type, uniformName, uniformLocation, (uint8_t)m_textures.size());
         else if (type == "_globalOmniShadow")
             loadGlobalTexture(type, uniformName, uniformLocation, (uint8_t)m_textures.size());

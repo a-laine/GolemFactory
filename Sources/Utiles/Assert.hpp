@@ -1,5 +1,6 @@
 #pragma once
 
+#undef NDEBUG
 
 #ifndef NDEBUG
 #include <cassert>
@@ -15,5 +16,5 @@
 #endif // GF_ASSERT_ON
 
 #define GF_ASSERT_VARIADIC_IMPL(condition, message, ...) GF_ASSERT_IMPL(condition, __FILE__, __LINE__, message)
-#define GF_ASSERT_IMPL(condition, file, line, message)   assert(condition)
+#define GF_ASSERT_IMPL(condition, file, line, message)   assert(condition && message)
 

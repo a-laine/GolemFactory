@@ -58,10 +58,15 @@ Physics& World::getPhysics() { return physics; }
 const Physics& World::getPhysics() const { return physics; }
 
 
-bool World::addToScene(Entity* object)
+bool World::addToScene(Entity* object, int maxDepth)
 {
 	physics.addMovingEntity(object);
-	return sceneManager.addObject(object);
+	return sceneManager.addObject(object, maxDepth);
+}
+bool World::removeFromScene(Entity* object)
+{
+	physics.removeMovingEntity(object);
+	return sceneManager.removeObject(object);
 }
 
 

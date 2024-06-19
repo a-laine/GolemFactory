@@ -57,8 +57,8 @@ class NodeVirtual
 		vec4f getBBMin() const;
 		int getChildrenCount() const;
 		bool isInside(const vec4f& point) const;
-		bool isTooSmall(const vec4f& size) const;
-		bool isTooBig(const vec4f& size) const;
+		//bool isTooSmall(const vec4f& size) const;
+		//bool isTooBig(const vec4f& size) const;
 		vec4f getPosition() const;
 		const float& getAllowanceSize() const;
 		vec3i getDivision() const;
@@ -94,7 +94,7 @@ class NodeVirtual
 		vec4f halfSize;							//!< Half of node size
 
 		//AxisAlignedBox boundingBox;
-
+		NodeVirtual* m_parent;
 		vec4f inflatedHalfSize;
 		float allowanceSize;
 		vec3i division;

@@ -293,16 +293,13 @@ bool ShaderLoader::load(const std::string& resourceDirectory, const std::string&
             if (glIsShader(shader.tessControlShader)) glDeleteShader(shader.tessControlShader);
             if (glIsShader(shader.tessEvalShader))    glDeleteShader(shader.tessEvalShader);
 
-            GLint compile_status = GL_TRUE;
-            glGetShaderiv(shader.program, GL_COMPILE_STATUS, &compile_status);
-            if (compile_status != GL_TRUE)
+            GLint link_status = GL_TRUE;
+            glGetProgramiv(shader.program, GL_LINK_STATUS, &link_status);
+            if (link_status != GL_TRUE)
             {
-                GLint logsize;
-                glGetShaderiv(shader.program, GL_INFO_LOG_LENGTH, &logsize);
-                char* log = new char[logsize];
-                glGetShaderInfoLog(shader.program, logsize, &logsize, log);
-                std::cout << log << std::endl;
-                delete[] log;
+                char log[512];
+                glGetProgramInfoLog(shader.program, sizeof(log), NULL, log);
+                std::cout << errorHeader << "program link" << log << std::endl;
             }
         }
     }
@@ -311,7 +308,8 @@ bool ShaderLoader::load(const std::string& resourceDirectory, const std::string&
     it = shaderMap.getMap().find("uniform");
     if (it != shaderMap.getMap().end() && it->second.getType() == Variant::MAP)
     {
-        for(auto it = shaderMap["uniform"].getMap().begin(); it != shaderMap["uniform"].getMap().end(); it++)
+        const auto& end = shaderMap["uniform"].getMap().end();
+        for(auto it = shaderMap["uniform"].getMap().begin(); it != end; it++)
         {
             try
             {

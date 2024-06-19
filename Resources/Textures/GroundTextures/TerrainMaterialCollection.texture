@@ -1,0 +1,102 @@
+{
+	"type" : "ARRAY",
+	"mipmap" : true,
+	"wrap" : "repeat",
+	"width" : 1024,
+	"height" : 1024,
+	
+	"texture" : [
+		"GroundTextures/Grass.png",
+		"GroundTextures/Grass_02.png",
+		"GroundTextures/Moss.png",
+		"GroundTextures/Sand.png",
+		"GroundTextures/Sand_Darker.png",
+		"GroundTextures/Sand_Desert.png",
+		"GroundTextures/Snow.png",
+		"GroundTextures/Pebbles.png",
+		"GroundTextures/Pebbles_Sand.png",
+		"GroundTextures/Mud.png",
+		"GroundTextures/Leaves.png",
+		"GroundTextures/Leaves_02.png",
+		"GroundTextures/Leaves_03.png",
+		"GroundTextures/Leaves_04.png",
+		"GroundTextures/Cliffwall.png",
+		"GroundTextures/Rockwall.png",
+		
+		"GroundTextures/BaseGrass_normals.png",
+		"GroundTextures/GrassHigherDetail_normals.png",
+		"GroundTextures/Leaves_normals_01.png",
+		"GroundTextures/Pebbles_normals.png",
+		"GroundTextures/Mud_Normal.png",
+		"GroundTextures/Rockwall_Normal.png",
+		"GroundTextures/Cliffwall_normals.png",
+		
+		"ErrorTexture.png"
+	],
+	
+	"layers" : [
+		{
+			"name" : "grass_01",
+			"albedo" : 0,
+			"normal" : 17,
+			"tiling" : 1.0,
+			"metalic" : 0.0,
+		},
+		{
+			"name" : "grass_02",
+			"albedo" : 1,
+			"normal" : 17,
+			"tiling" : 0.5,
+			"metalic" : 0.0,
+		},
+		{
+			"name" : "grass_03",
+			"albedo" : 7,
+			"normal" : 19,
+			"tiling" : 0.5,
+			"metalic" : 0.0,
+		},
+		{
+			"name" : "moss",
+			"albedo" : 2,
+			"normal" : 17,
+			"tiling" : 1.0,
+			"metalic" : 0.0,
+		},
+		{
+			"name" : "sand_01",
+			"albedo" : 3,
+			"normal" : 16,
+			"tiling" : 1.0,
+			"metalic" : 0.3,
+		},
+		{
+			"name" : "sand_02",
+			"albedo" : 4,
+			"normal" : 16,
+			"tiling" : 1.0,
+			"metalic" : 0.0,
+		},
+		{
+			"name" : "sand_03",
+			"albedo" : 8,
+			"normal" : 19,
+			"tiling" : 1.0,
+			"metalic" : 0.0,
+		},
+		{
+			"name" : "dirt",
+			"albedo" : 9,
+			"normal" : 20,
+			"tiling" : 1.0,
+			"metalic" : 0.0,
+		},
+		{
+			"name" : "snow",
+			"albedo" : 6,
+			"normal" : 16,
+			"tiling" : 0.5,
+			"metalic" : 0.7,
+		},
+	]
+}

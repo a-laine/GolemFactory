@@ -419,7 +419,7 @@ std::string Mesh::getIdentifier() const
 std::string Mesh::getLoaderId(const std::string& resourceName) const
 {
     size_t ext = resourceName.find_last_of('.');
-    if(ext != std::string::npos && resourceName.substr(ext) != Mesh::extension)
+    if(ext != std::string::npos && resourceName.substr(ext) != extension)
         return "assimpMesh";
     else
         return extension;
@@ -520,11 +520,11 @@ void Mesh::onDrawImGui()
     ImGui::Text("Vertices count : %d", getNumberVertices());
     ImGui::Text("Faces count : %d", getNumberFaces());
     if (faceType == GL_UNSIGNED_BYTE)
-        ImGui::Text("indiceType : BYTE", getNumberFaces());
-    if (faceType == GL_UNSIGNED_SHORT)
-        ImGui::Text("indiceType : SHORT", getNumberFaces());
+        ImGui::Text("indiceType : BYTE");
+    else if (faceType == GL_UNSIGNED_SHORT)
+        ImGui::Text("indiceType : SHORT");
     else
-        ImGui::Text("indiceType : INT", getNumberFaces());
+        ImGui::Text("indiceType : INT");
     ImGui::Spacing();
 
     // overview
@@ -532,7 +532,7 @@ void Mesh::onDrawImGui()
     if (overviewAngle0 > PI)
         overviewAngle0 -= 2 * PI;
 
-    GLuint texid = Renderer::getInstance()->renderMeshOverview(this, overviewAngle0, overviewAngle1);
+    GLuint texid = Renderer::getInstance()->renderMeshOverview(this, overviewAngle0, overviewAngle1, overviewDistance);
     vec2i texSize = Renderer::getInstance()->getOverviewTextureSize();
 
     if (!boneNames.empty())
@@ -568,7 +568,9 @@ void Mesh::onDrawImGui()
             overviewAngle1 = clamp(overviewAngle1, -1.2f, 1.2f);
         }
     }
+
     ImGui::SliderFloat("Rotation speed", &overviewAngleSpeed, 0.f, 0.1f);
+    ImGui::SliderFloat("Distance", &overviewDistance, 0.f, 1.f);
 
 #endif
 }

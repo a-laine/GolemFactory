@@ -387,10 +387,10 @@ void EntityFactory::tryLoadComponents(Entity* object, Variant* variant, const st
 		it0 = variant->getMap().find("colliderComponent");
 		if (it0 != variant->getMap().end() && it0->second.getType() == Variant::MAP)
 		{
-			Collider* occluder = new Collider();
-			if (occluder->load(it0->second, object->getName()))
-				object->addComponent(occluder);
-			else delete occluder;
+			Collider* collider = new Collider();
+			if (collider->load(it0->second, object->getName()))
+				object->addComponent(collider);
+			else delete collider;
 		}
 
 		// animationComponent

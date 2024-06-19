@@ -1998,9 +1998,10 @@
             "scale": 1.0,
             "lightComponent": {
 				"type" : 0,
-				"range" : 15,
+				"range" : 30,
 				"intensity" : 5.85,
 				"color" : [255,197,111],
+				"castShadow" : true,
             }
         },
         {
@@ -2020,9 +2021,10 @@
             "scale": 1.0,
             "lightComponent": {
 				"type" : 0,
-				"range" : 15,
+				"range" : 30,
 				"intensity" : 5.85,
 				"color" : [255,197,111],
+				"castShadow" : true,
             }
         },
         {
@@ -2045,6 +2047,7 @@
 				"range" : 30,
 				"intensity" : 5,
 				"color" : [75,181,255],
+				"castShadow" : true,
             }
         },
         {

@@ -179,7 +179,7 @@ glm::tvec3<T, P> glm::tvec3<T, P>::min(const glm::tvec3<T, P>& a, const glm::tve
 template <typename T, glm::precision P>
 glm::tvec3<T, P> glm::tvec3<T, P>::max(const glm::tvec3<T, P>& a, const glm::tvec3<T, P>& b)
 {
-	return glm::min(a, b);
+	return glm::max(a, b);
 }
 
 template <typename T, glm::precision P>
@@ -260,7 +260,7 @@ glm::tvec2<T, P> glm::tvec2<T, P>::min(const glm::tvec2<T, P>& a, const glm::tve
 template <typename T, glm::precision P>
 glm::tvec2<T, P> glm::tvec2<T, P>::max(const glm::tvec2<T, P>& a, const glm::tvec2<T, P>& b)
 {
-	return glm::min(a, b);
+	return glm::max(a, b);
 }
 
 template <typename T, glm::precision P>

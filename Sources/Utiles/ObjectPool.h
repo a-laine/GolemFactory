@@ -42,6 +42,10 @@ class ObjectPool
 			m_freeObjects.push_back(object);
 		}
 
+		bool empty()
+		{
+			return m_banks.empty();
+		}
 
 
 

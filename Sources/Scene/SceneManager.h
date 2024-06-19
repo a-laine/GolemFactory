@@ -31,10 +31,11 @@ class SceneManager
 		//
 
 		//	Object / Entity related
-		bool addObject(Entity* object);
+		bool addObject(Entity* object, int maxDepth);
 		bool removeObject(Entity* object);
 		bool updateObject(Entity* object);
 		void addToRootList(Entity* object);
+		bool isTracked(Entity* object);
 
 		std::vector<Entity*> getAllObjects();
 		Entity* searchEntity(const std::string& _name);

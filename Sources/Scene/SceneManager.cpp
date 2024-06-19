@@ -56,6 +56,7 @@ void SceneManager::init(const vec4f& bbMin, const vec4f& bbMax, const vec3i& nod
 
 	NodeVirtual* root = g_nodePool.getFreeObject();
 	root->init(bbMin, bbMax, nodeDivision);
+	root->m_parent = root;
 	world.push_back(root);
 }
 void SceneManager::addStreamingRadius(float radius, int depth)
@@ -65,11 +66,15 @@ void SceneManager::addStreamingRadius(float radius, int depth)
 }
 void SceneManager::clear()
 {
-	for (unsigned int i = 0; i < world.size(); i++)
+	if (!g_nodePool.empty()) // at game close list is invalid
 	{
-		world[i]->merge();
-		g_nodePool.releaseObject(world[i]);
+		for (unsigned int i = 0; i < world.size(); i++)
+		{
+			world[i]->merge();
+			g_nodePool.releaseObject(world[i]);
+		}
 	}
+
 	world.clear();
 	instanceTracking.clear();
 	streamingRadius.clear();
@@ -81,6 +86,7 @@ void SceneManager::update(vec4f playerPosition, bool continueOnUpdate)
 {
 	SCOPED_CPU_MARKER("SceneManager::update");
 	NodeVirtual* node = world[0];
+	const int maxSplitDepth = streamingRadius.size() - 1;
 
 	// init stacks
 	std::vector<NodeVirtual*> path;
@@ -96,14 +102,6 @@ void SceneManager::update(vec4f playerPosition, bool continueOnUpdate)
 		path.pop_back();
 		pathDepth.pop_back();
 
-		// too much depth -> merge node
-		if (depth >= streamingRadius.size())
-		{
-			node->merge();
-			if (continueOnUpdate)
-				continue;
-		}
-
 		// merge or split depending on distance
 		vec4f delta = playerPosition - node->position;
 		delta = vec4f::clamp(delta, -node->halfSize, node->halfSize) - delta;
@@ -112,14 +110,14 @@ void SceneManager::update(vec4f playerPosition, bool continueOnUpdate)
 		if (sqDistance > 1.2f * streamingData.sqRadius && !node->children.empty())
 		{
 			node->merge();
-			//if (continueOnUpdate)
-			//	continue;
+			if (continueOnUpdate)
+				continue;
 		}
-		if (sqDistance < streamingData.sqRadius && node->children.empty())
+		if (sqDistance < streamingData.sqRadius && node->children.empty() && depth < maxSplitDepth)
 		{
 			node->split();
-			//if (continueOnUpdate)
-			//	continue;
+			if (continueOnUpdate)
+				continue;
 		}
 
 		// push children
@@ -132,38 +130,26 @@ void SceneManager::update(vec4f playerPosition, bool continueOnUpdate)
 }
 
 
-bool SceneManager::addObject(Entity* object)
+bool SceneManager::addObject(Entity* object, int maxDepth)
 {
 	GF_ASSERT(object);
 	if (world.empty() || instanceTracking.count(object) != 0)
 		return false;
 
-	//world[0]->addObject(object); return true;
-
 	const AxisAlignedBox& box = object->m_worldBoundingBox;
 	const vec4f objSize = 0.5f * (box.max - box.min);
+	const float ss = vec4f::dot(objSize, objSize);
 	const vec4f objPos = 0.5f * (box.max + box.min);
 	NodeVirtual* node = world[0];
-	NodeVirtual* pNode = node;
-	{
-		vec4f p = objPos - world[0]->position;
-		vec4f s = world[0]->halfSize - vec4f(EPSILON);
-		if (std::abs(p.x) > s.x || std::abs(p.y) > s.y || std::abs(p.z) > s.z)
-			return false;
-	}
-
-	while (!node->isLeaf() && !node->isTooBig(objSize))
-	{
-		pNode = node;
+	if (!node->isInside(objPos))
+		return false;
+	
+	int depth = 0;
+	while (!node->children.empty() && ss < node->allowanceSize * node->allowanceSize && (depth++) <= maxDepth)
 		node = node->getChildAt(objPos);
-	}
 
-	NodeVirtual* finalNode = pNode;
-	//if (node->isTooBig(objSize))
-	//	finalNode = pNode;
-
-	finalNode->addObject(object);
-	instanceTracking[object] = { objPos, finalNode };
+	node->addObject(object);
+	instanceTracking[object] = { objPos, node };
 
 	return true;
 }
@@ -189,37 +175,27 @@ bool SceneManager::updateObject(Entity* object)
 
 	const AxisAlignedBox& box = object->m_worldBoundingBox;
 	const vec4f objSize = 0.5f * (box.max - box.min);
+	const float ss = vec4f::dot(objSize, objSize);
 	const vec4f objPos = 0.5f * (box.max + box.min);
 	auto track = instanceTracking.find(object);
 	NodeVirtual* node = track->second.owner;
 
-	if (!node->isInside(objPos) || node->isTooBig(objSize) || node->isTooSmall(objSize))
+	if (!node->isInside(objPos) || ss < node->allowanceSize * node->allowanceSize)
 	{
 		node->removeObject(object);
 
-		if (!world[0]->isInside(objPos))
+		node = world[0];
+		if (!node->isInside(objPos))
 		{
 			instanceTracking.erase(track);
 			return false;
 		}
 		else
 		{
-			node = world[0];
-			NodeVirtual* pNode = node;
-			while (!node->isLeaf() && !node->isTooBig(objSize))
-			{
-				pNode = node;
+			while (!node->children.empty() && ss < node->allowanceSize * node->allowanceSize)
 				node = node->getChildAt(objPos);
-			}
-
-			NodeVirtual* finalNode;
-			if (node->isTooBig(objSize))
-				finalNode = pNode;
-			else
-				finalNode = node;
-
-			finalNode->addObject(object);
-			track->second.owner = finalNode;
+			node->addObject(object);
+			track->second.owner = node;
 		}
 	}
 	track->second.position = objPos;
@@ -229,6 +205,25 @@ bool SceneManager::updateObject(Entity* object)
 void SceneManager::addToRootList(Entity* object)
 {
 	roots.push_back(object);
+}
+
+bool SceneManager::isTracked(Entity* object)
+{
+	auto track = instanceTracking.find(object);
+	if (track == instanceTracking.end())
+		return false;
+
+	NodeVirtual* node = track->second.owner;
+	while (node && node->m_parent != node)
+		node = node->m_parent;
+	if (!node)
+		return false;
+	for (NodeVirtual* root : world)
+	{
+		if (node == root)
+			return true;
+	}
+	return false;
 }
 
 
@@ -289,21 +284,12 @@ void SceneManager::getSceneNodes(VirtualSceneQuerry* collisionTest)
 	//	initialize and test root
 	for (NodeVirtual* node : world)
 	{
-		//NodeVirtual* node = world[j];
-		VirtualSceneQuerry::CollisionType collision = (VirtualSceneQuerry::CollisionType)(*collisionTest)(node);
-		if (collision == VirtualSceneQuerry::CollisionType::NONE)
-			return;
-
 		//	init path and iterate on tree
+		VirtualSceneQuerry::CollisionType collision;
 		std::vector<NodeVirtual*> path;
 		std::vector<bool> parentIsInsideStack;
 		path.push_back(node);
 		parentIsInsideStack.push_back(false);
-
-		/*if (!node->children.empty())
-			node->getChildren(path);
-		for (int i = 0; i < node->getChildrenCount(); i++)
-			parentIsInsideStack.push_back(collision == VirtualSceneQuerry::CollisionType::INSIDE);*/
 
 		while (!path.empty())
 		{

@@ -7,6 +7,7 @@
 #include <Utiles/Debug.h>
 #include <Animation/SkeletonComponent.h>
 #include <Resources/Shader.h>
+#include <Terrain/TerrainAreaDrawableComponent.h>
 
 
 #define MAX_INSTANCE 32
@@ -22,7 +23,7 @@ void Renderer::CollectEntitiesBindLights()
 	sceneQuery.getResult().clear();
 	collector.getResult().clear();
 
-	sceneQuery.Set(camPos, camFwd, camUp, -camRight, camera->getVerticalFieldOfView(), context->getViewportRatio(), m_sceneLights.m_far);
+	sceneQuery.Set(camPos, camFwd, camUp, -camRight, camera->getVerticalFieldOfView(), context->getViewportRatio(), 10000.f);
 	collector.m_flags = (uint64_t)Entity::Flags::Fl_Drawable | (uint64_t)Entity::Flags::Fl_Light;
 	if (m_enableOcclusionCulling)
 		collector.m_flags |= (uint64_t)Entity::Flags::Fl_Occluder;
@@ -56,6 +57,7 @@ void Renderer::CollectEntitiesBindLights()
 			{
 				m_hasInstancingShaders |= comp->getShader()->supportInstancing();
 				uint64_t queue = comp->getShader()->getRenderQueue();
+				/*uint64_t queue = comp->getShader()->getRenderQueue();
 				queue = queue << 48;
 
 				vec4f v = object->getWorldPosition() - camPos;
@@ -67,22 +69,46 @@ void Renderer::CollectEntitiesBindLights()
 					d++;
 				}
 
-				uint64_t hash = queue | d;
-				renderQueue.push_back({ hash, object, nullptr });
+				uint64_t hash = queue | d;*/
 
-				if ((queue & transparentMask) == 0 && comp->castShadow())
+				vec4f v = object->getWorldPosition() - camPos;
+				uint32_t d = (uint32_t)(1000.f * v.getNorm());
+
+				comp->pushDraw(renderQueue, d, false);
+				//renderQueue.push_back();// { hash, object, nullptr, nullptr });
+
+				if (comp->castShadow())
 				{
 					m_hasShadowCaster = true;
-					float projected = vec4f::dot(object->getWorldPosition(), camFwd);
-					shadowCascadeQueue.push_back({ projected, object, nullptr });
+					comp->pushDraw(shadowCascadeQueue, d, true);
+					//float projected = vec4f::dot(object->getWorldPosition(), camFwd);
+					//shadowCascadeQueue.push_back({ projected, object, nullptr });
 				}
 			}
+
+			/*if (ok && object->getFlags() & (uint64_t)Entity::Flags::Fl_Terrain)
+			{
+				TerrainAreaDrawableComponent* comp = object->getComponent<TerrainAreaDrawableComponent>();
+				if (comp->hasWater() && comp->getWaterShader())
+				{
+					uint64_t queue = comp->getWaterShader()->getRenderQueue();
+					queue = queue << 48;
+
+					vec4f v = object->getWorldPosition() - camPos;
+					uint32_t d = (uint32_t)(1000.f * v.getNorm());
+					d = ~d;
+					d++;
+
+					uint64_t hash = queue | d;
+					renderQueue.push_back({ hash, object, comp->getWaterShader(), nullptr });
+				}
+			}*/
 		}
 
-		if ((object->getFlags() & (uint64_t)Entity::Flags::Fl_Light))
+		if (object->getFlags() & (uint64_t)Entity::Flags::Fl_Light)
 		{
 			LightComponent* comp = object->getComponent<LightComponent>();
-			bool ok = comp && m_sceneLights.m_lightCount < MAX_LIGHT_COUNT;
+			bool ok = comp;
 
 #ifdef USE_IMGUI
 			if (ok && m_lightFrustrumCulling)
@@ -100,7 +126,7 @@ void Renderer::CollectEntitiesBindLights()
 			}
 		}
 
-		if ((object->getFlags() & (uint64_t)Entity::Flags::Fl_Occluder))
+		if (object->getFlags() & (uint64_t)Entity::Flags::Fl_Occluder)
 		{
 			OccluderComponent* comp = object->getComponent<OccluderComponent>();
 			bool ok = comp && comp->isValid();
@@ -120,11 +146,11 @@ void Renderer::CollectEntitiesBindLights()
 	for (int i = 0; i < MAX_OMNILIGHT_SHADOW_COUNT; i++)
 		m_OmniShadows.m_omniShadowLightIndexes[i] = 0xFF;
 	shadowOmniCaster.clear();
-	baseLayerUniform = -1;
+	shadowOmniLayerUniform = -1;
 
-	for (int i = 0; i < tmpLights.size() && i < 128; i++)
+	for (int i = 0; i < tmpLights.size() && i < MAX_LIGHT_COUNT - 1; i++)
 	{
-		auto comp = tmpLights[i].second;
+		LightComponent* comp = tmpLights[i].second;
 		m_sceneLights.m_lights[i].m_color = comp->m_color;
 		m_sceneLights.m_lights[i].m_position = comp->getPosition();
 		m_sceneLights.m_lights[i].m_direction = comp->isPointLight() ? vec4f(0.f) : comp->getDirection();
@@ -135,8 +161,9 @@ void Renderer::CollectEntitiesBindLights()
 		
 		if (comp->castShadow() && shadowOmniCaster.size() < MAX_OMNILIGHT_SHADOW_COUNT)
 		{
-			m_OmniShadows.m_omniShadowLightIndexes[shadowOmniCaster.size()] = m_sceneLights.m_lightCount;
-			computeOmniShadowProjection(comp, (int)shadowOmniCaster.size());
+			int omniIndex = shadowOmniCaster.size();
+			m_OmniShadows.m_omniShadowLightIndexes[omniIndex] = i;
+			computeOmniShadowProjection(comp, omniIndex);
 			shadowOmniCaster.push_back(comp);
 		}
 
@@ -418,7 +445,6 @@ void Renderer::OcclusionCulling()
 		}
 	}
 
-
 	m_OcclusionElapsedTime = 1000.0f * (float)(glfwGetTime() - startTime);
 	m_OcclusionAvgTime = 0.95f * m_OcclusionAvgTime + 0.05f * m_OcclusionElapsedTime;
 }
@@ -430,17 +456,13 @@ void Renderer::DynamicBatching()
 	// clear batches containers
 	for (auto it : batchClosedPool)
 	{
-		it->models.clear();
-		it->mesh = nullptr;
-		it->shader = nullptr;
+		it->matrices.clear();
 		batchFreePool.push_back(it);
 	}
 	batchClosedPool.clear();
 	for (auto it : batchOpened)
 	{
-		it.second->models.clear();
-		it.second->mesh = nullptr;
-		it.second->shader = nullptr;
+		it.second->matrices.clear();
 		batchFreePool.push_back(it.second);
 	}
 	batchOpened.clear();
@@ -452,11 +474,12 @@ void Renderer::DynamicBatching()
 		if (!it.entity)
 			continue;
 		DrawableComponent* comp = it.entity->getComponent<DrawableComponent>();
+		Shader* shader = it.shader;// ? it.specialShader : comp->getShader();
 		if (!comp->getShader()->supportInstancing())
 			continue;
 
-		Shader* shader = comp->getShader()->getVariant(variantCode);
-		Mesh* mesh = comp->getMesh();
+		shader = shader->getVariant(variantCode);
+		Mesh* mesh = it.mesh;// comp->getMesh();
 
 		// search insertion batch
 		Batch* batch;
@@ -466,7 +489,10 @@ void Renderer::DynamicBatching()
 		if (it2 == batchOpened.end())
 		{
 			if (batchFreePool.empty())
+			{
 				batch = new Batch();
+				batch->instanceDatas = new vec4f[m_maxUniformSize];
+			}
 			else
 			{
 				batch = batchFreePool.back();
@@ -476,19 +502,38 @@ void Renderer::DynamicBatching()
 			isNewBatch = true;
 			batch->shader = shader;
 			batch->mesh = mesh;
+			batch->instanceCount = 0;
+			batch->dataSize = comp->getInstanceDataSize();
+			batch->pushMatrices = shader->getUniformLocation("matrixArray") >= 0;
+			batch->constantDataReference = comp->hasConstantData() ? comp : nullptr;
+
+			if (batch->dataSize)
+			{
+				batch->maxInstanceCount = m_maxUniformSize / batch->dataSize;
+				if (batch->pushMatrices)
+					batch->maxInstanceCount = std::min((int)batch->maxInstanceCount, MAX_INSTANCE);
+			}
+			else batch->maxInstanceCount = MAX_INSTANCE;
+
 			batchOpened[key] = batch;
 		}
 		else
 			batch = it2->second;
 
 		// insert object
-		batch->models.push_back({ it.entity->getWorldTransformMatrix() , it.entity->getNormalMatrix() });
+		comp->writeInstanceData(batch->instanceDatas + (uint64_t)batch->dataSize * batch->instanceCount); 
+		if (batch->pushMatrices)
+		{
+			batch->matrices.push_back(it.entity->getWorldTransformMatrix());
+			batch->matrices.push_back(it.entity->getNormalMatrix());
+		}
+		batch->instanceCount++;
 		it.batch = batch;
 
 		if (!isNewBatch)
 		{
 			it.entity = nullptr;
-			if (batch->models.size() >= MAX_INSTANCE)
+			if (batch->instanceCount >= batch->maxInstanceCount)
 			{
 				batchClosedPool.push_back(batch);
 				batchOpened.erase(it2);
@@ -499,10 +544,15 @@ void Renderer::DynamicBatching()
 
 void Renderer::ShadowCasting()
 {
+	glDisable(GL_BLEND);
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
+	glFrontFace(GL_CCW);// peter panning
+
 	{
 		SCOPED_CPU_MARKER("Shadow cascades");
 
-		std::sort(shadowCascadeQueue.begin(), shadowCascadeQueue.end(), [](ShadowDrawElement& a, ShadowDrawElement& b) { return a.distance < b.distance; });
+		std::sort(shadowCascadeQueue.begin(), shadowCascadeQueue.end(), [](DrawElement& a, DrawElement& b) { return a.hash < b.hash; });
 		int shadowCode = Shader::computeVariantCode(false, 1, false);
 
 		// batching cascade
@@ -511,17 +561,13 @@ void Renderer::ShadowCasting()
 			// clear batches containers
 			for (auto it : batchClosedPool)
 			{
-				it->models.clear();
-				it->mesh = nullptr;
-				it->shader = nullptr;
+				it->matrices.clear();
 				batchFreePool.push_back(it);
 			}
 			batchClosedPool.clear();
 			for (auto it : batchOpened)
 			{
-				it.second->models.clear();
-				it.second->mesh = nullptr;
-				it.second->shader = nullptr;
+				it.second->matrices.clear();
 				batchFreePool.push_back(it.second);
 			}
 			batchOpened.clear();
@@ -536,8 +582,8 @@ void Renderer::ShadowCasting()
 				if (!comp->getShader()->supportInstancing())
 					continue;
 
-				Shader* shader = comp->getShader()->getVariant(instancedShadowCode);
-				Mesh* mesh = comp->getMesh();
+				Shader* shader = it.shader->getVariant(instancedShadowCode);
+				Mesh* mesh = it.mesh;
 
 				// search insertion batch
 				Batch* batch;
@@ -547,7 +593,10 @@ void Renderer::ShadowCasting()
 				if (it2 == batchOpened.end())
 				{
 					if (batchFreePool.empty())
+					{
 						batch = new Batch();
+						batch->instanceDatas = new vec4f[m_maxUniformSize];
+					}
 					else
 					{
 						batch = batchFreePool.back();
@@ -557,19 +606,37 @@ void Renderer::ShadowCasting()
 					isNewBatch = true;
 					batch->shader = shader;
 					batch->mesh = mesh;
+					batch->instanceCount = 0;
+					batch->dataSize = comp->getInstanceDataSize();
+					batch->pushMatrices = shader->getUniformLocation("matrixArray") >= 0; 
+					batch->constantDataReference = comp->hasConstantData() ? comp : nullptr;
+
+					if (batch->dataSize)
+					{
+						batch->maxInstanceCount = m_maxUniformSize / batch->dataSize;
+						if (batch->pushMatrices)
+							batch->maxInstanceCount = std::min((int)batch->maxInstanceCount, MAX_INSTANCE);
+					}
+					else batch->maxInstanceCount = MAX_INSTANCE;
 					batchOpened[key] = batch;
 				}
 				else
 					batch = it2->second;
 
 				// insert object
-				batch->models.push_back({ it.entity->getWorldTransformMatrix() , it.entity->getNormalMatrix() });
+				comp->writeInstanceData(batch->instanceDatas + (uint64_t)batch->dataSize * batch->instanceCount);
+				if (batch->pushMatrices)
+				{
+					batch->matrices.push_back(it.entity->getWorldTransformMatrix());
+					batch->matrices.push_back(it.entity->getNormalMatrix());
+				}
+				batch->instanceCount++;
 				it.batch = batch;
 
 				if (!isNewBatch)
 				{
 					it.entity = nullptr;
-					if (batch->models.size() >= MAX_INSTANCE)
+					if (batch->instanceCount >= batch->maxInstanceCount)
 					{
 						batchClosedPool.push_back(batch);
 						batchOpened.erase(it2);
@@ -583,9 +650,11 @@ void Renderer::ShadowCasting()
 		glBindFramebuffer(GL_FRAMEBUFFER, m_ShadowCascadeFBO);
 		glClear(GL_DEPTH_BUFFER_BIT);
 
-		glDisable(GL_BLEND);
-		glEnable(GL_CULL_FACE);
-		glCullFace(GL_FRONT);  // peter panning
+		//glDisable(GL_BLEND);
+		//glEnable(GL_CULL_FACE);
+		//glCullFace(GL_FRONT);  // peter panning
+		//glCullFace(GL_BACK);
+		//glFrontFace(GL_CCW);// peter panning
 
 		//	draw instance list
 		for (const auto& it : shadowCascadeQueue)
@@ -595,11 +664,16 @@ void Renderer::ShadowCasting()
 				continue;
 
 			if (it.batch)
-				drawInstancedObject(it.batch->shader, it.batch->mesh, it.batch->models);
+			{
+				drawInstancedObject(it.batch->shader, it.batch->mesh, (float*)it.batch->matrices.data(), it.batch->instanceDatas,
+					it.batch->dataSize, it.batch->instanceCount, it.batch->constantDataReference);
+				shadowDrawCalls++;
+			}
 			else
 			{
 				DrawableComponent* drawableComp = it.entity->getComponent<DrawableComponent>();
 				drawObject(it.entity, drawableComp->getShader()->getVariant(shadowCode));
+				shadowDrawCalls++;
 			}
 		}
 	}
@@ -622,7 +696,9 @@ void Renderer::ShadowCasting()
 
 		for (int i = 0; i < shadowOmniCaster.size(); i++)
 		{
-			baseLayerUniform = i;
+			shadowOmniLayerUniform = i;
+			lastShader = nullptr; // in order to force a new baseLayerUniform
+
 			vec4f center = shadowOmniCaster[i]->getPosition();
 			vec4f hsize = vec4f(shadowOmniCaster[i]->getRange());
 			hsize.w = 0;
@@ -642,17 +718,21 @@ void Renderer::ShadowCasting()
 				{
 					DrawableComponent* drawableComp = object->getComponent<DrawableComponent>();
 					if (drawableComp && drawableComp->isValid())
+					{
 						drawObject(object, drawableComp->getShader()->getVariant(shadowCode));
+						shadowDrawCalls++;
+					}
 				}
 			}
 		}
 
-		baseLayerUniform = -1;
+		shadowOmniLayerUniform = -1;
 		m_sceneLights.m_shadingConfiguration &= ~omniShadowPassMask;
 		glBindBuffer(GL_UNIFORM_BUFFER, m_lightsID);
 		glBufferSubData(GL_UNIFORM_BUFFER, 0, 8, &m_sceneLights);
 	}
 
-	glCullFace(GL_BACK);
+	//glCullFace(GL_BACK);
+	glFrontFace(GL_CW);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }

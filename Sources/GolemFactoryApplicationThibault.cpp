@@ -208,6 +208,7 @@ int main()
 					world.setMainCamera(cam);
 					currentCamera = cam;
 				});
+
 		}
 
 		world.getSceneManager().addToRootList(freeflyCamera);
@@ -215,8 +216,6 @@ int main()
 
 		WidgetManager::getInstance()->setBoolean("BBpicking", false);
 		WidgetManager::getInstance()->setBoolean("wireframe", false);
-
-		
 
 	// init loop time tracking
 	double averageTime = 0;
@@ -254,7 +253,7 @@ int main()
 
 		Debug::viewportRatio = context->getViewportRatio();
 		Debug::view = debugFreeflyCam->getViewMatrix();
-		Debug::projection = mat4f::perspective(debugFreeflyCam->getVerticalFieldOfView(), context->getViewportRatio(), 0.1f, 30000.f);  //far = 1500.f
+		Debug::projection = mat4f::perspective(debugFreeflyCam->getVerticalFieldOfView(), context->getViewportRatio(), 0.1f, 10000.f);  //far = 1500.f
 
 		//	physics
 		world.getPhysics().stepSimulation(physicsTimeSpeed * 0.016f, &world.getSceneManager());
@@ -304,8 +303,8 @@ int main()
 		{
 			SCOPED_CPU_MARKER("Swap buffers and clear");
 
-			Renderer::getInstance()->swap();
 			context->swapBuffers();
+			Renderer::getInstance()->swap();
 
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 		}
@@ -620,111 +619,110 @@ void initializeSyntyScene()
 			// load all prefabs and instanciate
 			for (auto it = sceneMap["sceneEntities"].getArray().begin(); it != sceneMap["sceneEntities"].getArray().end(); it++)
 			{
-				if (it->getType() == Variant::MAP)
+				if (it->getType() != Variant::MAP)
+					continue;
+
+				// get id and name
+				int id = (*it)["id"].toInt();
+				std::string prefabName = "";
+				auto prefabNameVariant = it->getMap().find("prefabName");
+				if (prefabNameVariant != it->getMap().end() && prefabNameVariant->second.getType() == Variant::STRING)
+					prefabName = prefabNameVariant->second.toString();
+
+				// pop parent now in case of loading error
+				Entity* newObject = nullptr;
+				Entity* parent = nullptr;
+				if (!parentStack.empty())
 				{
+					parent = parentStack.back();
+					parentStack.pop_back();
+				}
 
-					// get id and name
-					int id = (*it)["id"].toInt();
-					std::string prefabName = "";
-					auto prefabNameVariant = it->getMap().find("prefabName");
-					if (prefabNameVariant != it->getMap().end() && prefabNameVariant->second.getType() == Variant::STRING)
-						prefabName = prefabNameVariant->second.toString();
-
-					// pop parent now in case of loading error
-					Entity* newObject = nullptr;
-					Entity* parent = nullptr;
-					if (!parentStack.empty())
+				// load a new object
+				if (!prefabName.empty())
+				{
+					// load prefab
+					bool contain = world.getEntityFactory().containPrefab(prefabName);
+					bool loaded = world.getEntityFactory().loadPrefab(repository, packageName, prefabName);
+					if (!contain && loaded)
 					{
-						parent = parentStack.back();
-						parentStack.pop_back();
+						//std::cout << ConsoleColor::getColorString(ConsoleColor::Color::GREEN) << prefabName << " loaded" << std::flush;
+						//std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
 					}
-
-					// load a new object
-					if (!prefabName.empty())
+					else if(!loaded)
 					{
-						// load prefab
-						bool contain = world.getEntityFactory().containPrefab(prefabName);
-						bool loaded = world.getEntityFactory().loadPrefab(repository, packageName, prefabName);
-						if (!contain && loaded)
-						{
-							//std::cout << ConsoleColor::getColorString(ConsoleColor::Color::GREEN) << prefabName << " loaded" << std::flush;
-							//std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
-						}
-						else if(!loaded)
-						{
-							if (ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
-								std::cerr << "ERROR : loading scene : " << sceneName << " : fail loading prefab : " << prefabName << std::endl;
-							continue;
-						}
+						if (ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
+							std::cerr << "ERROR : loading scene : " << sceneName << " : fail loading prefab : " << prefabName << std::endl;
+						continue;
+					}
 						
-						// instantiate
-						newObject = world.getEntityFactory().instantiatePrefab(prefabName);
-						newObject->setName((*it)["name"].toString());
-					}
-					else
-					{
-						// create and set transform
-						newObject = world.getEntityFactory().createEntity();
-						newObject->setName((*it)["name"].toString());
-						world.getEntityFactory().tryLoadComponents(newObject, &(*it), packageName);
-					}
-					newObject->recomputeBoundingBox();
+					// instantiate
+					newObject = world.getEntityFactory().instantiatePrefab(prefabName);
+					newObject->setName((*it)["name"].toString());
+				}
+				else
+				{
+					// create and set transform
+					newObject = world.getEntityFactory().createEntity();
+					newObject->setName((*it)["name"].toString());
+					world.getEntityFactory().tryLoadComponents(newObject, &(*it), packageName);
+				}
+				newObject->recomputeBoundingBox();
 
-					// transform load
-					vec4f position, tmp;
-					TryLoadAsVec4f((*it)["position"], position);
-					position.w = 1.f;
-					TryLoadAsVec4f((*it)["rotation"], tmp);
-					quatf rotation = quatf(tmp.w, tmp.x, tmp.y, tmp.z);
-					rotation.normalize();
+				// transform load
+				vec4f position, tmp;
+				TryLoadAsVec4f((*it)["position"], position);
+				position.w = 1.f;
+				TryLoadAsVec4f((*it)["rotation"], tmp);
+				quatf rotation = quatf(tmp.w, tmp.x, tmp.y, tmp.z);
+				rotation.normalize();
 
-					float scale = 1.f;
-					auto& scaleVariant = (*it)["scale"];
-					if (scaleVariant.getType() == Variant::INT)
-						scale = (float)scaleVariant.toInt();
-					else if (scaleVariant.getType() == Variant::FLOAT)
-						scale = scaleVariant.toFloat();
-					else if (scaleVariant.getType() == Variant::DOUBLE)
-						scale = (float)scaleVariant.toDouble();
+				float scale = 1.f;
+				auto& scaleVariant = (*it)["scale"];
+				if (scaleVariant.getType() == Variant::INT)
+					scale = (float)scaleVariant.toInt();
+				else if (scaleVariant.getType() == Variant::FLOAT)
+					scale = scaleVariant.toFloat();
+				else if (scaleVariant.getType() == Variant::DOUBLE)
+					scale = (float)scaleVariant.toDouble();
 
-					if (!prefabName.empty())
-						scale *= newObject->getWorldScale();
+				if (!prefabName.empty())
+					scale *= newObject->getWorldScale();
 
-					if (scale < 0.f)
-					{
-						std::cout << ConsoleColor::getColorString(ConsoleColor::Color::MAGENTA) << "WARNING : object " << newObject->getName() << " has a negative scaling" << std::flush;
-						std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
+				if (scale < 0.f)
+				{
+					std::cout << ConsoleColor::getColorString(ConsoleColor::Color::MAGENTA) << "WARNING : object " << newObject->getName() << " has a negative scaling" << std::flush;
+					std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
 
-						scale = -scale;
-					}
+					scale = -scale;
+				}
 
-					// set parent and local transform
-					if (parent)
-					{
-						parent->addChild(newObject);
-						newObject->setLocalTransformation(position, scale, rotation);
-					}
-					else
-					{
-						newObject->setLocalTransformation(position, scale, rotation);
-						world.getSceneManager().addToRootList(newObject);
-					}
+				// set parent and local transform
+				if (parent)
+				{
+					parent->addChild(newObject);
+					newObject->setLocalTransformation(position, scale, rotation);
+				}
+				else
+				{
+					newObject->setLocalTransformation(position, scale, rotation);
+					world.getSceneManager().addToRootList(newObject);
+				}
 
-					std::vector<Entity*> allObjectHierarchy;
-					newObject->recursiveHierarchyCollect(allObjectHierarchy);
-					for (Entity* e : allObjectHierarchy)
-						world.addToScene(e);
+				std::vector<Entity*> allObjectHierarchy;
+				newObject->recursiveHierarchyCollect(allObjectHierarchy);
+				for (Entity* e : allObjectHierarchy)
+					world.addToScene(e);
 					
-					// push to stack if newObject is a parent
-					auto childVariant = (*it).getMap().find("childs");
-					if (childVariant != (*it).getMap().end() && childVariant->second.getType() == Variant::ARRAY)
+				// push to stack if newObject is a parent
+				auto childVariant = (*it).getMap().find("childs");
+				if (childVariant != (*it).getMap().end() && childVariant->second.getType() == Variant::ARRAY)
+				{
+					auto childrenArray = childVariant->second.getArray();
+					if (childrenArray.size() > 0)
 					{
-						auto childrenArray = childVariant->second.getArray();
-						if (childrenArray.size() > 0)
-						{
-							for (auto it2 = childrenArray.begin(); it2 != childrenArray.end(); it2++)
-								parentStack.push_back(newObject);
-						}
+						for (auto it2 = childrenArray.begin(); it2 != childrenArray.end(); it2++)
+							parentStack.push_back(newObject);
 					}
 				}
 			}
@@ -789,8 +787,8 @@ void initManagers()
     ResourceManager::getInstance()->addNewResourceLoader(".texture", new TextureLoader());
     ResourceManager::getInstance()->addNewResourceLoader(".animGraph", new AnimationGraphLoader());
 
-	// Init world -> 100Km²
-	const vec4f worldHalfSize = vec4f(64000, 128.f, 64000, 0);//vec4f(GRID_SIZE * GRID_ELEMENT_SIZE, 128.f, GRID_SIZE * GRID_ELEMENT_SIZE, 0) * 0.5f;
+	// Init world -> 64*64Km²
+	const vec4f worldHalfSize = vec4f(64000, 64.f, 64000, 0);//vec4f(GRID_SIZE * GRID_ELEMENT_SIZE, 128.f, GRID_SIZE * GRID_ELEMENT_SIZE, 0) * 0.5f;
 	const vec4f worldPos = vec4f(0, 0.5f * worldHalfSize.y, 0, 1);
 	NodeVirtual::debugWorld = &world;
 
@@ -800,9 +798,9 @@ void initManagers()
 	world.getSceneManager().addStreamingRadius(125000, 2);
 	world.getSceneManager().addStreamingRadius(25000, 3);
 	world.getSceneManager().addStreamingRadius(5000, 4);
-	world.getSceneManager().addStreamingRadius(1000, 5);
+	world.getSceneManager().addStreamingRadius(1000, 5); // fixed for terrain match
 	world.getSceneManager().addStreamingRadius(200, 6);
-	world.getSceneManager().addStreamingRadius(40, 7);
+	//world.getSceneManager().addStreamingRadius(40, 7);
 	world.getSceneManager().init(worldPos - worldHalfSize, worldPos + worldHalfSize, vec3i(4, 1, 4));
 	world.setMaxObjectCount(400000);
 	world.getSceneManager().update(vec4f(0, 7, -30, 1), false);
@@ -879,10 +877,13 @@ void initManagers()
 	Renderer::getInstance()->normalViewer = ResourceManager::getInstance()->getResource<Shader>("normalViewer");
 	Renderer::getInstance()->initializeGrid(GRID_SIZE, GRID_ELEMENT_SIZE, vec4f(24 / 255.f, 202 / 255.f, 230 / 255.f, 1.f));	// blue tron
 
+	Renderer::getInstance()->initializeConstants();
 	Renderer::getInstance()->initializeLightClusterBuffer(64, 36, 128);
 	Renderer::getInstance()->initializeOcclusionBuffers(256, 144);
 	Renderer::getInstance()->initializeShadows(1024, 1024, 1024, 1024);
 	Renderer::getInstance()->initializeOverviewRenderer(512, 512);
+	Renderer::getInstance()->initializeTerrainMaterialCollection("GroundTextures/TerrainMaterialCollection.terrain");
+
 	
 	// Debug
 	Debug::getInstance()->initialize("Shapes/box", "Shapes/sphere.obj", "Shapes/capsule", "default", "wired", "debug", "textureReinterpreter");
@@ -1170,7 +1171,7 @@ void updates(float elapseTime)
 		if (EventHandler::getInstance()->isActivated(LEFT)) direction -= right;
 		if (EventHandler::getInstance()->isActivated(RIGHT)) direction += right;
 		if (EventHandler::getInstance()->isActivated(SNEAKY)) speed /= 10.f;
-		if (EventHandler::getInstance()->isActivated(RUN)) speed *= 10.f;
+		if (EventHandler::getInstance()->isActivated(RUN)) speed *= 100.f;
 
 		if (direction.x || direction.y || direction.z)
 		{

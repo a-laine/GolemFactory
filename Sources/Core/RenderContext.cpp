@@ -38,7 +38,9 @@ vec2i RenderContext::getViewportSize() const
 float RenderContext::getViewportRatio() const
 {
 	glm::ivec2 size = m_viewportSize;
-	return (float) size.x / size.y;
+	if (size.y > 0)
+		return (float) size.x / size.y;
+	return 1.f;
 }
 
 bool RenderContext::isOffScreenContext() const

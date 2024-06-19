@@ -80,6 +80,7 @@ class Entity : public EntityBase
 
 		//	Hierarchy
 		void addChild(Entity* child);
+		void removeChild(Entity* child);
 		void recursiveHierarchyCollect(std::vector<Entity*>& collection);
 
 		template<typename Visitor>

@@ -22,7 +22,7 @@ TextureReinterpreter
 		#version 430
 		
 		// textures & uniforms
-		layout(binding = 0) uniform sampler2DArray shadowArray;			//sampler unit 0
+		layout(binding = 0) uniform sampler2DArray texArray;			//sampler unit 0
 		layout(binding = 1) uniform samplerCubeArray omniShadowArray;	//sampler unit 1
 		layout(binding = 2) uniform sampler2D depthTexture;				//sampler unit 2
 		
@@ -41,7 +41,7 @@ TextureReinterpreter
 		{
 			if (type == 0) // shadow cascade
 			{
-				float depth = texelFetch(shadowArray, ivec3(fragmentUv * textureSize(shadowArray, 0).xy, layer), 0).r;
+				float depth = texelFetch(texArray, ivec3(fragmentUv * textureSize(texArray, 0).xy, layer), 0).r;
 				fragColor = vec4(depth, depth, depth, 1.0);
 			}
 			else if (type == 1) // omni shadow array
@@ -115,10 +115,10 @@ TextureReinterpreter
 				
 				uint height = data.r;
 				uint water = data.g;
-				uint normalx = data.b >> 5;
-				uint normalz = ((data.b & 0x1F) << 5) | (data.a >> 10);
-				uint material = (data.a & 0x3FC) >> 2;
-				uint hole = data.a & 0x03;
+				uint normalx = (data.b & 0x7FF);
+				uint normalz = (data.b >> 11) | ((data.a & 0x3F) << 5);
+				uint material = (data.a >> 6) & 0xFF;
+				uint hole = (data.a >> 14) & 0x03;
 				
 				if (layer == 0)
 				{
@@ -127,13 +127,13 @@ TextureReinterpreter
 				}
 				else if (layer == 1)
 				{
-					float h = water / 65536.0;
+					float h = water / 6553.60;
 					fragColor = vec4(h, h, h, 1);
 				}
 				else if (layer == 2)
 				{
-					float x = normalx / 2048.0 - 0.5;
-					float z = normalz / 2048.0 - 0.5;
+					float x = (normalx / 1024.0 - 1.0);
+					float z = (normalz / 1024.0 - 1.0);
 					float y = sqrt(1.0 - min(x * x + z * z, 1.0));
 					fragColor = vec4(x, y, z, 1);
 				}
@@ -151,6 +151,11 @@ TextureReinterpreter
 				}
 				else
 					fragColor = vec4(0, 0, 0, 1);
+			}
+			else if (type == 4) // simple texture 2d array
+			{
+				fragColor = texelFetch(texArray, ivec3(fragmentUv * textureSize(texArray, 0).xy, layer), 0);
+				fragColor.w = 1.0;
 			}
 		}
 	};

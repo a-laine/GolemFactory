@@ -151,6 +151,38 @@ vec4f DrawableComponent::getMeshBBMin() const
 	return m_mesh->getBoundingBox().min;
 }
 
+void DrawableComponent::pushDraw(std::vector<Renderer::DrawElement>& drawQueue, uint32_t distance, bool isShadowPass)
+{
+	Renderer::DrawElement element;
+	element.shader = m_shader;
+	element.mesh = m_mesh;
+	element.batch = nullptr;
+	element.entity = getParentEntity();
+
+	uint64_t queue = m_shader->getRenderQueue();
+	queue = queue << 48;
+	if (!isShadowPass && (queue & TransparentMask))
+	{
+		//compute 2's complement of d
+		distance = ~distance;
+		distance++;
+	}
+	if (isShadowPass)
+		element.hash = distance;
+	else
+		element.hash = queue | distance;
+
+	drawQueue.push_back(element);
+}
+
+
+unsigned short DrawableComponent::getInstanceDataSize() const { return 0; }
+bool DrawableComponent::hasConstantData() const { return false; }
+void DrawableComponent::pushConstantData(Shader* _shader) const {}
+void DrawableComponent::pushInstanceData(Shader* _shader) const {}
+void DrawableComponent::writeInstanceData(vec4f* _destination) const {}
+
+
 void DrawableComponent::onAddToEntity(Entity* entity)
 {
 	Component::onAddToEntity(entity);

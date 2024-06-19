@@ -425,6 +425,15 @@
     <ClCompile Include="..\..\Sources\Terrain\Terrain.cpp">
       <Filter>Fichiers sources\Terrain</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Sources\Utiles\Xoshiro256.cpp">
+      <Filter>Fichiers sources\Utiles</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Sources\Terrain\TerrainAreaDrawableComponent.cpp">
+      <Filter>Fichiers sources\Terrain</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Sources\Utiles\WorkerThread.cpp">
+      <Filter>Fichiers sources\Utiles</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Sources\Math\TMath.h">
@@ -851,6 +860,15 @@
       <Filter>Fichiers sources\Terrain</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Sources\Utiles\ObjectPool.h">
+      <Filter>Fichiers sources\Utiles</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Utiles\Xoshiro256.h">
+      <Filter>Fichiers sources\Utiles</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Terrain\TerrainAreaDrawableComponent.h">
+      <Filter>Fichiers sources\Terrain</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Utiles\WorkerThread.h">
       <Filter>Fichiers sources\Utiles</Filter>
     </ClInclude>
   </ItemGroup>

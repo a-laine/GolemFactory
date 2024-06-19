@@ -53,13 +53,14 @@ Default
 			#ifdef WIRED_MODE
 				fragmentPosition_gs = model * position;
 				gl_Position = projection * view * fragmentPosition_gs;
-				fragmentNormal_gs = normalize(normalMatrix * normal);
 				fragmentUv_gs = uv;
+				fragmentNormal_gs = normalize(normalMatrix * normal);
 			#else
 				fragmentPosition = model * position;
 				gl_Position = projection * view * fragmentPosition;
 				fragmentNormal = normalize(normalMatrix * normal);
 				fragmentUv = uv;
+				
 			#endif
 		}
 	};

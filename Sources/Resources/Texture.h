@@ -45,7 +45,8 @@ class Texture : public ResourceVirtual
         ~Texture();
 
         void initialize(const vec3i& imageSize, const uint8_t* data, uint8_t config = 0);
-        void initialize(const std::string& textureName, const vec3i& imageSize, const void* data, uint8_t config, unsigned int internalFormat, unsigned int pixelFormat, unsigned int colorFormat, bool immutable = false);
+        void initialize(const std::string& textureName, const vec3i& imageSize, const void* data, uint8_t config, unsigned int internalFormat, 
+            unsigned int pixelFormat, unsigned int colorFormat, bool immutable = false);
 
         void update(const void* data, unsigned int pixelFormat, unsigned int colorFormat, 
             vec3i offset = vec3i(0), vec3i subSize = vec3i(std::numeric_limits<uint16_t>::max()));

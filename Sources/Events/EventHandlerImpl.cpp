@@ -223,16 +223,18 @@ vec2f EventHandlerImpl::getCursorPositionAbsolute()
 }
 vec2f EventHandlerImpl::getCursorNormalizedPosition()
 {
-	vec2f position;
+	vec2f position = vec2f(0, 0);
     mutex.lock();
     if(focusedWindow)
     {
         int width, height;
         glfwGetFramebufferSize(focusedWindow,&width,&height);
-        position.x = (2.f*cursorPositionAbsolute.x - width)/width;
-        position.y = (height - 2.f*cursorPositionAbsolute.y)/height;
+        if (width > 0 && height > 0)
+        {
+            position.x = (2.f * cursorPositionAbsolute.x - width) / width;
+            position.y = (height - 2.f * cursorPositionAbsolute.y) / height;
+        }
     }
-    else position = vec2f(0,0);
     mutex.unlock();
     return position;
 }

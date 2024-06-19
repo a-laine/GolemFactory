@@ -126,6 +126,7 @@ class Mesh : public ResourceVirtual
 		float overviewAngle0 = 0.f;
 		float overviewAngle1 = 0.f;
 		float overviewAngleSpeed = 0.03f;
+		float overviewDistance = 1.f;
 		ImVec2 clickPos;
 #endif
 };

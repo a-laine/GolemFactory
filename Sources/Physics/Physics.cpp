@@ -58,6 +58,12 @@ void Physics::addMovingEntity(Entity* e)
 	if (e->getComponent<RigidBody>() && movingEntity.insert(e).second)
 		e->getParentWorld()->getOwnership(e);
 }
+void Physics::removeMovingEntity(Entity* e)
+{
+	const auto& it = movingEntity.find(e);
+	if (it != movingEntity.end())
+		e->getParentWorld()->releaseOwnership(e);
+}
 //
 
 

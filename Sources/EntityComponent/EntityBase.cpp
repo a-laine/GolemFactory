@@ -32,14 +32,16 @@ Component* EntityBase::getComponent(unsigned short index) { return (index < m_co
 const Component* EntityBase::getComponent(unsigned short index) const { return (index < m_components.size()) ? m_components[index].comp : nullptr; }
 Component* EntityBase::getComponent(ClassID type)
 {
-	auto it = std::find_if(m_components.begin(), m_components.end(), [type](const Element& e) {return e.type == type; });
+	// it's cache friendly to test element.type first
+	auto it = std::find_if(m_components.begin(), m_components.end(), [type](const Element& e) { return e.type == type || e.comp->isIdInHierarchy(type); });
 	if (it != m_components.end())
 		return it->comp;
 	else return nullptr;
 }
 const Component* EntityBase::getComponent(ClassID type) const
 {
-	auto it = std::find_if(m_components.begin(), m_components.end(), [type](const Element& e) {return e.type == type; });
+	// it's cache friendly to test element.type first
+	auto it = std::find_if(m_components.begin(), m_components.end(), [type](const Element& e) { return e.type == type || e.comp->isIdInHierarchy(type); });
 	if (it != m_components.end())
 		return it->comp;
 	else return nullptr;

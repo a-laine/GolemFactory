@@ -8,7 +8,7 @@ SkinnedTextured
 		lightClusters : "_globalLightClusters";
 		cascadedShadow : "_globalShadowCascades";
 		omniShadowArray : "_globalOmniShadow";
-		omniBaseLayer = "int"
+		shadowOmniLayerUniform = "int"
 	};
 	
 	textures : [
@@ -101,7 +101,7 @@ SkinnedTextured
 			layout(triangles, invocations = GEOMETRY_INVOCATION) in;
 			layout(triangle_strip, max_vertices = 3) out;
 			
-			uniform int omniBaseLayer = 0;
+			uniform int shadowOmniLayerUniform;
 			
 			void main()
 			{
@@ -109,7 +109,7 @@ SkinnedTextured
 				{
 					for (int i = 0; i < 3; ++i)
 					{
-						gl_Layer = 6 * omniBaseLayer + gl_InvocationID;
+						gl_Layer = 6 * shadowOmniLayerUniform + gl_InvocationID;
 						gl_Position = omniShadowProjections[ gl_Layer ] * gl_in[i].gl_Position;
 						EmitVertex();
 					}

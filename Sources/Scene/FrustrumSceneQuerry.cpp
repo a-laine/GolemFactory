@@ -48,6 +48,11 @@ void FrustrumSceneQuerry::Set(const vec4f& position, const vec4f& direction, con
 
 VirtualSceneQuerry::CollisionType FrustrumSceneQuerry::operator() (const NodeVirtual* node)
 {
+	// implement proper SAT !!!!
+
+
+
+
 	vec4f center = node->getCenter();
 	vec4f halfSize = node->getInflatedHalfSize();
 	vec4f s; vec4b mask;

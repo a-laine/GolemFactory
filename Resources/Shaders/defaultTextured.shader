@@ -8,7 +8,8 @@ DefaultTextured
 		lightClusters : "_globalLightClusters";
 		cascadedShadow : "_globalShadowCascades";
 		omniShadowArray : "_globalOmniShadow";
-		omniBaseLayer = "int"
+		shadowOmniLayerUniform = "int"
+		InstanceDatas : "uniformBlocks";
 	};
 	
 	textures : [
@@ -45,7 +46,6 @@ DefaultTextured
 			uniform mat4 matrixArray[2];
 		#endif
 		
-
 		// output
 		#ifdef WIRED_MODE
 			out vec4 fragmentPosition_gs;
@@ -64,8 +64,8 @@ DefaultTextured
 		// program
 		void main()
 		{
-				mat4 model = matrixArray[2 * gl_InstanceID];
-				mat4 normalMatrix = matrixArray[2 * gl_InstanceID + 1];
+			mat4 model = matrixArray[2 * gl_InstanceID];
+			mat4 normalMatrix = matrixArray[2 * gl_InstanceID + 1];
 		
 			#ifdef WIRED_MODE
 				fragmentPosition_gs = model * position;
@@ -139,7 +139,7 @@ DefaultTextured
 			layout(triangles, invocations = GEOMETRY_INVOCATION) in;
 			layout(triangle_strip, max_vertices = 3) out;
 			
-			uniform int omniBaseLayer = 0;
+			uniform int shadowOmniLayerUniform;
 			
 			void main()
 			{
@@ -147,7 +147,7 @@ DefaultTextured
 				{
 					for (int i = 0; i < 3; ++i)
 					{
-						gl_Layer = 6 * omniBaseLayer + gl_InvocationID;
+						gl_Layer = 6 * shadowOmniLayerUniform + gl_InvocationID;
 						gl_Position = omniShadowProjections[ gl_Layer ] * gl_in[i].gl_Position;
 						EmitVertex();
 					}
@@ -335,11 +335,11 @@ DefaultTextured
 			#endif
 			
 			// compute base color depending on environement light (directional)
-			vec4 albedoColor = texture(albedo, vec2(fragmentUv.x, fragmentUv.y));
+			vec4 albedoColor = texture(albedo, fragmentUv.xy);
 			vec4 emmisiveColor = texture(emmisive, fragmentUv.xy);
 			float ndotl = dot(normalize(fragmentNormal), normalize(-m_directionalLightDirection));
 			vec4 diffuse = clamp(ndotl, 0 , 1 ) * m_directionalLightColor;
-			vec4 metalicParam = texture(metalic, vec2(fragmentUv.x, fragmentUv.y));
+			vec4 metalicParam = texture(metalic, fragmentUv.xy);
 			
 			float shadowAttenuation = 1.0;
 			if ((shadingConfiguration & 0x04) != 0 && ndotl > 0.0)
@@ -417,6 +417,8 @@ DefaultTextured
 				fragColor = 0.5 * fragmentColor + 0.5 * cascadeColor;
 			else
 				fragColor = fragmentColor;
+				
+			//fragColor = vec4(instanceColor.xyz, 1);
 		}
 	#endif
 	};

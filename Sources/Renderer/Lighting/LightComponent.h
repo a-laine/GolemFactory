@@ -2,6 +2,7 @@
 
 #include <EntityComponent/Component.hpp>
 #include <Math/TMath.h>
+#include <Physics/Shapes/AxisAlignedBox.h>
 
 
 class LightComponent : public Component
@@ -17,6 +18,7 @@ public:
 	void save(Variant& jsonObject) override;
 
 	void onAddToEntity(Entity* entity) override;
+	AxisAlignedBox getBoundingBox() const;
 
 	// setter geter
 	void setPointLight(bool _isPointLight);
@@ -29,7 +31,7 @@ public:
 
 
 	vec4f getDirection();
-	vec4f getPosition();
+	vec4f getPosition() const;
 	bool isPointLight() const;
 	bool castShadow() const;
 	float getRange() const;

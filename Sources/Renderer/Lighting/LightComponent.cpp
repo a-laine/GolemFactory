@@ -178,6 +178,13 @@ void LightComponent::onAddToEntity(Entity* entity)
 	entity->setFlags((uint64_t)Entity::Flags::Fl_Light);
 }
 
+AxisAlignedBox LightComponent::getBoundingBox() const
+{
+	vec4f center = getPosition();
+	vec4f range = vec4f(m_range, m_range, m_range, 0);
+	return AxisAlignedBox(center - range, center + range);
+}
+
 // setter geter
 void LightComponent::setPointLight(bool _isPointLight) { m_isPointLight = _isPointLight; }
 void LightComponent::setCastShadow(bool _enableShadow) { m_castShadow = _enableShadow; };
@@ -192,7 +199,7 @@ vec4f LightComponent::getDirection()
 {
 	return getParentEntity()->getWorldOrientation() * vec4f(0, 0, 1, 0);
 }
-vec4f LightComponent::getPosition()
+vec4f LightComponent::getPosition() const
 {
 	return getParentEntity()->getWorldPosition();
 }

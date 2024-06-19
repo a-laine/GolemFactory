@@ -21,13 +21,13 @@ class EntityFactory
 		Entity* createEntity();
 
 		template<typename Callback>
-		Entity* createObject(const std::string& type, Callback cb);
+		Entity* createObject(const std::string& type, Callback cb, bool _addToScene = true);
 		Entity* createObject(const std::string& type, const vec4f& position, const float& scale = 1.f, const quatf& orientation = quatf::identity, const std::string& name = "unknown");
 
 		template<typename Callback>
-		Entity* createObject(Callback cb);
+		Entity* createObject(Callback _cb, bool _addToScene = true);
 		template<typename Callback>
-		Entity* createObject(const std::vector<Component*>& components, Callback cb);
+		Entity* createObject(const std::vector<Component*>& components, Callback cb, bool _addToScene = true);
 		Entity* createObject(const std::vector<Component*>& components, const vec4f& position, const float& scale = 1.f, const quatf& orientation = quatf::identity, const std::string& name = "unknown");
 
 		bool addPrefab(std::string prefabName, Entity* prefabObject);
@@ -62,33 +62,36 @@ class EntityFactory
 
 
 template<typename Callback>
-Entity* EntityFactory::createObject(const std::string& type, Callback cb)
+Entity* EntityFactory::createObject(const std::string& type, Callback cb, bool _addToScene)
 {
 	Entity* object = createByType(type);
 	if(object)
 	{
 		cb(object);
-		addToScene(object);
+		if (_addToScene)
+			addToScene(object);
 	}
 	return object;
 }
 
 template<typename Callback>
-Entity* EntityFactory::createObject(Callback cb)
+Entity* EntityFactory::createObject(Callback _cb, bool _addToScene)
 {
 	Entity* object = createEntity();
-	cb(object);
-	addToScene(object);
+	_cb(object);
+	if (_addToScene)
+		addToScene(object);
 	return object;
 }
 
 template<typename Callback>
-Entity* EntityFactory::createObject(const std::vector<Component*>& components, Callback cb)
+Entity* EntityFactory::createObject(const std::vector<Component*>& components, Callback cb, bool _addToScene)
 {
 	Entity* object = createEntity();
 	addComponents(object, components);
 	cb(object);
-	addToScene(object);
+	if (_addToScene)
+		addToScene(object);
 	return object;
 }
 

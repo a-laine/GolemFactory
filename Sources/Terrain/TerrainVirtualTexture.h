@@ -7,6 +7,7 @@
 #include <Utiles/Mutex.h>
 #include <Resources/Texture.h>
 
+class TerrainArea;
 class TerrainVirtualTexture
 {
 	public:
@@ -14,7 +15,7 @@ class TerrainVirtualTexture
 		struct TextureTile
 		{
 			int m_lod;
-			std::atomic_bool* m_updateHook;
+			TerrainArea* m_owner;
 			vec2i m_min, m_max, m_size;
 		};
 		// 
@@ -26,12 +27,14 @@ class TerrainVirtualTexture
 
 		// Public methods
 		void initialize(int _physicalTextureSize);
-		void updateCPUTexture(const TextureTile& _destination, uint16_t* _source);
+		void updateCPUTexture(TextureTile* _destination, uint64_t* _sourceHeightMap);
 		void updateGPUTexture();
+		void syncroGPUTexture();
 
 		TextureTile getFreeTextureTile(int _lod);
+		GLuint getTextureId() const;
 
-		void releaseTextureTile(TextureTile& _textureTile);
+		void releaseTextureTile(TextureTile _textureTile);
 		//
 
 
@@ -46,7 +49,6 @@ class TerrainVirtualTexture
 
 		Mutex m_mutexPhysicalTexture;
 		std::vector<TextureTile*> m_pendingTiles;
-		vec2i m_pendingUpdateMin, m_pendingUpdateMax;
 		Texture m_GPUTexture;
 
 		vec3i m_physicalTextureSize;

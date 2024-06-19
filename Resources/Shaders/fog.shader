@@ -1,5 +1,5 @@
 Fog
-{	
+{
 	renderQueue : 3000;//transparent
 	transparent : true;
 	faceCulling : false;

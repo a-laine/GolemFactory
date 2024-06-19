@@ -20,13 +20,17 @@
 #define CLUSTER_SIZE_Y 36
 #define CLUSTER_SIZE_Z 128
 #define MAX_OMNILIGHT_SHADOW_COUNT 8
+#define MAX_TERRAIN_MATERIAL 128
+
+#define TransparentMask (1ULL << 63)
+#define FaceCullingMask (1ULL << 62)
 
 class Shader;
 class Mesh;
 class LightComponent;
 class OccluderComponent;
 class CameraComponent;
-//class Debug::Vertex;
+class DrawableComponent;
 
 class Renderer : public Singleton<Renderer>
 {
@@ -72,16 +76,27 @@ class Renderer : public Singleton<Renderer>
 
 		struct ModelMatrix
 		{
-			mat4f model;
+			mat4f modelMatrix;
 			mat4f normalMatrix;
+		};
+		struct Batch;
+		struct DrawElement
+		{
+			uint64_t hash;
+			Entity* entity;
+			Shader* shader;
+			Mesh* mesh;
+			Batch* batch;
 		};
 		//
 
 		//  Public functions
+		void initializeConstants();
 		void initializeGrid(const unsigned int& gridSize, const float& elementSize = 1.f, const vec4f& color = vec4f(0.4f, 0.2f, 0.1f, 1.f));
 		void initializeLightClusterBuffer(int width, int height, int depth);
 		void initializeOcclusionBuffers(int width, int height);
 		void initializeShadows(int cascadesWidth, int cascadesHeight, int omniWidth, int omniHeight);
+		void initializeTerrainMaterialCollection(const std::string& textureName);
 		void render(CameraComponent* renderCam);
 		void renderHUD();
 		void swap();
@@ -94,11 +109,13 @@ class Renderer : public Singleton<Renderer>
 		void setShader(ShaderIdentifier id, Shader* s);
 		void setGridVisible(bool enable);
 		void setRenderOption(const RenderOption& option);
+		void setVirtualTexture(TerrainVirtualTexture* virtualTexture);
 
 		void setEnvBackgroundColor(vec4f color);
 		void setEnvAmbientColor(vec4f color);
 		void setEnvDirectionalLightDirection(vec4f direction);
 		void setEnvDirectionalLightColor(vec4f color);
+		void incrementShaderAnimatedTime(float time);
 
 		double getElapsedTime() const;
 		double getAvgElapsedTime() const;
@@ -122,7 +139,8 @@ class Renderer : public Singleton<Renderer>
 		//
 
 		//	Render function
-		void loadModelMatrix(Shader* shader, const ModelMatrix* model, const int& modelSize = 1);
+		void loadInstanceMatrices(Shader* _shader, float* _instanceMatrices, unsigned short _instanceCount = 1);
+		void loadInstanceDatas(Shader* _shader, vec4f* _instanceDatas, unsigned short _dataSize, unsigned short _instanceCount = 1);
 		void drawObject(Entity* object, Shader* forceShader = nullptr);
 		// 
 		
@@ -130,7 +148,7 @@ class Renderer : public Singleton<Renderer>
 		void drawImGui(World& world);
 
 		void initializeOverviewRenderer(int width, int height);
-		GLuint renderMeshOverview(Mesh* mesh, float angle0, float angle1);
+		GLuint renderMeshOverview(Mesh* mesh, float angle0, float angle1, float zoom);
 		vec2i getOverviewTextureSize() const;
 		//
 
@@ -147,27 +165,30 @@ class Renderer : public Singleton<Renderer>
 		{
 			Shader* shader;
 			Mesh* mesh;
-			std::vector<ModelMatrix> models;
+			unsigned short instanceCount;
+
+			bool pushMatrices;
+			DrawableComponent* constantDataReference;
+			std::vector<mat4f> matrices;
+
+			unsigned short maxInstanceCount;
+			unsigned short dataSize;
+			vec4f* instanceDatas;
 		};
-		struct DrawElement
-		{
-			uint64_t hash;
-			Entity* entity;
-			Batch* batch;
-		};
-		struct ShadowDrawElement
+		/*struct ShadowDrawElement
 		{
 			float distance;
 			Entity* entity;
 			Batch* batch;
-		};
+		};*/
 		//
 
 		//	Protected functions
 		void loadGlobalUniforms(Shader* shader);
 		void loadVAO(const GLuint& vao);
 
-		void drawInstancedObject(Shader* s, Mesh* m, std::vector<ModelMatrix>& models);
+		void drawInstancedObject(Shader* _shader, Mesh* _mesh, float* _matrices, vec4f* _instanceDatas,
+			unsigned short _dataSize, unsigned short _instanceCount, DrawableComponent* _constantDataRef);
 
 		void initGlobalUniformBuffers();
 		void updateShadowCascadeMatrices(CameraComponent* renderCam, float viewportRatio);
@@ -193,7 +214,8 @@ class Renderer : public Singleton<Renderer>
 				World* world;
 				RenderContext* context;
 				std::map<ShaderIdentifier, Shader*> defaultShader;
-				RenderOption renderOption;
+				RenderOption renderOption; 
+				TerrainVirtualTexture* m_terrainVirtualTexture;
 
 				std::vector<DrawElement> renderQueue;
 				FrustrumSceneQuerry sceneQuery;
@@ -212,6 +234,7 @@ class Renderer : public Singleton<Renderer>
 
 				GLuint lastVAO, fullscreenVAO;
 				Shader* lastShader;
+				Skeleton* lastSkeleton;
 				bool shaderJustActivated;
 				Shader* fullscreenTriangle;
 
@@ -231,6 +254,7 @@ class Renderer : public Singleton<Renderer>
 
 				GLuint m_globalMatricesID;
 				GlobalMatrices m_globalMatrices;
+				GLint m_maxUniformSize;
 		#pragma endregion
 
 		#pragma region Occlusion_Culling
@@ -309,14 +333,15 @@ class Renderer : public Singleton<Renderer>
 				OmniShadows m_OmniShadows;
 				Texture shadowCascadeTexture;
 				Texture shadowOmniTextures;
-				std::vector<ShadowDrawElement> shadowCascadeQueue;
+				//std::vector<ShadowDrawElement> shadowCascadeQueue;
+				std::vector<DrawElement> shadowCascadeQueue;
 				std::vector<LightComponent*> shadowOmniCaster;
 				BoxSceneQuerry omniLightQuery;
 				VirtualEntityCollector omniLightCollector;
 				OrientedBox shadowAreaBoxes[4];
 				float shadowAreaMargin;
 				float shadowAreaMarginLightDirection;
-				int baseLayerUniform;
+				int shadowOmniLayerUniform;
 		#pragma endregion
 
 		#pragma region Metrics_And_Debug
@@ -327,15 +352,31 @@ class Renderer : public Singleton<Renderer>
 					float wireframeEdgeFactor;
 					float occlusionResultDrawAlpha;
 					float occlusionResultCuttoff;
+					float animatedTime;
 				};
 
 				unsigned int m_timerQueryID;
-				unsigned int instanceDrawn, drawCalls, trianglesDrawn;
+				unsigned int instanceDrawn, drawCalls, shadowDrawCalls, trianglesDrawn;
 				float m_GPUelapsedTime, m_GPUavgTime;
 				DebugShaderUniform m_debugShaderUniform;
 				GLuint m_DebugShaderUniformID, overviewFBO;
 				Texture overviewTexture;
 				Texture overviewDepth;
+		#pragma endregion
+
+		#pragma region Terrain_Global_Attributes
+				struct TerrainMaterial
+				{
+					int m_albedo;
+					int m_normal;
+					float m_tiling;
+					float m_metalic;
+				};
+
+				GLuint m_terrainMaterialCollectionID;
+				Texture* m_terrainMaterialCollection;
+				std::vector<TerrainMaterial> m_terrainMaterialInfos;
+				std::vector<std::string> m_terrainMaterialNames;
 		#pragma endregion
 
 #ifdef USE_IMGUI

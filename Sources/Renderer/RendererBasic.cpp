@@ -15,26 +15,24 @@
 #include <Animation/SkeletonComponent.h>
 #include <Renderer/Lighting/LightComponent.h>
 #include <Utiles/Debug.h>
-
-
-
-
-#define MAX_INSTANCE 32
+#include <Utiles/Parser/Reader.h>
 
 #ifdef USE_IMGUI
 bool RenderingWindowEnable = false;
 #endif
+#include <Utiles/ConsoleColor.h>
 
 
 //  Default
 Renderer::Renderer() : 
 	normalViewer(nullptr), renderOption(RenderOption::DEFAULT),
 	vboGridSize(0), gridVAO(0), vertexbuffer(0), arraybuffer(0), colorbuffer(0), normalbuffer(0),
-	instanceDrawn(0), trianglesDrawn(0), lastShader(nullptr)
+	instanceDrawn(0), trianglesDrawn(0), lastShader(nullptr), lastSkeleton(nullptr)
 {
 	context = nullptr;
 	camera = nullptr;
 	world = nullptr;
+	m_terrainVirtualTexture = nullptr;
 	m_OcclusionElapsedTime = m_OcclusionAvgTime = 0;
 
 	defaultShader[GRID] = nullptr;
@@ -84,6 +82,11 @@ Renderer::~Renderer()
 //
 
 //  Public functions
+void Renderer::initializeConstants()
+{
+	m_maxUniformSize = 1000;
+	//glGetIntegerv(GL_MAX_VERTEX_UNIFORM_VECTORS, &m_maxUniformSize);
+}
 void Renderer::initializeGrid(const unsigned int& gridSize,const float& elementSize, const vec4f& color)
 {
 	if (glIsVertexArray(gridVAO)) return;
@@ -241,9 +244,9 @@ void Renderer::initGlobalUniformBuffers()
 	glBindBufferRange(GL_UNIFORM_BUFFER, 0, m_globalMatricesID, 0, sizeof(m_globalMatrices));
 
 	// environment lighting settings
-	m_environementLighting.m_directionalLightDirection = vec4f(-10, -20, 0, 0);
+	m_environementLighting.m_directionalLightDirection = vec4f(-30, -20, 0, 0);
 	m_environementLighting.m_directionalLightColor = vec4f(1.f);// vec4f(0.15, 0.15, 0.15, 1.0);
-	m_environementLighting.m_ambientColor = vec4f(0);// 0.05, 0.05, 0.05, 1.0);
+	m_environementLighting.m_ambientColor = vec4f(0.34f);// 0.05, 0.05, 0.05, 1.0);
 
 	glGenBuffers(1, &m_environementLightingID);
 	glBindBuffer(GL_UNIFORM_BUFFER, m_environementLightingID);
@@ -264,6 +267,7 @@ void Renderer::initGlobalUniformBuffers()
 	m_debugShaderUniform.wireframeEdgeFactor = 0.4f;
 	m_debugShaderUniform.occlusionResultCuttoff = 50;
 	m_debugShaderUniform.occlusionResultDrawAlpha = 0.8f;
+	m_debugShaderUniform.animatedTime = 0.f;
 
 	glGenBuffers(1, &m_DebugShaderUniformID);
 	glBindBuffer(GL_UNIFORM_BUFFER, m_DebugShaderUniformID);
@@ -278,6 +282,13 @@ void Renderer::initGlobalUniformBuffers()
 	glBufferData(GL_UNIFORM_BUFFER, sizeof(m_OmniShadows), NULL, GL_DYNAMIC_DRAW);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 	glBindBufferRange(GL_UNIFORM_BUFFER, 4, m_omniShadowsID, 0, sizeof(m_OmniShadows));
+
+	// lights data
+	glGenBuffers(1, &m_terrainMaterialCollectionID);
+	glBindBuffer(GL_UNIFORM_BUFFER, m_terrainMaterialCollectionID);
+	glBufferData(GL_UNIFORM_BUFFER, sizeof(TerrainMaterial) * MAX_TERRAIN_MATERIAL, NULL, GL_DYNAMIC_DRAW);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+	glBindBufferRange(GL_UNIFORM_BUFFER, 5, m_terrainMaterialCollectionID, 0, sizeof(TerrainMaterial) * MAX_TERRAIN_MATERIAL);
 }
 void Renderer::initializeShadows(int cascadesWidth, int cascadesHeight, int omniWidth, int omniHeight)
 {
@@ -341,6 +352,169 @@ void Renderer::initializeShadows(int cascadesWidth, int cascadesHeight, int omni
 		std::cout << header << "Omni FBO Framebuffer is not complete !" << std::endl;
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+}
+void Renderer::initializeTerrainMaterialCollection(const std::string& textureName)
+{
+	auto PrintError = [&textureName](const std::string& msg)
+	{
+		if (ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
+		{
+			std::cout << ConsoleColor::getColorString(ConsoleColor::Color::RED) << "ERROR : loading TerrainMaterialCollection : " << textureName << " : " << msg << std::flush;
+			std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
+		}
+	};
+	auto PrintWarning = [&textureName](const std::string& msg)
+	{
+		if (ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::WARNINGS)
+		{
+			std::cout << ConsoleColor::getColorString(ConsoleColor::Color::YELLOW) << "WARNING : loading TerrainMaterialCollection : " << textureName << " : " << msg << std::flush;
+			std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
+		}
+	};
+
+	m_terrainMaterialCollection = ResourceManager::getInstance()->getResource<Texture>(textureName);
+	m_terrainMaterialInfos.clear();
+	m_terrainMaterialNames.clear();
+
+	// load texture array file
+	Variant v; Variant* tmp = nullptr;
+	try
+	{
+		Reader::parseFile(v, ResourceManager::getInstance()->getRepository() + Texture::directory + textureName);
+		tmp = &(v.getMap().begin()->second);
+		if (tmp->getType() != Variant::VariantType::MAP)
+		{
+			PrintError("wrong format");
+			ResourceManager::getInstance()->release(m_terrainMaterialCollection);
+			m_terrainMaterialCollection = nullptr;
+			return;
+		}
+	}
+	catch (std::exception&)
+	{
+		PrintError("fail to open or parse file");
+		ResourceManager::getInstance()->release(m_terrainMaterialCollection);
+		m_terrainMaterialCollection = nullptr;
+		return;
+	}
+	Variant::MapType& textureInfo = tmp->getMap();
+
+	// get layer infos
+	Variant::MapType::iterator it = textureInfo.find("layers");
+	if (it == textureInfo.end())
+	{
+		PrintError("no layer infos");
+		ResourceManager::getInstance()->release(m_terrainMaterialCollection);
+		m_terrainMaterialCollection = nullptr;
+		return;
+	}
+	else if (it->second.getType() != Variant::VariantType::ARRAY)
+	{
+		PrintError("wrong layer format (need an array)");
+		ResourceManager::getInstance()->release(m_terrainMaterialCollection);
+		m_terrainMaterialCollection = nullptr;
+		return;
+	}
+
+	auto& layerarray = it->second.getArray();
+	if (layerarray.size() >= MAX_TERRAIN_MATERIAL)
+		PrintWarning("Too much material in collection (max = " + std::to_string(MAX_TERRAIN_MATERIAL) + ")");
+	for (int i = 0; i < layerarray.size() && i < MAX_TERRAIN_MATERIAL; i++)
+	{
+		if (layerarray[i].getType() != Variant::VariantType::MAP)
+			continue;
+		{
+			//PrintWarning("element at index " + std::to_string(i) + " is not an object");
+		}
+
+		Variant::MapType& layer = layerarray[i].getMap();
+		std::string layername = "unknown";
+		it = layer.find("name");
+		if (it != layer.end() && it->second.getType() == Variant::VariantType::STRING)
+			layername = it->second.toString();
+		else PrintWarning("element at index " + std::to_string(i) + " has no valid name");
+
+		int invalidTextureIndex = m_terrainMaterialCollection->size.z;
+		TerrainMaterial material;
+		material.m_metalic = 0;
+		material.m_tiling = 1;
+
+		// albedo
+		it = layer.find("albedo");
+		if (it != layer.end() && it->second.getType() == Variant::VariantType::INT)
+		{
+			int index = it->second.toInt();
+			if (index >= 0 && index <= invalidTextureIndex)
+				material.m_albedo = index;
+			else
+			{
+				material.m_albedo = invalidTextureIndex;
+				PrintWarning("layer " + layername + " albedo index is out of bound");
+			}
+		}
+		else
+		{
+			material.m_albedo = invalidTextureIndex;
+			PrintWarning("layer " + layername + " has invalid albedo index (or none)");
+		}
+
+		// normal
+		it = layer.find("normal");
+		if (it != layer.end() && it->second.getType() == Variant::VariantType::INT)
+		{
+			int index = it->second.toInt();
+			if (index >= 0 && index <= invalidTextureIndex)
+				material.m_normal = index;
+			else
+			{
+				material.m_normal = invalidTextureIndex;
+				PrintWarning("layer " + layername + " normal index is out of bound");
+			}
+		}
+		else
+		{
+			material.m_normal = invalidTextureIndex;
+			PrintWarning("layer " + layername + " has invalid normal index (or none)");
+		}
+
+		// metalic and tiling
+		it = layer.find("metalic");
+		if (it != layer.end())
+		{
+			if (it->second.getType() == Variant::VariantType::INT)
+				material.m_metalic = it->second.toInt();
+			else if (it->second.getType() == Variant::VariantType::DOUBLE)
+				material.m_metalic = it->second.toDouble();
+			else if (it->second.getType() == Variant::VariantType::FLOAT)
+				material.m_metalic = it->second.toFloat();
+			else
+				PrintWarning("layer " + layername + " metalic is invalid");
+		}
+		it = layer.find("tiling");
+		if (it != layer.end())
+		{
+			if (it->second.getType() == Variant::VariantType::INT)
+				material.m_tiling = it->second.toInt();
+			else if (it->second.getType() == Variant::VariantType::DOUBLE)
+				material.m_tiling = it->second.toDouble();
+			else if (it->second.getType() == Variant::VariantType::FLOAT)
+				material.m_tiling = it->second.toFloat();
+			else
+				PrintWarning("layer " + layername + " tiling is invalid");
+		}
+
+		// end
+		m_terrainMaterialInfos.push_back(material);
+		m_terrainMaterialNames.push_back(layername);
+	}
+
+	glBindBuffer(GL_UNIFORM_BUFFER, m_terrainMaterialCollectionID);
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(TerrainMaterial) * m_terrainMaterialInfos.size(), m_terrainMaterialInfos.data());
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
+void Renderer::setVirtualTexture(TerrainVirtualTexture* virtualTexture)
+{
+	m_terrainVirtualTexture = virtualTexture;
 }
 
 void Renderer::initializeOverviewRenderer(int width, int height)
@@ -491,8 +665,11 @@ void Renderer::render(CameraComponent* renderCam)
 	trianglesDrawn = 0;
 	instanceDrawn = 0;
 	drawCalls = 0;
+	shadowDrawCalls = 0;
+	shadowDrawCalls = 0;
 	occlusionCulledInstances = 0;
 	lastShader = nullptr;
+	lastSkeleton = nullptr;
 	lastVAO = 0;
 	glBeginQuery(GL_TIME_ELAPSED, m_timerQueryID);
 
@@ -501,8 +678,9 @@ void Renderer::render(CameraComponent* renderCam)
 
 	//	bind matrix
 	m_globalMatrices.view = renderCam->getViewMatrix();
-	m_globalMatrices.projection = mat4f::perspective(renderCam->getVerticalFieldOfView(), context->getViewportRatio(), 0.1f, 1500.f);
+	m_globalMatrices.projection = mat4f::perspective(renderCam->getVerticalFieldOfView(), context->getViewportRatio(), 0.1f, 10000.f);
 	m_globalMatrices.cameraPosition = renderCam->getPosition();
+	m_debugShaderUniform.animatedTime = glfwGetTime();
 	updateShadowCascadeMatrices(camera, context->getViewportRatio());
 	updateGlobalUniformBuffers();
 	
@@ -518,8 +696,8 @@ void Renderer::render(CameraComponent* renderCam)
 	if (drawGrid && shader && glIsVertexArray(gridVAO))
 	{
 		shader->enable();
-		ModelMatrix modelMatrix = {mat4f::identity, mat4f::identity};
-		loadModelMatrix(shader, &modelMatrix);
+		ModelMatrix modelMatrix = {mat4f::identity, mat4f::identity };
+		loadInstanceMatrices(shader, (float*)&modelMatrix);
 		loadGlobalUniforms(shader);
 		int loc = shader->getUniformLocation("overrideColor");
 		if (loc >= 0) glUniform4fv(loc, 1, &m_gridColor[0]);
@@ -597,7 +775,8 @@ void Renderer::render(CameraComponent* renderCam)
 			SetCulling(it.hash & faceCullingMask);
 
 			if (it.batch)
-				drawInstancedObject(it.batch->shader, it.batch->mesh, it.batch->models);
+				drawInstancedObject(it.batch->shader, it.batch->mesh, (float*)it.batch->matrices.data(), it.batch->instanceDatas, 
+					it.batch->dataSize, it.batch->instanceCount, it.batch->constantDataReference);
 			else
 				drawObject(it.entity);
 		}
@@ -650,7 +829,7 @@ void Renderer::renderHUD()
 
 						mat4f m = mat4f::translate(model, (*it2)->getPosition());
 						ModelMatrix modelMatrix = { m, model };
-						loadModelMatrix(shader, &modelMatrix);
+						loadInstanceMatrices(shader, (float*)&modelMatrix);
 						if (!shader)
 							continue;
 
@@ -668,13 +847,11 @@ void Renderer::renderHUD()
 void Renderer::swap()
 {
 	int stopTimerAvailable = 0;
-	int timeout = 3;
 	while (!stopTimerAvailable)
 	{
 		glGetQueryObjectiv(m_timerQueryID, GL_QUERY_RESULT_AVAILABLE, &stopTimerAvailable);
 	}
 
-	if (timeout)
 	{
 		GLuint64 elapsedGPUtimer;
 		glGetQueryObjectui64v(m_timerQueryID, GL_QUERY_RESULT, &elapsedGPUtimer);
@@ -687,28 +864,41 @@ void Renderer::swap()
 //
 
 
-//	Protected functions
-void Renderer::loadModelMatrix(Shader* shader, const ModelMatrix* model, const int& modelSize)
+//	Protected function
+void Renderer::loadInstanceMatrices(Shader* _shader, float* _instanceMatrices, unsigned short _instanceCount)
 {
-	if (shader)
+	if (_shader)
 	{
-		shaderJustActivated = shader != lastShader;
-		if (shader != lastShader)
+		shaderJustActivated = _shader != lastShader;
+		if (shaderJustActivated)
 		{
-			shader->enable();
+			_shader->enable();
 			glBindVertexArray(0);
 			lastVAO = 0;
+			lastSkeleton = nullptr;
 		}
-		lastShader = shader;
+		lastShader = _shader;
 
-		int loc = shader->getUniformLocation("matrixArray");
-		if (loc >= 0)
-			glUniformMatrix4fv(loc, 2 * modelSize, GL_FALSE, (const float*)model);
+		if (_instanceMatrices)
+		{
+			int loc = _shader->getUniformLocation("matrixArray");
+			if (loc >= 0)
+				glUniformMatrix4fv(loc, 2 * _instanceCount, false, (const float*)_instanceMatrices);
+		}
 	}
-	else 
+	else
 	{
 		shaderJustActivated = false;
 		lastShader = nullptr;
+	}
+}
+void Renderer::loadInstanceDatas(Shader* _shader, vec4f* _instanceDatas, unsigned short _dataSize, unsigned short _instanceCount)
+{
+	if (_shader)
+	{
+		int loc = _shader->getUniformLocation("instanceDataArray");
+		if (loc >= 0)
+			glUniform4fv(loc, _dataSize * _instanceCount, (const float*)_instanceDatas);
 	}
 }
 void Renderer::loadGlobalUniforms(Shader* shader)
@@ -739,11 +929,27 @@ void Renderer::loadGlobalUniforms(Shader* shader)
 			glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, shadowOmniTextures.getTextureId());
 		}
 
-		if (baseLayerUniform >= 0)
+		loc = shader->getUniformLocation("_terrainVirtualTexture");
+		if (loc >= 0 && m_terrainVirtualTexture)
 		{
-			loc = shader->getUniformLocation("baseLayer");
+			uint8_t unit = shader->getGlobalTextureUnit("_terrainVirtualTexture");
+			glActiveTexture(GL_TEXTURE0 + unit);
+			glBindImageTexture(unit, m_terrainVirtualTexture->getTextureId(), 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA16UI);
+		}
+
+		loc = shader->getUniformLocation("_globalTerrainMaterialCollection");
+		if (loc >= 0 && m_terrainMaterialCollection)
+		{
+			uint8_t unit = shader->getGlobalTextureUnit("_globalTerrainMaterialCollection");
+			glActiveTexture(GL_TEXTURE0 + unit);
+			glBindTexture(GL_TEXTURE_2D_ARRAY, m_terrainMaterialCollection->getTextureId());
+		}
+
+		if (shadowOmniLayerUniform >= 0)
+		{
+			loc = shader->getUniformLocation("shadowOmniLayerUniform");
 			if (loc >= 0)
-				glUniform1i(loc, baseLayerUniform);
+				glUniform1i(loc, shadowOmniLayerUniform);
 		}
 	}
 }
@@ -808,6 +1014,12 @@ void Renderer::setEnvBackgroundColor(vec4f color)
 void Renderer::setEnvAmbientColor(vec4f color) { m_environementLighting.m_ambientColor = color; }
 void Renderer::setEnvDirectionalLightDirection(vec4f direction) { m_environementLighting.m_directionalLightDirection = direction; }
 void Renderer::setEnvDirectionalLightColor(vec4f color) { m_environementLighting.m_directionalLightColor = color; }
+void Renderer::incrementShaderAnimatedTime(float dTime) 
+{
+	m_debugShaderUniform.animatedTime += dTime;
+	if (m_debugShaderUniform.animatedTime > 3600.f)
+		m_debugShaderUniform.animatedTime -= 3600.f;
+}
 vec4f Renderer::getEnvBackgroundColor() const { return m_environementLighting.m_backgroundColor; }
 vec4f Renderer::getEnvAmbientColor() const { return m_environementLighting.m_ambientColor; }
 vec4f Renderer::getEnvDirectionalLightDirection() const { return m_environementLighting.m_directionalLightDirection; }
@@ -926,10 +1138,11 @@ void Renderer::drawImGui(World& world)
 	float columnWidth = 250.f;
 	ImGui::TextColored(titleColor, "DrawInfos");
 	ImGui::Text("Entities : %d", instanceDrawn);				ImGui::SameLine(columnWidth); ImGui::Text("Occluder triangles : %d", occluderTriangles);
-	ImGui::Text("Drawcalls : %d", drawCalls);					ImGui::SameLine(columnWidth); ImGui::Text("Occlusion rasterized triangles : %d", occluderRasterizedTriangles);
-	ImGui::Text("Triangles : %d", trianglesDrawn);				ImGui::SameLine(columnWidth); ImGui::Text("Occlusion pixel test : %d", occluderPixelsTest);
-	ImGui::Text("Lights : %d", m_sceneLights.m_lightCount);		ImGui::SameLine(columnWidth); ImGui::Text("Occlusion skipped : %d", occlusionCulledInstances);
-	ImGui::Text("Occlusion time : %d ms (%d)", (int)m_OcclusionAvgTime, (int)m_OcclusionElapsedTime);
+	ImGui::Text("Drawcalls : %d", drawCalls - shadowDrawCalls); ImGui::SameLine(columnWidth); ImGui::Text("Occlusion rasterized triangles : %d", occluderRasterizedTriangles);
+	ImGui::Text("Shadow drawcalls : %d", shadowDrawCalls);		ImGui::SameLine(columnWidth); ImGui::Text("Occlusion pixel test : %d", occluderPixelsTest);
+	ImGui::Text("Triangles : %d", trianglesDrawn);				ImGui::SameLine(columnWidth); ImGui::Text("Occlusion skipped : %d", occlusionCulledInstances);
+	ImGui::Text("Lights : %d", m_sceneLights.m_lightCount);		ImGui::SameLine(columnWidth); ImGui::Text("Occlusion time : %d ms (%d)", (int)m_OcclusionAvgTime, (int)m_OcclusionElapsedTime);
+	ImGui::Text("GPU : %d ms (%d)", (int)m_GPUavgTime, (int)m_GPUelapsedTime);
 	
 	ImGui::PopID();
 	ImGui::End();
@@ -938,12 +1151,15 @@ void Renderer::drawImGui(World& world)
 	{
 		vec4f d = m_environementLighting.m_directionalLightDirection;
 		d.normalize();
-
+		vec4f fwd = camera->getForward();
+		//fwd.y = 0;
+		vec4f offset = camera->getPosition() - vec4f(0, -10, 0, 0) + 50.f * fwd;
+		offset.w = 0;
 		Debug::color = m_environementLighting.m_directionalLightColor;
 		for (int i = -50; i <= 50; i++)
 			for (int j = -50; j <= 50; j++)
 			{
-				vec4f p = vec4f(5 * i, 0, 5 * j, 1.f);
+				vec4f p = vec4f(5 * i, 0, 5 * j, 1.f) + offset;
 				Debug::drawLine(p, p - 100.f * d);
 			}
 	}

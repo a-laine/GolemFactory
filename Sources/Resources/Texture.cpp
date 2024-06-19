@@ -85,7 +85,8 @@ std::string Texture::getIdentifier() const
 }
 std::string Texture::getLoaderId(const std::string& resourceName) const
 {
-    if((configuration & (uint8_t)TextureConfiguration::TYPE_MASK) == (uint8_t)TextureConfiguration::TEXTURE_2D)
+    size_t ext = resourceName.find_last_of('.');
+    if (ext != std::string::npos && resourceName.substr(ext) != extension)
         return "image";
     else
         return extension;
@@ -193,9 +194,9 @@ void Texture::initialize(const std::string& textureName, const vec3i& imageSize,
     if (configuration & (uint8_t)TextureConfiguration::USE_MIPMAP)
     {
         if (configuration & (uint8_t)TextureConfiguration::MAG_NEAREST)
-            glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_NEAREST_MIPMAP_LINEAR);
+            glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         else
-            glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+            glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         CheckError("glTexParameteri MAG_FILTER & MIPMAP");
 
         if (configuration & (uint8_t)TextureConfiguration::MIN_NEAREST)
@@ -289,54 +290,49 @@ void Texture::update(const void* data, unsigned int pixelFormat, unsigned int co
             return false;
         switch (error)
         {
-        case GL_INVALID_ENUM: std::cout << n << " : " << label << " : GL_INVALID_ENUM" << std::endl; break;
-        case GL_INVALID_VALUE: std::cout << n << " : " << label << " : GL_INVALID_VALUE" << std::endl; break;
-        case GL_INVALID_OPERATION: std::cout << n << " : " << label << " : GL_INVALID_OPERATION" << std::endl; break;
-        case GL_INVALID_FRAMEBUFFER_OPERATION: std::cout << n << label << " : GL_INVALID_FRAMEBUFFER_OPERATION" << std::endl; break;
-        case GL_OUT_OF_MEMORY: std::cout << n << " : " << label << " : GL_OUT_OF_MEMORY" << std::endl; break;
-        case GL_STACK_UNDERFLOW: std::cout << n << " : " << label << " : GL_STACK_UNDERFLOW" << std::endl; break;
-        case GL_STACK_OVERFLOW: std::cout << n << " : " << label << " : GL_STACK_OVERFLOW" << std::endl; break;
-        default: break;
+            case GL_INVALID_ENUM: std::cout << n << " : " << label << " : GL_INVALID_ENUM" << std::endl; break;
+            case GL_INVALID_VALUE: std::cout << n << " : " << label << " : GL_INVALID_VALUE" << std::endl; break;
+            case GL_INVALID_OPERATION: std::cout << n << " : " << label << " : GL_INVALID_OPERATION (or called out of render thread)" << std::endl; break;
+            case GL_INVALID_FRAMEBUFFER_OPERATION: std::cout << n << label << " : GL_INVALID_FRAMEBUFFER_OPERATION" << std::endl; break;
+            case GL_OUT_OF_MEMORY: std::cout << n << " : " << label << " : GL_OUT_OF_MEMORY" << std::endl; break;
+            case GL_STACK_UNDERFLOW: std::cout << n << " : " << label << " : GL_STACK_UNDERFLOW" << std::endl; break;
+            case GL_STACK_OVERFLOW: std::cout << n << " : " << label << " : GL_STACK_OVERFLOW" << std::endl; break;
+            default: break;
         }
         return error != GL_NO_ERROR;
     };
 
     vec3i updateSize = vec3i::min(size, subSize);
-    unsigned int type = GL_TEXTURE_2D;
     switch ((TextureConfiguration)(configuration & (uint8_t)TextureConfiguration::TYPE_MASK))
     {
         case TextureConfiguration::TEXTURE_1D:
             glBindTexture(GL_TEXTURE_1D, texture);
             glTexSubImage1D(GL_TEXTURE_1D, 0, offset.x, updateSize.x, pixelFormat, colorFormat, data);
             CheckError("glTexSubImage1D");
-            type = GL_TEXTURE_1D;
             break;
 
         case TextureConfiguration::TEXTURE_2D:
             glBindTexture(GL_TEXTURE_2D, texture);
             glTexSubImage2D(GL_TEXTURE_2D, 0, offset.x, offset.y, updateSize.x, updateSize.y, pixelFormat, colorFormat, data);
             CheckError("glTexSubImage2D");
-            type = GL_TEXTURE_2D;
             break;
 
         case TextureConfiguration::TEXTURE_3D:
             glBindTexture(GL_TEXTURE_3D, texture);
             glTexSubImage3D(GL_TEXTURE_3D, 0, offset.x, offset.y, offset.z, updateSize.x, updateSize.y, updateSize.z, pixelFormat, colorFormat, data);
             CheckError("glTexSubImage3D");
-            type = GL_TEXTURE_3D;
             break;
 
         case TextureConfiguration::TEXTURE_ARRAY:
             glBindTexture(GL_TEXTURE_2D_ARRAY, texture);
             glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, offset.x, offset.y, offset.z, updateSize.x, updateSize.y, updateSize.z, pixelFormat, colorFormat, data);
             CheckError("glTexSubImage3D");
-            type = GL_TEXTURE_2D_ARRAY;
             break;
 
         default:
             return;
     }
-    glBindTexture(type, 0);
+    glBindTexture(m_type, 0);
 }
 
 

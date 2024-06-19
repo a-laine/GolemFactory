@@ -109,3 +109,13 @@
 	*/
     typedef std::mutex Mutex;
 #endif
+
+class MutexGuard
+{
+	public:
+		MutexGuard(Mutex& m) : m_mutex(&m) { m_mutex->lock(); };
+		~MutexGuard() { m_mutex->unlock(); };
+
+	protected:
+		Mutex* m_mutex;
+};

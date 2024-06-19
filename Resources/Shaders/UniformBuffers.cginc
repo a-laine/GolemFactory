@@ -48,6 +48,7 @@ layout(std140, binding = 3) uniform DebugShaderUniform
 	float wireframeEdgeFactor;
 	float occlusionResultDrawAlpha;
 	float occlusionResultCuttoff;
+	float animatedTime;
 };
 layout(std140, binding = 4) uniform OmniShadows
 {
@@ -56,5 +57,17 @@ layout(std140, binding = 4) uniform OmniShadows
 	vec4 omniShadowNearLow;
 	vec4 omniShadowNearHigh;
 	mat4 omniShadowProjections[48];
+};
+
+struct TerrainMaterial
+{
+	int m_albedo;
+	int m_normal;
+	float m_tiling;
+	float m_metalic;
+};
+layout(std140, binding = 5) uniform TerrainMaterialCollections
+{
+	TerrainMaterial terrainMaterials[128];
 };
 //

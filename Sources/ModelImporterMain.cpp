@@ -51,6 +51,7 @@
 #include <Utiles/OpenSaveFileDialog.h>
 #include <Utiles/ConsoleColor.h>
 #include <Utiles/DirectoryWatcher.h>
+#include <Utiles/WorkerThread.h>
 
 #include <Terrain/Terrain.h>
 
@@ -68,12 +69,14 @@ enum EventEnum
 
 
 
+
 //	global attributes
 RenderContext* context = nullptr;
 World world;
 Entity* editorCamera = nullptr;
 DirectoryWatcher* watcher = nullptr;
 Terrain terrain;
+std::atomic_bool loading = false;
 
 double completeTime = 16.;
 double averageCompleteTime = 16.;
@@ -124,7 +127,7 @@ int main()
 	watcher = new DirectoryWatcher(ResourceManager::getInstance()->getRepository() + "GUI");
 	watcher->createNewFileWatcher("ModelImporter.gui");
 
-
+	 
 	//	Collision test
 	/*world.getEntityFactory().createObject("cube", [](Entity* object) // ground collider
 		{
@@ -133,13 +136,15 @@ int main()
 		});*/
 
 	//	Scene
-	Renderer::getInstance()->setGridVisible(true);
+	Renderer::getInstance()->setGridVisible(false);
+	//Renderer::getInstance()->setRenderOption(Renderer::RenderOption::WIREFRAME);
+	
 	//initializeSyntyScene();
 
 	editorCamera = world.getEntityFactory().createObject([](Entity* object)
 		{
 			object->setName("EditorCamera");
-			object->setWorldPosition(vec4f(-5, 3, -3, 1));
+			object->setWorldPosition(vec4f(-219, 21.4, -6.1, 1));
 
 			Collider* collider = new Collider(new Sphere(vec4f(0.f), 0.01f));
 			object->addComponent(collider);
@@ -147,7 +152,7 @@ int main()
 
 			CameraComponent* cam = new CameraComponent(true);
 			object->addComponent(cam);
-			cam->setDirection(vec4f(-1, 0, 0, 0));
+			cam->setDirection(vec4f(-0.2, 0, -1, 0));
 			currentCamera = cam;
 			world.setMainCamera(cam);
 			Renderer::getInstance()->setCamera(cam);
@@ -187,12 +192,12 @@ int main()
 
 		Debug::viewportRatio = context->getViewportRatio();
 		Debug::view = currentCamera->getViewMatrix();
-		Debug::projection = mat4f::perspective(currentCamera->getVerticalFieldOfView(), context->getViewportRatio(), 0.1f, 30000.f);  //far = 1500.f
+		Debug::projection = mat4f::perspective(currentCamera->getVerticalFieldOfView(), context->getViewportRatio(), 0.1f, 10000.f);  //far = 1500.f
 
 		// Render scene & picking
-		if (WidgetManager::getInstance()->getBoolean("wireframe"))
-			Renderer::getInstance()->setRenderOption(Renderer::RenderOption::WIREFRAME);
-		else Renderer::getInstance()->setRenderOption(Renderer::RenderOption::DEFAULT);
+		//if (WidgetManager::getInstance()->getBoolean("wireframe"))
+		//	Renderer::getInstance()->setRenderOption(Renderer::RenderOption::WIREFRAME);
+		//else Renderer::getInstance()->setRenderOption(Renderer::RenderOption::DEFAULT);
 		Renderer::getInstance()->render(currentCamera);
 
 		// gizmos and hud
@@ -235,7 +240,9 @@ int main()
 
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 		}
-		elapseTime = 1000.0 * (glfwGetTime() - startTime);
+		double dt = glfwGetTime() - startTime;
+		Renderer::getInstance()->incrementShaderAnimatedTime(dt);
+		elapseTime = 1000.0 * (dt);
 	}
 
 	//	end
@@ -486,6 +493,9 @@ void initManagers()
 	EventHandler::getInstance()->setCursorMode(true);
 	EventHandler::getInstance()->addResizeCallback(WidgetManager::resizeCallback);
 
+	// Worker thread utility
+	WorkerThread::initialize(6, 2);
+
 	// Init Resources manager
 	ResourceVirtual::logVerboseLevel = ResourceVirtual::VerboseLevel::ALL;
 	ResourceManager::getInstance()->setRepository(resourceRepository);
@@ -509,7 +519,7 @@ void initManagers()
 	ResourceManager::getInstance()->addNewResourceLoader(".animGraph", new AnimationGraphLoader());
 
 	// Init world
-	const vec4f worldHalfSize = vec4f(64000, 128.f, 64000, 0);// vec4f(GRID_SIZE * GRID_ELEMENT_SIZE, 128.f, GRID_SIZE * GRID_ELEMENT_SIZE, 0) * 0.5f;
+	const vec4f worldHalfSize = vec4f(32000, 1024.f, 32000, 0);// vec4f(GRID_SIZE * GRID_ELEMENT_SIZE, 128.f, GRID_SIZE * GRID_ELEMENT_SIZE, 0) * 0.5f;
 	const vec4f worldPos = vec4f(0, 0.5f * worldHalfSize.y, 0, 1);
 	NodeVirtual::debugWorld = &world;
 
@@ -533,10 +543,12 @@ void initManagers()
 	Renderer::getInstance()->normalViewer = ResourceManager::getInstance()->getResource<Shader>("normalViewer");
 	Renderer::getInstance()->initializeGrid(GRID_SIZE, GRID_ELEMENT_SIZE, vec4f(24 / 255.f, 202 / 255.f, 230 / 255.f, 1.f));	// blue tron
 
+	Renderer::getInstance()->initializeConstants();
 	Renderer::getInstance()->initializeLightClusterBuffer(64, 36, 128);
 	Renderer::getInstance()->initializeOcclusionBuffers(256, 144);
 	Renderer::getInstance()->initializeShadows(1024, 1024, 1024, 1024);
 	Renderer::getInstance()->initializeOverviewRenderer(512, 512);
+	Renderer::getInstance()->initializeTerrainMaterialCollection("GroundTextures/TerrainMaterialCollection.texture");
 
 	// Debug
 	Debug::getInstance()->initialize("Shapes/box", "Shapes/sphere.obj", "Shapes/capsule", "default", "wired", "debug", "textureReinterpreter");
@@ -548,8 +560,23 @@ void initManagers()
 	WidgetManager::getInstance()->disableAllHUD();
 
 	// Terrain
+	terrain.setWorld(&world);
 	terrain.initializeClipmaps();
+	//terrain.setMaterialCollection("GroundTextures/TerrainMaterialCollection.terrain");
+	world.getTerrainVirtualTexture().initialize(2048);
+	terrain.setVirtualTexture(&world.getTerrainVirtualTexture());
+	Renderer::getInstance()->setVirtualTexture(&world.getTerrainVirtualTexture());
 
+	terrain.g_morphingRange = 50.f;
+	terrain.addLodRadius(70);//lod0
+	terrain.addLodRadius(375 + terrain.g_morphingRange);
+	terrain.addLodRadius(375 + terrain.g_morphingRange);
+	terrain.addLodRadius(375 + terrain.g_morphingRange);
+	terrain.addLodRadius(375*2 + terrain.g_morphingRange);
+	terrain.addLodRadius(375*3 + terrain.g_morphingRange);
+	terrain.addLodRadius(375*3 + terrain.g_morphingRange);
+	terrain.addLodRadius(375*3 + terrain.g_morphingRange);
+	terrain.load(resourceRepository + "Terrain");
 
 	// default layout loading
 #ifdef USE_IMGUI
@@ -568,6 +595,8 @@ void initManagers()
 }
 void picking()
 {
+	return;
+
 	SCOPED_CPU_MARKER("Picking");
 	vec4f origin = currentCamera->getPosition();
 	vec4f direction = currentCamera->getForward(); // no rotations
@@ -623,13 +652,14 @@ void events()
 		if (v[i] == QUIT) glfwSetWindowShouldClose(context->getParentWindow(), GL_TRUE);
 
 		//else if (v[i] == F10)  EventHandler::getInstance()->getCursorPositionRelative();
-		
+
 		else if (v[i] == HELP) WidgetManager::getInstance()->setActiveHUD((WidgetManager::getInstance()->getActiveHUD() == "help" ? "" : "help"));
 		else if (v[i] == F9)   WidgetManager::getInstance()->setActiveHUD((WidgetManager::getInstance()->getActiveHUD() == "debug" ? "" : "debug"));
 		else if (v[i] == F10)  WidgetManager::getInstance()->setActiveHUD((WidgetManager::getInstance()->getActiveHUD() == "rendering" ? "" : "rendering"));
 		else if (v[i] == F11)  WidgetManager::getInstance()->setActiveHUD((WidgetManager::getInstance()->getActiveHUD() == "ModelImporter" ? "" : "ModelImporter"));
 
-		else if (v[i] == F4)   WidgetManager::getInstance()->setBoolean("wireframe", !WidgetManager::getInstance()->getBoolean("wireframe"));
+		else if (v[i] == F4)   currentCamera->setPosition(vec4f(3000, 200, 0, 1));// WidgetManager::getInstance()->setBoolean("wireframe", !WidgetManager::getInstance()->getBoolean("wireframe"));
+		else if (v[i] == F5)   currentCamera->setPosition(vec4f(0, 200, 0, 1));
 
 		else if (v[i] == CLICK_LEFT && !EventHandler::getInstance()->isActivated(CLICK_LEFT)) // released
 		{
@@ -673,6 +703,8 @@ void updates(float elapseTime)
 	SCOPED_CPU_MARKER("Updates");
 
 	world.getSceneManager().update(currentCamera->getPosition());
+	//if (!loading)
+		terrain.update(currentCamera->getPosition());
 
 	//	Compute HUD picking parameters
 	if (EventHandler::getInstance()->getCursorMode())
@@ -690,12 +722,12 @@ void updates(float elapseTime)
 
 	//	Update widgets
 	averageCompleteTime = 0.99f * averageCompleteTime + 0.01f * completeTime;
-	WidgetManager::getInstance()->setString("runtime speed",
+	/*WidgetManager::getInstance()->setString("runtime speed",
 		"FPS : " + std::to_string((int)(1000.f / completeTime)) + "\navg : " + std::to_string((int)(1000.f / averageCompleteTime)) +
 		"\n\nTime : " + ToolBox::to_string_with_precision(completeTime) + " ms\navg : " + ToolBox::to_string_with_precision(averageCompleteTime) + " ms");
 	WidgetManager::getInstance()->setString("drawcalls",
 		"Instances :\n  " + std::to_string(Renderer::getInstance()->getNbDrawnInstances() + WidgetManager::getInstance()->getNbDrawnWidgets()) +
-		"\n\nTriangles :\n  " + std::to_string(Renderer::getInstance()->getNbDrawnTriangles() + WidgetManager::getInstance()->getNbDrawnTriangles()));
+		"\n\nTriangles :\n  " + std::to_string(Renderer::getInstance()->getNbDrawnTriangles() + WidgetManager::getInstance()->getNbDrawnTriangles()));*/
 	WidgetManager::getInstance()->update((float)elapseTime, EventHandler::getInstance()->isActivated(CLICK_LEFT));
 
 	// animate camera
@@ -744,6 +776,7 @@ void ImGuiMenuBar()
 	extern bool SpatialPartitionningWindowEnable;
 	extern bool RenderingWindowEnable;
 	extern bool ResourcesWindowEnable;
+	extern bool TerrainWindowEnable;
 
 
 	if (EventHandler::getInstance()->isActivated(ALT))
@@ -761,6 +794,7 @@ void ImGuiMenuBar()
 			{
 				ImGui::MenuItem("Hierarchy", NULL, &HierarchyWindowEnable);
 				ImGui::MenuItem("Spatial partitionning", NULL, &SpatialPartitionningWindowEnable);
+				ImGui::MenuItem("Terrain debug", NULL, &TerrainWindowEnable);
 				ImGui::EndMenu();
 			}
 			if (ImGui::BeginMenu("Creation tools"))
@@ -783,6 +817,7 @@ void ImGuiSystemDraw()
 	extern bool SpatialPartitionningWindowEnable;
 	extern bool RenderingWindowEnable;
 	extern bool ResourcesWindowEnable;
+	extern bool TerrainWindowEnable;
 
 	if (PhysicDebugWindowEnable)
 	{
@@ -797,21 +832,113 @@ void ImGuiSystemDraw()
 		Renderer::getInstance()->drawImGui(world);
 	if (ResourcesWindowEnable)
 		ResourceManager::getInstance()->drawImGui(world);
+	if (TerrainWindowEnable)
+		terrain.drawImGui(world);
 
 	// special creation tools
 	if (TerrainCreatorWindowEnable)
 	{
-		static vec2i terrainSize = vec2i(16, 16);
-		static int seed = 0;
+		static vec2i terrainSize = vec2i(32, 32);
+		static std::string folderName = "Terrain";
+		static std::string loadingFolder;
+		static std::string loadingText = "Waiting command";
 
+		struct JobData
+		{
+			Terrain* terrain;
+			std::vector<vec2i> loadingQueue;
+			std::atomic<uint32_t> progress;
+		};
+		static JobData jobdata;
+		static Job* generationJob;
+		static Job* postGenerationJob;
+
+
+		folderName.reserve(128);
 		ImGui::Begin("Terrain Creator");
 		
-		ImGui::DragInt("Seed", &seed);
-		ImGui::DragInt2("TerrainSize", &terrainSize.x, 1, 1, 4096, "%d", ImGuiSliderFlags_AlwaysClamp);
+		ImGui::DragInt("Seed", &TerrainArea::g_seed);
+		ImGui::DragInt2("TerrainSize", &terrainSize.x, 1, 1, 128, "%d", ImGuiSliderFlags_AlwaysClamp);
+		ImGui::InputText("Terrain folder", &folderName[0], folderName.capacity());
 
-		if (ImGui::Button("Generate"))
+		bool loadingCache = loading;
+		if (loadingCache)
 		{
+			ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+			ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+		}
+		if (ImGui::Button("Generate") && !loading)
+		{
+			terrain.clear();
+			jobdata.loadingQueue.clear();
+			jobdata.loadingQueue.reserve(terrainSize.x * terrainSize.y);
+			vec2i offsetIndex = vec2i(terrainSize.x / 2, terrainSize.y / 2);
+			for (int i = 0; i < terrainSize.x; i++)
+				for (int j = 0; j < terrainSize.y; j++)
+				{
+					vec2i index = vec2i(i, j) - offsetIndex;
+					TerrainArea area(index, &terrain);
+					terrain.addArea(area, false);
+					jobdata.loadingQueue.push_back(vec2i(i, j));
+				}
+			jobdata.terrain = &terrain;
+			terrain.recomputeGrid();
 
+			jobdata.progress = 0;
+			loading = true;
+			loadingFolder = ResourceManager::getInstance()->getRepository() + std::string(folderName) + "/";
+
+			const auto generateJob = [](void* data, int instanceID, int count)
+			{
+				JobData* jobdata = (JobData*)data;
+				jobdata->terrain->generate(loadingFolder, jobdata->loadingQueue[instanceID]);
+				jobdata->progress++;
+			};
+			generationJob = new Job(jobdata.loadingQueue.size(), generateJob, &jobdata);
+			generationJob->addToQueue(Job::JobPriority::LOW);
+		}
+		ImGui::SameLine();
+		if (ImGui::Button("Load") && !loading)
+		{
+			loadingFolder = ResourceManager::getInstance()->getRepository() + std::string(folderName);
+			terrain.clear();
+			terrain.load(loadingFolder);
+		}
+		if (loadingCache)
+		{
+			ImGui::PopItemFlag();
+			ImGui::PopStyleVar();
+		}
+
+		if (loading)
+		{
+			terrain.getVirtualTexture()->syncroGPUTexture();
+			uint32_t tmp = jobdata.progress.load();
+			if (tmp >= jobdata.loadingQueue.size())
+			{
+				loading = false;
+				loadingText = "Finished";
+			}
+			else
+			{
+				loadingText = "Generating " + std::to_string(tmp) + " / " + std::to_string(jobdata.loadingQueue.size());
+			}
+		}
+
+		uint32_t tmp = jobdata.progress.load();
+		float t = 0.f;
+		if (jobdata.loadingQueue.size() > 0)
+			t = (float)tmp / jobdata.loadingQueue.size();
+		ImGui::Separator();
+		ImGui::ProgressBar(t, ImVec2(-1, 0), loadingText.c_str());
+
+		ImGui::Text("Terrain attributes");
+		ImGui::DragFloat("Amplitude", &TerrainArea::g_heightAmplitude, 0.1f, 0.f, 4000.f);
+		ImGui::Text("Noise harmonic");
+		for (int i = 0; i < 8; i++)
+		{
+			std::string label = "lvl " + std::to_string(i);
+			ImGui::SliderFloat(label.c_str(), &TerrainArea::g_noiseCurve[i], 0, 1, "%.4f", ImGuiSliderFlags_Logarithmic);
 		}
 
 		ImGui::End();

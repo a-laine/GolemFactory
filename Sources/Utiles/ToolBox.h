@@ -24,8 +24,9 @@ class ToolBox
 		template <typename T> static std::string to_string_with_precision(const T& a_value, const int& n = 2)
 		{
 			std::ostringstream out;
-			out << std::setprecision(n) << a_value;
-			return out.str();
+			out.precision(n);
+			out << std::fixed << a_value;
+			return std::move(out).str();
 		}
 
 		//	vector and matrix serialization

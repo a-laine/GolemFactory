@@ -1,12 +1,16 @@
 #pragma once
 
+#include <vector>
+
 #include <Math/TMath.h>
 #include <EntityComponent\Component.hpp>
+#include "Renderer.h"
 
 
 class Shader;
 class Mesh;
 class Skeleton;
+class Batch;
 
 class DrawableComponent : public Component
 {
@@ -27,13 +31,21 @@ class DrawableComponent : public Component
 		void setMesh(Mesh* mesh);
 		void setCastShadow(bool enabled);
 
+		virtual void pushDraw(std::vector<Renderer::DrawElement>& drawQueue, uint32_t distance, bool isShadowPass);
+
 		Shader* getShader() const;
 		Mesh* getMesh() const;
 
         bool isValid() const;
 		bool castShadow() const;
 
-        bool hasSkeleton() const;
+		virtual unsigned short getInstanceDataSize() const;
+		virtual void pushInstanceData(Shader* _shader) const;
+		virtual void writeInstanceData(vec4f* _destination) const;
+		virtual bool hasConstantData() const;
+		virtual void pushConstantData(Shader* _shader) const;
+
+        virtual bool hasSkeleton() const;
 		vec4f getMeshBBMax() const;
 		vec4f getMeshBBMin() const;
 
@@ -44,7 +56,7 @@ class DrawableComponent : public Component
 		bool visible() const { return m_visible; };
 #endif
 
-	private:
+	protected:
 		Mesh* m_mesh;
 		Shader* m_shader;
 

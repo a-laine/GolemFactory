@@ -17,7 +17,7 @@ World* NodeVirtual::debugWorld = nullptr;
 
 
 //	Default
-NodeVirtual::NodeVirtual() : position(0.f) , halfSize(0.f) , division(0) , allowanceSize(1.f){}
+NodeVirtual::NodeVirtual() : position(0.f) , halfSize(0.f), m_parent(nullptr), division(0) , allowanceSize(1.f){}
 NodeVirtual::~NodeVirtual()
 {
 	merge();
@@ -57,6 +57,7 @@ void NodeVirtual::split()
 				min.z = bbmin.z + z * childSize.z;
 				children[index] = g_nodePool.getFreeObject();
 				children[index]->init(min, min + childSize, division);
+				children[index]->m_parent = this;
 				index++;
 			}
 		}
@@ -69,13 +70,16 @@ void NodeVirtual::merge()
 	{
 		n->merge();
 		g_nodePool.releaseObject(n);
+		n->m_parent = nullptr;
 	}
 	children.clear();
 
 	for (unsigned int i = 0; i < objectList.size(); i++)
 	{
 		World* world = objectList[i]->getParentWorld();
-		world->releaseOwnership(objectList[i]);
+		world->removeFromScene(objectList[i]);
+		//world->releaseOwnership(objectList[i]);
+		//world->getSceneManager().removeObject(objectList[i]);
 	}
 	objectList.clear();
 }
@@ -91,12 +95,12 @@ bool NodeVirtual::isLeaf() const { return children.empty(); }
 
 bool NodeVirtual::isInside(const vec4f& point) const
 {
-	vec4f p = point - getCenter();
+	vec4f p = point - position;
 	vec4f s = halfSize;
 	return std::abs(p.x) <= s.x && std::abs(p.y) <= s.y && std::abs(p.z) <= s.z;
 }
 
-bool NodeVirtual::isTooSmall(const vec4f& size) const
+/*bool NodeVirtual::isTooSmall(const vec4f& size) const
 {
 	return vec4f::dot(size, size) < 4 * allowanceSize * allowanceSize;
 }
@@ -104,7 +108,7 @@ bool NodeVirtual::isTooSmall(const vec4f& size) const
 bool NodeVirtual::isTooBig(const vec4f& size) const
 {
 	return vec4f::dot(size, size) > allowanceSize * allowanceSize;
-}
+}*/
 vec4f NodeVirtual::getPosition() const
 {
 	return position;

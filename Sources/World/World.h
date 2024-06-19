@@ -39,7 +39,8 @@ class World
 
 		TerrainVirtualTexture& getTerrainVirtualTexture() { return m_terrainVirtualTexture; };
 
-		bool addToScene(Entity* object);
+		bool addToScene(Entity* object, int maxDepth = 1000);
+		bool removeFromScene(Entity* object);
 
 		void setMainCamera(CameraComponent* _camera);
 		CameraComponent* getMainCamera() const;

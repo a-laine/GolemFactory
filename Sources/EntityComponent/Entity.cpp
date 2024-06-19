@@ -4,6 +4,7 @@
 #include "Renderer/DrawableComponent.h"
 #include "Renderer/Lighting/LightComponent.h"
 #include "Animation/SkeletonComponent.h"
+#include "Terrain/TerrainAreaDrawableComponent.h"
 #include "World/World.h"
 
 #include <Utiles/Debug.h>
@@ -199,39 +200,39 @@ void Entity::setParentWorld(World* parentWorld)
 void Entity::recomputeBoundingBox()
 {
 	bool firstshape = true;
+	const auto AddBox = [&](const AxisAlignedBox& box)
+	{
+		if (firstshape)
+			m_localBoundingBox = box;
+		else m_localBoundingBox.add(box);
+		firstshape = false;
+	};
 	const auto visitor = [&](EntityBase::Element& element)
 	{
 		if (element.type == Collider::getStaticClassID())
 		{
 			const Collider* collider = static_cast<const Collider*>(element.comp);
-			if (firstshape)
-				m_localBoundingBox = collider->m_shape->toAxisAlignedBox();
-			else m_localBoundingBox.add(collider->m_shape->toAxisAlignedBox());
-			firstshape = false;
-		}
-		else if (element.type == DrawableComponent::getStaticClassID() && (getFlags()&(uint64_t)Flags::Fl_Skinned) == 0)
-		{
-			const DrawableComponent* drawable = static_cast<const DrawableComponent*>(element.comp);
-			if (firstshape)
-				m_localBoundingBox = drawable->getMesh()->getBoundingBox();
-			else m_localBoundingBox.add(drawable->getMesh()->getBoundingBox());
-			firstshape = false;
-		}
-		else if (element.type == LightComponent::getStaticClassID())
-		{
-			const LightComponent* light = static_cast<const LightComponent*>(element.comp);
-			vec4f radius4 = vec4f(light->getRange());
-			m_localBoundingBox.min = vec4f::min(m_localBoundingBox.min, -radius4);
-			m_localBoundingBox.max = vec4f::max(m_localBoundingBox.max, radius4);
-			firstshape = false;
+			AddBox(collider->m_shape->toAxisAlignedBox());
 		}
 		else if (element.type == SkeletonComponent::getStaticClassID())
 		{
 			const SkeletonComponent* skeleton = static_cast<const SkeletonComponent*>(element.comp);
-			if (firstshape)
-				m_localBoundingBox = skeleton->getBoundingBox();
-			else m_localBoundingBox.add(skeleton->getBoundingBox());
-			firstshape = false;
+			AddBox(skeleton->getBoundingBox());
+		}
+		else if (element.type == TerrainAreaDrawableComponent::getStaticClassID())
+		{
+			const TerrainAreaDrawableComponent* area = static_cast<const TerrainAreaDrawableComponent*>(element.comp);
+			AddBox(area->getBoundingBox());
+		}
+		else if (element.comp->isIdInHierarchy(DrawableComponent::getStaticClassID()))
+		{
+			const DrawableComponent* drawable = static_cast<const DrawableComponent*>(element.comp);
+			AddBox(drawable->getMesh()->getBoundingBox());
+		}
+		else if (element.type == LightComponent::getStaticClassID())
+		{
+			const LightComponent* light = static_cast<const LightComponent*>(element.comp);
+			AddBox(light->getBoundingBox());
 		}
 		return false;
 	};
@@ -270,7 +271,8 @@ const mat4f& Entity::getWorldTransformMatrix()
 }
 const mat4f& Entity::getNormalMatrix()
 {
-	getWorldTransformMatrix();
+	if (m_transformIsDirty)
+		getWorldTransformMatrix();
 	return m_normalMatrix;
 }
 const mat4f& Entity::getInverseWorldTransformMatrix()
@@ -320,6 +322,26 @@ void Entity::addChild(Entity* child)
 		return;
 	m_childs.push_back(child);
 	child->m_parentEntity = this;
+}
+void Entity::removeChild(Entity* child)
+{
+	int index = -1;
+	for (int i = 0; i < m_childs.size(); i++)
+	{
+		if (m_childs[i] == child)
+		{
+			index = i;
+			break;
+		}
+	}
+	if (index >= 0)
+	{
+		child->m_parentEntity = nullptr;
+		int last = m_childs.size() - 1;
+		if (index != last)
+			m_childs[index] = m_childs[last];
+		m_childs.pop_back();
+	}
 }
 void Entity::recursiveHierarchyCollect(std::vector<Entity*>& collection)
 {
@@ -420,6 +442,7 @@ bool Entity::drawImGui(World& world, bool inChildWindow)
 
 		ImGui::Spacing();
 		ImGui::TextColored(ImVec4(1, 1, 0, 1), "Gizmos");
+		ImGui::Text("Distance to camera : %.2f", (Debug::view[3] - m_worldPosition).getNorm());
 		ImGui::Checkbox("Show transform", &m_showTransform);
 		ImGui::Checkbox("Show all hierarchy", &m_showHierarchyTransform);
 

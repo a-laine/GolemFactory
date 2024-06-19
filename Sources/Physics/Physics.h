@@ -44,6 +44,7 @@ class Physics
 		float getDefaultFriction() const;
 
 		void addMovingEntity(Entity* e);
+		void removeMovingEntity(Entity* e);
 		//
 
 	private:

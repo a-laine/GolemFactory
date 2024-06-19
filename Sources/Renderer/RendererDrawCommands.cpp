@@ -34,13 +34,16 @@ void Renderer::drawObject(Entity* object, Shader* forceShader)
 		else 
 			shaderToUse = drawableComp->getShader()->getVariant(Shader::computeVariantCode(false, 0, renderOption == RenderOption::WIREFRAME));
 	}
-
-	ModelMatrix modelMatrix = {object->getWorldTransformMatrix(), object->getNormalMatrix()};
-	loadModelMatrix(shaderToUse, &modelMatrix);
 	if (!shaderToUse)
 		return;
 
+	Renderer::ModelMatrix modelMatrix = { object->getWorldTransformMatrix(), object->getNormalMatrix() };
+	loadInstanceMatrices(shaderToUse, (float*)&modelMatrix);
 	loadGlobalUniforms(shaderToUse);
+	if (drawableComp->getInstanceDataSize() > 0)
+		drawableComp->pushInstanceData(shaderToUse);
+	if (drawableComp->hasConstantData())
+		drawableComp->pushConstantData(shaderToUse);
 
 	// animation uniforms
 	if (isSkinned)
@@ -50,10 +53,14 @@ void Renderer::drawObject(Entity* object, Shader* forceShader)
 		int loc = shaderToUse->getUniformLocation("skeletonPose");
 		if (loc >= 0) glUniformMatrix4fv(loc, (int)pose.size(), FALSE, (float*)pose.data());
 
-		//	Load inverse bind pose matrix list for vertex skinning calculation
-		const std::vector<mat4f>& bind = skeletonComp->getInverseBindPose();
-		loc = shaderToUse->getUniformLocation("inverseBindPose");
-		if (loc >= 0) glUniformMatrix4fv(loc, (int)bind.size(), FALSE, (float*)bind.data());
+		if (skeletonComp->getSkeleton() != lastSkeleton)
+		{
+			//	Load inverse bind pose matrix list for vertex skinning calculation
+			lastSkeleton = skeletonComp->getSkeleton();
+			const std::vector<mat4f>& bind = skeletonComp->getInverseBindPose();
+			loc = shaderToUse->getUniformLocation("inverseBindPose");
+			if (loc >= 0) glUniformMatrix4fv(loc, (int)bind.size(), FALSE, (float*)bind.data());
+		}
 	}
 
 	//	Draw mesh
@@ -78,7 +85,7 @@ void Renderer::drawObject(Entity* object, Shader* forceShader)
 
 		if (renderOption == RenderOption::NORMALS && normalViewer)
 		{
-			loadModelMatrix(normalViewer, &modelMatrix);
+			loadInstanceMatrices(normalViewer, (float*)&modelMatrix);
 			loadVAO(mesh->getVAO());
 			glDrawElements(GL_TRIANGLES, mesh->getNumberIndices(), mesh->getIndicesType(), NULL);
 
@@ -91,157 +98,52 @@ void Renderer::drawObject(Entity* object, Shader* forceShader)
 	instanceDrawn++;
 	trianglesDrawn += mesh->getNumberFaces();
 }
-void Renderer::drawInstancedObject(Shader* s, Mesh* m, std::vector<ModelMatrix>& models)
+void Renderer::drawInstancedObject(Shader* _shader, Mesh* _mesh, float* _matrices, vec4f* _instanceDatas, 
+	unsigned short _dataSize, unsigned short _instanceCount, DrawableComponent* _constantDataRef)
 {
 	//	Get shader and prepare matrix
 	Shader* shaderToUse;
 	if (renderOption == RenderOption::BOUNDING_BOX)
 		shaderToUse = defaultShader[INSTANCE_DRAWABLE_BB];
 	else
-		shaderToUse = s;
-
-	//	Load MVP matrix
-	loadModelMatrix(shaderToUse, models.data(), (int)models.size());
+		shaderToUse = _shader;
 	if (!shaderToUse)
 		return;
 
+	//	Load MVP matrix
+	loadInstanceMatrices(shaderToUse, _matrices, _instanceCount);
 	loadGlobalUniforms(shaderToUse);
+	if (_dataSize)
+		loadInstanceDatas(shaderToUse, _instanceDatas, _dataSize, _instanceCount);
+	if (_constantDataRef)
+		_constantDataRef->pushConstantData(shaderToUse);
 
 	//	Draw instanced
 	if (renderOption == RenderOption::BOUNDING_BOX)
 	{
-		loadVAO(m->getBBoxVAO());
-		glDrawElementsInstanced(GL_TRIANGLES, (int)m->getBBoxFaces()->size(), GL_UNSIGNED_SHORT, NULL, (unsigned short)models.size());
+		loadVAO(_mesh->getBBoxVAO());
+		glDrawElementsInstanced(GL_TRIANGLES, (int)_mesh->getBBoxFaces()->size(), GL_UNSIGNED_SHORT, NULL, _instanceCount);
 	}
 	else
 	{
-		loadVAO(m->getVAO());
-		glDrawElementsInstanced(GL_TRIANGLES, m->getNumberIndices(), m->getIndicesType(), NULL, (unsigned short)models.size());
+		loadVAO(_mesh->getVAO());
+		glDrawElementsInstanced(GL_TRIANGLES, _mesh->getNumberIndices(), _mesh->getIndicesType(), NULL, _instanceCount);
 
 		if (renderOption == RenderOption::NORMALS && normalViewer)
 		{
-			loadModelMatrix(normalViewer, models.data(), (int)models.size());
-			loadVAO(m->getVAO());
-			glDrawElementsInstanced(GL_TRIANGLES, m->getNumberIndices(), m->getIndicesType(), NULL, (unsigned short)models.size());
+			loadInstanceMatrices(normalViewer, _matrices, _instanceCount);
+			loadVAO(_mesh->getVAO());
+			glDrawElementsInstanced(GL_TRIANGLES, _mesh->getNumberIndices(), _mesh->getIndicesType(), NULL, _instanceCount);
 
 			drawCalls++;
-			instanceDrawn += (int)(models.size());
-			trianglesDrawn += (int)(models.size() * m->getNumberFaces());
+			instanceDrawn += _instanceCount;
+			trianglesDrawn += (int)(_instanceCount * _mesh->getNumberFaces());
 		}
 	}
 	drawCalls++;
-	instanceDrawn += (int)(models.size());
-	trianglesDrawn += (int)(models.size() * m->getNumberFaces());
+	instanceDrawn += _instanceCount;
+	trianglesDrawn += (int)(_instanceCount * _mesh->getNumberFaces());
 }
-/*void Renderer::drawMap(Map* map, Shader* s)
-{
-	mat4f scale = mat4f::scale(mat4f::identity, map->getScale());
-	mat4f model = scale * map->getModelMatrix();
-	ModelMatrix modelMatrix = { scale * map->getModelMatrix(), map->getNormalMatrix() };
-
-	// raw
-	loadModelMatrix(map->getShader(), &modelMatrix);
-	loadGlobalUniforms(map->getShader());
-	vec4i exclusion = map->getExclusionZone();
-	int loc = map->getShader()->getUniformLocation("exclusion");
-	//if (loc >= 0) glUniform4iv(loc, 1, (int*)&exclusion);
-	if (loc >= 0) glUniform4iv(loc, 1, &vec4i(-1,0,0,0)[0]);
-	
-	loadVAO(map->getVAO());
-	glDrawElements(GL_TRIANGLES, map->getFacesCount(), GL_UNSIGNED_INT, NULL);
-	drawCalls++;
-	instanceDrawn++;
-	trianglesDrawn += map->getFacesCount() / 6;
-	//return;
-
-	// chunks
-	exclusion = vec4i(-1, 0, 0, 0);
-	if (loc >= 0) glUniform4iv(loc, 1, (int*)&exclusion);
-	loc = map->getShader()->getUniformLocation("overrideColor");
-	vec4f color;
-
-	std::vector<vec2i> chunksIndexes = map->getDrawableChunks();
-	for (int i = 0; i < chunksIndexes.size(); i++)
-	{
-		vec2i v = chunksIndexes[i];
-		Chunk* chunk = map->getChunk(v.x, v.y);
-		if (chunk->isInitialized())
-		{
-			model = scale * chunk->getModelMatrix();
-			modelMatrix.model = model;
-			loadModelMatrix(map->getShader(), &modelMatrix);
-			loadVAO(chunk->getVAO());
-
-			int lod = chunk->getLod();
-			int lodLeft  = map->inBound(v.x - 1, v.y) ? map->getChunk(v.x - 1, v.y)->getLod() : lod;
-			int lodRight = map->inBound(v.x + 1, v.y) ? map->getChunk(v.x + 1, v.y)->getLod() : lod;
-			int lodUp    = map->inBound(v.x, v.y + 1) ? map->getChunk(v.x, v.y + 1)->getLod() : lod;
-			int lodDown  = map->inBound(v.x, v.y - 1) ? map->getChunk(v.x, v.y - 1)->getLod() : lod;
-
-			glDrawElements(GL_TRIANGLES, chunk->getCenterFacesCount(), GL_UNSIGNED_INT, NULL);
-			trianglesDrawn += chunk->getCenterFacesCount() / 6;
-			
-			unsigned int offset;
-			if (lod > lodUp)
-			{
-				offset = chunk->getCenterFacesCount() + 4 * chunk->getBorderFacesCount();
-				glDrawElements(GL_TRIANGLES, chunk->getSeamlessBorderFacesCount(), GL_UNSIGNED_INT, (void*)(offset * sizeof(unsigned int)));
-				trianglesDrawn += chunk->getSeamlessBorderFacesCount() / 6;
-			}
-			else
-			{
-				offset = chunk->getCenterFacesCount();
-				glDrawElements(GL_TRIANGLES, chunk->getBorderFacesCount(), GL_UNSIGNED_INT, (void*)(offset * sizeof(unsigned int)));
-				trianglesDrawn += chunk->getBorderFacesCount() / 6;
-			}
-
-			if (lod > lodDown) 
-			{
-				offset = chunk->getCenterFacesCount() + 4 * chunk->getBorderFacesCount() + chunk->getSeamlessBorderFacesCount();
-				glDrawElements(GL_TRIANGLES, chunk->getSeamlessBorderFacesCount(), GL_UNSIGNED_INT, (void*)(offset * sizeof(unsigned int)));
-				trianglesDrawn += chunk->getSeamlessBorderFacesCount() / 6;
-			}
-			else 
-			{
-				offset = chunk->getCenterFacesCount() + chunk->getBorderFacesCount();
-				glDrawElements(GL_TRIANGLES, chunk->getBorderFacesCount(), GL_UNSIGNED_INT, (void*)(offset * sizeof(unsigned int)));
-				trianglesDrawn += chunk->getBorderFacesCount() / 6;
-			}
-
-			if (lod > lodLeft)
-			{
-				offset = chunk->getCenterFacesCount() + 4 * chunk->getBorderFacesCount() + 2 * chunk->getSeamlessBorderFacesCount();
-				glDrawElements(GL_TRIANGLES, chunk->getSeamlessBorderFacesCount(), GL_UNSIGNED_INT, (void*)(offset * sizeof(unsigned int)));
-				trianglesDrawn += chunk->getSeamlessBorderFacesCount() / 6;
-			}
-			else
-			{
-				offset = chunk->getCenterFacesCount() + 2 * chunk->getBorderFacesCount();
-				glDrawElements(GL_TRIANGLES, chunk->getBorderFacesCount(), GL_UNSIGNED_INT, (void*)(offset * sizeof(unsigned int)));
-				trianglesDrawn += chunk->getBorderFacesCount() / 6;
-			}
-
-			if (lod > lodRight)
-			{
-				offset = chunk->getCenterFacesCount() + 4 * chunk->getBorderFacesCount() + 3 * chunk->getSeamlessBorderFacesCount();
-				glDrawElements(GL_TRIANGLES, chunk->getSeamlessBorderFacesCount(), GL_UNSIGNED_INT, (void*)(offset * sizeof(unsigned int)));
-				trianglesDrawn += chunk->getSeamlessBorderFacesCount() / 6;
-			}
-			else
-			{
-				offset = chunk->getCenterFacesCount() + 3 * chunk->getBorderFacesCount();
-				glDrawElements(GL_TRIANGLES, chunk->getBorderFacesCount(), GL_UNSIGNED_INT, (void*)(offset * sizeof(unsigned int)));
-				trianglesDrawn += chunk->getBorderFacesCount() / 6;
-			}
-
-			drawCalls++;
-			instanceDrawn++;
-		}
-	}
-	color = vec4f(-1.f, 0.f, 0.f, 1.f);
-	if (loc >= 0) glUniform3fv(loc, 1, (float*)&color);
-}*/
-
 
 void Renderer::fullScreenDraw(const Texture* texture, Shader* shader, float alpha, bool bindIntoImage)
 {
@@ -278,7 +180,7 @@ void Renderer::fullScreenDraw(const Texture* texture, Shader* shader, float alph
 }
 
 
-GLuint Renderer::renderMeshOverview(Mesh* mesh, float angle0, float angle1)
+GLuint Renderer::renderMeshOverview(Mesh* mesh, float angle0, float angle1, float zoom)
 {
 	if (!mesh)
 		return 0;
@@ -289,13 +191,13 @@ GLuint Renderer::renderMeshOverview(Mesh* mesh, float angle0, float angle1)
 	vec4f right = vec4f::cross(forward, vec4f(0, 1, 0, 0));
 	right.normalize();
 	vec4f up = vec4f::cross(forward, right);
-	vec4f camPosition = bounding.center + trackballRadius * forward;
+	vec4f camPosition = bounding.center + (trackballRadius * zoom) * forward;
 	camPosition.w = 1;
 	mat4f camTransform(right, up, forward, camPosition);
 	mat4f view = mat4f::inverse(camTransform);
 
 	m_globalMatrices.view = view;
-	m_globalMatrices.projection = mat4f::perspective((float)DEG2RAD * 90.f, (float)overviewTexture.size.x / overviewTexture.size.y, 0.1f, 3 * trackballRadius);
+	m_globalMatrices.projection = mat4f::perspective((float)DEG2RAD * 90.f, (float)overviewTexture.size.x / overviewTexture.size.y, 0.01f, 3 * trackballRadius);
 	m_globalMatrices.cameraPosition = camPosition;
 	glBindBuffer(GL_UNIFORM_BUFFER, m_globalMatricesID);
 	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(m_globalMatrices), &m_globalMatrices);
@@ -307,11 +209,15 @@ GLuint Renderer::renderMeshOverview(Mesh* mesh, float angle0, float angle1)
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 
-	Renderer::ModelMatrix modelMatrix = { mat4f::identity,  mat4f::identity };
-	Renderer::getInstance()->loadModelMatrix(defaultShader[DEFAULT], &modelMatrix);
+	Shader* shader = defaultShader[DEFAULT];
+	if (mesh->getNormals()->empty())
+		shader = defaultShader[DEFAULT]->getVariant(Shader::computeVariantCode(false, 0, true));
+
+	Renderer::ModelMatrix modelMatrix = { mat4f::identity, mat4f::identity };
+	Renderer::getInstance()->loadInstanceMatrices(shader, (float*)&modelMatrix);
 
 	vec4f color = vec4f(1, 1, 1, 1);
-	int loc = defaultShader[DEFAULT]->getUniformLocation("overrideColor");
+	int loc = shader->getUniformLocation("overrideColor");
 	if (loc >= 0)
 		glUniform4fv(loc, 1, (float*)&color);
 

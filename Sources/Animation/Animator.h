@@ -14,6 +14,8 @@ class SkeletonComponent;
 
 class Animator : public Component
 {
+	GF_DECLARE_COMPONENT_CLASS(Animator, Component)
+
 	public:
 		explicit Animator();
 		virtual ~Animator() override;

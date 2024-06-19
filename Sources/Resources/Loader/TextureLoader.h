@@ -19,9 +19,9 @@ class TextureLoader : public IResourceLoader
     private:
         std::string getFileName(const std::string& resourceDirectory, const std::string& fileName) const;
 
-        vec3f size;
-        uint8_t* textureData;
-        uint8_t configuration;
-        bool isImage;
+        vec3f m_size;
+        uint8_t* m_textureData;
+        uint8_t m_configuration;
+        bool m_isImage;
 };
 
