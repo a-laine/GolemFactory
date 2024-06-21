@@ -244,7 +244,7 @@ void Renderer::initGlobalUniformBuffers()
 	glBindBufferRange(GL_UNIFORM_BUFFER, 0, m_globalMatricesID, 0, sizeof(m_globalMatrices));
 
 	// environment lighting settings
-	m_environementLighting.m_directionalLightDirection = vec4f(-30, -20, 0, 0);
+	m_environementLighting.m_directionalLightDirection = vec4f(-10, -20, 0, 0);
 	m_environementLighting.m_directionalLightColor = vec4f(1.f);// vec4f(0.15, 0.15, 0.15, 1.0);
 	m_environementLighting.m_ambientColor = vec4f(0.34f);// 0.05, 0.05, 0.05, 1.0);
 

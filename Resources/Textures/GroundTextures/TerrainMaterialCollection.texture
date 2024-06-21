@@ -98,5 +98,12 @@
 			"tiling" : 0.5,
 			"metalic" : 0.7,
 		},
+		{
+			"name" : "cliff",
+			"albedo" : 14,
+			"normal" : 22,
+			"tiling" : 0.25,
+			"metalic" : 0.7,
+		},
 	]
 }

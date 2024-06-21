@@ -10,9 +10,10 @@ thread_local std::default_random_engine g_randomGenerator;
 
 int TerrainArea::g_lodPixelCount[] = { 257, 129, 65, 33, 17, 9, 5, 3 };
 int TerrainArea::g_lodSpacing[] = { 1, 2, 4, 8, 16, 32, 64, 128 };
-float TerrainArea::g_noiseCurve[] = { 0.51f, 0.0838f, 0.0459f, 0.027f, 0.013f, 0.0044f, 0.0026f, 0.0012f };
+float TerrainArea::g_noiseCurve[] = { 0.5f, 0.2f, 0.073f, 0.038f, 0.017f, 0.009f, 0.0046f, 0.0025f };
 float TerrainArea::g_heightAmplitude = 300.f;	// 300m from super high to super low
-float TerrainArea::g_seeLevel = 30.f;			// 30m under see is super low
+float TerrainArea::g_seeLevel = 20.f;			// 30m under see is super low
+float TerrainArea::g_erosion = 2.f;
 int TerrainArea::g_seed = 0;
 
 // Default
@@ -51,9 +52,10 @@ void TerrainArea::generate(const std::string& directory)
 	};
 	const auto noised = [hash](float x, float y, int octaves)
 	{
-		float height = 0.f;
+		float height = -g_seeLevel;
 		vec2f derivative = vec2f(0);
 		float interval = 250.f;
+		float erosion = g_erosion;
 
 		for (int i = 0; i < octaves; i++, interval *= 0.5f)
 		{
@@ -63,19 +65,34 @@ void TerrainArea::generate(const std::string& directory)
 			vec2f t = vec2f((x - p.x) * invInterval, (y - p.y) * invInterval);
 			vec2f u = t * t * t * (t * (t * 6.f - vec2f(15.f)) + vec2f(10.f));
 			vec2f du = 30.f * t * t * (t * (t - vec2f(2.f)) + vec2f(1.f));
+			vec2f ddu = 60.f * t * (2.f * t * t - 3.f * t + vec2f(1.f));
 
-			float a = amplitude * hash(p.x, p.y);
-			float b = amplitude * hash(p.x + interval, p.y);
-			float c = amplitude * hash(p.x, p.y + interval);
-			float d = amplitude * hash(p.x + interval, p.y + interval);
+			float a = hash(p.x, p.y);
+			float b = hash(p.x + interval, p.y);
+			float c = hash(p.x, p.y + interval);
+			float d = hash(p.x + interval, p.y + interval);
 
-			height += a + (b - a) * u.x + (c - a) * u.y + (a - b - c + d) * u.x * u.y;
-			derivative += (du * (vec2f(b - a, c - a) + (a - b - c + d) * vec2f(u.y, u.x))) / amplitude;
+			vec2f lambda = vec2f(b - a, c - a);
+			float mu = (a - b - c + d);
+
+			float n = (a + (b - a) * u.x + (c - a) * u.y + mu * u.x * u.y);
+			//if (i == 0) erosion = lerp(0.f, g_erosion, n);
+
+			n *= amplitude;
+			vec2f dn = (invInterval * amplitude) * (du * (lambda + mu * vec2f(u.y, u.x)));
+			vec2f ddn = (invInterval *invInterval * amplitude) * (ddu * (lambda + mu * vec2f(u.y, u.x)) + mu * vec2f(du.x * du.y));
+			float denominator = 1.f + erosion * dn.getNorm2();
+
+			height += n / denominator;
+			derivative += dn / denominator - (2 * erosion * n) / (denominator * denominator) * (dn * ddn);
 		}
 		return vec3f(height - g_seeLevel, derivative.x, derivative.y);
 	};
 	const auto materialSelect = [&](const MapData& data, int i, int j)
 	{
+		if (data.normal.y < 0.85f)
+			return 9;//cliff
+
 		float height = data.height + 3.0 * hash(i, j);
 		if (std::min(height, data.height) < 0.1)
 			return (hash(j, i) > 0.2f ? 4 : 5);    // sand
@@ -94,11 +111,11 @@ void TerrainArea::generate(const std::string& directory)
 	for (int i = 0; i < 257; i++)
 		for (int j = 0; j < 257; j++)
 		{
-			vec3f n = noised(m_gridIndex.x * 250 + faceScale * i, m_gridIndex.y * 250 + faceScale * j, 6);
+			vec3f n = noised(m_gridIndex.x * 250 + faceScale * i, m_gridIndex.y * 250 + faceScale * j, 8);
 			data[i][j].height = clamp(n.x, -g_seeLevel, g_heightAmplitude - g_seeLevel);
 			data[i][j].water = 0.f;
 			data[i][j].hole = 0;
-			data[i][j].normal = vec4f(n.y, 4, n.z, 0).getNormal();
+			data[i][j].normal = vec4f(n.y, 2, n.z, 0).getNormal();
 			data[i][j].material = materialSelect(data[i][j], 256 * m_gridIndex.x + i, 256 * m_gridIndex.y + j);
 		}
 

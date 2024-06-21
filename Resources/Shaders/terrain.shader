@@ -673,7 +673,7 @@ Terrain
 			else
 				fragColor = fragmentColor;
 				
-			//fragColor = albedoColor;
+			//fragColor.xyz = normal.xyz;
 				
 			//fragColor = terrainData0;
 			//fragColor = vec4(normal.x, 0, normal.z, 1) ;//+ 0.5*fragmentColor;

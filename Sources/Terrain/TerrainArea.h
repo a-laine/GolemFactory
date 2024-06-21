@@ -37,6 +37,7 @@ class TerrainArea
 		static float g_noiseCurve[];
 		static float g_heightAmplitude;
 		static float g_seeLevel;
+		static float g_erosion;
 		static int g_seed;
 
 	protected:

@@ -934,6 +934,8 @@ void ImGuiSystemDraw()
 
 		ImGui::Text("Terrain attributes");
 		ImGui::DragFloat("Amplitude", &TerrainArea::g_heightAmplitude, 0.1f, 0.f, 4000.f);
+		ImGui::DragFloat("See level", &TerrainArea::g_seeLevel, 0.1f, 0.f, TerrainArea::g_heightAmplitude);
+		ImGui::DragFloat("Erosion", &TerrainArea::g_erosion, 0.1f, 0.f, 100.f);
 		ImGui::Text("Noise harmonic");
 		for (int i = 0; i < 8; i++)
 		{
