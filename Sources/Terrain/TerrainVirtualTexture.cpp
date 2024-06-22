@@ -28,6 +28,13 @@ void TerrainVirtualTexture::initialize(int _physicalTextureSize)
 	m_GPUTexture.initialize("terrainVirtualTexture", m_physicalTextureSize, m_CPUTexture, config, GL_RGBA16UI, GL_RGBA_INTEGER, GL_UNSIGNED_SHORT);
 	ResourceManager::getInstance()->addResource(&m_GPUTexture);
 	m_GPUTexture.isEnginePrivate = true;
+	auto& layerDescriptor = m_GPUTexture.getLayerDescriptor();
+	layerDescriptor.push_back("Terrain heightmap");
+	layerDescriptor.push_back("Water heightmap");
+	layerDescriptor.push_back("Terrain normal");
+	layerDescriptor.push_back("Water normal");
+	layerDescriptor.push_back("Terrain material index");
+	layerDescriptor.push_back("Terrain and water holes");
 
 	// Generate tiles
 	const vec2i poolData[] = { vec2i(256, 2), vec2i(128, 4), vec2i(64, 5), vec2i(32, 5), vec2i(16, 5), vec2i(8, 5), vec2i(4, 4), vec2i(2, 4) };

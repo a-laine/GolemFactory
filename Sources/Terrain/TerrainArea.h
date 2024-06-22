@@ -58,13 +58,17 @@ class TerrainArea
 
 		struct MapData
 		{
-			float height;
-			float water;
-			vec4f normal;
+			vec4f normalTerrain;
+			vec4f normalWater;
+			float heightTerrain;
+			float heightWater;
+			bool holeTerrain;
+			bool holeWater;
 			uint8_t material;
-			uint8_t hole;
 
 			uint64_t pack();
 			void unpack(uint64_t data);
+			uint64_t octahedralPack(vec4f n, int bits);
+			vec4f octahedralUnpack(uint64_t n, int bits);
 		};
 };

@@ -547,7 +547,7 @@ void Renderer::ShadowCasting()
 	glDisable(GL_BLEND);
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
-	glFrontFace(GL_CCW);// peter panning
+	glFrontFace(GL_CW);// peter panning
 
 	{
 		SCOPED_CPU_MARKER("Shadow cascades");

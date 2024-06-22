@@ -90,13 +90,13 @@ void TerrainArea::generate(const std::string& directory)
 	};
 	const auto materialSelect = [&](const MapData& data, int i, int j)
 	{
-		if (data.normal.y < 0.85f)
+		if (data.normalTerrain.y < 0.85f)
 			return 9;//cliff
 
-		float height = data.height + 3.0 * hash(i, j);
-		if (std::min(height, data.height) < 0.1)
+		float height = data.heightTerrain + 3.0 * hash(i, j);
+		if (std::min(height, data.heightTerrain) < 0.1)
 			return (hash(j, i) > 0.2f ? 4 : 5);    // sand
-		else if (std::min(height, data.height) < 0.7)
+		else if (std::min(height, data.heightTerrain) < 0.7)
 			return 7;    // dirt
 		else if (height > 0.5 * g_heightAmplitude)
 			return 8;	  // snow
@@ -112,10 +112,12 @@ void TerrainArea::generate(const std::string& directory)
 		for (int j = 0; j < 257; j++)
 		{
 			vec3f n = noised(m_gridIndex.x * 250 + faceScale * i, m_gridIndex.y * 250 + faceScale * j, 8);
-			data[i][j].height = clamp(n.x, -g_seeLevel, g_heightAmplitude - g_seeLevel);
-			data[i][j].water = 0.f;
-			data[i][j].hole = 0;
-			data[i][j].normal = vec4f(n.y, 2, n.z, 0).getNormal();
+			data[i][j].heightTerrain = clamp(n.x, -g_seeLevel, g_heightAmplitude - g_seeLevel);
+			data[i][j].heightWater = 0.f;
+			data[i][j].holeTerrain = false;
+			data[i][j].holeWater = data[i][j].heightTerrain > data[i][j].heightWater + 2.f;
+			data[i][j].normalTerrain = vec4f(n.y, 2, n.z, 0).getNormal();
+			data[i][j].normalWater = vec4f(0, 1, 0, 0);
 			data[i][j].material = materialSelect(data[i][j], 256 * m_gridIndex.x + i, 256 * m_gridIndex.y + j);
 		}
 
@@ -204,13 +206,13 @@ void TerrainArea::setLod(int lod)
 		for (int i = 0; i < 257 * 257; i++)
 		{
 			data.unpack(m_data[i]);
-			if (data.water > data.height)
+			if (data.heightWater > data.heightTerrain)
 				m_hasWater = true;
 
-			minHeight = std::min(minHeight, data.water);
-			minHeight = std::min(minHeight, data.height);
-			maxHeight = std::max(maxHeight, data.water);
-			maxHeight = std::max(maxHeight, data.height);
+			minHeight = std::min(minHeight, data.heightWater);
+			minHeight = std::min(minHeight, data.heightTerrain);
+			maxHeight = std::max(maxHeight, data.heightWater);
+			maxHeight = std::max(maxHeight, data.heightTerrain);
 		}
 
 		m_boundingBox.min = m_center + vec4f(-125.f, minHeight, -125.f, 0.f);
@@ -273,27 +275,44 @@ AxisAlignedBox TerrainArea::getBoundingBox() const
 uint64_t TerrainArea::MapData::pack()
 {
 	float scaleFactor = 65535.f / TerrainArea::g_heightAmplitude;
-	constexpr float normalFactor = 1024.f;
 
-	uint64_t h = (uint64_t)((uint16_t)((height + g_seeLevel) * scaleFactor));
-	uint64_t w = (uint64_t)((uint16_t)((water + g_seeLevel) * scaleFactor));
-	uint64_t nx = (uint64_t)((uint16_t)(clamp((normal.x + 1.f) * normalFactor, 0.f, 2047.f)));
-	uint64_t nz = (uint64_t)((uint16_t)(clamp((normal.z + 1.f) * normalFactor, 0.f, 2047.f)));
-	uint64_t m = (uint64_t)material;
-	uint64_t hh = (uint64_t)(hole & 0x03);
+	uint64_t theight = (uint64_t)((uint16_t)((heightTerrain + g_seeLevel) * scaleFactor));
+	uint64_t wheight = (uint64_t)((uint16_t)((heightWater + g_seeLevel) * scaleFactor));
+	uint64_t tnormal = octahedralPack(normalTerrain, 7);
+	uint64_t wnormal = octahedralPack(normalWater, 5);
+	uint64_t mat = (uint64_t)material;
+	uint64_t thole = holeTerrain ? 0x01 : 0x00;
+	uint64_t whole = holeWater ? 0x01 : 0x00;
 
-	return h | (w<<16) | (nx<<32) | (nz<<43) | (m<<54) | (hh<<62);
+	return theight | (wheight << 16) | (tnormal << 32) | (thole << 46) | (whole << 47) | (wnormal << 48) | (mat << 58);
 }
 void TerrainArea::MapData::unpack(uint64_t data)
 {
 	float scaleFactor = TerrainArea::g_heightAmplitude / 65535.f;
-	constexpr float normalFactor = 1.f / 1024.f;
 
-	height = (data & 0xFFFF) * scaleFactor - g_seeLevel;
-	water = ((data >> 16) & 0xFFFF) * scaleFactor - g_seeLevel;
-	float nx = ((data >> 32) & 0x7FF) * normalFactor - 1.f;
-	float nz = ((data >> 43) & 0x7FF) * normalFactor - 1.f;
-	normal = vec4f(nx, std::sqrt(1.f - std::min(nx * nx + nz * nz, 1.f)), nz, 0.f);
-	material = (data >> 54) & 0xFF;
-	hole = data >> 62;
+	heightTerrain = (data & 0xFFFF) * scaleFactor - g_seeLevel;
+	heightWater = ((data >> 16) & 0xFFFF) * scaleFactor - g_seeLevel;
+	normalTerrain = octahedralUnpack(data >> 32, 7);
+	normalWater = octahedralUnpack(data >> 48, 5);
+	material = data >> 58;
+	holeTerrain = (data & ((uint64_t)1 << 46));
+	holeWater = (data & ((uint64_t)1 << 47));
+}
+
+uint64_t TerrainArea::MapData::octahedralPack(vec4f n, int bits)
+{
+	// octahedral packing, exept that normal.y is always pointing up, so no copysign
+	n /= std::abs(n.x) + std::abs(n.y) + std::abs(n.z);
+	n = vec4f(0.5f) + vec4f(0.5f) * n;
+	int mask = (1 << bits) - 1;
+	vec2i d = vec2i((int)(n.x * mask + 0.5f), (int)(n.z * mask + 0.5f));
+	return ((uint64_t)d.y << bits) | d.x;
+}
+vec4f TerrainArea::MapData::octahedralUnpack(uint64_t n, int bits)
+{
+	int mask = (1 << bits) - 1;
+	vec2i d = vec2i(n & mask, (n >> bits) & mask);
+	vec4f v = vec4f((2 * d.x - 1.f) / mask, 0, (2 * d.y - 1.f) / mask, 0);
+	v.y = 1.f - std::abs(v.x) - std::abs(v.z);
+	return v.getNormal();
 }

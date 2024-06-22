@@ -45,7 +45,7 @@ Renderer::Renderer() :
 	drawGrid = true;
 	batchFreePool.reserve(512);
 
-	m_environementLighting.m_shadowFarPlanes = vec4f(20.f, 50.f, 150.f, 400.f);
+	m_environementLighting.m_shadowFarPlanes = vec4f(20.f, 50.f, 10.f, 600.f);
 	shadowAreaMargin = 10.f; 
 	shadowAreaMarginLightDirection = 50.f;
 
@@ -244,9 +244,11 @@ void Renderer::initGlobalUniformBuffers()
 	glBindBufferRange(GL_UNIFORM_BUFFER, 0, m_globalMatricesID, 0, sizeof(m_globalMatrices));
 
 	// environment lighting settings
-	m_environementLighting.m_directionalLightDirection = vec4f(-10, -20, 0, 0);
+	m_environementLighting.m_directionalLightDirection = vec4f(1, -0.46f, -0.85f, 0);
 	m_environementLighting.m_directionalLightColor = vec4f(1.f);// vec4f(0.15, 0.15, 0.15, 1.0);
-	m_environementLighting.m_ambientColor = vec4f(0.34f);// 0.05, 0.05, 0.05, 1.0);
+	m_environementLighting.m_ambientColor = vec3f(0.34f);// 0.05, 0.05, 0.05, 1.0);
+	m_environementLighting.m_fogDensity = 0.001f;
+	setEnvBackgroundColor(vec4f(0.53f, 0.72f, 0.83f, 1.0f));
 
 	glGenBuffers(1, &m_environementLightingID);
 	glBindBuffer(GL_UNIFORM_BUFFER, m_environementLightingID);
@@ -587,6 +589,7 @@ void Renderer::updateShadowCascadeMatrices(CameraComponent* renderCam, float vie
 	}
 
 	// compute matrices
+	vec4f margin = vec4f(shadowAreaMargin, shadowAreaMargin, std::max(shadowAreaMarginLightDirection, shadowAreaMargin), 0);
 	vec4f corners[8];
 	for (int i = 0; i < 4; i++)
 	{
@@ -606,7 +609,8 @@ void Renderer::updateShadowCascadeMatrices(CameraComponent* renderCam, float vie
 		for (int j = 0; j < 8; j++)
 			R = std::max(R, (center - corners[j]).getNorm2());
 		vec4f max = vec4f(std::sqrt(R));
-		vec4f min = -max;
+		vec4f min = -max - margin;
+		max += vec4f(shadowAreaMargin);
 
 		// snap the center to a texel size
 		mat4f invView = mat4f::transpose(lightOrientation);
@@ -618,20 +622,17 @@ void Renderer::updateShadowCascadeMatrices(CameraComponent* renderCam, float vie
 		snapedCenter.w = 1.f;
 		invView[3] = snapedCenter;
 
-		// aply offset on Z axis
 		mat4f view = lightOrientation;
 		view[3] = center;
-		float zoffset = std::max(0.f, shadowAreaMarginLightDirection - shadowAreaMargin);
+		view[2] *= -1;
 		shadowAreaBoxes[i].base = view;
 		shadowAreaBoxes[i].min = min;
 		shadowAreaBoxes[i].max = max;
-		shadowAreaBoxes[i].max.z = max.z + zoffset;
-		shadowAreaBoxes[i].min.z = min.z - shadowAreaMargin;
 		shadowAreaBoxes[i].min.w = 1;
 		shadowAreaBoxes[i].max.w = 1;
 
 		// end
-		mat4f lightProjection = mat4f::ortho(min.x, max.x, min.y, max.y, min.z - zoffset, max.z + shadowAreaMargin);
+		mat4f lightProjection = mat4f::ortho(min.x, max.x, min.y, max.y, min.z, max.z);
 		m_environementLighting.m_shadowCascadeProjections[i] = lightProjection * invView;
 	}
 }
@@ -1011,7 +1012,7 @@ void Renderer::setEnvBackgroundColor(vec4f color)
 	m_environementLighting.m_backgroundColor = color;
 	glClearColor(m_environementLighting.m_backgroundColor.x, m_environementLighting.m_backgroundColor.y, m_environementLighting.m_backgroundColor.z, m_environementLighting.m_backgroundColor.w);
 }
-void Renderer::setEnvAmbientColor(vec4f color) { m_environementLighting.m_ambientColor = color; }
+void Renderer::setEnvAmbientColor(vec3f color) { m_environementLighting.m_ambientColor = color; }
 void Renderer::setEnvDirectionalLightDirection(vec4f direction) { m_environementLighting.m_directionalLightDirection = direction; }
 void Renderer::setEnvDirectionalLightColor(vec4f color) { m_environementLighting.m_directionalLightColor = color; }
 void Renderer::incrementShaderAnimatedTime(float dTime) 
@@ -1021,7 +1022,7 @@ void Renderer::incrementShaderAnimatedTime(float dTime)
 		m_debugShaderUniform.animatedTime -= 3600.f;
 }
 vec4f Renderer::getEnvBackgroundColor() const { return m_environementLighting.m_backgroundColor; }
-vec4f Renderer::getEnvAmbientColor() const { return m_environementLighting.m_ambientColor; }
+vec3f Renderer::getEnvAmbientColor() const { return m_environementLighting.m_ambientColor; }
 vec4f Renderer::getEnvDirectionalLightDirection() const { return m_environementLighting.m_directionalLightDirection; }
 vec4f Renderer::getEnvDirectionalLightColor() const { return m_environementLighting.m_directionalLightColor; }
 
@@ -1043,7 +1044,10 @@ void Renderer::drawImGui(World& world)
 	ImGui::ColorEdit3("Ambient color", &m_environementLighting.m_ambientColor[0]);
 	if (ImGui::ColorEdit3("Background color", &m_environementLighting.m_backgroundColor[0]))
 		glClearColor(m_environementLighting.m_backgroundColor.x, m_environementLighting.m_backgroundColor.y, m_environementLighting.m_backgroundColor.z, m_environementLighting.m_backgroundColor.w);
+	ImGui::SliderFloat("Fog density", &m_environementLighting.m_fogDensity, 0.f, 1.f, "%.4f", ImGuiSliderFlags_Logarithmic);
 	ImGui::Checkbox("Draw light direction", &m_drawLightDirection);
+	ImGui::DragFloat("Debug ray spacing", &m_directionalLightDebugRaySpacing, 0.1f, 0.1f, 100.f);
+	ImGui::DragFloat("Debug ray vertical offset", &m_directionalLightDebugRayYoffset);
 
 	const char* renderOptions[] = { "Default", "Bounding box", "Wireframe", "Normals" };
 	static int renderOptionsCurrentIdx = (int)renderOption;
@@ -1117,8 +1121,8 @@ void Renderer::drawImGui(World& world)
 		ImGui::Checkbox("Stable fit", &m_shadowStableFit);
 		ImGui::DragFloat4("Shadow far planes", &m_environementLighting.m_shadowFarPlanes[0], 0.3f, 0.5f, 2000.f);
 		CheckboxFlag("Draw shadow cascades", m_sceneLights.m_shadingConfiguration, eDrawShadowCascades);
-		ImGui::DragFloat("Shadow projection margin", &shadowAreaMargin, 0.1f, 0.f, 20.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
-		ImGui::DragFloat("Shadow light direction margin", &shadowAreaMarginLightDirection, 0.1f, 0.f, 100.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
+		ImGui::DragFloat("Shadow projection margin", &shadowAreaMargin, 0.1f, 0.f, 20.f);
+		ImGui::DragFloat("Shadow light direction margin", &shadowAreaMarginLightDirection, 0.1f, 0.f, 100.f);
 	}
 	if (!(m_sceneLights.m_shadingConfiguration & (1 << eUseShadow)))
 	{
@@ -1151,16 +1155,18 @@ void Renderer::drawImGui(World& world)
 	{
 		vec4f d = m_environementLighting.m_directionalLightDirection;
 		d.normalize();
-		vec4f fwd = camera->getForward();
-		//fwd.y = 0;
-		vec4f offset = camera->getPosition() - vec4f(0, -10, 0, 0) + 50.f * fwd;
-		offset.w = 0;
+		vec4f offset = camera->getPosition();
+		//offset.x = (int)offset.x;
+		offset.y = m_directionalLightDebugRayYoffset;
+		//offset.z = (int)offset.z;
+
 		Debug::color = m_environementLighting.m_directionalLightColor;
 		for (int i = -50; i <= 50; i++)
 			for (int j = -50; j <= 50; j++)
 			{
-				vec4f p = vec4f(5 * i, 0, 5 * j, 1.f) + offset;
-				Debug::drawLine(p, p - 100.f * d);
+				//vec4f p = vec4f(5 * i, 0, 5 * j, 0.f) + offset;
+				vec4f p = offset + vec4f(m_directionalLightDebugRaySpacing * i, 0, m_directionalLightDebugRaySpacing * j, 0);
+				Debug::drawLine(p, p - 3000.f * d);
 			}
 	}
 	if (m_sceneLights.m_shadingConfiguration & (1 << eDrawShadowCascades))

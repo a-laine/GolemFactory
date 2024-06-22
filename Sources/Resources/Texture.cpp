@@ -91,6 +91,10 @@ std::string Texture::getLoaderId(const std::string& resourceName) const
     else
         return extension;
 }
+std::vector<std::string>& Texture::getLayerDescriptor()
+{
+    return m_layerDescriptor;
+}
 
 const std::string& Texture::getDefaultName() { return defaultName; }
 void Texture::setDefaultName(const std::string& name) { defaultName = name; }
@@ -532,8 +536,17 @@ void Texture::onDrawImGui()
         }
         else if (m_internalFormat == GL_RGBA16UI && m_type == GL_TEXTURE_2D && isEnginePrivate) // terrain virtual texture
         {
-            // 5 "layer" : height, water, normal, material, hole
-            ImGui::SliderInt("Layer", &layerOverview, 0, 4);
+            // 6 "layer" : height, water, normal, material, hole
+            if (m_layerDescriptor.size() > 0)
+            {
+                ImGui::SliderInt("Layer", &layerOverview, 0, m_layerDescriptor.size() - 1);
+                ImGui::Text(m_layerDescriptor[layerOverview].c_str());
+            }
+            else
+            {
+                ImGui::SliderInt("Layer", &layerOverview, 0, 5);
+                ImGui::Text("(no layer descriptor)");
+            }
             layer = (float)layerOverview;
         }
 

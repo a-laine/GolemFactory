@@ -1,5 +1,6 @@
 #pragma once
 
+#include <vector>
 #include <GL/glew.h>
 //#include <glm/glm.hpp>
 
@@ -62,6 +63,7 @@ class Texture : public ResourceVirtual
 
         std::string getIdentifier() const override;
         std::string getLoaderId(const std::string& resourceName) const;
+        std::vector<std::string>& getLayerDescriptor();
         //
 
         //  Attributes
@@ -76,12 +78,10 @@ class Texture : public ResourceVirtual
     private:
         static std::string defaultName;
 
-        //void initOpenGL(const uint8_t* textureData, const std::string& textureName);
-
-
         //  Attributes
         GLuint texture;                 //!< Texture Id
         uint8_t configuration;          //!< Texture configuration byte
+        std::vector<std::string> m_layerDescriptor;
 
 #ifdef USE_IMGUI
         int layerOverview;

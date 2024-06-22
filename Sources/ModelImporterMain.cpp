@@ -144,7 +144,7 @@ int main()
 	editorCamera = world.getEntityFactory().createObject([](Entity* object)
 		{
 			object->setName("EditorCamera");
-			object->setWorldPosition(vec4f(-219, 21.4, -6.1, 1));
+			object->setWorldPosition(vec4f(-111, 78, -75, 1));
 
 			Collider* collider = new Collider(new Sphere(vec4f(0.f), 0.01f));
 			object->addComponent(collider);
@@ -589,7 +589,7 @@ void initManagers()
 	PhysicDebugWindowEnable = false;
 	HierarchyWindowEnable = true;
 	SpatialPartitionningWindowEnable = false;
-	RenderingWindowEnable = false;
+	RenderingWindowEnable = true;
 	ResourcesWindowEnable = true;
 #endif
 }

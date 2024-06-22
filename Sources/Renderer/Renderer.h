@@ -112,7 +112,7 @@ class Renderer : public Singleton<Renderer>
 		void setVirtualTexture(TerrainVirtualTexture* virtualTexture);
 
 		void setEnvBackgroundColor(vec4f color);
-		void setEnvAmbientColor(vec4f color);
+		void setEnvAmbientColor(vec3f color);
 		void setEnvDirectionalLightDirection(vec4f direction);
 		void setEnvDirectionalLightColor(vec4f color);
 		void incrementShaderAnimatedTime(float time);
@@ -131,7 +131,7 @@ class Renderer : public Singleton<Renderer>
 		RenderOption getRenderOption() const;
 
 		vec4f getEnvBackgroundColor() const;
-		vec4f getEnvAmbientColor() const;
+		vec3f getEnvAmbientColor() const;
 		vec4f getEnvDirectionalLightDirection() const;
 		vec4f getEnvDirectionalLightColor() const;
 
@@ -280,7 +280,8 @@ class Renderer : public Singleton<Renderer>
 				struct EnvironementLighting
 				{
 					vec4f m_backgroundColor;
-					vec4f m_ambientColor;
+					vec3f m_ambientColor;
+					float m_fogDensity;
 					vec4f m_directionalLightDirection;
 					vec4f m_directionalLightColor;
 
@@ -384,6 +385,9 @@ class Renderer : public Singleton<Renderer>
 		bool m_lightFrustrumCulling = true;
 		bool m_drawClusters = false;
 		bool m_drawOcclusionBuffer = false;
+
+		float m_directionalLightDebugRaySpacing = 5.f;
+		float m_directionalLightDebugRayYoffset = 10.f;
 #endif //USE_IMGUI
 		//
 };

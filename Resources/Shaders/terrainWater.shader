@@ -18,6 +18,26 @@ TerrainWater
 	includes : 
 	{
 		#version 430
+		
+		struct VertexData
+		{
+			vec4 normalTerrain;
+			vec4 normalWater;
+			float height;
+			float water;
+			uint material;
+			bool holeTerrain;
+			bool holeWater;
+		};
+		vec4 octahedralUnpack(uint n, uint bits)
+		{
+			uint mask = (1 << bits) - 1;
+			uvec2 d = uvec2(n, n >> bits) & mask;
+			vec2 v = vec2(d) / float(mask);
+			v = 1.0 - 2.0 * v;
+			vec4 nor = vec4(v.x, 1.0 - abs(v.x) - abs(v.y), v.y, 0.0);
+			return normalize(nor);
+		}
 	};
 	vertex :
 	{
@@ -49,31 +69,20 @@ TerrainWater
 			out vec4 terrainData1;
 		#endif
 		
-		struct VertexData
-		{
-			float height;
-			float water;
-			vec2 normal_xz;
-			uint material;
-			uint hole;
-		};
-		
 		VertexData GetVertexData(ivec2 vertexCoord)
 		{
 			float heightAmplitude = constantData[0].z;
 			float seeLevel = constantData[0].w;
-			
 			uvec4 data = imageLoad(terrainVirtualTexture, vertexCoord);
 			
 			VertexData vdata;
 			vdata.height = data.x * heightAmplitude - seeLevel;
 			vdata.water = data.y * heightAmplitude - seeLevel;
-			
-			uint normalx = (data.z & 0x7FF);
-			uint normalz = (data.z >> 11) | ((data.w & 0x3F) << 5);
-			vdata.normal_xz = vec2((normalx / 1024.0) - 1.0, (normalz / 1024.0) - 1.0);
-			vdata.material = (data.w >> 6) & 0xFF;
-			vdata.hole = (data.w >> 14) & 0x03;
+			vdata.normalTerrain = octahedralUnpack(data.z, 7);
+			vdata.normalWater = octahedralUnpack(data.w, 5);
+			vdata.material = (data.w >> 10) & 0xFF;
+			vdata.holeTerrain = (data.z & (1 << 14)) != 0;
+			vdata.holeWater = (data.z & (1 << 15)) != 0;
 			return vdata;
 		}
 		float ComputeMorphingRatio(float camDistance)
@@ -94,7 +103,7 @@ TerrainWater
 			}
 			return 1.0;
 		}
-		float rand(vec2 co){ return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453); }
+		//float rand(vec2 co){ return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453); }
 		vec4 hash(float x, float y)
 		{
 			int n0 = int(x * 311 + y * 113); n0 = (n0 << 13) ^ n0;
@@ -107,6 +116,7 @@ TerrainWater
 		}
 		
 		// program
+		vec3 waveHarmonic[4] = vec3[]( vec3(0.0,0.2, 1.0), vec3(-0.3,0.0, 0.7), vec3(0.9,0.42, 0.5), vec3(-1.0,0.0, 3.0) );
 		void main()
 		{
 			vec4 areaData0 = instanceDataArray[2 * gl_InstanceID];
@@ -120,7 +130,8 @@ TerrainWater
 			VertexData vertexData0 = GetVertexData(ivec2(vertexCoordFloat.x , vertexCoordFloat.y));
 			vec4 p = vec4(position.x + areaData0.x, vertexData0.water,  position.z + areaData0.y, 1.0);
 			float waterDepth = vertexData0.water - vertexData0.height;
-			vec4 normal = vec4(0.0 , 1.0 , 0.0 , 0.0);
+			vec4 normal = vertexData0.normalWater;
+			
 			vec4 delta = p - cameraPosition;
 			float camDistance = sqrt(delta.x * delta.x + delta.z * delta.z);
 			float morphRatio = ComputeMorphingRatio(camDistance);
@@ -130,19 +141,26 @@ TerrainWater
 				displacementRatio = 1.0;
 			else if (lod == 1)
 				displacementRatio = 1.0 - morphRatio;
-			vec4 displacementAmplitude = displacementRatio * vec4(0.3 , 0.3 , 0.3 , 0.0);
+			if (vertexData0.holeWater)
+				displacementRatio = 0.0;
 			
 			// small movement
 			if (displacementRatio > 0.0)
 			{
-				vec4 displacement = hash(p.x, p.z);
-				float wave = sin(animatedTime + displacement.w + p.x + 0.1 * p.z);
-				normal += (hash(p.x + 1.0 , p.z) - hash(p.x - 1.0 , p.z) + hash(p.x, p.z + 1.0) - hash(p.x, p.z - 1.0)) * displacementAmplitude * wave;
-				p += displacement * displacementAmplitude * wave;
+				vec2 dnormal = vec2(0.0);
+				float amp = 0.1 * displacementRatio * clamp(waterDepth, 0.1, 1.0);
+				for (int i = 0; i < 4; i++)
+				{
+					float teta = animatedTime * waveHarmonic[i].z + dot(waveHarmonic[i].xy, p.xz);
+					p += (amp * sin(teta)) * normal;
+					dnormal -= (amp * cos(teta)) * waveHarmonic[i].xy;				
+				}
+				normal.xz += dnormal;
 			}
+			normalize(normal);
 			
 			// morphing
-			if (uv.z != 0.0 || uv.w != 0.0)
+			/*if (uv.z != 0.0 || uv.w != 0.0)
 			{
 				if (morphRatio > 0.0)
 				{
@@ -163,11 +181,11 @@ TerrainWater
 					
 					p = mix(p, 0.5 * (p1 + p2), morphRatio);
 				}
-			}
+			}*/
 			
 			// color
 			vec4 waterColor = vec4(0.1 , 0.3 , 0.7 , 0.2);
-			waterColor.w = mix(0.2 , 1.0 , clamp(abs(waterDepth) / 3.0 , 0.0 , 1.0));
+			waterColor.w = mix(0.4 , 1.0 , clamp(0.3 * waterDepth, 0.0, 1.0));
 			areaData1 = waterColor;
 			
 			#ifdef WIRED_MODE
@@ -264,7 +282,7 @@ TerrainWater
 		
 		// images
 		layout(rgba32ui) readonly uniform uimage3D lightClusters;			// image unit 0
-		//layout(rgba16ui) readonly uniform uimage2D terrainVirtualTexture;	// image unit 1
+		layout(rgba16ui) readonly uniform uimage2D terrainVirtualTexture;	// image unit 1
 		
 		// input
 		in vec4 fragmentPosition;
@@ -287,9 +305,23 @@ TerrainWater
 		vec4 cascadeIndexAll = vec4(0,1,2,3);
 		vec4 cascadeColor = vec4(0.0);
 		
-		// debug
-		vec4 lodcolors[8] = vec4[]( vec4(1,1,1,1), vec4(1,0,0,1), vec4(1,1,0,1), vec4(0,1,0,1), vec4(0,1,1,1), vec4(0,0,1,1), vec4(1,0,1,1), vec4(1,1,1,1) );
-		
+		// debug		
+		VertexData GetVertexData(ivec2 vertexCoord)
+		{
+			float heightAmplitude = constantData[0].z;
+			float seeLevel = constantData[0].w;
+			uvec4 data = imageLoad(terrainVirtualTexture, vertexCoord);
+			
+			VertexData vdata;
+			vdata.height = data.x * heightAmplitude - seeLevel;
+			vdata.water = data.y * heightAmplitude - seeLevel;
+			vdata.normalTerrain = octahedralUnpack(data.z, 7);
+			vdata.normalWater = octahedralUnpack(data.w, 5);
+			vdata.material = (data.w >> 10) & 0xFF;
+			vdata.holeTerrain = (data.z & (1 << 14)) != 0;
+			vdata.holeWater = (data.z & (1 << 15)) != 0;
+			return vdata;
+		}
 		float map(float value, float min1, float max1, float min2, float max2)
 		{
 		  return min2 + (value - min1) * (max2 - min2) / max(max1 - min1, 0.0001);
@@ -379,38 +411,38 @@ TerrainWater
 			// additive blending
 			fragmentColor += (shadowAttenuation * spotAttenuation * attenuation) * ((diffuse + specular) * albedo);
 		}
-		int ComputeCascadeIndex()
-		{
-			float dist = abs(view * fragmentPosition).z;
-			int index = 4;
-			for (int i = 0; i < 4; ++i)
-				if (shadowFarPlanes[i] > dist)
-				{
-					index = i;
-					break;
-				}
-				
-			if (index < 3)
-				cascadeColor[index] = 1;
-			else if (index == 3)
-				cascadeColor = vec4(1 , 1 , 0 , 1);
-			return index;
-		}
 		
-		float GetShadowAttenuation(int cascadeIndex, float bias)
+		float GetShadowAttenuation(float bias)
 		{
-			if (cascadeIndex >= 4)
-				return 1.0;
-				
+			// only cascade 3 for terrain
+			float dist = abs(view * fragmentPosition).z;
+			int cascadeIndex = 4;
+			if (shadowFarPlanes[3] > dist) cascadeIndex = 3;
+			else return 1.0;
+			cascadeColor = vec4(1 , 1 , 0 , 1);
+			
 			vec4 shadowPosition = shadowCascadeProjections[cascadeIndex] * fragmentPosition;
 			vec4 shadowCoord = shadowPosition / shadowPosition.w;
 			shadowCoord = shadowCoord * 0.5 + 0.5;
+			float shadow = 0.0;
 			
-			float shadow = texture(cascadedShadow, vec4(shadowCoord.xy, cascadeIndex, shadowCoord.z - bias));
-			
+			// PCF
+			vec2 texelSize = 1.0 / vec2(textureSize(cascadedShadow, 0));
+			for(int x = -1; x <= 1; ++x)
+				for(int y = -1; y <= 1; ++y)
+				{
+					shadow += texture(cascadedShadow, vec4(shadowCoord.xy + vec2(x, y) * texelSize, cascadeIndex, shadowCoord.z - bias));       
+				}
+			shadow /= 9.0;
 			return shadow;
 		}
-		
+		vec4 ApplyFog(float fragmentDistance, vec4 viewDir, vec4 lightDir)
+		{
+			float fogAmount = 1.0 - exp(-fragmentDistance * m_ambientColor.w);
+			float sunAmount = max(dot(viewDir, lightDir), 0.0 );
+			vec4 fogColor = mix(vec4(0.5 , 0.6 , 0.7 , 1.0), vec4(1.0 , 0.9 , 0.7 , 1.0), pow(sunAmount,8.0)) * m_directionalLightColor;
+			return mix(fragmentColor, fogColor, fogAmount);
+		}
 		
 		// program
 		void main()
@@ -422,22 +454,30 @@ TerrainWater
 					discard;
 			#endif
 			
+			ivec2 corner = ivec2(int(fragmentUv.x), int(fragmentUv.y));
+			VertexData data0 = GetVertexData(corner);
+			VertexData data1 = GetVertexData(corner + ivec2(0, 1));
+			VertexData data2 = GetVertexData(corner + ivec2(1, 0));
+			VertexData data3 = GetVertexData(corner + ivec2(1, 1));
+			if (data0.holeWater && data1.holeWater && data2.holeWater && data3.holeWater)
+				discard;
+			
 			// compute base color depending on environement light (directional)
 			normal = normalize(fragmentNormal);
 			vec4 albedoColor = terrainData1;
 			vec4 metalicParam = vec4(0.8, 0, 0, 0);
-			float ndotl = dot(normal, normalize(-m_directionalLightDirection));
-			vec4 diffuse = clamp(ndotl, 0 , 1 ) * m_directionalLightColor;
-			
-			float shadowAttenuation = 1.0;
+			vec4 lightDir = normalize(m_directionalLightDirection);
+			float ndotl = dot(normal, -lightDir);
+			float shadowAttenuation = ndotl > 0.0 ? 1.0 : 0.0;
 			if ((shadingConfiguration & 0x04) != 0 && ndotl > 0.0)
 			{
-				int cascadeIndex = ComputeCascadeIndex();
-				shadowAttenuation = GetShadowAttenuation(cascadeIndex, max(0.005 * (1.0 - ndotl), 0.0005));			
+				shadowAttenuation = GetShadowAttenuation(10 * max(0.005 * (1.0 - ndotl), 0.0005));		
 			}
 			
+			vec4 diffuse = clamp(ndotl, 0 , 1 ) * m_directionalLightColor;
+			float fragmentDistance = distance(cameraPosition, fragmentPosition);
 			vec4 viewDir = normalize(cameraPosition - fragmentPosition);
-			vec4 reflectDir = reflect(normalize(m_directionalLightDirection), normal);  
+			vec4 reflectDir = reflect(lightDir, normal);  
 			float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
 			vec4 specular = metalicParam.x * spec * m_directionalLightColor;  
 			fragmentColor = (m_ambientColor + shadowAttenuation * (diffuse + specular)) * albedoColor;
@@ -499,7 +539,10 @@ TerrainWater
 				}
 			}
 			
-			//fragmentColor.w = 0.5;
+			fragmentColor = ApplyFog(fragmentDistance, viewDir, lightDir);
+			fragmentColor.w = albedoColor.w;
+			
+			// debug override
 			if ((shadingConfiguration & 0x02) != 0)
 				fragColor = 0.5 * fragmentColor + 0.5 * clusterColor;
 			else if((shadingConfiguration & 0x08) != 0)
@@ -507,7 +550,6 @@ TerrainWater
 			else
 				fragColor = fragmentColor;
 				
-			//fragColor = albedoColor;
 				
 			//fragColor = terrainData0;
 			//fragColor = vec4(normal.x, 0, normal.z, 1) ;//+ 0.5*fragmentColor;

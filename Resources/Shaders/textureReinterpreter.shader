@@ -37,6 +37,39 @@ TextureReinterpreter
 		// output
 		layout (location = 0) out vec4 fragColor;
 		
+		struct VertexData
+		{
+			vec4 normalTerrain;
+			vec4 normalWater;
+			float height;
+			float water;
+			uint material;
+			bool holeTerrain;
+			bool holeWater;
+		};
+		vec4 octahedralUnpack(uint n, uint bits)
+		{
+			uint mask = (1 << bits) - 1;
+			uvec2 d = uvec2(n, n >> bits) & mask;
+			vec2 v = vec2(d) / float(mask);
+			v = 1.0 - 2.0 * v;
+			vec4 nor = vec4(v.x, 1.0 - abs(v.x) - abs(v.y), v.y, 0.0);
+			return normalize(nor);
+		}
+		VertexData GetVertexData(ivec2 vertexCoord)
+		{
+			uvec4 data = imageLoad(terrainData, vertexCoord);
+			
+			VertexData vdata;
+			vdata.height = data.x / 65536.0;
+			vdata.water = data.y / 65536.0;
+			vdata.normalTerrain = octahedralUnpack(data.z, 7);
+			vdata.normalWater = octahedralUnpack(data.w, 5);
+			vdata.material = (data.w >> 10) & 0xFF;
+			vdata.holeTerrain = (data.z & (1 << 14)) != 0;
+			vdata.holeWater = (data.z & (1 << 15)) != 0;
+			return vdata;
+		}
 		void main()
 		{
 			if (type == 0) // shadow cascade
@@ -111,43 +144,36 @@ TextureReinterpreter
 			{
 				ivec2 terrainDataSize = imageSize(terrainData);
 				ivec2 uv = ivec2(fragmentUv.x * terrainDataSize.x, (1.0 - fragmentUv.y) * terrainDataSize.y);
-				uvec4 data = imageLoad(terrainData, uv);
-				
-				uint height = data.r;
-				uint water = data.g;
-				uint normalx = (data.b & 0x7FF);
-				uint normalz = (data.b >> 11) | ((data.a & 0x3F) << 5);
-				uint material = (data.a >> 6) & 0xFF;
-				uint hole = (data.a >> 14) & 0x03;
+				VertexData data = GetVertexData(uv);
 				
 				if (layer == 0)
 				{
-					float h = height / 65536.0;
+					float h = data.height;
 					fragColor = vec4(h, h, h, 1);
 				}
 				else if (layer == 1)
 				{
-					float h = water / 6553.60;
+					float h = data.water;
 					fragColor = vec4(h, h, h, 1);
 				}
 				else if (layer == 2)
 				{
-					float x = (normalx / 1024.0 - 1.0);
-					float z = (normalz / 1024.0 - 1.0);
-					float y = sqrt(1.0 - min(x * x + z * z, 1.0));
-					fragColor = vec4(x, y, z, 1);
+					fragColor = vec4(0.5 * data.normalTerrain.xyz + vec3(0.5), 1);
 				}
 				else if (layer == 3)
 				{
-					float r = 0.125 * (material & 0x03);
-					float g = 0.125 * ((material & 0x38) >> 3);
-					float b = 0.25 * ((material & 0xC0) >> 6);
-					fragColor = vec4(r, g, b, 1);
+					fragColor = vec4(0.5 * data.normalWater.xyz + vec3(0.5), 1);
 				}
 				else if (layer == 4)
 				{
-					float h = 0.33 * hole;
-					fragColor = vec4(h, h, h, 1);
+					float r = 0.25 * (data.material & 0x03);
+					float g = 0.25 * ((data.material & 0x0C) >> 2);
+					float b = 0.25 * ((data.material & 0x30) >> 4);
+					fragColor = vec4(r, g, b, 1);
+				}
+				else if (layer == 5)
+				{
+					fragColor = vec4(data.holeTerrain ? 1 : 0, 0, data.holeWater ? 1 : 0, 1);
 				}
 				else
 					fragColor = vec4(0, 0, 0, 1);

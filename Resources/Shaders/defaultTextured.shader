@@ -319,7 +319,6 @@ DefaultTextured
 			shadowCoord = shadowCoord * 0.5 + 0.5;
 			
 			float shadow = texture(cascadedShadow, vec4(shadowCoord.xy, cascadeIndex, shadowCoord.z - bias));
-			
 			return shadow;
 		}
 		
