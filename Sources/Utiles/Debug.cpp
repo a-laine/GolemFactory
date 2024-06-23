@@ -419,6 +419,15 @@ void Debug::reinterpreteTexture(const Texture* in, Texture* out, float layer)
 		if (loc >= 0)
 			glUniform1f(loc, 4);
 	}
+	else if (in->m_type == GL_TEXTURE_CUBE_MAP)
+	{
+		glActiveTexture(GL_TEXTURE3);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, in->getTextureId());
+
+		int loc = This->textureReinterpreter->getUniformLocation("type");
+		if (loc >= 0)
+			glUniform1f(loc, 5);
+	}
 
 	int loc = This->textureReinterpreter->getUniformLocation("layer");
 	if (loc >= 0)

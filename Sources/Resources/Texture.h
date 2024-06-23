@@ -24,18 +24,19 @@ class Texture : public ResourceVirtual
             TEXTURE_1D = 1,         //!< 1 dimension texture
             TEXTURE_2D = 2,         //!< 2 dimensions texture
             TEXTURE_3D = 3,         //!< 3 dimensions texture
-            TEXTURE_ARRAY = 4,
-            CUBEMAP_ARRAY = 5,  
-            TYPE_MASK = 0x07,       //!< the type mask byte
+            CUBEMAP = 4,
+            TEXTURE_ARRAY = 5,
+            CUBEMAP_ARRAY = 6,  
+            TYPE_MASK = 0x0F,       //!< the type mask byte
 
-            MIN_NEAREST = 1 << 3,     //!< if not the GL_LINEAR criterion is used for minify
-            MAG_NEAREST = 1 << 4,     //!< if not the GL_LINEAR criterion is used for magify
-            USE_MIPMAP = 1 << 5,      //!< the mip-map flag
+            MIN_NEAREST = 1 << 4,     //!< if not the GL_LINEAR criterion is used for minify
+            MAG_NEAREST = 1 << 5,     //!< if not the GL_LINEAR criterion is used for magify
+            USE_MIPMAP = 1 << 6,      //!< the mip-map flag
 
-            WRAP_CLAMP = 0 << 6,      //!< clamp coordinates to the texture limit
-            WRAP_REPEAT = 1 << 6,     //!< repeat if coordinates greater than 1
-            WRAP_MIRROR = 2 << 6,     //!< same as repeat but mirrored the repeated texture
-            WRAP_MASK = 0x03 << 6     //!< wrap mask byte
+            WRAP_CLAMP = 0 << 7,      //!< clamp coordinates to the texture limit
+            WRAP_REPEAT = 1 << 7,     //!< repeat if coordinates greater than 1
+            WRAP_MIRROR = 2 << 7,     //!< same as repeat but mirrored the repeated texture
+            WRAP_MASK = 0x03 << 7     //!< wrap mask byte
         };
         //
 

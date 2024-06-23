@@ -101,14 +101,16 @@ void Shader::initialize(GLuint  vertexSh, GLuint fragSh, GLuint geomShr, GLuint 
         }
 
         if (type == "_globalLightClusters")
-            loadGlobalTexture(type, uniformName, uniformLocation, 0);
+            loadGlobalTexture(type, uniformName, uniformLocation, 0); // force image unit 0
         else if (type == "_terrainVirtualTexture")
-            loadGlobalTexture(type, uniformName, uniformLocation, 1);
+            loadGlobalTexture(type, uniformName, uniformLocation, 1); // force image unit 1
         else if (type == "_globalShadowCascades")
             loadGlobalTexture(type, uniformName, uniformLocation, (uint8_t)m_textures.size());
         else if (type == "_globalTerrainMaterialCollection")
             loadGlobalTexture(type, uniformName, uniformLocation, (uint8_t)m_textures.size());
         else if (type == "_globalOmniShadow")
+            loadGlobalTexture(type, uniformName, uniformLocation, (uint8_t)m_textures.size());
+        else if (type == "_globalSkybox")
             loadGlobalTexture(type, uniformName, uniformLocation, (uint8_t)m_textures.size());
     }
 

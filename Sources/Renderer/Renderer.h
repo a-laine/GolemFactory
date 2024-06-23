@@ -97,6 +97,7 @@ class Renderer : public Singleton<Renderer>
 		void initializeOcclusionBuffers(int width, int height);
 		void initializeShadows(int cascadesWidth, int cascadesHeight, int omniWidth, int omniHeight);
 		void initializeTerrainMaterialCollection(const std::string& textureName);
+		void initializeSkybox(const std::string& textureName);
 		void render(CameraComponent* renderCam);
 		void renderHUD();
 		void swap();
@@ -201,6 +202,7 @@ class Renderer : public Singleton<Renderer>
 		void CollectEntitiesBindLights();
 		void CollectTerrainQueueData();
 		void LightClustering();
+		void AtmosphericScattering();
 		void DynamicBatching();
 		void OcclusionCulling();
 		void ShadowCasting();
@@ -316,8 +318,13 @@ class Renderer : public Singleton<Renderer>
 				GLuint m_environementLightingID, m_lightsID, m_clustersID;
 				SceneLights m_sceneLights;
 				EnvironementLighting m_environementLighting;
-				Texture lightClusterTexture;
-				Shader* lightClustering;
+				Texture m_lightClusterTexture;
+				Shader* m_lightClustering;
+				Texture* m_skyboxTexture;
+				Mesh* m_skyboxMesh;
+				Shader* m_skyboxShader;
+				Shader* m_atmosphericScattering;
+				bool m_enableAtmosphericScattering = true;
 		#pragma endregion
 
 		#pragma region Shadows

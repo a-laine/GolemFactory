@@ -1,0 +1,15 @@
+{
+	"type" : "CUBEMAP",
+	"mipmap" : false,
+	"width" : 200,
+	"height" : 200,
+	
+	"texture" : [
+		"SkyBoxes/RightA.png",
+		"SkyBoxes/LeftA.png",
+		"SkyBoxes/TopA.png",
+		"SkyBoxes/BottomA.png",
+		"SkyBoxes/FrontA.png",
+		"SkyBoxes/BackA.png"
+	],
+}

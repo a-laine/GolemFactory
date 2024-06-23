@@ -403,7 +403,9 @@ std::string ShaderLoader::getFileName(const std::string& resourceDirectory, cons
     std::string str = resourceDirectory;
     str += Shader::directory;
     str += fileName;
-    str += Shader::extension;
+
+    if (fileName.find('.') == std::string::npos)
+        str += Shader::extension;
     return str;
 }
 

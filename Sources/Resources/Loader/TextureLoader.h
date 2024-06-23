@@ -22,6 +22,9 @@ class TextureLoader : public IResourceLoader
         vec3f m_size;
         uint8_t* m_textureData;
         uint8_t m_configuration;
+
+        unsigned int m_internalFormat;
+
         bool m_isImage;
 };
 

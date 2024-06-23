@@ -42,3 +42,6 @@ Debug/
 Release/
 x64/
 v16/
+
+#heavy binary files
+Terrain/

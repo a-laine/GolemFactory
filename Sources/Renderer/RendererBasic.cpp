@@ -40,12 +40,16 @@ Renderer::Renderer() :
 	defaultShader[INSTANCE_DRAWABLE_BB] = nullptr;
 	defaultShader[HUD] = nullptr;
 
-	lightClustering = nullptr;
+	m_lightClustering = nullptr;
+	m_terrainMaterialCollection = nullptr;
+	m_skyboxTexture = nullptr;
+	m_skyboxMesh = nullptr;
+	m_skyboxShader = nullptr;
 
 	drawGrid = true;
 	batchFreePool.reserve(512);
 
-	m_environementLighting.m_shadowFarPlanes = vec4f(20.f, 50.f, 10.f, 600.f);
+	m_environementLighting.m_shadowFarPlanes = vec4f(20.f, 50.f, 180.f, 600.f);
 	shadowAreaMargin = 10.f; 
 	shadowAreaMarginLightDirection = 50.f;
 
@@ -78,6 +82,12 @@ Renderer::~Renderer()
 		delete[] m_occlusionCenterY;
 	}
 
+	if (m_terrainMaterialCollection)
+		ResourceManager::getInstance()->release(m_terrainMaterialCollection);
+	if (m_skyboxTexture)
+		ResourceManager::getInstance()->release(m_skyboxTexture);
+	if (m_skyboxShader)
+		ResourceManager::getInstance()->release(m_skyboxShader);
 }
 //
 
@@ -164,7 +174,7 @@ void Renderer::initializeGrid(const unsigned int& gridSize,const float& elementS
 void Renderer::initializeLightClusterBuffer(int width, int height, int depth)
 {
 	vec3i imageSize = vec3i(width, height, depth);
-	lightClustering = ResourceManager::getInstance()->getResource<Shader>("lightClustering");
+	m_lightClustering = ResourceManager::getInstance()->getResource<Shader>("lightClustering");
 
 	const int length = imageSize.x * imageSize.y * imageSize.z * 4;
 	uint32_t* buffer = new uint32_t[length];
@@ -182,9 +192,9 @@ void Renderer::initializeLightClusterBuffer(int width, int height, int depth)
 
 	using TC = Texture::TextureConfiguration;
 	uint8_t config = (uint8_t)TC::TEXTURE_3D | (uint8_t)TC::MIN_NEAREST | (uint8_t)TC::MAG_NEAREST | (uint8_t)TC::WRAP_CLAMP;
-	lightClusterTexture.initialize("lightClusterTexture", imageSize, buffer, config, GL_RGBA32UI, GL_RGBA_INTEGER, GL_UNSIGNED_INT);
-	ResourceManager::getInstance()->addResource(&lightClusterTexture);
-	lightClusterTexture.isEnginePrivate = true;
+	m_lightClusterTexture.initialize("lightClusterTexture", imageSize, buffer, config, GL_RGBA32UI, GL_RGBA_INTEGER, GL_UNSIGNED_INT);
+	ResourceManager::getInstance()->addResource(&m_lightClusterTexture);
+	m_lightClusterTexture.isEnginePrivate = true;
 	delete[] buffer;
 
 	m_sceneLights.m_near = 2.f;
@@ -374,6 +384,8 @@ void Renderer::initializeTerrainMaterialCollection(const std::string& textureNam
 		}
 	};
 
+	if (m_terrainMaterialCollection)
+		ResourceManager::getInstance()->release(m_terrainMaterialCollection);
 	m_terrainMaterialCollection = ResourceManager::getInstance()->getResource<Texture>(textureName);
 	m_terrainMaterialInfos.clear();
 	m_terrainMaterialNames.clear();
@@ -513,6 +525,19 @@ void Renderer::initializeTerrainMaterialCollection(const std::string& textureNam
 	glBindBuffer(GL_UNIFORM_BUFFER, m_terrainMaterialCollectionID);
 	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(TerrainMaterial) * m_terrainMaterialInfos.size(), m_terrainMaterialInfos.data());
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+}
+void Renderer::initializeSkybox(const std::string& textureName)
+{
+	if (m_skyboxTexture)
+		ResourceManager::getInstance()->release(m_skyboxTexture);
+	m_skyboxTexture = ResourceManager::getInstance()->getResource<Texture>(textureName);
+
+	if (!m_skyboxMesh)
+		m_skyboxMesh = ResourceManager::getInstance()->getResource<Mesh>("Shapes/box.mesh");
+	if (!m_skyboxShader)
+		m_skyboxShader = ResourceManager::getInstance()->getResource<Shader>("skyboxRendering");
+	if (!m_atmosphericScattering)
+		m_atmosphericScattering = ResourceManager::getInstance()->getResource<Shader>("atmosphericScattering");
 }
 void Renderer::setVirtualTexture(TerrainVirtualTexture* virtualTexture)
 {
@@ -679,12 +704,16 @@ void Renderer::render(CameraComponent* renderCam)
 
 	//	bind matrix
 	m_globalMatrices.view = renderCam->getViewMatrix();
-	m_globalMatrices.projection = mat4f::perspective(renderCam->getVerticalFieldOfView(), context->getViewportRatio(), 0.1f, 10000.f);
+	float farPlaneDistance = 10000.f;
+	m_globalMatrices.projection = mat4f::perspective(renderCam->getVerticalFieldOfView(), context->getViewportRatio(), 0.1f, farPlaneDistance);
 	m_globalMatrices.cameraPosition = renderCam->getPosition();
 	m_debugShaderUniform.animatedTime = glfwGetTime();
 	updateShadowCascadeMatrices(camera, context->getViewportRatio());
 	updateGlobalUniformBuffers();
-	
+
+	if (m_skyboxTexture && m_atmosphericScattering && m_enableAtmosphericScattering)
+		AtmosphericScattering();
+
 	//	opengl state
 	glEnable(GL_DEPTH_TEST);
 	glDisable(GL_BLEND);
@@ -714,7 +743,7 @@ void Renderer::render(CameraComponent* renderCam)
 	CollectEntitiesBindLights();
 	CollectTerrainQueueData();
 
-	if (lightClustering)
+	if (m_lightClustering)
 		LightClustering();
 	if (m_enableOcclusionCulling && !m_occluders.empty() && m_occlusionDepth)
 		OcclusionCulling();
@@ -781,6 +810,26 @@ void Renderer::render(CameraComponent* renderCam)
 			else
 				drawObject(it.entity);
 		}
+	}
+
+	// background
+	if (m_skyboxMesh && m_skyboxTexture && m_skyboxShader)
+	{
+		float scale = 0.95f * farPlaneDistance / std::sqrtf(3);
+		mat4f m = scale * mat4f::identity;
+		m[3] = camera->getPosition();
+		Renderer::ModelMatrix modelMatrix = { m, m };
+		loadInstanceMatrices(m_skyboxShader, (float*)&modelMatrix);
+		loadGlobalUniforms(m_skyboxShader);
+
+		SetCulling(false);
+		SetBlending(false);
+		loadVAO(m_skyboxMesh->getVAO());
+		glDrawElements(GL_TRIANGLES, m_skyboxMesh->getNumberIndices(), m_skyboxMesh->getIndicesType(), NULL);
+
+		drawCalls++;
+		instanceDrawn++;
+		trianglesDrawn += m_skyboxMesh->getNumberFaces();
 	}
 
 
@@ -911,7 +960,7 @@ void Renderer::loadGlobalUniforms(Shader* shader)
 		{
 			uint8_t unit = shader->getGlobalTextureUnit("_globalLightClusters");
 			glActiveTexture(GL_TEXTURE0 + unit);
-			glBindImageTexture(unit, lightClusterTexture.getTextureId(), 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32UI);
+			glBindImageTexture(unit, m_lightClusterTexture.getTextureId(), 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32UI);
 		}
 
 		loc = shader->getUniformLocation("_globalShadowCascades");
@@ -930,20 +979,26 @@ void Renderer::loadGlobalUniforms(Shader* shader)
 			glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, shadowOmniTextures.getTextureId());
 		}
 
-		loc = shader->getUniformLocation("_terrainVirtualTexture");
-		if (loc >= 0 && m_terrainVirtualTexture)
+		if (m_terrainVirtualTexture)
 		{
-			uint8_t unit = shader->getGlobalTextureUnit("_terrainVirtualTexture");
-			glActiveTexture(GL_TEXTURE0 + unit);
-			glBindImageTexture(unit, m_terrainVirtualTexture->getTextureId(), 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA16UI);
+			loc = shader->getUniformLocation("_terrainVirtualTexture");
+			if (loc >= 0)
+			{
+				uint8_t unit = shader->getGlobalTextureUnit("_terrainVirtualTexture");
+				glActiveTexture(GL_TEXTURE0 + unit);
+				glBindImageTexture(unit, m_terrainVirtualTexture->getTextureId(), 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA16UI);
+			}
 		}
 
-		loc = shader->getUniformLocation("_globalTerrainMaterialCollection");
-		if (loc >= 0 && m_terrainMaterialCollection)
+		if (m_terrainMaterialCollection)
 		{
-			uint8_t unit = shader->getGlobalTextureUnit("_globalTerrainMaterialCollection");
-			glActiveTexture(GL_TEXTURE0 + unit);
-			glBindTexture(GL_TEXTURE_2D_ARRAY, m_terrainMaterialCollection->getTextureId());
+			loc = shader->getUniformLocation("_globalTerrainMaterialCollection");
+			if (loc >= 0)
+			{
+				uint8_t unit = shader->getGlobalTextureUnit("_globalTerrainMaterialCollection");
+				glActiveTexture(GL_TEXTURE0 + unit);
+				glBindTexture(GL_TEXTURE_2D_ARRAY, m_terrainMaterialCollection->getTextureId());
+			}
 		}
 
 		if (shadowOmniLayerUniform >= 0)
@@ -951,6 +1006,38 @@ void Renderer::loadGlobalUniforms(Shader* shader)
 			loc = shader->getUniformLocation("shadowOmniLayerUniform");
 			if (loc >= 0)
 				glUniform1i(loc, shadowOmniLayerUniform);
+		}
+
+		if (m_skyboxTexture)
+		{
+			loc = shader->getUniformLocation("_globalSkybox");
+			if (loc >= 0)
+			{
+				uint8_t unit = shader->getGlobalTextureUnit("_globalSkybox");
+				glActiveTexture(GL_TEXTURE0 + unit);
+				glBindTexture(GL_TEXTURE_CUBE_MAP, m_skyboxTexture->getTextureId());
+
+				std::string& textureName = m_skyboxTexture->name;
+				const auto CheckError = [&textureName](const char* label)
+				{
+					GLenum error = glGetError();
+					if (!label)
+						return false;
+					switch (error)
+					{
+					case GL_INVALID_ENUM: std::cout << textureName << " : " << label << " : GL_INVALID_ENUM" << std::endl; break;
+					case GL_INVALID_VALUE: std::cout << textureName << " : " << label << " : GL_INVALID_VALUE" << std::endl; break;
+					case GL_INVALID_OPERATION: std::cout << textureName << " : " << label << " : GL_INVALID_OPERATION" << std::endl; break;
+					case GL_INVALID_FRAMEBUFFER_OPERATION: std::cout << textureName << " : " << label << " : GL_INVALID_FRAMEBUFFER_OPERATION" << std::endl; break;
+					case GL_OUT_OF_MEMORY: std::cout << textureName << " : " << label << " : GL_OUT_OF_MEMORY" << std::endl; break;
+					case GL_STACK_UNDERFLOW: std::cout << textureName << " : " << label << " : GL_STACK_UNDERFLOW" << std::endl; break;
+					case GL_STACK_OVERFLOW: std::cout << textureName << " : " << label << " : GL_STACK_OVERFLOW" << std::endl; break;
+					default: break;
+					}
+					return error != GL_NO_ERROR;
+				};
+				CheckError("glBindTexture");
+			}
 		}
 	}
 }
@@ -1187,7 +1274,7 @@ void Renderer::drawImGui(World& world)
 		if (clusterLines.empty())
 		{
 			vec4f color = Debug::white;
-			vec3i imageSize = lightClusterTexture.size;
+			vec3i imageSize = m_lightClusterTexture.size;
 			int clusterCount = imageSize.x * imageSize.y * imageSize.z;
 			int rightClusterCount = imageSize.y * imageSize.z;
 			int topClusterCount = imageSize.x * imageSize.z;

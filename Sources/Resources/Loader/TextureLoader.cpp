@@ -10,7 +10,9 @@
 
 
 TextureLoader::TextureLoader() : m_size(0) , m_textureData(nullptr) , m_configuration(0) , m_isImage(false)
-{}
+{
+    m_internalFormat = GL_RGBA8;
+}
 
 bool TextureLoader::load(const std::string& resourceDirectory, const std::string& fileName)
 {
@@ -83,6 +85,8 @@ bool TextureLoader::load(const std::string& resourceDirectory, const std::string
                 m_configuration = (uint8_t)Texture::TextureConfiguration::TEXTURE_3D;
             else if (typestr == "ARRAY")
                 m_configuration = (uint8_t)Texture::TextureConfiguration::TEXTURE_ARRAY;
+            else if (typestr == "CUBEMAP")
+                m_configuration = (uint8_t)Texture::TextureConfiguration::CUBEMAP;
             else
             {
                 PrintError("unsuported type");
@@ -127,12 +131,26 @@ bool TextureLoader::load(const std::string& resourceDirectory, const std::string
             m_configuration |= (uint8_t)Texture::TextureConfiguration::WRAP_REPEAT;
         else if (typestr == "mirror")
             m_configuration |= (uint8_t)Texture::TextureConfiguration::WRAP_MIRROR;
+        else if (typestr == "clamp")
+            m_configuration |= (uint8_t)Texture::TextureConfiguration::WRAP_CLAMP;
         else
             PrintWarning("unknown \"wrap\" param value");
     }
 
+    // Internal format
+    m_internalFormat = GL_RGBA8;
+
+    it = textureInfo.find("internalFormat");
+    if (it != textureInfo.end() && it->second.getType() == Variant::VariantType::STRING)
+    {
+        const std::string& wantedFormat = it->second.toString();
+        if (wantedFormat == "RGB")
+            m_internalFormat = GL_RGB8;
+        else
+            PrintWarning("unknown internal format");
+    }
+
     //  Get layers & generate texture data
-    //uint8_t* textureData = nullptr;
     it = textureInfo.find("texture");
     if (it == textureInfo.end())
     {
@@ -158,7 +176,9 @@ bool TextureLoader::load(const std::string& resourceDirectory, const std::string
     }
     else if (isReadableArray && it->second[0].getType() == Variant::STRING)
     {
-        if (type != (uint8_t)Texture::TextureConfiguration::TEXTURE_3D && type != (uint8_t)Texture::TextureConfiguration::TEXTURE_ARRAY)
+        if (type != (uint8_t)Texture::TextureConfiguration::TEXTURE_3D && 
+            type != (uint8_t)Texture::TextureConfiguration::TEXTURE_ARRAY && 
+            type != (uint8_t)Texture::TextureConfiguration::CUBEMAP)
         {
             PrintError("texture data is array, but not texture type");
             return false;
@@ -214,6 +234,7 @@ bool TextureLoader::load(const std::string& resourceDirectory, const std::string
             return false;
         }
 
+        PrintError("Format not supported");
     }
 
     /*try
@@ -307,7 +328,7 @@ bool TextureLoader::load(const std::string& resourceDirectory, const std::string
 void TextureLoader::initialize(ResourceVirtual* resource)
 {
     Texture* texture = static_cast<Texture*>(resource);
-    texture->initialize(m_size, m_textureData, m_configuration);
+    texture->initialize(texture->name, m_size, m_textureData, m_configuration, m_internalFormat, GL_RGBA, GL_UNSIGNED_BYTE);
 
     if(m_isImage)
         ImageLoader::freeImage(m_textureData);

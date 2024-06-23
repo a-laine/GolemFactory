@@ -138,6 +138,7 @@ void Texture::initialize(const std::string& textureName, const vec3i& imageSize,
     CheckError(nullptr);
     glGenTextures(1, &texture); CheckError("glGenTextures");
     unsigned int type = GL_TEXTURE_2D;
+    bool checkForTextureview = false;
     switch ((TextureConfiguration)(configuration & (uint8_t)TextureConfiguration::TYPE_MASK))
     {
         case TextureConfiguration::TEXTURE_1D:
@@ -164,11 +165,32 @@ void Texture::initialize(const std::string& textureName, const vec3i& imageSize,
             type = GL_TEXTURE_3D;
             break;
 
+        case TextureConfiguration::CUBEMAP:
+            {
+                if ((int)size.z != 6)
+                    std::cout << textureName << " : texture is CUBEMAP, but doesn't have 6 layers" << std::endl;
+                glBindTexture(GL_TEXTURE_CUBE_MAP, texture); CheckError("glBindTexture");
+                uint64_t offset = (uint64_t)size.x * (uint64_t)size.y * 4;
+                for (int i = 0; i < std::min((int)size.z, 6); i++)
+                {
+                    const uint8_t* layerPtr = (const uint8_t*)data + (i * offset);
+                    glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internalFormat, (int)size.x, (int)size.y, 0, pixelFormat, colorFormat, layerPtr);
+                }
+                /*glTexImage3D(GL_TEXTURE_CUBE_MAP, 0, internalFormat, (int)size.x, (int)size.y, (int)size.z,
+                    0, pixelFormat, colorFormat, data);*/
+
+                CheckError("glTexImage3D");
+                type = GL_TEXTURE_CUBE_MAP;
+                checkForTextureview = true;                
+            }
+            break;
+
         case TextureConfiguration::TEXTURE_ARRAY:
             glBindTexture(GL_TEXTURE_2D_ARRAY, texture); CheckError("glBindTexture");
             glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, internalFormat, (int)size.x, (int)size.y, (int)size.z,
                 0, pixelFormat, colorFormat, data);
             type = GL_TEXTURE_2D_ARRAY;
+            checkForTextureview = true;
             break;
 
         case TextureConfiguration::CUBEMAP_ARRAY:
@@ -250,7 +272,7 @@ void Texture::initialize(const std::string& textureName, const vec3i& imageSize,
             glTexParameteri(type, GL_TEXTURE_WRAP_T, wrapMode);
             CheckError("glTexParameteri WRAP T");
         }
-        if (type == GL_TEXTURE_3D)
+        if (type == GL_TEXTURE_3D || type == GL_TEXTURE_CUBE_MAP)
         {
             glTexParameteri(type, GL_TEXTURE_WRAP_R, wrapMode);
             CheckError("glTexParameteri WRAP R");
@@ -260,9 +282,9 @@ void Texture::initialize(const std::string& textureName, const vec3i& imageSize,
 #ifdef USE_IMGUI
     m_internalFormat = internalFormat;
 
-    GLint status;
-    glGetTexParameteriv(type, GL_TEXTURE_IMMUTABLE_FORMAT, &status);
-    if (type == GL_TEXTURE_2D_ARRAY && status)
+    GLint isImmutable;
+    glGetTexParameteriv(type, GL_TEXTURE_IMMUTABLE_FORMAT, &isImmutable);
+    if (checkForTextureview && isImmutable)
     {
         bool printedError = false;
         textureLayers = new GLuint[size.z];
@@ -324,6 +346,12 @@ void Texture::update(const void* data, unsigned int pixelFormat, unsigned int co
         case TextureConfiguration::TEXTURE_3D:
             glBindTexture(GL_TEXTURE_3D, texture);
             glTexSubImage3D(GL_TEXTURE_3D, 0, offset.x, offset.y, offset.z, updateSize.x, updateSize.y, updateSize.z, pixelFormat, colorFormat, data);
+            CheckError("glTexSubImage3D");
+            break;
+
+        case TextureConfiguration::CUBEMAP:
+            glBindTexture(GL_TEXTURE_CUBE_MAP, texture);
+            glTexSubImage3D(GL_TEXTURE_CUBE_MAP, 0, offset.x, offset.y, offset.z, updateSize.x, updateSize.y, updateSize.z, pixelFormat, colorFormat, data);
             CheckError("glTexSubImage3D");
             break;
 
@@ -460,6 +488,12 @@ void Texture::onDrawImGui()
             ImGui::Text("Width : %d", (int)size.x);
             ImGui::Text("Height : %d", (int)size.y);
             ImGui::Text("Depth : %d", (int)size.z);
+            break;
+        case Texture::TextureConfiguration::CUBEMAP:
+            ImGui::Text("Type : CUBE MAP");
+            ImGui::Text("Width : %d", (int)size.x);
+            ImGui::Text("Height : %d", (int)size.y);
+            ImGui::Text("Layers : %d", (int)size.z);
             break;
         case Texture::TextureConfiguration::TEXTURE_ARRAY:
             ImGui::Text("Type : 2D Array");

@@ -25,6 +25,7 @@ TextureReinterpreter
 		layout(binding = 0) uniform sampler2DArray texArray;			//sampler unit 0
 		layout(binding = 1) uniform samplerCubeArray omniShadowArray;	//sampler unit 1
 		layout(binding = 2) uniform sampler2D depthTexture;				//sampler unit 2
+		layout(binding = 3) uniform samplerCube cubemap;
 		
 		layout(rgba16ui) readonly uniform uimage2D terrainData;			// image unit 0
 		
@@ -181,6 +182,22 @@ TextureReinterpreter
 			else if (type == 4) // simple texture 2d array
 			{
 				fragColor = texelFetch(texArray, ivec3(fragmentUv * textureSize(texArray, 0).xy, layer), 0);
+				fragColor.w = 1.0;
+			}
+			else if (type == 5) // cubemap
+			{
+				vec3 fakeDir;
+				switch(int(layer))
+				{
+					case 0: fakeDir = vec3( 1.0, -fragmentUv.x, fragmentUv.y); break; // +X
+					case 1: fakeDir = vec3(-1.0,  fragmentUv.x, fragmentUv.y); break; // -X
+					case 2: fakeDir = vec3( fragmentUv.x,  1.0, fragmentUv.y); break; // +Y
+					case 3: fakeDir = vec3(-fragmentUv.x, -1.0, fragmentUv.y); break; // -Y
+					case 4: fakeDir = vec3(fragmentUv.x, -fragmentUv.y,  1.0); break; // +Z
+					default: fakeDir = vec3(fragmentUv.x,  fragmentUv.y, -1.0); break; // -Z
+				}
+				
+				fragColor = texture(cubemap, normalize(fakeDir));
 				fragColor.w = 1.0;
 			}
 		}

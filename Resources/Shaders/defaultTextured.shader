@@ -8,7 +8,7 @@ DefaultTextured
 		lightClusters : "_globalLightClusters";
 		cascadedShadow : "_globalShadowCascades";
 		omniShadowArray : "_globalOmniShadow";
-		shadowOmniLayerUniform = "int"
+		shadowOmniLayerUniform = "int";
 		InstanceDatas : "uniformBlocks";
 	};
 	

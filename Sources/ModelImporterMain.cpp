@@ -549,6 +549,7 @@ void initManagers()
 	Renderer::getInstance()->initializeShadows(1024, 1024, 1024, 1024);
 	Renderer::getInstance()->initializeOverviewRenderer(512, 512);
 	Renderer::getInstance()->initializeTerrainMaterialCollection("GroundTextures/TerrainMaterialCollection.texture");
+	Renderer::getInstance()->initializeSkybox("SkyBoxes/SkyboxA.texture");
 
 	// Debug
 	Debug::getInstance()->initialize("Shapes/box", "Shapes/sphere.obj", "Shapes/capsule", "default", "wired", "debug", "textureReinterpreter");

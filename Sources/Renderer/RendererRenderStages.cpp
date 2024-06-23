@@ -189,17 +189,35 @@ void Renderer::LightClustering()
 {
 	SCOPED_CPU_MARKER("Light clustering");
 
-	lightClustering->enable();
+	m_lightClustering->enable();
 
-	GLint lightClusterLocation = glGetUniformLocation(lightClustering->getProgram(), "lightClusters");
+	GLint lightClusterLocation = glGetUniformLocation(m_lightClustering->getProgram(), "lightClusters");
 	if (lightClusterLocation >= 0)
 	{
 		glUniform1i(lightClusterLocation, 0);
 		glActiveTexture(GL_TEXTURE0);
-		glBindImageTexture(0, lightClusterTexture.getTextureId(), 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32UI);
+		glBindImageTexture(0, m_lightClusterTexture.getTextureId(), 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32UI);
 	}
 
 	glDispatchCompute(16, 12, 16);
+	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+	lastShader = nullptr;
+	glUseProgram(0);
+}
+
+void Renderer::AtmosphericScattering()
+{
+	m_atmosphericScattering->enable();
+
+	GLint lightClusterLocation = glGetUniformLocation(m_atmosphericScattering->getProgram(), "skybox");
+	if (lightClusterLocation >= 0)
+	{
+		glUniform1i(lightClusterLocation, 0);
+		glActiveTexture(GL_TEXTURE0);
+		glBindImageTexture(0, m_skyboxTexture->getTextureId(), 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
+	}
+
+	glDispatchCompute((int)m_skyboxTexture->size.x, (int)m_skyboxTexture->size.y, 6);
 	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 	lastShader = nullptr;
 	glUseProgram(0);
