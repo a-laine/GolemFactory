@@ -45,7 +45,7 @@ bool ImageLoader::load(const std::string& resourceDirectory, const std::string& 
 void ImageLoader::initialize(ResourceVirtual* resource)
 {
     Texture* texture = static_cast<Texture*>(resource);
-    texture->initialize(size, textureData, (uint8_t)Texture::TextureConfiguration::TEXTURE_2D);
+    texture->initialize(size, textureData, (uint16_t)Texture::TextureConfiguration::TEXTURE_2D);
     ImageLoader::freeImage(textureData);
 }
 

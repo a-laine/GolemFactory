@@ -42,7 +42,7 @@ void SkeletonSaver::save(Skeleton* skeleton, const std::string& resourcesPath, s
 	Writer writer(&file);
 	file << std::fixed;
 	file.precision(5);
-	writer.setInlineArray(true);
+	writer.setInlineArray(false);
 	writer.write(rootVariant);
 }
 //

@@ -324,7 +324,7 @@ class Renderer : public Singleton<Renderer>
 				Mesh* m_skyboxMesh;
 				Shader* m_skyboxShader;
 				Shader* m_atmosphericScattering;
-				bool m_enableAtmosphericScattering = true;
+				bool m_enableAtmosphericScattering;
 		#pragma endregion
 
 		#pragma region Shadows

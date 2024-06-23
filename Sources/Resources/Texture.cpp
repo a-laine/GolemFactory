@@ -1,5 +1,6 @@
 #include "Texture.h"
 #include "Loader/TextureLoader.h"
+#include "Loader/TextureSaver.h"
 
 #include <Utiles/Assert.hpp>
 #include <Utiles/Debug.h>
@@ -11,20 +12,21 @@ std::string Texture::defaultName;
 
 #ifdef USE_IMGUI
 Texture* Texture::sharedTextureOverview = nullptr;
+static char exportName[128] = "exportName";
 #endif
 //
 
 //  Default
 Texture::Texture(const std::string& textureName, TextureConfiguration conf)
     : ResourceVirtual(textureName, ResourceVirtual::ResourceType::TEXTURE)
-    , texture(0), configuration((uint8_t)conf) 
+    , texture(0), configuration((uint16_t)conf) 
 {
 #ifdef USE_IMGUI
     layerOverview = 0;
     textureLayers = nullptr;
 #endif
 }
-Texture::Texture(const std::string& textureName, uint8_t conf)
+Texture::Texture(const std::string& textureName, uint16_t conf)
     : ResourceVirtual(textureName, ResourceVirtual::ResourceType::TEXTURE)
     , texture(0), configuration(conf) 
 {
@@ -58,17 +60,17 @@ Texture::~Texture()
 #endif
 }
 
-void Texture::initialize(const vec3i& imageSize, const uint8_t* data, uint8_t config)
+void Texture::initialize(const vec3i& imageSize, const uint8_t* data, uint16_t config)
 {
     initialize(name, imageSize, data, config, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
 }
 //
 
 //  Set/get functions
-int Texture::getType() { return (configuration & (uint8_t)TextureConfiguration::TYPE_MASK); }
+int Texture::getType() { return (configuration & (uint16_t)TextureConfiguration::TYPE_MASK); }
 GLenum Texture::getGLenumType()
 {
-    switch((TextureConfiguration)(configuration & (uint8_t)TextureConfiguration::TYPE_MASK))
+    switch((TextureConfiguration)(configuration & (uint16_t)TextureConfiguration::TYPE_MASK))
     {
         case TextureConfiguration::TEXTURE_1D: return GL_TEXTURE_1D;
         case TextureConfiguration::TEXTURE_3D: return GL_TEXTURE_3D;
@@ -106,7 +108,7 @@ GLuint* Texture::getTextureIdPointer() { return &texture; }
 //
 
 
-void Texture::initialize(const std::string& textureName, const vec3i& imageSize, const void* data, uint8_t config, unsigned int internalFormat, 
+void Texture::initialize(const std::string& textureName, const vec3i& imageSize, const void* data, uint16_t config, unsigned int internalFormat,
     unsigned int pixelFormat, unsigned int colorFormat, bool immutable)
 {
     GF_ASSERT(state == INVALID);
@@ -114,7 +116,6 @@ void Texture::initialize(const std::string& textureName, const vec3i& imageSize,
     state = LOADING;
     size = imageSize;
     configuration = config;
-
 
     const auto CheckError = [textureName](const char* label)
     {
@@ -139,7 +140,7 @@ void Texture::initialize(const std::string& textureName, const vec3i& imageSize,
     glGenTextures(1, &texture); CheckError("glGenTextures");
     unsigned int type = GL_TEXTURE_2D;
     bool checkForTextureview = false;
-    switch ((TextureConfiguration)(configuration & (uint8_t)TextureConfiguration::TYPE_MASK))
+    switch ((TextureConfiguration)(configuration & (uint16_t)TextureConfiguration::TYPE_MASK))
     {
         case TextureConfiguration::TEXTURE_1D:
             glBindTexture(GL_TEXTURE_1D, texture); CheckError("glBindTexture");
@@ -210,22 +211,22 @@ void Texture::initialize(const std::string& textureName, const vec3i& imageSize,
     }
     m_type = type;
 
-    if (configuration & (uint8_t)TextureConfiguration::USE_MIPMAP)
+    if (configuration & (uint16_t)TextureConfiguration::USE_MIPMAP)
     {
         glGenerateMipmap(type);
         CheckError("glGenerateMipmap");
     }
 
     //  MAG & MIN filter parameter
-    if (configuration & (uint8_t)TextureConfiguration::USE_MIPMAP)
+    if (configuration & (uint16_t)TextureConfiguration::USE_MIPMAP)
     {
-        if (configuration & (uint8_t)TextureConfiguration::MAG_NEAREST)
+        if (configuration & (uint16_t)TextureConfiguration::MAG_NEAREST)
             glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         else
             glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         CheckError("glTexParameteri MAG_FILTER & MIPMAP");
 
-        if (configuration & (uint8_t)TextureConfiguration::MIN_NEAREST)
+        if (configuration & (uint16_t)TextureConfiguration::MIN_NEAREST)
             glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
         else
             glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -233,13 +234,13 @@ void Texture::initialize(const std::string& textureName, const vec3i& imageSize,
     }
     else
     {
-        if (configuration & (uint8_t)TextureConfiguration::MAG_NEAREST)
+        if (configuration & (uint16_t)TextureConfiguration::MAG_NEAREST)
             glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
         else
             glTexParameteri(type, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         CheckError("glTexParameteri MIN_FILTER");
 
-        if (configuration & (uint8_t)TextureConfiguration::MIN_NEAREST)
+        if (configuration & (uint16_t)TextureConfiguration::MIN_NEAREST)
             glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         else
             glTexParameteri(type, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -248,7 +249,7 @@ void Texture::initialize(const std::string& textureName, const vec3i& imageSize,
 
     //  WRAP parameter
     unsigned int wrapMode = 0;
-    switch ((TextureConfiguration)(configuration & (uint8_t)TextureConfiguration::WRAP_MASK))
+    switch ((TextureConfiguration)(configuration & (uint16_t)TextureConfiguration::WRAP_MASK))
     {
         case TextureConfiguration::WRAP_CLAMP:
             wrapMode = GL_CLAMP_TO_EDGE;
@@ -329,7 +330,7 @@ void Texture::update(const void* data, unsigned int pixelFormat, unsigned int co
     };
 
     vec3i updateSize = vec3i::min(size, subSize);
-    switch ((TextureConfiguration)(configuration & (uint8_t)TextureConfiguration::TYPE_MASK))
+    switch ((TextureConfiguration)(configuration & (uint16_t)TextureConfiguration::TYPE_MASK))
     {
         case TextureConfiguration::TEXTURE_1D:
             glBindTexture(GL_TEXTURE_1D, texture);
@@ -471,7 +472,7 @@ void Texture::onDrawImGui()
     ImGui::TextColored(ResourceVirtual::titleColorDraw, "Texture infos");
 
     // type
-    TextureConfiguration type = (TextureConfiguration)(configuration & (uint8_t)TextureConfiguration::TYPE_MASK);
+    TextureConfiguration type = (TextureConfiguration)(configuration & (uint16_t)TextureConfiguration::TYPE_MASK);
     switch (type)
     {
         case Texture::TextureConfiguration::TEXTURE_1D:
@@ -507,20 +508,20 @@ void Texture::onDrawImGui()
     ImGui::Text("Internal format : %s", GetInternalFormatString(m_internalFormat));
 
     // mipmaps
-    if (configuration & (uint8_t)TextureConfiguration::USE_MIPMAP)
+    if (configuration & (uint16_t)TextureConfiguration::USE_MIPMAP)
         ImGui::Text("Mipmap : True");
     else ImGui::Text("Mipmap : False");
 
     // Filtering (point, linear, ...)
-    if (configuration & (uint8_t)TextureConfiguration::MAG_NEAREST)
+    if (configuration & (uint16_t)TextureConfiguration::MAG_NEAREST)
         ImGui::Text("Magify filter : Nearest");
     else ImGui::Text("Magify filter : Linear");
-    if (configuration & (uint8_t)TextureConfiguration::MIN_NEAREST)
+    if (configuration & (uint16_t)TextureConfiguration::MIN_NEAREST)
         ImGui::Text("Minify filter : Nearest");
     else ImGui::Text("Minify filter : Linear");
 
     // wrap mode
-    TextureConfiguration wrap = (TextureConfiguration)(configuration & (uint8_t)TextureConfiguration::WRAP_MASK);
+    TextureConfiguration wrap = (TextureConfiguration)(configuration & (uint16_t)TextureConfiguration::WRAP_MASK);
     switch (type)
     {
         case Texture::TextureConfiguration::WRAP_CLAMP:
@@ -556,7 +557,7 @@ void Texture::onDrawImGui()
         if (!Texture::sharedTextureOverview)
         {
             Texture::sharedTextureOverview = new Texture("sharedTextureOverview", Texture::TextureConfiguration::TEXTURE_2D);
-            Texture::sharedTextureOverview->initialize(vec3i(size.x, size.y, 0), nullptr, (uint8_t)Texture::TextureConfiguration::TEXTURE_2D);
+            Texture::sharedTextureOverview->initialize(vec3i(size.x, size.y, 0), nullptr, (uint16_t)Texture::TextureConfiguration::TEXTURE_2D);
             ResourceManager::getInstance()->addResource(Texture::sharedTextureOverview);
             Texture::sharedTextureOverview->isEnginePrivate = true;
         }
@@ -586,6 +587,21 @@ void Texture::onDrawImGui()
 
         Debug::reinterpreteTexture(this, sharedTextureOverview, layer);
         ImGui::Image((void*)sharedTextureOverview->getTextureId(), ImVec2(size.x * ratio, size.y * ratio), ImVec2(0, 0), ImVec2(1, 1), ImColor(255, 255, 255, 255), ImColor(255, 255, 255, 128));
+    }
+
+    if (enableExport)
+    {
+        ImGui::InputText("exportName", exportName, sizeof(exportName));
+        if (ImGui::Button("Export"))
+        {
+            bool needMetadata = false;
+            if (type == Texture::TextureConfiguration::CUBEMAP)
+                needMetadata = true;
+            else if (type == Texture::TextureConfiguration::TEXTURE_ARRAY)
+                needMetadata = true;
+
+            TextureSaver::save(this, ResourceManager::getInstance()->getRepository(), needMetadata, std::string(exportName));
+        }
     }
 
 #endif

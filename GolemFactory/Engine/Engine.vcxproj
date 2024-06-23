@@ -254,6 +254,7 @@
     <ClCompile Include="..\..\Sources\Resources\Loader\SkeletonLoader.cpp" />
     <ClCompile Include="..\..\Sources\Resources\Loader\SkeletonSaver.cpp" />
     <ClCompile Include="..\..\Sources\Resources\Loader\TextureLoader.cpp" />
+    <ClCompile Include="..\..\Sources\Resources\Loader\TextureSaver.cpp" />
     <ClCompile Include="..\..\Sources\Resources\Mesh.cpp" />
     <ClCompile Include="..\..\Sources\Resources\ResourceManager.cpp" />
     <ClCompile Include="..\..\Sources\Resources\ResourceVirtual.cpp" />
@@ -392,7 +393,9 @@
     <ClInclude Include="..\..\Sources\Resources\Loader\SkeletonLoader.h" />
     <ClInclude Include="..\..\Sources\Resources\Loader\SkeletonSaver.h" />
     <ClInclude Include="..\..\Sources\Resources\Loader\stb_image.h" />
+    <ClInclude Include="..\..\Sources\Resources\Loader\stb_image_write.h" />
     <ClInclude Include="..\..\Sources\Resources\Loader\TextureLoader.h" />
+    <ClInclude Include="..\..\Sources\Resources\Loader\TextureSaver.h" />
     <ClInclude Include="..\..\Sources\Resources\Mesh.h" />
     <ClInclude Include="..\..\Sources\Resources\ResourceManager.h" />
     <ClInclude Include="..\..\Sources\Resources\ResourceVirtual.h" />

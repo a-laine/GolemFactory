@@ -177,6 +177,8 @@ void ResourceManager::drawImGui(World& world)
 
     ImGui::TextColored(ImVec4(1, 1, 0, 1), "Filters");
     m_nameFilter.Draw();
+    static float adjustableSection = 0.5f;
+    ImGui::SliderFloat("Section size", &adjustableSection, 0.2f, 0.8f);
 
     ImGui::Spacing(); ImGui::Spacing();
 
@@ -196,7 +198,7 @@ void ResourceManager::drawImGui(World& world)
                 auto selectedIt = selectedResources.find(TabTypes[i]);
                 ResourceVirtual* selectedRes = selectedIt != selectedResources.end() ? selectedIt->second : nullptr;
 
-                ImGui::BeginChild("ResourceList", ImVec2(ImGui::GetContentRegionAvail().x * 0.5f, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
+                ImGui::BeginChild("ResourceList", ImVec2(ImGui::GetContentRegionAvail().x * adjustableSection, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
                 {
                     bool noResourceLoaded = true;
                     for (const auto& it : resources)

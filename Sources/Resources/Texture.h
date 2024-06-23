@@ -8,8 +8,11 @@
 #include "ResourceVirtual.h"
 
 class Shader;
+class TextureSaver;
 class Texture : public ResourceVirtual
 {
+    friend class TextureSaver;
+
     public:
         static char const * const directory;
         static char const * const extension;
@@ -43,11 +46,11 @@ class Texture : public ResourceVirtual
         //  Default
         explicit Texture();
         explicit Texture(const std::string& textureName, TextureConfiguration conf);
-		explicit Texture(const std::string& textureName, uint8_t conf = 0x0);
+		explicit Texture(const std::string& textureName, uint16_t conf = 0x0);
         ~Texture();
 
-        void initialize(const vec3i& imageSize, const uint8_t* data, uint8_t config = 0);
-        void initialize(const std::string& textureName, const vec3i& imageSize, const void* data, uint8_t config, unsigned int internalFormat, 
+        void initialize(const vec3i& imageSize, const uint8_t* data, uint16_t config = 0);
+        void initialize(const std::string& textureName, const vec3i& imageSize, const void* data, uint16_t config, unsigned int internalFormat,
             unsigned int pixelFormat, unsigned int colorFormat, bool immutable = false);
 
         void update(const void* data, unsigned int pixelFormat, unsigned int colorFormat, 
@@ -74,6 +77,7 @@ class Texture : public ResourceVirtual
 
         #ifdef USE_IMGUI
             bool isEnginePrivate = false;
+            bool enableExport = false;
         #endif
 
     private:
@@ -81,7 +85,7 @@ class Texture : public ResourceVirtual
 
         //  Attributes
         GLuint texture;                 //!< Texture Id
-        uint8_t configuration;          //!< Texture configuration byte
+        uint16_t configuration;         //!< Texture configuration byte
         std::vector<std::string> m_layerDescriptor;
 
 #ifdef USE_IMGUI

@@ -140,7 +140,7 @@ atmosphericScattering
 		{
 			ivec3 clusterIndex = ivec3(gl_GlobalInvocationID.xyz);
 			ivec2 skyboxSize = imageSize(skybox);
-			float invImageSize = 1.0 / skyboxSize.x;
+			float invImageSize = 1.0 / (skyboxSize.x - 1.0);
 			
 			// compute ray direction
 			vec3 ray = vec3(1,1,1);
@@ -160,7 +160,7 @@ atmosphericScattering
 			vec4 lightDir = -normalize(m_directionalLightDirection);
 			
 			//vec3 color = mix(ray.xxx, facecolors[clusterIndex.z].xyz, 0.5);
-			vec3 color = IntegrateScattering(vec3(0, cameraPosition.y, 0), ray, 100000.0 , lightDir.xyz, m_directionalLightColor.xyz);
+			vec3 color = IntegrateScattering(vec3(0, cameraPosition.y, 0), ray, INFINITY , lightDir.xyz, m_directionalLightColor.xyz);
 			
 			imageStore(skybox, clusterIndex, vec4(color, 1.0));
 		}

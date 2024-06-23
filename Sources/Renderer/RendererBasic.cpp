@@ -46,7 +46,8 @@ Renderer::Renderer() :
 	m_skyboxMesh = nullptr;
 	m_skyboxShader = nullptr;
 
-	drawGrid = true;
+	drawGrid = true; 
+	m_enableAtmosphericScattering = true;
 	batchFreePool.reserve(512);
 
 	m_environementLighting.m_shadowFarPlanes = vec4f(20.f, 50.f, 180.f, 600.f);
@@ -191,7 +192,7 @@ void Renderer::initializeLightClusterBuffer(int width, int height, int depth)
 			}
 
 	using TC = Texture::TextureConfiguration;
-	uint8_t config = (uint8_t)TC::TEXTURE_3D | (uint8_t)TC::MIN_NEAREST | (uint8_t)TC::MAG_NEAREST | (uint8_t)TC::WRAP_CLAMP;
+	uint16_t config = (uint16_t)TC::TEXTURE_3D | (uint16_t)TC::MIN_NEAREST | (uint16_t)TC::MAG_NEAREST | (uint16_t)TC::WRAP_CLAMP;
 	m_lightClusterTexture.initialize("lightClusterTexture", imageSize, buffer, config, GL_RGBA32UI, GL_RGBA_INTEGER, GL_UNSIGNED_INT);
 	ResourceManager::getInstance()->addResource(&m_lightClusterTexture);
 	m_lightClusterTexture.isEnginePrivate = true;
@@ -225,7 +226,7 @@ void Renderer::initializeOcclusionBuffers(int width, int height)
 
 #ifdef USE_IMGUI
 	using TC = Texture::TextureConfiguration;
-	uint8_t config = (uint8_t)TC::TEXTURE_2D | (uint8_t)TC::MIN_NEAREST | (uint8_t)TC::MAG_NEAREST | (uint8_t)TC::WRAP_CLAMP;
+	uint16_t config = (uint16_t)TC::TEXTURE_2D | (uint16_t)TC::MIN_NEAREST | (uint16_t)TC::MAG_NEAREST | (uint16_t)TC::WRAP_CLAMP;
 	occlusionTexture.initialize("occlusionTexture", vec3i(m_occlusionBufferSize.x, m_occlusionBufferSize.y, 0),
 		nullptr, config, GL_R32F, GL_RED, GL_FLOAT);// GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
 	ResourceManager::getInstance()->addResource(&occlusionTexture);
@@ -326,7 +327,7 @@ void Renderer::initializeShadows(int cascadesWidth, int cascadesHeight, int omni
 	};
 
 	using TC = Texture::TextureConfiguration;
-	uint8_t config = (uint8_t)TC::TEXTURE_ARRAY | (uint8_t)TC::WRAP_CLAMP;
+	uint16_t config = (uint16_t)TC::TEXTURE_ARRAY | (uint16_t)TC::WRAP_CLAMP;
 	shadowCascadeTexture.initialize("shadowCascadeTexture", vec3i(cascadesWidth, cascadesHeight, 4),
 		nullptr, config, GL_DEPTH_COMPONENT32F, GL_DEPTH_COMPONENT, GL_FLOAT);
 	shadowCascadeTexture.isEnginePrivate = true;
@@ -348,7 +349,7 @@ void Renderer::initializeShadows(int cascadesWidth, int cascadesHeight, int omni
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	// omni cubemap array
-	config = (uint8_t)TC::CUBEMAP_ARRAY | (uint8_t)TC::WRAP_CLAMP;
+	config = (uint16_t)TC::CUBEMAP_ARRAY | (uint16_t)TC::WRAP_CLAMP;
 	shadowOmniTextures.initialize("shadowOmniTextures", vec3i(omniWidth, omniHeight, MAX_OMNILIGHT_SHADOW_COUNT),
 		nullptr, config, GL_DEPTH_COMPONENT32F, GL_DEPTH_COMPONENT, GL_FLOAT);
 	shadowOmniTextures.isEnginePrivate = true;
@@ -547,7 +548,7 @@ void Renderer::setVirtualTexture(TerrainVirtualTexture* virtualTexture)
 void Renderer::initializeOverviewRenderer(int width, int height)
 {
 	using TC = Texture::TextureConfiguration;
-	uint8_t config = (uint8_t)TC::TEXTURE_2D | (uint8_t)TC::WRAP_CLAMP;
+	uint16_t config = (uint16_t)TC::TEXTURE_2D | (uint16_t)TC::WRAP_CLAMP;
 	overviewDepth.initialize("overviewDepth", vec3i(width, height, 0),
 		nullptr, config, GL_DEPTH_COMPONENT32F, GL_DEPTH_COMPONENT, GL_FLOAT);
 	overviewTexture.initialize("overviewTexture", vec3i(width, height, 0),
@@ -1132,6 +1133,8 @@ void Renderer::drawImGui(World& world)
 	if (ImGui::ColorEdit3("Background color", &m_environementLighting.m_backgroundColor[0]))
 		glClearColor(m_environementLighting.m_backgroundColor.x, m_environementLighting.m_backgroundColor.y, m_environementLighting.m_backgroundColor.z, m_environementLighting.m_backgroundColor.w);
 	ImGui::SliderFloat("Fog density", &m_environementLighting.m_fogDensity, 0.f, 1.f, "%.4f", ImGuiSliderFlags_Logarithmic);
+
+	ImGui::Checkbox("Realtime Atmospheric scattering", &m_enableAtmosphericScattering);
 	ImGui::Checkbox("Draw light direction", &m_drawLightDirection);
 	ImGui::DragFloat("Debug ray spacing", &m_directionalLightDebugRaySpacing, 0.1f, 0.1f, 100.f);
 	ImGui::DragFloat("Debug ray vertical offset", &m_directionalLightDebugRayYoffset);

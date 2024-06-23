@@ -12,6 +12,7 @@ TerrainWater
 		cascadedShadow : "_globalShadowCascades";
 		omniShadowArray : "_globalOmniShadow";
 		terrainVirtualTexture : "_terrainVirtualTexture";
+		skybox : "_globalSkybox";
 		omniBaseLayer = "int";
 	};
 	
@@ -278,6 +279,7 @@ TerrainWater
 		
 		uniform sampler2DArrayShadow  cascadedShadow;
 		uniform samplerCubeArray omniShadowArray;
+		uniform samplerCube skybox;
 		uniform vec4 constantData[16];
 		
 		// images
@@ -465,7 +467,7 @@ TerrainWater
 			// compute base color depending on environement light (directional)
 			normal = normalize(fragmentNormal);
 			vec4 albedoColor = terrainData1;
-			vec4 metalicParam = vec4(0.8, 0, 0, 0);
+			vec4 metalicParam = vec4(0.3 , 0.7 , 0 , 0);
 			vec4 lightDir = normalize(m_directionalLightDirection);
 			float ndotl = dot(normal, -lightDir);
 			float shadowAttenuation = ndotl > 0.0 ? 1.0 : 0.0;
@@ -479,8 +481,11 @@ TerrainWater
 			vec4 viewDir = normalize(cameraPosition - fragmentPosition);
 			vec4 reflectDir = reflect(lightDir, normal);  
 			float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
-			vec4 specular = metalicParam.x * spec * m_directionalLightColor;  
+			vec4 specular = metalicParam.x * spec * m_directionalLightColor;
+			reflectDir = reflect(viewDir, normal);
+			vec4 reflectionColor = texture(skybox, reflectDir.xyz);
 			fragmentColor = (m_ambientColor + shadowAttenuation * (diffuse + specular)) * albedoColor;
+			fragmentColor = mix(fragmentColor, reflectionColor, clamp(dot(normal, viewDir), 0.0, 1.0) * metalicParam.y);
 			
 			// process cluster data
 			if (lightCount > 0)

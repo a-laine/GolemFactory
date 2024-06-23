@@ -434,6 +434,9 @@
     <ClCompile Include="..\..\Sources\Utiles\WorkerThread.cpp">
       <Filter>Fichiers sources\Utiles</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Sources\Resources\Loader\TextureSaver.cpp">
+      <Filter>Fichiers sources\Resources\Loader</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Sources\Math\TMath.h">
@@ -870,6 +873,12 @@
     </ClInclude>
     <ClInclude Include="..\..\Sources\Utiles\WorkerThread.h">
       <Filter>Fichiers sources\Utiles</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Resources\Loader\TextureSaver.h">
+      <Filter>Fichiers sources\Resources\Loader</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Resources\Loader\stb_image_write.h">
+      <Filter>Fichiers sources\Resources\Loader</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

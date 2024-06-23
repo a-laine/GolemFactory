@@ -61,13 +61,13 @@ bool TextureLoader::load(const std::string& resourceDirectory, const std::string
             switch (it->second.toInt())
             {
                 case 1:
-                    m_configuration = (uint8_t)Texture::TextureConfiguration::TEXTURE_1D;
+                    m_configuration = (uint16_t)Texture::TextureConfiguration::TEXTURE_1D;
                     break;
                 case 2:
-                    m_configuration = (uint8_t)Texture::TextureConfiguration::TEXTURE_2D;
+                    m_configuration = (uint16_t)Texture::TextureConfiguration::TEXTURE_2D;
                     break;
                 case 3:
-                    m_configuration = (uint8_t)Texture::TextureConfiguration::TEXTURE_3D;
+                    m_configuration = (uint16_t)Texture::TextureConfiguration::TEXTURE_3D;
                     break;
                 default:
                     PrintError("unsuported type");
@@ -78,15 +78,15 @@ bool TextureLoader::load(const std::string& resourceDirectory, const std::string
         {
             std::string typestr = it->second.toString();
             if (typestr == "1D")
-                m_configuration = (uint8_t)Texture::TextureConfiguration::TEXTURE_1D;
+                m_configuration = (uint16_t)Texture::TextureConfiguration::TEXTURE_1D;
             else if (typestr == "2D")
-                m_configuration = (uint8_t)Texture::TextureConfiguration::TEXTURE_2D;
+                m_configuration = (uint16_t)Texture::TextureConfiguration::TEXTURE_2D;
             else if (typestr == "3D")
-                m_configuration = (uint8_t)Texture::TextureConfiguration::TEXTURE_3D;
+                m_configuration = (uint16_t)Texture::TextureConfiguration::TEXTURE_3D;
             else if (typestr == "ARRAY")
-                m_configuration = (uint8_t)Texture::TextureConfiguration::TEXTURE_ARRAY;
+                m_configuration = (uint16_t)Texture::TextureConfiguration::TEXTURE_ARRAY;
             else if (typestr == "CUBEMAP")
-                m_configuration = (uint8_t)Texture::TextureConfiguration::CUBEMAP;
+                m_configuration = (uint16_t)Texture::TextureConfiguration::CUBEMAP;
             else
             {
                 PrintError("unsuported type");
@@ -109,30 +109,30 @@ bool TextureLoader::load(const std::string& resourceDirectory, const std::string
     if (it != textureInfo.end())
     {
         if (it->second.toBool())
-            m_configuration |= (uint8_t)Texture::TextureConfiguration::USE_MIPMAP;
+            m_configuration |= (uint16_t)Texture::TextureConfiguration::USE_MIPMAP;
     }
     it = textureInfo.find("minnearest");
     if (it != textureInfo.end())
     {
         if (it->second.toBool())
-            m_configuration |= (uint8_t)Texture::TextureConfiguration::MIN_NEAREST;
+            m_configuration |= (uint16_t)Texture::TextureConfiguration::MIN_NEAREST;
     }
     it = textureInfo.find("magnearest");
     if (it != textureInfo.end())
     {
         if (it->second.toBool())
-            m_configuration |= (uint8_t)Texture::TextureConfiguration::MAG_NEAREST;
+            m_configuration |= (uint16_t)Texture::TextureConfiguration::MAG_NEAREST;
     }
     it = textureInfo.find("wrap");
     if (it != textureInfo.end())
     {
         std::string typestr = it->second.toString();
         if (typestr == "repeat")
-            m_configuration |= (uint8_t)Texture::TextureConfiguration::WRAP_REPEAT;
+            m_configuration |= (uint16_t)Texture::TextureConfiguration::WRAP_REPEAT;
         else if (typestr == "mirror")
-            m_configuration |= (uint8_t)Texture::TextureConfiguration::WRAP_MIRROR;
+            m_configuration |= (uint16_t)Texture::TextureConfiguration::WRAP_MIRROR;
         else if (typestr == "clamp")
-            m_configuration |= (uint8_t)Texture::TextureConfiguration::WRAP_CLAMP;
+            m_configuration |= (uint16_t)Texture::TextureConfiguration::WRAP_CLAMP;
         else
             PrintWarning("unknown \"wrap\" param value");
     }
@@ -158,10 +158,10 @@ bool TextureLoader::load(const std::string& resourceDirectory, const std::string
         return false;
     }
 
-    uint8_t type = m_configuration & (uint8_t)Texture::TextureConfiguration::TYPE_MASK;
+    uint8_t type = m_configuration & (uint16_t)Texture::TextureConfiguration::TYPE_MASK;
     bool isReadableArray = it->second.getType() == Variant::ARRAY && it->second.getArray().size() > 0;
 
-    if (type == (uint8_t)Texture::TextureConfiguration::TEXTURE_2D && it->second.getType() == Variant::STRING)
+    if (type == (uint16_t)Texture::TextureConfiguration::TEXTURE_2D && it->second.getType() == Variant::STRING)
     {
         int x, y, n;
         m_textureData = ImageLoader::loadFromFile(resourceDirectory + Texture::directory + textureInfo["texture"].toString(), x, y, n, ImageLoader::RGB_ALPHA);
@@ -176,9 +176,9 @@ bool TextureLoader::load(const std::string& resourceDirectory, const std::string
     }
     else if (isReadableArray && it->second[0].getType() == Variant::STRING)
     {
-        if (type != (uint8_t)Texture::TextureConfiguration::TEXTURE_3D && 
-            type != (uint8_t)Texture::TextureConfiguration::TEXTURE_ARRAY && 
-            type != (uint8_t)Texture::TextureConfiguration::CUBEMAP)
+        if (type != (uint16_t)Texture::TextureConfiguration::TEXTURE_3D && 
+            type != (uint16_t)Texture::TextureConfiguration::TEXTURE_ARRAY && 
+            type != (uint16_t)Texture::TextureConfiguration::CUBEMAP)
         {
             PrintError("texture data is array, but not texture type");
             return false;
@@ -228,7 +228,7 @@ bool TextureLoader::load(const std::string& resourceDirectory, const std::string
     }
     else if (isReadableArray)
     {
-        if (type != (uint8_t)Texture::TextureConfiguration::TEXTURE_3D && type != (uint8_t)Texture::TextureConfiguration::TEXTURE_ARRAY)
+        if (type != (uint16_t)Texture::TextureConfiguration::TEXTURE_3D && type != (uint16_t)Texture::TextureConfiguration::TEXTURE_ARRAY)
         {
             PrintError("texture data is array, but not texture type");
             return false;
@@ -239,7 +239,7 @@ bool TextureLoader::load(const std::string& resourceDirectory, const std::string
 
     /*try
     {
-        if ((configuration & (uint8_t)Texture::TextureConfiguration::TYPE_MASK) == (uint8_t)Texture::TextureConfiguration::TEXTURE_2D &&
+        if ((configuration & (uint16_t)Texture::TextureConfiguration::TYPE_MASK) == (uint16_t)Texture::TextureConfiguration::TEXTURE_2D &&
             textureInfo["texture"].getType() == Variant::STRING) //texture="a.png";
         {
             int x, y, n;
@@ -251,8 +251,8 @@ bool TextureLoader::load(const std::string& resourceDirectory, const std::string
         }
         else if (textureInfo["texture"].getType() == Variant::ARRAY && textureInfo["texture"][0].getType() == Variant::STRING)//texture=["a.png","b.png"];
         {
-            configuration &= ~(uint8_t)Texture::TextureConfiguration::TYPE_MASK;
-            configuration |= (uint8_t)Texture::TextureConfiguration::TEXTURE_3D;
+            configuration &= ~(uint16_t)Texture::TextureConfiguration::TYPE_MASK;
+            configuration |= (uint16_t)Texture::TextureConfiguration::TEXTURE_3D;
             size.x = (float)textureInfo["width"].toInt();
             size.y = (float)textureInfo["height"].toInt();
             size.z = (float)textureInfo["texture"].size();
@@ -282,12 +282,12 @@ bool TextureLoader::load(const std::string& resourceDirectory, const std::string
         {
             unsigned int n = textureInfo["width"].toInt();
             size.x = (float)n;
-            if ((configuration & (uint8_t)Texture::TextureConfiguration::TYPE_MASK) == (uint8_t)Texture::TextureConfiguration::TEXTURE_2D) 
+            if ((configuration & (uint16_t)Texture::TextureConfiguration::TYPE_MASK) == (uint16_t)Texture::TextureConfiguration::TEXTURE_2D) 
             { 
                 size.y = (float)textureInfo["height"].toInt(); 
                 n *= textureInfo["height"].toInt(); 
             }
-            if ((configuration & (uint8_t)Texture::TextureConfiguration::TYPE_MASK) == (uint8_t)Texture::TextureConfiguration::TEXTURE_3D) 
+            if ((configuration & (uint16_t)Texture::TextureConfiguration::TYPE_MASK) == (uint16_t)Texture::TextureConfiguration::TEXTURE_3D) 
             { 
                 size.z = (float)textureInfo["depth"].toInt();  
                 n *= textureInfo["depth"].toInt(); 

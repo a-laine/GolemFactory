@@ -1,0 +1,13 @@
+{
+"height" : 128,
+"mipmap" : false,
+"texture" : [
+    "SkyBoxes/defaultSkybox_0.png",
+    "SkyBoxes/defaultSkybox_1.png",
+    "SkyBoxes/defaultSkybox_2.png",
+    "SkyBoxes/defaultSkybox_3.png",
+    "SkyBoxes/defaultSkybox_4.png",
+    "SkyBoxes/defaultSkybox_5.png" ],
+"type" : "CUBEMAP",
+"width" : 128
+}
