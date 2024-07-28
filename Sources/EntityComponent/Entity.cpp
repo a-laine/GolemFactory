@@ -5,6 +5,7 @@
 #include "Renderer/Lighting/LightComponent.h"
 #include "Animation/SkeletonComponent.h"
 #include "Terrain/TerrainAreaDrawableComponent.h"
+#include "Terrain/TerrainDetailDrawableComponent.h"
 #include "World/World.h"
 
 #include <Utiles/Debug.h>
@@ -16,6 +17,16 @@ Entity::Entity() : m_refCount(0), m_name("unknown"), m_parentWorld(nullptr),
 	m_worldScale(1.f), m_localScale(1.f), m_transformIsDirty(false), m_transform(1.f), m_normalMatrix(1.f), m_invTransform(1.f), m_flags(0)
 {
 	m_parentEntity = nullptr;
+}
+Entity::~Entity()
+{
+	if (m_parentEntity)
+		m_parentEntity->removeChild(this);
+	if (m_parentWorld)
+	{
+		removeAllChild(true);
+		m_parentWorld->removeFromScene(this);
+	}
 }
 //
 
@@ -224,6 +235,11 @@ void Entity::recomputeBoundingBox()
 			const TerrainAreaDrawableComponent* area = static_cast<const TerrainAreaDrawableComponent*>(element.comp);
 			AddBox(area->getBoundingBox());
 		}
+		else if (element.type == TerrainDetailDrawableComponent::getStaticClassID())
+		{
+			const TerrainDetailDrawableComponent* area = static_cast<const TerrainDetailDrawableComponent*>(element.comp);
+			AddBox(area->getBoundingBox());
+		}
 		else if (element.comp->isIdInHierarchy(DrawableComponent::getStaticClassID()))
 		{
 			const DrawableComponent* drawable = static_cast<const DrawableComponent*>(element.comp);
@@ -316,12 +332,15 @@ uint64_t Entity::getFlags() const { return m_flags; }
 //
 
 // Hierarchy
-void Entity::addChild(Entity* child)
+void Entity::addChild(Entity* child, bool incOwnership)
 {
 	if (!child)
 		return;
 	m_childs.push_back(child);
 	child->m_parentEntity = this;
+	if (incOwnership && m_parentWorld)
+		m_parentWorld->getOwnership(child);
+
 }
 void Entity::removeChild(Entity* child)
 {
@@ -336,12 +355,27 @@ void Entity::removeChild(Entity* child)
 	}
 	if (index >= 0)
 	{
+		if (m_parentWorld)
+			m_parentWorld->releaseOwnership(child);
 		child->m_parentEntity = nullptr;
 		int last = m_childs.size() - 1;
 		if (index != last)
 			m_childs[index] = m_childs[last];
 		m_childs.pop_back();
 	}
+}
+void Entity::removeAllChild(bool removeFromSceneToo)
+{
+	if (m_parentWorld)
+	{
+		for (Entity* child : m_childs)
+		{
+			if (removeFromSceneToo)
+				m_parentWorld->removeFromScene(child);
+			m_parentWorld->releaseOwnership(child);
+		}
+	}
+	m_childs.clear();
 }
 void Entity::recursiveHierarchyCollect(std::vector<Entity*>& collection)
 {

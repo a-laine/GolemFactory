@@ -26,6 +26,7 @@ class TerrainAreaDrawableComponent : public DrawableComponent
 		};
 
 		TerrainAreaDrawableComponent(TerrainArea* _area);
+		~TerrainAreaDrawableComponent() override;
 
 		unsigned short getInstanceDataSize() const override;
 		void pushInstanceData(Shader* _shader) const override;

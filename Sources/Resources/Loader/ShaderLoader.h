@@ -47,6 +47,7 @@ class ShaderLoader : public IResourceLoader
         std::vector<Texture*> textureResources;
 
         bool isComputeShader;
+        bool usePeterPanning;
         unsigned int compute, computeProgram;
         //
 

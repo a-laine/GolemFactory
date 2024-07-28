@@ -273,6 +273,7 @@
     <ClCompile Include="..\..\Sources\Terrain\Terrain.cpp" />
     <ClCompile Include="..\..\Sources\Terrain\TerrainArea.cpp" />
     <ClCompile Include="..\..\Sources\Terrain\TerrainAreaDrawableComponent.cpp" />
+    <ClCompile Include="..\..\Sources\Terrain\TerrainDetailDrawableComponent.cpp" />
     <ClCompile Include="..\..\Sources\Terrain\TerrainVirtualTexture.cpp" />
     <ClCompile Include="..\..\Sources\Utiles\ConsoleColor.cpp" />
     <ClCompile Include="..\..\Sources\Utiles\Debug.cpp" />
@@ -414,6 +415,7 @@
     <ClInclude Include="..\..\Sources\Terrain\Terrain.h" />
     <ClInclude Include="..\..\Sources\Terrain\TerrainArea.h" />
     <ClInclude Include="..\..\Sources\Terrain\TerrainAreaDrawableComponent.h" />
+    <ClInclude Include="..\..\Sources\Terrain\TerrainDetailDrawableComponent.h" />
     <ClInclude Include="..\..\Sources\Terrain\TerrainVirtualTexture.h" />
     <ClInclude Include="..\..\Sources\Utiles\Assert.hpp" />
     <ClInclude Include="..\..\Sources\Utiles\ConsoleColor.h" />

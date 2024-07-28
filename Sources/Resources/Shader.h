@@ -8,9 +8,12 @@
 #include "ResourceVirtual.h"
 #include "Texture.h"
 
+class ShaderLoader;
 
 class Shader : public ResourceVirtual
 {
+    friend class ShaderLoader;
+
     public:
         static char const * const directory;
         static char const * const extension;
@@ -73,6 +76,7 @@ class Shader : public ResourceVirtual
 		std::string getUniformType(const std::string& uniform);
         bool supportInstancing() const;
         bool isComputeShader() const;
+        bool usePeterPanning() const;
         Shader* getVariant(int variantCode);
 
         std::string getIdentifier() const override;
@@ -101,6 +105,7 @@ class Shader : public ResourceVirtual
         //uint8_t textureCount;								//!< The number of texture use by the program
         uint16_t renderQueue;
         bool m_isComputeShader;
+        bool m_usePeterPanning;
         std::map<std::string, GLint> attributesLocation;	//!< The shader attribute map with their opengl location
 		std::map<std::string, std::string> attributesType;
         //std::vector<std::string> textureIdentifiers;

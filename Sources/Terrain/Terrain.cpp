@@ -14,6 +14,7 @@
 	bool TerrainWindowEnable = true;
 #endif
 #include <Utiles/Debug.h>
+#include <Terrain/TerrainDetailDrawableComponent.h>
 
 float Terrain::g_morphingRange = 10.f;
 
@@ -310,7 +311,8 @@ void Terrain::update(vec4f _cameraPosition)
 			jobdatas.push_back({ area, -1, -100 });
 			m_world->removeFromScene(area->m_entity);
 			m_areaContainer->removeChild(area->m_entity);
-			delete area->m_entity;
+			m_world->releaseOwnership(area->m_entity);
+			//delete area->m_entity;
 			area->m_entity = nullptr;
 		}
 	}
@@ -324,6 +326,7 @@ void Terrain::update(vec4f _cameraPosition)
 			if (!area)
 				continue;
 
+			// create entity for the area
 			if (!area->m_entity)
 			{
 				area->m_entity = m_world->getEntityFactory().createObject([&](Entity* object)
@@ -345,6 +348,7 @@ void Terrain::update(vec4f _cameraPosition)
 			}
 			GF_ASSERT(area->m_entity, "No entity for area !");
 
+			// compute desired lod
 			vec4f delta = _cameraPosition - area->m_center;
 			delta = vec4f::clamp(delta, -halfSize, halfSize) - delta;
 			float distance = std::sqrt(delta.x * delta.x + delta.z * delta.z);
@@ -359,6 +363,32 @@ void Terrain::update(vec4f _cameraPosition)
 				}
 			}
 
+			// create detail entities if needed, or delete them
+			if (lod < 5)
+			{
+				if (area->m_entity->getChilds().size() == 0 && area->getLod() != -1)
+				{
+					Entity* massentity = area->addDetailsInstance("PolygonDungeon/SM_Env_GrassQuads_01.fbx", 1.f, vec2f(0.7f, 1.f), vec2f(0.9f, 1.f), 0.f, -0.1f);
+					TerrainDetailDrawableComponent* drawable = massentity->getComponent<TerrainDetailDrawableComponent>();
+					drawable->setDoubleSidedFaces(true);
+					drawable->setColorTintGradient(vec3f(0.08f, 0.25f, 0.05f), vec3f(0.16f, 0.25f, 0.05f));
+					drawable->setAlphaClipThs(0.3f);
+
+					const float treeDensity = 7.f;
+					const vec2f treeSize = vec2f(3.f, 5.f);
+					area->addDetailsInstance("PolygonDungeon/SM_Env_Tree_01.fbx", treeDensity, vec2f(0.00f, 0.17f), treeSize, 1.f, -0.1f);
+					area->addDetailsInstance("PolygonDungeon/SM_Env_Tree_02.fbx", treeDensity, vec2f(0.17f, 0.34f), treeSize, 1.f, -0.1f);
+					area->addDetailsInstance("PolygonDungeon/SM_Env_Tree_03.fbx", treeDensity, vec2f(0.34f, 0.51f), treeSize, 1.f, -0.1f);
+					area->addDetailsInstance("PolygonDungeon/SM_Env_Tree_04.fbx", treeDensity, vec2f(0.51f, 0.68f), treeSize, 1.f, -0.1f);
+				}
+			}
+			else
+			{
+				if (area->m_entity->getChilds().size() > 0)
+					area->m_entity->removeAllChild(true);
+			}
+
+			// change area lod
 			if (area->getLod() != lod)
 			{
 				TerrainAreaDrawableComponent* drawable = area->m_entity->getComponent<TerrainAreaDrawableComponent>();
@@ -656,8 +686,10 @@ void Terrain::drawImGui(World& world)
 
 				Debug::color = Debug::magenta;
 				mat4f transform = mat4f::identity;
-				transform[3] = area->m_center;
-				Debug::drawCube(transform, vec4f(125.f, 100, 125.f, 0));
+				float minHeight = area->getBoundingBox().min.y;
+				float maxHeight = area->getBoundingBox().max.y;
+				transform[3] = area->m_center + vec4f(0, 0.5f * (maxHeight + minHeight), 0, 0);
+				Debug::drawCube(transform, vec4f(125.f, 0.5f * (maxHeight - minHeight), 125.f, 0));
 				Debug::drawLineCube(mat4f::identity, area->m_center - vec4f(125.f, 500, 125.f, 0), area->m_center + vec4f(125.f, 500, 125.f, 0));
 			}
 		}

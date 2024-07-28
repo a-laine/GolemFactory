@@ -10,6 +10,10 @@ TerrainAreaDrawableComponent::TerrainAreaDrawableComponent(TerrainArea* _area) :
 {
 
 }
+TerrainAreaDrawableComponent::~TerrainAreaDrawableComponent()
+{
+	ResourceManager::getInstance()->release(m_waterShader);
+}
 
 unsigned short TerrainAreaDrawableComponent::getInstanceDataSize() const
 {
@@ -115,8 +119,8 @@ AxisAlignedBox TerrainAreaDrawableComponent::getBoundingBox() const
 {
 	if (m_area)
 		return m_area->getBoundingBox();
-	vec4f hs = vec4f(125.f, 0.f, 125.f, 0.f);
-	return AxisAlignedBox(getParentEntity()->getWorldPosition() - hs, getParentEntity()->getWorldPosition() + hs);
+	vec4f hs = vec4f(125.f, 100.f, 125.f, 0.f);
+	return AxisAlignedBox(-hs, hs);
 }
 Shader* TerrainAreaDrawableComponent::getWaterShader() const
 {

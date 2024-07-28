@@ -39,7 +39,7 @@ void EntityManager::releaseOwnership(Entity* object)
 	object->m_refCount--;
 	if(object->m_refCount == 0)
 	{
-		delete object;
+		//delete object;
 		garbage.push_back(object);
 		nbObjects--;
 	}

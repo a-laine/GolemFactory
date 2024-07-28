@@ -534,7 +534,7 @@ void Renderer::initializeSkybox(const std::string& textureName)
 	m_skyboxTexture = ResourceManager::getInstance()->getResource<Texture>(textureName);
 
 	if (!m_skyboxMesh)
-		m_skyboxMesh = ResourceManager::getInstance()->getResource<Mesh>("Shapes/box.mesh");
+		m_skyboxMesh = ResourceManager::getInstance()->getResource<Mesh>("Shapes/box");
 	if (!m_skyboxShader)
 		m_skyboxShader = ResourceManager::getInstance()->getResource<Shader>("skyboxRendering");
 	if (!m_atmosphericScattering)
@@ -758,9 +758,7 @@ void Renderer::render(CameraComponent* renderCam)
 		ShadowCasting();
 
 	//	sort
-	uint64_t transparentMask = 1ULL << 63;
-	uint64_t faceCullingMask = 1ULL << 62;
-	uint64_t compareMask = ~(transparentMask | faceCullingMask); // don't use the states bits for comparing entities
+	uint64_t compareMask = ~(TransparentMask | FaceCullingMask); // don't use the states bits for comparing entities
 	std::sort(renderQueue.begin(), renderQueue.end(), [compareMask](DrawElement& a, DrawElement& b)
 		{
 			return (compareMask & a.hash) < (compareMask & b.hash);
@@ -771,6 +769,10 @@ void Renderer::render(CameraComponent* renderCam)
 		DynamicBatching();
 
 	// state tracking
+	glDisable(GL_BLEND);
+	glEnable(GL_CULL_FACE);
+	glCullFace(GL_BACK);
+	glFrontFace(GL_CW);
 	bool blendingEnabled = false;
 	bool faceCullingEnabled = true;
 	const auto SetBlending = [&blendingEnabled](bool state)
@@ -802,14 +804,14 @@ void Renderer::render(CameraComponent* renderCam)
 				continue;
 
 			//	opengl states managing
-			SetBlending(it.hash & transparentMask);
-			SetCulling(it.hash & faceCullingMask);
+			SetBlending(it.hash & TransparentMask);
+			SetCulling(it.hash & FaceCullingMask);
 
 			if (it.batch)
 				drawInstancedObject(it.batch->shader, it.batch->mesh, (float*)it.batch->matrices.data(), it.batch->instanceDatas, 
 					it.batch->dataSize, it.batch->instanceCount, it.batch->constantDataReference);
 			else
-				drawObject(it.entity);
+				drawObject(it.entity, it.shader);
 		}
 	}
 
@@ -823,8 +825,12 @@ void Renderer::render(CameraComponent* renderCam)
 		loadInstanceMatrices(m_skyboxShader, (float*)&modelMatrix);
 		loadGlobalUniforms(m_skyboxShader);
 
-		SetCulling(false);
 		SetBlending(false);
+		SetCulling(true);
+		//glDisable(GL_BLEND);
+		//glEnable(GL_CULL_FACE);
+		//glCullFace(GL_BACK);
+		//glFrontFace(GL_CW);
 		loadVAO(m_skyboxMesh->getVAO());
 		glDrawElements(GL_TRIANGLES, m_skyboxMesh->getNumberIndices(), m_skyboxMesh->getIndicesType(), NULL);
 
@@ -833,7 +839,7 @@ void Renderer::render(CameraComponent* renderCam)
 		trianglesDrawn += m_skyboxMesh->getNumberFaces();
 	}
 
-
+	loadVAO(0);
 	glEndQuery(GL_TIME_ELAPSED);
 }
 void Renderer::renderHUD()

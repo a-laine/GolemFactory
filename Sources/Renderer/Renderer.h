@@ -143,6 +143,7 @@ class Renderer : public Singleton<Renderer>
 		void loadInstanceMatrices(Shader* _shader, float* _instanceMatrices, unsigned short _instanceCount = 1);
 		void loadInstanceDatas(Shader* _shader, vec4f* _instanceDatas, unsigned short _dataSize, unsigned short _instanceCount = 1);
 		void drawObject(Entity* object, Shader* forceShader = nullptr);
+		void loadVAO(const GLuint& vao);
 		// 
 		
 		//	Debug
@@ -186,7 +187,6 @@ class Renderer : public Singleton<Renderer>
 
 		//	Protected functions
 		void loadGlobalUniforms(Shader* shader);
-		void loadVAO(const GLuint& vao);
 
 		void drawInstancedObject(Shader* _shader, Mesh* _mesh, float* _matrices, vec4f* _instanceDatas,
 			unsigned short _dataSize, unsigned short _instanceCount, DrawableComponent* _constantDataRef);

@@ -35,6 +35,8 @@ class DrawableComponent : public Component
 
 		Shader* getShader() const;
 		Mesh* getMesh() const;
+		virtual bool hasCustomDraw() const;
+		virtual void customDraw(Renderer* _renderer, unsigned int& _instanceDrawnCounter, unsigned int& _drawCallsCounter, unsigned int& _trianglesDrawnCounter) const;
 
         bool isValid() const;
 		bool castShadow() const;

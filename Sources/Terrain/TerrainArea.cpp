@@ -1,10 +1,12 @@
 #include "TerrainArea.h"
 #include "Terrain.h"
+#include "TerrainDetailDrawableComponent.h"
 
 #include <Utiles/ConsoleColor.h>
 #include <Utiles/ProfilerConfig.h>
 #include <random>
 #include <Utiles/Assert.hpp>
+#include <Resources/ResourceManager.h>
 
 thread_local std::default_random_engine g_randomGenerator;
 
@@ -162,6 +164,128 @@ void TerrainArea::generate(const std::string& directory)
 		delete[] data[i];
 	delete[] data;
 }
+Entity* TerrainArea::addDetailsInstance(const std::string& meshName, float density, vec2f probability, vec2f scaleRange, float worldNormalWeight, float modelOffset)
+{
+	const auto hash3 = [](float x, float y)
+	{
+		vec3f res;
+		int n = x * 311 + y * 113 + g_seed;
+		n = (n << 13) ^ n;
+		n = n * (n * n * 15731 + 789221) + 1376312589;
+		res.x = float(n & 0x0fffffff) / float(0x0fffffff);
+
+		n = x * 313 + y * 109 + g_seed;
+		n = (n << 13) ^ n;
+		n = n * (n * n * 15731 + 789221) + 1376312589;
+		res.y = float(n & 0x0fffffff) / float(0x0fffffff);
+
+		n = x * 317 + y * 107 + g_seed;
+		n = (n << 13) ^ n;
+		n = n * (n * n * 15731 + 789221) + 1376312589;
+		res.z = float(n & 0x0fffffff) / float(0x0fffffff);
+
+		return res;
+	};
+	const auto biLerpv = [](vec4f a, vec4f b, vec4f c, vec4f d, float s, float t)
+	{
+		vec4f x = vec4f::lerp(a, b, t);
+		vec4f y = vec4f::lerp(c, d, t);
+		return vec4f::lerp(x, y, s);
+	};
+	const auto biLerpf = [](float a, float b, float c, float d, float s, float t)
+	{
+		float x = lerp(a, b, t);
+		float y = lerp(c, d, t);
+		return lerp(x, y, s);
+	};
+
+	GF_ASSERT(m_data, "No data !");
+
+	ResourceManager* resmgr = ResourceManager::getInstance();
+	std::vector<vec4ui> instanceDatas;
+	//const float density = 1.f;
+	//const float probability = 0.7f;
+	const float displacementRange = 0.49f;
+	const float fullModelScale = 10.f;
+	const float pi2 = 2.f * (float)PI;
+
+	int gridPlacement = std::clamp((int)(250.f / std::max(0.001f, density)), 1, 0xFFFF);
+	instanceDatas.reserve(gridPlacement * gridPlacement);
+	float spacing = 250.f / gridPlacement;
+	vec2f posOffset = vec2f(0.5f * spacing - 125.f);
+	vec2f c = vec2f(getCenter().x, getCenter().z);
+	for (int i = 0; i < gridPlacement; i++)
+		for (int j = 0; j < gridPlacement; j++)
+		{
+			vec2f pos = posOffset + vec2f(i * spacing, j * spacing);
+			vec3f random = hash3(pos.x + c.x, pos.y + c.y);
+			if (random.x <= probability.x || random.x > probability.y)
+				continue;
+
+			pos.x += lerp(-displacementRange * spacing, displacementRange * spacing, random.y);
+			pos.y += lerp(-displacementRange * spacing, displacementRange * spacing, random.z);
+			vec2f tileuv = clamp((1.f / 250.f) * (pos + vec2f(125.f)), vec2f(0.f), vec2f(1.f));
+
+			int iposx = clamp((int)(tileuv.x * 256), 0, 256);
+			int iposy = clamp((int)(tileuv.y * 256), 0, 256);
+			float uvx = clamp(tileuv.x * 256 - iposx, 0.f, 1.f);
+			float uvy = clamp(tileuv.y * 256 - iposy, 0.f, 1.f);
+			MapData data0; data0.unpack(m_data[257 * iposx + iposy]);
+			MapData data1; data1.unpack(m_data[257 * (iposx + 1) + iposy]);
+			MapData data2; data2.unpack(m_data[257 * iposx + iposy + 1]);
+			MapData data3; data3.unpack(m_data[257 * (iposx + 1) + iposy + 1]);
+
+			// discard all patch not on grass
+			if (data0.material != 0 || data1.material != 0 || data2.material != 0 || data3.material != 0)
+				continue;
+
+			//float heightTerrain = biLerpf(data0.heightTerrain, data1.heightTerrain, data2.heightTerrain, data3.heightTerrain, uvx, uvy);
+			//float heightWater = biLerpf(data0.heightWater, data1.heightWater, data2.heightWater, data3.heightWater, uvx, uvy);
+			
+			vec4f normal = biLerpv(data0.normalTerrain, data1.normalTerrain, data2.normalTerrain, data3.normalTerrain, uvx, uvy).getNormal();
+
+			// discard too stiff slopes
+			if (normal.y < 0.95f)
+				continue;
+
+			vec3f random2 = hash3(random.x, random.y);
+			float scale = lerp(scaleRange.x, scaleRange.y, random2.x);
+			float angle = pi2 * random2.y;
+			float tint = random2.z;
+
+			uint32_t x = 65535 * std::clamp(pos.x + 125.f, 0.f, 250.f) / 250.f;
+			uint32_t z = 65535 * std::clamp(pos.y + 125.f, 0.f, 250.f) / 250.f;
+			uint32_t s = 65535 * std::clamp(scale, 0.f, fullModelScale) / fullModelScale;
+			uint32_t a = 65535 * std::clamp(angle, 0.f, pi2) / pi2;
+			uint32_t t = 511 * tint;
+			instanceDatas.push_back(vec4ui((x << 16) | z, (a << 16) | s, t, 0));
+		}
+
+	Entity* massInstance = m_entity->getParentWorld()->getEntityFactory().createObject([&](Entity* object)
+		{
+			object->setName("MassInstancing");
+			object->setWorldPosition(getCenter());
+
+			TerrainDetailDrawableComponent* drawable = new TerrainDetailDrawableComponent(this);
+			drawable->setShader(resmgr->getResource<Shader>("terrainDetail"));
+			drawable->setMesh(resmgr->getResource<Mesh>(meshName));
+			//drawable->setMesh(resmgr->getResource<Mesh>("cube2.obj"));
+			drawable->setInstanceData(instanceDatas);
+			drawable->setFullModelScale(fullModelScale);
+			drawable->setWorldNormalWeight(worldNormalWeight);
+			drawable->setModelOffset(modelOffset);
+			drawable->initializeVBO();
+			drawable->initializeVAO();
+			object->addComponent(drawable);
+
+			object->recomputeBoundingBox();
+		}, false);
+
+	m_entity->addChild(massInstance);
+	massInstance->setLocalPosition(vec4f(0.f));
+	m_entity->getParentWorld()->addToScene(massInstance);
+	return massInstance;
+}
 std::string TerrainArea::getNameFromIndex() const
 {
 	return (m_areaIndex.x < 0 ? "n" : "") + std::to_string(std::abs(m_areaIndex.x)) + "_" +
@@ -215,8 +339,10 @@ void TerrainArea::setLod(int lod)
 			maxHeight = std::max(maxHeight, data.heightTerrain);
 		}
 
-		m_boundingBox.min = m_center + vec4f(-125.f, minHeight, -125.f, 0.f);
-		m_boundingBox.max = m_center + vec4f( 125.f, maxHeight,  125.f, 0.f);
+		m_boundingBox.min = vec4f(-125.f, minHeight, -125.f, 0.f);
+		m_boundingBox.max = vec4f( 125.f, maxHeight,  125.f, 0.f);
+		if (m_entity)
+			m_entity->recomputeBoundingBox();
 	}
 
 	TerrainVirtualTexture* vtexture = m_terrain->getVirtualTexture();
@@ -257,6 +383,10 @@ void TerrainArea::setLod(int lod)
 int TerrainArea::getLod()
 {
 	return m_lod;
+}
+const TerrainVirtualTexture::TextureTile& TerrainArea::getTileData(int lod) const
+{
+	return m_tiles[lod];
 }
 Terrain* TerrainArea::getTerrain() const
 {
@@ -312,7 +442,7 @@ vec4f TerrainArea::MapData::octahedralUnpack(uint64_t n, int bits)
 {
 	int mask = (1 << bits) - 1;
 	vec2i d = vec2i(n & mask, (n >> bits) & mask);
-	vec4f v = vec4f((2 * d.x - 1.f) / mask, 0, (2 * d.y - 1.f) / mask, 0);
+	vec4f v = vec4f(1.f - 2.f * d.x / mask, 0, 1.f - 2.f * d.y / mask, 0);
 	v.y = 1.f - std::abs(v.x) - std::abs(v.z);
 	return v.getNormal();
 }

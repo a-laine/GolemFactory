@@ -20,12 +20,13 @@ class TerrainArea
 
 		// Public methods
 		void generate(const std::string& directory);
+		Entity* addDetailsInstance(const std::string& meshName, float density, vec2f probability, vec2f scaleRange, float worldNormalWeight, float modelOffset);
 		void setLod(int lod);
 		int getLod();
 		std::string getNameFromIndex() const;
 		vec4f getCenter() const;
 		const uint64_t* getRawData() const;
-		const TerrainVirtualTexture::TextureTile& getTileData() const;
+		const TerrainVirtualTexture::TextureTile& getTileData(int lod) const;
 		Terrain* getTerrain() const;
 		bool hasWater() const;
 		AxisAlignedBox getBoundingBox() const;

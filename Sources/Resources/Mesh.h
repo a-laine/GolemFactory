@@ -15,6 +15,7 @@ class Mesh : public ResourceVirtual
 	friend class HouseGenerator;
 	friend class MeshSaver;
 	friend class IncrementalHull;
+	friend class TerrainDetailDrawableComponent;
 
     public:
         static char const * const directory;

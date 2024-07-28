@@ -29,7 +29,7 @@ void Renderer::CollectEntitiesBindLights()
 		collector.m_flags |= (uint64_t)Entity::Flags::Fl_Occluder;
 
 	collector.m_exclusionFlags = (uint64_t)Entity::Flags::Fl_Hide;
-	auto aaaa = VirtualSceneQuerry();
+	//auto aaaa = VirtualSceneQuerry();
 	world->getSceneManager().getEntities(&sceneQuery, &collector);
 
 	uint64_t transparentMask = 1ULL << 63;
@@ -56,8 +56,8 @@ void Renderer::CollectEntitiesBindLights()
 			if (ok)
 			{
 				m_hasInstancingShaders |= comp->getShader()->supportInstancing();
-				uint64_t queue = comp->getShader()->getRenderQueue();
 				/*uint64_t queue = comp->getShader()->getRenderQueue();
+				uint64_t queue = comp->getShader()->getRenderQueue();
 				queue = queue << 48;
 
 				vec4f v = object->getWorldPosition() - camPos;
@@ -565,10 +565,13 @@ void Renderer::ShadowCasting()
 	glDisable(GL_BLEND);
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
-	glFrontFace(GL_CW);// peter panning
+	glFrontFace(GL_CCW);// peter panning
+	bool usePeterPanning = true;
 
 	{
 		SCOPED_CPU_MARKER("Shadow cascades");
+		//glEnable(GL_DEPTH_CLAMP_NEAR_AMD);
+		//glEnable();
 
 		std::sort(shadowCascadeQueue.begin(), shadowCascadeQueue.end(), [](DrawElement& a, DrawElement& b) { return a.hash < b.hash; });
 		int shadowCode = Shader::computeVariantCode(false, 1, false);
@@ -668,11 +671,21 @@ void Renderer::ShadowCasting()
 		glBindFramebuffer(GL_FRAMEBUFFER, m_ShadowCascadeFBO);
 		glClear(GL_DEPTH_BUFFER_BIT);
 
-		//glDisable(GL_BLEND);
-		//glEnable(GL_CULL_FACE);
-		//glCullFace(GL_FRONT);  // peter panning
-		//glCullFace(GL_BACK);
-		//glFrontFace(GL_CCW);// peter panning
+		auto PeterPanningSwitch = [&usePeterPanning](const Shader* shader)
+		{
+			if (shader->usePeterPanning())
+			{
+				if (!usePeterPanning)
+					glFrontFace(GL_CCW);
+				usePeterPanning = true;
+			}
+			else
+			{
+				if (usePeterPanning)
+					glFrontFace(GL_CW);
+				usePeterPanning = false;
+			}
+		};
 
 		//	draw instance list
 		for (const auto& it : shadowCascadeQueue)
@@ -683,6 +696,7 @@ void Renderer::ShadowCasting()
 
 			if (it.batch)
 			{
+				PeterPanningSwitch(it.batch->shader);
 				drawInstancedObject(it.batch->shader, it.batch->mesh, (float*)it.batch->matrices.data(), it.batch->instanceDatas,
 					it.batch->dataSize, it.batch->instanceCount, it.batch->constantDataReference);
 				shadowDrawCalls++;
@@ -690,6 +704,7 @@ void Renderer::ShadowCasting()
 			else
 			{
 				DrawableComponent* drawableComp = it.entity->getComponent<DrawableComponent>();
+				PeterPanningSwitch(drawableComp->getShader());
 				drawObject(it.entity, drawableComp->getShader()->getVariant(shadowCode));
 				shadowDrawCalls++;
 			}
@@ -698,6 +713,7 @@ void Renderer::ShadowCasting()
 
 
 	// omni shadows
+	glFrontFace(GL_CCW);// peter panning
 	if (!shadowOmniCaster.empty())
 	{
 		SCOPED_CPU_MARKER("Omnidirectional shadows");

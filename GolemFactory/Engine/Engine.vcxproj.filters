@@ -437,6 +437,9 @@
     <ClCompile Include="..\..\Sources\Resources\Loader\TextureSaver.cpp">
       <Filter>Fichiers sources\Resources\Loader</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Sources\Terrain\TerrainDetailDrawableComponent.cpp">
+      <Filter>Fichiers sources\Terrain</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Sources\Math\TMath.h">
@@ -879,6 +882,9 @@
     </ClInclude>
     <ClInclude Include="..\..\Sources\Resources\Loader\stb_image_write.h">
       <Filter>Fichiers sources\Resources\Loader</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Terrain\TerrainDetailDrawableComponent.h">
+      <Filter>Fichiers sources\Terrain</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -32,6 +32,7 @@ class Entity : public EntityBase
 
 		//  Default
 		Entity();
+		~Entity();
 		//
 
 		// public
@@ -79,8 +80,9 @@ class Entity : public EntityBase
 		//
 
 		//	Hierarchy
-		void addChild(Entity* child);
+		void addChild(Entity* child, bool incOwnership = false);
 		void removeChild(Entity* child);
+		void removeAllChild(bool removeFromSceneToo);
 		void recursiveHierarchyCollect(std::vector<Entity*>& collection);
 
 		template<typename Visitor>

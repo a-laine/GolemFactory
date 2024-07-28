@@ -16,7 +16,7 @@ Shader::Shader(const std::string& shaderName)
     : ResourceVirtual(shaderName, ResourceVirtual::ResourceType::SHADER)
     , vertexShader(0), fragmentShader(0), geometricShader(0)
     , tessControlShader(0), tessEvalShader(0), program(0)
-    , renderQueue(1000), m_isComputeShader(false)
+    , renderQueue(1000), m_isComputeShader(false), m_usePeterPanning(true)
 {
 #ifdef USE_IMGUI
     dynamicQueue = 1000;
@@ -316,6 +316,10 @@ bool Shader::supportInstancing() const
 bool Shader::isComputeShader() const
 {
     return m_isComputeShader;
+}
+bool Shader::usePeterPanning() const
+{
+    return m_usePeterPanning;
 }
 
 const std::string& Shader::getDefaultName() { return defaultName; }

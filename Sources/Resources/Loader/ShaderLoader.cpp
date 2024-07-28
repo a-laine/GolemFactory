@@ -88,10 +88,10 @@ bool ShaderLoader::load(const std::string& resourceDirectory, const std::string&
 
             switch (it->second.getType())
             {
-            case Variant::INT:      b = it->second.toInt() == 0;        break;
-            case Variant::FLOAT:    b = it->second.toFloat() == 0.f;    break;
-            case Variant::DOUBLE:   b = it->second.toDouble() == 0.0;   break;
-            default: break;
+                case Variant::INT:      b = it->second.toInt() == 0;        break;
+                case Variant::FLOAT:    b = it->second.toFloat() == 0.f;    break;
+                case Variant::DOUBLE:   b = it->second.toDouble() == 0.0;   break;
+                default: break;
             }
         }
 
@@ -151,6 +151,29 @@ bool ShaderLoader::load(const std::string& resourceDirectory, const std::string&
 
         if (b)
             renderQueue |= transparentBit;
+    }
+
+    // usePeterPanning
+    it = shaderMap.getMap().find("usePeterPanning");
+    if (it != shaderMap.getMap().end())
+    {
+        bool b = true;
+        if (it->second.getType() == Variant::BOOL)
+            b = it->second.toBool();
+        else
+        {
+            PrintWarning(fileName.c_str(), "usePeterPanning attribute need to be a boolean");
+
+            switch (it->second.getType())
+            {
+                case Variant::INT:      b = it->second.toInt() == 0;        break;
+                case Variant::FLOAT:    b = it->second.toFloat() == 0.f;    break;
+                case Variant::DOUBLE:   b = it->second.toDouble() == 0.0;   break;
+                default: break;
+            }
+        }
+
+        usePeterPanning = b;
     }
     
     // faceCulling
@@ -365,17 +388,13 @@ void ShaderLoader::initialize(ResourceVirtual* resource)
     {
         baseShader->initialize(compute, computeProgram, attributesType, textures);
 
-        //for (int i = 0; i < textureResources.size(); i++)
-        //    baseShader->pushTexture(textureResources[i]);
     }
     else
     {
         ShaderStruct& base = shaderVariants.front();
         baseShader->initialize(base.vertexShader, base.fragmentShader, base.geometricShader, base.tessControlShader, base.tessEvalShader, base.program,
             attributesType, textures, renderQueue);
-
-        //for (int i = 0; i < textureResources.size(); i++)
-        //    baseShader->pushTexture(textureResources[i]);
+        baseShader->m_usePeterPanning = usePeterPanning;
 
         for (int i = 1; i < shaderVariants.size(); i++)
         {
@@ -387,8 +406,7 @@ void ShaderLoader::initialize(ResourceVirtual* resource)
             Shader* variantShader = new Shader(variantName);
             variantShader->initialize(variant.vertexShader, variant.fragmentShader, variant.geometricShader, variant.tessControlShader, variant.tessEvalShader, variant.program,
                 attributesType, textures, renderQueue);
-            //for (int i = 0; i < textureResources.size(); i++)
-            //    variantShader->pushTexture(textureResources[i]);
+            variantShader->m_usePeterPanning = usePeterPanning;
 
             baseShader->addVariant(variant.variantCode, variantShader);
         }

@@ -76,12 +76,22 @@ void Renderer::drawObject(Entity* object, Shader* forceShader)
 		{
 			loadVAO(mesh->getBBoxVAO());
 			glDrawElements(GL_TRIANGLES, (int)mesh->getBBoxFaces()->size(), GL_UNSIGNED_SHORT, NULL);
+			instanceDrawn++;
+			trianglesDrawn += 12;
+			drawCalls++;
 		}
+	}
+	else if (drawableComp->hasCustomDraw())
+	{
+		drawableComp->customDraw(this, instanceDrawn, drawCalls, trianglesDrawn);
 	}
 	else
 	{
 		loadVAO(mesh->getVAO());
 		glDrawElements(GL_TRIANGLES, mesh->getNumberIndices(), mesh->getIndicesType(), NULL);
+		trianglesDrawn += mesh->getNumberFaces();
+		instanceDrawn++;
+		drawCalls++;
 
 		if (renderOption == RenderOption::NORMALS && normalViewer)
 		{
@@ -94,9 +104,6 @@ void Renderer::drawObject(Entity* object, Shader* forceShader)
 			trianglesDrawn += mesh->getNumberFaces();
 		}
 	}
-	drawCalls++;
-	instanceDrawn++;
-	trianglesDrawn += mesh->getNumberFaces();
 }
 void Renderer::drawInstancedObject(Shader* _shader, Mesh* _mesh, float* _matrices, vec4f* _instanceDatas, 
 	unsigned short _dataSize, unsigned short _instanceCount, DrawableComponent* _constantDataRef)

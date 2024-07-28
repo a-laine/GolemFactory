@@ -882,7 +882,7 @@ void initManagers()
 	Renderer::getInstance()->initializeOcclusionBuffers(256, 144);
 	Renderer::getInstance()->initializeShadows(1024, 1024, 1024, 1024);
 	Renderer::getInstance()->initializeOverviewRenderer(512, 512);
-	Renderer::getInstance()->initializeTerrainMaterialCollection("GroundTextures/TerrainMaterialCollection.terrain");
+	Renderer::getInstance()->initializeTerrainMaterialCollection("GroundTextures/TerrainMaterialCollection.texture");
 
 	
 	// Debug

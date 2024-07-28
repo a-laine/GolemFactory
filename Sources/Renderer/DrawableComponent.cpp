@@ -18,10 +18,11 @@ DrawableComponent::DrawableComponent(const std::string& meshName, const std::str
 	m_shader = ResourceManager::getInstance()->getResource<Shader>(shaderName);
 }
 
-DrawableComponent::DrawableComponent(const DrawableComponent* other) : m_castShadow(true)
+DrawableComponent::DrawableComponent(const DrawableComponent* other)
 {
 	m_mesh = ResourceManager::getInstance()->getResource<Mesh>(other->m_mesh->name);
 	m_shader = ResourceManager::getInstance()->getResource<Shader>(other->m_shader->name);
+	m_castShadow = other->castShadow();
 }
 
 DrawableComponent::~DrawableComponent()
@@ -121,6 +122,16 @@ Shader* DrawableComponent::getShader() const
 Mesh* DrawableComponent::getMesh() const
 {
 	return m_mesh;
+}
+
+bool DrawableComponent::hasCustomDraw() const
+{
+	return false;
+}
+
+void DrawableComponent::customDraw(Renderer* _renderer, unsigned int& _instanceDrawnCounter, unsigned int& _drawCallsCounter, unsigned int& _trianglesDrawnCounter) const
+{
+
 }
 
 bool DrawableComponent::isValid() const
