@@ -3,6 +3,7 @@
 #include <vector>
 
 #include <EntityComponent/Entity.hpp>
+#include <Utiles/Mutex.h>
 
 
 class EntityManager
@@ -20,7 +21,8 @@ class EntityManager
 		void clearGarbage();
 
 	private:
+		Mutex mutexGarbage;
 		std::vector<Entity*> garbage;
-		int nbObjects;
+		std::atomic_uint nbObjects;
 };
 

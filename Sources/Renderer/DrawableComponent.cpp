@@ -2,33 +2,32 @@
 
 #include <Resources/ResourceManager.h>
 #include <Resources/Mesh.h>
-#include <Resources/Shader.h>
+#include <Resources/Material.h>
 #include <Utiles/Debug.h>
 #include <Utiles/Parser/Variant.h>
 #include <Utiles/ConsoleColor.h>
 
 
-DrawableComponent::DrawableComponent() : m_mesh(nullptr), m_shader(nullptr), m_castShadow(true)
+DrawableComponent::DrawableComponent() : m_mesh(nullptr), m_material(nullptr)
 {
 
 }
-DrawableComponent::DrawableComponent(const std::string& meshName, const std::string& shaderName) : m_castShadow(true)
+DrawableComponent::DrawableComponent(const std::string& meshName, const std::string& materialName)
 {
 	m_mesh = ResourceManager::getInstance()->getResource<Mesh>(meshName);
-	m_shader = ResourceManager::getInstance()->getResource<Shader>(shaderName);
+	m_material = ResourceManager::getInstance()->getResource<Material>(materialName);
 }
 
 DrawableComponent::DrawableComponent(const DrawableComponent* other)
 {
 	m_mesh = ResourceManager::getInstance()->getResource<Mesh>(other->m_mesh->name);
-	m_shader = ResourceManager::getInstance()->getResource<Shader>(other->m_shader->name);
-	m_castShadow = other->castShadow();
+	m_material = ResourceManager::getInstance()->getResource<Material>(other->m_material->name);
 }
 
 DrawableComponent::~DrawableComponent()
 {
 	ResourceManager::getInstance()->release(m_mesh);
-	ResourceManager::getInstance()->release(m_shader);
+	ResourceManager::getInstance()->release(m_material);
 }
 
 bool DrawableComponent::load(Variant& jsonObject, const std::string& objectName)
@@ -39,7 +38,7 @@ bool DrawableComponent::load(Variant& jsonObject, const std::string& objectName,
 {
 	if (jsonObject.getType() == Variant::MAP)
 	{
-		std::string meshName, shaderName;
+		std::string meshName, materialName;
 		auto it1 = jsonObject.getMap().find("meshName");
 		if (it1 != jsonObject.getMap().end() && it1->second.getType() == Variant::STRING)
 		{
@@ -48,15 +47,15 @@ bool DrawableComponent::load(Variant& jsonObject, const std::string& objectName,
 				meshName += ".fbx";
 		}
 
-		it1 = jsonObject.getMap().find("shaderName");
+		it1 = jsonObject.getMap().find("materialName");
 		if (it1 != jsonObject.getMap().end() && it1->second.getType() == Variant::STRING)
-			shaderName = it1->second.toString();
+			materialName = it1->second.toString();
 
-		if (!meshName.empty() && !shaderName.empty())
+		if (!meshName.empty() && !materialName.empty())
 		{
 			m_mesh = ResourceManager::getInstance()->getResource<Mesh>(meshName);
 			if (skeleton) m_mesh->retargetSkin(skeleton);
-			m_shader = ResourceManager::getInstance()->getResource<Shader>(shaderName);
+			m_material = ResourceManager::getInstance()->getResource<Material>(materialName);
 			return true;
 		}
 		else
@@ -65,12 +64,12 @@ bool DrawableComponent::load(Variant& jsonObject, const std::string& objectName,
 			{
 				if (meshName.empty())
 				{
-					std::cout << ConsoleColor::getColorString(ConsoleColor::Color::RED) << "ERROR   : EntityFactory : " << objectName << " : DrawableComponent loading : no mesh name" << std::flush;
+					std::cout << ConsoleColor::getColorString(ConsoleColor::Color::RED) << "ERROR   : DrawableComponent load : " << objectName << " : DrawableComponent loading : no mesh name" << std::flush;
 					std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
 				}
-				if (shaderName.empty())
+				if (materialName.empty())
 				{
-					std::cout << ConsoleColor::getColorString(ConsoleColor::Color::RED) << "ERROR   : EntityFactory : " << objectName << " : DrawableComponent loading : no shader name" << std::flush;
+					std::cout << ConsoleColor::getColorString(ConsoleColor::Color::RED) << "ERROR   : DrawableComponent load : " << objectName << " : DrawableComponent loading : no material name" << std::flush;
 					std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
 				}
 			}
@@ -83,17 +82,17 @@ void DrawableComponent::save(Variant& jsonObject)
 
 }
 
-void DrawableComponent::setShader(const std::string& shaderName)
+void DrawableComponent::setMaterial(const std::string& materialName)
 {
-	ResourceManager::getInstance()->release(m_shader);
-	m_shader = ResourceManager::getInstance()->getResource<Shader>(shaderName);
+	ResourceManager::getInstance()->release(m_material);
+	m_material = ResourceManager::getInstance()->getResource<Material>(materialName);
 }
 
-void DrawableComponent::setShader(Shader* shader)
+void DrawableComponent::setMaterial(Material* material)
 {
-	ResourceManager::getInstance()->release(m_shader);
-	if(shader) m_shader = ResourceManager::getInstance()->getResource<Shader>(shader);
-	else m_shader = nullptr;
+	ResourceManager::getInstance()->release(m_material);
+	if(material) m_material = ResourceManager::getInstance()->getResource<Material>(material);
+	else m_material = nullptr;
 }
 
 void DrawableComponent::setMesh(const std::string& meshName)
@@ -109,14 +108,9 @@ void DrawableComponent::setMesh(Mesh* mesh)
 	else m_mesh = nullptr;
 }
 
-void DrawableComponent::setCastShadow(bool enabled)
+Material* DrawableComponent::getMaterial() const
 {
-	m_castShadow = enabled;
-}
-
-Shader* DrawableComponent::getShader() const
-{
-	return m_shader;
+	return m_material;
 }
 
 Mesh* DrawableComponent::getMesh() const
@@ -136,12 +130,12 @@ void DrawableComponent::customDraw(Renderer* _renderer, unsigned int& _instanceD
 
 bool DrawableComponent::isValid() const
 {
-    return m_mesh && m_mesh->isValid() && m_shader && m_shader->isValid();
+    return m_mesh && m_mesh->isValid() && m_material && m_material->isValid();
 }
 
 bool DrawableComponent::castShadow() const
 {
-	return m_castShadow;
+	return m_material->getMaxShadowCascade() >= 0;
 }
 
 bool DrawableComponent::hasSkeleton() const
@@ -165,12 +159,14 @@ vec4f DrawableComponent::getMeshBBMin() const
 void DrawableComponent::pushDraw(std::vector<Renderer::DrawElement>& drawQueue, uint32_t distance, bool isShadowPass)
 {
 	Renderer::DrawElement element;
-	element.shader = m_shader;
+	element.material = m_material;
 	element.mesh = m_mesh;
 	element.batch = nullptr;
 	element.entity = getParentEntity();
 
-	uint64_t queue = m_shader->getRenderQueue();
+
+
+	uint64_t queue = m_material->getShader()->getRenderQueue();
 	queue = queue << 48;
 	if (!isShadowPass && (queue & TransparentMask))
 	{
@@ -183,6 +179,9 @@ void DrawableComponent::pushDraw(std::vector<Renderer::DrawElement>& drawQueue, 
 	else
 		element.hash = queue | distance;
 
+	if (m_ClockWise)
+		element.hash |= CullingModeMask;
+
 	drawQueue.push_back(element);
 }
 
@@ -193,6 +192,14 @@ void DrawableComponent::pushConstantData(Shader* _shader) const {}
 void DrawableComponent::pushInstanceData(Shader* _shader) const {}
 void DrawableComponent::writeInstanceData(vec4f* _destination) const {}
 
+void DrawableComponent::setClockWise(bool ccwEnable)
+{
+	m_ClockWise = ccwEnable;
+}
+bool DrawableComponent::isClockWise() const
+{
+	return m_ClockWise;
+}
 
 void DrawableComponent::onAddToEntity(Entity* entity)
 {
@@ -222,25 +229,26 @@ void DrawableComponent::onDrawImGui()
 		ImGui::Unindent();
 
 		ImGui::Spacing();
-		ImGui::TextColored(componentColor, "Shader");
+		ImGui::TextColored(componentColor, "Material");
 		ImGui::Indent();
-		ImGui::Text("name : %s", m_shader->name.c_str());
+		ImGui::Text("name : %s", m_material->name.c_str());
 		
-		const auto& textures = m_shader->getTextures();
+		auto& textures = m_material->getTextures();
+		const auto& shaderTextures = m_material->getShader()->getTextures();
 		if (!textures.empty())
 		{
 			ImGui::TextColored(ImVec4(0.7f, 1.f, 0.7f, 1.f), "Binded textures :");
 			ImGui::Indent();
-			for (int i = 0; i < textures.size(); i++)
+			for (int i = 0; i < shaderTextures.size(); i++)
 			{
-				if (textures[i].texture)
-					ImGui::Text("Location %d : %s", i, textures[i].texture->name.c_str());
-				else if (textures[i].isGlobalAttribute)
-					ImGui::Text("Global : %s", textures[i].defaultResource.c_str());
+				if (shaderTextures[i].isGlobalAttribute)
+					ImGui::Text("Global : %s", shaderTextures[i].defaultResource.c_str());
+				else if (textures[i])
+					ImGui::Text("Location %d : %s", i, textures[i]->name.c_str());
 			}
 			ImGui::Unindent();
 		}
-		const auto& uniforms = m_shader->getUniforms();
+		const auto& uniforms = m_material->getShader()->getUniforms();
 		if (!uniforms.empty())
 		{
 			ImGui::TextColored(ImVec4(0.7f, 1.f, 0.7f, 1.f), "Parameters :");
@@ -252,6 +260,12 @@ void DrawableComponent::onDrawImGui()
 			ImGui::Unindent();
 		}
 		ImGui::Unindent();
+
+		/*ImGui::Spacing();
+		ImGui::TextColored(componentColor, "Shader");
+		ImGui::Indent();
+		ImGui::SliderInt("Max shadow cascade", &m_material->getMaxShadowCascade(), -1, 4, "%d", ImGuiSliderFlags_AlwaysClamp);
+		ImGui::Unindent();*/
 
 		ImGui::Spacing();
 		ImGui::TextColored(componentColor, "Gizmos");

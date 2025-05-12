@@ -2,7 +2,7 @@
 	"scale": 0.01,
     "drawableComponent": {
         "meshName": "PolygonDungeon/SM_Wep_Greatsword_Straight_01",
-        "shaderName": "defaultTextured"
+        "materialName" : "dungeon01"
     },
     "prefabEntities": []
 }

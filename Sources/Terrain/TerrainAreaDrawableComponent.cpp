@@ -3,16 +3,17 @@
 
 #include <EntityComponent/Entity.hpp>
 #include <Resources/Shader.h>
+#include <Resources/Material.h>
 #include <Resources/ResourceManager.h>
 
 
-TerrainAreaDrawableComponent::TerrainAreaDrawableComponent(TerrainArea* _area) : m_area(_area), m_waterShader(nullptr)
+TerrainAreaDrawableComponent::TerrainAreaDrawableComponent(TerrainArea* _area) : m_area(_area)//, m_waterShader(nullptr)
 {
 
 }
 TerrainAreaDrawableComponent::~TerrainAreaDrawableComponent()
 {
-	ResourceManager::getInstance()->release(m_waterShader);
+	//ResourceManager::getInstance()->release(m_waterShader);
 }
 
 unsigned short TerrainAreaDrawableComponent::getInstanceDataSize() const
@@ -51,8 +52,8 @@ void TerrainAreaDrawableComponent::pushConstantData(Shader* _shader) const
 	if (_shader && m_area && m_area->getLod() >= 0)
 	{
 		TerrainConstantData constant;
-		constant.lod = m_area->getLod();
-		constant.textureSize = TerrainArea::g_lodPixelCount[m_area->getLod()];
+		constant.lod = (float)m_area->getLod();
+		constant.textureSize = (float)TerrainArea::g_lodPixelCount[m_area->getLod()];
 		constant.heightAmplitude = TerrainArea::g_heightAmplitude / 65535.f;
 		constant.seeLevel = TerrainArea::g_seeLevel;
 
@@ -71,12 +72,12 @@ void TerrainAreaDrawableComponent::pushDraw(std::vector<Renderer::DrawElement>& 
 {
 	// push terrain surface draw command
 	Renderer::DrawElement element;
-	element.shader = m_shader;
+	element.material = m_material;
 	element.mesh = m_mesh;
 	element.batch = nullptr;
 	element.entity = getParentEntity();
 
-	uint64_t queue = m_shader->getRenderQueue();
+	uint64_t queue = m_material->getShader()->getRenderQueue();
 	queue = queue << 48;
 	uint32_t distance2 = distance;
 	if (!isShadowPass && (queue & TransparentMask))
@@ -93,7 +94,7 @@ void TerrainAreaDrawableComponent::pushDraw(std::vector<Renderer::DrawElement>& 
 	drawQueue.push_back(element);
 
 	// push water draw
-	if (!isShadowPass && hasWater() && getWaterShader())
+	/*if (!isShadowPass && hasWater() && getWaterShader())
 	{
 		element.shader = getWaterShader();
 		distance2 = ~distance;
@@ -102,7 +103,7 @@ void TerrainAreaDrawableComponent::pushDraw(std::vector<Renderer::DrawElement>& 
 		queue = queue << 48;
 		element.hash = queue | distance2;
 		drawQueue.push_back(element);
-	}
+	}*/
 }
 
 void TerrainAreaDrawableComponent::onAddToEntity(Entity* entity)
@@ -122,13 +123,13 @@ AxisAlignedBox TerrainAreaDrawableComponent::getBoundingBox() const
 	vec4f hs = vec4f(125.f, 100.f, 125.f, 0.f);
 	return AxisAlignedBox(-hs, hs);
 }
-Shader* TerrainAreaDrawableComponent::getWaterShader() const
+/*Shader* TerrainAreaDrawableComponent::getWaterShader() const
 {
 	return m_waterShader;
 }
 void  TerrainAreaDrawableComponent::setWaterShader(Shader* _shader)
 {
-	ResourceManager::getInstance()->release(m_shader);
+	ResourceManager::getInstance()->release(m_waterShader);
 	if (_shader) m_waterShader = ResourceManager::getInstance()->getResource<Shader>(_shader);
 	else m_waterShader = nullptr;
-}
+}*/

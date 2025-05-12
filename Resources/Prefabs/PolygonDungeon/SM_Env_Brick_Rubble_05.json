@@ -1,7 +1,7 @@
 {
     "drawableComponent": {
         "meshName": "PolygonDungeon/SM_Env_Brick_Rubble_05",
-        "shaderName": "defaultTextured"
+        "materialName" : "dungeon01"
     },
     "prefabEntities": []
 }

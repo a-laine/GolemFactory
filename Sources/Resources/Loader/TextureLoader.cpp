@@ -336,9 +336,6 @@ void TextureLoader::initialize(ResourceVirtual* resource)
         delete[] m_textureData;
 }
 
-void TextureLoader::getResourcesToRegister(std::vector<ResourceVirtual*>& resourceList)
-{}
-
 std::string TextureLoader::getFileName(const std::string& resourceDirectory, const std::string& fileName) const
 {
     std::string str = resourceDirectory;

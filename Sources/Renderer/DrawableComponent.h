@@ -7,17 +7,16 @@
 #include "Renderer.h"
 
 
-class Shader;
+class Material;
 class Mesh;
 class Skeleton;
-class Batch;
 
 class DrawableComponent : public Component
 {
 	GF_DECLARE_COMPONENT_CLASS(DrawableComponent, Component)
 	public:
 		explicit DrawableComponent();
-		explicit DrawableComponent(const std::string& meshName, const std::string& shaderName);
+		explicit DrawableComponent(const std::string& meshName, const std::string& materialName);
 		virtual ~DrawableComponent() override;
 		DrawableComponent(const DrawableComponent* other);
 
@@ -25,15 +24,14 @@ class DrawableComponent : public Component
 		bool load(Variant& jsonObject, const std::string& objectName, const Skeleton* skeleton = nullptr);
 		void save(Variant& jsonObject) override;
 
-		void setShader(const std::string& shaderName);
-		void setShader(Shader* shader);
+		void setMaterial(const std::string& materialName);
+		void setMaterial(Material* material);
 		void setMesh(const std::string& meshName);
 		void setMesh(Mesh* mesh);
-		void setCastShadow(bool enabled);
 
 		virtual void pushDraw(std::vector<Renderer::DrawElement>& drawQueue, uint32_t distance, bool isShadowPass);
 
-		Shader* getShader() const;
+		Material* getMaterial() const;
 		Mesh* getMesh() const;
 		virtual bool hasCustomDraw() const;
 		virtual void customDraw(Renderer* _renderer, unsigned int& _instanceDrawnCounter, unsigned int& _drawCallsCounter, unsigned int& _trianglesDrawnCounter) const;
@@ -46,10 +44,14 @@ class DrawableComponent : public Component
 		virtual void writeInstanceData(vec4f* _destination) const;
 		virtual bool hasConstantData() const;
 		virtual void pushConstantData(Shader* _shader) const;
+		//const std::vector<Texture*>* getTextureOverride() const;
+		//bool setTextureOverride(const std::string& texIdentifier, const std::string& texOverride);
+		void setClockWise(bool ccwEnable);
 
         virtual bool hasSkeleton() const;
 		vec4f getMeshBBMax() const;
 		vec4f getMeshBBMin() const;
+		bool isClockWise() const;
 
 		void onDrawImGui() override;
 		void onAddToEntity(Entity* entity) override;
@@ -60,9 +62,11 @@ class DrawableComponent : public Component
 
 	protected:
 		Mesh* m_mesh;
-		Shader* m_shader;
+		Material* m_material;
+		//std::vector<Texture*> m_textureOverride;
 
-		bool m_castShadow;
+		//int m_shadowMaxCascade;
+		bool m_ClockWise;
 
 #ifdef USE_IMGUI
 		bool m_drawMeshBoundingBox = false;

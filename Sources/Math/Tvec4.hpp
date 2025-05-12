@@ -1,5 +1,5 @@
 #pragma once
-#include <iostream>
+//#include <iostream>
 
 #include "Tvec4.h"
 
@@ -263,78 +263,126 @@ Tvec4<T>& Tvec4<T>::operator=(const Tvec4& b)
 template<typename T>
 T Tvec4<T>::getNorm2() const
 {
+#if defined(USE_AVX)
+	return _mm_cvtss_f32(_mm_dp_ps(v128, v128, 0xFF));
+#else
 	return x * x + y * y + z * z + w * w;
+#endif
 }
 
 template<typename T>
 T Tvec4<T>::getNorm() const
 {
+#if defined(USE_AVX)
+	return _mm_cvtss_f32(_mm_sqrt_ps(_mm_dp_ps(v128, v128, 0xFF)));
+#else
 	return sqrt(x * x + y * y + z * z + w * w);
+#endif
 }
 
 template<typename T>
 Tvec4<T> Tvec4<T>::getNorm4() const
 {
+#if defined(USE_AVX)
+	return _mm_sqrt_ps(_mm_dp_ps(v128, v128, 0xFF));
+#else
 	return Tvec4<T>(sqrt(x * x + y * y + z * z + w * w));
+#endif
 }
 
 template<typename T>
 Tvec4<T> Tvec4<T>::getNormal() const
 {
+#if defined(USE_AVX)
+	return _mm_mul_ps(v128, _mm_rsqrt_ps(_mm_dp_ps(v128, v128, 0xFF)));
+#else
 	T invnorm = T(1) / sqrt(x * x + y * y + z * z + w * w);
 	return Tvec4<T>(x * invnorm, y * invnorm, z * invnorm, w * invnorm);
+#endif
 }
 
 template<typename T>
 void Tvec4<T>::normalize()
 {
+#if defined(USE_AVX)
+	v128 = _mm_mul_ps(v128, _mm_rsqrt_ps(_mm_dp_ps(v128, v128, 0xFF)));
+#else
 	T invnorm = T(1) / sqrt(x * x + y * y + z * z + w * w);
 	x *= invnorm;
 	y *= invnorm;
 	z *= invnorm;
 	w *= invnorm;
+#endif
 }
 
 template<typename T, typename T2>
 Tvec4<T> operator+(const Tvec4<T>& a, const Tvec4<T2>& b)
 {
+#if defined(USE_AVX)
+	return _mm_add_ps(a.v128, b.v128);
+#else
 	return Tvec4<T>(a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w);
+#endif
 }
 
 template<typename T, typename T2>
 Tvec4<T> operator-(const Tvec4<T>& a, const Tvec4<T2>& b)
 {
+#if defined(USE_AVX)
+	return _mm_sub_ps(a.v128, b.v128);
+#else
 	return Tvec4<T>(a.x - b.x, a.y - b.y, a.z - b.z, a.w - b.w);
+#endif
 }
 
 template<typename T, typename T2>
 Tvec4<T> operator*(const Tvec4<T>& a, const Tvec4<T2>& b)
 {
+#if defined(USE_AVX)
+	return _mm_mul_ps(a.v128, b.v128);
+#else
 	return Tvec4<T>(a.x * b.x, a.y * b.y, a.z * b.z, a.w * b.w);
+#endif
 }
 
 template<typename T, typename T2>
 Tvec4<T> operator/(const Tvec4<T>& a, const Tvec4<T2>& b)
 {
+#if defined(USE_AVX)
+	return _mm_div_ps(a.v128, b.v128);
+#else
 	return Tvec4<T>(a.x / b.x, a.y / b.y, a.z / b.z, a.w / b.w);
+#endif
 }
 
 template<typename T, typename T2>
 Tvec4<T> operator*(const T2& scalar, const Tvec4<T>& a)
 {
+#if defined(USE_AVX)
+	return _mm_mul_ps(a.v128, _mm_set_ps1(scalar));
+#else
 	return Tvec4<T>(scalar * a.x, scalar * a.y, scalar * a.z, scalar * a.w);
+#endif
 }
 
 template<typename T, typename T2>
 Tvec4<T> operator*(const Tvec4<T>& a, const T2& scalar)
 {
+#if defined(USE_AVX)
+	return _mm_mul_ps(a.v128, _mm_set_ps1(scalar));
+#else
 	return Tvec4<T>(scalar * a.x, scalar * a.y, scalar * a.z, scalar * a.w);
+#endif
 }
 
 template<typename T, typename T2>
 Tvec4<T> operator/(const Tvec4<T>& a, const T2& scalar)
 {
+#if defined(USE_AVX)
+	return _mm_div_ps(a.v128, _mm_set_ps1(scalar));
+#else
 	return Tvec4<T>(a.x / scalar, a.y / scalar, a.z / scalar, a.w / scalar);
+#endif
 }
 
 
@@ -375,7 +423,7 @@ Tvec4<T> Tvec4<T>::min(const Tvec4<T>& a, const Tvec4<T>& b)
 {
 	Tvec4<T> result;
 	for (int i = 0; i < 4; ++i)
-		result[i] = std::min(a[i], b[i]);
+		result[i] = a[i] < b[i] ? a[i] : b[i];
 	return result;
 }
 
@@ -398,11 +446,20 @@ Tvec4<T> Tvec4<T>::clamp(const Tvec4& a, const Tvec4& min, const Tvec4& max)
 }
 
 template<typename T>
+Tvec4<T> Tvec4<T>::maskSelect(const Tvec4<bool>& mask, const Tvec4& a, const Tvec4& b)
+{
+	Tvec4<T> result;
+	for (int i = 0; i < 4; i++)
+		result[i] = mask[i] ? a[i] : b[i];
+	return result;
+}
+
+template<typename T>
 Tvec4<T> Tvec4<T>::max(const Tvec4<T>& a, const Tvec4<T>& b)
 {
 	Tvec4<T> result;
 	for (int i = 0; i < 4; ++i)
-		result[i] = std::max(a[i], b[i]);
+		result[i] = a[i] > b[i] ? a[i] : b[i];
 	return result;
 }
 

@@ -1,14 +1,16 @@
 #pragma once
 
-#define USE_GLM
+//#define USE_GLM
 
 #ifdef USE_GLM
 
+#define GLM_FORCE_AVX2
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/matrix_operation.hpp>
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtx/rotate_vector.hpp>
 
@@ -17,12 +19,27 @@
 #define DEG2RAD (PI / 180.f)
 #define RAD2DEG (180.f / PI)
 
+#ifdef GLM_FORCE_AVX2
+typedef glm::tvec4<glm::f32, glm::simd> vec4f;
+#else
 typedef glm::fvec4 vec4f;
+#endif
+
+
 typedef glm::fvec3 vec3f;
 typedef glm::fvec2 vec2f;
 
+#ifdef GLM_FORCE_AVX2
+typedef glm::tquat<glm::f32, glm::simd> quatf;
+#else
 typedef glm::fquat quatf;
+#endif
+
+#ifdef GLM_FORCE_AVX2
+typedef glm::tmat4x4<glm::f32, glm::simd> mat4f;
+#else
 typedef glm::fmat4 mat4f;
+#endif
 
 typedef glm::ivec4 vec4i;
 typedef glm::ivec3 vec3i;
@@ -54,6 +71,12 @@ template <typename T, glm::precision P>
 glm::tvec4<T, P> glm::tvec4<T, P>::getNormal() const
 {
 	return glm::normalize(*this);
+}
+
+template <typename T, glm::precision P>
+glm::tvec3<T, P> glm::tvec4<T, P>::xyz() const
+{
+	return glm::tvec3<T, P>(x, y, z);
 }
 
 template <typename T, glm::precision P>
@@ -327,6 +350,11 @@ glm::tquat<T, P> glm::tquat<T, P>::slerp(const glm::tquat<T, P>& a, const glm::t
 	return glm::slerp(a, b, t);
 }
 
+template <typename T, glm::precision P>
+glm::tvec3<T, P> glm::tquat<T, P>::eulerAngles(const glm::tquat<T, P>& q)
+{
+	return glm::eulerAngles(q);
+}
 
 // mat4f
 template <typename T, glm::precision P>
@@ -368,7 +396,7 @@ glm::tmat4x4<T, P> glm::tmat4x4<T, P>::rotate(const glm::tmat4x4<T, P>& m, const
 template <typename T, glm::precision P>
 glm::tmat4x4<T, P> glm::tmat4x4<T, P>::rotate(const glm::tmat4x4<T, P>& m, const glm::tvec3<T, P> euler)
 {
-	return glm::eulerAngleXYZ(euler.x, euler.y, euler.z) * m;
+	return (glm::tmat4x4<T, P>)glm::eulerAngleXYZ(euler.x, euler.y, euler.z) * m;
 }
 
 template <typename T, glm::precision P>
@@ -407,6 +435,55 @@ glm::tmat4x4<T, P> glm::tmat4x4<T, P>::inverse(const glm::tmat4x4<T, P>& m)
 }
 
 template <typename T, glm::precision P>
+glm::tmat4x4<T, P> glm::tmat4x4<T, P>::adjugate(const glm::tmat4x4<T, P>& m)
+{
+	T Coef00 = m[2][2] * m[3][3] - m[3][2] * m[2][3];
+	T Coef02 = m[1][2] * m[3][3] - m[3][2] * m[1][3];
+	T Coef03 = m[1][2] * m[2][3] - m[2][2] * m[1][3];
+
+	T Coef04 = m[2][1] * m[3][3] - m[3][1] * m[2][3];
+	T Coef06 = m[1][1] * m[3][3] - m[3][1] * m[1][3];
+	T Coef07 = m[1][1] * m[2][3] - m[2][1] * m[1][3];
+
+	T Coef08 = m[2][1] * m[3][2] - m[3][1] * m[2][2];
+	T Coef10 = m[1][1] * m[3][2] - m[3][1] * m[1][2];
+	T Coef11 = m[1][1] * m[2][2] - m[2][1] * m[1][2];
+
+	T Coef12 = m[2][0] * m[3][3] - m[3][0] * m[2][3];
+	T Coef14 = m[1][0] * m[3][3] - m[3][0] * m[1][3];
+	T Coef15 = m[1][0] * m[2][3] - m[2][0] * m[1][3];
+
+	T Coef16 = m[2][0] * m[3][2] - m[3][0] * m[2][2];
+	T Coef18 = m[1][0] * m[3][2] - m[3][0] * m[1][2];
+	T Coef19 = m[1][0] * m[2][2] - m[2][0] * m[1][2];
+
+	T Coef20 = m[2][0] * m[3][1] - m[3][0] * m[2][1];
+	T Coef22 = m[1][0] * m[3][1] - m[3][0] * m[1][1];
+	T Coef23 = m[1][0] * m[2][1] - m[2][0] * m[1][1];
+
+	glm::tvec4<T, P> Fac0(Coef00, Coef00, Coef02, Coef03);
+	glm::tvec4<T, P> Fac1(Coef04, Coef04, Coef06, Coef07);
+	glm::tvec4<T, P> Fac2(Coef08, Coef08, Coef10, Coef11);
+	glm::tvec4<T, P> Fac3(Coef12, Coef12, Coef14, Coef15);
+	glm::tvec4<T, P> Fac4(Coef16, Coef16, Coef18, Coef19);
+	glm::tvec4<T, P> Fac5(Coef20, Coef20, Coef22, Coef23);
+
+	glm::tvec4<T, P> Vec0(m[1][0], m[0][0], m[0][0], m[0][0]);
+	glm::tvec4<T, P> Vec1(m[1][1], m[0][1], m[0][1], m[0][1]);
+	glm::tvec4<T, P> Vec2(m[1][2], m[0][2], m[0][2], m[0][2]);
+	glm::tvec4<T, P> Vec3(m[1][3], m[0][3], m[0][3], m[0][3]);
+
+	glm::tvec4<T, P> Inv0(Vec1 * Fac0 - Vec2 * Fac1 + Vec3 * Fac2);
+	glm::tvec4<T, P> Inv1(Vec0 * Fac0 - Vec2 * Fac3 + Vec3 * Fac4);
+	glm::tvec4<T, P> Inv2(Vec0 * Fac1 - Vec1 * Fac3 + Vec3 * Fac5);
+	glm::tvec4<T, P> Inv3(Vec0 * Fac2 - Vec1 * Fac4 + Vec2 * Fac5);
+
+	glm::tvec4<T, P> SignA(+1, -1, +1, -1);
+	glm::tvec4<T, P> SignB(-1, +1, -1, +1);
+	return glm::tmat4x4<T, P>(Inv0 * SignA, Inv1 * SignB, Inv2 * SignA, Inv3 * SignB);
+}
+
+template <typename T, glm::precision P>
 glm::tmat4x4<T, P> glm::tmat4x4<T, P>::transpose(const glm::tmat4x4<T, P>& m)
 {
 	return glm::transpose(m);
@@ -437,8 +514,16 @@ T clamp(const T& a, const T& min, const T& max) {
 }
 
 #else
+//#define USE_AVX
 
 #include "Tmat4.h"
+
+#include "Tvec2.hpp"
+#include "Tvec3.hpp"
+#include "Tvec4.hpp"
+#include "Tmat3.hpp"
+#include "Tmat4.hpp"
+#include "Tquat.hpp"
 
 #endif
 

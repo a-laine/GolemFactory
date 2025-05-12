@@ -44,10 +44,26 @@ class Shader : public ResourceVirtual
         {
             std::string identifier;
             std::string defaultResource;
-            uint8_t unit;
-            GLuint location;
-            bool isGlobalAttribute;
             Texture* texture;
+            GLuint location;
+            uint8_t unit;
+            bool isGlobalAttribute;
+        };
+        struct Property
+        {
+            enum class PropertyType
+            {
+                eInteger,
+                eIntegerVector,
+                eFloat,
+                eFloatVector,
+                eColor
+            };
+
+            std::string m_name;
+            PropertyType m_type;
+            vec4f m_floatValues;
+            vec4i m_integerValues;
         };
         //
 
@@ -60,7 +76,7 @@ class Shader : public ResourceVirtual
         void initialize(GLuint vertexSh, GLuint fragSh, GLuint geomShr, GLuint tessControlSh, GLuint tessEvalSh, GLuint prog,
             const std::map<std::string, std::string>& attType, const std::vector<std::pair<std::string, std::string>>& textures, uint16_t queue);
         void initialize(GLuint computeSh, GLuint prog, const std::map<std::string, std::string>& attType, const std::vector<std::pair<std::string, std::string>>& textures);
-        void enable();
+        void enable(const std::vector<Texture*>* _texOverride = nullptr);
 
 		//void setInstanciable(Shader* instaciedVersion);
         void addVariant(int variantCode, Shader* variantShader);
@@ -84,6 +100,7 @@ class Shader : public ResourceVirtual
         //void pushTexture(Texture* texture);
 
         const std::vector<TextureInfos>& getTextures() const { return m_textures; }
+        const std::vector<Property>& getProperties() const { return m_properties; }
         const std::map<std::string, std::string>& getUniforms() const {return attributesType; }
 
         void onDrawImGui() override;
@@ -102,16 +119,15 @@ class Shader : public ResourceVirtual
                 tessControlShader,							//!< Tesselation control shader opengl id
                 tessEvalShader,								//!< Tesselation evaluation shader opengl id
                 program;									//!< Program opengl id
-        //uint8_t textureCount;								//!< The number of texture use by the program
+
+        std::map<std::string, GLint> attributesLocation;	//!< The shader attribute map with their opengl location
+		std::map<std::string, std::string> attributesType;
+        std::vector<TextureInfos> m_textures;
+        std::vector<Property> m_properties;
+        std::map<int, Shader*> variants;
         uint16_t renderQueue;
         bool m_isComputeShader;
         bool m_usePeterPanning;
-        std::map<std::string, GLint> attributesLocation;	//!< The shader attribute map with their opengl location
-		std::map<std::string, std::string> attributesType;
-        //std::vector<std::string> textureIdentifiers;
-        //std::vector<Texture*> textures;
-        std::vector<TextureInfos> m_textures;
-        std::map<int, Shader*> variants;
 
 #ifdef USE_IMGUI
         int dynamicQueue;

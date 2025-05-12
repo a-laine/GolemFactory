@@ -21,7 +21,7 @@ Entity::Entity() : m_refCount(0), m_name("unknown"), m_parentWorld(nullptr),
 Entity::~Entity()
 {
 	if (m_parentEntity)
-		m_parentEntity->removeChild(this);
+		m_parentEntity->removeChild(this, true);
 	if (m_parentWorld)
 	{
 		removeAllChild(true);
@@ -75,7 +75,7 @@ void Entity::setWorldPosition(const vec4f& position)
 	m_worldPosition.w = 1.f;
 	if (m_parentEntity)
 	{
-		m_localPosition = (1.f / m_parentEntity->m_worldScale) * (conjugate(m_parentEntity->m_worldOrientation) * (position - m_parentEntity->m_worldPosition));
+		m_localPosition = (vec4f::one / m_parentEntity->m_worldScale) * (conjugate(m_parentEntity->m_worldOrientation) * (position - m_parentEntity->m_worldPosition));
 		m_localPosition.w = 1.f;
 	}
 	else
@@ -85,7 +85,7 @@ void Entity::setWorldPosition(const vec4f& position)
 	recomputeWorldBoundingBox();
 	recomputeWorldChildTransforms();
 }
-void Entity::setWorldScale(const float& scale)
+void Entity::setWorldScale(const vec4f& scale)
 {
 	m_worldScale = scale;
 	if (m_parentEntity)
@@ -111,7 +111,7 @@ void Entity::setWorldOrientation(const quatf& orientation)
 	recomputeWorldBoundingBox();
 	recomputeWorldChildTransforms();
 }
-void Entity::setWorldTransformation(const vec4f& position, const float& scale, const quatf& orientation)
+void Entity::setWorldTransformation(const vec4f& position, const vec4f& scale, const quatf& orientation)
 {
 	m_worldPosition = position;
 	m_worldOrientation = orientation;
@@ -121,7 +121,7 @@ void Entity::setWorldTransformation(const vec4f& position, const float& scale, c
 
 	if (m_parentEntity)
 	{
-		float invScale = 1.f / m_parentEntity->m_worldScale;
+		vec4f invScale = vec4f::one / m_parentEntity->m_worldScale;
 		m_localPosition = invScale * (conjugate(m_parentEntity->m_worldOrientation) * (position - m_parentEntity->m_worldPosition));
 		m_localPosition.w = 1.f;
 		m_localOrientation = conjugate(m_parentEntity->m_worldOrientation) * orientation;
@@ -147,7 +147,7 @@ void Entity::setLocalPosition(const vec4f& position)
 	recomputeWorldBoundingBox();
 	recomputeWorldChildTransforms();
 }
-void Entity::setLocalScale(const float& scale)
+void Entity::setLocalScale(const vec4f& scale)
 {
 	m_localScale = scale;
 	if (m_parentEntity)
@@ -173,7 +173,7 @@ void Entity::setLocalOrientation(const quatf& orientation)
 	recomputeWorldBoundingBox();
 	recomputeWorldChildTransforms();
 }
-void Entity::setLocalTransformation(const vec4f& position, const float& scale, const quatf& orientation)
+void Entity::setLocalTransformation(const vec4f& position, const vec4f& scale, const quatf& orientation)
 {
 	m_localPosition = position;
 	m_localOrientation = orientation;
@@ -267,13 +267,35 @@ std::vector<Entity*>& Entity::getChilds() { return m_childs; }
 
 
 uint64_t Entity::getId() const { return reinterpret_cast<uintptr_t>(this); }
-const mat4f& Entity::getWorldTransformMatrix() 
+const mat4f& Entity::getWorldTransformMatrix()
 { 
 	if (m_transformIsDirty)
 	{
-		m_transform = mat4f::TRS(m_worldPosition, m_worldOrientation, vec4f(m_worldScale));
+		m_transform = mat4f::TRS(m_worldPosition, m_worldOrientation, m_worldScale);
 		m_invTransform = mat4f::inverse(m_transform);
-		m_normalMatrix = mat4f(m_worldOrientation);
+		bool cw = m_worldScale.x * m_worldScale.y * m_worldScale.z >= 0.f;
+
+		m_normalMatrix = m_invTransform;
+		m_normalMatrix[3] = vec4f(0, 0, 0, 1);
+		m_normalMatrix = mat4f::transpose(m_normalMatrix);
+
+		/*mat4f adj(1.f);
+		adj[0] = vec4f::cross(m_transform[1], m_transform[2]);
+		adj[1] = vec4f::cross(m_transform[2], m_transform[0]);
+		adj[2] = vec4f::cross(m_transform[0], m_transform[1]);
+		m_normalMatrix = (cw ? 1.f : -1.f) * adj;*/
+
+		const auto visitor = [&](EntityBase::Element& element)
+		{
+			if (element.comp->isIdInHierarchy(DrawableComponent::getStaticClassID()))
+			{
+				DrawableComponent* drawable = static_cast<DrawableComponent*>(element.comp);
+				drawable->setClockWise(cw);
+			}
+			return false;
+		};
+		allComponentsVisitor(visitor);
+
 		m_transformIsDirty = false;
 
 		for (int i = 0; i < m_childs.size(); i++)
@@ -301,7 +323,7 @@ vec4f Entity::getWorldPosition() const
 {
 	return m_worldPosition;
 }
-float Entity::getWorldScale() const
+vec4f Entity::getWorldScale() const
 {
 	return m_worldScale;
 }
@@ -313,7 +335,7 @@ vec4f Entity::getLocalPosition() const
 {
 	return m_localPosition;
 }
-float Entity::getLocalScale() const
+vec4f Entity::getLocalScale() const
 {
 	return m_localScale;
 }
@@ -342,7 +364,7 @@ void Entity::addChild(Entity* child, bool incOwnership)
 		m_parentWorld->getOwnership(child);
 
 }
-void Entity::removeChild(Entity* child)
+void Entity::removeChild(Entity* child, bool removeFromSceneToo)
 {
 	int index = -1;
 	for (int i = 0; i < m_childs.size(); i++)
@@ -356,9 +378,13 @@ void Entity::removeChild(Entity* child)
 	if (index >= 0)
 	{
 		if (m_parentWorld)
+		{
+			if (removeFromSceneToo)
+				m_parentWorld->removeFromScene(child);
 			m_parentWorld->releaseOwnership(child);
+		}
 		child->m_parentEntity = nullptr;
-		int last = m_childs.size() - 1;
+		int last = (int)m_childs.size() - 1;
 		if (index != last)
 			m_childs[index] = m_childs[last];
 		m_childs.pop_back();
@@ -389,7 +415,7 @@ void Entity::recursiveHierarchyCollect(std::vector<Entity*>& collection)
 void Entity::recomputeWorldBoundingBox()
 {
 	m_worldBoundingBox = m_localBoundingBox;
-	m_worldBoundingBox.transform(m_worldPosition, vec4f(m_worldScale), m_worldOrientation);
+	m_worldBoundingBox.transform(m_worldPosition, m_worldScale, m_worldOrientation);
 }
 void Entity::recomputeWorldChildTransforms()
 {
@@ -451,13 +477,13 @@ bool Entity::drawImGui(World& world, bool inChildWindow)
 		ImGui::TextColored(ImVec4(1, 1, 0, 1), "World");
 		if (ImGui::DragFloat3("World position", &m_worldPosition[0], 0.1f, -floatMax, floatMax, "%.3f"))
 			setWorldPosition(m_worldPosition);
-		if (ImGui::DragFloat("World scale", &m_worldScale, 0.1f, epsilon, floatMax, "%.3f"))
+		if (ImGui::DragFloat3("World scale", &m_worldScale[0], 0.1f, epsilon, floatMax, "%.3f"))
 			setWorldScale(m_worldScale);
 		/*vec3f euler = (float)RAD2DEG * glm::eulerAngles(m_worldOrientation);
 		if (ImGui::DragFloat3("World orientation", &euler[0], 0.1f, -360.f, 360.f, "%.3f"))
 		setWorldOrientation(quatf((float)DEG2RAD * euler));*/
 		if (ImGui::DragFloat4("World orientation", &m_worldOrientation[0], 0.1f, -1.f, 1.f, "%.3f"))
-			setLocalOrientation(m_worldOrientation);
+			setWorldOrientation(m_worldOrientation);
 
 		if (m_parentEntity)
 		{
@@ -465,7 +491,7 @@ bool Entity::drawImGui(World& world, bool inChildWindow)
 			ImGui::TextColored(ImVec4(1, 1, 0, 1), "Local");
 			if (ImGui::DragFloat3("Local position", &m_localPosition[0], 0.1f, -floatMax, floatMax, "%.3f"))
 				setLocalPosition(m_localPosition);
-			if (ImGui::DragFloat("Local scale", &m_localScale, 0.1f, epsilon, floatMax, "%.3f"))
+			if (ImGui::DragFloat3("Local scale", &m_localScale[0], 0.1f, epsilon, floatMax, "%.3f"))
 				setLocalScale(m_localScale);
 			/*euler = (float)RAD2DEG * glm::eulerAngles(m_localOrientation);
 			if (ImGui::DragFloat3("Local orientation", &euler[0], 0.1f, -360.f, 360.f, "%.3f"))

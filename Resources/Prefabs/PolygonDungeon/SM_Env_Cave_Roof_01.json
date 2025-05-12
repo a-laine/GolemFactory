@@ -1,7 +1,7 @@
 {
     "drawableComponent": {
         "meshName": "PolygonDungeon/SM_Env_Cave_Roof_01",
-        "shaderName": "defaultTextured"
+        "materialName" : "dungeon01"
     },
     "prefabEntities": []
 }

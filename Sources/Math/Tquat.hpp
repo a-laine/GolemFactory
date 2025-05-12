@@ -2,6 +2,8 @@
 
 
 #include "Tquat.h"
+#include "Tmat3.h"
+#include "Tmat4.h"
 
 // constructors
 template<typename T>
@@ -27,6 +29,30 @@ Tquat<T>::Tquat(const T& angle, const Tvec4<T>& axis)
 	w = ca;
 }
 
+template<typename T>
+Tquat<T>::Tquat(const T& angle, const Tvec3<T>& axis)
+{
+	Tvec3<T> v = axis.getNormal();
+	T ca = cos(T(0.5) * angle);
+	T sa = sin(T(0.5) * angle);
+	x = v.x * sa;
+	y = v.y * sa;
+	z = v.z * sa;
+	w = ca;
+}
+
+template<typename T>
+Tquat<T>::Tquat(const Tvec3<T>& eulers)
+{
+	Tvec3<T> c = Tvec3<T>(cos(eulers.x * T(0.5)), cos(eulers.y * T(0.5)), cos(eulers.z * T(0.5)));
+	Tvec3<T> s = Tvec3<T>(sin(eulers.x * T(0.5)), sin(eulers.y * T(0.5)), sin(eulers.z * T(0.5)));
+
+	w = c.x * c.y * c.z + s.x * s.y * s.z;
+	x = s.x * c.y * c.z - c.x * s.y * s.z;
+	y = c.x * s.y * c.z + s.x * c.y * s.z;
+	z = c.x * c.y * s.z - s.x * s.y * c.z;
+}
+
 // operator
 template<typename T>
 Tvec3<T> Tquat<T>::xyz() const
@@ -43,10 +69,11 @@ Tvec4<T> Tquat<T>::xyzw() const
 template<typename T>
 Tquat<T> Tquat<T>::operator-() const
 {
-	Tquat<T> q = *this;
+	Tquat<T> q;
 	q.x = -x;
 	q.y = -y;
 	q.z = -z;
+	q.w = -w;
 	return q;
 }
 
@@ -94,7 +121,7 @@ Tquat<T>& Tquat<T>::operator=(const Tquat& b)
 template<typename T>
 void Tquat<T>::normalize()
 {
-	T invNorm = std::sqrt(x * x + y * y + z * z + w * w);
+	T invNorm = T(1) / std::sqrt(x * x + y * y + z * z + w * w);
 	x *= invNorm;
 	y *= invNorm;
 	z *= invNorm;
@@ -102,57 +129,57 @@ void Tquat<T>::normalize()
 }
 
 //constants
-template<typename T> const Tquat<T> Tquat<T>::identity = Tquat<T>(0, 0, 0, 1);
+template<typename T> const Tquat<T> Tquat<T>::identity = Tquat<T>(1, 0, 0, 0);
 
 
 // math function
-template<typename T>
-Tvec4<T> operator*(const Tquat<T>& q, const Tvec4<T>& v)
-{
-	Tquat<T> vq = Tquat<T>(v.x, v.y, v.z, 0);
-	Tquat<T> r = q * vq * (-q);
-	return Tvec4<T>(r.x, r.y, r.z, v.w);
-}
-
 template<typename T>
 Tquat<T> operator*(const Tquat<T>& a, const Tquat<T>& b)
 {
 	Tquat<T> result;
 	result.x = a.w * b.x + a.x * b.w + a.y * b.z - a.z * b.y;
-	result.y = a.w * b.y - a.x * b.z + a.y * b.w + a.z * b.x;
-	result.z = a.w * b.z + a.x * b.y - a.y * b.x + a.z * b.w;
+	result.y = a.w * b.y + a.y * b.w + a.z * b.x - a.x * b.z;
+	result.z = a.w * b.z + a.x * b.y + a.z * b.w - a.y * b.x;
 	result.w = a.w * b.w - a.x * b.x - a.y * b.y - a.z * b.z;
 	return result;
+}
+
+template<typename T>
+Tvec4<T> operator*(const Tquat<T>& q, const Tvec4<T>& v)
+{
+	Tquat<T> vq = Tquat<T>(0, v.x, v.y, v.z);
+	Tquat<T> r = q * vq * (-q);
+	return Tvec4<T>(r.x, r.y, r.z, v.w);
 }
 
 template<typename T, typename T2>
 Tquat<T> operator*(const Tquat<T>& a, const T2& scalar)
 {
-	return Tquat<T>(scalar * a.x, scalar * a.y, scalar * a.z, scalar * a.w);
+	return Tquat<T>(scalar * a.w, scalar * a.x, scalar * a.y, scalar * a.z);
 }
 
 template<typename T, typename T2>
 Tquat<T> operator*(const T2& scalar, const Tquat<T>& a)
 {
-	return Tquat<T>(scalar * a.x, scalar * a.y, scalar * a.z, scalar * a.w);
+	return Tquat<T>(scalar * a.w, scalar * a.x, scalar * a.y, scalar * a.z);
 }
 
 template<typename T, typename T2>
 Tquat<T> operator/(const Tquat<T>& a, const T2& scalar)
 {
-	return Tquat<T>(a.x / scalar, a.y / scalar, a.z / scalar, a.w / scalar);
+	return Tquat<T>(a.w / scalar, a.x / scalar, a.y / scalar, a.z / scalar);
 }
 
 template<typename T, typename T2>
 Tquat<T> operator/(const T2& scalar, const Tquat<T>& a)
 {
-	return Tquat<T>(a.x / scalar, a.y / scalar, a.z / scalar, a.w / scalar);
+	return Tquat<T>(a.w / scalar, a.x / scalar, a.y / scalar, a.z / scalar);
 }
 
 template<typename T, typename T2>
 Tquat<T> operator+(const Tquat<T>& a, const Tquat<T2>& b)
 {
-	return Tquat<T>(a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w);
+	return Tquat<T>(a.w + b.w, a.x + b.x, a.y + b.y, a.z + b.z);
 }
 
 template<typename T>
@@ -167,7 +194,7 @@ Tquat<T> Tquat<T>::slerp(const Tquat<T>& a, const Tquat<T>& b, const T& t)
 	}
 
 	if (cosTheta > T(1) - EPSILON)
-		return Tquat<T>(lerp(a.x, z.x, t), lerp(a.y, z.y, t), lerp(a.z, z.z, t), lerp(a.w, z.w, t));
+		return Tquat<T>(lerp(a.w, z.w, t), lerp(a.x, z.x, t), lerp(a.y, z.y, t), lerp(a.z, z.z, t));
 	else
 	{
 		T angle = acos(cosTheta);
@@ -219,4 +246,20 @@ Tquat<T> Tquat<T>::lookAt(const Tvec4<T>& forward, Tvec4<T> up)
 		q.z = T(0.25) * s;
 	}
 	return q;
+}
+
+template<typename T>
+Tquat<T> conjugate(const Tquat<T>& q)
+{
+	return Tquat<T>(q.w, -q.x, -q.y, -q.z);
+}
+
+template <typename T>
+Tvec3<T> Tquat<T>::eulerAngles(Tquat<T> const& q)
+{
+	return Tvec3<T>(
+		atan2(T(2) * (q.y * q.z + q.w * q.x), q.w * q.w - q.x * q.x - q.y * q.y + q.z * q.z),
+		asin(clamp(T(-2) * (q.x * q.z - q.w * q.y), T(-1), T(1))),
+		atan2(T(2) * (q.x * q.y + q.w * q.z), q.w * q.w + q.x * q.x - q.y * q.y - q.z * q.z)
+	);
 }

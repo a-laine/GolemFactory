@@ -15,13 +15,14 @@
 #endif
 #include <Utiles/Debug.h>
 #include <Terrain/TerrainDetailDrawableComponent.h>
+#include <Resources/Material.h>
 
 float Terrain::g_morphingRange = 10.f;
 
 
 // Default
 Terrain::Terrain() : m_world(nullptr), m_areaContainer(nullptr), m_virtualTexture(nullptr), m_gridSize(0), 
-	m_grid(nullptr), m_terrainShader(nullptr), m_waterShader(nullptr)
+	m_grid(nullptr), m_terrainMaterial(nullptr), m_waterMaterial(nullptr), m_terrainDetailMaterial(nullptr)
 {
 	m_gridMinIndex = vec2i(-std::numeric_limits<int>::max());
 }
@@ -32,8 +33,9 @@ Terrain::~Terrain()
 
 	m_clipmapMeshes.clear();
 
-	ResourceManager::getInstance()->release(m_terrainShader);
-	ResourceManager::getInstance()->release(m_waterShader);
+	ResourceManager::getInstance()->release(m_terrainMaterial);
+	ResourceManager::getInstance()->release(m_waterMaterial);
+	ResourceManager::getInstance()->release(m_terrainDetailMaterial);
 }
 //
 
@@ -137,8 +139,9 @@ void Terrain::initializeClipmaps()
 		m_clipmapMeshes.push_back(clipmap);
 	}
 
-	m_terrainShader = ResourceManager::getInstance()->getResource<Shader>("terrain");
-	m_waterShader = ResourceManager::getInstance()->getResource<Shader>("terrainWater");
+	m_terrainMaterial = ResourceManager::getInstance()->getResource<Material>("terrain");
+	m_waterMaterial = ResourceManager::getInstance()->getResource<Material>("terrainWater");
+	m_terrainDetailMaterial = ResourceManager::getInstance()->getResource<Material>("terrainDetail");
 
 	if (!m_areaContainer)
 	{
@@ -151,6 +154,25 @@ void Terrain::initializeClipmaps()
 	}
 }
 
+Terrain::AreaDetails& Terrain::addDetail()
+{
+	m_areaDetails.push_back(AreaDetails());
+	return m_areaDetails.back();
+}
+void Terrain::endAddDetail()
+{
+	ResourceManager* resmgr = ResourceManager::getInstance();
+	int identifier = 0;
+	for (auto& areaDetail : m_areaDetails)
+	{
+		for (int i = 0; i < areaDetail.m_meshNames.size(); i++)
+		{
+			areaDetail.m_meshResources.push_back(resmgr->getResource<Mesh>(areaDetail.m_meshNames[i]));
+			areaDetail.m_identifiers.push_back(identifier + i);
+		}
+		identifier += (int)areaDetail.m_meshNames.size();
+	}
+}
 
 void Terrain::addArea(TerrainArea& area, bool recomputeIfNeeded)
 {
@@ -183,8 +205,8 @@ void Terrain::clear()
 					if (area && area->m_entity)
 					{
 						area->setLod(-1);
-						m_world->removeFromScene(area->m_entity);
-						m_areaContainer->removeChild(area->m_entity);
+						area->m_entity->removeAllChild(true);
+						m_areaContainer->removeChild(area->m_entity, true);
 					}
 				}
 		}
@@ -289,30 +311,41 @@ void Terrain::update(vec4f _cameraPosition)
 		int m_targetLod;
 		int priority;
 	};
-	std::vector<AreaJobData> jobdatas;
+	std::vector<AreaJobData> jobLodDatas;
+	std::vector<AreaJobData> jobDetailDatas;
 
 	m_currentPlayerPosInTile.x = (250 * 0.5f * m_gridSize.x + _cameraPosition.x) / 250;
 	m_currentPlayerPosInTile.y = (250 * 0.5f * m_gridSize.y + _cameraPosition.z) / 250;
 	vec2i camAreaIndex;
-	camAreaIndex.x = m_currentPlayerPosInTile.x;
-	camAreaIndex.y = m_currentPlayerPosInTile.y;
+	camAreaIndex.x = (int)m_currentPlayerPosInTile.x;
+	camAreaIndex.y = (int)m_currentPlayerPosInTile.y;
 
-	vec2i tileSize = vec2i(m_lodRadius.back() / 250);
+	int farThs = (int)(m_lodRadius.back() / 250);
+	vec2i tileSize = vec2i(farThs);
 	vec2i min = vec2i::clamp(camAreaIndex - tileSize, vec2i::zero, m_gridSize - vec2i::one);
 	vec2i max = vec2i::clamp(camAreaIndex + tileSize, vec2i::zero, m_gridSize - vec2i::one);
 	m_currentStreamingMin = min;
 	m_currentStreamingMax = max;
-	int farThs = m_lodRadius.back() / 250;
+
+	int detailMaxLod = -1;
+	for (const AreaDetails& detail : m_areaDetails)
+	{
+		detailMaxLod = std::max(detailMaxLod, detail.m_lod);
+	}
 
 	for (TerrainArea* area : m_previousAreas)
 	{
 		if (area->m_gridIndex.x < min.x || area->m_gridIndex.x > max.x || area->m_gridIndex.y < min.y || area->m_gridIndex.y > max.y)
 		{
-			jobdatas.push_back({ area, -1, -100 });
-			m_world->removeFromScene(area->m_entity);
-			m_areaContainer->removeChild(area->m_entity);
-			m_world->releaseOwnership(area->m_entity);
-			//delete area->m_entity;
+			// texture and lod update
+			jobLodDatas.push_back({ area, -1, -100 });
+
+			// clear details
+			area->m_details.clear();
+			area->m_entity->removeAllChild(true);
+
+			// remove area entity
+			m_areaContainer->removeChild(area->m_entity, true);
 			area->m_entity = nullptr;
 		}
 	}
@@ -335,8 +368,8 @@ void Terrain::update(vec4f _cameraPosition)
 						object->setWorldPosition(area->getCenter());
 
 						TerrainAreaDrawableComponent* drawable = new TerrainAreaDrawableComponent(area);
-						drawable->setShader(m_terrainShader);
-						drawable->setWaterShader(m_waterShader);
+						drawable->setMaterial(m_terrainMaterial);
+						//drawable->setWaterMaterial(m_waterMaterial);
 						drawable->setMesh(m_clipmapMeshes.back());
 						object->addComponent(drawable);
 
@@ -353,7 +386,7 @@ void Terrain::update(vec4f _cameraPosition)
 			delta = vec4f::clamp(delta, -halfSize, halfSize) - delta;
 			float distance = std::sqrt(delta.x * delta.x + delta.z * delta.z);
 
-			int lod = m_lodRadius.size() - 1;
+			int lod = (int)m_lodRadius.size() - 1;
 			for (int k = 0; k < m_lodRadius.size() - 1; k++)
 			{
 				if (distance < m_lodRadius[k])
@@ -363,51 +396,30 @@ void Terrain::update(vec4f _cameraPosition)
 				}
 			}
 
-			// create detail entities if needed, or delete them
-			if (lod < 5)
-			{
-				if (area->m_entity->getChilds().size() == 0 && area->getLod() != -1)
-				{
-					Entity* massentity = area->addDetailsInstance("PolygonDungeon/SM_Env_GrassQuads_01.fbx", 1.f, vec2f(0.7f, 1.f), vec2f(0.9f, 1.f), 0.f, -0.1f);
-					TerrainDetailDrawableComponent* drawable = massentity->getComponent<TerrainDetailDrawableComponent>();
-					drawable->setDoubleSidedFaces(true);
-					drawable->setColorTintGradient(vec3f(0.08f, 0.25f, 0.05f), vec3f(0.16f, 0.25f, 0.05f));
-					drawable->setAlphaClipThs(0.3f);
-
-					const float treeDensity = 7.f;
-					const vec2f treeSize = vec2f(3.f, 5.f);
-					area->addDetailsInstance("PolygonDungeon/SM_Env_Tree_01.fbx", treeDensity, vec2f(0.00f, 0.17f), treeSize, 1.f, -0.1f);
-					area->addDetailsInstance("PolygonDungeon/SM_Env_Tree_02.fbx", treeDensity, vec2f(0.17f, 0.34f), treeSize, 1.f, -0.1f);
-					area->addDetailsInstance("PolygonDungeon/SM_Env_Tree_03.fbx", treeDensity, vec2f(0.34f, 0.51f), treeSize, 1.f, -0.1f);
-					area->addDetailsInstance("PolygonDungeon/SM_Env_Tree_04.fbx", treeDensity, vec2f(0.51f, 0.68f), treeSize, 1.f, -0.1f);
-				}
-			}
-			else
-			{
-				if (area->m_entity->getChilds().size() > 0)
-					area->m_entity->removeAllChild(true);
-			}
 
 			// change area lod
-			if (area->getLod() != lod)
+			int currentLod = area->getLod();
+			if (currentLod != lod)
 			{
-				TerrainAreaDrawableComponent* drawable = area->m_entity->getComponent<TerrainAreaDrawableComponent>();
-				drawable->setMesh(m_clipmapMeshes[lod]);
+				//TerrainAreaDrawableComponent* drawable = area->m_entity->getComponent<TerrainAreaDrawableComponent>();
+				//drawable->setMesh(m_clipmapMeshes[lod]);
 				int priority = std::min(std::abs(camAreaIndex.x - i), std::abs(camAreaIndex.y - j));
-				if (area->getLod() < lod)
+				if (currentLod < lod)
 					priority += 100;
-				jobdatas.push_back({ area, lod, priority });
+				jobLodDatas.push_back({ area, lod, priority });
+				jobDetailDatas.push_back({ area, detailMaxLod, 0 });
 			}
 			m_previousAreas.insert(area);
 		}
 
-	if (!jobdatas.empty())
+	if (!jobLodDatas.empty())
 	{
-		std::sort(jobdatas.begin(), jobdatas.end(), [](const AreaJobData& a, const AreaJobData& b) { return a.priority < b.priority; });
+		std::sort(jobLodDatas.begin(), jobLodDatas.end(), [](const AreaJobData& a, const AreaJobData& b) { return a.priority < b.priority; });
 
-		Job updateJob(jobdatas.size(), [](void* _data, int _id, int _count)
+#if 1
+		Job updateLodJob(jobLodDatas.size(), [](void* _data, int _id, int _count)
 			{
-				SCOPED_CPU_MARKER("TerrainArea::jobUpdate");
+				SCOPED_CPU_MARKER("TerrainArea::updateLodJob");
 				AreaJobData* data = (AreaJobData*)_data;
 				TerrainArea* area = data[_id].m_area;
 				int targetLod = data[_id].m_targetLod;
@@ -416,16 +428,16 @@ void Terrain::update(vec4f _cameraPosition)
 				if (entity)
 				{
 					TerrainAreaDrawableComponent* drawable = entity->getComponent<TerrainAreaDrawableComponent>();
+					drawable->setMesh(area->getTerrain()->m_clipmapMeshes[targetLod]);
 					drawable->updateData(area->m_tiles[targetLod]);
 				}
+			}, jobLodDatas.data());
 
-			}, jobdatas.data());
-
-#if 0
-		updateJob.addToQueue(Job::JobPriority::MEDIUM);
-		updateJob.waitCompletion(true);
+		updateLodJob.addToQueue(Job::JobPriority::MEDIUM);
+		updateLodJob.waitCompletion(true);
+		jobLodDatas.clear();
 #else
-		for (auto& job : jobdatas)
+		for (auto& job : jobLodDatas)
 		{
 			TerrainArea* area = job.m_area;
 			int targetLod = job.m_targetLod;
@@ -434,6 +446,7 @@ void Terrain::update(vec4f _cameraPosition)
 			if (entity)
 			{
 				TerrainAreaDrawableComponent* drawable = entity->getComponent<TerrainAreaDrawableComponent>();
+				drawable->setMesh(m_clipmapMeshes[targetLod]);
 				drawable->updateData(area->m_tiles[targetLod]);
 			}
 		}
@@ -441,6 +454,209 @@ void Terrain::update(vec4f _cameraPosition)
 		if (m_virtualTexture)
 			m_virtualTexture->updateGPUTexture();
 	}
+
+	if (!jobDetailDatas.empty())
+	{
+		// cannot use job for now : we need main thread to init VBO & VAO
+#if 0
+		Job updateDetailJob(jobDetailDatas.size(), [](void* _data, int _id, int _count)
+			{
+				SCOPED_CPU_MARKER("TerrainArea::updateDetailJob");
+				AreaJobData* data = (AreaJobData*)_data;
+				TerrainArea* area = data[_id].m_area;
+				int detailMaxLod = data[_id].m_targetLod;
+				int lod = area->getLod();
+				if (lod <= detailMaxLod)
+				{
+					area->loadInstanceData();
+					area->getTerrain()->addRemoveDetails2(area);
+				}
+				else
+				{
+					area->unloadInstanceData();
+					if (area->m_entity->getChilds().size() > 0)
+						area->m_entity->removeAllChild(true);
+					area->m_details.clear();
+				}
+			}, jobDetailDatas.data());
+
+		updateDetailJob.addToQueue(Job::JobPriority::MEDIUM);
+		updateDetailJob.waitCompletion(true);
+		jobDetailDatas.clear();
+#else
+		for (auto& job : jobDetailDatas)
+		{
+			TerrainArea* area = job.m_area;
+			int lod = area->getLod();
+			if (lod <= detailMaxLod)
+			{
+				area->loadInstanceData();
+				addRemoveDetails2(area);
+			}
+			else
+			{
+				area->unloadInstanceData();
+				if (area->m_entity->getChilds().size() > 0)
+					area->m_entity->removeAllChild(true);
+				area->m_details.clear();
+			}
+		}
+#endif
+	}
+}
+void Terrain::addRemoveDetails(TerrainArea* area, int lod)
+{
+	for (const AreaDetails& terrainDetail : m_areaDetails)
+	{
+		if (lod < terrainDetail.m_lod)
+		{
+			// search if area has detail
+			bool hasDetail = false;
+			for (auto& areaDetail : area->m_details)
+			{
+				if (areaDetail.m_lod == terrainDetail.m_lod && areaDetail.m_name == terrainDetail.m_name)
+				{
+					hasDetail = true;
+					break;
+				}
+			}
+			if (hasDetail || terrainDetail.m_meshNames.size() == 0)
+				continue;
+
+			// create detail entities
+			SCOPED_CPU_MARKER("add area detail");
+			auto& areaDetail = area->m_details.emplace_back();
+			areaDetail.m_name = terrainDetail.m_name;
+			areaDetail.m_lod = terrainDetail.m_lod;
+			for (int k = 0; k < terrainDetail.m_meshNames.size(); k++)
+			{
+				Entity* massentity = area->addDetailsInstance(
+					terrainDetail.m_meshNames[k],
+					terrainDetail.m_density,
+					terrainDetail.m_allowedMaterials,
+					terrainDetail.m_probability[k],
+					terrainDetail.m_sizeRange,
+					terrainDetail.m_normalWeight,
+					terrainDetail.m_modelOffset[k]);
+
+				TerrainDetailDrawableComponent* drawable = massentity->getComponent<TerrainDetailDrawableComponent>();
+				drawable->setDoubleSidedFaces(terrainDetail.m_doubleSided);
+				drawable->setColorTintGradient(terrainDetail.m_colorTint0, terrainDetail.m_colorTint1);
+				drawable->setAlphaClipThs(terrainDetail.m_alphaCLipThs);
+				//drawable->setMaxShadowCascade(terrainDetail.m_maxShadow);
+
+				areaDetail.m_detailEntities.push_back(massentity);
+			}
+		}
+		else
+		{
+			// search corresponding detail
+			int index = -1;
+			for (int k = 0; k < area->m_details.size(); k++)
+			{
+				auto& areaDetail = area->m_details[k];
+				if (areaDetail.m_lod == terrainDetail.m_lod && areaDetail.m_name == terrainDetail.m_name)
+				{
+					index = k;
+					break;
+				}
+			}
+			if (index < 0)
+				continue;
+
+			// remove details
+			SCOPED_CPU_MARKER("remove area detail");
+			auto& areaDetail = area->m_details[index];
+			for (Entity* massentity : areaDetail.m_detailEntities)
+			{
+				area->m_entity->removeChild(massentity, true);
+			}
+			int last = (int)area->m_details.size() - 1;
+			if (index != last)
+				area->m_details[index] = area->m_details[last];
+			area->m_details.pop_back();
+		}
+	}
+}
+
+void Terrain::addRemoveDetails2(TerrainArea* area)
+{
+	int identifier = 0;
+	for (const AreaDetails& terrainDetail : m_areaDetails)
+	{
+		if (area->getLod() <= terrainDetail.m_lod)
+		{
+			// search if area has detail
+			bool hasDetail = false;
+			for (auto& areaDetail : area->m_details)
+			{
+				if (areaDetail.m_lod == terrainDetail.m_lod && areaDetail.m_name == terrainDetail.m_name)
+				{
+					hasDetail = true;
+					break;
+				}
+			}
+			if (hasDetail || terrainDetail.m_meshNames.size() == 0)
+				continue;
+
+			// create detail entities
+			SCOPED_CPU_MARKER("add area detail");
+			auto& areaDetail = area->m_details.emplace_back();
+			areaDetail.m_name = terrainDetail.m_name;
+			areaDetail.m_lod = terrainDetail.m_lod;
+			for (int k = 0; k < terrainDetail.m_meshResources.size(); k++)
+			{
+				Entity* massentity = area->addDetailsInstance(
+					terrainDetail.m_meshResources[k],
+					identifier + k,
+					terrainDetail.m_normalWeight,
+					terrainDetail.m_modelOffset[k]);
+
+				TerrainDetailDrawableComponent* drawable = massentity->getComponent<TerrainDetailDrawableComponent>();
+				drawable->setDoubleSidedFaces(terrainDetail.m_doubleSided);
+				drawable->setColorTintGradient(terrainDetail.m_colorTint0, terrainDetail.m_colorTint1);
+				drawable->setAlphaClipThs(terrainDetail.m_alphaCLipThs);
+				//drawable->setMaxShadowCascade(terrainDetail.m_maxShadow);
+				//for (auto it = terrainDetail.m_shaderTextureOverride.begin(); it != terrainDetail.m_shaderTextureOverride.end(); it++)
+				//	drawable->setTextureOverride(it->first, it->second);
+
+				areaDetail.m_detailEntities.push_back(massentity);
+			}
+		}
+		else
+		{
+			// search corresponding detail
+			int index = -1;
+			for (int k = 0; k < area->m_details.size(); k++)
+			{
+				auto& areaDetail = area->m_details[k];
+				if (areaDetail.m_lod == terrainDetail.m_lod && areaDetail.m_name == terrainDetail.m_name)
+				{
+					index = k;
+					break;
+				}
+			}
+			if (index < 0)
+				continue;
+
+			// remove details
+			SCOPED_CPU_MARKER("remove area detail");
+			auto& areaDetail = area->m_details[index];
+			for (Entity* massentity : areaDetail.m_detailEntities)
+			{
+				area->m_entity->removeChild(massentity, true);
+			}
+			int last = (int)area->m_details.size() - 1;
+			if (index != last)
+				area->m_details[index] = area->m_details[last];
+			area->m_details.pop_back();
+		}
+		identifier += (int)terrainDetail.m_meshResources.size();
+	}
+}
+const std::vector<Terrain::AreaDetails>& Terrain::getAreaDetails()
+{
+	return m_areaDetails;
 }
 //
 
@@ -457,6 +673,11 @@ void Terrain::setVirtualTexture(TerrainVirtualTexture* virtualTexture)
 TerrainVirtualTexture* Terrain::getVirtualTexture()
 {
 	return m_virtualTexture;
+}
+
+Material* Terrain::getDetailMaterial() const
+{
+	return m_terrainDetailMaterial;
 }
 
 std::string Terrain::getDirectory() const

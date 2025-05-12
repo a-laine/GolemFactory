@@ -1,7 +1,7 @@
 {
     "drawableComponent": {
         "meshName": "PolygonDungeon/SM_Wep_Shield_Bone_01",
-        "shaderName": "defaultTextured"
+        "materialName" : "dungeon01"
     },
     "prefabEntities": []
 }

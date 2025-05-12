@@ -183,6 +183,7 @@ namespace glm
 		static tmat4x4<T, P> lookAt(const tvec4<T, P>& forward, tvec4<T, P> up = tvec4<T, P>(0, 1, 0, 0));
 		static tmat4x4<T, P> ortho(const T left, const T right, const T bottom, const T top, const T zNear, const T zFar);
 		static tmat4x4<T, P> inverse(const tmat4x4<T, P>& m);
+		static tmat4x4<T, P> adjugate(const tmat4x4<T, P>& m);
 		static tmat4x4<T, P> transpose(const tmat4x4<T, P>& m);
 		static tmat4x4<T, P> perspective(T fovy, T aspect, T zNear, T zFar);
 		static tmat4x4<T, P> eulerAngleZX(T z, T x);

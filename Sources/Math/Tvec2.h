@@ -42,9 +42,12 @@ class Tvec2
 		bool operator==(const Tvec2& b) const;
 		bool operator!=(const Tvec2& b) const;
 		Tvec2& operator=(const Tvec2& b);
+		Tvec2<bool> operator<(const Tvec2& b) const;
+		Tvec2<bool> operator>(const Tvec2& b) const;
 
 		// norm & normalize
 		T getNorm() const;
+		T getNorm2() const;
 		Tvec2 getNormal() const;
 		void normalize();
 
@@ -53,7 +56,9 @@ class Tvec2
 		static const Tvec2 one;
 
 		//math
+		static Tvec2 min(const Tvec2& a, const Tvec2& b);
+		static Tvec2 max(const Tvec2& a, const Tvec2& b);
 		static Tvec2 clamp(const Tvec2& a, const Tvec2& min, const Tvec2& max);
 };
 
-#include "Tvec2.hpp"
+//#include "Tvec2.hpp"

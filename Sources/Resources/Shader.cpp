@@ -205,16 +205,20 @@ void Shader::loadGlobalTexture(const std::string& type, const std::string& ident
     m_textures.push_back(tex);
 }
 
-void Shader::enable()
+void Shader::enable(const std::vector<Texture*>* _texOverride)
 {
     glUseProgram(program);
+    bool useOverride = _texOverride && _texOverride->size() == m_textures.size();
 
     for (int i = 0; i < m_textures.size(); i++)
     {
         if (!m_textures[i].isGlobalAttribute)
         {
             glActiveTexture(GL_TEXTURE0 + m_textures[i].unit);
-            glBindTexture(GL_TEXTURE_2D, m_textures[i].texture->getTextureId());
+            if (useOverride && _texOverride->at(i))
+                glBindTexture(GL_TEXTURE_2D, _texOverride->at(i)->getTextureId());
+            else
+                glBindTexture(GL_TEXTURE_2D, m_textures[i].texture->getTextureId());
         }
     }
 }

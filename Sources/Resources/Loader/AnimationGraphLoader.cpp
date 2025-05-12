@@ -582,9 +582,6 @@ void AnimationGraphLoader::initialize(ResourceVirtual* resource)
     graph->setVariants(m_variants);
 }
 
-void AnimationGraphLoader::getResourcesToRegister(std::vector<ResourceVirtual*>& resourceList)
-{}
-
 
 void AnimationGraphLoader::loadStateMachine(const std::string& fileName, Variant& variant, std::vector<AG::StateMachine>& targetArray,
     std::vector<std::string>& _subGrapTarget)

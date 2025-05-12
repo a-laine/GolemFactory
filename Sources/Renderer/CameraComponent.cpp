@@ -88,7 +88,7 @@ void CameraComponent::setDirection(vec4f direction)
 {
 	direction.w = 0.f;
 	if (direction.getNorm2() < EPSILON)
-		direction = vec4f(0, 0, 1, 0);
+		direction = vec4f(1, 0, 0, 0);
 
 	direction.normalize();
 	
@@ -98,7 +98,7 @@ void CameraComponent::setDirection(vec4f direction)
 	vec4f up = vec4f::cross(right, direction);
 
 	mat4f view(direction, up, right, vec4f(0, 0, 0, 1));
-	quatf q = quatf(view);
+	quatf q = view.extractRotation();
 	q.normalize();
 	//getParentEntity()->setWorldTransformation(getParentEntity()->getWorldPosition(), getParentEntity()->getWorldScale(), q);
 	getParentEntity()->setWorldOrientation(q);
@@ -116,22 +116,22 @@ void CameraComponent::rotate(const quatf& rotation)
 
 void CameraComponent::rotate(float verticalDelta, float horizontalDelta)
 {
-	quatf orientation = getParentEntity()->getWorldOrientation();
-	vec4f front = orientation * vec4f(0, 0, 1, 0);
-	vec4f up = orientation * vec4f(0, 1, 0, 0);
-	vec4f right = orientation * vec4f(1, 0, 0, 0);
+	//quatf orientation = getParentEntity()->getWorldOrientation();
+	vec4f front = getForward();
+	vec4f up = getUp();
+	vec4f right = getRight();
 
 	front = front + horizontalDelta * right;
-	vec4f newfront = front - verticalDelta * up;
-	if (std::abs(newfront.y) < 0.97f)
-		front = newfront;
+	//vec4f newfront = front - verticalDelta * up;
+	//if (std::abs(newfront.y) < 0.97f)
+	//	front = newfront;
 
 	front.normalize();
 	right = vec4f::cross(vec4f(0, 1, 0, 0), front).getNormal();
 	up = vec4f::cross(front, right);
 
 	mat4f view(right, up, front, vec4f(0, 0, 0, 1));
-	quatf q = quatf(view);
+	quatf q = view.extractRotation();
 	q.normalize();
 	//getParentEntity()->setWorldTransformation(getParentEntity()->getWorldPosition(), getParentEntity()->getWorldScale(), q);
 	getParentEntity()->setWorldOrientation(q);

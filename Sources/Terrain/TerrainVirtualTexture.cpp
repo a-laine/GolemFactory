@@ -83,6 +83,7 @@ void TerrainVirtualTexture::initialize(int _physicalTextureSize)
 }
 void TerrainVirtualTexture::updateCPUTexture(TextureTile* _destination, uint64_t* _sourceHeightMap)
 {
+	SCOPED_CPU_MARKER("TerrainVirtualTexture::updateCPUTexture");
 	int spacing = TerrainArea::g_lodSpacing[_destination->m_lod];
 	uint64_t* cputex64 = (uint64_t*)m_CPUTexture;
 	for (int i = 0; i < _destination->m_size.x; i++)
@@ -154,9 +155,10 @@ TerrainVirtualTexture::TextureTile TerrainVirtualTexture::getFreeTextureTile(int
 	m_mutexPool.lock();
 	TextureTile freetile;
 	freetile.m_lod = -1;
-	GF_ASSERT(m_freeTilesPools[_lod].empty(), "No virtual texture tile found !");
+	bool hasTile = !m_freeTilesPools[_lod].empty();
+	GF_ASSERT(hasTile, "No virtual texture tile found !");
 
-	if (!m_freeTilesPools[_lod].empty())
+	if (hasTile)
 	{
 		freetile = m_freeTilesPools[_lod].back();
 		m_freeTilesPools[_lod].pop_back();

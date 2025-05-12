@@ -38,6 +38,7 @@ typedef Tquat<double>		quatd;
 #define EPSILON 1E-6
 #define PI 3.14159265359
 #define DEG2RAD (PI / 180.0)
+#define RAD2DEG (180.0 / PI)
 
 template<typename T>
 T lerp(const T& a, const T& b, const T& t) {
@@ -47,6 +48,24 @@ T lerp(const T& a, const T& b, const T& t) {
 template<typename T>
 T clamp(const T& a, const T& min, const T& max) {
 	return a < min ? min : (a > max ? max : a);
+}
+
+template<typename T>
+Tvec2<T> clamp(const Tvec2<T>& a, const Tvec2<T>& min, const Tvec2<T>& max) 
+{
+	return Tvec2<T>(clamp(a.x, min.x, max.x), clamp(a.y, min.y, max.y));
+}
+
+template<typename T>
+Tvec3<T> clamp(const Tvec3<T>& a, const Tvec3<T>& min, const Tvec3<T>& max) 
+{
+	return Tvec3<T>(clamp(a.x, min.x, max.x), clamp(a.y, min.y, max.y), clamp(a.z, min.z, max.z));
+}
+
+template<typename T>
+Tvec4<T> clamp(const Tvec4<T>& a, const Tvec4<T>& min, const Tvec4<T>& max) 
+{
+	return Tvec4<T>(clamp(a.x, min.x, max.x), clamp(a.y, min.y, max.y), clamp(a.z, min.z, max.z), clamp(a.w, min.w, max.w));
 }
 
 
@@ -59,8 +78,15 @@ T clamp(const T& a, const T& min, const T& max) {
 	#include <immintrin.h>
 	#include <intrin.h>
 
-	#define USE_SIMD //(GLM_ARCH_AVX | GLM_ARCH_SSE4 | GLM_ARCH_SSE3 | GLM_ARCH_SSE2)
+	//#define USE_SIMD //(GLM_ARCH_AVX | GLM_ARCH_SSE4 | GLM_ARCH_SSE3 | GLM_ARCH_SSE2)
+	//#define USE_AVX
+
+#if defined(USE_AVX2)
 	#define USE_AVX
+	#define USE_SIMD
+#elif defined(USE_AVX)
+	#define USE_SIMD
+#endif
 
 #elif (_M_IX86_FP == 2) || defined(_M_X64) || defined (_M_AMD64)
 	#include <xmmintrin.h>
@@ -85,3 +111,7 @@ template<> struct simd4<int32_t> { typedef __m128i simdType; };
 #endif
 
 #endif
+
+#include <cmath>
+#include <Utiles/Assert.hpp>
+

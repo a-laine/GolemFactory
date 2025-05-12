@@ -9,6 +9,7 @@ DefaultTextured
 		cascadedShadow : "_globalShadowCascades";
 		omniShadowArray : "_globalOmniShadow";
 		shadowOmniLayerUniform = "int";
+		shadowCascadeMax = "int";
 		terrainVirtualTexture : "_terrainVirtualTexture";
 	};
 	
@@ -156,6 +157,7 @@ DefaultTextured
 				insData_gs = modeldata;
 			#else
 				#ifdef SHADOW_PASS
+					fragmentUv_gs = uv;
 					gl_Position = model * position;
 				#else
 					fragmentPosition = model * position;
@@ -231,6 +233,7 @@ DefaultTextured
 			out vec4 fragmentUv;
 			
 			uniform int shadowOmniLayerUniform;
+			uniform int shadowCascadeMax = 4;
 			
 			void main()
 			{
@@ -247,12 +250,17 @@ DefaultTextured
 				}
 				else
 				{
-					for (int i = 0; i < 3; ++i)
+					if (gl_InvocationID <= shadowCascadeMax)
 					{
-						gl_Position = shadowCascadeProjections[ gl_InvocationID ] * gl_in[i].gl_Position;
-						fragmentUv = fragmentUv_gs[i];
-						gl_Layer = gl_InvocationID;
-						EmitVertex();
+						for (int i = 0; i < 3; ++i)
+						{
+							vec4 screenPos = shadowCascadeProjections[ gl_Layer ] * gl_in[i].gl_Position;
+							screenPos.z = max(screenPos.z, -1.0);
+							gl_Position = screenPos;
+							fragmentUv = fragmentUv_gs[i];
+							gl_Layer = gl_InvocationID;
+							EmitVertex();
+						}
 					}
 					EndPrimitive();				
 				}
@@ -303,13 +311,11 @@ DefaultTextured
 		// output
 		layout (location = 0) out vec4 fragColor;
 		
-		//uniform vec4 constantData[16];
-		
 		// usefull
 		vec4 fragmentColor= vec4(0.0);
 		vec4 clusterColor = vec4(0.0);
 		vec4 cascadeIndexAll = vec4(0,1,2,3);
-		vec4 cascadeColor = vec4(0.0);
+		vec4 cascadeColor = vec4(0.0, 0.0, 0.0, 1.0);
 		
 		float map(float value, float min1, float max1, float min2, float max2)
 		{
@@ -482,7 +488,7 @@ DefaultTextured
 			if ((shadingConfiguration & 0x04) != 0 && ndotl > 0.0)
 			{
 				int cascadeIndex = ComputeCascadeIndex();
-				shadowAttenuation = GetShadowAttenuation(cascadeIndex, max(0.005 * (1.0 - ndotl), 0.0005));			
+				shadowAttenuation = GetShadowAttenuation(cascadeIndex, (cascadeIndex + 1) * max(0.005 * (1.0 - ndotl), 0.0005));			
 			}
 			
 			float fragmentDistance = distance(cameraPosition, fragmentPosition);

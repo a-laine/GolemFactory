@@ -36,19 +36,23 @@ void EntityManager::getOwnership(Entity* object)
 void EntityManager::releaseOwnership(Entity* object)
 {
     GF_ASSERT(object);
-	object->m_refCount--;
-	if(object->m_refCount == 0)
+	unsigned int previous = object->m_refCount--;
+	if(previous == 1)
 	{
 		//delete object;
-		garbage.push_back(object);
+		mutexGarbage.lock();
 		nbObjects--;
+		garbage.push_back(object);
+		mutexGarbage.unlock();
 	}
 }
 
 void EntityManager::clearGarbage()
 {
+	mutexGarbage.lock();
 	for(Entity* object : garbage)
 		delete object;
 	garbage.clear();
+	mutexGarbage.unlock();
 }
 

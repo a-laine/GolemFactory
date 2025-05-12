@@ -1,7 +1,7 @@
 {
     "drawableComponent": {
         "meshName": "PolygonDungeon/SM_Env_Tiles_Texture_02",
-        "shaderName": "defaultTextured"
+        "materialName" : "dungeon01"
     },
 	"occluderComponent": {
 		"meshName" : "PolygonDungeon/SM_Env_Tile_Simple_01",

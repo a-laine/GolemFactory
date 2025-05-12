@@ -49,10 +49,6 @@ void ImageLoader::initialize(ResourceVirtual* resource)
     ImageLoader::freeImage(textureData);
 }
 
-void ImageLoader::getResourcesToRegister(std::vector<ResourceVirtual*>& resourceList)
-{
-}
-
 std::string ImageLoader::getFileName(const std::string& resourceDirectory, const std::string& fileName) const
 {
     std::string str = resourceDirectory;

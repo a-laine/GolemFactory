@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Tvec3.h"
+#include "Tquat.h"
 
 template<typename T>
 class Tmat3
@@ -32,7 +32,7 @@ class Tmat3
 		const T& operator[](int i) const { return m; }
 
 		// operator
-		Tvec3 operator-() const;
+		Tmat3 operator-() const;
 		void operator*=(const T& scalar);
 		void operator/=(const T& scalar);
 		void operator*=(const Tmat3& b);

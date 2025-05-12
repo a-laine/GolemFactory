@@ -26,6 +26,7 @@ NodeVirtual::~NodeVirtual()
 void NodeVirtual::init(const vec4f bbMin, const vec4f bbMax, const vec3i& nodeDivision)
 {
 	GF_ASSERT(children.empty());
+	m_depth = 0;
 	position = (bbMax + bbMin) * 0.5f;
 	position.w = 1.f;
 	vec4f delta = bbMax - bbMin;
@@ -58,6 +59,7 @@ void NodeVirtual::split()
 				children[index] = g_nodePool.getFreeObject();
 				children[index]->init(min, min + childSize, division);
 				children[index]->m_parent = this;
+				children[index]->m_depth = m_depth + 1;
 				index++;
 			}
 		}
@@ -115,7 +117,10 @@ vec4f NodeVirtual::getPosition() const
 }
 const float& NodeVirtual::getAllowanceSize() const { return allowanceSize; }
 vec3i NodeVirtual::getDivision() const { return division; }
-
+int NodeVirtual::getDepth() const
+{
+	return m_depth;
+}
 
 void NodeVirtual::addObject(Entity* object)
 {

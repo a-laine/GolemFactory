@@ -2722,11 +2722,7 @@
                 0.9714795351028442
             ],
             "scale": 1.8150532245635987,
-            "prefabName": "SM_Env_RockPile_Square_01",
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/SM_Env_RockPile_Square_01",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_RockPile_Square_01"
         },
         {
             "name": "SM_Env_Gem_Spike_04",
@@ -2746,7 +2742,7 @@
             "XXX_prefabName": "SM_Env_Gem_Spike_02",
             "drawableComponent": {
                 "meshName": "PolygonDungeon/SM_Env_Gem_Spike_02",
-                "shaderName": "defaultTextured"
+                "materialName": "dungeon02"
             }
         },
         {
@@ -2764,11 +2760,7 @@
                 0.9873915314674377
             ],
             "scale": 1.815053105354309,
-            "prefabName": "SM_Env_RockPile_Square_01",
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/SM_Env_RockPile_Square_01",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_RockPile_Square_01"
         },
         {
             "name": "SM_Env_GroundMound_Edge_06",
@@ -2785,11 +2777,7 @@
                 -0.9411923885345459
             ],
             "scale": 1.0,
-            "prefabName": "SM_Env_GroundMound_Edge_02",
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/SM_Env_GroundMound_Edge_02",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_GroundMound_Edge_02"
         },
         {
             "name": "SM_Env_Rock_Spike_18",
@@ -2806,11 +2794,7 @@
                 0.8626625537872315
             ],
             "scale": 6.00132942199707,
-            "prefabName": "SM_Env_Rock_Spike_05",
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/SM_Env_Rock_Spike_05",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_Rock_Spike_05"
         },
         {
             "name": "SM_Env_Rune_Pillar_04",
@@ -2827,11 +2811,7 @@
                 0.23236709833145142
             ],
             "scale": 1.0,
-            "prefabName": "SM_Env_Rune_Pillar_04",
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/SM_Env_Rune_Pillar_04",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_Rune_Pillar_04"
         },
         {
             "name": "SM_Env_Gem_Spike_09",
@@ -2848,11 +2828,7 @@
                 0.6442407369613648
             ],
             "scale": 3.3882546424865724,
-            "prefabName": "SM_Env_Gem_Spike_01",
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/SM_Env_Gem_Spike_01",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_Gem_Spike_01"
         },
         {
             "name": "SM_Env_GroundMound_Edge_02",
@@ -2869,11 +2845,7 @@
                 -0.13688510656356812
             ],
             "scale": 1.0,
-            "prefabName": "SM_Env_GroundMound_Edge_02",
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/SM_Env_GroundMound_Edge_02",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_GroundMound_Edge_02"
         },
         {
             "name": "SM_Env_Rune_Pillar_02",
@@ -2890,11 +2862,7 @@
                 0.7688118815422058
             ],
             "scale": 1.0,
-            "prefabName": "SM_Env_Rune_Pillar_02",
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/SM_Env_Rune_Pillar_02",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_Rune_Pillar_02"
         },
         {
             "name": "SM_Env_Gem_Spike_08",
@@ -2914,7 +2882,7 @@
             "XXX_prefabName": "SM_Env_Gem_Spike_02",
             "drawableComponent": {
                 "meshName": "PolygonDungeon/SM_Env_Gem_Spike_02",
-                "shaderName": "defaultTextured"
+                "materialName": "dungeon02"
             }
         },
         {
@@ -2932,11 +2900,7 @@
                 0.7801072597503662
             ],
             "scale": 1.2929121255874634,
-            "prefabName": "SM_Env_Cave_01",
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/SM_Env_Cave_01",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_Cave_01"
         },
         {
             "name": "SM_Env_Gem_Spike_05",
@@ -2956,7 +2920,7 @@
             "XXX_prefabName": "SM_Env_Gem_Spike_01",
             "drawableComponent": {
                 "meshName": "PolygonDungeon/SM_Env_Gem_Spike_01",
-                "shaderName": "defaultTextured"
+                "materialName": "dungeon02"
             }
         },
         {
@@ -2974,11 +2938,7 @@
                 0.9551689028739929
             ],
             "scale": 4.40488338470459,
-            "prefabName": "SM_Env_Rock_Spike_05",
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/SM_Env_Rock_Spike_05",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_Rock_Spike_05"
         },
         {
             "name": "SM_Env_Rune_Pillar_05",
@@ -2995,11 +2955,7 @@
                 0.43708494305610659
             ],
             "scale": 1.0,
-            "prefabName": "SM_Env_Rune_Pillar_05",
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/SM_Env_Rune_Pillar_05",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_Rune_Pillar_05"
         },
         {
             "name": "SM_Env_GroundMound_Rough_04",
@@ -3016,11 +2972,7 @@
                 1.0
             ],
             "scale": 2.6941449642181398,
-            "prefabName": "SM_Env_GroundMound_Rough_02",
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/SM_Env_GroundMound_Rough_02",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_GroundMound_Rough_02"
         },
         {
             "name": "SM_Env_RockPile_Square_30",
@@ -3037,11 +2989,7 @@
                 0.9873915314674377
             ],
             "scale": 4.159416675567627,
-            "prefabName": "SM_Env_RockPile_Square_01",
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/SM_Env_RockPile_Square_01",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_RockPile_Square_01"
         },
         {
             "name": "SM_Env_Rune_Pillar_01",
@@ -3058,11 +3006,7 @@
                 1.0
             ],
             "scale": 1.0568864345550538,
-            "prefabName": "SM_Env_Rune_Pillar_01",
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/SM_Env_Rune_Pillar_01",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_Rune_Pillar_01"
         },
         {
             "name": "SM_Env_GroundMound_Rough_05",
@@ -3079,11 +3023,7 @@
                 1.0
             ],
             "scale": 2.6941449642181398,
-            "prefabName": "SM_Env_GroundMound_Rough_02",
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/SM_Env_GroundMound_Rough_02",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_GroundMound_Rough_02"
         },
         {
             "name": "SM_Env_GroundMound_Edge_08",
@@ -3100,11 +3040,7 @@
                 0.8865585327148438
             ],
             "scale": 1.9202580451965333,
-            "prefabName": "SM_Env_GroundMound_Edge_02",
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/SM_Env_GroundMound_Edge_02",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_GroundMound_Edge_02"
         },
         {
             "name": "SM_Env_Cave_15",
@@ -3121,11 +3057,7 @@
                 -0.044519487768411639
             ],
             "scale": 1.0,
-            "prefabName": "SM_Env_Cave_01",
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/SM_Env_Cave_01",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_Cave_01"
         },
         {
             "name": "SM_Env_CrackedRock_42",
@@ -3142,11 +3074,7 @@
                 -0.9882199764251709
             ],
             "scale": 0.7416985630989075,
-            "prefabName": "SM_Env_CrackedRock_01",
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/SM_Env_CrackedRock_01",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_CrackedRock_01"
         },
         {
             "name": "SM_Env_GroundMound_Rough_06",
@@ -3163,11 +3091,7 @@
                 0.8622714877128601
             ],
             "scale": 2.6941449642181398,
-            "prefabName": "SM_Env_GroundMound_Rough_02",
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/SM_Env_GroundMound_Rough_02",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_GroundMound_Rough_02"
         },
         {
             "name": "SM_Env_Gem_Spike_07",
@@ -3187,7 +3111,7 @@
             "XXX_prefabName": "SM_Env_Gem_Spike_02",
             "drawableComponent": {
                 "meshName": "PolygonDungeon/SM_Env_Gem_Spike_02",
-                "shaderName": "defaultTextured"
+                "materialName": "dungeon02"
             }
         },
         {
@@ -3222,11 +3146,7 @@
                 0.8591323494911194
             ],
             "scale": 1.3919804096221924,
-            "prefabName": "SM_Env_Rock_Flat_01",
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/SM_Env_Rock_Flat_01",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_Rock_Flat_01"
         },
         {
             "name": "SM_Env_Stalagmite_57",
@@ -3243,11 +3163,7 @@
                 -0.3977506756782532
             ],
             "scale": 5.781567096710205,
-            "prefabName": "SM_Env_Stalagmite_02",
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/SM_Env_Stalagmite_02",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_Stalagmite_02"
         },
         {
             "name": "SM_Env_CrackedRock_43",
@@ -3264,11 +3180,7 @@
                 -0.09197340905666352
             ],
             "scale": 1.0,
-            "prefabName": "SM_Env_CrackedRock_03",
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/SM_Env_CrackedRock_03",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_CrackedRock_03"
         },
         {
             "name": "SM_Env_GroundMound_Rough_09",
@@ -3285,11 +3197,7 @@
                 0.6979130506515503
             ],
             "scale": 2.6941447257995607,
-            "prefabName": "SM_Env_GroundMound_Rough_02",
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/SM_Env_GroundMound_Rough_02",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_GroundMound_Rough_02"
         },
         {
             "name": "SM_Env_Rock_Spike_17",
@@ -3306,11 +3214,7 @@
                 0.12344875931739807
             ],
             "scale": 4.40488338470459,
-            "prefabName": "SM_Env_Rock_Spike_05",
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/SM_Env_Rock_Spike_05",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_Rock_Spike_05"
         },
         {
             "name": "SM_Env_Gem_Spike_03",
@@ -3330,7 +3234,7 @@
             "XXX_prefabName": "SM_Env_Gem_Spike_01",
             "drawableComponent": {
                 "meshName": "PolygonDungeon/SM_Env_Gem_Spike_01",
-                "shaderName": "defaultTextured"
+                "materialName": "dungeon02"
             }
         },
         {
@@ -3348,11 +3252,7 @@
                 0.9996177554130554
             ],
             "scale": 1.4724178314208985,
-            "prefabName": "SM_Env_Statue_04",
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/SM_Env_Statue_04",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_Statue_04"
         },
         {
             "name": "SM_Env_GroundMound_Rough_03",
@@ -3369,11 +3269,7 @@
                 1.0
             ],
             "scale": 2.6941449642181398,
-            "prefabName": "SM_Env_GroundMound_Rough_02",
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/SM_Env_GroundMound_Rough_02",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_GroundMound_Rough_02"
         },
         {
             "name": "SM_Env_GroundMound_Rough_02",
@@ -3390,11 +3286,7 @@
                 1.0
             ],
             "scale": 2.6941449642181398,
-            "prefabName": "SM_Env_GroundMound_Rough_02",
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/SM_Env_GroundMound_Rough_02",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_GroundMound_Rough_02"
         },
         {
             "name": "SM_Env_Entrance_Large_02",
@@ -3411,11 +3303,7 @@
                 0.9764300584793091
             ],
             "scale": 0.766473650932312,
-            "prefabName": "SM_Env_Entrance_Large_01",
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/SM_Env_Entrance_Large_01",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_Entrance_Large_01"
         },
         {
             "name": "SM_Env_Stalagmite_58",
@@ -3432,11 +3320,7 @@
                 0.8706681728363037
             ],
             "scale": 5.153011322021484,
-            "prefabName": "SM_Env_Stalagmite_03",
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/SM_Env_Stalagmite_03",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_Stalagmite_03"
         },
         {
             "name": "SM_Env_Cave_Background_Corner_14",
@@ -3453,11 +3337,7 @@
                 0.3006342649459839
             ],
             "scale": 0.42667895555496218,
-            "prefabName": "SM_Env_Cave_Background_Corner_01",
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/SM_Env_Cave_Background_Corner_01",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_Cave_Background_Corner_01"
         },
         {
             "name": "SM_Env_Rock_Flat_53",
@@ -3474,11 +3354,7 @@
                 0.02531553991138935
             ],
             "scale": 1.0,
-            "prefabName": "SM_Env_Rock_Flat_01",
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/SM_Env_Rock_Flat_01",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_Rock_Flat_01"
         },
         {
             "name": "SM_Env_GroundMound_Rough_07",
@@ -3495,11 +3371,7 @@
                 0.6979130506515503
             ],
             "scale": 2.6941447257995607,
-            "prefabName": "SM_Env_GroundMound_Rough_02",
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/SM_Env_GroundMound_Rough_02",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_GroundMound_Rough_02"
         },
         {
             "name": "SM_Env_Rock_Spike_15",
@@ -3516,11 +3388,7 @@
                 0.151
             ],
             "scale": 15.014113426208496,
-            "prefabName": "SM_Env_Rock_Spike_04",
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/SM_Env_Rock_Spike_04",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_Rock_Spike_04"
         },
         {
             "name": "SM_Env_Statue_12",
@@ -3537,11 +3405,7 @@
                 0.9712942242622376
             ],
             "scale": 1.472417950630188,
-            "prefabName": "SM_Env_Statue_04",
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/SM_Env_Statue_04",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_Statue_04"
         },
         {
             "name": "SM_Env_Gem_Spike_06",
@@ -3561,7 +3425,7 @@
             "XXX_prefabName": "SM_Env_Gem_Spike_01",
             "drawableComponent": {
                 "meshName": "PolygonDungeon/SM_Env_Gem_Spike_01",
-                "shaderName": "defaultTextured"
+                "materialName": "dungeon02"
             }
         },
         {
@@ -3579,11 +3443,7 @@
                 2.3846735075494509e-7
             ],
             "scale": 1.4731491804122925,
-            "prefabName": "SM_Env_CrackedRock_03",
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/SM_Env_CrackedRock_03",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_CrackedRock_03"
         },
         {
             "name": "SM_Env_Cave_Background_Corner_15",
@@ -3600,11 +3460,7 @@
                 0.5408390760421753
             ],
             "scale": 0.4479886293411255,
-            "prefabName": "SM_Env_Cave_Background_Corner_02",
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/SM_Env_Cave_Background_Corner_02",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_Cave_Background_Corner_02"
         },
         {
             "name": "SM_Env_Cave_Background_Corner_12",
@@ -3621,11 +3477,7 @@
                 -0.9176133871078491
             ],
             "scale": 0.4479886293411255,
-            "prefabName": "SM_Env_Cave_Background_Corner_02",
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/SM_Env_Cave_Background_Corner_02",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_Cave_Background_Corner_02"
         },
         {
             "name": "SM_Env_Rock_Spike_19",
@@ -3642,11 +3494,7 @@
                 0.9215730428695679
             ],
             "scale": 6.00132942199707,
-            "prefabName": "SM_Env_Rock_Spike_05",
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/SM_Env_Rock_Spike_05",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_Rock_Spike_05"
         },
         {
             "name": "SM_Env_GroundMound_Rough_08",
@@ -3663,11 +3511,7 @@
                 0.6979130506515503
             ],
             "scale": 2.6941447257995607,
-            "prefabName": "SM_Env_GroundMound_Rough_02",
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/SM_Env_GroundMound_Rough_02",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_GroundMound_Rough_02"
         },
         {
             "name": "SM_Env_GroundMound_Edge_05",
@@ -3684,11 +3528,7 @@
                 0.4355606734752655
             ],
             "scale": 1.9202580451965333,
-            "prefabName": "SM_Env_GroundMound_Edge_02",
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/SM_Env_GroundMound_Edge_02",
-                "shaderName": "defaultTextured"
-            }
+            "prefabName": "SM_Env_GroundMound_Edge_02"
         },
         {
             "name": "SM_Env_Gem_Large_18",
@@ -3708,7 +3548,7 @@
             "XXX_prefabName": "SM_Env_Gem_Large_01",
             "drawableComponent": {
                 "meshName": "PolygonDungeon/SM_Env_Gem_Large_01",
-                "shaderName": "defaultTextured"
+                "materialName": "dungeon02"
             }
         },
         {
@@ -11926,7 +11766,7 @@
             "XXX_prefabName": "SM_Env_Gem_Spike_01",
             "drawableComponent": {
                 "meshName": "PolygonDungeon/SM_Env_Gem_Spike_01",
-                "shaderName": "defaultTextured"
+                "materialName": "dungeon02"
             }
         },
         {
@@ -11947,7 +11787,7 @@
             "XXX_prefabName": "SM_Env_Gem_Spike_02",
             "drawableComponent": {
                 "meshName": "PolygonDungeon/SM_Env_Gem_Spike_02",
-                "shaderName": "defaultTextured"
+                "materialName": "dungeon02"
             }
         },
         {
@@ -11968,7 +11808,7 @@
             "XXX_prefabName": "SM_Env_Gem_Large_02",
             "drawableComponent": {
                 "meshName": "PolygonDungeon/SM_Env_Gem_Large_02",
-                "shaderName": "defaultTextured"
+                "materialName": "dungeon02"
             }
         },
         {
@@ -11989,7 +11829,7 @@
             "XXX_prefabName": "SM_Env_Gem_Large_01",
             "drawableComponent": {
                 "meshName": "PolygonDungeon/SM_Env_Gem_Large_01",
-                "shaderName": "defaultTextured"
+                "materialName": "dungeon02"
             }
         },
         {
@@ -77551,7 +77391,7 @@
             "prefabName": "",
             "drawableComponent": {
                 "meshName": "PolygonDungeon/Plane",
-                "shaderName": "fog"
+                "materialName": "fog"
             }
         },
         {
@@ -77572,7 +77412,7 @@
             "prefabName": "",
             "drawableComponent": {
                 "meshName": "PolygonDungeon/Plane",
-                "shaderName": "fog"
+                "materialName": "fog"
             }
         },
         {
@@ -77593,7 +77433,7 @@
             "prefabName": "",
             "drawableComponent": {
                 "meshName": "PolygonDungeon/Plane",
-                "shaderName": "fog"
+                "materialName": "fog"
             }
         },
         {
@@ -77614,7 +77454,7 @@
             "prefabName": "",
             "drawableComponent": {
                 "meshName": "PolygonDungeon/Plane",
-                "shaderName": "fog"
+                "materialName" : "fog"
             }
         },
         {
@@ -77635,7 +77475,7 @@
             "prefabName": "",
             "drawableComponent": {
                 "meshName": "PolygonDungeon/Plane",
-                "shaderName": "fog"
+                "materialName" : "fog"
             }
         },
         {
@@ -77656,7 +77496,7 @@
             "prefabName": "",
             "drawableComponent": {
                 "meshName": "PolygonDungeon/Plane",
-                "shaderName": "fog"
+                "materialName" : "fog"
             }
         },
         {

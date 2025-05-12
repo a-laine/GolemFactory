@@ -440,6 +440,12 @@
     <ClCompile Include="..\..\Sources\Terrain\TerrainDetailDrawableComponent.cpp">
       <Filter>Fichiers sources\Terrain</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\Sources\Resources\Material.cpp">
+      <Filter>Fichiers sources\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Sources\Resources\Loader\MaterialLoader.cpp">
+      <Filter>Fichiers sources\Resources\Loader</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Sources\Math\TMath.h">
@@ -885,6 +891,15 @@
     </ClInclude>
     <ClInclude Include="..\..\Sources\Terrain\TerrainDetailDrawableComponent.h">
       <Filter>Fichiers sources\Terrain</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Resources\Material.h">
+      <Filter>Fichiers sources\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Resources\ResourceIncludes.h">
+      <Filter>Fichiers sources\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Resources\Loader\MaterialLoader.h">
+      <Filter>Fichiers sources\Resources\Loader</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

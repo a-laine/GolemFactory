@@ -6,12 +6,32 @@
 #include <set>
 #include <vector>
 #include <Resources/Mesh.h>
-#include <Resources/Shader.h>
+#include <Resources/Material.h>
 
 class World;
 class Terrain
 {
 	public:
+		// structures
+		struct AreaDetails
+		{
+			std::string m_name;
+			std::vector<std::string> m_meshNames;
+			std::vector<Mesh*> m_meshResources;
+			std::vector<int> m_identifiers;
+			std::map<std::string, std::string> m_shaderTextureOverride;
+
+			std::vector<vec2f> m_probability;
+			std::vector<float> m_modelOffset;
+			std::vector<int> m_allowedMaterials;
+			vec3f m_colorTint0, m_colorTint1;
+			vec2f m_sizeRange;
+			float m_density, m_normalWeight, m_alphaCLipThs;
+			int m_lod, m_maxShadow;
+			bool m_doubleSided;
+		};
+		//
+		
 		// Default
 		Terrain();
 		~Terrain();
@@ -19,6 +39,8 @@ class Terrain
 
 		// public functions
 		void initializeClipmaps();
+		AreaDetails& addDetail();
+		void endAddDetail();
 
 		void addArea(TerrainArea& area, bool recomputeIfNeeded = true);
 		void removeArea(vec2i index);
@@ -31,6 +53,8 @@ class Terrain
 
 		void addLodRadius(float _radiusIncrement);
 		void update(vec4f _cameraPosition);
+
+		float getHeight(const vec4f& position, vec4f* normal = nullptr);
 		//
 
 		//
@@ -40,6 +64,8 @@ class Terrain
 		std::string getDirectory() const;
 		const TerrainArea* getArea(vec2i index) const;
 		const std::vector<float>& getRadius() const;
+		const std::vector<AreaDetails>& getAreaDetails();
+		Material* getDetailMaterial() const;
 
 		void drawImGui(World& world);
 		//
@@ -70,6 +96,11 @@ class Terrain
 		};
 		//
 		
+		// helpers functions
+		void addRemoveDetails(TerrainArea* area, int lod);
+		void addRemoveDetails2(TerrainArea* area);
+		//
+		
 		// Members
 		World* m_world;
 		Entity* m_areaContainer;
@@ -82,9 +113,10 @@ class Terrain
 		TerrainArea*** m_grid;
 		std::set<TerrainArea*> m_previousAreas;
 		std::vector<float> m_lodRadius;
-		Job updateJob;
 		std::vector<Mesh*> m_clipmapMeshes;
-		Shader* m_terrainShader;
-		Shader* m_waterShader;
+		Material* m_terrainMaterial;
+		Material* m_waterMaterial;
+		Material* m_terrainDetailMaterial;
+		std::vector<AreaDetails> m_areaDetails;
 		//
 };

@@ -5,14 +5,14 @@ Terrain
 	
 	uniform :
 	{
-		instanceDataArray : "vec4 array32";
-		constantData : "vec4 array32";
+		instanceDataArray : "vec4 array1000";
+		constantData : "vec4 array16";
 		lightClusters : "_globalLightClusters";
 		cascadedShadow : "_globalShadowCascades";
 		materialCollection : "_globalTerrainMaterialCollection";
 		omniShadowArray : "_globalOmniShadow";
 		terrainVirtualTexture : "_terrainVirtualTexture";
-		omniBaseLayer = "int";
+		shadowOmniLayerUniform = "int";
 	};
 	
 	/*textures : [
@@ -249,7 +249,7 @@ Terrain
 			layout(triangles, invocations = GEOMETRY_INVOCATION) in;
 			layout(triangle_strip, max_vertices = 3) out;
 			
-			uniform int omniBaseLayer = 0;
+			uniform int shadowOmniLayerUniform = 0;
 			
 			void main()
 			{
@@ -257,7 +257,7 @@ Terrain
 				{
 					for (int i = 0; i < 3; ++i)
 					{
-						gl_Layer = 6 * omniBaseLayer + gl_InvocationID;
+						gl_Layer = 6 * shadowOmniLayerUniform + gl_InvocationID;
 						gl_Position = omniShadowProjections[ gl_Layer ] * gl_in[i].gl_Position;
 						EmitVertex();
 					}
@@ -439,11 +439,10 @@ Terrain
 				cascadeColor = vec4(1 , 1 , 0 , 1);
 			return index;
 		}
-		float GetShadowAttenuation(float bias)
+		float GetShadowAttenuation(int cascadeIndex, float bias)
 		{
 			// only cascade 3 for terrain
-			float dist = abs(view * fragmentPosition).z;
-			int cascadeIndex = ComputeCascadeIndex();
+			//float dist = abs(view * fragmentPosition).z;
 			if (cascadeIndex >= 4)
 				return 1.0;
 			//if (shadowFarPlanes[3] > dist) cascadeIndex = 3;
@@ -629,7 +628,8 @@ Terrain
 			float shadowAttenuation = ndotl > 0.0 ? 1.0 : 0.0;
 			if ((shadingConfiguration & 0x04) != 0 && ndotl >= 0.0)
 			{
-				shadowAttenuation = GetShadowAttenuation(10 * max(0.005 * (1.0 - ndotl), 0.0005));
+				int cascadeIndex = ComputeCascadeIndex();
+				shadowAttenuation = GetShadowAttenuation(cascadeIndex, 10 * max(0.005 * (1.0 - ndotl), 0.0005));
 			}
 			
 			normal = SampleQuadMaterials();

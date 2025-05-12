@@ -23,14 +23,14 @@ class ResourceVirtual
 
     public:
         //  Miscellaneous
-		enum class VerboseLevel
+		enum class VerboseLevel : uint8_t
 		{
             NONE = 0,
 			ERRORS = 1,		//!< Just print errors in log
 			WARNINGS = 2,	//!< Print errors and logs
 			ALL = 3			//!< Print all logs (errors, warning and optionnal informations)
 		};
-		enum class ResourceType
+		enum class ResourceType : uint8_t
 		{
             NONE = 0,
             MESH,
@@ -40,7 +40,7 @@ class ResourceVirtual
             SKELETON,
             ANIMATION,
             FONT,
-            ANIMATION_GRAPH
+            ANIMATION_GRAPH,
 		};
 		//
 
@@ -49,7 +49,7 @@ class ResourceVirtual
 		ResourceVirtual();
 	    virtual ~ResourceVirtual();
 
-        bool isValid() const;
+        virtual bool isValid() const;
         ResourceType getType() const { return type; };
         virtual std::string getIdentifier() const;
         virtual void assign(const ResourceVirtual* other);
@@ -69,7 +69,7 @@ class ResourceVirtual
     #endif
 
     protected:
-        enum State
+        enum State : uint8_t
         {
             INVALID,
             LOADING,

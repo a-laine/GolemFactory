@@ -19,7 +19,6 @@ class ShaderLoader : public IResourceLoader
         // Interface
         bool load(const std::string& resourceDirectory, const std::string& fileName) override;
         void initialize(ResourceVirtual* resource) override;
-        void getResourcesToRegister(std::vector<ResourceVirtual*>& resourceList) override;
 
         void PrintError(const char* filename, const char* msg) override;
         void PrintWarning(const char* filename, const char* msg) override;
@@ -44,7 +43,7 @@ class ShaderLoader : public IResourceLoader
 
         std::map<std::string, std::string> attributesType;
         std::vector<std::pair<std::string, std::string>> textures;
-        std::vector<Texture*> textureResources;
+        std::vector<Shader::Property> m_properties;
 
         bool isComputeShader;
         bool usePeterPanning;

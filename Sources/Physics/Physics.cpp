@@ -4,7 +4,7 @@
 #include <set>
 
 #include "RigidBody.h"
-#include <Renderer/DrawableComponent.h>
+//#include <Renderer/DrawableComponent.h>
 #include <Animation/SkeletonComponent.h>
 #include <Scene/SceneManager.h>
 #include <World/World.h>
@@ -826,7 +826,7 @@ void Physics::drawImGui(World& world)
 		{
 			g_GeneratedObjContainer = world.getEntityFactory().createEntity();
 			g_GeneratedObjContainer->setName("PhysicsObjectsGeneratedContainer");
-			g_GeneratedObjContainer->setLocalTransformation(vec4f::zero, 1.f, quatf::identity);
+			g_GeneratedObjContainer->setLocalTransformation(vec4f::zero, vec4f::one, quatf::identity);
 			world.getSceneManager().addToRootList(g_GeneratedObjContainer);
 		}
 
@@ -835,7 +835,7 @@ void Physics::drawImGui(World& world)
 				float radius = m_size.x;
 				object->setName("Throwed " + type + " (" + std::to_string(g_GeneratedEntitiesIdCount++) + ")");
 				g_GeneratedObjContainer->addChild(object);
-				object->setLocalTransformation(mainCamera->getParentEntity()->getWorldPosition() + mainCamera->getForward(), radius, quatf::identity);
+				object->setLocalTransformation(mainCamera->getParentEntity()->getWorldPosition() + mainCamera->getForward(), vec4f(radius, radius, radius, 1.f), quatf::identity);
 
 				RigidBody* rb = new RigidBody(RigidBody::DYNAMIC);
 				rb->setMass(radius * radius * radius);

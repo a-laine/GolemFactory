@@ -1,7 +1,7 @@
 {
     "drawableComponent": {
         "meshName": "PolygonDungeon/SM_Env_Sewer_Water_01",
-        "shaderName": "waterSewer"
+        "materialName": "waterSewer"
     },
     "prefabEntities": []
 }

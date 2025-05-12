@@ -1,7 +1,7 @@
 {
     "drawableComponent": {
         "meshName": "PolygonDungeon/SM_Env_Wall_Alcove_Small_02",
-        "shaderName": "defaultTextured"
+        "materialName" : "dungeon01"
     },
 	"occluderComponent": {
 		"meshName" : "PolygonDungeon/AlcoveSmall02Occluder",

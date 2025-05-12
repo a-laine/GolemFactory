@@ -25,7 +25,7 @@ class TerrainAreaDrawableComponent : public DrawableComponent
 			float animatedTime;
 		};
 
-		TerrainAreaDrawableComponent(TerrainArea* _area);
+		TerrainAreaDrawableComponent(TerrainArea* _area); 
 		~TerrainAreaDrawableComponent() override;
 
 		unsigned short getInstanceDataSize() const override;
@@ -37,14 +37,14 @@ class TerrainAreaDrawableComponent : public DrawableComponent
 		void pushDraw(std::vector<Renderer::DrawElement>& drawQueue, uint32_t distance, bool isShadowPass) override;
 		void updateData(TerrainVirtualTexture::TextureTile& tile);
 
-		Shader* getWaterShader() const;
-		void setWaterShader(Shader* _shader);
+		//Shader* getWaterShader() const;
+		//void setWaterShader(Shader* _shader);
 		bool hasWater() const;
 		AxisAlignedBox getBoundingBox() const;
 
 	protected:
 		TerrainAreaData m_data;
 		TerrainArea* m_area;
-		Shader* m_waterShader;
+		//Shader* m_waterShader;
 };
 

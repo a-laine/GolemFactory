@@ -2,9 +2,7 @@
 
 #include <GL/glew.h>
 
-
 #include "Math/TMath.h"
-//#include <glm/glm.hpp>
 
 #include <Utiles/Mutex.h>
 #include <Core/RenderContext.h>
@@ -24,8 +22,10 @@
 
 #define TransparentMask (1ULL << 63)
 #define FaceCullingMask (1ULL << 62)
+#define CullingModeMask (1ULL << 61)
 
 class Shader;
+class Material;
 class Mesh;
 class LightComponent;
 class OccluderComponent;
@@ -39,7 +39,7 @@ class Renderer : public Singleton<Renderer>
 
 	public:
 		//	Miscellaneous
-		enum ShaderIdentifier
+		enum ShaderIdentifier : uint8_t
 		{	
 			HUD = 1,
 			GRID,
@@ -49,7 +49,7 @@ class Renderer : public Singleton<Renderer>
 
 			DEFAULT
 		};
-		enum class RenderOption
+		enum class RenderOption : uint8_t
 		{
 			DEFAULT,
 			BOUNDING_BOX,
@@ -65,7 +65,7 @@ class Renderer : public Singleton<Renderer>
 
 		};
 		
-		enum ShadingConfig
+		enum ShadingConfig : uint8_t
 		{
 			eUseLightClustering = 0,
 			eLightCountHeatmap = 1,
@@ -79,12 +79,27 @@ class Renderer : public Singleton<Renderer>
 			mat4f modelMatrix;
 			mat4f normalMatrix;
 		};
-		struct Batch;
+		struct Batch
+		{
+			Mesh* mesh;
+			Material* material;
+			Shader* shader;
+			DrawableComponent* constantDataReference;
+			std::vector<mat4f> matrices;
+
+			unsigned short maxInstanceCount;
+			unsigned short dataSize;
+			unsigned short instanceCount;
+
+			bool clockwise;
+			bool pushMatrices;
+			vec4f* instanceDatas;
+		};
 		struct DrawElement
 		{
 			uint64_t hash;
 			Entity* entity;
-			Shader* shader;
+			Material* material;
 			Mesh* mesh;
 			Batch* batch;
 		};
@@ -140,7 +155,8 @@ class Renderer : public Singleton<Renderer>
 		//
 
 		//	Render function
-		void loadInstanceMatrices(Shader* _shader, float* _instanceMatrices, unsigned short _instanceCount = 1);
+		void bindMaterial(Material* _material, Shader* _shader);
+		void loadMatrices(Shader* _shader, float* _instanceMatrices, unsigned short _instanceCount = 1);
 		void loadInstanceDatas(Shader* _shader, vec4f* _instanceDatas, unsigned short _dataSize, unsigned short _instanceCount = 1);
 		void drawObject(Entity* object, Shader* forceShader = nullptr);
 		void loadVAO(const GLuint& vao);
@@ -161,34 +177,11 @@ class Renderer : public Singleton<Renderer>
 		Renderer();
 		~Renderer();
 		//
-
-		//	Miscellaneous
-		struct Batch
-		{
-			Shader* shader;
-			Mesh* mesh;
-			unsigned short instanceCount;
-
-			bool pushMatrices;
-			DrawableComponent* constantDataReference;
-			std::vector<mat4f> matrices;
-
-			unsigned short maxInstanceCount;
-			unsigned short dataSize;
-			vec4f* instanceDatas;
-		};
-		/*struct ShadowDrawElement
-		{
-			float distance;
-			Entity* entity;
-			Batch* batch;
-		};*/
-		//
-
+		 
 		//	Protected functions
 		void loadGlobalUniforms(Shader* shader);
 
-		void drawInstancedObject(Shader* _shader, Mesh* _mesh, float* _matrices, vec4f* _instanceDatas,
+		void drawInstancedObject(Material* material, Shader* _shader, Mesh* _mesh, float* _matrices, vec4f* _instanceDatas,
 			unsigned short _dataSize, unsigned short _instanceCount, DrawableComponent* _constantDataRef);
 
 		void initGlobalUniformBuffers();
@@ -203,9 +196,10 @@ class Renderer : public Singleton<Renderer>
 		void CollectTerrainQueueData();
 		void LightClustering();
 		void AtmosphericScattering();
-		void DynamicBatching();
+		//void DynamicBatching();
 		void OcclusionCulling();
 		void ShadowCasting();
+		void CreateBatches(std::vector<DrawElement>& _queue, int _shadowMode);
 		//
 
 		//  Attributes
@@ -216,17 +210,19 @@ class Renderer : public Singleton<Renderer>
 				World* world;
 				RenderContext* context;
 				std::map<ShaderIdentifier, Shader*> defaultShader;
-				RenderOption renderOption; 
 				TerrainVirtualTexture* m_terrainVirtualTexture;
 
 				std::vector<DrawElement> renderQueue;
 				FrustrumSceneQuerry sceneQuery;
 				VirtualEntityCollector collector;
+				float m_frustrumFar = 10000.f;
+				int m_queryMaxDepth = 1000;
+				RenderOption renderOption; 
 		#pragma endregion
 
 		#pragma region Grid
 
-				bool drawGrid;
+				bool m_drawGrid;
 				unsigned int vboGridSize;
 				GLuint gridVAO, vertexbuffer, arraybuffer, colorbuffer, normalbuffer;
 				vec4f m_gridColor;
@@ -234,36 +230,61 @@ class Renderer : public Singleton<Renderer>
 
 		#pragma region OpenGL_States
 
-				GLuint lastVAO, fullscreenVAO;
+				GLuint lastVAO;
 				Shader* lastShader;
+				Material* lastMaterial;
 				Skeleton* lastSkeleton;
-				bool shaderJustActivated;
+
 				Shader* fullscreenTriangle;
 
 				#ifdef USE_IMGUI
 					Shader* occlusionResultDraw;
 				#endif
+
+				GLuint fullscreenVAO;
+				bool m_cwFrontFace;
+				bool shaderJustActivated;
+				std::vector<Texture*> m_bindedTextures;
+				int m_bindedMaxShadowCascade;
+				int m_bindedOmniLayer;
+
 		#pragma endregion
 
 		#pragma region Batching_Instancing
 
-				bool m_enableInstancing = true;
-				bool m_hasInstancingShaders = false;
-				bool m_hasShadowCaster = false;
-				std::map<std::pair<Shader*, Mesh*>, Batch*> batchOpened;
+				struct BatchKey
+				{
+					Mesh* m_mesh;
+					Shader* m_shader;
+					Material* m_material;
+					int8_t m_cw;
+					
+					BatchKey(Mesh* ms, Shader* s, Material* ma, bool cw) : m_mesh(ms), m_shader(s), m_material(ma), m_cw(cw ? 1 : -1) {};
+					inline bool operator<(const BatchKey& other) const 
+					{
+						if (m_shader != other.m_shader) return (intptr_t)m_shader < (intptr_t)other.m_shader;
+						if (m_material != other.m_material) return (intptr_t)m_material < (intptr_t)other.m_material;
+						if (m_mesh != other.m_mesh) return (intptr_t)m_mesh < (intptr_t)other.m_mesh;
+						return m_cw < other.m_cw;
+					}
+				};
+
+				std::map<BatchKey, Batch*> batchOpened;
 				std::vector<Batch*> batchFreePool;
 				std::vector<Batch*> batchClosedPool;
 
 				GLuint m_globalMatricesID;
 				GlobalMatrices m_globalMatrices;
 				GLint m_maxUniformSize;
+				bool m_enableInstancing = true;
+				bool m_hasShadowCaster = false;
 		#pragma endregion
 
 		#pragma region Occlusion_Culling
 
 				bool m_enableOcclusionCulling = true;
-				std::vector<std::pair<float, OccluderComponent*>> m_occluders;
 				vec2i m_occlusionBufferSize;
+				std::vector<std::pair<float, OccluderComponent*>> m_occluders;
 				float* m_occlusionCenterX = nullptr;
 				float* m_occlusionCenterY = nullptr;
 				float* m_occlusionDepth = nullptr;
@@ -322,7 +343,7 @@ class Renderer : public Singleton<Renderer>
 				Shader* m_lightClustering;
 				Texture* m_skyboxTexture;
 				Mesh* m_skyboxMesh;
-				Shader* m_skyboxShader;
+				Material* m_skyboxMaterial;
 				Shader* m_atmosphericScattering;
 				bool m_enableAtmosphericScattering;
 		#pragma endregion
@@ -333,7 +354,6 @@ class Renderer : public Singleton<Renderer>
 					int m_omniShadowLightIndexes[MAX_OMNILIGHT_SHADOW_COUNT];
 					float m_omniShadowLightNear[MAX_OMNILIGHT_SHADOW_COUNT];
 					mat4f m_shadowOmniProjections[6 * MAX_OMNILIGHT_SHADOW_COUNT];
-
 				};
 
 				bool m_shadowStableFit = true;
@@ -341,8 +361,7 @@ class Renderer : public Singleton<Renderer>
 				OmniShadows m_OmniShadows;
 				Texture shadowCascadeTexture;
 				Texture shadowOmniTextures;
-				//std::vector<ShadowDrawElement> shadowCascadeQueue;
-				std::vector<DrawElement> shadowCascadeQueue;
+				std::vector<DrawElement> shadowQueue;
 				std::vector<LightComponent*> shadowOmniCaster;
 				BoxSceneQuerry omniLightQuery;
 				VirtualEntityCollector omniLightCollector;
@@ -350,6 +369,7 @@ class Renderer : public Singleton<Renderer>
 				float shadowAreaMargin;
 				float shadowAreaMarginLightDirection;
 				int shadowOmniLayerUniform;
+				int shadowCascadeMax;
 		#pragma endregion
 
 		#pragma region Metrics_And_Debug
@@ -381,20 +401,20 @@ class Renderer : public Singleton<Renderer>
 					float m_metalic;
 				};
 
-				GLuint m_terrainMaterialCollectionID;
 				Texture* m_terrainMaterialCollection;
 				std::vector<TerrainMaterial> m_terrainMaterialInfos;
 				std::vector<std::string> m_terrainMaterialNames;
+				GLuint m_terrainMaterialCollectionID;
 		#pragma endregion
 
 #ifdef USE_IMGUI
+		float m_directionalLightDebugRaySpacing = 5.f;
+		float m_directionalLightDebugRayYoffset = 10.f;
+
 		bool m_drawLightDirection = false;
 		bool m_lightFrustrumCulling = true;
 		bool m_drawClusters = false;
 		bool m_drawOcclusionBuffer = false;
-
-		float m_directionalLightDebugRaySpacing = 5.f;
-		float m_directionalLightDebugRayYoffset = 10.f;
 #endif //USE_IMGUI
 		//
 };

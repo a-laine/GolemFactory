@@ -11,13 +11,12 @@
 #include <Utiles/Assert.hpp>
 #include <Resources/Mesh.h>
 #include <Resources/Skeleton.h>
-#include <Resources/AnimationClip.h>
+//#include <Resources/AnimationClip.h>
 #include <Utiles/ConsoleColor.h>
 
 
 //  Default
-AssimpLoader::AssimpLoader(ResourceType resourceToLoad)
-    : firstResource(resourceToLoad)
+AssimpLoader::AssimpLoader(ResourceType resourceToLoad) : firstResource(resourceToLoad)
 {}
 void AssimpLoader::PrintError(const char* filename, const char* msg)
 {
@@ -76,10 +75,7 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
     bool hasPrintedFaceIndexOutOfBound = false;
     bool hasPrintedNoUV = false;
 
-    if (fileName.find("Characters/Character_Skeleton_Soldier_02") != std::string::npos)
-    {
-        int toto = 0;
-    }
+    //if (fileName.find("Characters/Character_Skeleton_Soldier_02") != std::string::npos) { int toto = 0; }
 
 
     //	Load mesh
@@ -108,6 +104,7 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
         {
             aiVector3D pos = mesh->mVertices[j];
             vertices.push_back(vec4f(-pos.x, pos.y, pos.z, 1.f));
+            //vertices.push_back(vec4f(pos.x, pos.y, pos.z, 1.f));
             if (std::abs(pos.x) > 10000.f || std::abs(pos.y) > 10000.f || std::abs(pos.z) > 10000.f)
             {
                 if (!hasPrintedMeshTooLarge)
@@ -117,6 +114,7 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
 
             aiVector3D normal = (mesh->HasNormals() ? mesh->mNormals[j] : aiVector3D(0.0f, 0.0f, 0.0f));
             normales.push_back(vec4f(-normal.x, normal.y, normal.z, 0.f));
+            //normales.push_back(vec4f(normal.x, normal.y, normal.z, 0.f));
 
             aiVector3D uv = (mesh->HasTextureCoords(0) ? mesh->mTextureCoords[0][j] : aiVector3D(0.0f, 0.0f, 0.0f));
             uvs.push_back(vec4f(uv.x, 1 - uv.y, uv.z, 0.f));
@@ -260,30 +258,30 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
             std::string channelName(currentChannel->mNodeName.C_Str());
 
             // import translation vector
-            for(unsigned int k = 0; k < scene->mAnimations[i]->mChannels[j]->mNumPositionKeys; k++)
+            for(unsigned int k = 0; k < currentChannel->mNumPositionKeys; k++)
             {
-                position = vec4f(scene->mAnimations[i]->mChannels[j]->mPositionKeys[k].mValue.x,
-                    scene->mAnimations[i]->mChannels[j]->mPositionKeys[k].mValue.y,
-                    scene->mAnimations[i]->mChannels[j]->mPositionKeys[k].mValue.z, 1.f);
+                position = vec4f(currentChannel->mPositionKeys[k].mValue.x,
+                    currentChannel->mPositionKeys[k].mValue.y,
+                    currentChannel->mPositionKeys[k].mValue.z, 1.f);
                 positionBM.push_back(std::make_tuple((float) currentChannel->mPositionKeys[k].mTime, channelName, position));
             }
 
             // import rotation quaternion
-            for(unsigned int k = 0; k < scene->mAnimations[i]->mChannels[j]->mNumRotationKeys; k++)
+            for(unsigned int k = 0; k < currentChannel->mNumRotationKeys; k++)
             {
-                rotation = quatf(scene->mAnimations[i]->mChannels[j]->mRotationKeys[k].mValue.w,
-                    scene->mAnimations[i]->mChannels[j]->mRotationKeys[k].mValue.x,
-                    scene->mAnimations[i]->mChannels[j]->mRotationKeys[k].mValue.y,
-                    scene->mAnimations[i]->mChannels[j]->mRotationKeys[k].mValue.z);
+                rotation = quatf(currentChannel->mRotationKeys[k].mValue.w,
+                    currentChannel->mRotationKeys[k].mValue.x,
+                    currentChannel->mRotationKeys[k].mValue.y,
+                    currentChannel->mRotationKeys[k].mValue.z);
                 rotationBM.push_back(std::make_tuple((float) currentChannel->mRotationKeys[k].mTime, channelName, rotation));
             }
 
             // import scaling vector
-            for(unsigned int k = 0; k < scene->mAnimations[i]->mChannels[j]->mNumScalingKeys; k++)
+            for(unsigned int k = 0; k < currentChannel->mNumScalingKeys; k++)
             {
-                scale = vec4f(scene->mAnimations[i]->mChannels[j]->mScalingKeys[k].mValue.x,
-                    scene->mAnimations[i]->mChannels[j]->mScalingKeys[k].mValue.y,
-                    scene->mAnimations[i]->mChannels[j]->mScalingKeys[k].mValue.z, 1.f);
+                scale = vec4f(currentChannel->mScalingKeys[k].mValue.x,
+                    currentChannel->mScalingKeys[k].mValue.y,
+                    currentChannel->mScalingKeys[k].mValue.z, 1.f);
                 scaleBM.push_back(std::make_tuple((float) currentChannel->mScalingKeys[k].mTime, channelName, scale));
             }
         }
@@ -388,24 +386,6 @@ void AssimpLoader::initialize(ResourceVirtual* resource)
         default:
             GF_ASSERT(0);
     }
-}
-
-void AssimpLoader::getResourcesToRegister(std::vector<ResourceVirtual*>& resourceList)
-{
-    // need to load skeleton too
-    /*if (firstResource == ResourceType::MESH && !bones.empty())
-    {
-        Skeleton* skeleton = new Skeleton(resourceName);
-        skeleton->initialize(roots, joints);
-        resourceList.push_back(skeleton);
-
-        if (!animations.empty())
-        {
-            Animation* animation = new Animation(resourceName);
-            animation->initialize(animations);
-            resourceList.push_back(animation);
-        }
-    }*/
 }
 
 std::string AssimpLoader::getFileName(const std::string& resourceDirectory, const std::string& fileName) const

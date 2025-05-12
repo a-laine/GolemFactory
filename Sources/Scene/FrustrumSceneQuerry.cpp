@@ -50,8 +50,8 @@ VirtualSceneQuerry::CollisionType FrustrumSceneQuerry::operator() (const NodeVir
 {
 	// implement proper SAT !!!!
 
-
-
+	if (node->getDepth() > maxDepth)
+		return VirtualSceneQuerry::CollisionType::NONE;
 
 	vec4f center = node->getCenter();
 	vec4f halfSize = node->getInflatedHalfSize();

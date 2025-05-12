@@ -13,7 +13,7 @@
 #include <Physics/Shapes/Collider.h>
 #include <Renderer/Lighting/LightComponent.h>
 #include <Renderer/OccluderComponent.h>
-#include <Utiles/ConsoleColor.cpp>
+#include <Utiles/ConsoleColor.h>
 #include <Animation/Animator.h>
 #include <Utiles/ProfilerConfig.h>
 
@@ -23,7 +23,7 @@ EntityFactory::EntityFactory(World* parentWorld)
 	: world(parentWorld)
 {}
 
-Entity* EntityFactory::createObject(const std::string& type, const vec4f& position, const float& scale, const quatf& orientation, const std::string& name)
+Entity* EntityFactory::createObject(const std::string& type, const vec4f& position, const vec4f& scale, const quatf& orientation, const std::string& name)
 {
 	Entity* object = createByType(type);
 	if(object)
@@ -35,7 +35,7 @@ Entity* EntityFactory::createObject(const std::string& type, const vec4f& positi
 	return object;
 }
 
-Entity* EntityFactory::createObject(const std::vector<Component*>& components, const vec4f& position, const float& scale, const quatf& orientation, const std::string& name)
+Entity* EntityFactory::createObject(const std::vector<Component*>& components, const vec4f& position, const vec4f& scale, const quatf& orientation, const std::string& name)
 {
 	Entity* object = createEntity();
 	addComponents(object, components);
@@ -229,15 +229,15 @@ bool EntityFactory::loadPrefab(const std::string& resourceDirectory, const std::
 	Entity* prefab = createEntity();
 	prefab->setName(fileName);
 
-	float scale = 1.f;
+	vec4f scale = vec4f::one;
 	if (prefabMap.getMap().find("scale") != prefabMap.getMap().end())
-		scale = (float)prefabMap["scale"].toDouble();
+		scale = vec4f((float)prefabMap["scale"].toDouble());
 
 	prefab->setWorldTransformation(vec4f(0, 0, 0, 1), scale, quatf(1, 0, 0, 0));
 	prefabs.emplace(fileName, prefab);
 
 	// component of prefab
-	tryLoadComponents(prefab, &prefabMap, assetPackName);
+	tryLoadComponents(prefab, &prefabMap);
 	tryLoadHierarchy(prefab, &prefabMap, assetPackName);
 	prefab->recomputeBoundingBox();
 
@@ -317,19 +317,19 @@ void EntityFactory::tryLoadTransform(Entity* object, Variant* variant)
 		(float)(*variant)["rotation"].getArray()[2].toDouble());
 	rotation.normalize();
 
-	float scale = 1.f;
+	vec4f scale = vec4f::one;
 	auto& scaleVariant = (*variant)["scale"];
 	if (scaleVariant.getType() == Variant::INT)
-		scale = (float)scaleVariant.toInt();
+		scale = vec4f((float)scaleVariant.toInt());
 	else if (scaleVariant.getType() == Variant::FLOAT)
-		scale = scaleVariant.toFloat();
+		scale = vec4f(scaleVariant.toFloat());
 	else if (scaleVariant.getType() == Variant::DOUBLE)
-		scale = (float)scaleVariant.toDouble();
+		scale = vec4f((float)scaleVariant.toDouble());
 
 	object->setLocalTransformation(position, scale, rotation);
 }
 
-void EntityFactory::tryLoadComponents(Entity* object, Variant* variant, const std::string& assetPackName)
+void EntityFactory::tryLoadComponents(Entity* object, Variant* variant)
 {
 	// helpers
 	std::string messageHeader = "Loading components of " + object->getName();
@@ -441,7 +441,7 @@ void EntityFactory::tryLoadHierarchy(Entity* object, Variant* variant, const std
 						child = createEntity();
 
 						// load components and childs
-						tryLoadComponents(child, &(*it2), assetPackName);
+						tryLoadComponents(child, &(*it2));
 						tryLoadHierarchy(child, &(*it2), assetPackName);
 					}
 					else

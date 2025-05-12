@@ -2,7 +2,7 @@
 	"scale": 0.01,
     "drawableComponent": {
         "meshName": "PolygonDungeon/SM_Prop_Skeleton_Slave_Shackles_01",
-        "shaderName": "defaultTextured"
+        "materialName" : "dungeon01"
     },
     "prefabEntities": []
 }

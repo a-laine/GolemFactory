@@ -29,21 +29,7 @@
 #include "Core/Application.h"
 #include "Events/EventEnum.h"
 
-#include <Resources/Texture.h>
-#include <Resources/Font.h>
-#include <Resources/Shader.h>
-#include <Resources/Mesh.h>
-#include <Resources/Skeleton.h>
-#include <Resources/AnimationClip.h>
-#include <Resources/Loader/AnimationLoader.h>
-#include <Resources/Loader/FontLoader.h>
-#include <Resources/Loader/AssimpLoader.h>
-#include <Resources/Loader/MeshLoader.h>
-#include <Resources/Loader/ShaderLoader.h>
-#include <Resources/Loader/SkeletonLoader.h>
-#include <Resources/Loader/ImageLoader.h>
-#include <Resources/Loader/TextureLoader.h>
-#include <Resources/Loader/AnimationGraphLoader.h>
+#include <Resources/ResourceIncludes.h>
 
 #include <EntityComponent/ComponentUpdater.h>
 
@@ -132,7 +118,7 @@ int main()
 
 		initializeSyntyScene();
 
-		Renderer::getInstance()->setGridVisible(true);
+		Renderer::getInstance()->setGridVisible(false);
 		
 		freeflyCamera = world.getEntityFactory().createObject([](Entity* object)
 			{
@@ -352,7 +338,7 @@ void initializeForestScene(bool emptyPlace)
 					{
 						object->setName("PhysicSphere");
 						quatf q = quatf::identity;
-						object->setWorldTransformation(p, 1.f, q);
+						object->setWorldTransformation(p, vec4f::one, q);
 						RigidBody* rb = new RigidBody(RigidBody::DYNAMIC);
 						rb->setMass(1.f);
 						rb->setGravityFactor(1.f);
@@ -437,7 +423,7 @@ void initializeForestScene(bool emptyPlace)
 			float s = sOffset + sDispersion * ((rand() % 100) / 50.f - 1.f);
 			quatf a = quatf((float)DEG2RAD *(rand() % 3600) * 0.1f, vec3f(0, 0, 1));
 
-			world.getEntityFactory().createObject(objectType, p, s, a, "Firtree");
+			world.getEntityFactory().createObject(objectType, p, vec4f(s, s, s, 1.f), a, "Firtree");
 		}
 	
 	//	debug
@@ -450,7 +436,7 @@ void initializeForestScene(bool emptyPlace)
 void initializePhysicsScene(int testCase)
 {
 	Renderer::getInstance()->setEnvBackgroundColor(vec4f(0.6f, 0.85f, 0.91f, 0.f));
-	Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("wired"));
+	Renderer::getInstance()->setShader(Renderer::GRID, ResourceManager::getInstance()->getResource<Shader>("greenGrass"));
 
 	if (testCase == 0)
 	{
@@ -466,7 +452,7 @@ void initializePhysicsScene(int testCase)
 							object->setName("PhysicsSphere");
 							quatf q = quatf(1.f, 0.f, 0.5f * ((rand() % 200) - 100), 0.5f * ((rand() % 200) - 100));
 							q.normalize();
-							object->setWorldTransformation(p, r, q);
+							object->setWorldTransformation(p, vec4f(r, r, r, 1.f), q);
 							RigidBody* rb = new RigidBody(RigidBody::DYNAMIC);
 							rb->setMass(r * r * r);
 							rb->setBouncyness(0.05f);
@@ -489,8 +475,8 @@ void initializePhysicsScene(int testCase)
 				object->setName("PhysicsCube 1");
 				quatf q = quatf(1.f, 0.f, 0.5f * ((rand() % 200) - 100), 0.5f * ((rand() % 200) - 100));
 				q.normalize();
-				object->setWorldTransformation(p, r, q);
-				object->setWorldTransformation(p, r, quatf::identity);
+				object->setWorldTransformation(p, vec4f(r, r, r, 1.f), q);
+				object->setWorldTransformation(p, vec4f(r, r, r, 1.f), quatf::identity);
 				RigidBody* rb = new RigidBody(RigidBody::DYNAMIC);
 				rb->setMass(5.f);
 				rb->setBouncyness(0.f);
@@ -504,7 +490,7 @@ void initializePhysicsScene(int testCase)
 		world.getEntityFactory().createObject("cube", [&p, &r](Entity* object)
 			{
 				object->setName("PhysicsCube 2");
-				object->setWorldTransformation(p, r, quatf::identity);
+				object->setWorldTransformation(p, vec4f(r, r, r, 1.f), quatf::identity);
 				RigidBody* rb = new RigidBody(RigidBody::DYNAMIC);
 				rb->setMass(5.f);
 				rb->setBouncyness(0.1f);
@@ -517,7 +503,7 @@ void initializePhysicsScene(int testCase)
 		world.getEntityFactory().createObject("sphere", [&p, &r](Entity* object)
 			{
 				object->setName("PhysicsSphere");
-				object->setWorldTransformation(p, r, quatf::identity);
+				object->setWorldTransformation(p, vec4f(r, r, r, 1.f), quatf::identity);
 				RigidBody* rb = new RigidBody(RigidBody::DYNAMIC);
 				rb->setMass(5.f);
 				rb->setBouncyness(0.f);
@@ -532,7 +518,7 @@ void initializePhysicsScene(int testCase)
 void initializeSyntyScene()
 {
 	Renderer::getInstance()->setEnvBackgroundColor(vec4f(0.f, 0.f, 0.f, 0.f));
-	Renderer::getInstance()->setShader(Renderer::GRID, nullptr);//ResourceManager::getInstance()->getResource<Shader>("wired"));//
+	
 
 #if 0
 	Entity* newObject = world.getEntityFactory().createEntity();
@@ -581,7 +567,7 @@ void initializeSyntyScene()
 	// load file and parse JSON
 	std::string repository = ResourceManager::getInstance()->getRepository();
 	std::string packageName = "PolygonDungeon";
-	std::string sceneName = "Demo"; // "Demo"; // "TestInterior";
+	std::string sceneName = "Demo2"; // "Demo"; // "TestInterior";
 	std::string fullFileName = repository + "Scenes/" + packageName + "/" + sceneName + ".json";
 	Variant v; Variant* tmp = nullptr;
 	try
@@ -600,6 +586,8 @@ void initializeSyntyScene()
 			std::cerr << "ERROR : loading scene : " << sceneName << " : fail to open or parse file" << std::endl;
 		return;
 	}
+
+	std::cout << "Loading scene : " << fullFileName << std::endl;
 	Variant& sceneMap = *tmp;
 	if (sceneMap.getType() != Variant::MAP)
 	{
@@ -659,43 +647,48 @@ void initializeSyntyScene()
 					// instantiate
 					newObject = world.getEntityFactory().instantiatePrefab(prefabName);
 					newObject->setName((*it)["name"].toString());
+
+					// manage prefab override
+					auto ovrd = it->getMap().find("drawableComponent");
+					if (ovrd != it->getMap().end() && ovrd->second.getType() == Variant::MAP)
+					{
+						auto it1 = ovrd->second.getMap().find("materialName");
+						if (it1 != ovrd->second.getMap().end() && it1->second.getType() == Variant::STRING)
+						{
+							DrawableComponent* drawable = newObject->getComponent<DrawableComponent>();
+							if (drawable)
+								drawable->setMaterial(ResourceManager::getInstance()->getResource<Material>(it1->second.toString()));
+						}
+					}
 				}
 				else
 				{
 					// create and set transform
 					newObject = world.getEntityFactory().createEntity();
 					newObject->setName((*it)["name"].toString());
-					world.getEntityFactory().tryLoadComponents(newObject, &(*it), packageName);
+					world.getEntityFactory().tryLoadComponents(newObject, &(*it));
 				}
 				newObject->recomputeBoundingBox();
 
 				// transform load
-				vec4f position, tmp;
+				vec4f position, tmp, scale;
 				TryLoadAsVec4f((*it)["position"], position);
 				position.w = 1.f;
 				TryLoadAsVec4f((*it)["rotation"], tmp);
 				quatf rotation = quatf(tmp.w, tmp.x, tmp.y, tmp.z);
 				rotation.normalize();
-
-				float scale = 1.f;
-				auto& scaleVariant = (*it)["scale"];
-				if (scaleVariant.getType() == Variant::INT)
-					scale = (float)scaleVariant.toInt();
-				else if (scaleVariant.getType() == Variant::FLOAT)
-					scale = scaleVariant.toFloat();
-				else if (scaleVariant.getType() == Variant::DOUBLE)
-					scale = (float)scaleVariant.toDouble();
+				TryLoadAsVec4f((*it)["scale"], scale);
 
 				if (!prefabName.empty())
 					scale *= newObject->getWorldScale();
 
-				if (scale < 0.f)
+				/*if (scale < 0.f)
 				{
 					std::cout << ConsoleColor::getColorString(ConsoleColor::Color::MAGENTA) << "WARNING : object " << newObject->getName() << " has a negative scaling" << std::flush;
 					std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
 
 					scale = -scale;
-				}
+				}*/
 
 				// set parent and local transform
 				if (parent)
@@ -773,6 +766,7 @@ void initManagers()
     Shader::setDefaultName("default");
     Mesh::setDefaultName("cube2.obj");
     Skeleton::setDefaultName("human");
+    Material::setDefaultName("default");
     AnimationClip::setDefaultName("male_idle_breath");
 	AnimationGraph::setDefaultName("humanoid");
 
@@ -782,6 +776,7 @@ void initManagers()
     ResourceManager::getInstance()->addNewResourceLoader("assimpSkel", new AssimpLoader(AssimpLoader::ResourceType::SKELETON));
     ResourceManager::getInstance()->addNewResourceLoader(".mesh", new MeshLoader());
     ResourceManager::getInstance()->addNewResourceLoader(".shader", new ShaderLoader());
+	ResourceManager::getInstance()->addNewResourceLoader(".material", new MaterialLoader());
     ResourceManager::getInstance()->addNewResourceLoader(".skeleton", new SkeletonLoader());
     ResourceManager::getInstance()->addNewResourceLoader("image", new ImageLoader());
     ResourceManager::getInstance()->addNewResourceLoader(".texture", new TextureLoader());
@@ -833,7 +828,7 @@ void initManagers()
 				groundAndWalls->addChild(object);
 				object->setLocalTransformation(
 					vec4f(0.5f * GRID_SIZE * GRID_ELEMENT_SIZE, 0.f, 3.f, 1), 
-					1.f,//vec4f(3.f, 0.5f * GRID_SIZE * GRID_ELEMENT_SIZE + 3.f, 6.f, 1.f),
+					vec4f::one,//vec4f(3.f, 0.5f * GRID_SIZE * GRID_ELEMENT_SIZE + 3.f, 6.f, 1.f),
 					quatf::identity);
 			});
 		world.getEntityFactory().createObject("cube", [&](Entity* object)
@@ -842,7 +837,7 @@ void initManagers()
 				groundAndWalls->addChild(object);
 				object->setLocalTransformation(
 					vec4f(-0.5f * GRID_SIZE * GRID_ELEMENT_SIZE, 0.f, 3.f, 1),
-					1.f, //vec4f(3.f, 0.5f * GRID_SIZE * GRID_ELEMENT_SIZE + 3.f, 6.f, 1.f),
+					vec4f::one, //vec4f(3.f, 0.5f * GRID_SIZE * GRID_ELEMENT_SIZE + 3.f, 6.f, 1.f),
 					quatf::identity);
 			});
 		world.getEntityFactory().createObject("cube", [&](Entity* object)
@@ -851,7 +846,7 @@ void initManagers()
 				groundAndWalls->addChild(object);
 				object->setLocalTransformation(
 					vec4f(0.f, 3.f, 0.5f * GRID_SIZE * GRID_ELEMENT_SIZE, 1),
-					1.f, //vec4f(0.5f * GRID_SIZE * GRID_ELEMENT_SIZE + 3.f, 3.f, 6.f, 1.f),
+					vec4f::one, //vec4f(0.5f * GRID_SIZE * GRID_ELEMENT_SIZE + 3.f, 3.f, 6.f, 1.f),
 					quatf::identity);
 			});
 		world.getEntityFactory().createObject("cube", [&](Entity* object)
@@ -860,7 +855,7 @@ void initManagers()
 				groundAndWalls->addChild(object);
 				object->setLocalTransformation(
 					vec4f(0.f, 3.f,-0.5f * GRID_SIZE * GRID_ELEMENT_SIZE,  1),
-					1.f, //vec4f(0.5f * GRID_SIZE * GRID_ELEMENT_SIZE + 3.f, 3.f, 6.f, 1.f),
+					vec4f::one, //vec4f(0.5f * GRID_SIZE * GRID_ELEMENT_SIZE + 3.f, 3.f, 6.f, 1.f),
 					quatf::identity);
 			});
 	}
@@ -883,10 +878,15 @@ void initManagers()
 	Renderer::getInstance()->initializeShadows(1024, 1024, 1024, 1024);
 	Renderer::getInstance()->initializeOverviewRenderer(512, 512);
 	Renderer::getInstance()->initializeTerrainMaterialCollection("GroundTextures/TerrainMaterialCollection.texture");
+	Renderer::getInstance()->initializeSkybox("SkyBoxes/defaultSkybox.texture");
 
 	
 	// Debug
 	Debug::getInstance()->initialize("Shapes/box", "Shapes/sphere.obj", "Shapes/capsule", "default", "wired", "debug", "textureReinterpreter");
+	ResourceManager::getInstance()->getResource<Texture>("PolygonDungeon/Dungeons_Texture_01.png");
+	ResourceManager::getInstance()->getResource<Texture>("PolygonDungeon/Dungeons_Texture_02.png");
+	ResourceManager::getInstance()->getResource<Texture>("PolygonDungeon/Dungeons_Texture_03.png");
+	ResourceManager::getInstance()->getResource<Texture>("PolygonDungeon/Dungeons_Texture_04.png");
 
 	// Animator
 	//Animator::getInstance();
@@ -1171,7 +1171,7 @@ void updates(float elapseTime)
 		if (EventHandler::getInstance()->isActivated(LEFT)) direction -= right;
 		if (EventHandler::getInstance()->isActivated(RIGHT)) direction += right;
 		if (EventHandler::getInstance()->isActivated(SNEAKY)) speed /= 10.f;
-		if (EventHandler::getInstance()->isActivated(RUN)) speed *= 100.f;
+		if (EventHandler::getInstance()->isActivated(RUN)) speed *= 10.f;
 
 		if (direction.x || direction.y || direction.z)
 		{

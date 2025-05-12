@@ -16,7 +16,8 @@ RayEntityCollector::RayEntityCollector(const vec4f& pos, const vec4f& dir, float
 bool RayEntityCollector::operator() (Entity* entity)
 {
 	DrawableComponent* drawableComp = entity->getComponent<DrawableComponent>();
-	if (!drawableComp || !drawableComp->isValid()) return false;
+	if (!drawableComp || !drawableComp->isValid() || !drawableComp->visible()) 
+		return false;
 
 	const SkeletonComponent* skeletonComp = entity->getComponent<SkeletonComponent>();
 	bool animatable = drawableComp->hasSkeleton() && skeletonComp && skeletonComp->isValid();

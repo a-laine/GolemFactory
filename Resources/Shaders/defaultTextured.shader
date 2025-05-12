@@ -1,10 +1,11 @@
 DefaultTextured
-{	
+{
 	renderQueue : 1000;//opaque
 	
 	uniform :
 	{
 		matrixArray : "struct array32";
+		tintColor : "vec4";
 		lightClusters : "_globalLightClusters";
 		cascadedShadow : "_globalShadowCascades";
 		omniShadowArray : "_globalOmniShadow";
@@ -70,7 +71,7 @@ DefaultTextured
 			#ifdef WIRED_MODE
 				fragmentPosition_gs = model * position;
 				gl_Position = projection * view * fragmentPosition_gs;
-				fragmentNormal_gs = normalize(normalMatrix * normal);
+				fragmentNormal_gs = normalize(normalMatrix * vec4(normal.xyz, 0));
 				fragmentUv_gs = uv;
 			#else
 				#ifdef SHADOW_PASS
@@ -78,7 +79,7 @@ DefaultTextured
 				#else
 					fragmentPosition = model * position;
 					gl_Position = projection * view * fragmentPosition;
-					fragmentNormal = normalize(normalMatrix * normal);
+					fragmentNormal = normalize(normalMatrix * vec4(normal.xyz, 0));
 					fragmentUv = uv;
 				#endif
 			#endif
@@ -157,8 +158,10 @@ DefaultTextured
 				{
 					for (int i = 0; i < 3; ++i)
 					{
-						gl_Position = shadowCascadeProjections[ gl_InvocationID ] * gl_in[i].gl_Position;
 						gl_Layer = gl_InvocationID;
+						vec4 screenPos = shadowCascadeProjections[ gl_Layer ] * gl_in[i].gl_Position;
+						screenPos.z = max(screenPos.z, -1.0);
+						gl_Position = screenPos;
 						EmitVertex();
 					}
 					EndPrimitive();				
@@ -183,6 +186,9 @@ DefaultTextured
 		
 		// images
 		layout(rgba32ui) readonly uniform uimage3D lightClusters;	// image unit 0
+		
+		// material constants
+		uniform vec4 tintColor = vec4(1.0 , 1.0 , 1.0 , 1.0);
 		
 		// input
 		in vec4 fragmentPosition;
@@ -224,12 +230,12 @@ DefaultTextured
 			clusterIndex = clamp(clusterIndex, ivec3(0), clusterSize - ivec3(1));
 			return clusterIndex;
 		}
-		float GetOmniShadowAttenuation(int lightIndex, int omniIndex, vec4 rayLight, float currentDistance, float lightNear)
+		float GetOmniShadowAttenuation(int lightIndex, int omniIndex, vec4 rayLight, float currentDistance, float lightNear, float bias)
 		{
 			float range = lights[lightIndex].m_range;
 			vec4 dir = abs(rayLight);
 			float maxDir = max(dir.x, max(dir.y, dir.z));
-			float currentDepth = (1 / maxDir - 1 / lightNear) / (1 / range - 1 / lightNear);
+			float currentDepth = (1 / maxDir - 1 / lightNear) / (1 / range - 1 / lightNear) - bias;
 			
 			vec3 ray = rayLight.xyz / currentDistance;
 			vec3 u = abs(ray.x) > abs(ray.z) ? vec3(ray.y, -ray.x, 0) : vec3(0, ray.z, -ray.y);
@@ -242,7 +248,7 @@ DefaultTextured
 			for(int i = -2; i <= 2; i++)
 				for(int j = -2; j <= 2; j++)
 				{
-					shadow += texture(omniShadowArray, vec4(ray + i * u + j * v, omniIndex)).r < currentDepth ? 0.0 : 1.0;
+					shadow += texture(omniShadowArray, vec4(ray + i * u + j * v, omniIndex)).r < currentDepth  ? 0.0 : 1.0;
 				}
 			shadow /= 25;
 			
@@ -253,17 +259,18 @@ DefaultTextured
 			// search for shadow
 			vec4 lightRay = fragmentPosition - lights[lightIndex].m_position;
 			float currentDistance = length(lightRay);
+			float bias = 0.0005;
 			float shadowAttenuation = 1.0;
 			for(int i = 0; i < 4; i++)
 			{
 				if (omniShadowIndexLow[i] == lightIndex)
 				{
-					shadowAttenuation = GetOmniShadowAttenuation(lightIndex, i, lightRay, currentDistance, omniShadowNearLow[i]);
+					shadowAttenuation = GetOmniShadowAttenuation(lightIndex, i, lightRay, currentDistance, omniShadowNearLow[i], bias);
 					break;
 				}
 				else if (omniShadowIndexHigh[i] == lightIndex)
 				{
-					shadowAttenuation = GetOmniShadowAttenuation(lightIndex, 4 * i, lightRay, currentDistance, omniShadowNearHigh[i]);
+					shadowAttenuation = GetOmniShadowAttenuation(lightIndex, 4 + i, lightRay, currentDistance, omniShadowNearHigh[i], bias);
 					break;
 				}
 			}
@@ -273,7 +280,7 @@ DefaultTextured
 			
 			lightRay /= currentDistance;
 			vec4 lightColor = lights[lightIndex].m_color;
-			vec4 diffuse = clamp(dot(normalize(fragmentNormal), normalize(-lightRay)), 0 , 1 ) * lightColor;
+			vec4 diffuse = clamp(dot(normalize(fragmentNormal), -lightRay), 0 , 1 ) * lightColor;
 			float spec = pow(max(dot(viewDir, lightRay), 0.0), 32);
 			vec4 specular = metalic * spec * lightColor;
 			float attenuation = lights[lightIndex].m_intensity / (1.0 + 25 * u * u)* clamp((1 - u) * 5.0 , 0 , 1);
@@ -334,7 +341,7 @@ DefaultTextured
 			#endif
 			
 			// compute base color depending on environement light (directional)
-			vec4 albedoColor = texture(albedo, fragmentUv.xy);
+			vec4 albedoColor = tintColor * texture(albedo, fragmentUv.xy); albedoColor.a = 1.0;
 			vec4 emmisiveColor = texture(emmisive, fragmentUv.xy);
 			float ndotl = dot(normalize(fragmentNormal), normalize(-m_directionalLightDirection));
 			vec4 diffuse = clamp(ndotl, 0 , 1 ) * m_directionalLightColor;

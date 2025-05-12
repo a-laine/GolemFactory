@@ -13,8 +13,9 @@ thread_local std::default_random_engine g_randomGenerator;
 int TerrainArea::g_lodPixelCount[] = { 257, 129, 65, 33, 17, 9, 5, 3 };
 int TerrainArea::g_lodSpacing[] = { 1, 2, 4, 8, 16, 32, 64, 128 };
 float TerrainArea::g_noiseCurve[] = { 0.5f, 0.2f, 0.073f, 0.038f, 0.017f, 0.009f, 0.0046f, 0.0025f };
-float TerrainArea::g_heightAmplitude = 300.f;	// 300m from super high to super low
-float TerrainArea::g_seeLevel = 20.f;			// 30m under see is super low
+float TerrainArea::g_heightAmplitude = 100.f;	// 300m from super high to super low
+float TerrainArea::g_seeLevel = 10.f;			// 30m under see is super low
+float TerrainArea::g_snowLevel = 250.f;			
 float TerrainArea::g_erosion = 2.f;
 int TerrainArea::g_seed = 0;
 
@@ -47,7 +48,7 @@ void TerrainArea::generate(const std::string& directory)
 {
 	const auto hash = [](float x, float y)
 	{
-		int n = x * 311 + y * 113 + g_seed;
+		int n = (int)(x * 311 + y * 113 + g_seed);
 		n = (n << 13) ^ n;
 		n = n * (n * n * 15731 + 789221) + 1376312589;
 		return float(n & 0x0fffffff) / float(0x0fffffff);
@@ -95,14 +96,14 @@ void TerrainArea::generate(const std::string& directory)
 		if (data.normalTerrain.y < 0.85f)
 			return 9;//cliff
 
-		float height = data.heightTerrain + 3.0 * hash(i, j);
+		float height = data.heightTerrain + 3.f * hash((float)i, (float)j);
 		if (std::min(height, data.heightTerrain) < 0.1)
-			return (hash(j, i) > 0.2f ? 4 : 5);    // sand
+			return (hash((float)j, (float)i) > 0.2f ? 4 : 5);    // sand
 		else if (std::min(height, data.heightTerrain) < 0.7)
 			return 7;    // dirt
-		else if (height > 0.5 * g_heightAmplitude)
+		else if (height > g_snowLevel)
 			return 8;	  // snow
-		return 0;
+		return 0; // grass
 	};
 
 	// direct write noised and derivative
@@ -159,27 +160,71 @@ void TerrainArea::generate(const std::string& directory)
 	}
 #endif
 
+	// details
+	DetailInstanceDataHeader header;
+	std::vector<std::vector<vec4ui>> instanceDatas;
+	auto& areaDetails = m_terrain->getAreaDetails();
+	int identifier = 0;
+	for (const auto& areaDetail : areaDetails)
+	{
+		for (int k = 0; k < areaDetail.m_meshNames.size(); k++)
+		{
+			std::vector<vec4ui> insdata = generateDetails(areaDetail.m_density, areaDetail.m_probability[k], areaDetail.m_sizeRange, areaDetail.m_allowedMaterials, texture.data());
+			if (insdata.size() > 0)
+			{
+				header.m_arrayIdentifier.push_back(identifier);
+				header.m_arraySizes.push_back((int)insdata.size());
+				instanceDatas.push_back(insdata);
+			}
+			identifier++;
+		}
+	}
+	header.m_arrayCount = (int)header.m_arrayIdentifier.size();
+
+	// save to file
+	filename = getNameFromIndex() + ".areaDetails";
+	std::ofstream file2(directory + filename, std::ios::out | std::ios::binary);
+	if (file2)
+	{
+		// header
+		file2.write((const char*)&header.m_arrayCount, sizeof(int));
+		for (int i = 0; i < header.m_arrayCount; i++)
+			file2.write((const char*)&header.m_arrayIdentifier[i], sizeof(int));
+		for (int i = 0; i < header.m_arrayCount; i++)
+			file2.write((const char*)&header.m_arraySizes[i], sizeof(int));
+
+		// datas
+		for (int i = 0; i < header.m_arrayCount; i++)
+			file2.write((const char*)instanceDatas[i].data(), instanceDatas[i].size() * sizeof(vec4ui));
+
+		file2.close();
+	}
+	else
+	{
+		std::cout << ConsoleColor::red << "[ERROR] : cannot create file " << filename << ConsoleColor::classic << std::endl;
+	}
+
 	// clear all
 	for (int i = 0; i < 257; i++)
 		delete[] data[i];
 	delete[] data;
 }
-Entity* TerrainArea::addDetailsInstance(const std::string& meshName, float density, vec2f probability, vec2f scaleRange, float worldNormalWeight, float modelOffset)
+std::vector<vec4ui> TerrainArea::generateDetails(float density, vec2f probability, vec2f scaleRange, const std::vector<int>& allowedMaterials, const uint64_t* dataPtr)
 {
 	const auto hash3 = [](float x, float y)
 	{
 		vec3f res;
-		int n = x * 311 + y * 113 + g_seed;
+		int n = (int)(x * 311 + y * 113 + g_seed);
 		n = (n << 13) ^ n;
 		n = n * (n * n * 15731 + 789221) + 1376312589;
 		res.x = float(n & 0x0fffffff) / float(0x0fffffff);
 
-		n = x * 313 + y * 109 + g_seed;
+		n = (int)(x * 313 + y * 109 + g_seed);
 		n = (n << 13) ^ n;
 		n = n * (n * n * 15731 + 789221) + 1376312589;
 		res.y = float(n & 0x0fffffff) / float(0x0fffffff);
 
-		n = x * 317 + y * 107 + g_seed;
+		n = (int)(x * 317 + y * 107 + g_seed);
 		n = (n << 13) ^ n;
 		n = n * (n * n * 15731 + 789221) + 1376312589;
 		res.z = float(n & 0x0fffffff) / float(0x0fffffff);
@@ -198,16 +243,19 @@ Entity* TerrainArea::addDetailsInstance(const std::string& meshName, float densi
 		float y = lerp(c, d, t);
 		return lerp(x, y, s);
 	};
+	const auto isAllowedMaterial = [allowedMaterials](int mat)
+	{
+		for (int m : allowedMaterials)
+			if (m == mat)
+				return true;
+		return false;
+	};
 
-	GF_ASSERT(m_data, "No data !");
-
-	ResourceManager* resmgr = ResourceManager::getInstance();
 	std::vector<vec4ui> instanceDatas;
-	//const float density = 1.f;
-	//const float probability = 0.7f;
 	const float displacementRange = 0.49f;
 	const float fullModelScale = 10.f;
 	const float pi2 = 2.f * (float)PI;
+	const uint64_t* data = dataPtr ? dataPtr : m_data;
 
 	int gridPlacement = std::clamp((int)(250.f / std::max(0.001f, density)), 1, 0xFFFF);
 	instanceDatas.reserve(gridPlacement * gridPlacement);
@@ -228,20 +276,28 @@ Entity* TerrainArea::addDetailsInstance(const std::string& meshName, float densi
 
 			int iposx = clamp((int)(tileuv.x * 256), 0, 256);
 			int iposy = clamp((int)(tileuv.y * 256), 0, 256);
+			MapData data0; data0.unpack(data[257 * iposx + iposy]);
+			MapData data1; data1.unpack(data[257 * (iposx + 1) + iposy]);
+			MapData data2; data2.unpack(data[257 * iposx + iposy + 1]);
+			MapData data3; data3.unpack(data[257 * (iposx + 1) + iposy + 1]);
+
+			// discard all patch not on allowed materials
+			if (data0.material == data1.material && data0.material == data2.material && data0.material == data3.material)
+			{
+				if (!isAllowedMaterial(data0.material))
+					continue;
+			}
+			else
+			{
+				if (!isAllowedMaterial(data0.material) || !isAllowedMaterial(data1.material) || !isAllowedMaterial(data2.material) || !isAllowedMaterial(data3.material))
+					continue;
+			}
+
 			float uvx = clamp(tileuv.x * 256 - iposx, 0.f, 1.f);
 			float uvy = clamp(tileuv.y * 256 - iposy, 0.f, 1.f);
-			MapData data0; data0.unpack(m_data[257 * iposx + iposy]);
-			MapData data1; data1.unpack(m_data[257 * (iposx + 1) + iposy]);
-			MapData data2; data2.unpack(m_data[257 * iposx + iposy + 1]);
-			MapData data3; data3.unpack(m_data[257 * (iposx + 1) + iposy + 1]);
-
-			// discard all patch not on grass
-			if (data0.material != 0 || data1.material != 0 || data2.material != 0 || data3.material != 0)
-				continue;
-
 			//float heightTerrain = biLerpf(data0.heightTerrain, data1.heightTerrain, data2.heightTerrain, data3.heightTerrain, uvx, uvy);
 			//float heightWater = biLerpf(data0.heightWater, data1.heightWater, data2.heightWater, data3.heightWater, uvx, uvy);
-			
+
 			vec4f normal = biLerpv(data0.normalTerrain, data1.normalTerrain, data2.normalTerrain, data3.normalTerrain, uvx, uvy).getNormal();
 
 			// discard too stiff slopes
@@ -261,15 +317,24 @@ Entity* TerrainArea::addDetailsInstance(const std::string& meshName, float densi
 			instanceDatas.push_back(vec4ui((x << 16) | z, (a << 16) | s, t, 0));
 		}
 
+	return instanceDatas;
+}
+Entity* TerrainArea::addDetailsInstance(const std::string& meshName, float density, const std::vector<int>& allowedMaterials, vec2f probability, vec2f scaleRange, float worldNormalWeight, float modelOffset)
+{
+	GF_ASSERT(m_data, "No data !");
+
+	ResourceManager* resmgr = ResourceManager::getInstance();
+	std::vector<vec4ui> instanceDatas = generateDetails(density, probability, scaleRange, allowedMaterials);
+	const float fullModelScale = 10.f;
+
 	Entity* massInstance = m_entity->getParentWorld()->getEntityFactory().createObject([&](Entity* object)
 		{
 			object->setName("MassInstancing");
 			object->setWorldPosition(getCenter());
 
 			TerrainDetailDrawableComponent* drawable = new TerrainDetailDrawableComponent(this);
-			drawable->setShader(resmgr->getResource<Shader>("terrainDetail"));
+			drawable->setMaterial(resmgr->getResource<Material>("terrainDetail"));
 			drawable->setMesh(resmgr->getResource<Mesh>(meshName));
-			//drawable->setMesh(resmgr->getResource<Mesh>("cube2.obj"));
 			drawable->setInstanceData(instanceDatas);
 			drawable->setFullModelScale(fullModelScale);
 			drawable->setWorldNormalWeight(worldNormalWeight);
@@ -286,6 +351,85 @@ Entity* TerrainArea::addDetailsInstance(const std::string& meshName, float densi
 	m_entity->getParentWorld()->addToScene(massInstance);
 	return massInstance;
 }
+Entity* TerrainArea::addDetailsInstance(Mesh* mesh, int identifier, float worldNormalWeight, float modelOffset)
+{
+	const float fullModelScale = 10.f;
+
+	std::vector<vec4ui> instanceDatas;
+	for (int i = 0; i < m_instanceHeader.m_arrayIdentifier.size(); i++)
+	{
+		if (m_instanceHeader.m_arrayIdentifier[i] == identifier)
+		{
+			instanceDatas = m_instanceDatas[i];
+			break;
+		}
+	}
+
+	Entity* massInstance = m_entity->getParentWorld()->getEntityFactory().createObject([&](Entity* object)
+		{
+			object->setName("MassInstancing id" + std::to_string(identifier));
+			object->setWorldPosition(getCenter());
+
+			TerrainDetailDrawableComponent* drawable = new TerrainDetailDrawableComponent(this);
+			drawable->setMaterial(m_terrain->getDetailMaterial());
+
+
+			drawable->setMesh(mesh);
+			drawable->setInstanceData(instanceDatas);
+			drawable->setFullModelScale(fullModelScale);
+			drawable->setWorldNormalWeight(worldNormalWeight);
+			drawable->setModelOffset(modelOffset);
+			drawable->initializeVBO();
+			drawable->initializeVAO();
+			object->addComponent(drawable);
+
+			object->recomputeBoundingBox();
+		}, false);
+
+	m_entity->addChild(massInstance);
+	massInstance->setLocalPosition(vec4f(0.f));
+	m_entity->getParentWorld()->addToScene(massInstance);
+	return massInstance;
+}
+
+void TerrainArea::loadInstanceData()
+{
+	if (!m_instanceDatas.empty())
+		return;
+
+	std::string filename = getNameFromIndex() + ".areaDetails";
+	std::ifstream file(m_terrain->getDirectory() + "/" + filename, std::ios::binary);
+	//GF_ASSERT(file, "No instance datas file found !");
+
+	if (file)
+	{
+		file.read((char*)&m_instanceHeader.m_arrayCount, sizeof(int));
+		for (int i = 0; i < m_instanceHeader.m_arrayCount; i++)
+		{
+			int tmpInteger;
+			file.read((char*)&tmpInteger, sizeof(int));
+			m_instanceHeader.m_arrayIdentifier.push_back(tmpInteger);
+		}
+		for (int i = 0; i < m_instanceHeader.m_arrayCount; i++)
+		{
+			int tmpInteger;
+			file.read((char*)&tmpInteger, sizeof(int));
+			m_instanceHeader.m_arraySizes.push_back(tmpInteger);
+		}
+		for (int i = 0; i < m_instanceHeader.m_arrayCount; i++)
+		{
+			m_instanceDatas.emplace_back();
+			m_instanceDatas.back().insert(m_instanceDatas.back().begin(), m_instanceHeader.m_arraySizes[i], vec4ui::zero);
+			file.read((char*)m_instanceDatas.back().data(), m_instanceHeader.m_arraySizes[i] * sizeof(vec4ui));
+		}
+		file.close();
+	}
+}
+void TerrainArea::unloadInstanceData()
+{
+	m_instanceDatas.clear();
+}
+
 std::string TerrainArea::getNameFromIndex() const
 {
 	return (m_areaIndex.x < 0 ? "n" : "") + std::to_string(std::abs(m_areaIndex.x)) + "_" +
@@ -311,6 +455,7 @@ void TerrainArea::setLod(int lod)
 	// load heightmap
 	else if (m_lod < 0 && lod >= 0)
 	{
+		SCOPED_CPU_MARKER("TerrainArea::loadHeightmap");
 		m_data = new uint64_t[257 * 257];
 		std::string filename = getNameFromIndex() + ".area";
 		std::ifstream file(m_terrain->getDirectory() + "/" + filename, std::ios::binary);

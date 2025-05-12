@@ -1,0 +1,16 @@
+{
+	"shaderName" : "fog",
+	"properties" : [
+		{
+			"name" : "tintColor",
+			"type" : "color",
+			"default" : [ 1.0 , 1.0 , 0.5 , 0.4 ]
+		}
+	],
+	"textureOverride" : [
+		{
+			"identifier" : "density",
+			"texture" : "PolygonDungeon/Dungeon_Fog_Breakup.tga"
+		}
+	]
+}

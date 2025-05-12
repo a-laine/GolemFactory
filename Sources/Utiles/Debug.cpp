@@ -208,7 +208,7 @@ void Debug::capsule(const vec4f& point1, const vec4f& point2, const float& radiu
 		if (v != vec4f::zero)
 		{
 			float angle = asinf(v.getNorm());
-			orientation = quatf(angle, (vec3f)v.getNormal());
+			orientation = quatf(angle, v.getNormal().xyz());
 			base = mat4f::rotate(mat4f::identity, orientation);
 			rotMat = base;
 		}
@@ -216,7 +216,8 @@ void Debug::capsule(const vec4f& point1, const vec4f& point2, const float& radiu
 
 		//	Get shader and prepare matrix
 		Renderer::ModelMatrix modelMatrix = { base, rotMat };
-		This->renderer->loadInstanceMatrices(shader, (float*)&modelMatrix);
+		This->renderer->bindMaterial(nullptr, shader);
+		This->renderer->loadMatrices(shader, (float*)&modelMatrix);
 
 		//	override mesh color
 		int loc = shader->getUniformLocation("overrideColor");
@@ -228,19 +229,22 @@ void Debug::capsule(const vec4f& point1, const vec4f& point2, const float& radiu
 
 		mat4f model = mat4f::scale(base, vec4f(radius, radius, length, 1.f));
 		modelMatrix.modelMatrix = model;
-		This->renderer->loadInstanceMatrices(shader, (float*)&modelMatrix);
+		This->renderer->bindMaterial(nullptr, shader);
+		This->renderer->loadMatrices(shader, (float*)&modelMatrix);
 		glDrawElements(GL_TRIANGLES, cylinderFaces, GL_UNSIGNED_SHORT, NULL);
 
 		model = mat4f::translate(base, vec4f(0, 0, length, 0.f));
 		model = mat4f::scale(model, vec4f(radius, radius, radius, 1.f));
 		modelMatrix.modelMatrix = model;
-		This->renderer->loadInstanceMatrices(shader, (float*)&modelMatrix);
+		This->renderer->bindMaterial(nullptr, shader);
+		This->renderer->loadMatrices(shader, (float*)&modelMatrix);
 		glDrawElements(GL_TRIANGLES, hemisphereFaces, GL_UNSIGNED_SHORT, (void*)(cylinderFaces * sizeof(unsigned short)));
 
 		model = mat4f::translate(base, vec4f(0, 0, -length, 0.f));
 		model = mat4f::scale(model, vec4f(radius, radius, radius, 1.f));
 		modelMatrix.modelMatrix = model;
-		This->renderer->loadInstanceMatrices(shader, (float*)&modelMatrix);
+		This->renderer->bindMaterial(nullptr, shader);
+		This->renderer->loadMatrices(shader, (float*)&modelMatrix);
 		glDrawElements(GL_TRIANGLES, hemisphereFaces, GL_UNSIGNED_SHORT, (void*)((cylinderFaces + hemisphereFaces) * sizeof(unsigned short)));
 
 		if (loc >= 0) glUniform4fv(loc, 1, &defaultColorUniform[0]);
@@ -251,9 +255,10 @@ void Debug::mesh(const Mesh* const mesh, const mat4f& transform, Shader* shader)
 	if (This->renderer && shader && mesh)
 	{
 		//	Get shader and prepare matrix
-		mat4f orientation = mat4f(quatf(transform));
+		mat4f orientation = mat4f(transform.extractRotation());
 		Renderer::ModelMatrix modelMatrix = { transform, orientation };
-		This->renderer->loadInstanceMatrices(shader, (float*)&modelMatrix);
+		This->renderer->bindMaterial(nullptr, shader);
+		This->renderer->loadMatrices(shader, (float*)&modelMatrix);
 
 		//	override mesh color
 		int loc = shader->getUniformLocation("overrideColor");
@@ -274,7 +279,8 @@ void Debug::drawMultiplePrimitive(const Vertex* vertices, const unsigned int& ve
 		return;
 
 	Renderer::ModelMatrix modelMatrix = { model, model };
-	This->renderer->loadInstanceMatrices(This->debug, (float*)&modelMatrix);
+	This->renderer->bindMaterial(nullptr, This->debug);
+	This->renderer->loadMatrices(This->debug, (float*)&modelMatrix);
 
 	constexpr size_t vboSize = sizeof(Vertex) * 4096;
 	uint8_t* startPtr = (uint8_t*)vertices;

@@ -138,7 +138,7 @@ T* ResourceManager::getResource(T* resource)
 {
     GF_ASSERT(resource);
     bool inserted = addResource_internal(resource);
-    GF_ASSERT(!inserted, "Resource with same name doesn't correspond");
+    GF_ASSERT(!inserted, "Resource with same name doesn't correspond or 'emplace' error");
     resource->count++;
     return resource;
 }

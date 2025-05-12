@@ -1,0 +1,9 @@
+{
+	"shaderName" : "defaultTextured",
+	"textureOverride" : [
+		{
+			"identifier" : "albedo",
+			"texture" : "PolygonDungeon/Dungeons_Texture_04_D.png"
+		}
+	]
+}

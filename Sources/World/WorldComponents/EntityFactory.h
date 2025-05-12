@@ -22,13 +22,13 @@ class EntityFactory
 
 		template<typename Callback>
 		Entity* createObject(const std::string& type, Callback cb, bool _addToScene = true);
-		Entity* createObject(const std::string& type, const vec4f& position, const float& scale = 1.f, const quatf& orientation = quatf::identity, const std::string& name = "unknown");
+		Entity* createObject(const std::string& type, const vec4f& position, const vec4f& scale = vec4f::one, const quatf& orientation = quatf::identity, const std::string& name = "unknown");
 
 		template<typename Callback>
 		Entity* createObject(Callback _cb, bool _addToScene = true);
 		template<typename Callback>
 		Entity* createObject(const std::vector<Component*>& components, Callback cb, bool _addToScene = true);
-		Entity* createObject(const std::vector<Component*>& components, const vec4f& position, const float& scale = 1.f, const quatf& orientation = quatf::identity, const std::string& name = "unknown");
+		Entity* createObject(const std::vector<Component*>& components, const vec4f& position, const vec4f& scale = vec4f::one, const quatf& orientation = quatf::identity, const std::string& name = "unknown");
 
 		bool addPrefab(std::string prefabName, Entity* prefabObject);
 		bool removePrefab(std::string prefabName);
@@ -37,7 +37,7 @@ class EntityFactory
 		Entity* instantiatePrefab(std::string prefabName, bool _addToScene = false);
 
 		void tryLoadTransform(Entity* object, Variant* variant);
-		void tryLoadComponents(Entity* object, Variant* variant, const std::string& assetPackName);
+		void tryLoadComponents(Entity* object, Variant* variant);
 		void tryLoadHierarchy(Entity* object, Variant* variant, const std::string& assetPackName);
 
 	private:

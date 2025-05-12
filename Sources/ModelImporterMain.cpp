@@ -22,22 +22,7 @@
 #include "Animation/SkeletonComponent.h"
 #include "Core/Application.h"
 
-#include <Resources/Texture.h>
-#include <Resources/Font.h>
-#include <Resources/Shader.h>
-#include <Resources/Mesh.h>
-#include <Resources/Skeleton.h>
-#include <Resources/AnimationClip.h>
-#include <Resources/Loader/AnimationLoader.h>
-#include <Resources/Loader/FontLoader.h>
-#include <Resources/Loader/AssimpLoader.h>
-#include <Resources/Loader/MeshLoader.h>
-#include <Resources/Loader/ShaderLoader.h>
-#include <Resources/Loader/SkeletonLoader.h>
-#include <Resources/Loader/ImageLoader.h>
-#include <Resources/Loader/TextureLoader.h>
-#include <Resources/Loader/AnimationGraphLoader.h>
-#include <Resources/Loader/MeshSaver.h>
+#include <Resources/ResourceIncludes.h>
 
 #include <Physics/Physics.h>
 #include <Physics/RigidBody.h>
@@ -54,6 +39,12 @@
 #include <Utiles/WorkerThread.h>
 
 #include <Terrain/Terrain.h>
+
+
+#pragma warning(push, 0)
+#include <assimp/Importer.hpp>
+#include <assimp/postprocess.h>
+#pragma warning(pop)
 
 enum EventEnum
 {
@@ -97,6 +88,7 @@ bool TerrainCreatorWindowEnable = true;
 
 // prototypes
 void initializeSyntyScene();
+void loadSceneFBX(std::string sceneName);
 std::string checkResourcesDirectory();
 
 void initManagers();
@@ -139,6 +131,8 @@ int main()
 	Renderer::getInstance()->setGridVisible(false);
 	//Renderer::getInstance()->setRenderOption(Renderer::RenderOption::WIREFRAME);
 	
+	//terrain.load(ResourceManager::getInstance()->getRepository() + "Terrain");
+	loadSceneFBX("Small_City_LVL3.fbx");
 	//initializeSyntyScene();
 
 	editorCamera = world.getEntityFactory().createObject([](Entity* object)
@@ -241,7 +235,7 @@ int main()
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 		}
 		double dt = glfwGetTime() - startTime;
-		Renderer::getInstance()->incrementShaderAnimatedTime(dt);
+		Renderer::getInstance()->incrementShaderAnimatedTime((float)dt);
 		elapseTime = 1000.0 * (dt);
 	}
 
@@ -394,37 +388,29 @@ void initializeSyntyScene()
 						// create and set transform
 						newObject = world.getEntityFactory().createEntity();
 						newObject->setName((*it)["name"].toString());
-						world.getEntityFactory().tryLoadComponents(newObject, &(*it), packageName);
+						world.getEntityFactory().tryLoadComponents(newObject, &(*it));
 					}
 					newObject->recomputeBoundingBox();
 
 					// transform load
-					vec4f position, tmp;
+					vec4f position, tmp, scale;
 					TryLoadAsVec4f((*it)["position"], position);
 					position.w = 1.f;
 					TryLoadAsVec4f((*it)["rotation"], tmp);
 					quatf rotation = quatf(tmp.w, tmp.x, tmp.y, tmp.z);
 					rotation.normalize();
-
-					float scale = 1.f;
-					auto& scaleVariant = (*it)["scale"];
-					if (scaleVariant.getType() == Variant::INT)
-						scale = (float)scaleVariant.toInt();
-					else if (scaleVariant.getType() == Variant::FLOAT)
-						scale = scaleVariant.toFloat();
-					else if (scaleVariant.getType() == Variant::DOUBLE)
-						scale = (float)scaleVariant.toDouble();
+					TryLoadAsVec4f((*it)["scale"], scale);
 
 					if (!prefabName.empty())
 						scale *= newObject->getWorldScale();
 
-					if (scale < 0.f)
+					/*if (scale < 0.f)
 					{
 						std::cout << ConsoleColor::getColorString(ConsoleColor::Color::MAGENTA) << "WARNING : object " << newObject->getName() << " has a negative scaling" << std::flush;
 						std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
 
 						scale = -scale;
-					}
+					}*/
 
 					// set parent and local transform
 					if (parent)
@@ -463,6 +449,165 @@ void initializeSyntyScene()
 		if (ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
 			std::cerr << "ERROR : loading scene : " << sceneName << " : fail parsing file" << std::endl;
 		return;
+	}
+}
+void loadSceneFBX(std::string sceneName)
+{
+	const auto& PrintError = [](std::string msg)
+	{
+		std::cout << ConsoleColor::getColorString(ConsoleColor::Color::RED) << "ERROR   : Loader : " << msg << std::flush;
+		std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
+	};
+
+	std::vector<vec4f> vertices;
+	std::vector<vec4f> normales;
+	std::vector<vec4f> uvs;
+	std::vector<unsigned int> faces;
+	std::vector<vec4i> bones; 
+	std::vector<vec4f> weights;
+	std::vector<Mesh*> meshes;
+	ResourceManager* mgr = ResourceManager::getInstance();
+	EntityFactory& factory = world.getEntityFactory();
+
+	Assimp::Importer importer;
+	std::string filename = mgr->getRepository() + Mesh::directory + sceneName;
+	const aiScene* scene = importer.ReadFile(filename.c_str(), aiProcessPreset_TargetRealtime_MaxQuality);
+	if (!scene)
+	{
+		if (ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
+			PrintError("could not open file" + filename);
+		std::cerr << "        : AssimpImporter log : " << importer.GetErrorString() << std::endl;
+		return;
+	}
+
+	meshes.reserve(scene->mNumMeshes);
+	for (unsigned int i = 0; i < scene->mNumMeshes; i++)
+	{
+		vertices.clear();
+		normales.clear();
+		uvs.clear();
+		faces.clear();
+
+		aiMesh* mesh = scene->mMeshes[i];
+		for (unsigned int j = 0; j < mesh->mNumFaces; j++)
+		{
+			if (mesh->mFaces[j].mNumIndices != 3)
+			{
+				continue;
+			}
+
+			for (int k = 0; k < 3; k++)
+				faces.push_back(mesh->mFaces[j].mIndices[k]);
+		}
+		for (unsigned int j = 0; j < mesh->mNumVertices; j++)
+		{
+			aiVector3D pos = mesh->mVertices[j];
+			vertices.push_back(vec4f(-pos.x, pos.y, pos.z, 1.f));
+
+			aiVector3D normal = (mesh->HasNormals() ? mesh->mNormals[j] : aiVector3D(0.0f, 0.0f, 0.0f));
+			normales.push_back(vec4f(-normal.x, normal.y, normal.z, 0.f));
+
+			aiVector3D uv = (mesh->HasTextureCoords(0) ? mesh->mTextureCoords[0][j] : aiVector3D(0.0f, 0.0f, 0.0f));
+			uvs.push_back(vec4f(uv.x, 1 - uv.y, uv.z, 0.f));
+		}
+
+		std::string meshname = std::string(mesh->mName.C_Str()) + "#" + std::to_string(i);
+		if (meshname.find("decal") != std::string::npos)
+			meshes.push_back(nullptr);
+		else if (meshname.find("collision") != std::string::npos)
+			meshes.push_back(nullptr);
+		else
+		{
+			Mesh* gfmesh = new Mesh(meshname);
+			gfmesh->initialize(&vertices, &normales, &uvs, &faces, &bones, &weights);
+			mgr->addResource(gfmesh);
+			meshes.push_back(gfmesh);
+		}
+	}
+
+	unsigned int multimeshEntitiesCount = 0;
+	std::vector<aiNode*> nodes;
+	nodes.push_back(scene->mRootNode);
+	std::vector<std::pair<Entity*, unsigned int>> entityStack;
+	while (!nodes.empty())
+	{
+		aiNode* current = nodes.back();
+		nodes.pop_back();
+
+		Entity* entity = factory.createEntity();
+		entity->setName(current->mName.C_Str());
+		if (!entityStack.empty())
+		{
+			entityStack.back().first->addChild(entity);
+			entityStack.back().second--;
+			if (entityStack.back().second == 0)
+				entityStack.pop_back();
+		}
+
+		aiVector3D position, scale;
+		aiQuaternion rotation;
+		if (current->mParent == nullptr)
+		{
+			scale = aiVector3D(0.01f);
+			rotation = aiQuaternion(aiVector3D(1, 0, 0), -0.5f * PI);
+			position = aiVector3D(0);
+		}
+		else
+			current->mTransformation.Decompose(scale, rotation, position);
+
+		entity->setLocalTransformation(
+			vec4f(position.x, position.y, position.z, 1),
+			vec4f(scale.x, scale.y, scale.z, 1.f), quatf(rotation.w, rotation.x, rotation.y, rotation.z));
+
+
+		if (current->mNumMeshes > 0)
+		{
+			if (current->mNumMeshes == 1)
+			{
+				if (meshes[current->mMeshes[0]])
+				{
+					std::string meshname = meshes[current->mMeshes[0]]->name;
+					DrawableComponent* drawable = new DrawableComponent(meshname, "default");
+					entity->addComponent(drawable);
+					entity->recomputeBoundingBox();
+				}
+			}
+			else
+			{
+				/*for (int i = 0; i < 1; i++)//current->mNumMeshes
+				{
+					Entity* subEntity = factory.createEntity();
+					entity->addChild(subEntity);
+
+					std::string meshname = scene->mMeshes[current->mMeshes[i]]->mName.C_Str();
+					DrawableComponent* drawable = new DrawableComponent(meshname, "default");
+					subEntity->addComponent(drawable);
+					subEntity->recomputeBoundingBox();
+					world.addToScene(subEntity);
+				}*/
+				entity->recomputeBoundingBox();
+
+				multimeshEntitiesCount++;
+			}
+		}
+
+		world.addToScene(entity);
+		if (current->mParent == nullptr)
+			world.getSceneManager().addToRootList(entity);
+
+		if (current->mNumChildren > 0)
+		{
+			entityStack.push_back({ entity, current->mNumChildren });
+			for (unsigned int i = 0; i < current->mNumChildren; i++)
+				nodes.push_back(current->mChildren[i]);
+		}
+	}
+
+	if (multimeshEntitiesCount)
+	{
+		std::cout << ConsoleColor::getColorString(ConsoleColor::Color::YELLOW) << "WARNING   : Loader : " <<
+			("Has multimesh enties (" + std::to_string(multimeshEntitiesCount) + ")") << std::flush;
+		std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
 	}
 }
 std::string checkResourcesDirectory()
@@ -504,6 +649,7 @@ void initManagers()
 	Shader::setDefaultName("default");
 	Mesh::setDefaultName("cube2.obj");
 	Skeleton::setDefaultName("human");
+	Material::setDefaultName("default");
 	AnimationClip::setDefaultName("male_idle_breath");
 	AnimationGraph::setDefaultName("humanoid");
 
@@ -513,6 +659,7 @@ void initManagers()
 	ResourceManager::getInstance()->addNewResourceLoader("assimpSkel", new AssimpLoader(AssimpLoader::ResourceType::SKELETON));
 	ResourceManager::getInstance()->addNewResourceLoader(".mesh", new MeshLoader());
 	ResourceManager::getInstance()->addNewResourceLoader(".shader", new ShaderLoader());
+	ResourceManager::getInstance()->addNewResourceLoader(".material", new MaterialLoader());
 	ResourceManager::getInstance()->addNewResourceLoader(".skeleton", new SkeletonLoader());
 	ResourceManager::getInstance()->addNewResourceLoader("image", new ImageLoader());
 	ResourceManager::getInstance()->addNewResourceLoader(".texture", new TextureLoader());
@@ -563,7 +710,79 @@ void initManagers()
 	// Terrain
 	terrain.setWorld(&world);
 	terrain.initializeClipmaps();
-	//terrain.setMaterialCollection("GroundTextures/TerrainMaterialCollection.terrain");
+	/*trees detail*/ {
+		auto& detail = terrain.addDetail();
+		detail.m_name = "trees";
+		detail.m_lod = 4;
+		detail.m_colorTint0 = vec3f(1.f);
+		detail.m_colorTint1 = vec3f(0.9f);
+		detail.m_density = 10.f;
+		detail.m_alphaCLipThs = -1.f;
+		detail.m_doubleSided = false;
+		detail.m_maxShadow = 4;
+		detail.m_normalWeight = 1.f;
+		detail.m_sizeRange = vec2f(3.f, 5.f);
+		detail.m_allowedMaterials.push_back(0);
+
+		detail.m_meshNames.push_back("PolygonDungeon/SM_Env_Tree_01.fbx");
+		detail.m_probability.push_back(vec2f(0.00f, 0.17f));
+		detail.m_modelOffset.push_back(-0.1f);
+
+		detail.m_meshNames.push_back("PolygonDungeon/SM_Env_Tree_02.fbx");
+		detail.m_probability.push_back(vec2f(0.17f, 0.34f));
+		detail.m_modelOffset.push_back(-0.1f);
+
+		detail.m_meshNames.push_back("PolygonDungeon/SM_Env_Tree_03.fbx");
+		detail.m_probability.push_back(vec2f(0.34f, 0.51f));
+		detail.m_modelOffset.push_back(-0.1f);
+
+		detail.m_meshNames.push_back("PolygonDungeon/SM_Env_Tree_04.fbx");
+		detail.m_probability.push_back(vec2f(0.51f, 0.68f));
+		detail.m_modelOffset.push_back(-0.1f);
+	}
+	/*grass detail*/ {
+		auto& detail = terrain.addDetail();
+		detail.m_name = "grass";
+		detail.m_lod = 2;
+		detail.m_colorTint0 = vec3f(0.08f, 0.25f, 0.05f);
+		detail.m_colorTint1 = vec3f(0.16f, 0.25f, 0.05f);
+		detail.m_density = 1.f;
+		detail.m_alphaCLipThs = 0.3f;
+		detail.m_doubleSided = true;
+		detail.m_maxShadow = 0;
+		detail.m_normalWeight = 0.f;
+		detail.m_sizeRange = vec2f(0.9f, 1.f);
+		detail.m_allowedMaterials.push_back(0);
+
+		detail.m_meshNames.push_back("PolygonDungeon/SM_Env_GrassQuads_01.fbx");
+		detail.m_probability.push_back(vec2f(0.7f, 1.f));
+		detail.m_modelOffset.push_back(-0.1f);
+		detail.m_shaderTextureOverride["albedo"] = "PolygonDungeon/Grass_01.png";
+		detail.m_shaderTextureOverride["metalic"] = "BlackTexture.png";
+		detail.m_shaderTextureOverride["emmisive"] = "BlackTexture.png";
+	}
+	/*rocks detail*/ {
+		auto& detail = terrain.addDetail();
+		detail.m_name = "rocks";
+		detail.m_lod = 3;
+		detail.m_colorTint0 = vec3f(1.f);
+		detail.m_colorTint1 = vec3f(0.9f);
+		detail.m_density = 6.f;
+		detail.m_alphaCLipThs = -1.f;
+		detail.m_doubleSided = false;
+		detail.m_maxShadow = 2;
+		detail.m_normalWeight = 0.f;
+		detail.m_sizeRange = vec2f(2.f , 3.f);
+		detail.m_allowedMaterials.push_back(0);//grass
+		detail.m_allowedMaterials.push_back(4);//sand
+		detail.m_allowedMaterials.push_back(5);//sand
+
+		detail.m_meshNames.push_back("PolygonDungeon/SM_Env_Rock_Round_02.fbx");
+		detail.m_probability.push_back(vec2f(0.00f, 0.3f));
+		detail.m_modelOffset.push_back(-0.01f);
+	}
+	terrain.endAddDetail();
+
 	world.getTerrainVirtualTexture().initialize(2048);
 	terrain.setVirtualTexture(&world.getTerrainVirtualTexture());
 	Renderer::getInstance()->setVirtualTexture(&world.getTerrainVirtualTexture());
@@ -577,7 +796,7 @@ void initManagers()
 	terrain.addLodRadius(375*3 + terrain.g_morphingRange);
 	terrain.addLodRadius(375*3 + terrain.g_morphingRange);
 	terrain.addLodRadius(375*3 + terrain.g_morphingRange);
-	terrain.load(resourceRepository + "Terrain");
+	//terrain.load(resourceRepository + "Terrain");
 
 	// default layout loading
 #ifdef USE_IMGUI
@@ -704,7 +923,7 @@ void updates(float elapseTime)
 	SCOPED_CPU_MARKER("Updates");
 
 	world.getSceneManager().update(currentCamera->getPosition());
-	//if (!loading)
+	if (!loading)
 		terrain.update(currentCamera->getPosition());
 
 	//	Compute HUD picking parameters
@@ -808,6 +1027,116 @@ void ImGuiMenuBar()
 	}
 #endif
 }
+
+void TerrainCreatorTool()
+{
+	static vec2i terrainSize = vec2i(32, 32);
+	static std::string folderName = "Terrain";
+	static std::string loadingFolder;
+	static std::string loadingText = "Waiting command";
+
+	struct JobData
+	{
+		Terrain* terrain;
+		std::vector<vec2i> loadingQueue;
+		std::atomic<uint32_t> progress;
+	};
+	static JobData jobdata;
+	static Job* generationJob;
+	static Job* postGenerationJob;
+
+
+	folderName.reserve(128);
+	ImGui::Begin("Terrain Creator");
+		
+	ImGui::DragInt("Seed", &TerrainArea::g_seed);
+	ImGui::DragInt2("TerrainSize", &terrainSize.x, 1, 1, 128, "%d", ImGuiSliderFlags_AlwaysClamp);
+	ImGui::InputText("Terrain folder", &folderName[0], folderName.capacity());
+
+	bool loadingCache = loading;
+	if (loadingCache)
+	{
+		ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+		ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
+	}
+	if (ImGui::Button("Generate") && !loading)
+	{
+		terrain.clear();
+		jobdata.loadingQueue.clear();
+		jobdata.loadingQueue.reserve(terrainSize.x * terrainSize.y);
+		vec2i offsetIndex = vec2i(terrainSize.x / 2, terrainSize.y / 2);
+		for (int i = 0; i < terrainSize.x; i++)
+			for (int j = 0; j < terrainSize.y; j++)
+			{
+				vec2i index = vec2i(i, j) - offsetIndex;
+				TerrainArea area(index, &terrain);
+				terrain.addArea(area, false);
+				jobdata.loadingQueue.push_back(vec2i(i, j));
+			}
+		jobdata.terrain = &terrain;
+		terrain.recomputeGrid();
+
+		jobdata.progress = 0;
+		loading = true;
+		loadingFolder = ResourceManager::getInstance()->getRepository() + std::string(folderName) + "/";
+
+		const auto generateJob = [](void* data, int instanceID, int count)
+		{
+			JobData* jobdata = (JobData*)data;
+			jobdata->terrain->generate(loadingFolder, jobdata->loadingQueue[instanceID]);
+			jobdata->progress++;
+		};
+		generationJob = new Job((uint32_t)jobdata.loadingQueue.size(), generateJob, &jobdata);
+		generationJob->addToQueue(Job::JobPriority::LOW);
+	}
+	ImGui::SameLine();
+	if (ImGui::Button("Load") && !loading)
+	{
+		loadingFolder = ResourceManager::getInstance()->getRepository() + std::string(folderName);
+		terrain.clear();
+		terrain.load(loadingFolder);
+	}
+	if (loadingCache)
+	{
+		ImGui::PopItemFlag();
+		ImGui::PopStyleVar();
+	}
+
+	if (loading)
+	{
+		terrain.getVirtualTexture()->syncroGPUTexture();
+		uint32_t tmp = jobdata.progress.load();
+		if (tmp >= jobdata.loadingQueue.size())
+		{
+			loading = false;
+			loadingText = "Finished";
+		}
+		else
+		{
+			loadingText = "Generating " + std::to_string(tmp) + " / " + std::to_string(jobdata.loadingQueue.size());
+		}
+	}
+
+	uint32_t tmp = jobdata.progress.load();
+	float t = 0.f;
+	if (jobdata.loadingQueue.size() > 0)
+		t = (float)tmp / jobdata.loadingQueue.size();
+	ImGui::Separator();
+	ImGui::ProgressBar(t, ImVec2(-1, 0), loadingText.c_str());
+
+	ImGui::Text("Terrain attributes");
+	ImGui::DragFloat("Amplitude", &TerrainArea::g_heightAmplitude, 0.1f, 0.f, 4000.f);
+	ImGui::DragFloat("See level", &TerrainArea::g_seeLevel, 0.1f, 0.f, TerrainArea::g_heightAmplitude);
+	ImGui::DragFloat("Erosion", &TerrainArea::g_erosion, 0.1f, 0.f, 100.f);
+	ImGui::Text("Noise harmonic");
+	for (int i = 0; i < 8; i++)
+	{
+		std::string label = "lvl " + std::to_string(i);
+		ImGui::SliderFloat(label.c_str(), &TerrainArea::g_noiseCurve[i], 0, 1, "%.4f", ImGuiSliderFlags_Logarithmic);
+	}
+
+	ImGui::End();
+}
 void ImGuiSystemDraw()
 {
 #ifdef USE_IMGUI
@@ -839,112 +1168,7 @@ void ImGuiSystemDraw()
 	// special creation tools
 	if (TerrainCreatorWindowEnable)
 	{
-		static vec2i terrainSize = vec2i(32, 32);
-		static std::string folderName = "Terrain";
-		static std::string loadingFolder;
-		static std::string loadingText = "Waiting command";
-
-		struct JobData
-		{
-			Terrain* terrain;
-			std::vector<vec2i> loadingQueue;
-			std::atomic<uint32_t> progress;
-		};
-		static JobData jobdata;
-		static Job* generationJob;
-		static Job* postGenerationJob;
-
-
-		folderName.reserve(128);
-		ImGui::Begin("Terrain Creator");
-		
-		ImGui::DragInt("Seed", &TerrainArea::g_seed);
-		ImGui::DragInt2("TerrainSize", &terrainSize.x, 1, 1, 128, "%d", ImGuiSliderFlags_AlwaysClamp);
-		ImGui::InputText("Terrain folder", &folderName[0], folderName.capacity());
-
-		bool loadingCache = loading;
-		if (loadingCache)
-		{
-			ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-			ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGui::GetStyle().Alpha * 0.5f);
-		}
-		if (ImGui::Button("Generate") && !loading)
-		{
-			terrain.clear();
-			jobdata.loadingQueue.clear();
-			jobdata.loadingQueue.reserve(terrainSize.x * terrainSize.y);
-			vec2i offsetIndex = vec2i(terrainSize.x / 2, terrainSize.y / 2);
-			for (int i = 0; i < terrainSize.x; i++)
-				for (int j = 0; j < terrainSize.y; j++)
-				{
-					vec2i index = vec2i(i, j) - offsetIndex;
-					TerrainArea area(index, &terrain);
-					terrain.addArea(area, false);
-					jobdata.loadingQueue.push_back(vec2i(i, j));
-				}
-			jobdata.terrain = &terrain;
-			terrain.recomputeGrid();
-
-			jobdata.progress = 0;
-			loading = true;
-			loadingFolder = ResourceManager::getInstance()->getRepository() + std::string(folderName) + "/";
-
-			const auto generateJob = [](void* data, int instanceID, int count)
-			{
-				JobData* jobdata = (JobData*)data;
-				jobdata->terrain->generate(loadingFolder, jobdata->loadingQueue[instanceID]);
-				jobdata->progress++;
-			};
-			generationJob = new Job(jobdata.loadingQueue.size(), generateJob, &jobdata);
-			generationJob->addToQueue(Job::JobPriority::LOW);
-		}
-		ImGui::SameLine();
-		if (ImGui::Button("Load") && !loading)
-		{
-			loadingFolder = ResourceManager::getInstance()->getRepository() + std::string(folderName);
-			terrain.clear();
-			terrain.load(loadingFolder);
-		}
-		if (loadingCache)
-		{
-			ImGui::PopItemFlag();
-			ImGui::PopStyleVar();
-		}
-
-		if (loading)
-		{
-			terrain.getVirtualTexture()->syncroGPUTexture();
-			uint32_t tmp = jobdata.progress.load();
-			if (tmp >= jobdata.loadingQueue.size())
-			{
-				loading = false;
-				loadingText = "Finished";
-			}
-			else
-			{
-				loadingText = "Generating " + std::to_string(tmp) + " / " + std::to_string(jobdata.loadingQueue.size());
-			}
-		}
-
-		uint32_t tmp = jobdata.progress.load();
-		float t = 0.f;
-		if (jobdata.loadingQueue.size() > 0)
-			t = (float)tmp / jobdata.loadingQueue.size();
-		ImGui::Separator();
-		ImGui::ProgressBar(t, ImVec2(-1, 0), loadingText.c_str());
-
-		ImGui::Text("Terrain attributes");
-		ImGui::DragFloat("Amplitude", &TerrainArea::g_heightAmplitude, 0.1f, 0.f, 4000.f);
-		ImGui::DragFloat("See level", &TerrainArea::g_seeLevel, 0.1f, 0.f, TerrainArea::g_heightAmplitude);
-		ImGui::DragFloat("Erosion", &TerrainArea::g_erosion, 0.1f, 0.f, 100.f);
-		ImGui::Text("Noise harmonic");
-		for (int i = 0; i < 8; i++)
-		{
-			std::string label = "lvl " + std::to_string(i);
-			ImGui::SliderFloat(label.c_str(), &TerrainArea::g_noiseCurve[i], 0, 1, "%.4f", ImGuiSliderFlags_Logarithmic);
-		}
-
-		ImGui::End();
+		TerrainCreatorTool();
 	}
 
 	// Editor camera parameters

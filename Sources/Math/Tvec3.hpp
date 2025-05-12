@@ -156,6 +156,16 @@ T Tvec3<T>::dot(const Tvec3<T>& a, const Tvec3<T>& b)
 {
 	return a.x * b.x + a.y * b.y + a.z * b.z;
 }
+template<typename T>
+Tvec3<T> Tvec3<T>::min(const Tvec3<T>& a, const Tvec3<T>& b)
+{
+	return Tvec3<T>(a.x < b.x ? a.x : b.x, a.y < b.y ? a.y : b.y, a.z < b.z ? a.z : b.z);
+}
+template<typename T>
+Tvec3<T> Tvec3<T>::max(const Tvec3<T>& a, const Tvec3<T>& b)
+{
+	return Tvec3<T>(a.x > b.x ? a.x : b.x, a.y > b.y ? a.y : b.y, a.z > b.z ? a.z : b.z);
+}
 
 template<typename T>
 Tvec3<T> Tvec3<T>::cross(const Tvec3<T>& a, const Tvec3<T>& b)

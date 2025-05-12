@@ -147,9 +147,6 @@ void SkeletonLoader::initialize(ResourceVirtual* resource)
     skeleton->initialize(bones);
 }
 
-void SkeletonLoader::getResourcesToRegister(std::vector<ResourceVirtual*>& resourceList)
-{}
-
 std::string SkeletonLoader::getFileName(const std::string& resourceDirectory, const std::string& fileName) const
 {
     std::string str = resourceDirectory;

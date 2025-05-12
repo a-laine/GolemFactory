@@ -75,18 +75,18 @@ class Texture : public ResourceVirtual
         unsigned int m_internalFormat;
         unsigned int m_type;
 
-        #ifdef USE_IMGUI
-            bool isEnginePrivate = false;
-            bool enableExport = false;
-        #endif
+#ifdef USE_IMGUI
+        bool isEnginePrivate = false;
+        bool enableExport = false;
+#endif
 
     private:
         static std::string defaultName;
 
         //  Attributes
-        GLuint texture;                 //!< Texture Id
         uint16_t configuration;         //!< Texture configuration byte
         std::vector<std::string> m_layerDescriptor;
+        GLuint texture;                 //!< Texture Id
 
 #ifdef USE_IMGUI
         int layerOverview;

@@ -17,6 +17,9 @@ class FrustrumSceneQuerry : public VirtualSceneQuerry
 		bool TestSphere(vec4f center, float radius);
 		bool TestAABB(vec4f min, vec4f max);
 
+
+		int maxDepth = 1000;
+
 	private:
 		vec4f frustrumPlaneNormals[6];
 		vec4f frustrumCorners[5];

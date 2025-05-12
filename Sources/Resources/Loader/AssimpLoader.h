@@ -33,7 +33,6 @@ class AssimpLoader : public IResourceLoader
         //  Public functions
         bool load(const std::string& resourceDirectory, const std::string& fileName) override;
         void initialize(ResourceVirtual* resource) override;
-        void getResourcesToRegister(std::vector<ResourceVirtual*>& resourceList) override;
 
         void PrintError(const char* filename, const char* msg) override;
         void PrintWarning(const char* filename, const char* msg) override;

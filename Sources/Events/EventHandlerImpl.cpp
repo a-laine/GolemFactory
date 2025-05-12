@@ -627,6 +627,6 @@ void EventHandlerImpl::framebufferResizeCallback(GLFWwindow* window, int width, 
         (*cb)(window, width, height);
 
 	RenderContext* context = RenderContext::getContextFromWindow(window);
-	context->updateViewportSize(glm::ivec2(width, height));
+	context->updateViewportSize(vec2i(width, height));
 }
 //

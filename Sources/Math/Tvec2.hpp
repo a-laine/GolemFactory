@@ -73,9 +73,27 @@ Tvec2<T>& Tvec2<T>::operator=(const Tvec2<T>& b)
 }
 
 template<typename T>
+Tvec2<bool> Tvec2<T>::operator<(const Tvec2<T>& b) const
+{
+	return Tvec2<bool>(x < b.x ? x : b.x, y < b.y ? y : b.y);
+}
+
+template<typename T>
+Tvec2<bool> Tvec2<T>::operator>(const Tvec2<T>& b) const
+{
+	return Tvec2<bool>(x > b.x ? x : b.x, y > b.y ? y : b.y);
+}
+
+template<typename T>
 T Tvec2<T>::getNorm() const
 {
 	return (T)sqrt(x * x + y * y);
+}
+
+template<typename T>
+T Tvec2<T>::getNorm2() const
+{
+	return dot(*this, *this);
 }
 
 template<typename T>
@@ -147,6 +165,18 @@ template<typename T, typename T2>
 T dot(const Tvec2<T>& a, const Tvec2<T2>& b)
 {
 	return a.x * b.x + a.y * b.y;
+}
+
+template<typename T>
+Tvec2<T> Tvec2<T>::min(const Tvec2& a, const Tvec2& b)
+{
+	return Tvec2(a.x < b.x ? a.x : b.x, a.y < b.y ? a.y : b.y);
+}
+
+template<typename T>
+Tvec2<T> Tvec2<T>::max(const Tvec2& a, const Tvec2& b)
+{
+	return Tvec2(a.x > b.x ? a.x : b.x, a.y > b.y ? a.y : b.y);
 }
 
 template<typename T>

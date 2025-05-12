@@ -95,7 +95,7 @@ bool AnimationLoader::load(const std::string& resourceDirectory, const std::stri
             if (vbonecurve.getType() == Variant::MAP)
             {
                 AnimationClip::BoneCurves tmpCurve;
-                tmpCurve.m_boneName.empty();
+                tmpCurve.m_boneName.clear();
 
                 auto it1 = vbonecurve.getMap().find("boneName");
                 if (it1 != vbonecurve.getMap().end() && it1->second.getType() == Variant::STRING)
@@ -224,9 +224,6 @@ void AnimationLoader::initialize(ResourceVirtual* resource)
     AnimationClip* animation = static_cast<AnimationClip*>(resource);
     animation->initialize(m_curves, m_duration);
 }
-
-void AnimationLoader::getResourcesToRegister(std::vector<ResourceVirtual*>& resourceList)
-{}
 
 std::string AnimationLoader::getFileName(const std::string& resourceDirectory, const std::string& fileName) const
 {

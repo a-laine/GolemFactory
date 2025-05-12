@@ -11,6 +11,7 @@
 #include <Scene/FrustrumEntityCollector.h>
 #include <Resources/ResourceManager.h>
 #include <Resources/Skeleton.h>
+#include <Resources/Material.h>
 #include <Renderer/DrawableComponent.h>
 #include <Animation/SkeletonComponent.h>
 #include <Renderer/Lighting/LightComponent.h>
@@ -18,7 +19,7 @@
 #include <Utiles/Parser/Reader.h>
 
 #ifdef USE_IMGUI
-bool RenderingWindowEnable = false;
+bool RenderingWindowEnable = true;
 #endif
 #include <Utiles/ConsoleColor.h>
 
@@ -34,6 +35,7 @@ Renderer::Renderer() :
 	world = nullptr;
 	m_terrainVirtualTexture = nullptr;
 	m_OcclusionElapsedTime = m_OcclusionAvgTime = 0;
+	//m_frustrumFar = 10.f;
 
 	defaultShader[GRID] = nullptr;
 	defaultShader[INSTANCE_ANIMATABLE_BB] = nullptr;
@@ -44,9 +46,9 @@ Renderer::Renderer() :
 	m_terrainMaterialCollection = nullptr;
 	m_skyboxTexture = nullptr;
 	m_skyboxMesh = nullptr;
-	m_skyboxShader = nullptr;
+	m_skyboxMaterial = nullptr;
 
-	drawGrid = true; 
+	m_drawGrid = true;
 	m_enableAtmosphericScattering = true;
 	batchFreePool.reserve(512);
 
@@ -87,8 +89,8 @@ Renderer::~Renderer()
 		ResourceManager::getInstance()->release(m_terrainMaterialCollection);
 	if (m_skyboxTexture)
 		ResourceManager::getInstance()->release(m_skyboxTexture);
-	if (m_skyboxShader)
-		ResourceManager::getInstance()->release(m_skyboxShader);
+	if (m_skyboxMaterial)
+		ResourceManager::getInstance()->release(m_skyboxMaterial);
 }
 //
 
@@ -535,8 +537,8 @@ void Renderer::initializeSkybox(const std::string& textureName)
 
 	if (!m_skyboxMesh)
 		m_skyboxMesh = ResourceManager::getInstance()->getResource<Mesh>("Shapes/box");
-	if (!m_skyboxShader)
-		m_skyboxShader = ResourceManager::getInstance()->getResource<Shader>("skyboxRendering");
+	if (!m_skyboxMaterial)
+		m_skyboxMaterial = ResourceManager::getInstance()->getResource<Material>("skybox");
 	if (!m_atmosphericScattering)
 		m_atmosphericScattering = ResourceManager::getInstance()->getResource<Shader>("atmosphericScattering");
 }
@@ -676,12 +678,12 @@ void Renderer::computeOmniShadowProjection(LightComponent* light, int omniIndex)
 	vec4f z(0.f, 0.f, 1.f, 0.f);
 
 	m_OmniShadows.m_omniShadowLightNear[omniIndex] = n;
-	m_OmniShadows.m_shadowOmniProjections[6 * omniIndex]     = shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0));
-	m_OmniShadows.m_shadowOmniProjections[6 * omniIndex + 1] = shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(-1.0, 0.0, 0.0), glm::vec3(0.0, -1.0, 0.0));
-	m_OmniShadows.m_shadowOmniProjections[6 * omniIndex + 2] = shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0.0, 1.0, 0.0), glm::vec3(0.0, 0.0, 1.0));
-	m_OmniShadows.m_shadowOmniProjections[6 * omniIndex + 3] = shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0.0, -1.0, 0.0), glm::vec3(0.0, 0.0, -1.0));
-	m_OmniShadows.m_shadowOmniProjections[6 * omniIndex + 4] = shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0.0, 0.0, 1.0), glm::vec3(0.0, -1.0, 0.0));
-	m_OmniShadows.m_shadowOmniProjections[6 * omniIndex + 5] = shadowProj * glm::lookAt(lightPos, lightPos + glm::vec3(0.0, 0.0, -1.0), glm::vec3(0.0, -1.0, 0.0));
+	m_OmniShadows.m_shadowOmniProjections[6 * omniIndex]     = shadowProj * mat4f::lookAt(vec4f(1, 0, 0, 0), vec4f(0, -1, 0, 0));
+	m_OmniShadows.m_shadowOmniProjections[6 * omniIndex + 1] = shadowProj * mat4f::lookAt(vec4f(-1, 0, 0, 0), vec4f(0, -1, 0, 0));
+	m_OmniShadows.m_shadowOmniProjections[6 * omniIndex + 2] = shadowProj * mat4f::lookAt(vec4f(0, 1, 0, 0), vec4f(0, 0, 1, 0));
+	m_OmniShadows.m_shadowOmniProjections[6 * omniIndex + 3] = shadowProj * mat4f::lookAt(vec4f(0, -1, 0, 0), vec4f(0, 0, -1, 0));
+	m_OmniShadows.m_shadowOmniProjections[6 * omniIndex + 4] = shadowProj * mat4f::lookAt(vec4f(0, 0, 1, 0), vec4f(0, -1, 0, 0));
+	m_OmniShadows.m_shadowOmniProjections[6 * omniIndex + 5] = shadowProj * mat4f::lookAt(vec4f(0, 0, -1, 0), vec4f(0, -1, 0, 0));
 }
 
 void Renderer::render(CameraComponent* renderCam)
@@ -696,6 +698,7 @@ void Renderer::render(CameraComponent* renderCam)
 	shadowDrawCalls = 0;
 	occlusionCulledInstances = 0;
 	lastShader = nullptr;
+	m_bindedTextures.clear();
 	lastSkeleton = nullptr;
 	lastVAO = 0;
 	glBeginQuery(GL_TIME_ELAPSED, m_timerQueryID);
@@ -724,12 +727,11 @@ void Renderer::render(CameraComponent* renderCam)
 
 	//	draw grid
 	Shader* shader = defaultShader[GRID];
-	if (drawGrid && shader && glIsVertexArray(gridVAO))
+	if (m_drawGrid && shader && glIsVertexArray(gridVAO))
 	{
-		shader->enable();
 		ModelMatrix modelMatrix = {mat4f::identity, mat4f::identity };
-		loadInstanceMatrices(shader, (float*)&modelMatrix);
-		loadGlobalUniforms(shader);
+		bindMaterial(nullptr, shader);
+		loadMatrices(shader, (float*)&modelMatrix);
 		int loc = shader->getUniformLocation("overrideColor");
 		if (loc >= 0) glUniform4fv(loc, 1, &m_gridColor[0]);
 
@@ -758,15 +760,15 @@ void Renderer::render(CameraComponent* renderCam)
 		ShadowCasting();
 
 	//	sort
-	uint64_t compareMask = ~(TransparentMask | FaceCullingMask); // don't use the states bits for comparing entities
+	uint64_t compareMask = ~(TransparentMask | FaceCullingMask | CullingModeMask); // don't use the states bits for comparing entities
 	std::sort(renderQueue.begin(), renderQueue.end(), [compareMask](DrawElement& a, DrawElement& b)
 		{
 			return (compareMask & a.hash) < (compareMask & b.hash);
 		});
 
 	// batching
-	if (m_enableInstancing && m_hasInstancingShaders)
-		DynamicBatching();
+	if (m_enableInstancing)
+		CreateBatches(renderQueue, 0);
 
 	// state tracking
 	glDisable(GL_BLEND);
@@ -775,6 +777,7 @@ void Renderer::render(CameraComponent* renderCam)
 	glFrontFace(GL_CW);
 	bool blendingEnabled = false;
 	bool faceCullingEnabled = true;
+	bool clockwise = true;
 	const auto SetBlending = [&blendingEnabled](bool state)
 	{
 		if (!blendingEnabled && state)
@@ -783,19 +786,29 @@ void Renderer::render(CameraComponent* renderCam)
 			glDisable(GL_BLEND);
 		blendingEnabled = state;
 	};
-	const auto SetCulling = [&faceCullingEnabled](bool state)
+	const auto SetCulling = [&faceCullingEnabled, &clockwise](bool state, bool cw)
 	{
 		if (!faceCullingEnabled && state)
 			glEnable(GL_CULL_FACE);
 		else if (faceCullingEnabled && !state)
 			glDisable(GL_CULL_FACE);
 		faceCullingEnabled = state;
+
+		if (state)
+		{
+			if (cw && !clockwise)
+				glFrontFace(GL_CW);
+			else if (!cw && clockwise)
+				glFrontFace(GL_CCW);
+			clockwise = cw;
+		}
 	};
 
 	//	draw instance list
 	glViewport(0, 0, context->getViewportSize().x, context->getViewportSize().y);
 	{
 		SCOPED_CPU_MARKER("Drawing");
+		shadowCascadeMax = -1;
 
 		for (const auto& it : renderQueue)
 		{
@@ -805,32 +818,32 @@ void Renderer::render(CameraComponent* renderCam)
 
 			//	opengl states managing
 			SetBlending(it.hash & TransparentMask);
-			SetCulling(it.hash & FaceCullingMask);
+			SetCulling(it.hash & FaceCullingMask, it.hash & CullingModeMask);
 
 			if (it.batch)
-				drawInstancedObject(it.batch->shader, it.batch->mesh, (float*)it.batch->matrices.data(), it.batch->instanceDatas, 
+			{
+				drawInstancedObject(it.batch->material, it.batch->shader, it.batch->mesh, (float*)it.batch->matrices.data(), it.batch->instanceDatas,
 					it.batch->dataSize, it.batch->instanceCount, it.batch->constantDataReference);
+			}
 			else
-				drawObject(it.entity, it.shader);
+			{
+				drawObject(it.entity, it.material->getShader());
+			}
 		}
 	}
 
 	// background
-	if (m_skyboxMesh && m_skyboxTexture && m_skyboxShader)
+	if (m_skyboxMesh && m_skyboxTexture && m_skyboxMaterial)
 	{
 		float scale = 0.95f * farPlaneDistance / std::sqrtf(3);
 		mat4f m = scale * mat4f::identity;
 		m[3] = camera->getPosition();
 		Renderer::ModelMatrix modelMatrix = { m, m };
-		loadInstanceMatrices(m_skyboxShader, (float*)&modelMatrix);
-		loadGlobalUniforms(m_skyboxShader);
+		bindMaterial(m_skyboxMaterial, m_skyboxMaterial->getShader());
+		loadMatrices(m_skyboxMaterial->getShader(), (float*)&modelMatrix);
 
 		SetBlending(false);
-		SetCulling(true);
-		//glDisable(GL_BLEND);
-		//glEnable(GL_CULL_FACE);
-		//glCullFace(GL_BACK);
-		//glFrontFace(GL_CW);
+		SetCulling(true, true);
 		loadVAO(m_skyboxMesh->getVAO());
 		glDrawElements(GL_TRIANGLES, m_skyboxMesh->getNumberIndices(), m_skyboxMesh->getIndicesType(), NULL);
 
@@ -886,7 +899,8 @@ void Renderer::renderHUD()
 
 						mat4f m = mat4f::translate(model, (*it2)->getPosition());
 						ModelMatrix modelMatrix = { m, model };
-						loadInstanceMatrices(shader, (float*)&modelMatrix);
+						bindMaterial(nullptr, shader);
+						loadMatrices(shader, (float*)&modelMatrix);
 						if (!shader)
 							continue;
 
@@ -922,31 +936,185 @@ void Renderer::swap()
 
 
 //	Protected function
-void Renderer::loadInstanceMatrices(Shader* _shader, float* _instanceMatrices, unsigned short _instanceCount)
+void Renderer::bindMaterial(Material* _material, Shader* _shader)
 {
 	if (_shader)
 	{
-		shaderJustActivated = _shader != lastShader;
-		if (shaderJustActivated)
+		// bind program
+		if (_shader != lastShader)
 		{
-			_shader->enable();
+			glUseProgram(_shader->getProgram());
 			glBindVertexArray(0);
 			lastVAO = 0;
 			lastSkeleton = nullptr;
+			lastMaterial = nullptr;
+			m_bindedTextures.clear();
+			m_bindedMaxShadowCascade = -1;
+			m_bindedOmniLayer = -1;
+			shaderJustActivated = true;
 		}
-		lastShader = _shader;
 
-		if (_instanceMatrices)
+		if (_material && _material != lastMaterial)
 		{
-			int loc = _shader->getUniformLocation("matrixArray");
-			if (loc >= 0)
-				glUniformMatrix4fv(loc, 2 * _instanceCount, false, (const float*)_instanceMatrices);
+			// bind textures
+			const std::vector<Shader::TextureInfos>&  shaTextures = _shader->getTextures();
+			const std::vector<Texture*>& matTextures = _material->getTextures();
+			GF_ASSERT(shaTextures.size() == matTextures.size(), "Texture array missmatch in material");
+
+			for (int i = 0; i < shaTextures.size(); i++)
+			{
+				if (m_bindedTextures.size() <= i)
+					m_bindedTextures.push_back(nullptr);
+				
+				if (shaTextures[i].location < 0)
+				{
+					m_bindedTextures[i] = nullptr;
+					continue;
+				}
+
+				uint8_t unit = shaTextures[i].unit;
+				if (!shaTextures[i].isGlobalAttribute)
+				{
+					if (m_bindedTextures[i] != matTextures[i])
+					{
+						glActiveTexture(GL_TEXTURE0 + unit);
+						glBindTexture(GL_TEXTURE_2D, matTextures[i]->getTextureId());
+						m_bindedTextures[i] = matTextures[i];
+					}
+				}
+				else
+				{
+					std::string globalName = shaTextures[i].defaultResource;
+					if (globalName == "_globalLightClusters")
+					{
+						if (m_bindedTextures[i] != &m_lightClusterTexture)
+						{
+							glActiveTexture(GL_TEXTURE0 + unit);
+							glBindImageTexture(unit, m_lightClusterTexture.getTextureId(), 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32UI);
+							m_bindedTextures[i] = &m_lightClusterTexture;
+						}
+					}
+					else if (globalName == "_globalShadowCascades")
+					{
+						if (m_bindedTextures[i] != &shadowCascadeTexture)
+						{
+							glActiveTexture(GL_TEXTURE0 + unit);
+							glBindTexture(GL_TEXTURE_2D_ARRAY, shadowCascadeTexture.getTextureId());
+							m_bindedTextures[i] = &shadowCascadeTexture;
+						}
+					}
+					else if (globalName == "_globalOmniShadow")
+					{
+						if (m_bindedTextures[i] != &shadowOmniTextures)
+						{
+							glActiveTexture(GL_TEXTURE0 + unit);
+							glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, shadowOmniTextures.getTextureId());
+							m_bindedTextures[i] = &shadowOmniTextures;
+						}
+					}
+					else if (m_terrainVirtualTexture && globalName == "_terrainVirtualTexture")
+					{
+						if (m_bindedTextures[i] != (Texture*)m_terrainVirtualTexture)
+						{
+							glActiveTexture(GL_TEXTURE0 + unit);
+							glBindImageTexture(unit, m_terrainVirtualTexture->getTextureId(), 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA16UI);
+							m_bindedTextures[i] = (Texture*)m_terrainVirtualTexture;
+						}
+					}
+					else if (m_terrainMaterialCollection && globalName == "_globalTerrainMaterialCollection")
+					{
+						if (m_bindedTextures[i] != m_terrainMaterialCollection)
+						{
+							glActiveTexture(GL_TEXTURE0 + unit);
+							glBindTexture(GL_TEXTURE_2D_ARRAY, m_terrainMaterialCollection->getTextureId());
+							m_bindedTextures[i] = m_terrainMaterialCollection;
+						}
+					}
+					else if (m_skyboxTexture && globalName == "_globalSkybox")
+					{
+						if (m_bindedTextures[i] != m_skyboxTexture)
+						{
+							glActiveTexture(GL_TEXTURE0 + unit);
+							glBindTexture(GL_TEXTURE_CUBE_MAP, m_skyboxTexture->getTextureId());
+							m_bindedTextures[i] = m_skyboxTexture;
+						}
+					}
+				}
+			}
+
+			// load uniforms
+			if (shadowOmniLayerUniform >= 0 && m_bindedOmniLayer != shadowOmniLayerUniform)
+			{
+				int loc = _shader->getUniformLocation("shadowOmniLayerUniform");
+				if (loc >= 0)
+					glUniform1i(loc, shadowOmniLayerUniform);
+				m_bindedOmniLayer = shadowOmniLayerUniform;
+			}
+
+			int maxCascade = _material->getMaxShadowCascade();
+			if (maxCascade >= 0 && m_bindedMaxShadowCascade != maxCascade)
+			{
+				int loc = _shader->getUniformLocation("shadowCascadeMax");
+				if (loc >= 0)
+					glUniform1i(loc, maxCascade);
+				m_bindedMaxShadowCascade = maxCascade;
+			}
+
+			using ptype = Shader::Property::PropertyType;
+			const std::vector<Shader::Property>& properties = _material->getProperties();
+			for (const Shader::Property& property : properties)
+			{
+				int loc = _shader->getUniformLocation(property.m_name);
+				if (loc >= 0)
+				{
+					switch (property.m_type)
+					{
+						case ptype::eFloat:
+							glUniform1f(loc, property.m_floatValues.x);
+							break;
+						case ptype::eInteger:
+							glUniform1i(loc, property.m_integerValues.x);
+							break;
+						case ptype::eIntegerVector:
+							glUniform4iv(loc, 1, &property.m_integerValues.x);
+							break;
+						case ptype::eColor:
+						case ptype::eFloatVector:
+							glUniform4fv(loc, 1, &property.m_floatValues.x);
+							break;
+					}
+				}
+			}
+
+			lastMaterial = _material;
+		}
+		else if (!_material)
+		{
+			lastMaterial = nullptr;
+			m_bindedTextures.clear();
+			m_bindedMaxShadowCascade = -1;
+			m_bindedOmniLayer = -1;
 		}
 	}
 	else
 	{
 		shaderJustActivated = false;
-		lastShader = nullptr;
+		lastShader = nullptr; 
+		lastMaterial = nullptr;
+		lastSkeleton = nullptr;
+		lastVAO = 0;
+		m_bindedTextures.clear();
+		m_bindedMaxShadowCascade = -1;
+		m_bindedOmniLayer = -1;
+	}
+}
+void Renderer::loadMatrices(Shader* _shader, float* _instanceMatrices, unsigned short _instanceCount)
+{
+	if (_shader && _instanceMatrices)
+	{
+		int loc = _shader->getUniformLocation("matrixArray");
+		if (loc >= 0)
+			glUniformMatrix4fv(loc, 2 * _instanceCount, false, (const float*)_instanceMatrices);
 	}
 }
 void Renderer::loadInstanceDatas(Shader* _shader, vec4f* _instanceDatas, unsigned short _dataSize, unsigned short _instanceCount)
@@ -1032,20 +1200,26 @@ void Renderer::loadGlobalUniforms(Shader* shader)
 						return false;
 					switch (error)
 					{
-					case GL_INVALID_ENUM: std::cout << textureName << " : " << label << " : GL_INVALID_ENUM" << std::endl; break;
-					case GL_INVALID_VALUE: std::cout << textureName << " : " << label << " : GL_INVALID_VALUE" << std::endl; break;
-					case GL_INVALID_OPERATION: std::cout << textureName << " : " << label << " : GL_INVALID_OPERATION" << std::endl; break;
-					case GL_INVALID_FRAMEBUFFER_OPERATION: std::cout << textureName << " : " << label << " : GL_INVALID_FRAMEBUFFER_OPERATION" << std::endl; break;
-					case GL_OUT_OF_MEMORY: std::cout << textureName << " : " << label << " : GL_OUT_OF_MEMORY" << std::endl; break;
-					case GL_STACK_UNDERFLOW: std::cout << textureName << " : " << label << " : GL_STACK_UNDERFLOW" << std::endl; break;
-					case GL_STACK_OVERFLOW: std::cout << textureName << " : " << label << " : GL_STACK_OVERFLOW" << std::endl; break;
-					default: break;
+						case GL_INVALID_ENUM: std::cout << textureName << " : " << label << " : GL_INVALID_ENUM" << std::endl; break;
+						case GL_INVALID_VALUE: std::cout << textureName << " : " << label << " : GL_INVALID_VALUE" << std::endl; break;
+						case GL_INVALID_OPERATION: std::cout << textureName << " : " << label << " : GL_INVALID_OPERATION" << std::endl; break;
+						case GL_INVALID_FRAMEBUFFER_OPERATION: std::cout << textureName << " : " << label << " : GL_INVALID_FRAMEBUFFER_OPERATION" << std::endl; break;
+						case GL_OUT_OF_MEMORY: std::cout << textureName << " : " << label << " : GL_OUT_OF_MEMORY" << std::endl; break;
+						case GL_STACK_UNDERFLOW: std::cout << textureName << " : " << label << " : GL_STACK_UNDERFLOW" << std::endl; break;
+						case GL_STACK_OVERFLOW: std::cout << textureName << " : " << label << " : GL_STACK_OVERFLOW" << std::endl; break;
+						default: break;
 					}
 					return error != GL_NO_ERROR;
 				};
 				CheckError("glBindTexture");
 			}
 		}
+	}
+	if (shadowCascadeMax >= 0)
+	{
+		int loc = shader->getUniformLocation("shadowCascadeMax");
+		if (loc >= 0)
+			glUniform1i(loc, shadowCascadeMax);
 	}
 }
 void Renderer::loadVAO(const GLuint& vao)
@@ -1078,7 +1252,7 @@ void Renderer::setShader(ShaderIdentifier id, Shader* s)
 			defaultShader[INSTANCE_DRAWABLE_BB] = defaultShader[DEFAULT]->getVariant(Shader::computeVariantCode(false, 0, true));
 	}
 }
-void Renderer::setGridVisible(bool enable) { drawGrid = enable; }
+void Renderer::setGridVisible(bool enable) { m_drawGrid = enable; }
 void Renderer::setRenderOption(const RenderOption& option) { renderOption = option; }
 
 
@@ -1091,7 +1265,7 @@ Shader* Renderer::getShader(ShaderIdentifier id)
 	if (it != defaultShader.end()) return defaultShader[id];
 	else return nullptr;
 }
-bool Renderer::isGridVisible() { return drawGrid; }
+bool Renderer::isGridVisible() { return m_drawGrid; }
 unsigned int Renderer::getNbDrawnInstances() const { return instanceDrawn; }
 unsigned int Renderer::getNbDrawCalls() const { return drawCalls; }
 unsigned int Renderer::getNbDrawnTriangles() const { return trianglesDrawn; }
@@ -1153,6 +1327,8 @@ void Renderer::drawImGui(World& world)
 	ImGui::Spacing();
 	ImGui::TextColored(titleColor, "Rendering parameters");
 	ImGui::Checkbox("Instancing enabled", &m_enableInstancing);
+	ImGui::SliderFloat("Far distance", &m_frustrumFar, 10.f, 1000.f);
+	ImGui::SliderInt("m_queryMaxDepth", &m_queryMaxDepth, 1, 10);
 	if (ImGui::BeginCombo("Render option", renderOptionPreviewValue))
 	{
 		for (int n = 0; n < IM_ARRAYSIZE(renderOptions); n++)
@@ -1188,7 +1364,7 @@ void Renderer::drawImGui(World& world)
 	ImGui::Checkbox("Occlusion culling", &m_enableOcclusionCulling);
 	ImGui::Checkbox("Draw light clusters", &m_drawClusters);
 	ImGui::Checkbox("Draw occlusion buffer", &m_drawOcclusionBuffer);
-	ImGui::Checkbox("Draw grid", &drawGrid);
+	ImGui::Checkbox("Draw grid", &m_drawGrid);
 
 	if (!m_drawOcclusionBuffer)
 	{
@@ -1207,7 +1383,7 @@ void Renderer::drawImGui(World& world)
 
 
 	ImGui::TextColored(titleColor, "Shadows");
-	CheckboxFlag("Shadow cascades", m_sceneLights.m_shadingConfiguration, eUseShadow);
+	CheckboxFlag("Use shadow", m_sceneLights.m_shadingConfiguration, eUseShadow);
 	if (!(m_sceneLights.m_shadingConfiguration & (1 << eUseShadow)))
 	{
 		ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);

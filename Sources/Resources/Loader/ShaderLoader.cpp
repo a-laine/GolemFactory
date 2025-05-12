@@ -44,6 +44,7 @@ bool ShaderLoader::load(const std::string& resourceDirectory, const std::string&
 	//  Initialization
     const uint16_t transparentBit = 1 << 15;
     const uint16_t faceCullingBit = 1 << 14;
+    const uint16_t cullingModeBit = 1 << 13;
 
     clear();
     std::string fullFileName = getFileName(resourceDirectory, fileName);
@@ -349,7 +350,7 @@ bool ShaderLoader::load(const std::string& resourceDirectory, const std::string&
     auto textureVariant = shaderMap.getMap().find("textures");
     if (textureVariant != shaderMap.getMap().end())
     {
-        if (textureVariant->second.getType() == Variant::ARRAY || textureVariant->second.getArray().size() <= 0)
+        if (textureVariant->second.getType() == Variant::ARRAY && textureVariant->second.getArray().size() > 0)
         {
             auto& textureArray = textureVariant->second.getArray();
             bool hasError = false;
@@ -374,6 +375,109 @@ bool ShaderLoader::load(const std::string& resourceDirectory, const std::string&
         }
         else PrintError(fileName.c_str(), "Texture field is not a valid array (or is empty)");
     }
+
+    auto propertiesVariant = shaderMap.getMap().find("properties");
+    if (propertiesVariant != shaderMap.getMap().end())
+    {
+        if (propertiesVariant->second.getType() == Variant::ARRAY && propertiesVariant->second.getArray().size() > 0)
+        {
+            using ptype = Shader::Property::PropertyType;
+            auto& propertiesArray = propertiesVariant->second.getArray();
+            bool hasError = false;
+            for (auto it2 = propertiesArray.begin(); it2 != propertiesArray.end(); it2++)
+            {
+                if (it2->getType() == Variant::MAP)
+                {
+                    auto nameVariant = it2->getMap().find("name");
+                    auto typeVariant = it2->getMap().find("type");
+                    auto defaultVariant = it2->getMap().find("default");
+
+                    if (nameVariant != it2->getMap().end() && typeVariant != it2->getMap().end() && defaultVariant != it2->getMap().end() &&
+                        nameVariant->second.getType() == Variant::STRING && typeVariant->second.getType() == Variant::STRING)
+                    {
+                        Shader::Property property;
+                        property.m_name = nameVariant->second.toString();
+                        std::string typestr = typeVariant->second.toString();
+                        bool properror = false;
+
+                        if (typestr == "int")
+                        {
+                            property.m_type = ptype::eInteger;
+                            property.m_floatValues = vec4f::zero;
+                            if (defaultVariant->second.getType() == Variant::INT)
+                                property.m_integerValues = vec4i(defaultVariant->second.toInt(), 0, 0, 0);
+                            else properror = true;
+                        }
+                        else if (typestr == "ivec4")
+                        {
+                            property.m_type = ptype::eIntegerVector;
+                            property.m_floatValues = vec4f::zero;
+                            property.m_integerValues = vec4i::zero;
+                            if (defaultVariant->second.getType() == Variant::ARRAY)
+                            {
+                                auto& varray = defaultVariant->second.getArray();
+                                for (int i = 0; i < 4 && i < varray.size(); i++)
+                                {
+                                    auto& element = varray[i];
+                                    if (element.getType() == Variant::INT)
+                                        property.m_floatValues[i] = (float)element.toInt();
+                                    else properror = true;
+                                }
+                            }
+                            else properror = true;
+                        }
+                        else if (typestr == "float")
+                        {
+                            property.m_type = ptype::eFloat;
+                            property.m_integerValues = vec4i::zero;
+                            if (defaultVariant->second.getType() == Variant::INT)
+                                property.m_floatValues = vec4f(defaultVariant->second.toInt(), 0, 0, 0);
+                            else if (defaultVariant->second.getType() == Variant::FLOAT)
+                                property.m_floatValues = vec4f(defaultVariant->second.toFloat(), 0, 0, 0);
+                            else if (defaultVariant->second.getType() == Variant::DOUBLE)
+                                property.m_floatValues = vec4f(defaultVariant->second.toDouble(), 0, 0, 0);
+                            else properror = true;
+                        }
+                        else if (typestr == "vec4" || typestr == "color")
+                        {
+                            property.m_type = typestr == "vec4" ? ptype::eFloatVector : ptype::eColor;
+                            property.m_integerValues = vec4i::zero;
+                            property.m_floatValues = vec4f::zero;
+                            if (defaultVariant->second.getType() == Variant::ARRAY)
+                            {
+                                auto& varray = defaultVariant->second.getArray();
+                                for (int i = 0; i < 4 && i < varray.size(); i++)
+                                {
+                                    auto& element = varray[i];
+                                    if (element.getType() == Variant::FLOAT)
+                                        property.m_floatValues[i] = element.toFloat();
+                                    else if (element.getType() == Variant::DOUBLE)
+                                        property.m_floatValues[i] = (float)element.toDouble();
+                                    else if (element.getType() == Variant::INT)
+                                        property.m_floatValues[i] = (float)element.toInt();
+                                    else properror = true;
+                                }
+                            }
+                            else properror = true;
+                        }
+                        else properror = true;
+
+                        if (!properror)
+                        {
+                            m_properties.push_back(property);
+                        }
+                        else
+                        {
+                            std::string msg = "Property (" + property.m_name + ") parsing error";
+                            PrintWarning(fileName.c_str(), msg.c_str());
+                            hasError = true;
+                        }
+                    }
+                    else hasError = true;
+                }
+            }
+        }
+    }
     
     if (isComputeShader)
         return glIsProgram(computeProgram);
@@ -395,6 +499,7 @@ void ShaderLoader::initialize(ResourceVirtual* resource)
         baseShader->initialize(base.vertexShader, base.fragmentShader, base.geometricShader, base.tessControlShader, base.tessEvalShader, base.program,
             attributesType, textures, renderQueue);
         baseShader->m_usePeterPanning = usePeterPanning;
+        baseShader->m_properties.swap(m_properties);
 
         for (int i = 1; i < shaderVariants.size(); i++)
         {
@@ -412,9 +517,6 @@ void ShaderLoader::initialize(ResourceVirtual* resource)
         }
     }
 }
-
-void ShaderLoader::getResourcesToRegister(std::vector<ResourceVirtual*>& resourceList)
-{}
 
 std::string ShaderLoader::getFileName(const std::string& resourceDirectory, const std::string& fileName)
 {
@@ -437,7 +539,7 @@ void ShaderLoader::clear()
     isComputeShader = false;
     attributesType.clear();
     textures.clear();
-    textureResources.clear();
+    m_properties.clear();
     includes.clear();
     shaderVariants.clear();
     vertexPragmas.clear();

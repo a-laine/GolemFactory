@@ -150,9 +150,6 @@ void FontLoader::initialize(ResourceVirtual* resource)
     ImageLoader::freeImage(image);
 }
 
-void FontLoader::getResourcesToRegister(std::vector<ResourceVirtual*>& resourceList)
-{}
-
 std::string FontLoader::getFileName(const std::string& resourceDirectory, const std::string& fileName) const
 {
     std::string str = resourceDirectory;

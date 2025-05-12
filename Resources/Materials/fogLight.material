@@ -1,0 +1,10 @@
+{
+	"shaderName" : "fog",
+	"properties" : [
+		{
+			"name" : "tintColor",
+			"type" : "color",
+			"default" : [ 0.5 , 1.0 , 1.0 , 0.4 ]
+		}
+	]
+}

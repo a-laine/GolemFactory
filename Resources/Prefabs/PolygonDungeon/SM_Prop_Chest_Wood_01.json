@@ -1,7 +1,7 @@
 {
     "drawableComponent": {
         "meshName": "PolygonDungeon/SM_Prop_Chest_Wood_01",
-        "shaderName": "defaultTextured"
+        "materialName" : "dungeon01"
     },
     "prefabEntities": [
         {
@@ -23,7 +23,7 @@
             "childs": [],
             "drawableComponent": {
                 "meshName": "PolygonDungeon/SM_Prop_Chest_Wood_Lid",
-                "shaderName": "defaultTextured"
+                "materialName" : "dungeon01"
             }
         }
     ]

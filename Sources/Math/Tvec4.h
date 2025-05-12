@@ -48,6 +48,7 @@ class Tvec4
 		operator Tvec3<T>() const { return Tvec3<T>(x, y, z); }
 		operator Tvec2<T>() const { return Tvec2<T>(x, y); }
 		Tvec3<T> xyz() const { return Tvec3<T>(x, y, z); }
+		operator Tvec3<T>() { return Tvec3<T>(x, y, z); }
 
 		// operator
 		Tvec4 operator-() const;
@@ -85,6 +86,7 @@ class Tvec4
 		static Tvec4<bool> greaterThan(const Tvec4& a, const Tvec4& b);
 		static bool any(const Tvec4& b);
 		static Tvec4 clamp(const Tvec4& a, const Tvec4& min, const Tvec4& max);
+		static Tvec4 maskSelect(const Tvec4<bool>& mask, const Tvec4& a, const Tvec4& b);
 };
 
-#include "Tvec4.hpp"
+//#include "Tvec4.hpp"

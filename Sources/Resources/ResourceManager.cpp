@@ -34,9 +34,9 @@ void ResourceManager::release(ResourceVirtual* resource)
 {
     //	prevent fail & decrement resources user counter
     if(!resource)  return;
-	resource->count--;
+	unsigned int previous = resource->count--;
 
-	if (resource->count <= 0)
+	if (previous == 1)
     {
 		//	remove resource from avalaible ressources lists
         mutexList.lock();
@@ -116,14 +116,6 @@ void ResourceManager::loadResource_internal(ResourceVirtual* resource, const std
         return;
 
     loader->initialize(resource);
-
-    std::vector<ResourceVirtual*> extraResources;
-    loader->getResourcesToRegister(extraResources);
-    for(ResourceVirtual* res : extraResources)
-    {
-        if(!addResource_internal(res))
-            delete res;
-    }
 }
 bool ResourceManager::addResource_internal(ResourceVirtual* resource)
 {

@@ -59,8 +59,6 @@ void MeshLoader::initialize(ResourceVirtual* resource)
     mesh->initialize(std::move(vertices), std::move(normals), std::move(uvs), std::move(faces), std::move(bones), std::move(weights));
 }
 
-void MeshLoader::getResourcesToRegister(std::vector<ResourceVirtual*>& resourceList)
-{}
 
 std::string MeshLoader::getFileName(const std::string& resourceDirectory, const std::string& fileName) const
 {

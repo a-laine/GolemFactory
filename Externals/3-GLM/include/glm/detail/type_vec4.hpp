@@ -353,6 +353,7 @@ namespace detail
 		T getNorm2() const;
 		tvec4<T, P> getNormal() const;
 		void normalize();
+		tvec3<T, P> xyz() const;
 
 		static T dot(const tvec4<T, P>& a, const tvec4<T, P>& b);
 		static tvec4<T, P> cross(const tvec4<T, P>& a, const tvec4<T, P>& b);

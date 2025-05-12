@@ -197,7 +197,7 @@ void Collider::onDrawImGui()
 						constexpr float floatMax = std::numeric_limits<float>::max();
 						OrientedBox* box = static_cast<OrientedBox*>(m_shape);
 						vec4f position = box->base[3];
-						vec3f euler = (float)RAD2DEG * glm::eulerAngles(quatf(box->base));
+						vec3f euler = (float)RAD2DEG * quatf::eulerAngles(box->base.extractRotation());
 						edited |= ImGui::DragFloat3("Local position", &position[0], 0.01f, -floatMax, floatMax, "%.3f");
 						edited |= ImGui::DragFloat3("Local orientation", &euler[0], 0.1f, -180.f, 180.f, "%.3f");
 						if (edited)
@@ -248,7 +248,7 @@ void Collider::drawDebug(vec4f color, bool wired) const
 	{
 		Debug::color = color;
 		mat4f transform = getParentEntity()->getWorldTransformMatrix();
-		float scale = getParentEntity()->getWorldScale();
+		vec4f scale = getParentEntity()->getWorldScale();
 		switch (m_shape->type)
 		{
 			case Shape::ShapeType::POINT:
@@ -277,10 +277,11 @@ void Collider::drawDebug(vec4f color, bool wired) const
 			case Shape::ShapeType::SPHERE:
 				{
 					const Sphere* sphere = static_cast<const Sphere*>(m_shape);
+					float s = std::max(scale.x, std::max(scale.y, scale.z));
 					if (wired)
-						Debug::drawWiredSphere(transform * sphere->center, scale * sphere->radius);
+						Debug::drawWiredSphere(transform * sphere->center, s * sphere->radius);
 					else
-						Debug::drawSphere(transform * sphere->center, scale * sphere->radius);
+						Debug::drawSphere(transform * sphere->center, s * sphere->radius);
 				}
 				break;
 			case Shape::ShapeType::AXIS_ALIGNED_BOX:
@@ -312,10 +313,11 @@ void Collider::drawDebug(vec4f color, bool wired) const
 			case Shape::ShapeType::CAPSULE:
 				{
 					const Capsule* capsule = static_cast<const Capsule*>(m_shape);
+					float s = std::max(scale.x, std::max(scale.y, scale.z));
 					if (wired)
-						Debug::drawLineCapsule(transform * capsule->p1, transform * capsule->p2, scale * capsule->radius);
+						Debug::drawLineCapsule(transform * capsule->p1, transform * capsule->p2, s * capsule->radius);
 					else
-						Debug::drawCapsule(transform * capsule->p1, transform * capsule->p2, scale * capsule->radius);
+						Debug::drawCapsule(transform * capsule->p1, transform * capsule->p2, s * capsule->radius);
 				}
 				break;
 			case Shape::ShapeType::HULL:

@@ -29,26 +29,26 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -103,6 +103,9 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <WarningVersion>
+      </WarningVersion>
+      <AdditionalOptions>/w44244 /w44267 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -120,6 +123,9 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <WarningVersion>
+      </WarningVersion>
+      <AdditionalOptions>/w44244 /w44267 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -137,6 +143,9 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <WarningVersion>
+      </WarningVersion>
+      <AdditionalOptions>/w44244 /w44267 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -157,6 +166,9 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <WarningVersion>
+      </WarningVersion>
+      <AdditionalOptions>/w44244 /w44267 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -248,6 +260,7 @@
     <ClCompile Include="..\..\Sources\Resources\Loader\AssimpLoader.cpp" />
     <ClCompile Include="..\..\Sources\Resources\Loader\FontLoader.cpp" />
     <ClCompile Include="..\..\Sources\Resources\Loader\ImageLoader.cpp" />
+    <ClCompile Include="..\..\Sources\Resources\Loader\MaterialLoader.cpp" />
     <ClCompile Include="..\..\Sources\Resources\Loader\MeshLoader.cpp" />
     <ClCompile Include="..\..\Sources\Resources\Loader\MeshSaver.cpp" />
     <ClCompile Include="..\..\Sources\Resources\Loader\ShaderLoader.cpp" />
@@ -255,6 +268,7 @@
     <ClCompile Include="..\..\Sources\Resources\Loader\SkeletonSaver.cpp" />
     <ClCompile Include="..\..\Sources\Resources\Loader\TextureLoader.cpp" />
     <ClCompile Include="..\..\Sources\Resources\Loader\TextureSaver.cpp" />
+    <ClCompile Include="..\..\Sources\Resources\Material.cpp" />
     <ClCompile Include="..\..\Sources\Resources\Mesh.cpp" />
     <ClCompile Include="..\..\Sources\Resources\ResourceManager.cpp" />
     <ClCompile Include="..\..\Sources\Resources\ResourceVirtual.cpp" />
@@ -388,6 +402,7 @@
     <ClInclude Include="..\..\Sources\Resources\Loader\AssimpLoader.h" />
     <ClInclude Include="..\..\Sources\Resources\Loader\FontLoader.h" />
     <ClInclude Include="..\..\Sources\Resources\Loader\ImageLoader.h" />
+    <ClInclude Include="..\..\Sources\Resources\Loader\MaterialLoader.h" />
     <ClInclude Include="..\..\Sources\Resources\Loader\MeshLoader.h" />
     <ClInclude Include="..\..\Sources\Resources\Loader\MeshSaver.h" />
     <ClInclude Include="..\..\Sources\Resources\Loader\ShaderLoader.h" />
@@ -397,7 +412,9 @@
     <ClInclude Include="..\..\Sources\Resources\Loader\stb_image_write.h" />
     <ClInclude Include="..\..\Sources\Resources\Loader\TextureLoader.h" />
     <ClInclude Include="..\..\Sources\Resources\Loader\TextureSaver.h" />
+    <ClInclude Include="..\..\Sources\Resources\Material.h" />
     <ClInclude Include="..\..\Sources\Resources\Mesh.h" />
+    <ClInclude Include="..\..\Sources\Resources\ResourceIncludes.h" />
     <ClInclude Include="..\..\Sources\Resources\ResourceManager.h" />
     <ClInclude Include="..\..\Sources\Resources\ResourceVirtual.h" />
     <ClInclude Include="..\..\Sources\Resources\Shader.h" />

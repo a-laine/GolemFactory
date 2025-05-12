@@ -62,6 +62,7 @@ class NodeVirtual
 		vec4f getPosition() const;
 		const float& getAllowanceSize() const;
 		vec3i getDivision() const;
+		int getDepth() const;
 		//
 		
 		//	Hierarchy related function
@@ -95,6 +96,7 @@ class NodeVirtual
 
 		//AxisAlignedBox boundingBox;
 		NodeVirtual* m_parent;
+		unsigned int m_depth;
 		vec4f inflatedHalfSize;
 		float allowanceSize;
 		vec3i division;

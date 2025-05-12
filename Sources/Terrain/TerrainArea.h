@@ -7,6 +7,7 @@
 
 class Terrain;
 class Entity;
+class Mesh;
 
 class TerrainArea
 {
@@ -20,8 +21,12 @@ class TerrainArea
 
 		// Public methods
 		void generate(const std::string& directory);
-		Entity* addDetailsInstance(const std::string& meshName, float density, vec2f probability, vec2f scaleRange, float worldNormalWeight, float modelOffset);
+		std::vector<vec4ui> generateDetails(float density, vec2f probability, vec2f scaleRange, const std::vector<int>& allowedMaterials, const uint64_t* dataPtr = nullptr);
+		Entity* addDetailsInstance(const std::string& meshName, float density, const std::vector<int>& allowedMaterials, vec2f probability, vec2f scaleRange, float worldNormalWeight, float modelOffset);
+		Entity* addDetailsInstance(Mesh* mesh, int identifier, float worldNormalWeight, float modelOffset);
 		void setLod(int lod);
+		void loadInstanceData();
+		void unloadInstanceData();
 		int getLod();
 		std::string getNameFromIndex() const;
 		vec4f getCenter() const;
@@ -38,6 +43,7 @@ class TerrainArea
 		static float g_noiseCurve[];
 		static float g_heightAmplitude;
 		static float g_seeLevel;
+		static float g_snowLevel;
 		static float g_erosion;
 		static int g_seed;
 
@@ -55,6 +61,14 @@ class TerrainArea
 		std::vector<TerrainVirtualTexture::TextureTile> m_tiles;
 
 		Entity* m_entity;
+
+		struct Details
+		{
+			std::string m_name;
+			int m_lod;
+			std::vector<Entity*> m_detailEntities;
+		};
+		std::vector<Details> m_details;
 		//
 
 		struct MapData
@@ -72,4 +86,12 @@ class TerrainArea
 			uint64_t octahedralPack(vec4f n, int bits);
 			vec4f octahedralUnpack(uint64_t n, int bits);
 		};
+		struct DetailInstanceDataHeader
+		{
+			int m_arrayCount;
+			std::vector<int> m_arrayIdentifier;
+			std::vector<int> m_arraySizes;
+		};
+		DetailInstanceDataHeader m_instanceHeader;
+		std::vector<std::vector<vec4ui>> m_instanceDatas;
 };

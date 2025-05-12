@@ -57,8 +57,10 @@ class Tvec3
 
 		//math
 		static T dot(const Tvec3& a, const Tvec3& b);
+		static Tvec3 min(const Tvec3& a, const Tvec3& b);
+		static Tvec3 max(const Tvec3& a, const Tvec3& b);
 		static Tvec3 cross(const Tvec3& a, const Tvec3& b);
 		static Tvec3 lerp(const Tvec3& a, const Tvec3& b, const T& t);
 };
 
-#include "Tvec3.hpp"
+//#include "Tvec3.hpp"

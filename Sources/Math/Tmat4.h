@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Tquat.h"
+#include "Tmat3.h"
 
 template<typename T>
 class Tmat4
@@ -43,27 +43,59 @@ class Tmat4
 
 		template<typename T2>
 		Tmat4(const Tquat<T2>& q) {
-			m[0][0] = 1 - 2 * (q.y * q.y - q.z * q.z);
+
+			/*tmat3x3<T, P> Result(T(1));
+			T qxx(q.x * q.x);
+			T qyy(q.y * q.y);
+			T qzz(q.z * q.z);
+			T qxz(q.x * q.z);
+			T qxy(q.x * q.y);
+			T qyz(q.y * q.z);
+			T qwx(q.w * q.x);
+			T qwy(q.w * q.y);
+			T qwz(q.w * q.z);
+
+			Result[0][0] = 1 - 2 * (qyy + qzz);
+			Result[0][1] = 2 * (qxy + qwz);
+			Result[0][2] = 2 * (qxz - qwy);
+
+			Result[1][0] = 2 * (qxy - qwz);
+			Result[1][1] = 1 - 2 * (qxx + qzz);
+			Result[1][2] = 2 * (qyz + qwx);
+
+			Result[2][0] = 2 * (qxz + qwy);
+			Result[2][1] = 2 * (qyz - qwx);
+			Result[2][2] = 1 - 2 * (qxx + qyy);
+			return Result;*/
+			m[0][0] = 1 - 2 * (q.y * q.y + q.z * q.z);
 			m[0][1] = 2 * (q.x * q.y + q.z * q.w);
 			m[0][2] = 2 * (q.x * q.z - q.y * q.w);
 			m[0][3] = 0;
 
 			m[1][0] = 2 * (q.x * q.y - q.z * q.w);
-			m[1][1] = 1 - 2 * (q.x * q.x - q.z * q.z);
+			m[1][1] = 1 - 2 * (q.x * q.x + q.z * q.z);
 			m[1][2] = 2 * (q.y * q.z + q.x * q.w);
 			m[1][3] = 0;
 
-			m[1][0] = 2 * (q.x * q.z + q.y * q.w);
-			m[1][1] = 2 * (q.y * q.z - q.x * q.w);
-			m[1][2] = 1 - 2 * (q.x * q.x - q.y * q.y);
-			m[1][3] = 0;
+			m[2][0] = 2 * (q.x * q.z + q.y * q.w);
+			m[2][1] = 2 * (q.y * q.z - q.x * q.w);
+			m[2][2] = 1 - 2 * (q.x * q.x + q.y * q.y);
+			m[2][3] = 0;
 
-			m[1][0] = 0;
-			m[1][1] = 0;
-			m[1][2] = 0;
-			m[1][3] = 1;
+			m[3][0] = 0;
+			m[3][1] = 0;
+			m[3][2] = 0;
+			m[3][3] = 1;
 		}
 
+		template<typename T2>
+		Tmat4(const Tvec4<T2>& c0, const Tvec4<T2>& c1, const Tvec4<T2>& c2, const Tvec4<T2>& c3)
+		{
+			c[0] = c0;
+			c[1] = c1;
+			c[2] = c2;
+			c[3] = c3;
+		}
 
 		// component access
 		Tvec4<T>& operator[](int i) { return c[i]; }
@@ -97,4 +129,4 @@ class Tmat4
 		static Tmat4 eulerAngleZX(T z, T x);
 };
 
-#include "Tmat4.hpp"
+//#include "Tmat4.hpp"

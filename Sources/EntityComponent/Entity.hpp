@@ -47,13 +47,13 @@ class Entity : public EntityBase
 
 		//	Set/Get functions
 		void setWorldPosition(const vec4f& position);
-		void setWorldScale(const float& scale);
+		void setWorldScale(const vec4f& scale);
 		void setWorldOrientation(const quatf& orientation);
-		void setWorldTransformation(const vec4f& position, const float& scale, const quatf& orientation);
+		void setWorldTransformation(const vec4f& position, const vec4f& scale, const quatf& orientation);
 		void setLocalPosition(const vec4f& position);
-		void setLocalScale(const float& scale);
+		void setLocalScale(const vec4f& scale);
 		void setLocalOrientation(const quatf& orientation);
-		void setLocalTransformation(const vec4f& position, const float& scale, const quatf& orientation);
+		void setLocalTransformation(const vec4f& position, const vec4f& scale, const quatf& orientation);
 		void touchTransform();
 		void setParentWorld(World* parentWorld);
 		void setName(const std::string& _name);
@@ -68,10 +68,10 @@ class Entity : public EntityBase
 		const mat4f& getNormalMatrix();
 		const mat4f& getInverseWorldTransformMatrix();
 		vec4f getWorldPosition() const;
-		float getWorldScale() const;
+		vec4f getWorldScale() const;
 		quatf getWorldOrientation() const;
 		vec4f getLocalPosition() const;
-		float getLocalScale() const;
+		vec4f getLocalScale() const;
 		quatf getLocalOrientation() const;
 		World* getParentWorld() const;
 		std::string getName() const;
@@ -81,7 +81,7 @@ class Entity : public EntityBase
 
 		//	Hierarchy
 		void addChild(Entity* child, bool incOwnership = false);
-		void removeChild(Entity* child);
+		void removeChild(Entity* child, bool removeFromSceneToo);
 		void removeAllChild(bool removeFromSceneToo);
 		void recursiveHierarchyCollect(std::vector<Entity*>& collection);
 
@@ -109,10 +109,10 @@ class Entity : public EntityBase
 
 		//	Attributes
 		World* m_parentWorld;
-		std::atomic<uint32_t> m_refCount;
+		std::atomic_uint m_refCount;
 		vec4f m_worldPosition, m_localPosition;
 		quatf m_worldOrientation, m_localOrientation;
-		float m_worldScale, m_localScale;
+		vec4f m_worldScale, m_localScale;
 		bool m_transformIsDirty;
 		mat4f m_transform;
 		mat4f m_normalMatrix;

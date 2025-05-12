@@ -154,7 +154,7 @@ namespace glm
 
 		static tquat<T, P> lookAt(const tvec4<T, P>& forward, tvec4<T, P> up = tvec4<T, P>(0, 1, 0, 0));
 		static tquat<T, P> slerp(const tquat<T, P>& a, const tquat<T, P>& b, const T& t);
-
+		static tvec3<T, P> eulerAngles(const tquat<T, P>& q);
 		static tquat<T, P> identity;
 	};
 

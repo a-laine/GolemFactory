@@ -9,7 +9,7 @@
 
 class TerrainArea;
 class TerrainVirtualTexture
-{
+{ 
 	public:
 		// Structures
 		struct TextureTile
