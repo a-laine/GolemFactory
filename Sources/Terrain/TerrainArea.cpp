@@ -7,6 +7,7 @@
 #include <random>
 #include <Utiles/Assert.hpp>
 #include <Resources/ResourceManager.h>
+#include <Physics/Collision.h>
 
 thread_local std::default_random_engine g_randomGenerator;
 
@@ -57,7 +58,7 @@ void TerrainArea::generate(const std::string& directory)
 	{
 		float height = -g_seeLevel;
 		vec2f derivative = vec2f(0);
-		float interval = 250.f;
+		float interval = AREA_WORLDSCALE;
 		float erosion = g_erosion;
 
 		for (int i = 0; i < octaves; i++, interval *= 0.5f)
@@ -107,14 +108,14 @@ void TerrainArea::generate(const std::string& directory)
 	};
 
 	// direct write noised and derivative
-	constexpr float faceScale = 250.f / 256.f;
+	constexpr float faceScale = AREA_WORLDSCALE / 256.f;
 	MapData** data = new MapData*[257];
 	for (int i = 0; i < 257; i++)
 		data[i] = new MapData[257];
 	for (int i = 0; i < 257; i++)
 		for (int j = 0; j < 257; j++)
 		{
-			vec3f n = noised(m_gridIndex.x * 250 + faceScale * i, m_gridIndex.y * 250 + faceScale * j, 8);
+			vec3f n = noised(m_gridIndex.x * AREA_WORLDSCALE + faceScale * i, m_gridIndex.y * AREA_WORLDSCALE + faceScale * j, 8);
 			data[i][j].heightTerrain = clamp(n.x, -g_seeLevel, g_heightAmplitude - g_seeLevel);
 			data[i][j].heightWater = 0.f;
 			data[i][j].holeTerrain = false;
@@ -257,9 +258,9 @@ std::vector<vec4ui> TerrainArea::generateDetails(float density, vec2f probabilit
 	const float pi2 = 2.f * (float)PI;
 	const uint64_t* data = dataPtr ? dataPtr : m_data;
 
-	int gridPlacement = std::clamp((int)(250.f / std::max(0.001f, density)), 1, 0xFFFF);
+	int gridPlacement = std::clamp((int)(AREA_WORLDSCALE / std::max(0.001f, density)), 1, 0xFFFF);
 	instanceDatas.reserve(gridPlacement * gridPlacement);
-	float spacing = 250.f / gridPlacement;
+	float spacing = AREA_WORLDSCALE / gridPlacement;
 	vec2f posOffset = vec2f(0.5f * spacing - 125.f);
 	vec2f c = vec2f(getCenter().x, getCenter().z);
 	for (int i = 0; i < gridPlacement; i++)
@@ -272,7 +273,7 @@ std::vector<vec4ui> TerrainArea::generateDetails(float density, vec2f probabilit
 
 			pos.x += lerp(-displacementRange * spacing, displacementRange * spacing, random.y);
 			pos.y += lerp(-displacementRange * spacing, displacementRange * spacing, random.z);
-			vec2f tileuv = clamp((1.f / 250.f) * (pos + vec2f(125.f)), vec2f(0.f), vec2f(1.f));
+			vec2f tileuv = clamp((1.f / AREA_WORLDSCALE) * (pos + vec2f(0.5f * AREA_WORLDSCALE)), vec2f(0.f), vec2f(1.f));
 
 			int iposx = clamp((int)(tileuv.x * 256), 0, 256);
 			int iposy = clamp((int)(tileuv.y * 256), 0, 256);
@@ -309,8 +310,8 @@ std::vector<vec4ui> TerrainArea::generateDetails(float density, vec2f probabilit
 			float angle = pi2 * random2.y;
 			float tint = random2.z;
 
-			uint32_t x = 65535 * std::clamp(pos.x + 125.f, 0.f, 250.f) / 250.f;
-			uint32_t z = 65535 * std::clamp(pos.y + 125.f, 0.f, 250.f) / 250.f;
+			uint32_t x = 65535 * std::clamp(pos.x + 0.5f * AREA_WORLDSCALE, 0.f, AREA_WORLDSCALE) / AREA_WORLDSCALE;
+			uint32_t z = 65535 * std::clamp(pos.y + 0.5f * AREA_WORLDSCALE, 0.f, AREA_WORLDSCALE) / AREA_WORLDSCALE;
 			uint32_t s = 65535 * std::clamp(scale, 0.f, fullModelScale) / fullModelScale;
 			uint32_t a = 65535 * std::clamp(angle, 0.f, pi2) / pi2;
 			uint32_t t = 511 * tint;
@@ -541,9 +542,79 @@ bool TerrainArea::hasWater() const
 {
 	return m_hasWater;
 }
-AxisAlignedBox TerrainArea::getBoundingBox() const
+const AxisAlignedBox& TerrainArea::getBoundingBox() const
 {
 	return m_boundingBox;
+}
+
+
+bool TerrainArea::getCollisionInCache(Physics::CollisionCache& cache) const
+{
+	if (!m_data)
+		return false;
+
+	if (!Collision::collide_AxisAlignedBoxvsAxisAlignedBox(cache.m_aabb.min, cache.m_aabb.max, m_center + m_boundingBox.min, m_center + m_boundingBox.max))
+		return false;
+
+	vec4f corner = m_center - vec4f(0.5f * AREA_WORLDSCALE, 0, 0.5f * AREA_WORLDSCALE, 0);
+	corner.y = 0;
+	corner.w = 1;
+	float invScale = 1.f / AREA_WORLDSCALE;
+	float id2world = AREA_WORLDSCALE / 256;
+	vec4f world2index = vec4f(256 * invScale);
+	vec4f m = (cache.m_aabb.min - corner) * world2index;
+	vec4f M = (cache.m_aabb.max - corner) * world2index;
+	vec2i min = vec2i::clamp(vec2i((int)m.x, (int)m.z), vec2i::zero, vec2i(255));
+	vec2i max = vec2i::clamp(vec2i((int)M.x, (int)M.z), vec2i::zero, vec2i(255));
+	bool hasCollision = false;
+
+	MapData data0, data1, data2, data3;
+	for (int i = min.x; i <= max.x; i++)
+		for (int j = min.y; j <= max.y; j++)
+		{
+			data0.unpack(m_data[i * 257 + j]);
+			data1.unpack(m_data[i * 257 + j + 1]);
+			data2.unpack(m_data[(i + 1) * 257 + j + 1]);
+			data3.unpack(m_data[(i + 1) * 257 + j]);
+
+			Triangle t0, t1;
+			AxisAlignedBox quadaabb;
+			if (((i + j) & 0x01) == 0)
+			{
+				t0.p1 = t1.p1 = corner + vec4f(i * id2world, data0.heightTerrain, j * id2world, 0);
+				t0.p2 = corner + vec4f(i * id2world, data1.heightTerrain, (j + 1) * id2world, 0);
+				t0.p3 = t1.p2 = corner + vec4f((i + 1) * id2world, data2.heightTerrain, (j + 1) * id2world, 0);
+				t1.p3 = corner + vec4f((i + 1) * id2world, data3.heightTerrain, j * id2world, 0);
+				quadaabb.min = t0.p1;
+				quadaabb.max = t0.p3;
+			}
+			else
+			{
+				t0.p1 = corner + vec4f(i * id2world, data0.heightTerrain, j * id2world, 0);
+				t0.p2 = t1.p1 = corner + vec4f(i * id2world, data1.heightTerrain, (j + 1) * id2world, 0);
+				t1.p2 = corner + vec4f((i + 1) * id2world, data2.heightTerrain, (j + 1) * id2world, 0);
+				t0.p3 = t1.p3 = corner + vec4f((i + 1) * id2world, data3.heightTerrain, j * id2world, 0);
+				quadaabb.min = t0.p1;
+				quadaabb.max = t1.p2;
+			}
+
+			quadaabb.min.y = std::min(std::min(data0.heightTerrain, data1.heightTerrain), std::min(data2.heightTerrain, data3.heightTerrain));
+			quadaabb.max.y = std::max(std::max(data0.heightTerrain, data1.heightTerrain), std::max(data2.heightTerrain, data3.heightTerrain));
+
+			if (Collision::collide(&cache.m_aabb, &quadaabb))
+			{
+				Physics::CollisionCache::Element element;
+				element.m_entity = m_entity;
+				hasCollision = true;
+
+				element.m_shape = &(cache.m_triangles[cache.m_triangles.add(t0)]);
+				cache.m_elements.push_back(element);
+
+				element.m_shape = &(cache.m_triangles[cache.m_triangles.add(t1)]);
+				cache.m_elements.push_back(element);
+			}
+		}
+	return hasCollision;
 }
 //
 

@@ -15,6 +15,7 @@ class OrientedBox : public Shape
 		virtual Shape& operator=(const Shape& s) override;
 		virtual Shape* duplicate() const override;
 
+		virtual float computeVolume() const override;
 		virtual mat4f computeInertiaMatrix() const override;
 
 		virtual void transform(const vec4f& position, const vec4f& scale, const quatf& orientation) override;

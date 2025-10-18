@@ -6,7 +6,10 @@
 #include <glm/gtx/quaternion.hpp>*/
 
 
-Segment::Segment(const vec4f& a, const vec4f& b) : Shape(ShapeType::SEGMENT), p1(a), p2(b) {}
+Segment::Segment(const vec4f& a, const vec4f& b) : Shape(ShapeType::SEGMENT), p1(a), p2(b)
+{ 
+	computeDirection();
+}
 Sphere Segment::toSphere() const { return Sphere(0.5f * (p1 + p2), 0.5f * (p1 - p2).getNorm()); }
 AxisAlignedBox Segment::toAxisAlignedBox() const
 {
@@ -39,4 +42,13 @@ void Segment::getFacingFace(const vec4f& direction, std::vector<vec4f>& points) 
 {
 	points.push_back(p1);
 	points.push_back(p2);
+}
+void Segment::computeDirection()
+{
+	direction = p2 - p1;
+	direction.w = 0;
+	float length = std::sqrt(vec4f::dot(direction, direction));
+	if (length > 1E-06f)
+		direction /= length;
+	direction.w = length;
 }

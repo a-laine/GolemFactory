@@ -10,6 +10,7 @@ AxisAlignedBox Shape::toAxisAlignedBox() const { return AxisAlignedBox(vec4f(0, 
 Shape& Shape::operator=(const Shape& s) { type = s.type; return *this; }
 Shape* Shape::duplicate() const { return new Shape(type); }
 
+float Shape::computeVolume() const { return 0.f; }
 mat4f Shape::computeInertiaMatrix() const { return mat4f::identity; }
 
 void Shape::transform(const vec4f& position, const vec4f& scale, const quatf& orientation) {}

@@ -461,6 +461,7 @@ void loadSceneFBX(std::string sceneName)
 
 	std::vector<vec4f> vertices;
 	std::vector<vec4f> normales;
+	std::vector<vec4f> colors;
 	std::vector<vec4f> uvs;
 	std::vector<unsigned int> faces;
 	std::vector<vec4i> bones; 
@@ -486,6 +487,7 @@ void loadSceneFBX(std::string sceneName)
 		vertices.clear();
 		normales.clear();
 		uvs.clear();
+		colors.clear();
 		faces.clear();
 
 		aiMesh* mesh = scene->mMeshes[i];
@@ -519,7 +521,7 @@ void loadSceneFBX(std::string sceneName)
 		else
 		{
 			Mesh* gfmesh = new Mesh(meshname);
-			gfmesh->initialize(&vertices, &normales, &uvs, &faces, &bones, &weights);
+			gfmesh->initialize(&vertices, &normales, &uvs, &colors, &faces, &bones, &weights);
 			mgr->addResource(gfmesh);
 			meshes.push_back(gfmesh);
 		}
@@ -969,7 +971,7 @@ void updates(float elapseTime)
 		{
 			vec2f delta = EventHandler::getInstance()->getCursorPositionRelative();
 
-			direction = currentCamera->getUp() * delta.y - currentCamera->getRight()* delta.x;
+			direction = currentCamera->getUp() * delta.y + currentCamera->getLeft()* delta.x;
 			direction *= editorCameraSensibility;
 		}
 

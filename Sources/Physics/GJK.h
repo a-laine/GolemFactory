@@ -10,6 +10,17 @@
 class GJK
 {
 	public:
+		//	Usefull structs
+		struct MinkowskiPoint
+		{
+			vec4f a, b, p;
+
+			MinkowskiPoint();
+			MinkowskiPoint(const vec4f& _a, const  vec4f& _b);
+			bool operator==(const MinkowskiPoint& _other) const;
+			bool operator<(const MinkowskiPoint& _other) const;
+		};
+
 		//	Debug
 		static bool verbose;
 		static bool gizmos;
@@ -21,15 +32,6 @@ class GJK
 
 	protected:
 		//	Usefull structs
-		struct MinkowskiPoint
-		{
-				vec4f a, b, p;
-
-				MinkowskiPoint(const vec4f& _a, const  vec4f& _b);
-				bool operator==(const MinkowskiPoint& _other) const; 
-				bool operator<(const MinkowskiPoint& _other) const;
-		};
-
 		struct Edge;
 		struct Face
 		{

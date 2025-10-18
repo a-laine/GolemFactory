@@ -67,6 +67,9 @@ class NodeVirtual
 		
 		//	Hierarchy related function
 		NodeVirtual* getChildAt(const vec4f& pos);
+
+		template<typename container>
+		void getChildren(container& result) { for (auto& n : children) result.push_back(n); }
 		void getChildren(std::vector<NodeVirtual*>& result);
 		void getChildren(std::vector<NodeRange>& result);
 		void getChildrenInBox(std::vector<NodeVirtual*>& result, const vec4f& boxMin, const vec4f& boxMax);

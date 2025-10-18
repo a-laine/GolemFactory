@@ -2,11 +2,9 @@
 #include "Sphere.h"
 #include "AxisAlignedBox.h"
 
-/*#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/quaternion.hpp>*/
 
-
-Capsule::Capsule(const vec4f& a, const vec4f& b, const float& r) : Shape(ShapeType::CAPSULE), p1(a), p2(b), radius(r) {}
+Capsule::Capsule(const vec4f& a, const vec4f& b, const float& r) : Shape(ShapeType::CAPSULE), p1(a), p2(b), radius(r) 
+{}
 Sphere Capsule::toSphere() const { return Sphere(0.5f * (p1 + p2), radius + 0.5f * (p1 - p2).getNorm()); }
 AxisAlignedBox Capsule::toAxisAlignedBox() const
 {
@@ -52,6 +50,13 @@ void Capsule::getFacingFace(const vec4f& direction, std::vector<vec4f>& points) 
 	}
 	else
 		points.push_back(support(direction));
+}
+float Capsule::computeVolume() const
+{
+	float height = std::abs((p2 - p1).getNorm() - 2 * radius);
+	float sph = 4.f / 3.f * PI * radius * radius * radius;
+	float cyl = PI * height * radius * radius;
+	return sph + cyl;
 }
 mat4f Capsule::computeInertiaMatrix() const
 {

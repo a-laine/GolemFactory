@@ -27,7 +27,11 @@ void TerrainVirtualTexture::initialize(int _physicalTextureSize)
 	uint8_t config = (uint8_t)TC::TEXTURE_2D | (uint8_t)TC::MIN_NEAREST | (uint8_t)TC::MAG_NEAREST | (uint8_t)TC::WRAP_CLAMP;
 	m_GPUTexture.initialize("terrainVirtualTexture", m_physicalTextureSize, m_CPUTexture, config, GL_RGBA16UI, GL_RGBA_INTEGER, GL_UNSIGNED_SHORT);
 	ResourceManager::getInstance()->addResource(&m_GPUTexture);
+
+#ifdef USE_IMGUI
 	m_GPUTexture.isEnginePrivate = true;
+#endif
+
 	auto& layerDescriptor = m_GPUTexture.getLayerDescriptor();
 	layerDescriptor.push_back("Terrain heightmap");
 	layerDescriptor.push_back("Water heightmap");

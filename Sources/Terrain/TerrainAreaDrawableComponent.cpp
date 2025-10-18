@@ -94,28 +94,34 @@ void TerrainAreaDrawableComponent::pushDraw(std::vector<Renderer::DrawElement>& 
 	drawQueue.push_back(element);
 
 	// push water draw
-	/*if (!isShadowPass && hasWater() && getWaterShader())
+	if (!isShadowPass && hasWater() && m_area->getTerrain() && m_area->getTerrain()->getWaterMaterial())
 	{
-		element.shader = getWaterShader();
+		element.material = m_area->getTerrain()->getWaterMaterial();
 		distance2 = ~distance;
 		distance2++; 
-		queue = element.shader->getRenderQueue();
+		queue = element.material->getShader()->getRenderQueue();
 		queue = queue << 48;
 		element.hash = queue | distance2;
 		drawQueue.push_back(element);
-	}*/
+	}
 }
 
 void TerrainAreaDrawableComponent::onAddToEntity(Entity* entity)
 {
 	Component::onAddToEntity(entity);
-	entity->setFlags((uint64_t)Entity::Flags::Fl_Drawable | (uint64_t)Entity::Flags::Fl_Terrain);
+	entity->setFlags((uint64_t)Entity::Flags::Fl_Drawable | (uint64_t)Entity::Flags::Fl_Terrain | (uint64_t)Entity::Flags::Fl_Collision);
 }
 
 bool TerrainAreaDrawableComponent::hasWater() const
 {
 	return m_area && m_area->hasWater();
 }
+
+const TerrainArea* TerrainAreaDrawableComponent::getArea()
+{
+	return m_area;
+}
+
 AxisAlignedBox TerrainAreaDrawableComponent::getBoundingBox() const
 {
 	if (m_area)

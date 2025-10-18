@@ -218,7 +218,7 @@ void LightComponent::onDrawImGui()
 	const ImVec4 componentColor = ImVec4(0.7f, 0.7f, 0.5f, 1.f);
 	std::ostringstream unicName;
 	unicName << "Light component##" << (uintptr_t)this;
-	if (ImGui::TreeNodeEx(unicName.str().c_str(), ImGuiTreeNodeFlags_DefaultOpen))
+	if (ImGui::TreeNodeEx(unicName.str().c_str()))
 	{
 		ImGui::TextColored(componentColor, "Parameters");
 		ImGui::Indent();

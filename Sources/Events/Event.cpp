@@ -6,9 +6,9 @@ Event::~Event() {}
 //
 
 //  Public functions
-bool Event::isActivated() const
+bool Event::isActivated(Event::EventType checkFlag) const
 {
-	return (configuration&ACTIVATED_FLAG) != 0;
+	return (configuration & (uint32_t)checkFlag) != 0;
 }
 bool Event::check(InputType call,int key,int action)
 {
@@ -18,7 +18,7 @@ bool Event::check(InputType call,int key,int action)
     {
         if(inputList[i].first.callback == call && inputList[i].first.key == key)
             inputList[i].second = (action != 0);
-        activated = (inputList[i].second != 0) && activated;
+        activated &= inputList[i].second;
     }
 
 	//	check for user event publication
@@ -29,8 +29,19 @@ bool Event::check(InputType call,int key,int action)
         upDown = true;
 
 	//	change flag if needed
-    if(activated) configuration |=  ACTIVATED_FLAG;
-    else configuration &= ~ACTIVATED_FLAG;
+    configuration &= ~(ACTIVATED_BUTTON_DOWN | ACTIVATED_BUTTON_UP);
+    if(activated) 
+    {
+        if (~configuration & ACTIVATED_FLAG)
+            configuration |= ACTIVATED_BUTTON_DOWN;
+        configuration |=  ACTIVATED_FLAG;
+    }
+    else 
+    {
+        if (configuration & ACTIVATED_FLAG)
+            configuration |= ACTIVATED_BUTTON_UP;
+        configuration &= ~ACTIVATED_FLAG;
+    }
 
     return upDown;
 }

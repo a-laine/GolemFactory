@@ -12,6 +12,7 @@ Mesh* ReferenceMeshGenerator::getReferenceCapsule(const unsigned int& quadrature
 	//	create buffers
 	std::vector<vec4f> vertices;
 	std::vector<vec4f> normals;
+	std::vector<vec4f> uvs;
 	std::vector<vec4f> colors;
 	std::vector<unsigned int> faces;
 
@@ -36,18 +37,22 @@ Mesh* ReferenceMeshGenerator::getReferenceCapsule(const unsigned int& quadrature
 
 		vertices.push_back(o - s1 - s2);  
 		normals.push_back(vec4f(vertices.back().x, vertices.back().y, 0, 0).getNormal());
+		uvs.push_back(vec4f::zero);
 		colors.push_back(vec4f(1.f, 1.f, 1.f, 1.f));
 
 		vertices.push_back(o + s1 - s2);  
 		normals.push_back(vec4f(vertices.back().x, vertices.back().y, 0, 0).getNormal());
+		uvs.push_back(vec4f::zero);
 		colors.push_back(vec4f(1.f, 1.f, 1.f, 1.f));
 
 		vertices.push_back(o - s1 + s2);  
 		normals.push_back(vec4f(vertices.back().x, vertices.back().y, 0, 0).getNormal());
+		uvs.push_back(vec4f::zero);
 		colors.push_back(vec4f(1.f, 1.f, 1.f, 1.f));
 
 		vertices.push_back(o + s1 + s2);  
 		normals.push_back(vec4f(vertices.back().x, vertices.back().y, 0, 0).getNormal());
+		uvs.push_back(vec4f::zero);
 		colors.push_back(vec4f(1.f, 1.f, 1.f, 1.f));
 
 		faces.push_back((unsigned int)vertices.size() - 4);
@@ -83,18 +88,22 @@ Mesh* ReferenceMeshGenerator::getReferenceCapsule(const unsigned int& quadrature
 
 			vertices.push_back(v2);
 			normals.push_back(vertices.back().getNormal());
+			uvs.push_back(vec4f::zero);
 			colors.push_back(white);
 
 			vertices.push_back(v1);
 			normals.push_back(vertices.back().getNormal());
+			uvs.push_back(vec4f::zero);
 			colors.push_back(white);
 
 			vertices.push_back(v3);
 			normals.push_back(vertices.back().getNormal());
+			uvs.push_back(vec4f::zero);
 			colors.push_back(white);
 
 			vertices.push_back(v4);  
 			normals.push_back(vertices.back().getNormal());
+			uvs.push_back(vec4f::zero);
 			colors.push_back(white);
 
 			faces.push_back((unsigned int)vertices.size() - 4);
@@ -130,18 +139,22 @@ Mesh* ReferenceMeshGenerator::getReferenceCapsule(const unsigned int& quadrature
 
 			vertices.push_back(v2);
 			normals.push_back(vertices.back().getNormal());
+			uvs.push_back(vec4f::zero);
 			colors.push_back(white);
 
 			vertices.push_back(v1);
 			normals.push_back(vertices.back().getNormal());
+			uvs.push_back(vec4f::zero);
 			colors.push_back(white);
 
 			vertices.push_back(v3);
 			normals.push_back(vertices.back().getNormal());
+			uvs.push_back(vec4f::zero);
 			colors.push_back(white);
 
 			vertices.push_back(v4);
 			normals.push_back(vertices.back().getNormal());
+			uvs.push_back(vec4f::zero);
 			colors.push_back(white);
 
 
@@ -164,7 +177,7 @@ Mesh* ReferenceMeshGenerator::getReferenceCapsule(const unsigned int& quadrature
 	Mesh* mesh = new Mesh("generatedCapsule");
 	std::vector<vec4i> bonesArray;
 	std::vector<vec4f> weightsArray;
-	mesh->initialize(vertices, normals, colors, faces, bonesArray, weightsArray);
+	mesh->initialize(vertices, normals, uvs, colors, faces, bonesArray, weightsArray);
 	return mesh;
 }
 

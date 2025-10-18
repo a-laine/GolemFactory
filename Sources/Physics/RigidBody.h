@@ -8,6 +8,7 @@
 #include "EntityComponent/Component.hpp"
 #include "Physics/Shapes/AxisAlignedBox.h"
 
+//class Cluster;
 class RigidBody : public Component
 {
 	GF_DECLARE_COMPONENT_CLASS(RigidBody, Component)
@@ -36,7 +37,9 @@ class RigidBody : public Component
 		RigidBody(const RigidBodyType& type = DYNAMIC, const SolverType& solver = DISCRETE);
 		virtual ~RigidBody() override;
 
-		void initialize(const float& _mass);
+		bool load(Variant& jsonObject, const std::string& objectName) override;
+
+		void initialize(bool explicitMass, float _mass);
 		void computeWorldShapes();
 		//
 
@@ -92,37 +95,40 @@ class RigidBody : public Component
 
 	protected:
 		//	Attributes
-		RigidBodyType type;
-		SolverType solver;
+		RigidBodyType m_type;
+		SolverType m_solver;
 
-		float inverseMass;
-		float gravityFactor;
-		float bouncyness;
-		float friction;
-		float damping;
+		float m_mass, m_inverseMass, m_volumicMass;
+		float m_gravityFactor;
+		float m_bouncyness;
+		float m_friction;
+		float m_damping;
 
-		float mass;
-		mat4f inertia;
-		mat4f inverseInertia;
+		mat4f m_inertia;
+		mat4f m_inverseInertia;
 
-		vec4f externalForces;
-		vec4f externalTorques;
-		vec4f linearAcceleration;
-		vec4f angularAcceleration;
-		vec4f linearVelocity;
-		vec4f angularVelocity;
+		vec4f m_externalForces;
+		vec4f m_externalTorques;
+		vec4f m_linearAcceleration;
+		vec4f m_angularAcceleration;
+		vec4f m_linearVelocity;
+		vec4f m_angularVelocity;
 		//
 
 	private:
 		//	Internal (used by Physics engine)
-		AxisAlignedBox sweptBox;
-		vec4f previousPosition;
-		quatf previousOrientation;
+		AxisAlignedBox m_sweptBox;
+		vec4f m_previousPosition;
+		quatf m_previousOrientation;
 
-		std::vector<Component*> colliders;
-		std::vector<Shape*> worldShapes;
+		std::vector<Component*> m_colliders;
+		std::vector<Shape*> m_worldShapes;
+
+		int m_clusterIndex = -1;
 
 #ifdef USE_IMGUI
 		bool m_drawColliders = false;
+		int m_drawClusterCollisionCache = 0;
+		vec4f m_cacheColor = vec4f(1, 0.5f, 0, 0);
 #endif
 };

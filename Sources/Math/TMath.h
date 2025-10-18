@@ -1,6 +1,6 @@
 #pragma once
 
-//#define USE_GLM
+#define USE_GLM
 
 #ifdef USE_GLM
 
@@ -140,6 +140,12 @@ template <typename T, glm::precision P>
 bool glm::tvec4<T, P>::any(const glm::tvec4<T, P>& b)
 {
 	return glm::any(b);
+}
+
+template <typename T, glm::precision P>
+bool glm::tvec4<T, P>::all(const glm::tvec4<T, P>& b)
+{
+	return glm::all(b);
 }
 
 template <typename T, glm::precision P>
@@ -511,6 +517,26 @@ T lerp(const T& a, const T& b, const T& t) {
 template<typename T>
 T clamp(const T& a, const T& min, const T& max) {
 	return a < min ? min : (a > max ? max : a);
+}
+
+template<typename T>
+T moveTowards(const T& current, const T& target, const T& maxdelta)
+{
+	T delta = target - current;
+	delta = clamp(delta, -maxdelta, maxdelta);
+	return current + delta;
+}
+
+template<typename T>
+T smoothDamped(const T& current, const T& target, T& velocity, float smoothTime, float dt)
+{
+	float omega = 2.f / smoothTime;
+	float x = omega * dt;
+	float exp = 1.f / (1.f + x + 0.48f * x * x + 0.235f * x * x * x);
+	T delta = current - target;
+	T temp = (velocity + omega * delta) * dt;
+	velocity = (velocity - omega * temp) * exp;
+	return target + (delta + temp) * exp;
 }
 
 #else

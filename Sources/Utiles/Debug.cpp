@@ -127,6 +127,7 @@ void Debug::drawLineCube(const mat4f& transform, const vec4f& size)
 void Debug::drawLineCapsule(const vec4f& point1, const vec4f& point2, const float& radius)
 {
 	constexpr unsigned int quadrature = 32;
+	constexpr unsigned int quadratureModulo = quadrature - 1;
 	constexpr unsigned int cylinderFaces = quadrature;
 	constexpr float stepAngle = 2.f * PI / quadrature;
 	constexpr unsigned int quarterQuadrature = quadrature / 4;
@@ -142,7 +143,7 @@ void Debug::drawLineCapsule(const vec4f& point1, const vec4f& point2, const floa
 	for (int i = 0; i < quadrature; i++)
 	{
 		float a1 = i * stepAngle;
-		float a2 = ((i + 1) % quadrature) * stepAngle;
+		float a2 = ((i + 1) & quadratureModulo) * stepAngle;
 		float rca1 = radius * cos(a1);
 		float rsa1 = radius * sin(a1);
 		float rca2 = radius * cos(a2);
@@ -160,7 +161,7 @@ void Debug::drawLineCapsule(const vec4f& point1, const vec4f& point2, const floa
 		for (int j = 0; j < quarterQuadrature; j++)
 		{
 			float b1 = j * stepAngle;
-			float b2 = ((j + 1) % quadrature) * stepAngle;
+			float b2 = ((j + 1) & quadratureModulo) * stepAngle;
 			float rcb1 = cos(b1);
 			float rsb1 = sin(b1);
 			float rcb2 = cos(b2);
@@ -176,6 +177,55 @@ void Debug::drawLineCapsule(const vec4f& point1, const vec4f& point2, const floa
 			Vertex c8 = { point2 + (rcb1 * rca1) * axis_n0 + (rcb1 * rsa1) * axis_n1 + (radius * rsb1) * axis, Debug::color };
 			Vertex c10 = { point2 + (rcb2 * rca1) * axis_n0 + (rcb2 * rsa1) * axis_n1 + (radius * rsb2) * axis, Debug::color };
 			Vertex c11 = { point2 + (rcb2 * rca2) * axis_n0 + (rcb2 * rsa2) * axis_n1 + (radius * rsb2) * axis, Debug::color };
+
+			vertices.push_back(c10); vertices.push_back(c11);
+			vertices.push_back(c8);  vertices.push_back(c10);
+		}
+	}
+	drawMultiplePrimitive(vertices.data(), (unsigned int)vertices.size(), mat4f::identity, GL_LINES);
+}
+void Debug::drawLineSphere(const vec4f& center, const float& radius, vec4f upaxis)
+{
+	constexpr unsigned int quadrature = 32;
+	constexpr unsigned int quadratureModulo = quadrature - 1;
+	constexpr float stepAngle = 2.f * PI / quadrature;
+	constexpr unsigned int quarterQuadrature = quadrature / 4;
+
+	vec4f axis = upaxis;
+	axis.normalize();
+	vec4f axis_n0 = (std::abs(axis.x) > std::abs(axis.z) ? vec4f(-axis.y, axis.x, 0, 0) : vec4f(0, -axis.z, axis.y, 0)).getNormal();
+	vec4f axis_n1 = vec4f::cross(axis, axis_n0);
+
+	std::vector<Vertex> vertices;
+	vertices.reserve(6 * quadrature + 8 * quadrature + quarterQuadrature);
+	for (int i = 0; i < quadrature; i++)
+	{
+		float a1 = i * stepAngle;
+		float a2 = ((i + 1) & quadratureModulo) * stepAngle;
+		float rca1 = radius * cos(a1);
+		float rsa1 = radius * sin(a1);
+		float rca2 = radius * cos(a2);
+		float rsa2 = radius * sin(a2);
+
+		for (int j = 0; j < quarterQuadrature; j++)
+		{
+			float b1 = j * stepAngle;
+			float b2 = ((j + 1) & quadratureModulo) * stepAngle;
+			float rcb1 = cos(b1);
+			float rsb1 = sin(b1);
+			float rcb2 = cos(b2);
+			float rsb2 = sin(b2);
+
+			Vertex c4 = { center + (rcb1 * rca1) * axis_n0 + (rcb1 * rsa1) * axis_n1 - (radius * rsb1) * axis, Debug::color };
+			Vertex c6 = { center + (rcb2 * rca1) * axis_n0 + (rcb2 * rsa1) * axis_n1 - (radius * rsb2) * axis, Debug::color };
+			Vertex c7 = { center + (rcb2 * rca2) * axis_n0 + (rcb2 * rsa2) * axis_n1 - (radius * rsb2) * axis, Debug::color };
+
+			vertices.push_back(c6); vertices.push_back(c7);
+			vertices.push_back(c4); vertices.push_back(c6);
+
+			Vertex c8 = { center + (rcb1 * rca1) * axis_n0 + (rcb1 * rsa1) * axis_n1 + (radius * rsb1) * axis, Debug::color };
+			Vertex c10 = { center + (rcb2 * rca1) * axis_n0 + (rcb2 * rsa1) * axis_n1 + (radius * rsb2) * axis, Debug::color };
+			Vertex c11 = { center + (rcb2 * rca2) * axis_n0 + (rcb2 * rsa2) * axis_n1 + (radius * rsb2) * axis, Debug::color };
 
 			vertices.push_back(c10); vertices.push_back(c11);
 			vertices.push_back(c8);  vertices.push_back(c10);

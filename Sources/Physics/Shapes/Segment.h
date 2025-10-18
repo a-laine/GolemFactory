@@ -15,15 +15,16 @@ class Segment : public Shape
 		virtual Shape& operator=(const Shape& s) override;
 		virtual Shape* duplicate() const override;
 
-		//virtual glm::mat3 computeInertiaMatrix() const override;
-
 		virtual void transform(const vec4f& position, const vec4f& scale, const quatf& orientation) override;
 
 		virtual vec4f support(const vec4f& direction) const override;
 		virtual void getFacingFace(const vec4f& direction, std::vector<vec4f>& points) const override;
+
+		void computeDirection();
 		//
 
 		//	Attributes
 		vec4f p1, p2;
+		vec4f direction; //length in w
 		//
 };

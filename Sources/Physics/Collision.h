@@ -18,6 +18,7 @@ class Collision
 	public:
 		static void DispatchMatrixInit();
 		static bool collide(const Shape* a, const Shape* b, CollisionReport* report = nullptr);
+		static bool raycast(const Segment* ray, const Shape* shape, RaycastReport* report = nullptr);
 
 	private:
 		using CollisionTest = bool (*)(const Shape*, const Shape*, CollisionReport*);
@@ -46,6 +47,10 @@ class Collision
 		static bool _SpherevsAxisAlignedBox(const Shape* a, const Shape* b, CollisionReport* report);
 		static bool _SpherevsOrientedBox(const Shape* a, const Shape* b, CollisionReport* report);
 		static bool _SpherevsCapsule(const Shape* a, const Shape* b, CollisionReport* report);
+		static bool _SpherevsTriangle(const Shape* a, const Shape* b, CollisionReport* report);
+
+		static bool _CapsulevsTriangle(const Shape* a, const Shape* b, CollisionReport* report);
+		static bool _CapsulevsSphere(const Shape* a, const Shape* b, CollisionReport* report);
 
 		static bool _OrientedBoxvsSphere(const Shape* a, const Shape* b, CollisionReport* report);
 
@@ -92,7 +97,9 @@ class Collision
 		static bool collide_SpherevsSphere(const vec4f& sphere1Center, const float& sphere1Radius, const vec4f& sphere2Center, const float& sphere2Radius, CollisionReport* report = nullptr);
 
 		static bool collide_SpherevsCapsule(const vec4f& sphereCenter, const float& sphereRadius, const vec4f& capsule1, const vec4f& capsule2, const float& capsuleRadius, CollisionReport* report = nullptr);
+		static bool collide_SpherevsTriangle(const vec4f& sphereCenter, const float& sphereRadius, const vec4f& triangle1, const vec4f& triangle2, const vec4f& triangle3, CollisionReport* report = nullptr);
 		static bool collide_CapsulevsSphere(const vec4f& sphereCenter, const float& sphereRadius, const vec4f& capsule1, const vec4f& capsule2, const float& capsuleRadius, CollisionReport* report = nullptr);
+		static bool collide_CapsulevsTriangle(const vec4f& capsule1, const vec4f& capsule2, const float& capsuleRadius, const vec4f& triangle1, const vec4f& triangle2, const vec4f& triangle3, CollisionReport* report = nullptr);
 
 		static bool collide_SpherevsAxisAlignedBox(const vec4f& boxMin, const vec4f& boxMax, const vec4f& sphereCenter, const float& sphereRadius, CollisionReport* report = nullptr);
 		static bool collide_AxisAlignedBoxvsSphere(const vec4f& boxMin, const vec4f& boxMax, const vec4f& sphereCenter, const float& sphereRadius, CollisionReport* report = nullptr);
@@ -101,7 +108,15 @@ class Collision
 		static bool collide_OrientedBoxvsSphere(const vec4f& sphereCenter, const float& sphereRadius, const mat4f& boxTranform, const vec4f& boxMin, const vec4f& boxMax, CollisionReport* report = nullptr);
 
 		//	Specialized functions : Axis Aligned Box vs all other (except previous Shape)
-		//static bool collide_AxisAlignedBoxvsAxisAlignedBox(const vec4f& box1Min, const vec4f& box1Max, const vec4f& box2Min, const vec4f& box2Max);
 		static bool collide_AxisAlignedBoxvsAxisAlignedBox(const vec4f& box1Min, const vec4f& box1Max, const vec4f& box2Min, const vec4f& box2Max, CollisionReport* report = nullptr);
 
+
+
+
+		static bool raycast_Sphere(const vec4f& rayOrigin, const vec4f& rayDirection, const vec4f& sphereCenter, const float& sphereRadius, RaycastReport* report = nullptr);
+		static bool raycast_Capsule(const vec4f& rayOrigin, const vec4f& rayDirection, const vec4f& capsule1, const vec4f& capsule2, const float& sphereRadius, RaycastReport* report = nullptr);
+		static bool raycast_OrientedBox(const vec4f& rayOrigin, const vec4f& rayDirection, const mat4f& boxTranform, const vec4f& boxMin, const vec4f& boxMax, RaycastReport* report = nullptr);
+		static bool raycast_AxisAlignedBox(const vec4f& rayOrigin, const vec4f& rayDirection, const vec4f& boxMin, const vec4f& boxMax, RaycastReport* report = nullptr);
+		static bool raycast_Triangle(const vec4f& rayOrigin, const vec4f& rayDirection, const vec4f& triangle1, const vec4f& triangle2, const vec4f& triangle3, bool discardBackface = true, RaycastReport* report = nullptr);
+		static bool raycast_Hull(const vec4f& rayOrigin, const vec4f& rayDirection, const std::vector<vec4f>& hullPoints, const std::vector<vec4f>& hullNormals, const std::vector<unsigned short>& hullFaces, const mat4f& hullBase, RaycastReport* report = nullptr);
 };

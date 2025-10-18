@@ -34,6 +34,7 @@ void Sphere::transform(const vec4f& position, const vec4f& scale, const quatf& o
 }
 Shape* Sphere::duplicate() const { return new Sphere(*this); }
 vec4f Sphere::support(const vec4f& direction) const { return center + direction.getNormal() * radius; }
+float Sphere::computeVolume() const { return 4.f/3.f * PI * radius * radius * radius; }
 mat4f Sphere::computeInertiaMatrix() const
 {
 	return mat4f(2.f / 5.f * radius * radius);

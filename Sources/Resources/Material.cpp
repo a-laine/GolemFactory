@@ -99,7 +99,7 @@ void Material::onDrawImGui()
 
     ImGui::Spacing();
     ImGui::TextColored(ResourceVirtual::titleColorDraw, "Material infos");
-    ImGui::Text("Shader name : %s", m_shader->name);
+    ImGui::Text("Shader name : %s", m_shader->name.c_str());
 
     /*const uint16_t transparentBit = 1 << 15;
     const uint16_t faceCullingBit = 1 << 14;

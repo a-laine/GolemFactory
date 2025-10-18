@@ -16,6 +16,8 @@
 #include <Utiles/Debug.h>
 #include <Terrain/TerrainDetailDrawableComponent.h>
 #include <Resources/Material.h>
+#include <Physics/Collision.h>
+#include <Utiles/JobSystem.h>
 
 float Terrain::g_morphingRange = 10.f;
 
@@ -44,7 +46,6 @@ void Terrain::initializeClipmaps()
 {
 	const int lodFaceCount[] = { 256, 128, 64, 32, 16, 8, 4, 2 };
 	constexpr int lodCount = sizeof(lodFaceCount) / sizeof(int);
-	constexpr float faceScale = 250.f;
 
 	std::vector<vec4f> vertices;
 	std::vector<vec4f> uvs;
@@ -74,9 +75,9 @@ void Terrain::initializeClipmaps()
 			for (int j = 0; j <= faceCount; j++)
 			{
 				vertices.push_back(vec4f(
-					faceScale * (i * faceSize.x -0.5f), 
-					(faceScale * 0.003f / faceCount) * (rand() & 0xFF), 
-					faceScale * (j * faceSize.y - 0.5f), 1.f)
+					AREA_WORLDSCALE * (i * faceSize.x -0.5f),
+					(AREA_WORLDSCALE * 0.003f / faceCount) * (rand() & 0xFF),
+					AREA_WORLDSCALE * (j * faceSize.y - 0.5f), 1.f)
 				);
 
 				// j, i because of opengl index flip
@@ -133,8 +134,12 @@ void Terrain::initializeClipmaps()
 			}
 
 		Mesh* clipmap = new Mesh("internalClipmapMeshLod" + std::to_string(lod));
-		clipmap->initialize(vertices, dummyArrayVec4f, uvs, indices, dummyArrayVec4i, dummyArrayVec4f);
-		clipmap->isEnginePrivate = true;
+		clipmap->initialize(vertices, dummyArrayVec4f, uvs, dummyArrayVec4f, indices, dummyArrayVec4i, dummyArrayVec4f);
+
+		#ifdef USE_IMGUI
+			clipmap->isEnginePrivate = true;
+		#endif
+		
 		ResourceManager::getInstance()->addResource(clipmap);
 		m_clipmapMeshes.push_back(clipmap);
 	}
@@ -314,13 +319,13 @@ void Terrain::update(vec4f _cameraPosition)
 	std::vector<AreaJobData> jobLodDatas;
 	std::vector<AreaJobData> jobDetailDatas;
 
-	m_currentPlayerPosInTile.x = (250 * 0.5f * m_gridSize.x + _cameraPosition.x) / 250;
-	m_currentPlayerPosInTile.y = (250 * 0.5f * m_gridSize.y + _cameraPosition.z) / 250;
+	m_currentPlayerPosInTile.x = (AREA_WORLDSCALE * 0.5f * m_gridSize.x + _cameraPosition.x) / AREA_WORLDSCALE;
+	m_currentPlayerPosInTile.y = (AREA_WORLDSCALE * 0.5f * m_gridSize.y + _cameraPosition.z) / AREA_WORLDSCALE;
 	vec2i camAreaIndex;
 	camAreaIndex.x = (int)m_currentPlayerPosInTile.x;
 	camAreaIndex.y = (int)m_currentPlayerPosInTile.y;
 
-	int farThs = (int)(m_lodRadius.back() / 250);
+	int farThs = (int)(m_lodRadius.back() / AREA_WORLDSCALE);
 	vec2i tileSize = vec2i(farThs);
 	vec2i min = vec2i::clamp(camAreaIndex - tileSize, vec2i::zero, m_gridSize - vec2i::one);
 	vec2i max = vec2i::clamp(camAreaIndex + tileSize, vec2i::zero, m_gridSize - vec2i::one);
@@ -414,9 +419,28 @@ void Terrain::update(vec4f _cameraPosition)
 
 	if (!jobLodDatas.empty())
 	{
+		SCOPED_CPU_MARKER("Area LOD change");
 		std::sort(jobLodDatas.begin(), jobLodDatas.end(), [](const AreaJobData& a, const AreaJobData& b) { return a.priority < b.priority; });
 
 #if 1
+		Job2 updateLodJob(Job2::JobPriority::HIGH, [&jobLodDatas](int _jobId, void* _data) {
+				SCOPED_CPU_MARKER("TerrainArea::updateLodJob");
+				TerrainArea* area = jobLodDatas[_jobId].m_area;
+				int targetLod = jobLodDatas[_jobId].m_targetLod;
+				area->setLod(targetLod);
+				Entity* entity = area->m_entity;
+				if (entity)
+				{
+					TerrainAreaDrawableComponent* drawable = entity->getComponent<TerrainAreaDrawableComponent>();
+					drawable->setMesh(area->getTerrain()->m_clipmapMeshes[targetLod]);
+					drawable->updateData(area->m_tiles[targetLod]);
+				}
+			});
+		JobSystem::getInstance()->dispatchJob(updateLodJob, jobLodDatas.size(), 1);
+		updateLodJob.waitCompletion(true);
+		jobLodDatas.clear();
+
+#elif 0
 		Job updateLodJob(jobLodDatas.size(), [](void* _data, int _id, int _count)
 			{
 				SCOPED_CPU_MARKER("TerrainArea::updateLodJob");
@@ -457,8 +481,31 @@ void Terrain::update(vec4f _cameraPosition)
 
 	if (!jobDetailDatas.empty())
 	{
+		SCOPED_CPU_MARKER("Detail change");
 		// cannot use job for now : we need main thread to init VBO & VAO
 #if 0
+		Job2 updateDetailJob(Job2::JobPriority::HIGH, [&jobDetailDatas](int _jobId, void* _data) {
+				SCOPED_CPU_MARKER("TerrainArea::updateDetailJob");
+				TerrainArea* area = jobDetailDatas[_jobId].m_area;
+				int detailMaxLod = jobDetailDatas[_jobId].m_targetLod;
+				int lod = area->getLod();
+				if (lod <= detailMaxLod)
+				{
+					area->loadInstanceData();
+					area->getTerrain()->addRemoveDetails2(area);
+				}
+				else
+				{
+					area->unloadInstanceData();
+					if (area->m_entity->getChilds().size() > 0)
+						area->m_entity->removeAllChild(true);
+					area->m_details.clear();
+				}
+			});
+		JobSystem::getInstance()->dispatchJob(updateDetailJob, jobDetailDatas.size(), 1);
+		updateDetailJob.waitCompletion(false);
+		jobDetailDatas.clear();
+#elif 0
 		Job updateDetailJob(jobDetailDatas.size(), [](void* _data, int _id, int _count)
 			{
 				SCOPED_CPU_MARKER("TerrainArea::updateDetailJob");
@@ -616,6 +663,13 @@ void Terrain::addRemoveDetails2(TerrainArea* area)
 				drawable->setDoubleSidedFaces(terrainDetail.m_doubleSided);
 				drawable->setColorTintGradient(terrainDetail.m_colorTint0, terrainDetail.m_colorTint1);
 				drawable->setAlphaClipThs(terrainDetail.m_alphaCLipThs);
+
+				//if (terrainDetail.m_lod == 4)
+				//	massentity->setFlags((uint64_t)Entity::Flags::Fl_Hide);
+
+				//if (terrainDetail.m_lod == 2)
+				//	drawable->setFullModelScale(0.5f * drawable->getFullModelScale());
+
 				//drawable->setMaxShadowCascade(terrainDetail.m_maxShadow);
 				//for (auto it = terrainDetail.m_shaderTextureOverride.begin(); it != terrainDetail.m_shaderTextureOverride.end(); it++)
 				//	drawable->setTextureOverride(it->first, it->second);
@@ -679,6 +733,10 @@ Material* Terrain::getDetailMaterial() const
 {
 	return m_terrainDetailMaterial;
 }
+Material* Terrain::getWaterMaterial() const
+{
+	return m_waterMaterial;
+}
 
 std::string Terrain::getDirectory() const
 {
@@ -696,6 +754,30 @@ const TerrainArea* Terrain::getArea(vec2i index) const
 const std::vector<float>& Terrain::getRadius() const
 {
 	return m_lodRadius;
+}
+
+bool Terrain::getCollisionInCache(Physics::CollisionCache& cache)
+{
+	vec4f center = vec4f(0.5f * m_gridSize.x, 0, 0.5f * m_gridSize.y, 0);
+	vec4f invScale = vec4f(1.f / AREA_WORLDSCALE);
+	vec4f m = cache.m_aabb.min * invScale + center;
+	vec4f M = cache.m_aabb.max * invScale + center;
+	vec2i min = vec2i::clamp(vec2i((int)m.x, (int)m.z), vec2i::zero, m_gridSize - vec2i::one);
+	vec2i max = vec2i::clamp(vec2i((int)M.x, (int)M.z), vec2i::zero, m_gridSize - vec2i::one);
+	bool hasCollision = false;
+
+	for (int i = min.x; i <= max.x; i++)
+		for (int j = min.y; j <= max.y; j++)
+		{
+			TerrainArea* area = m_grid[i][j];
+			if (!area)
+				continue;
+			if (!Collision::collide(&cache.m_aabb, &area->getBoundingBox()))
+				continue;
+
+			hasCollision |= area->getCollisionInCache(cache);
+		}
+	return hasCollision;
 }
 
 // protected functions
@@ -755,7 +837,7 @@ void Terrain::recomputeGrid()
 				if (!area)
 					continue;
 
-				area->m_center = vec4f((area->m_areaIndex.x + 0.5f) * 250.f, 0, (area->m_areaIndex.y + 0.5f) * 250.f, 1);
+				area->m_center = vec4f((area->m_areaIndex.x + 0.5f) * AREA_WORLDSCALE, 0, (area->m_areaIndex.y + 0.5f) * AREA_WORLDSCALE, 1);
 			}
 	}
 }

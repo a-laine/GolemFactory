@@ -119,8 +119,9 @@ void HouseGenerator::getHouse(Entity* house, unsigned int seed, int d, int p)
 	//	end
 	Mesh* mesh = new Mesh(houseName);
     std::vector<vec4i> bonesArray;
+    std::vector<vec4f> colorsArray;
     std::vector<vec4f> weightsArray;
-    mesh->initialize(verticesArray, normalesArray, uvArray, facesArray, bonesArray, weightsArray);
+    mesh->initialize(verticesArray, normalesArray, uvArray, colorsArray, facesArray, bonesArray, weightsArray);
 	ResourceManager::getInstance()->addResource(mesh);				//	add mesh to resources manager for instance creation
 
 	DrawableComponent* drawable = new DrawableComponent(houseName, "default");

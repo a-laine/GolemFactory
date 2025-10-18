@@ -41,6 +41,27 @@ void ShaderLoader::PrintWarning(const char* filename, const char* msg)
 
 bool ShaderLoader::load(const std::string& resourceDirectory, const std::string& fileName)
 {
+    // helpers
+    std::string header = "ShaderLoader::load : ";
+    const auto CheckError = [header](const char* label)
+        {
+            GLenum error = glGetError();
+            if (!label)
+                return false;
+            switch (error)
+            {
+                case GL_INVALID_ENUM: std::cout << header << label << " : GL_INVALID_ENUM" << std::endl; break;
+                case GL_INVALID_VALUE: std::cout << header << label << " : GL_INVALID_VALUE" << std::endl; break;
+                case GL_INVALID_OPERATION: std::cout << header << label << " : GL_INVALID_OPERATION" << std::endl; break;
+                case GL_INVALID_FRAMEBUFFER_OPERATION: std::cout << header << label << " : GL_INVALID_FRAMEBUFFER_OPERATION" << std::endl; break;
+                case GL_OUT_OF_MEMORY: std::cout << header << label << " : GL_OUT_OF_MEMORY" << std::endl; break;
+                case GL_STACK_UNDERFLOW: std::cout << header << label << " : GL_STACK_UNDERFLOW" << std::endl; break;
+                case GL_STACK_OVERFLOW: std::cout << header << label << " : GL_STACK_OVERFLOW" << std::endl; break;
+                default: break;
+            }
+            return error != GL_NO_ERROR;
+        };
+
 	//  Initialization
     const uint16_t transparentBit = 1 << 15;
     const uint16_t faceCullingBit = 1 << 14;
@@ -228,26 +249,14 @@ bool ShaderLoader::load(const std::string& resourceDirectory, const std::string&
         std::string errorHeader = "ERROR : loading shader : " + fileName;
         if (!compileSource(Shader::ShaderType::COMPUTE_SH, computeSourceCode, dummyDefine, compute, errorHeader))
         {
-            glDeleteShader(compute);
+            glDeleteShader(compute);                CheckError("glDeleteShader");
             return false;
         }
 
         computeProgram = glCreateProgram();
-        glAttachShader(computeProgram, compute);
-        glLinkProgram(computeProgram);
-        glDeleteShader(compute);
-
-        GLint compile_status = GL_TRUE;
-        glGetShaderiv(computeProgram, GL_COMPILE_STATUS, &compile_status);
-        if (compile_status != GL_TRUE)
-        {
-            GLint logsize;
-            glGetShaderiv(computeProgram, GL_INFO_LOG_LENGTH, &logsize);
-            char* log = new char[logsize];
-            glGetShaderInfoLog(computeProgram, logsize, &logsize, log);
-            std::cout << log << std::endl;
-            delete[] log;
-        }
+        glAttachShader(computeProgram, compute);    CheckError("glAttachShader");
+        glLinkProgram(computeProgram);              CheckError("glLinkProgram");
+        glDeleteShader(compute);                    CheckError("glDeleteShader");
     }
     else
     {
@@ -273,8 +282,8 @@ bool ShaderLoader::load(const std::string& resourceDirectory, const std::string&
             bool fragmentOk = compileSource(Shader::ShaderType::FRAGMENT_SH, fragmentSourceCode, variantDefines[i].defines, tmpFragmentId, errorHeader);
             if (!vertexOk || !fragmentOk)
             {
-                glDeleteShader(tmpVertexId);
-                glDeleteShader(tmpFragmentId);
+                glDeleteShader(tmpVertexId);        CheckError("glDeleteShader(vertex)");
+                glDeleteShader(tmpFragmentId);      CheckError("glDeleteShader(fragmet)");
                 continue;
             }
 
@@ -282,47 +291,50 @@ bool ShaderLoader::load(const std::string& resourceDirectory, const std::string&
             shaderVariants.emplace_back();
             ShaderStruct& shader = shaderVariants.back();
             shader.variantCode = variantDefines[i].shaderCode;
-            shader.program = glCreateProgram();
+            shader.program = glCreateProgram();     CheckError("glCreateProgram(fragmet)");
             shader.vertexShader = tmpVertexId;
             shader.fragmentShader = tmpFragmentId;
             shader.geometricShader = 0;
             shader.tessEvalShader = 0;
             shader.tessControlShader = 0;
             shader.allDefines = variantDefines[i].allDefines;
-            glAttachShader(shader.program, shader.vertexShader);
-            glAttachShader(shader.program, shader.fragmentShader);
+            glAttachShader(shader.program, shader.vertexShader);    CheckError("glAttachShader(fragmet)");
+            glAttachShader(shader.program, shader.fragmentShader);  CheckError("glAttachShader(fragmet)");
 
             // attach optional stages
             if (!geometrySourceCode.empty() && shouldAttachStage(geometryPragmas, variantDefines[i].defines))
             {
                 if (compileSource(Shader::ShaderType::GEOMETRIC_SH, geometrySourceCode, variantDefines[i].defines, shader.geometricShader, errorHeader))
                     glAttachShader(shader.program, shader.geometricShader);
+                CheckError("glAttachShader(geometry)");
             }
             if (!evaluationSourceCode.empty() && shouldAttachStage(evaluationPragmas, variantDefines[i].defines))
             {
                 if (compileSource(Shader::ShaderType::TESS_EVAL_SH, evaluationSourceCode, variantDefines[i].defines, shader.tessEvalShader, errorHeader))
                     glAttachShader(shader.program, shader.tessEvalShader);
+                CheckError("glAttachShader(tessEval)");
             }
             if (!controlSourceCode.empty() && shouldAttachStage(controlPragmas, variantDefines[i].defines))
             {
                 if (compileSource(Shader::ShaderType::TESS_CONT_SH, controlSourceCode, variantDefines[i].defines, shader.tessControlShader, errorHeader))
                     glAttachShader(shader.program, shader.tessControlShader);
+                CheckError("glAttachShader(tessCtrl)");
             }
 
             //  Linking program
-            glLinkProgram(shader.program);
-            glDeleteShader(shader.vertexShader);
-            glDeleteShader(shader.fragmentShader);
-            if (glIsShader(shader.geometricShader))   glDeleteShader(shader.geometricShader);
-            if (glIsShader(shader.tessControlShader)) glDeleteShader(shader.tessControlShader);
-            if (glIsShader(shader.tessEvalShader))    glDeleteShader(shader.tessEvalShader);
+            glLinkProgram(shader.program);          CheckError("glLinkProgram");
+            glDeleteShader(shader.vertexShader);    CheckError("glDeleteShader(vertex)");
+            glDeleteShader(shader.fragmentShader);  CheckError("glDeleteShader(fragment)");
+            if (glIsShader(shader.geometricShader))   glDeleteShader(shader.geometricShader);       CheckError("glDeleteShader(geometric)");
+            if (glIsShader(shader.tessControlShader)) glDeleteShader(shader.tessControlShader);     CheckError("glDeleteShader(tessCtrl)");
+            if (glIsShader(shader.tessEvalShader))    glDeleteShader(shader.tessEvalShader);        CheckError("glDeleteShader(tessEval)");
 
             GLint link_status = GL_TRUE;
-            glGetProgramiv(shader.program, GL_LINK_STATUS, &link_status);
+            glGetProgramiv(shader.program, GL_LINK_STATUS, &link_status);       CheckError("glGetProgramiv");
             if (link_status != GL_TRUE)
             {
                 char log[512];
-                glGetProgramInfoLog(shader.program, sizeof(log), NULL, log);
+                glGetProgramInfoLog(shader.program, sizeof(log), NULL, log);    CheckError("glGetProgramInfoLog");
                 std::cout << errorHeader << "program link" << log << std::endl;
             }
         }
@@ -558,6 +570,27 @@ void ShaderLoader::clear()
 
 bool ShaderLoader::compileSource(Shader::ShaderType shaderType, std::string source, std::vector<std::string> defines, GLuint& shader, const std::string& errorHeader)
 {
+    // helpers
+    std::string header = errorHeader;
+    const auto CheckError = [header](const char* label)
+        {
+            GLenum error = glGetError();
+            if (!label)
+                return false;
+            switch (error)
+            {
+            case GL_INVALID_ENUM: std::cout << header << label << " : GL_INVALID_ENUM" << std::endl; break;
+            case GL_INVALID_VALUE: std::cout << header << label << " : GL_INVALID_VALUE" << std::endl; break;
+            case GL_INVALID_OPERATION: std::cout << header << label << " : GL_INVALID_OPERATION" << std::endl; break;
+            case GL_INVALID_FRAMEBUFFER_OPERATION: std::cout << header << label << " : GL_INVALID_FRAMEBUFFER_OPERATION" << std::endl; break;
+            case GL_OUT_OF_MEMORY: std::cout << header << label << " : GL_OUT_OF_MEMORY" << std::endl; break;
+            case GL_STACK_UNDERFLOW: std::cout << header << label << " : GL_STACK_UNDERFLOW" << std::endl; break;
+            case GL_STACK_OVERFLOW: std::cout << header << label << " : GL_STACK_OVERFLOW" << std::endl; break;
+            default: break;
+            }
+            return error != GL_NO_ERROR;
+        };
+
     // Generate ID from OpenGL
     switch (shaderType)
     {
@@ -571,6 +604,8 @@ bool ShaderLoader::compileSource(Shader::ShaderType shaderType, std::string sour
             std::cerr << errorHeader << Shader::toString(shaderType) << std::endl;
             return false;
     }
+    CheckError("glCreateShader");
+
     if (!shader)
     {
         std::cerr << errorHeader << Shader::toString(shaderType) << " : fail to create OPENGL shader" << std::endl;
@@ -585,17 +620,17 @@ bool ShaderLoader::compileSource(Shader::ShaderType shaderType, std::string sour
 
     // Compile shader source
     const char* sourceData = source.data();
-    glShaderSource(shader, 1, (const GLchar**)(&sourceData), NULL);
-    glCompileShader(shader);
+    glShaderSource(shader, 1, (const GLchar**)(&sourceData), NULL);     CheckError("glShaderSource");
+    glCompileShader(shader);    CheckError("glCompileShader");
 
     GLint compile_status = GL_TRUE;
-    glGetShaderiv(shader, GL_COMPILE_STATUS, &compile_status);
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &compile_status);          CheckError("glGetShaderiv");
     if (compile_status != GL_TRUE)
     {
         GLint logsize;
-        glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logsize);
+        glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logsize);            CheckError("glGetShaderiv");
         char* log = new char[logsize];
-        glGetShaderInfoLog(shader, logsize, &logsize, log);
+        glGetShaderInfoLog(shader, logsize, &logsize, log);             CheckError("glGetShaderInfoLog");
 
         if (ResourceVirtual::logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
         {

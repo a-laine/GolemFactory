@@ -81,6 +81,30 @@ vec4f Hull::support(const vec4f& direction) const
 	}
 	return base * v;
 }
+float Hull::computeVolume() const
+{
+	const std::vector<vec4f>& vertices = *mesh->getVertices();
+	vec4f barycenter = vec4f::zero;
+	for (const vec4f& p : vertices)
+		barycenter += p;
+	if (barycenter.w < 0.5f)
+		return 0.f;
+
+	barycenter /= barycenter.w;
+	float volume = 0.f;
+	for (int i = 0; i < mesh->getNumberFaces(); i++)
+	{
+		unsigned int i0 = mesh->getFaceIndiceAt(3 * i + 0);
+		unsigned int i1 = mesh->getFaceIndiceAt(3 * i + 1);
+		unsigned int i2 = mesh->getFaceIndiceAt(3 * i + 2);
+
+		vec4f a = vertices[i0] - barycenter;
+		vec4f b = vertices[i1] - barycenter;
+		vec4f c = vertices[i2] - barycenter;
+		volume += 1.f / 6.f * vec4f::dot(vec4f::cross(a, b), c);
+	}
+	return volume;
+}
 void Hull::getFacingFace(const vec4f& direction, std::vector<vec4f>& points) const
 {
 	vec4f localDirection = mat4f::inverse(base) * direction;

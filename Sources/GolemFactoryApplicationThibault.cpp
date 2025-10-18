@@ -47,7 +47,9 @@
 
 
 #include <GameSpecific/TPSCameraComponent.h>
-#include <GameSpecific/PlayerMovement.h>
+#include <GameSpecific/CharacterController.h>
+#include <Terrain.h>
+#include <JobSystem.h>
 
 #define GRID_SIZE 512
 #define GRID_ELEMENT_SIZE 1.f
@@ -61,6 +63,7 @@ World world;
 Entity* avatar = nullptr;
 Entity* freeflyCamera = nullptr;
 Entity* tpsCamera = nullptr;
+Terrain terrain;
 //Entity* frustrumCamera = nullptr;
 
 float physicsTimeSpeed = 1.f;
@@ -84,6 +87,7 @@ struct {
 void initializeForestScene(bool emptyPlace = false);
 void initializePhysicsScene(int testCase = -1);
 void initializeSyntyScene();
+void initialzeTerrainScene();
 std::string checkResourcesDirectory();
 
 void initManagers();
@@ -104,26 +108,41 @@ int main()
 	std::cout << "Application start" << std::endl;
 	Application application;
 	context = application.createFullscreenWindow("Thibault test", 1600, 900);
-	//context = application.createFullscreenWindow("Thibault test", glfwGetPrimaryMonitor(), 1600, 900);
+	//context = application.createFullscreenWindow("Thibault test", glfwGetPrimaryMonitor()); // full screen no title bar
 	context->makeCurrent();
-	context->setVSync(false);
+	context->setVSync(true);
 	application.initGLEW(1);
 	THREAD_MARKER("MainThread");
 	initManagers();
+	application.changeIcon(ResourceManager::getInstance()->getRepository() + "Textures/cubeIcon.png");
+	//application.maximizeMainWindow();
+
+
+#ifdef USE_IMGUI
+	extern bool PhysicDebugWindowEnable;
+	extern bool HierarchyWindowEnable;
+	extern bool RenderingWindowEnable;
+
+	PhysicDebugWindowEnable = false;
+	HierarchyWindowEnable = false;
+	RenderingWindowEnable = false;
+#endif
 
 	//AnimationGraph* animgraph = ResourceManager::getInstance()->getResource<AnimationGraph>("humanoid");
 
 	//	Test scene
-		EventHandler::getInstance()->setCursorMode(true);
+		EventHandler::getInstance()->setCursorMode(false);
 
-		initializeSyntyScene();
+		//initializeSyntyScene();
+		initialzeTerrainScene();
 
 		Renderer::getInstance()->setGridVisible(false);
+		//Renderer::getInstance()->setRenderOption(Renderer::RenderOption::WIREFRAME);
 		
 		freeflyCamera = world.getEntityFactory().createObject([](Entity* object)
 			{
 				object->setName("FreeFlyCam");
-				object->setWorldPosition(vec4f(0, 7, -30, 1));
+				object->setWorldPosition(vec4f(2.5, 0.08, 62, 1));
 
 				Collider* collider = new Collider(new Sphere(vec4f(0.f), 0.01f));
 				object->addComponent(collider);
@@ -131,7 +150,7 @@ int main()
 
 				CameraComponent* cam = new CameraComponent(true);
 				object->addComponent(cam);
-				cam->setDirection(vec4f(-1, 0, 0, 0));
+				cam->setDirection(vec4f(0, 0, 1, 0));
 				currentCamera = cam;
 				world.setMainCamera(cam);
 				Renderer::getInstance()->setCamera(cam);
@@ -139,12 +158,12 @@ int main()
 		Entity* freeflyCamera2 = world.getEntityFactory().createObject([](Entity* object)
 			{
 				object->setName("FreeFlyCam2");
-				object->setWorldPosition(vec4f(0, 7, -30, 1));
+				object->setWorldPosition(freeflyCamera->getWorldPosition());
 
 
 				CameraComponent* cam = new CameraComponent(true);
 				object->addComponent(cam);
-				cam->setDirection(vec4f(-1, 0, 0, 0));
+				cam->setDirection(currentCamera->getForward());
 				//currentCamera = cam;
 				debugFreeflyCam = cam;
 			});
@@ -154,24 +173,62 @@ int main()
 		{
 			player->setFlags((uint64_t)Entity::Flags::Fl_Player);
 
-			Capsule* capsule = new Capsule();
-			capsule->radius = 0.4f;
-			capsule->p1 = vec4f(0, capsule->radius, 0, 1);
-			capsule->p2 = vec4f(0, 1.8f - capsule->radius, 0, 1);
-			player->addComponent(new Collider(capsule));
 
-			RigidBody* rb = new RigidBody(RigidBody::KINEMATICS);
-			rb->setBouncyness(0.f);
-			rb->setFriction(0.2f);
-			rb->setDamping(0.001f);
-			rb->setGravityFactor(1.f);
-			rb->setAngularVelocity(vec4f::zero);
-			player->addComponent(rb);
-			world.getPhysics().addMovingEntity(player);
-			rb->initialize(80.f);
+			SkeletonComponent* skeletoncomp = player->getComponent<SkeletonComponent>();
+			if (!skeletoncomp)
+			{
+				skeletoncomp = new SkeletonComponent();
+				skeletoncomp->load("PolygonDungeonCharacters");
+				player->addComponent(skeletoncomp);
+			}
 
-			PlayerMovement* playerController = new PlayerMovement();
+			DrawableComponent* drawable = player->getComponent<DrawableComponent>();
+			if (!drawable)
+			{
+				drawable = new DrawableComponent();
+				drawable->setMesh("PolygonDungeon/Characters/Character_Hero_Knight_Male.fbx");
+				drawable->getMesh()->retargetSkin(skeletoncomp->getSkeleton());
+				drawable->setMaterial("dungeon01skinned");
+				player->addComponent(drawable);
+			}
+
+			Animator* animator = player->getComponent<Animator>();
+			if (!animator)
+			{
+				Animator* animator = new Animator();
+				animator->load("humanoid", "male");
+				player->addComponent(animator);
+			}
+
+			Collider* collider = player->getComponent<Collider>();
+			if (!collider)
+			{
+				Collider* collider = new Collider();
+				collider->m_shape = new Capsule(vec4f(0, 0.4f, 0, 1), vec4f(0, 1.4f, 0, 1), 0.4f);
+				player->addComponent(collider);
+			}
+
+			RigidBody* rigidbody = player->getComponent<RigidBody>();
+			if (!rigidbody)
+			{
+				RigidBody* rigidbody = new RigidBody();
+				rigidbody->setType(RigidBody::KINEMATICS);
+				rigidbody->setMass(80.f);
+				rigidbody->setBouncyness(0.f);
+				rigidbody->setFriction(0.2f);
+				rigidbody->setDamping(0.001f);
+				rigidbody->setGravityFactor(1.f);
+				player->addComponent(rigidbody);
+			}
+
+			CharacterController* playerController = new CharacterController();
+			playerController->setControlable(true);
+			playerController->setMale(true);
+			playerController->setCompanion(false);
+			playerController->setSpeeds(1, 2, 4);
+			playerController->setJumpForce(4);
 			player->addComponent(playerController);
+			world.getSceneManager().selectEntity(world, player);
 
 			tpsCamera = world.getEntityFactory().createObject([&](Entity* object)
 				{
@@ -188,6 +245,7 @@ int main()
 					cam->setTargetCharacter(player);
 					playerController->setCamera(cam);
 					object->setWorldPosition(vec4f(0, 7, -30, 1));
+					object->clearFlags((uint64_t)Entity::Flags::Fl_Collision);
 
 					//cam->setOrientation(currentCamera->getOrientation());
 					//cam->setPosition(currentCamera->getPosition());
@@ -201,7 +259,7 @@ int main()
 		world.getSceneManager().addToRootList(freeflyCamera2);
 
 		WidgetManager::getInstance()->setBoolean("BBpicking", false);
-		WidgetManager::getInstance()->setBoolean("wireframe", false);
+		WidgetManager::getInstance()->setBoolean("wireframe", true);
 
 	// init loop time tracking
 	double averageTime = 0;
@@ -242,7 +300,20 @@ int main()
 		Debug::projection = mat4f::perspective(debugFreeflyCam->getVerticalFieldOfView(), context->getViewportRatio(), 0.1f, 10000.f);  //far = 1500.f
 
 		//	physics
-		world.getPhysics().stepSimulation(physicsTimeSpeed * 0.016f, &world.getSceneManager());
+		float oneStepDt = 0.01f;//in sec
+		float advanceTime = 0.f;
+		int substepCount = 0;// dt / std::max((float)elapseTime, 0.01f);
+		float maxDtUpdate = (float)elapseTime * 0.001f;
+		while (substepCount < 10 && advanceTime < maxDtUpdate)
+		{
+			float dt = std::min(oneStepDt, maxDtUpdate - advanceTime);
+			world.getPhysics().stepSimulation(physicsTimeSpeed * oneStepDt, &world.getSceneManager());
+			advanceTime += dt;
+			substepCount++;
+		}
+
+		//world.getPhysics().stepSimulation(physicsTimeSpeed * 0.005f, &world.getSceneManager());
+		//world.getPhysics().stepSimulation(physicsTimeSpeed * 0.005f, &world.getSceneManager());
 
 		// Render scene & picking
 		/*if (WidgetManager::getInstance()->getBoolean("BBrendering"))
@@ -259,7 +330,7 @@ int main()
 		ImGuiMenuBar();
 		ImGuiSystemDraw();
 #endif
-		picking();
+		//picking();
 		Renderer::getInstance()->renderHUD();
 
 		//	clear garbages
@@ -288,6 +359,26 @@ int main()
 #endif
 		{
 			SCOPED_CPU_MARKER("Swap buffers and clear");
+
+			std::string header = "End of frame : ";
+			const auto CheckError = [header](const char* label)
+				{
+					GLenum error = glGetError();
+					switch (error)
+					{
+						case GL_INVALID_ENUM: std::cout << header << label << " : GL_INVALID_ENUM" << std::endl; break;
+						case GL_INVALID_VALUE: std::cout << header << label << " : GL_INVALID_VALUE" << std::endl; break;
+						case GL_INVALID_OPERATION: std::cout << header << label << " : GL_INVALID_OPERATION" << std::endl; break;
+						case GL_INVALID_FRAMEBUFFER_OPERATION: std::cout << header << label << " : GL_INVALID_FRAMEBUFFER_OPERATION" << std::endl; break;
+						case GL_OUT_OF_MEMORY: std::cout << header << label << " : GL_OUT_OF_MEMORY" << std::endl; break;
+						case GL_STACK_UNDERFLOW: std::cout << header << label << " : GL_STACK_UNDERFLOW" << std::endl; break;
+						case GL_STACK_OVERFLOW: std::cout << header << label << " : GL_STACK_OVERFLOW" << std::endl; break;
+						default: break;
+					}
+					return error != GL_NO_ERROR;
+				};
+			if (CheckError("??"))
+				DebugBreak();
 
 			context->swapBuffers();
 			Renderer::getInstance()->swap();
@@ -517,6 +608,7 @@ void initializePhysicsScene(int testCase)
 }
 void initializeSyntyScene()
 {
+	FRAME_MARKER("initializeSyntyScene");
 	Renderer::getInstance()->setEnvBackgroundColor(vec4f(0.f, 0.f, 0.f, 0.f));
 	
 
@@ -531,7 +623,7 @@ void initializeSyntyScene()
 #endif
 
 
-	const auto TryLoadAsVec4f = [](Variant& variant, vec4f& destination)
+	const auto TryLoadAsVec4f = [](Variant& variant, vec4f& destination, bool testAsScalar = false, std::string assetName = "")
 	{
 		int sucessfullyParsed = 0;
 		if (variant.getType() == Variant::ARRAY)
@@ -559,6 +651,30 @@ void initializeSyntyScene()
 			}
 			destination = parsed;
 		}
+		else if (testAsScalar && (variant.getType() == Variant::FLOAT || variant.getType() == Variant::DOUBLE || variant.getType() == Variant::INT))
+		{
+			if (ResourceVirtual::logVerboseLevel > ResourceVirtual::VerboseLevel::WARNINGS)
+			{
+				std::cout << ConsoleColor::getColorString(ConsoleColor::Color::YELLOW) << "WARNING : object " << assetName << " has a scalar scaling" << std::flush;
+				std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
+			}
+
+			if (variant.getType() == Variant::FLOAT)
+			{
+				destination = vec4f(variant.toFloat());
+				sucessfullyParsed += 4;
+			}
+			else if (variant.getType() == Variant::DOUBLE)
+			{
+				destination = vec4f((float)variant.toDouble());
+				sucessfullyParsed += 4;
+			}
+			else if (variant.getType() == Variant::INT)
+			{
+				destination = vec4f((float)variant.toInt());
+				sucessfullyParsed+=4;
+			}
+		}
 		return sucessfullyParsed;
 	};
 
@@ -567,7 +683,7 @@ void initializeSyntyScene()
 	// load file and parse JSON
 	std::string repository = ResourceManager::getInstance()->getRepository();
 	std::string packageName = "PolygonDungeon";
-	std::string sceneName = "Demo2"; // "Demo"; // "TestInterior";
+	std::string sceneName = "TestInterior"; // "Demo"; // "TestInterior";
 	std::string fullFileName = repository + "Scenes/" + packageName + "/" + sceneName + ".json";
 	Variant v; Variant* tmp = nullptr;
 	try
@@ -677,7 +793,7 @@ void initializeSyntyScene()
 				TryLoadAsVec4f((*it)["rotation"], tmp);
 				quatf rotation = quatf(tmp.w, tmp.x, tmp.y, tmp.z);
 				rotation.normalize();
-				TryLoadAsVec4f((*it)["scale"], scale);
+				TryLoadAsVec4f((*it)["scale"], scale, true, newObject->getName());
 
 				if (!prefabName.empty())
 					scale *= newObject->getWorldScale();
@@ -728,6 +844,26 @@ void initializeSyntyScene()
 		return;
 	}
 }
+void initialzeTerrainScene()
+{
+	terrain.clear();
+	terrain.load(ResourceManager::getInstance()->getRepository() + "Terrain");
+	terrain.getVirtualTexture()->syncroGPUTexture();
+
+	//return;
+
+	Entity* e = world.getEntityFactory().createObject([](Entity* object)
+		{
+			object->setName("PlayerTest");
+			object->setWorldTransformation(vec4f(10,10,10,1), vec4f::one, quatf::identity);
+
+			Collider* collider = new Collider();
+			collider->m_shape = new Capsule(vec4f(0, 0.4f, 0, 1), vec4f(0, 1.4f, 0, 1), 0.4f);
+			object->addComponent(collider);
+		}, true	);
+
+	world.getSceneManager().addToRootList(e);
+}
 std::string checkResourcesDirectory()
 {
 	//	check relative from executable
@@ -746,10 +882,32 @@ std::string checkResourcesDirectory()
 
 void initManagers()
 {
+	FRAME_MARKER("Frame -1");
 	SCOPED_CPU_MARKER("initManagers");
 
 	std::string resourceRepository = checkResourcesDirectory();
 	if (DEBUG_LEVEL) std::cout << "Found resources folder at : " << resourceRepository << std::endl;
+
+	std::string header = "initManagers : ";
+	const auto CheckError = [header](uint32_t line)
+		{
+			GLenum error = glGetError();
+			switch (error)
+			{
+				case GL_INVALID_ENUM: std::cout << header << "line : " << line << " : GL_INVALID_ENUM" << std::endl; break;
+				case GL_INVALID_VALUE: std::cout << header << "line : " << line << " : GL_INVALID_VALUE" << std::endl; break;
+				case GL_INVALID_OPERATION: std::cout << header << "line : " << line << " : GL_INVALID_OPERATION" << std::endl; break;
+				case GL_INVALID_FRAMEBUFFER_OPERATION: std::cout << header << "line : " << line << " : GL_INVALID_FRAMEBUFFER_OPERATION" << std::endl; break;
+				case GL_OUT_OF_MEMORY: std::cout << header << "line : " << line << " : GL_OUT_OF_MEMORY" << std::endl; break;
+				case GL_STACK_UNDERFLOW: std::cout << header << "line : " << line << " : GL_STACK_UNDERFLOW" << std::endl; break;
+				case GL_STACK_OVERFLOW: std::cout << header << "line : " << line << " : GL_STACK_OVERFLOW" << std::endl; break;
+				default: break;
+			}
+			if (error != GL_NO_ERROR)
+				DebugBreak();
+		};
+
+	CheckError(__LINE__);
 
 	// Init Event handler
 	EventHandler::getInstance()->addWindow(context->getParentWindow());
@@ -758,8 +916,13 @@ void initManagers()
 	EventHandler::getInstance()->setCursorMode(false);
 	EventHandler::getInstance()->addResizeCallback(WidgetManager::resizeCallback);
 
+	// Worker thread utility
+	//WorkerThread::initialize(6, 2);
+	JobSystem::getInstance()->init(true);
+	CheckError(__LINE__);
+
 	// Init Resources manager
-	ResourceVirtual::logVerboseLevel = ResourceVirtual::VerboseLevel::ALL;
+	ResourceVirtual::logVerboseLevel = ResourceVirtual::VerboseLevel::WARNINGS;
 	ResourceManager::getInstance()->setRepository(resourceRepository);
     Texture::setDefaultName("10points.png");
     Font::setDefaultName("Comic Sans MS");
@@ -769,6 +932,7 @@ void initManagers()
     Material::setDefaultName("default");
     AnimationClip::setDefaultName("male_idle_breath");
 	AnimationGraph::setDefaultName("humanoid");
+	CheckError(__LINE__);
 
     ResourceManager::getInstance()->addNewResourceLoader(".animation", new AnimationLoader());
     ResourceManager::getInstance()->addNewResourceLoader(".font", new FontLoader());
@@ -781,6 +945,7 @@ void initManagers()
     ResourceManager::getInstance()->addNewResourceLoader("image", new ImageLoader());
     ResourceManager::getInstance()->addNewResourceLoader(".texture", new TextureLoader());
     ResourceManager::getInstance()->addNewResourceLoader(".animGraph", new AnimationGraphLoader());
+	CheckError(__LINE__);
 
 	// Init world -> 64*64Km²
 	const vec4f worldHalfSize = vec4f(64000, 64.f, 64000, 0);//vec4f(GRID_SIZE * GRID_ELEMENT_SIZE, 128.f, GRID_SIZE * GRID_ELEMENT_SIZE, 0) * 0.5f;
@@ -800,7 +965,7 @@ void initManagers()
 	world.setMaxObjectCount(400000);
 	world.getSceneManager().update(vec4f(0, 7, -30, 1), false);
 
-	world.getTerrainVirtualTexture().initialize(2048);
+	CheckError(__LINE__);
 	
 	if(false)
 	{
@@ -864,6 +1029,7 @@ void initManagers()
 	//world.getMap().loadFromHeightmap(resourceRepository + "Textures/", "mountains512.png"); /// >> CREATE BUGS WITH TRANSPARENT ?
 
 	//	Renderer
+	CheckError(__LINE__);
 	Renderer::getInstance()->setContext(context);
 	Renderer::getInstance()->setWorld(&world);
 	Renderer::getInstance()->setShader(Renderer::DEFAULT, ResourceManager::getInstance()->getResource<Shader>("default"));
@@ -872,16 +1038,17 @@ void initManagers()
 	Renderer::getInstance()->normalViewer = ResourceManager::getInstance()->getResource<Shader>("normalViewer");
 	Renderer::getInstance()->initializeGrid(GRID_SIZE, GRID_ELEMENT_SIZE, vec4f(24 / 255.f, 202 / 255.f, 230 / 255.f, 1.f));	// blue tron
 
-	Renderer::getInstance()->initializeConstants();
-	Renderer::getInstance()->initializeLightClusterBuffer(64, 36, 128);
-	Renderer::getInstance()->initializeOcclusionBuffers(256, 144);
-	Renderer::getInstance()->initializeShadows(1024, 1024, 1024, 1024);
-	Renderer::getInstance()->initializeOverviewRenderer(512, 512);
-	Renderer::getInstance()->initializeTerrainMaterialCollection("GroundTextures/TerrainMaterialCollection.texture");
-	Renderer::getInstance()->initializeSkybox("SkyBoxes/defaultSkybox.texture");
+	Renderer::getInstance()->initializeConstants(); CheckError(__LINE__);
+	Renderer::getInstance()->initializeLightClusterBuffer(64, 36, 128); CheckError(__LINE__);
+	Renderer::getInstance()->initializeOcclusionBuffers(256, 144); CheckError(__LINE__);
+	Renderer::getInstance()->initializeShadows(1024, 1024, 1024, 1024); CheckError(__LINE__);
+	Renderer::getInstance()->initializeOverviewRenderer(512, 512); CheckError(__LINE__);
+	Renderer::getInstance()->initializeTerrainMaterialCollection("GroundTextures/TerrainMaterialCollection.texture"); CheckError(__LINE__);
+	Renderer::getInstance()->initializeSkybox("SkyBoxes/defaultSkybox.texture"); CheckError(__LINE__);  
 
 	
 	// Debug
+	CheckError(__LINE__);
 	Debug::getInstance()->initialize("Shapes/box", "Shapes/sphere.obj", "Shapes/capsule", "default", "wired", "debug", "textureReinterpreter");
 	ResourceManager::getInstance()->getResource<Texture>("PolygonDungeon/Dungeons_Texture_01.png");
 	ResourceManager::getInstance()->getResource<Texture>("PolygonDungeon/Dungeons_Texture_02.png");
@@ -894,6 +1061,101 @@ void initManagers()
 	//	HUD
 	WidgetManager::getInstance()->setInitialViewportRatio(context->getViewportRatio());
 	WidgetManager::getInstance()->loadHud("default");
+	CheckError(__LINE__);
+
+	// Terrain
+	terrain.setWorld(&world);
+	terrain.initializeClipmaps();
+
+#if 1
+	/*trees detail*/ {
+		auto& detail = terrain.addDetail();
+		detail.m_name = "trees";
+		detail.m_lod = 4;
+		detail.m_colorTint0 = vec3f(1.f);
+		detail.m_colorTint1 = vec3f(0.9f);
+		detail.m_density = 10.f;
+		detail.m_alphaCLipThs = -1.f;
+		detail.m_doubleSided = false;
+		detail.m_maxShadow = 4;
+		detail.m_normalWeight = 1.f;
+		detail.m_sizeRange = vec2f(3.f, 5.f);
+		detail.m_allowedMaterials.push_back(0);
+
+		detail.m_meshNames.push_back("PolygonDungeon/SM_Env_Tree_01.fbx");
+		detail.m_probability.push_back(vec2f(0.00f, 0.17f));
+		detail.m_modelOffset.push_back(-0.1f);
+
+		detail.m_meshNames.push_back("PolygonDungeon/SM_Env_Tree_02.fbx");
+		detail.m_probability.push_back(vec2f(0.17f, 0.34f));
+		detail.m_modelOffset.push_back(-0.1f);
+
+		detail.m_meshNames.push_back("PolygonDungeon/SM_Env_Tree_03.fbx");
+		detail.m_probability.push_back(vec2f(0.34f, 0.51f));
+		detail.m_modelOffset.push_back(-0.1f);
+
+		detail.m_meshNames.push_back("PolygonDungeon/SM_Env_Tree_04.fbx");
+		detail.m_probability.push_back(vec2f(0.51f, 0.68f));
+		detail.m_modelOffset.push_back(-0.1f);
+	}
+	/*grass detail*/ {
+		auto& detail = terrain.addDetail();
+		detail.m_name = "grass";
+		detail.m_lod = 2;
+		detail.m_colorTint0 = vec3f(0.08f, 0.25f, 0.05f);
+		detail.m_colorTint1 = vec3f(0.40f, 0.63f, 0.12f);
+		detail.m_density = 1.f;
+		detail.m_alphaCLipThs = 0.3f;
+		detail.m_doubleSided = true;
+		detail.m_maxShadow = 0;
+		detail.m_normalWeight = 0.f;
+		detail.m_sizeRange = vec2f(0.3f, 0.5f);
+		detail.m_allowedMaterials.push_back(0);
+
+		detail.m_meshNames.push_back("PolygonDungeon/SM_Env_GrassQuads_01.fbx");
+		detail.m_probability.push_back(vec2f(0.7f, 1.f));
+		detail.m_modelOffset.push_back(-0.1f);
+		detail.m_shaderTextureOverride["albedo"] = "PolygonDungeon/Grass_01.png";
+		detail.m_shaderTextureOverride["metalic"] = "BlackTexture.png";
+		detail.m_shaderTextureOverride["emmisive"] = "BlackTexture.png";
+	}
+	/*rocks detail*/ {
+		auto& detail = terrain.addDetail();
+		detail.m_name = "rocks";
+		detail.m_lod = 3;
+		detail.m_colorTint0 = vec3f(1.f);
+		detail.m_colorTint1 = vec3f(0.9f);
+		detail.m_density = 6.f;
+		detail.m_alphaCLipThs = -1.f;
+		detail.m_doubleSided = false;
+		detail.m_maxShadow = 2;
+		detail.m_normalWeight = 0.f;
+		detail.m_sizeRange = vec2f(2.f, 3.f);
+		detail.m_allowedMaterials.push_back(0);//grass
+		detail.m_allowedMaterials.push_back(4);//sand
+		detail.m_allowedMaterials.push_back(5);//sand
+
+		detail.m_meshNames.push_back("PolygonDungeon/SM_Env_Rock_Round_02.fbx");
+		detail.m_probability.push_back(vec2f(0.00f, 0.3f));
+		detail.m_modelOffset.push_back(-0.01f);
+	}
+	terrain.endAddDetail();
+#endif
+
+	world.getTerrainVirtualTexture().initialize(2048);
+	terrain.setVirtualTexture(&world.getTerrainVirtualTexture());
+	Renderer::getInstance()->setVirtualTexture(&world.getTerrainVirtualTexture());
+
+	terrain.g_morphingRange = 50.f;
+	terrain.addLodRadius(70);//lod0
+	terrain.addLodRadius(375 + terrain.g_morphingRange);
+	terrain.addLodRadius(375 + terrain.g_morphingRange);
+	terrain.addLodRadius(375 + terrain.g_morphingRange);
+	terrain.addLodRadius(375 * 2 + terrain.g_morphingRange);
+	terrain.addLodRadius(375 * 3 + terrain.g_morphingRange);
+	terrain.addLodRadius(375 * 3 + terrain.g_morphingRange);
+	terrain.addLodRadius(375 * 3 + terrain.g_morphingRange);
+	CheckError(__LINE__);
 }
 void picking()
 {
@@ -907,12 +1169,12 @@ void picking()
 		vec2f cursor = EventHandler::getInstance()->getCursorPositionAbsolute();
 		vec2i vpsize = context->getViewportSize();
 		vec4f up = debugFreeflyCam->getUp();
-		vec4f right = debugFreeflyCam->getRight();
+		vec4f left = debugFreeflyCam->getLeft();
 		float tanfov = tan(0.5f * debugFreeflyCam->getVerticalFieldOfView());
 		float ratio = (float)vpsize.x / vpsize.y;
 		float nearPlane = 0.1f;
 
-		direction = nearPlane * debugFreeflyCam->getForward() + (nearPlane * tanfov * ratio * ( 2.f * cursor.x / vpsize.x - 1.f)) * right + (nearPlane * tanfov * (1.f - 2.f * cursor.y / vpsize.y)) * up;
+		direction = nearPlane * debugFreeflyCam->getForward() + (nearPlane * tanfov * ratio * (1.f - 2.f * cursor.x / vpsize.x)) * left + (nearPlane * tanfov * (1.f - 2.f * cursor.y / vpsize.y)) * up;
 		direction.normalize();
 
 		//std::cout << c.x << ' ' << c.y << std::endl;
@@ -1062,6 +1324,7 @@ void updates(float elapseTime)
 {
 	SCOPED_CPU_MARKER("Updates");
 	world.getSceneManager().update(debugFreeflyCam->getPosition());
+	terrain.update(currentCamera->getPosition());
 
 	//	animate avatar
 	//if(avatar)
@@ -1143,17 +1406,18 @@ void updates(float elapseTime)
 	else*/
 	{
 		CameraComponent* ffCam = freeflyCamera->getComponent<CameraComponent>();
+		EventHandler* eventMgr = EventHandler::getInstance();
 		
 		// Rotation
-		if (!EventHandler::getInstance()->getCursorMode() && WidgetManager::getInstance()->getBoolean("syncCamera"))
+		if (!eventMgr->getCursorMode() && WidgetManager::getInstance()->getBoolean("syncCamera"))
 		{
 			float sensitivity = 0.2f;
-			float yaw = -(float)DEG2RAD * sensitivity * EventHandler::getInstance()->getCursorPositionRelative().x;
-			float pitch = -(float)DEG2RAD * sensitivity * EventHandler::getInstance()->getCursorPositionRelative().y;
+			float yaw = -(float)DEG2RAD * sensitivity * eventMgr->getCursorPositionRelative().x;
+			float pitch = -(float)DEG2RAD * sensitivity * eventMgr->getCursorPositionRelative().y;
 			ffCam->rotate(pitch, yaw);
 
 			// FOV
-			float angle = ffCam->getVerticalFieldOfView() + (float)DEG2RAD * EventHandler::getInstance()->getScrollingRelative().y;
+			float angle = ffCam->getVerticalFieldOfView() + (float)DEG2RAD * eventMgr->getScrollingRelative().y;
 			if (angle > 1.5f) angle = 1.5f;
 			else if (angle < 0.05f) angle = 0.05f;
 
@@ -1163,15 +1427,15 @@ void updates(float elapseTime)
 		// Translation
 		vec4f direction(0., 0., 0., 0.);
 		vec4f forward = ffCam->getForward();
-		vec4f right = ffCam->getRight();
+		vec4f left = ffCam->getLeft();
 
 		float speed = 0.003f;
-		if (EventHandler::getInstance()->isActivated(FORWARD)) direction += forward;
-		if (EventHandler::getInstance()->isActivated(BACKWARD)) direction -= forward;
-		if (EventHandler::getInstance()->isActivated(LEFT)) direction -= right;
-		if (EventHandler::getInstance()->isActivated(RIGHT)) direction += right;
-		if (EventHandler::getInstance()->isActivated(SNEAKY)) speed /= 10.f;
-		if (EventHandler::getInstance()->isActivated(RUN)) speed *= 10.f;
+		if (eventMgr->isActivated(FORWARD)) direction += forward;
+		if (eventMgr->isActivated(BACKWARD)) direction -= forward;
+		if (eventMgr->isActivated(LEFT)) direction += left;
+		if (eventMgr->isActivated(RIGHT)) direction -= left;
+		if (eventMgr->isActivated(SNEAKY)) speed /= 10.f;
+		if (eventMgr->isActivated(RUN)) speed *= 10.f;
 
 		if (direction.x || direction.y || direction.z)
 		{

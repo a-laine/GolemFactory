@@ -1,8 +1,5 @@
 #pragma once
 
-//#include <glm/glm.hpp>
-//#include <glm/gtx/quaternion.hpp>
-
 #include <vector>
 
 #include "RigidBody.h"
@@ -35,4 +32,24 @@ class CollisionReport
 
 		std::vector<vec4f> shape1face;
 		std::vector<vec4f> shape2face;
+};
+
+class RaycastReport
+{
+public:
+	//	Default
+	RaycastReport();
+	~RaycastReport();
+	//
+
+
+	// Public Methode
+	void clear();
+	//
+
+	vec4f m_intersection;
+	float m_distance;
+	vec4f m_normal;
+	Entity* m_entity;
+	Shape* m_shape;
 };

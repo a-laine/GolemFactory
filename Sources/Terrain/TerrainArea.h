@@ -4,10 +4,13 @@
 
 #include <Utiles/WorkerThread.h>
 #include <Physics/Shapes/AxisAlignedBox.h>
+#include <Physics/Physics.h>
 
 class Terrain;
 class Entity;
 class Mesh;
+
+#define AREA_WORLDSCALE 250.f
 
 class TerrainArea
 {
@@ -34,7 +37,9 @@ class TerrainArea
 		const TerrainVirtualTexture::TextureTile& getTileData(int lod) const;
 		Terrain* getTerrain() const;
 		bool hasWater() const;
-		AxisAlignedBox getBoundingBox() const;
+		const AxisAlignedBox& getBoundingBox() const;
+
+		bool getCollisionInCache(Physics::CollisionCache& cache) const;
 		//
 		
 		// Members

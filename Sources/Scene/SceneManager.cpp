@@ -11,6 +11,7 @@
 #include <Renderer/CameraComponent.h>
 #include <Utiles/ProfilerConfig.h>
 #include <Utiles/ObjectPool.h>
+#include <Utiles/MixedArray.h>
 
 
 #ifdef USE_IMGUI
@@ -23,7 +24,9 @@ extern ObjectPool<NodeVirtual> g_nodePool;
 
 SceneManager::SceneManager()
 {
+#ifdef USE_IMGUI
 	m_lastSelectedEntity = nullptr;
+#endif
 }
 SceneManager::SceneManager(SceneManager&& other) : world(std::move(other.world)), instanceTracking(std::move(other.instanceTracking))
 {
@@ -253,7 +256,11 @@ Entity* SceneManager::searchEntity(const std::string& _name)
 
 Entity* SceneManager::getLastSelectedEntity() const
 {
+#ifdef USE_IMGUI
 	return m_lastSelectedEntity;
+#else 
+	return nullptr;
+#endif
 }
 
 std::vector<Entity*> SceneManager::getObjectsOnRay(const vec4f& position, const vec4f& direction, float maxDistance)
@@ -281,13 +288,17 @@ void SceneManager::getSceneNodes(VirtualSceneQuerry* collisionTest)
 {
 	SCOPED_CPU_MARKER("SceneManager::getSceneNodes");
 
+	// cache init
+	MixedArray<NodeVirtual*, 256> path;
+	MixedArray<bool, 256> parentIsInsideStack;
+
 	//	initialize and test root
 	for (NodeVirtual* node : world)
 	{
 		//	init path and iterate on tree
 		VirtualSceneQuerry::CollisionType collision;
-		std::vector<NodeVirtual*> path;
-		std::vector<bool> parentIsInsideStack;
+		path.clear();
+		parentIsInsideStack.clear();
 		path.push_back(node);
 		parentIsInsideStack.push_back(false);
 
@@ -316,8 +327,8 @@ void SceneManager::getSceneNodes(VirtualSceneQuerry* collisionTest)
 					parentIsInsideStack.push_back(collision == VirtualSceneQuerry::CollisionType::INSIDE);
 			}
 		}
+
 	}
-	
 }
 void SceneManager::getEntities(VirtualSceneQuerry* collisionTest, VirtualEntityCollector* entityCollector)
 {

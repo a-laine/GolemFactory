@@ -10,7 +10,7 @@
 	"colliderComponent" :{
 		"shapeType" : "Box",
 		"center" : [-2.5, 0.05, 2.5],
-		"halfSize" : [2.5, 0.05, 2.5]
+		"halfSize" : [2.53, 0.05, 2.53]
 	},
     "prefabEntities": []
 }

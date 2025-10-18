@@ -103,6 +103,11 @@ void AxisAlignedBox::getFacingFace(const vec4f& direction, std::vector<vec4f>& p
 		}
 	}
 }
+float  AxisAlignedBox::computeVolume() const
+{
+	vec4f size = 0.5f * (max - min);
+	return size.x * size.y * size.z;
+}
 mat4f AxisAlignedBox::computeInertiaMatrix() const
 {
 	vec4f size = 0.5f * (max - min);

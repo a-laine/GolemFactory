@@ -75,6 +75,15 @@
     <Filter Include="Fichiers sources\Renderer\Lighting">
       <UniqueIdentifier>{374afe81-bdb4-414a-bd70-131bfd92102b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Fichiers sources\Utiles\Hull">
+      <UniqueIdentifier>{37b0cc07-65aa-43f8-8481-98d4175b592b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Fichiers sources\Utiles\Containers">
+      <UniqueIdentifier>{753ebb1d-3b2f-45e6-92f4-b6bd7c626fc3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Fichiers sources\Utiles\JobSystem">
+      <UniqueIdentifier>{b770b7b4-582b-41ad-8b5b-c7c14ffef026}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\Sources\Animation\AnimationComponent.cpp">
@@ -260,15 +269,6 @@
     <ClCompile Include="..\..\Sources\Utiles\Debug.cpp">
       <Filter>Fichiers sources\Utiles</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Sources\Utiles\GiftWrapping.cpp">
-      <Filter>Fichiers sources\Utiles</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\Utiles\IncrementalHull.cpp">
-      <Filter>Fichiers sources\Utiles</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\Sources\Utiles\QuickHull.cpp">
-      <Filter>Fichiers sources\Utiles</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\Sources\Utiles\ToolBox.cpp">
       <Filter>Fichiers sources\Utiles</Filter>
     </ClCompile>
@@ -431,9 +431,6 @@
     <ClCompile Include="..\..\Sources\Terrain\TerrainAreaDrawableComponent.cpp">
       <Filter>Fichiers sources\Terrain</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Sources\Utiles\WorkerThread.cpp">
-      <Filter>Fichiers sources\Utiles</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\Sources\Resources\Loader\TextureSaver.cpp">
       <Filter>Fichiers sources\Resources\Loader</Filter>
     </ClCompile>
@@ -445,6 +442,21 @@
     </ClCompile>
     <ClCompile Include="..\..\Sources\Resources\Loader\MaterialLoader.cpp">
       <Filter>Fichiers sources\Resources\Loader</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Sources\Utiles\GiftWrapping.cpp">
+      <Filter>Fichiers sources\Utiles\Hull</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Sources\Utiles\IncrementalHull.cpp">
+      <Filter>Fichiers sources\Utiles\Hull</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Sources\Utiles\QuickHull.cpp">
+      <Filter>Fichiers sources\Utiles\Hull</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Sources\Utiles\WorkerThread.cpp">
+      <Filter>Fichiers sources\Utiles\JobSystem</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Sources\Utiles\JobSystem.cpp">
+      <Filter>Fichiers sources\Utiles\JobSystem</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -697,25 +709,13 @@
     <ClInclude Include="..\..\Sources\Utiles\FileWatcher.h">
       <Filter>Fichiers sources\Utiles</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Sources\Utiles\GiftWrapping.h">
-      <Filter>Fichiers sources\Utiles</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Sources\Utiles\ImguiConfig.h">
-      <Filter>Fichiers sources\Utiles</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Utiles\IncrementalHull.h">
       <Filter>Fichiers sources\Utiles</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Sources\Utiles\Mutex.h">
       <Filter>Fichiers sources\Utiles</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Sources\Utiles\OpenSaveFileDialog.h">
-      <Filter>Fichiers sources\Utiles</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Utiles\QuickHull.h">
-      <Filter>Fichiers sources\Utiles</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\Sources\Utiles\SafeFoxwardList.h">
       <Filter>Fichiers sources\Utiles</Filter>
     </ClInclude>
     <ClInclude Include="..\..\Sources\Utiles\Singleton.h">
@@ -880,9 +880,6 @@
     <ClInclude Include="..\..\Sources\Terrain\TerrainAreaDrawableComponent.h">
       <Filter>Fichiers sources\Terrain</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Sources\Utiles\WorkerThread.h">
-      <Filter>Fichiers sources\Utiles</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Sources\Resources\Loader\TextureSaver.h">
       <Filter>Fichiers sources\Resources\Loader</Filter>
     </ClInclude>
@@ -900,6 +897,33 @@
     </ClInclude>
     <ClInclude Include="..\..\Sources\Resources\Loader\MaterialLoader.h">
       <Filter>Fichiers sources\Resources\Loader</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Utiles\GiftWrapping.h">
+      <Filter>Fichiers sources\Utiles\Hull</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Utiles\IncrementalHull.h">
+      <Filter>Fichiers sources\Utiles\Hull</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Utiles\QuickHull.h">
+      <Filter>Fichiers sources\Utiles\Hull</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Utiles\SafeFoxwardList.h">
+      <Filter>Fichiers sources\Utiles\Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Utiles\BankArray.h">
+      <Filter>Fichiers sources\Utiles\Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Utiles\ThreadSafeRingBuffer.h">
+      <Filter>Fichiers sources\Utiles\Containers</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Utiles\WorkerThread.h">
+      <Filter>Fichiers sources\Utiles\JobSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Utiles\JobSystem.h">
+      <Filter>Fichiers sources\Utiles\JobSystem</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Utiles\MixedArray.h">
+      <Filter>Fichiers sources\Utiles\Containers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

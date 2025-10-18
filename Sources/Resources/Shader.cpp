@@ -11,6 +11,13 @@ char const * const Shader::extension = ".shader";
 std::string Shader::defaultName;
 //
 
+//  Internal bitfield of variants
+#define VARIANT_INSTANCING      (1 << 0)
+#define VARIANT_SHADOW          (1 << 1)
+#define VARIANT_WIREFRAME       (1 << 2)
+#define VARIANT_OMNI_SHADOW     ((1 << 3) | VARIANT_SHADOW)
+//
+
 //  Default
 Shader::Shader(const std::string& shaderName)
     : ResourceVirtual(shaderName, ResourceVirtual::ResourceType::SHADER)
@@ -295,13 +302,11 @@ std::string Shader::getLoaderId(const std::string& resourceName) const
 
 int Shader::computeVariantCode(bool instanced, int shadow, bool wireframe)
 {
-    int code = instanced ? (1 << 0) : 0;
-    if (shadow)
-        code |= 1 << 1;
-    else if (wireframe)
-        code |= 2 << 1;
-    if (shadow > 1)
-        code |= 1 << 3;
+    int code = 0;
+    if (instanced) code |= VARIANT_INSTANCING;
+    if (wireframe) code |= VARIANT_WIREFRAME;
+    if (shadow > 1) code |= VARIANT_OMNI_SHADOW;
+    else if (shadow == 1) code |= VARIANT_SHADOW;
 
     return code;
 }
@@ -314,7 +319,7 @@ Shader* Shader::getVariant(int variantCode)
 }
 bool Shader::supportInstancing() const
 {
-    auto it = variants.find(1 << 0);
+    auto it = variants.find(VARIANT_INSTANCING);
     return it != variants.end() && it->second;
 }
 bool Shader::isComputeShader() const

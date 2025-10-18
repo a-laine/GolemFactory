@@ -23,6 +23,56 @@ bool Collision::collide(const Shape* a, const Shape* b, CollisionReport* report)
 }
 
 
+bool Collision::raycast(const Segment* ray, const Shape* shape, RaycastReport* report)
+{
+	bool collision = false;
+	switch (shape->type)
+	{
+		case Shape::ShapeType::SPHERE:
+			{
+				const Sphere& sphere = *(Sphere*)shape;
+				collision = raycast_Sphere(ray->p1, ray->p2, sphere.center, sphere.radius, report);
+				if (collision && report)
+					report->m_shape = (Shape*)shape;
+				return collision;
+			}
+
+		case Shape::ShapeType::AXIS_ALIGNED_BOX:
+			{
+				const AxisAlignedBox& aabb = *(AxisAlignedBox*)shape;
+				collision = raycast_AxisAlignedBox(ray->p1, ray->p2, aabb.min, aabb.max, report);
+				if (collision && report)
+					report->m_shape = (Shape*)shape;
+				return collision;
+			}
+
+		case Shape::ShapeType::ORIENTED_BOX:
+			{
+				const OrientedBox& box = *(OrientedBox*)shape;
+				collision = raycast_OrientedBox(ray->p1, ray->p2, box.base, box.min, box.max, report);
+				if (collision && report)
+					report->m_shape = (Shape*)shape;
+				return collision;
+			}
+
+		case Shape::ShapeType::TRIANGLE:
+			{
+				const Triangle& tri = *(Triangle*)shape;
+				collision = raycast_Triangle(ray->p1, ray->p2, tri.p1, tri.p2, tri.p3, true, report);
+				if (collision && report)
+					report->m_shape = (Shape*)shape;
+				return collision;
+			}
+			break;
+
+
+		default:
+			return false;
+	}
+	return false;
+}
+
+
 void Collision::DispatchMatrixInit()
 {
 	for (int i = 0; i < 8; i++)
@@ -52,6 +102,10 @@ void Collision::DispatchMatrixInit()
 	dispatchMatrix[(int)Shape::ShapeType::SPHERE][(int)Shape::ShapeType::ORIENTED_BOX] = _SpherevsOrientedBox;
 	dispatchMatrix[(int)Shape::ShapeType::SPHERE][(int)Shape::ShapeType::AXIS_ALIGNED_BOX] = _SpherevsAxisAlignedBox;
 	dispatchMatrix[(int)Shape::ShapeType::SPHERE][(int)Shape::ShapeType::CAPSULE] = _SpherevsCapsule;
+	dispatchMatrix[(int)Shape::ShapeType::SPHERE][(int)Shape::ShapeType::TRIANGLE] = _SpherevsTriangle;
+
+	dispatchMatrix[(int)Shape::ShapeType::CAPSULE][(int)Shape::ShapeType::SPHERE] = _CapsulevsSphere;
+	dispatchMatrix[(int)Shape::ShapeType::CAPSULE][(int)Shape::ShapeType::TRIANGLE] = _CapsulevsTriangle;
 
 	dispatchMatrix[(int)Shape::ShapeType::ORIENTED_BOX][(int)Shape::ShapeType::SPHERE] = _OrientedBoxvsSphere;
 
@@ -184,6 +238,26 @@ bool Collision::_SpherevsCapsule(const Shape* a, const Shape* b, CollisionReport
 	const Sphere& sphere = *(Sphere*)a;
 	const Capsule& capsule = *(Capsule*)b;
 	return collide_SpherevsCapsule(sphere.center, sphere.radius, capsule.p1, capsule.p2, capsule.radius, report);
+}
+bool Collision::_SpherevsTriangle(const Shape* a, const Shape* b, CollisionReport* report)
+{
+	const Sphere& sphere = *(Sphere*)a;
+	const Triangle& triangle = *(Triangle*)b;
+	return collide_SpherevsTriangle(sphere.center, sphere.radius, triangle.p1, triangle.p2, triangle.p3, report);
+}
+
+// Capsule dispatch
+bool Collision::_CapsulevsTriangle(const Shape* a, const Shape* b, CollisionReport* report)
+{
+	const Capsule& capsule = *(Capsule*)a;
+	const Triangle& triangle = *(Triangle*)b;
+	return collide_CapsulevsTriangle(capsule.p1, capsule.p2, capsule.radius, triangle.p1, triangle.p2, triangle.p3, report);
+}
+bool Collision::_CapsulevsSphere(const Shape* a, const Shape* b, CollisionReport* report)
+{
+	const Capsule& capsule = *(Capsule*)a;
+	const Sphere& sphere = *(Sphere*)b;
+	return collide_CapsulevsSphere(sphere.center, sphere.radius, capsule.p1, capsule.p2, capsule.radius, report);
 }
 
 // OrientedBox dispatch

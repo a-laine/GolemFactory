@@ -223,7 +223,8 @@ void Entity::recomputeBoundingBox()
 		if (element.type == Collider::getStaticClassID())
 		{
 			const Collider* collider = static_cast<const Collider*>(element.comp);
-			AddBox(collider->m_shape->toAxisAlignedBox());
+			if (!collider->m_isTrigger)
+				AddBox(collider->m_shape->toAxisAlignedBox());
 		}
 		else if (element.type == SkeletonComponent::getStaticClassID())
 		{
@@ -243,7 +244,8 @@ void Entity::recomputeBoundingBox()
 		else if (element.comp->isIdInHierarchy(DrawableComponent::getStaticClassID()))
 		{
 			const DrawableComponent* drawable = static_cast<const DrawableComponent*>(element.comp);
-			AddBox(drawable->getMesh()->getBoundingBox());
+			if (!(m_flags & (uint64_t)Flags::Fl_Skinned))
+				AddBox(drawable->getMesh()->getBoundingBox());
 		}
 		else if (element.type == LightComponent::getStaticClassID())
 		{
@@ -449,7 +451,7 @@ bool Entity::drawImGui(World& world, bool inChildWindow)
 	}
 	else
 	{
-		
+		ImGui::SetNextWindowSize(ImVec2(500, 800), ImGuiCond_FirstUseEver);
 		ImGui::Begin(unicName.str().c_str(), &m_isDebugSelected);
 	}
 
@@ -622,6 +624,8 @@ bool Entity::drawImGui(World& world, bool inChildWindow)
 	}
 
 	return !m_isDebugSelected;
+#else
+	return false;
 #endif // USE_IMGUI
 }
 //

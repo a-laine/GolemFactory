@@ -15,6 +15,7 @@
 #include <Physics/Shapes/Collider.h>
 #include <Renderer/CameraComponent.h>
 #include <Utiles/ProfilerConfig.h>
+#include <Terrain/TerrainAreaDrawableComponent.h>
 
 //#define APPROXIMATION_FACTOR 10.f
 //#define SUPERSAMPLING_DELTA 0.01f
@@ -64,6 +65,10 @@ void Physics::removeMovingEntity(Entity* e)
 	if (it != movingEntity.end())
 		e->getParentWorld()->releaseOwnership(e);
 }
+Physics::Cluster* Physics::getCLuster(int clusterIndex)
+{
+	return &m_clusters[clusterIndex];
+}
 //
 
 
@@ -77,21 +82,21 @@ void Physics::stepSimulation(const float& elapsedTime, SceneManager* scene)
 	clusterFinder.clear();
 	dynamicPairs.clear();
 	dynamicCollisions.clear();
-	staticCollisions.clear();
-	clusters.clear();
+	//staticCollisions.clear();
+	m_clusters.clear();
 	
 	predictTransform(elapsedTime);
 	computeBoundingShapesAndDetectPairs(elapsedTime, scene);
-	computeDynamicClusters();
+	computeDynamicClusters(scene);
 
-	for (unsigned int i = 0; i < clusters.size(); i++)
+	for (unsigned int i = 0; i < m_clusters.size(); i++)
 	{
 		createConstraint(i, elapsedTime);
 		solveConstraint(i, elapsedTime);
 
-		for (unsigned int j = 0; j < clusters[i].dynamicEntities.size(); j++)
+		for (unsigned int j = 0; j < m_clusters[i].dynamicEntities.size(); j++)
 		{
-			RigidBody* rigidbody = clusters[i].dynamicEntities[j];
+			RigidBody* rigidbody = m_clusters[i].dynamicEntities[j];
 
 			//rigidbody->setPosition(rigidbody->getPosition() + elapsedTime * rigidbody->linearVelocity);
 			//glm::fquat dq = glm::fquat(0.f, rigidbody->angularVelocity.x, rigidbody->angularVelocity.y, rigidbody->angularVelocity.z);
@@ -100,17 +105,20 @@ void Physics::stepSimulation(const float& elapsedTime, SceneManager* scene)
 			rigidbody->setExternalForces(vec4f(0.f));
 			rigidbody->setExternalTorques(vec4f(0.f));
 
-			rigidbody->linearVelocity *= 1.f - rigidbody->damping;
-			rigidbody->angularVelocity *= 1.f - rigidbody->damping;
+			rigidbody->m_linearVelocity *= 1.f - rigidbody->m_damping;
+			rigidbody->m_angularVelocity *= 1.f - rigidbody->m_damping;
 
-			scene->updateObject(clusters[i].dynamicEntities[j]->getParentEntity());
+			if (!scene->isTracked(rigidbody->getParentEntity()))
+				scene->addObject(rigidbody->getParentEntity(), 2);
+			else
+				scene->updateObject(rigidbody->getParentEntity());
 		}
 	}
 
 	clearTempoaryStruct(scene);
 }
 
-bool Physics::collisionTest(const Shape& _shape, SceneManager* scene, uint64_t flags, uint64_t noFlags, CollisionReport* _report)
+/*bool Physics::collisionTest(const Shape& _shape, SceneManager* scene, uint64_t flags, uint64_t noFlags, CollisionReport* _report)
 {
 	SCOPED_CPU_MARKER("Physics collisionTest");
 
@@ -169,6 +177,308 @@ bool Physics::collisionTest(const Shape& _shape, SceneManager* scene, uint64_t f
 		entity->componentsVisitor(Collider::getStaticClassID(), colliderVisitor);
 	}
 	return maxDepth >= 0.f;
+}*/
+
+bool Physics::raycast(Segment ray, SceneManager* scene, uint64_t flags, uint64_t noFlags, bool skipTriggers, RaycastReport* _report)
+{
+	SCOPED_CPU_MARKER("Physics::raycast");
+
+	auto aabb = ray.toAxisAlignedBox();
+	proximityTest.result.clear();
+	proximityTest.bbMin = aabb.min;
+	proximityTest.bbMax = aabb.max;
+	proximityList.result.clear();
+	proximityList.m_flags = flags;
+	proximityList.m_exclusionFlags = noFlags;
+	scene->getEntities(&proximityTest, &proximityList);
+
+	constexpr float maxValue = 1E12f;
+	float minDistance = maxValue;
+	for (unsigned int i = 0; i < proximityList.result.size(); i++)
+	{
+		Entity* entity = proximityList.result[i];
+		if (!Collision::raycast(&ray, &entity->m_worldBoundingBox))
+			continue;
+
+		Segment localRay;
+		localRay.p1 = entity->getInverseWorldTransformMatrix() * ray.p1;
+		localRay.p2 = entity->getInverseWorldTransformMatrix() * ray.p2;
+		RaycastReport bestEntityReport, tmpReport;
+		float bestEntityMinDistance = maxValue;
+
+
+		auto colliderVisitor = [&](Component* componentCollider)
+		{
+			const Collider* collider = static_cast<const Collider*>(componentCollider);
+			if (!collider)
+				return false;
+			if (collider->m_isTrigger && skipTriggers)
+				return false;
+
+			if (collider->m_shape)
+			{
+				if (Collision::raycast(&localRay, collider->m_shape, _report ? &tmpReport : nullptr))
+				{
+					if (_report)
+					{
+						if (tmpReport.m_distance < bestEntityMinDistance)
+						{
+							bestEntityMinDistance = tmpReport.m_distance;
+							bestEntityReport = tmpReport;
+						}
+					}
+					else
+					{
+						minDistance = 0.f;
+						return true;
+					}
+					tmpReport.clear();
+				}
+			}
+			return false;
+		};
+		entity->componentsVisitor(Collider::getStaticClassID(), colliderVisitor);
+
+		if (_report && bestEntityMinDistance < maxValue)
+		{
+			vec4f localRayDirection = (localRay.p2 - localRay.p1).getNormal();
+			vec4f localClosest = localRay.p1 + bestEntityReport.m_distance * localRayDirection;
+			localClosest.w = 1;
+			vec4f worldClosest = entity->getWorldTransformMatrix() * localClosest;
+			worldClosest.w = 1;
+			float distance = (worldClosest - ray.p1).getNorm();
+
+			if (distance < minDistance)
+			{
+				minDistance = distance;
+				*_report = bestEntityReport;
+				_report->m_intersection = worldClosest;
+				_report->m_distance = distance;
+				_report->m_normal = entity->getWorldTransformMatrix() * bestEntityReport.m_normal;
+				_report->m_normal.w = 0;
+				_report->m_normal.normalize();
+			}
+		}
+		else break;
+	}
+	return minDistance < maxValue;
+}
+
+bool Physics::raycastInCache(const CollisionCache& cache, Segment ray, SceneManager* scene, uint64_t flags, uint64_t noFlags, RaycastReport* _report)
+{
+	ray.computeDirection();
+
+	SCOPED_CPU_MARKER("Physics::raycastInCache");
+	if (!Collision::raycast(&ray, &cache.m_aabb, nullptr))
+		return false;
+
+	bool hadCollision = false;
+	RaycastReport tmpReport;
+	for (unsigned int i = 0; i < cache.m_elements.size(); i++)
+	{
+		if (Collision::raycast(&ray, cache.m_elements[i].m_shape, _report ? &tmpReport : nullptr))
+		{
+			hadCollision = true;
+			if (_report)
+			{
+				if (tmpReport.m_distance < _report->m_distance)
+				{
+					*_report = tmpReport;
+					_report->m_entity = cache.m_elements[i].m_entity;
+				}
+			}
+			else return true;
+			tmpReport.clear();
+		}
+	}
+	return hadCollision;
+}
+
+bool Physics::collisionInCache(const CollisionCache& cache, Shape* shape, SceneManager* scene, uint64_t flags, uint64_t noFlags, CollisionReport* _report)
+{
+	SCOPED_CPU_MARKER("Physics::collisionInCache");
+	if (!Collision::collide(shape, &cache.m_aabb, nullptr))
+		return false;
+
+	bool hadCollision = false;
+	CollisionReport tmpReport;
+	tmpReport.computeManifoldContacts = _report ? _report->computeManifoldContacts : false;
+	float maxDepthComputed = -1.f;
+	for (unsigned int i = 0; i < cache.m_elements.size(); i++)
+	{
+		if (Collision::collide(shape, cache.m_elements[i].m_shape, _report ? &tmpReport : nullptr))
+		{
+			hadCollision = true;
+			if (_report)
+			{
+				float maxDepth = tmpReport.depths[0];
+				if (tmpReport.computeManifoldContacts)
+				{
+					for (int j = 1; j < tmpReport.depths.size(); j++)
+						maxDepth = std::max(maxDepth, tmpReport.depths[0]);
+				}
+
+				if (maxDepth > maxDepthComputed)
+				{
+					maxDepthComputed = maxDepth;
+					*_report = tmpReport;
+					_report->entity1 = cache.m_elements[i].m_entity;
+					_report->entity2 = nullptr;
+				}
+			}
+			else return true;
+			tmpReport.clear();
+		}
+	}
+	return hadCollision;
+}
+
+void Physics::getCollisionCache(SceneManager* scene, CollisionCache& cache, uint64_t flags, uint64_t noFlags)
+{
+	SCOPED_CPU_MARKER("Physics::getCollisionCache");
+
+	cache.clear();
+
+	/*cache.m_triangles.clear();	cache.m_triangles.reserve(128);
+	cache.m_spheres.clear();	cache.m_spheres.reserve(16);
+	cache.m_boxes.clear();		cache.m_boxes.reserve(16);
+	cache.m_capsules.clear();	cache.m_capsules.reserve(16);
+	cache.m_hulls.clear();		cache.m_hulls.reserve(4);
+	cache.m_elements.clear();	cache.m_triangles.reserve(32);*/
+
+	proximityTest.result.clear();
+	proximityTest.bbMin = cache.m_aabb.min;
+	proximityTest.bbMax = cache.m_aabb.max;
+	proximityList.result.clear();
+	proximityList.m_flags = flags;
+	proximityList.m_exclusionFlags = noFlags;
+	scene->getEntities(&proximityTest, &proximityList);
+
+	for (unsigned int i = 0; i < proximityList.result.size(); i++)
+	{
+		Entity* entity = proximityList.result[i];
+		if (!Collision::collide(&cache.m_aabb, &entity->m_worldBoundingBox))
+			continue;
+
+		OrientedBox box;
+		box.base = entity->getInverseWorldTransformMatrix();
+		box.min = cache.m_aabb.min;
+		box.max = cache.m_aabb.max;
+		AxisAlignedBox localaabb = box.toAxisAlignedBox();
+
+		auto colliderVisitor = [&](Component* componentCollider)
+			{
+				const Collider* collider = static_cast<const Collider*>(componentCollider);
+				if (!collider)
+					return false;
+				if (collider->m_isTrigger)
+					return false;
+
+				if (collider->m_shape)
+				{
+					switch (collider->m_shape->type)
+					{
+						case Shape::ShapeType::SPHERE:
+							{
+								Sphere shape = *((Sphere*)collider->m_shape);
+								shape.transform(entity->getWorldPosition(), entity->getWorldScale(), entity->getWorldOrientation());
+								if (Collision::collide(&cache.m_aabb, &shape, nullptr))
+								{
+									CollisionCache::Element element;
+									element.m_entity = entity;
+									element.m_shape = &cache.m_spheres[cache.m_spheres.add(shape)];
+									cache.m_elements.push_back(element);
+								}
+							}
+							break;
+
+						case Shape::ShapeType::ORIENTED_BOX:
+							{
+								OrientedBox shape = *((OrientedBox*)collider->m_shape);
+								shape.transform(entity->getWorldPosition(), entity->getWorldScale(), entity->getWorldOrientation());
+								if (Collision::collide(&cache.m_aabb, &shape, nullptr))
+								{
+									CollisionCache::Element element;
+									element.m_entity = entity;
+									element.m_shape = &cache.m_boxes[cache.m_boxes.add(shape)];
+									cache.m_elements.push_back(element);
+								}
+							}
+							break;
+
+						case Shape::ShapeType::AXIS_ALIGNED_BOX:
+							{
+								AxisAlignedBox* localshape = (AxisAlignedBox*)collider->m_shape;
+								OrientedBox shape;
+								shape.min = localshape->min;
+								shape.max = localshape->max;
+								shape.base = entity->getWorldTransformMatrix();
+
+								if (Collision::collide(&cache.m_aabb, &shape, nullptr))
+								{
+									CollisionCache::Element element;
+									element.m_entity = entity;
+									element.m_shape = &cache.m_boxes[cache.m_boxes.add(shape)];
+									cache.m_elements.push_back(element);
+								}
+							}
+							break;
+
+						case Shape::ShapeType::CAPSULE:
+							{
+								Capsule shape = *((Capsule*)collider->m_shape);
+								shape.transform(entity->getWorldPosition(), entity->getWorldScale(), entity->getWorldOrientation());
+								if (Collision::collide(&cache.m_aabb, &shape, nullptr))
+								{
+									CollisionCache::Element element;
+									element.m_entity = entity;
+									element.m_shape = &cache.m_capsules[cache.m_capsules.add(shape)];
+									cache.m_elements.push_back(element);
+								}
+							}
+							break;
+
+						/*case Shape::ShapeType::HULL:
+							{
+								Hull shape = *((Hull*)collider->m_shape);
+								shape.transform(entity->getWorldPosition(), entity->getWorldScale(), entity->getWorldOrientation());
+								if (Collision::collide(&cache.m_aabb, &shape, nullptr))
+								{
+									CollisionCache::Element element;
+									element.m_entity = entity;
+									element.m_shape = &cache.m_hulls[cache.m_hulls.add(shape)];
+									cache.m_elements.push_back(element);
+								}
+							}
+							break;*/
+
+
+						case Shape::ShapeType::TRIANGLE:
+							{
+							Triangle shape = *((Triangle*)collider->m_shape);
+								shape.transform(entity->getWorldPosition(), entity->getWorldScale(), entity->getWorldOrientation());
+								if (Collision::collide(&cache.m_aabb, &shape, nullptr))
+								{
+									CollisionCache::Element element;
+									element.m_entity = entity;
+									element.m_shape = &cache.m_triangles[cache.m_triangles.add(shape)];
+									cache.m_elements.push_back(element);
+								}
+							}
+							break;
+
+						default:
+							break;
+					}
+				}
+				return false;
+			};
+		entity->componentsVisitor(Collider::getStaticClassID(), colliderVisitor);
+
+		TerrainAreaDrawableComponent* terrainArea = entity->getComponent<TerrainAreaDrawableComponent>();
+		if (terrainArea)
+			terrainArea->getArea()->getCollisionInCache(cache);
+	}
 }
 //
 
@@ -182,6 +492,9 @@ void Physics::predictTransform(const float& elapsedTime)
 	{
 		Entity* entity = *it;
 		RigidBody* rigidbody = entity->getComponent<RigidBody>();
+		if (rigidbody)
+			rigidbody->m_clusterIndex = -1;
+
 		if (!rigidbody || rigidbody->getMass() == 0.f)
 		{
 			entity->getParentWorld()->releaseOwnership(entity);
@@ -191,42 +504,42 @@ void Physics::predictTransform(const float& elapsedTime)
 		{
 			if (rigidbody->getType() == RigidBody::RigidBodyType::DYNAMIC)
 			{
-				rigidbody->previousPosition = rigidbody->getPosition();
-				rigidbody->previousOrientation = rigidbody->getOrientation();
+				rigidbody->m_previousPosition = rigidbody->getPosition();
+				rigidbody->m_previousOrientation = rigidbody->getOrientation();
 
-				rigidbody->linearAcceleration = gravity * rigidbody->gravityFactor;							// gravity
-				rigidbody->linearAcceleration += rigidbody->inverseMass * rigidbody->externalForces;		// other forces
-				rigidbody->angularAcceleration = rigidbody->inverseInertia * rigidbody->externalTorques;	// other torques
+				rigidbody->m_linearAcceleration = gravity * rigidbody->m_gravityFactor;							// gravity
+				rigidbody->m_linearAcceleration += rigidbody->m_inverseMass * rigidbody->m_externalForces;		// other forces
+				rigidbody->m_angularAcceleration = rigidbody->m_inverseInertia * rigidbody->m_externalTorques;	// other torques
 
-				rigidbody->linearVelocity += elapsedTime * rigidbody->linearAcceleration;
-				rigidbody->angularVelocity += elapsedTime * rigidbody->angularAcceleration;
+				rigidbody->m_linearVelocity += elapsedTime * rigidbody->m_linearAcceleration;
+				rigidbody->m_angularVelocity += elapsedTime * rigidbody->m_angularAcceleration;
 
-				vec4f newPosition = rigidbody->previousPosition + elapsedTime * rigidbody->linearVelocity;
-				quatf dq = quatf(0.f, rigidbody->angularVelocity.x, rigidbody->angularVelocity.y, rigidbody->angularVelocity.z);
+				vec4f newPosition = rigidbody->m_previousPosition + elapsedTime * rigidbody->m_linearVelocity;
+				quatf dq = quatf(0.f, rigidbody->m_angularVelocity.x, rigidbody->m_angularVelocity.y, rigidbody->m_angularVelocity.z);
 				quatf newOrientation = rigidbody->getOrientation() + (0.5f * elapsedTime) * dq * rigidbody->getOrientation();
 				newOrientation.normalize();
 
-				rigidbody->sweptBox = entity->m_worldBoundingBox;
+				rigidbody->m_sweptBox = entity->m_worldBoundingBox;
 				AxisAlignedBox end = entity->m_localBoundingBox;
 				end.transform(newPosition, vec4f(entity->getWorldScale()), newOrientation);
-				rigidbody->sweptBox.add(end);
+				rigidbody->m_sweptBox.add(end);
 
 				entity->setWorldTransformation(newPosition, entity->getWorldScale(), newOrientation);
 			}
 			else if (rigidbody->getType() == RigidBody::RigidBodyType::KINEMATICS)
 			{
-				rigidbody->previousPosition = rigidbody->getPosition();
-				rigidbody->previousOrientation = rigidbody->getOrientation();
-				rigidbody->linearAcceleration = gravity * rigidbody->gravityFactor;
-				rigidbody->linearVelocity += elapsedTime * rigidbody->linearAcceleration;
-				rigidbody->angularVelocity = vec4f::zero;
-				rigidbody->angularAcceleration = vec4f::zero;
+				rigidbody->m_previousPosition = rigidbody->getPosition();
+				rigidbody->m_previousOrientation = rigidbody->getOrientation();
+				rigidbody->m_linearAcceleration = gravity * rigidbody->m_gravityFactor;
+				rigidbody->m_linearVelocity += elapsedTime * rigidbody->m_linearAcceleration;
+				rigidbody->m_angularVelocity = vec4f::zero;
+				rigidbody->m_angularAcceleration = vec4f::zero;
 
-				vec4f newPosition = rigidbody->previousPosition + elapsedTime * rigidbody->linearVelocity;
-				rigidbody->sweptBox = entity->m_worldBoundingBox;
+				vec4f newPosition = rigidbody->m_previousPosition + elapsedTime * rigidbody->m_linearVelocity;
+				rigidbody->m_sweptBox = entity->m_worldBoundingBox;
 				AxisAlignedBox end = entity->m_localBoundingBox;
-				end.transform(newPosition, vec4f(entity->getWorldScale()), rigidbody->previousOrientation);
-				rigidbody->sweptBox.add(end);
+				end.transform(newPosition, vec4f(entity->getWorldScale()), rigidbody->m_previousOrientation);
+				rigidbody->m_sweptBox.add(end);
 
 				entity->setWorldPosition(newPosition);
 			}
@@ -243,13 +556,13 @@ void Physics::computeBoundingShapesAndDetectPairs(const float& elapsedTime, Scen
 	{
 		Entity* entity = *it;
 		RigidBody* rigidbody = entity->getComponent<RigidBody>();
-		const AxisAlignedBox& box = rigidbody->sweptBox;
+		const AxisAlignedBox& box = rigidbody->m_sweptBox;
 
 		proximityTest.result.clear();
 		proximityTest.bbMin = box.min;
 		proximityTest.bbMax = box.max;
 		proximityList.result.clear();
-		proximityList.m_flags = (uint64_t)Entity::Flags::Fl_Collision;
+		proximityList.m_flags = (uint64_t)Entity::Flags::Fl_Physics | (uint64_t)Entity::Flags::Fl_Collision;
 		scene->getEntities(&proximityTest, &proximityList);
 
 		bool collideOnDynamic = false;
@@ -261,10 +574,10 @@ void Physics::computeBoundingShapesAndDetectPairs(const float& elapsedTime, Scen
 
 			//	get shape of concurent entity
 			Entity* other = proximityList.result[i];
-			RigidBody* body2 = (other->getFlags() & (uint64_t)Entity::Flags::Fl_Physics) ? other->getComponent<RigidBody>() : nullptr;
+			RigidBody* body2 = other->getComponent<RigidBody>();// (other->getFlags() & (uint64_t)Entity::Flags::Fl_Physics) ? : nullptr;
 			AxisAlignedBox* box2 = nullptr;
 			if (body2)
-				box2 = &body2->sweptBox;
+				box2 = &body2->m_sweptBox;
 			else
 				box2 = &other->m_worldBoundingBox;
 			
@@ -280,7 +593,7 @@ void Physics::computeBoundingShapesAndDetectPairs(const float& elapsedTime, Scen
 				else
 				{
 					collideOnStatic = true;
-					staticCollisions[entity].push_back(proximityList.result[i]);
+					//staticCollisions[entity].push_back(proximityList.result[i]);
 				}
 			}
 		}
@@ -294,24 +607,27 @@ void Physics::computeBoundingShapesAndDetectPairs(const float& elapsedTime, Scen
 		else if (!collideOnDynamic && collideOnStatic)
 		{
 			// small cluster of one dynamic object
-			clusters.push_back(Cluster());
-			Cluster& cluster = clusters.back();
+			rigidbody->m_clusterIndex = m_clusters.add(Cluster());
+			Cluster& cluster = m_clusters[rigidbody->m_clusterIndex];
 			cluster.constraints.clear();
 			cluster.dynamicEntities.clear();
-			cluster.staticEntities.clear();
+			cluster.cache.clear();
 			cluster.dynamicEntities.push_back(rigidbody);
 			rigidbody->computeWorldShapes();
 
-			std::map<Entity*, std::vector<Entity*>>::iterator it = staticCollisions.find(entity);
+			cluster.cache.m_aabb = cluster.dynamicEntities[0]->m_sweptBox;
+			getCollisionCache(scene, cluster.cache, (uint64_t)Entity::Flags::Fl_Collision, (uint64_t)Entity::Flags::Fl_Physics);
+
+			/*std::map<Entity*, std::vector<Entity*>>::iterator it = staticCollisions.find(entity);
 			if (it != staticCollisions.end())
 			{
 				for (unsigned int k = 0; k < it->second.size(); k++)
 					cluster.staticEntities.push_back(it->second[k]);
-			}
+			}*/
 		}
 	}
 }
-void Physics::computeDynamicClusters()
+void Physics::computeDynamicClusters(SceneManager* scene)
 {
 	SCOPED_CPU_MARKER("Create clusters");
 
@@ -330,8 +646,8 @@ void Physics::computeDynamicClusters()
 	std::vector<std::vector<Entity*>> clusterList = clusterFinder.getCluster();
 	for (unsigned int i = 0; i < clusterList.size(); i++)
 	{
-		clusters.push_back(Cluster());
-		Cluster& cluster = clusters.back();
+		int clusterIndex = m_clusters.add(Cluster());
+		Cluster& cluster = m_clusters[clusterIndex];
 		std::set<Entity*> staticEntities;
 
 		for (unsigned int j = 0; j < clusterList[i].size(); j++)
@@ -341,20 +657,32 @@ void Physics::computeDynamicClusters()
 			cluster.dynamicEntities.emplace_back(body);
 			body->computeWorldShapes();
 
-			std::map<Entity*, std::vector<Entity*>>::iterator it = staticCollisions.find(entity);
+			/*std::map<Entity*, std::vector<Entity*>>::iterator it = staticCollisions.find(entity);
 			if (it != staticCollisions.end())
 			{
 				for (unsigned int k = 0; k < it->second.size(); k++)
 					staticEntities.insert(it->second[k]);
-			}
+			}*/
 		}
 
 		if (cluster.dynamicEntities.empty())
-			clusters.pop_back();
-		else
+			m_clusters.remove(clusterIndex);
+		/*else
 		{
 			for (Entity* entity : staticEntities)
 				cluster.staticEntities.push_back(entity);
+		}*/
+
+		else
+		{
+			for (int i = 1; i < cluster.dynamicEntities.size(); i++)
+				cluster.dynamicEntities[i]->m_clusterIndex = clusterIndex;
+
+			cluster.cache.m_aabb = cluster.dynamicEntities[0]->m_sweptBox;
+			for (int i = 1; i < cluster.dynamicEntities.size(); i++)
+				cluster.cache.m_aabb.add(cluster.dynamicEntities[i]->m_sweptBox);
+
+			getCollisionCache(scene, cluster.cache, (uint64_t)Entity::Flags::Fl_Collision, (uint64_t)Entity::Flags::Fl_Physics);
 		}
 	}
 }
@@ -363,7 +691,7 @@ void Physics::createConstraint(const unsigned int& clusterIndex, const float& de
 {
 	SCOPED_CPU_MARKER("CreateConstraint");
 
-	Cluster* cluster = &clusters[clusterIndex];
+	Cluster* cluster = &m_clusters[clusterIndex];
 
 	CollisionReport report;
 	report.computeManifoldContacts = true;
@@ -377,10 +705,10 @@ void Physics::createConstraint(const unsigned int& clusterIndex, const float& de
 		{
 			RigidBody* body2 = cluster->dynamicEntities[j];
 
-			for (unsigned int k = 0; k < body1->worldShapes.size(); k++)
-				for (unsigned int l = 0; l < body2->worldShapes.size(); l++)
+			for (unsigned int k = 0; k < body1->m_worldShapes.size(); k++)
+				for (unsigned int l = 0; l < body2->m_worldShapes.size(); l++)
 				{
-					if (Collision::collide(body1->worldShapes[k], body2->worldShapes[l], &report))
+					if (Collision::collide(body1->m_worldShapes[k], body2->m_worldShapes[l], &report))
 					{
 						report.entity1 = body1->getParentEntity();
 						report.entity2 = body2->getParentEntity();
@@ -401,24 +729,24 @@ void Physics::createConstraint(const unsigned int& clusterIndex, const float& de
 				}
 		}
 
-		for (unsigned int j = 0; j < cluster->staticEntities.size(); j++)
+		/*for (unsigned int j = 0; j < cluster->staticEntities.size(); j++)
 		{
 			Entity* entity2 = cluster->staticEntities[j];
-			entityColliders.clear();
-			entity2->getAllComponents<Collider>(entityColliders);
+			//entityColliders.clear();
+			//entity2->getAllComponents<Collider>(entityColliders);
 
 
 			auto colliderVisitor = [&](Component* componentCollider)
 			{
 				const Collider* collider = static_cast<const Collider*>(componentCollider);
-				if (collider)
+				if (collider && !collider->m_isTrigger)
 				{
 					Shape* tmp = collider->m_shape->duplicate();
 					tmp->transform(entity2->getWorldPosition(), vec4f(entity2->getWorldScale()), entity2->getWorldOrientation());
 
-					for (unsigned int k = 0; k < body1->worldShapes.size(); k++)
+					for (unsigned int k = 0; k < body1->m_worldShapes.size(); k++)
 					{
-						if (Collision::collide(body1->worldShapes[k], tmp, &report))
+						if (Collision::collide(body1->m_worldShapes[k], tmp, &report))
 						{
 							report.entity1 = body1->getParentEntity();
 							report.entity2 = entity2;
@@ -445,6 +773,38 @@ void Physics::createConstraint(const unsigned int& clusterIndex, const float& de
 			};
 
 			entity2->componentsVisitor(Collider::getStaticClassID(), colliderVisitor);
+
+
+			TerrainAreaDrawableComponent* terrainArea = entity2->getComponent<TerrainAreaDrawableComponent>();
+			//if (terrainArea)
+			//	terrainArea->getArea()->getCollisionInCache(cache);
+		}*/
+
+		for (int i = 0; i < cluster->cache.m_elements.size(); i++)
+		{
+			const Shape* shape = cluster->cache.m_elements[i].m_shape;
+			Entity* entity = cluster->cache.m_elements[i].m_entity;
+			for (unsigned int k = 0; k < body1->m_worldShapes.size(); k++)
+			{
+				if (Collision::collide(body1->m_worldShapes[k], shape, &report))
+				{
+					report.entity1 = body1->getParentEntity();
+					report.entity2 = entity;
+					report.body1 = body1;
+					report.body2 = nullptr;
+
+					for (int k = 0; k < report.points.size(); k++)
+					{
+						if (report.depths[k] > 0.f)
+						{
+							Constraint constraint;
+							constraint.createFromReport(report, k, deltaTime);
+							cluster->constraints.push_back(constraint);
+						}
+					}
+				}
+				report.clear();
+			}
 		}
 	}
 }
@@ -462,7 +822,7 @@ void Physics::solveConstraint(const unsigned int& clusterIndex, const float& del
  {
 	SCOPED_CPU_MARKER("SolveConstraint");
 
-	Cluster* cluster = &clusters[clusterIndex];
+	Cluster* cluster = &m_clusters[clusterIndex];
 	for (int i = 0; i < g_maxIterationCount; i++)
 	{
 		float maxImpulseCorrection = 0.f;
@@ -480,12 +840,12 @@ void Physics::solveConstraint(const unsigned int& clusterIndex, const float& del
 				impulseLength = totalImpulse - constraint.accumulationLinear[0];
 				constraint.accumulationLinear[0] = totalImpulse;
 
-				constraint.body1->linearVelocity += (impulseLength * constraint.body1->inverseMass) * constraint.axis[0];
-				constraint.body1->angularVelocity += impulseLength * constraint.rotationPerUnitImpulse1[0];
+				constraint.body1->m_linearVelocity += (impulseLength * constraint.body1->m_inverseMass) * constraint.axis[0];
+				constraint.body1->m_angularVelocity += impulseLength * constraint.rotationPerUnitImpulse1[0];
 				if (constraint.body2)
 				{
-					constraint.body2->linearVelocity -= (impulseLength * constraint.body2->inverseMass) * constraint.axis[0];
-					constraint.body2->angularVelocity -= impulseLength * constraint.rotationPerUnitImpulse2[0];
+					constraint.body2->m_linearVelocity -= (impulseLength * constraint.body2->m_inverseMass) * constraint.axis[0];
+					constraint.body2->m_angularVelocity -= impulseLength * constraint.rotationPerUnitImpulse2[0];
 				}
 
 				maxImpulseCorrection = std::max(maxImpulseCorrection, std::abs(impulseLength));
@@ -531,12 +891,12 @@ void Physics::solveConstraint(const unsigned int& clusterIndex, const float& del
 
 			if (std::abs(impulseLength1) > SOLVER_ITERATION_THRESHOLD)
 			{
-				constraint.body1->linearVelocity += (impulseLength1 * constraint.body1->inverseMass) * constraint.axis[1];
-				constraint.body1->angularVelocity += impulseLength1 * constraint.rotationPerUnitImpulse1[1];
+				constraint.body1->m_linearVelocity += (impulseLength1 * constraint.body1->m_inverseMass) * constraint.axis[1];
+				constraint.body1->m_angularVelocity += impulseLength1 * constraint.rotationPerUnitImpulse1[1];
 				if (constraint.body2)
 				{
-					constraint.body2->linearVelocity -= (impulseLength1 * constraint.body2->inverseMass) * constraint.axis[1];
-					constraint.body2->angularVelocity -= impulseLength1 * constraint.rotationPerUnitImpulse2[1];
+					constraint.body2->m_linearVelocity -= (impulseLength1 * constraint.body2->m_inverseMass) * constraint.axis[1];
+					constraint.body2->m_angularVelocity -= impulseLength1 * constraint.rotationPerUnitImpulse2[1];
 				}
 
 				maxImpulseCorrection = std::max(maxImpulseCorrection, std::abs(impulseLength1));
@@ -544,12 +904,12 @@ void Physics::solveConstraint(const unsigned int& clusterIndex, const float& del
 
 			if (std::abs(impulseLength2) > SOLVER_ITERATION_THRESHOLD)
 			{
-				constraint.body1->linearVelocity += (impulseLength2 * constraint.body1->inverseMass) * constraint.axis[2];
-				constraint.body1->angularVelocity += impulseLength2 * constraint.rotationPerUnitImpulse1[2];
+				constraint.body1->m_linearVelocity += (impulseLength2 * constraint.body1->m_inverseMass) * constraint.axis[2];
+				constraint.body1->m_angularVelocity += impulseLength2 * constraint.rotationPerUnitImpulse1[2];
 				if (constraint.body2)
 				{
-					constraint.body2->linearVelocity -= (impulseLength2 * constraint.body2->inverseMass) * constraint.axis[2];
-					constraint.body2->angularVelocity -= impulseLength2 * constraint.rotationPerUnitImpulse2[2];
+					constraint.body2->m_linearVelocity -= (impulseLength2 * constraint.body2->m_inverseMass) * constraint.axis[2];
+					constraint.body2->m_angularVelocity -= impulseLength2 * constraint.rotationPerUnitImpulse2[2];
 				}
 
 				maxImpulseCorrection = std::max(maxImpulseCorrection, std::abs(impulseLength2));
@@ -560,7 +920,7 @@ void Physics::solveConstraint(const unsigned int& clusterIndex, const float& del
 			break;
 	}
 
-	for (int i = 0; i < g_maxIterationCount; i++)
+	for (int i = 0; i < 0/*g_maxIterationCount*/; i++)
 	{
 		float maxCorrection = 0.f;
 		for (unsigned int j = 0; j < cluster->constraints.size(); j++)
@@ -568,26 +928,27 @@ void Physics::solveConstraint(const unsigned int& clusterIndex, const float& del
 			Constraint& constraint = cluster->constraints[j];
 			vec4f pos1 = constraint.body1->getPosition();
 			vec4f p1 = pos1 + constraint.body1->getOrientation() * constraint.localPoint1;
-			vec4f p2 = constraint.worldPoint;
+			vec4f p2 = constraint.worldPoint + constraint.depth * constraint.axis[0];
 			if (constraint.body2)
 				p2 = constraint.body2->getPosition() + constraint.body2->getOrientation() * constraint.localPoint2;
-			float depth = constraint.depth + vec4f::dot(p2 - p1, constraint.axis[0]);
-			if (std::abs(depth) < SOLVER_ITERATION_THRESHOLD)
+
+			float error = vec4f::dot(p2 - p1, constraint.axis[0]);
+			if (std::abs(error) < SOLVER_ITERATION_THRESHOLD)
 				continue;
 
-			float invMassSum = constraint.body1->inverseMass;
+			float invMassSum = constraint.body1->m_inverseMass;
 			if (constraint.body2)
-				invMassSum += constraint.body2->inverseMass;
+				invMassSum += constraint.body2->m_inverseMass;
 			if (invMassSum < 10E-06f)
 				continue;
 
-			float correction = depth * g_contactNormalRelaxation / invMassSum;
+			float correction = error * g_contactNormalRelaxation / invMassSum;
 			maxCorrection = std::max(maxCorrection, correction);
-			float slack = correction * constraint.body1->inverseMass;
+			float slack = correction * constraint.body1->m_inverseMass;
 			constraint.body1->setPosition(pos1 + slack * constraint.axis[0]);
 			if (constraint.body2)
 			{
-				slack = correction * constraint.body2->inverseMass;
+				slack = correction * constraint.body2->m_inverseMass;
 				constraint.body1->setPosition(constraint.body2->getPosition() - slack * constraint.axis[0]);
 			}
 		}
@@ -606,10 +967,150 @@ RigidBody::SolverType Physics::getSolverType(const std::vector<Entity*>& cluster
 	for (unsigned int i = 0; i < cluster.size(); i++)
 	{
 		RigidBody* rigidbody = cluster[i]->getComponent<RigidBody>();
-		if (solver < rigidbody->solver)
-			solver = rigidbody->solver;
+		if (solver < rigidbody->m_solver)
+			solver = rigidbody->m_solver;
 	}
 	return solver;
+}
+
+
+void Physics::CollisionCache::clear()
+{
+	m_triangles.clear();
+	m_spheres.clear();
+	m_boxes.clear();
+	m_capsules.clear();
+	m_elements.clear();
+}
+void Physics::CollisionCache::debugDraw(bool wireframe, vec4f baseColor) const
+{
+	const auto randomColorA = [](int seed)
+		{
+			vec4f res(0.f);
+			int n = (seed << 13) ^ seed;
+			int seed2 = n;
+			n = n * (n * n * 15731 + 789221) + 1376312589;
+			res.x = float(n & 0x0fffffff) / float(0x0fffffff);
+
+			n = (seed2 << 13) ^ seed2;
+			int seed3 = n;
+			n = n * (n * n * 15731 + 789221) + 1376312589;
+			res.y = float(n & 0x0fffffff) / float(0x0fffffff);
+
+			n = seed3;
+			n = (n << 13) ^ n;
+			n = n * (n * n * 15731 + 789221) + 1376312589;
+			res.z = float(n & 0x0fffffff) / float(0x0fffffff);
+
+			return res;
+		};
+	const auto randomColorB = [](float x, float y)
+		{
+			vec4f res(0.f);
+			int n = (int)(x * 311 + y * 113);
+			n = (n << 13) ^ n;
+			n = n * (n * n * 15731 + 789221) + 1376312589;
+			res.x = float(n & 0x0fffffff) / float(0x0fffffff);
+
+			n = (int)(x * 313 + y * 109);
+			n = (n << 13) ^ n;
+			n = n * (n * n * 15731 + 789221) + 1376312589;
+			res.y = float(n & 0x0fffffff) / float(0x0fffffff);
+
+			n = (int)(x * 317 + y * 107);
+			n = (n << 13) ^ n;
+			n = n * (n * n * 15731 + 789221) + 1376312589;
+			res.z = float(n & 0x0fffffff) / float(0x0fffffff);
+
+			return res;
+		};
+	
+	for (const Physics::CollisionCache::Element& element : m_elements)
+	{
+		Debug::color = 0.9f * baseColor + 0.1f * randomColorA((intptr_t)element.m_shape);
+		switch (element.m_shape->type)
+		{
+			case Shape::ShapeType::SPHERE:
+			{
+				const Sphere* sph = (const Sphere*)element.m_shape;
+				if (wireframe)
+					Debug::drawLineSphere(sph->center, sph->radius);
+				else
+					Debug::drawSphere(sph->center, sph->radius);
+			}
+			break;
+		case Shape::ShapeType::ORIENTED_BOX:
+			{
+				const OrientedBox* box = (const OrientedBox*)element.m_shape;
+				if (wireframe)
+					Debug::drawLineCube(box->base, box->min, box->max);
+				else
+					Debug::drawCube(box->base, box->min, box->max);
+			}
+			break;
+		case Shape::ShapeType::AXIS_ALIGNED_BOX:
+			{
+				const AxisAlignedBox* box = (const AxisAlignedBox*)element.m_shape;
+				if (wireframe)
+					Debug::drawLineCube(mat4f::identity, box->min, box->max);
+				else
+					Debug::drawCube(mat4f::identity, box->min, box->max);
+			}
+			break;
+		case Shape::ShapeType::CAPSULE:
+			{
+				const Capsule* cap = (const Capsule*)element.m_shape;
+				if (wireframe)
+					Debug::drawLineCapsule(cap->p1, cap->p2, cap->radius);
+				else
+					Debug::drawCapsule(cap->p1, cap->p2, cap->radius);
+			}
+			break;
+		default:
+			break;
+		}
+	}
+
+	int bufferSize = 0;
+	Debug::Vertex tmpBuffer[64 * 3];
+	for (uint32_t i = 0; i < m_triangles.size(); i++)
+	{
+		const Triangle& triangle = m_triangles[i];
+		vec4f tnormal = vec4f::cross(triangle.p2 - triangle.p1, triangle.p3 - triangle.p1);
+		vec4f center = 0.333f * (triangle.p2 + triangle.p1 + triangle.p3); center.w = 1.f;
+		vec4f color = 0.9f * baseColor + 0.1f * randomColorB(center.x, center.z);
+
+		if (wireframe)
+		{
+			tmpBuffer[bufferSize].m_position = triangle.p1;      tmpBuffer[bufferSize].m_color = color;
+			tmpBuffer[bufferSize + 1].m_position = triangle.p3;  tmpBuffer[bufferSize + 1].m_color = color;
+			tmpBuffer[bufferSize + 2].m_position = triangle.p1;  tmpBuffer[bufferSize + 2].m_color = color;
+			tmpBuffer[bufferSize + 3].m_position = triangle.p2;  tmpBuffer[bufferSize + 3].m_color = color;
+			tmpBuffer[bufferSize + 4].m_position = triangle.p2;  tmpBuffer[bufferSize + 4].m_color = color;
+			tmpBuffer[bufferSize + 5].m_position = triangle.p3;  tmpBuffer[bufferSize + 5].m_color = color;
+			bufferSize += 6;
+		}
+		else
+		{
+			tmpBuffer[bufferSize].m_position = triangle.p1;      tmpBuffer[bufferSize].m_color = color;
+			tmpBuffer[bufferSize + 1].m_position = triangle.p2;  tmpBuffer[bufferSize + 1].m_color = color;
+			tmpBuffer[bufferSize + 2].m_position = triangle.p3;  tmpBuffer[bufferSize + 2].m_color = color;
+			bufferSize += 3;
+		}
+
+		//Debug::color = Debug::red; Debug::drawLine(center, center + tnormal);
+
+		if (bufferSize == 64 * 3)
+		{
+			Debug::drawMultiplePrimitive(tmpBuffer, bufferSize, mat4f::identity, wireframe ? GL_LINES : GL_TRIANGLES);
+			bufferSize = 0;
+		}
+	}
+	if (bufferSize)
+	{
+		Debug::drawMultiplePrimitive(tmpBuffer, bufferSize, mat4f::identity, wireframe ? GL_LINES : GL_TRIANGLES);
+		bufferSize = 0;
+	}
 }
 //
 
@@ -677,9 +1178,9 @@ void Physics::debugDraw()
 	const float depthLength = 10.f;
 	const float tangentLength = 0.3f;
 
-	for (unsigned int i = 0; i < clusters.size(); i++)
+	for (unsigned int i = 0; i < m_clusters.size(); i++)
 	{
-		const Cluster& cluster = clusters[i];
+		const Cluster& cluster = m_clusters[i];
 
 		if (drawClustersAABB)
 		{
@@ -695,7 +1196,7 @@ void Physics::debugDraw()
 			for (const RigidBody* dynamicBody : cluster.dynamicEntities)
 			{
 				Debug::color = Debug::yellow;
-				Debug::drawLineCube(mat4f::identity, dynamicBody->sweptBox.min - sweptOffset, dynamicBody->sweptBox.max + sweptOffset);
+				Debug::drawLineCube(mat4f::identity, dynamicBody->m_sweptBox.min - sweptOffset, dynamicBody->m_sweptBox.max + sweptOffset);
 			}
 		}
 
@@ -763,7 +1264,7 @@ void Physics::debugDraw()
 			for (int j = 0; j < entityColliders.size(); j++)
 			{
 				Collider* collider = static_cast<Collider*>(entityColliders[j]);
-				collider->drawDebug(vec4f(0, 1, 0, 1), m_drawCollidersWired);
+				collider->drawDebug(collider->m_isTrigger ? vec4f(0, 1, 1, 1) : vec4f(0, 1, 0, 1), m_drawCollidersWired);
 			}
 		}
 	}
@@ -787,7 +1288,7 @@ void Physics::drawImGui(World& world)
 
 	ImGui::TextColored(titleColor, "Infos");
 	ImGui::Text("Object count : %d", movingEntity.size());
-	ImGui::Text("Cluster count : %d", clusters.size());
+	ImGui::Text("Cluster count : %d", m_clusters.size());
 	ImGui::Spacing();
 
 	ImGui::TextColored(titleColor, "Options");
@@ -805,6 +1306,8 @@ void Physics::drawImGui(World& world)
 	if (ImGui::Button("One frame update"))
 	{
 		stepSimulation(0.016f, &world.getSceneManager());
+		//stepSimulation(0.005f, &world.getSceneManager());
+		//stepSimulation(0.005f, &world.getSceneManager());
 	}
 
 	ImGui::Spacing(); ImGui::Spacing(); ImGui::Spacing();
@@ -845,7 +1348,10 @@ void Physics::drawImGui(World& world)
 				rb->setGravityFactor(1.f);
 				rb->setLinearVelocity(m_velocity * mainCamera->getForward());
 				object->addComponent(rb);
+
+				world.getSceneManager().selectEntity(world, object);
 			});
+
 	}
 
 	ImGui::PopID();

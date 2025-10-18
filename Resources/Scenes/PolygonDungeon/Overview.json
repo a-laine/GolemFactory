@@ -31,11 +31,7 @@
                 13,
                 14,
                 15
-            ],
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/",
-                "shaderName": ""
-            }
+            ]
         },
         {
             "name": "SM_Wep_Banner_03",
@@ -426,11 +422,7 @@
                 72,
                 73,
                 74
-            ],
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/",
-                "shaderName": ""
-            }
+            ]
         },
         {
             "name": "SM_Wep_Goblin_Staff_01",
@@ -1664,11 +1656,7 @@
                 0.0,
                 1.0
             ],
-            "scale": 1.0,
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/",
-                "shaderName": ""
-            }
+            "scale": 1.0
         },
         {
             "name": "Directional Light",
@@ -1684,11 +1672,7 @@
                 0.10938167572021485,
                 0.8754260540008545
             ],
-            "scale": 1.0,
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/",
-                "shaderName": ""
-            }
+            "scale": 1.0
         },
         {
             "name": "Cube",
@@ -1748,11 +1732,7 @@
                 98,
                 99,
                 100
-            ],
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/",
-                "shaderName": ""
-            }
+            ]
         },
         {
             "name": "SM_Env_Bone_Ribs_01",
@@ -2349,11 +2329,7 @@
                 216,
                 217,
                 218
-            ],
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/",
-                "shaderName": ""
-            }
+            ]
         },
         {
             "name": "SM_Env_Trap_Wallslab_Spikes_01",
@@ -4835,11 +4811,7 @@
                 244,
                 245,
                 246
-            ],
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/",
-                "shaderName": ""
-            }
+            ]
         },
         {
             "name": "SM_Env_Stairs_Broken_02",
@@ -5478,11 +5450,7 @@
                 278,
                 279,
                 280
-            ],
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/",
-                "shaderName": ""
-            }
+            ]
         },
         {
             "name": "SM_Prop_Goblin_Meat_01",
@@ -6373,11 +6341,7 @@
                 459,
                 460,
                 461
-            ],
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/",
-                "shaderName": ""
-            }
+            ]
         },
         {
             "name": "SM_Trap_Swing_Blade_01",
@@ -10262,11 +10226,7 @@
                 547,
                 548,
                 549
-            ],
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/",
-                "shaderName": ""
-            }
+            ]
         },
         {
             "name": "SM_Env_Rock_Round_02",
@@ -12149,11 +12109,7 @@
                 586,
                 587,
                 588
-            ],
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/",
-                "shaderName": ""
-            }
+            ]
         },
         {
             "name": "SM_Env_Wood_Pole_02",
@@ -13003,11 +12959,7 @@
                 621,
                 622,
                 623
-            ],
-            "drawableComponent": {
-                "meshName": "PolygonDungeon/",
-                "shaderName": ""
-            }
+            ]
         },
         {
             "name": "SM_Env_Vine_Spikes_01",
@@ -13740,7 +13692,7 @@
             "scale": 1.0,
             "drawableComponent": {
                 "meshName": "PolygonDungeon/Characters/Character_Skeleton_Soldier_02",
-                "shaderName": "defaultTextured"
+                "shaderName": "dungeon01skinned"
             }
         }
     ]

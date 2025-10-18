@@ -66,6 +66,33 @@ bool Collider::load(Variant& jsonObject, const std::string& objectName)
 		}
 		return sucessfullyParsed;
 	};
+	const auto TryLoadAsFloat = [](Variant& variant, const char* label, float& destination)
+	{
+		if (variant.getMap().find(label) != variant.getMap().end())
+		{
+			auto& v = variant[label];
+			if (v.getType() == Variant::FLOAT)
+				destination = v.toFloat();
+			else if (v.getType() == Variant::DOUBLE)
+				destination = (float)v.toDouble();
+			else if (v.getType() == Variant::INT)
+				destination = (float)v.toInt();
+			else
+				return false;
+			return true;
+		}
+		return false;
+	};
+	const auto TryLoadBool = [](Variant& variant, const char* label, bool& destination)
+	{
+		auto it0 = variant.getMap().find(label);
+		if (it0 != variant.getMap().end() && it0->second.getType() == Variant::BOOL)
+		{
+			destination = it0->second.toBool();
+			return true;
+		}
+		return false;
+	};
 
 	if (jsonObject.getType() == Variant::MAP)
 	{
@@ -93,6 +120,7 @@ bool Collider::load(Variant& jsonObject, const std::string& objectName)
 				else
 				{
 					PrintWarning("parsing center and halfSize attributes");
+					delete shape;
 				}
 			}
 			else if (shapeType == "Box")
@@ -113,6 +141,30 @@ bool Collider::load(Variant& jsonObject, const std::string& objectName)
 				else
 				{
 					PrintWarning("parsing center and halfSize attributes");
+					delete shape;
+				}
+			}
+			else if (shapeType == "Capsule")
+			{
+				Capsule* shape = new Capsule(vec4f::zero, vec4f(1.f), 0.3f);
+				vec4f center1, center2;
+				float radius;
+				bool center1Ok = TryLoadAsVec4f(jsonObject, "center1", center1) >= 3;
+				bool center2Ok = TryLoadAsVec4f(jsonObject, "center2", center2) >= 3;
+				bool radiusOk = TryLoadAsFloat(jsonObject, "radius", radius);
+
+				if (center1Ok && center2Ok && radiusOk)
+				{
+					shape->p1 = center1; shape->p1.w = 1.f;
+					shape->p2 = center2; shape->p2.w = 1.f;
+					shape->radius = radius;
+					m_shape = shape;
+					return true;
+				}
+				else
+				{
+					PrintWarning("parsing center1, center2 and radius attributes");
+					delete shape;
 				}
 			}
 			else
@@ -120,6 +172,8 @@ bool Collider::load(Variant& jsonObject, const std::string& objectName)
 				PrintWarning("shape not implemented yet");
 			}
 		}
+
+		TryLoadBool(jsonObject, "isTrigger", m_isTrigger);
 	}
 	return false;
 }
@@ -141,7 +195,7 @@ void Collider::onDrawImGui()
 	const ImVec4 componentColor = ImVec4(0, 1, 0, 1);
 	std::ostringstream unicName;
 	unicName << (m_shape ? m_shape->getTypeStr() : "INVALID") << " collider##" << (uintptr_t)this;
-	if (ImGui::TreeNodeEx(unicName.str().c_str(), ImGuiTreeNodeFlags_DefaultOpen))
+	if (ImGui::TreeNodeEx(unicName.str().c_str()))
 	{
 		if (m_shape)
 		{
@@ -279,7 +333,7 @@ void Collider::drawDebug(vec4f color, bool wired) const
 					const Sphere* sphere = static_cast<const Sphere*>(m_shape);
 					float s = std::max(scale.x, std::max(scale.y, scale.z));
 					if (wired)
-						Debug::drawWiredSphere(transform * sphere->center, s * sphere->radius);
+						Debug::drawLineSphere(transform * sphere->center, s * sphere->radius, transform[1]);
 					else
 						Debug::drawSphere(transform * sphere->center, s * sphere->radius);
 				}

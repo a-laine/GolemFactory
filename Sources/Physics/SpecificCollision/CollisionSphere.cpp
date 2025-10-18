@@ -68,7 +68,7 @@ bool Collision::collide_CapsulevsSphere(const vec4f& sphereCenter, const float& 
 {
 	vec4f closest = CollisionUtils::getSegmentClosestPoint(capsule1, capsule2, sphereCenter);
 	float radiusSum = sphereRadius + capsuleRadius;
-	vec4f v = sphereCenter - closest;
+	vec4f v = sphereCenter - closest; v.w = 0.f;
 	float vv = v.getNorm2();
 
 	if (vv > radiusSum * radiusSum)
@@ -287,6 +287,109 @@ bool Collision::collide_SpherevsAxisAlignedBox(const vec4f& boxMin, const vec4f&
 		}
 		return true;
 	}
+}
+
+bool Collision::collide_SpherevsTriangle(const vec4f& sphereCenter, const float& sphereRadius, const vec4f& triangle1, const vec4f& triangle2, const vec4f& triangle3, CollisionReport* report)
+{
+	vec4f t12 = triangle2 - triangle1;
+	vec4f t13 = triangle3 - triangle1;
+	vec4f tnormal = vec4f::cross(t12, t13);
+	tnormal.w = 0.f;
+	tnormal.normalize();
+	float d = vec4f::dot(sphereCenter - triangle1, tnormal);
+	if (std::abs(d) > sphereRadius)
+		return false;
+
+	CollisionUtils::ClosestPointCategory closestCategory;
+	vec4f closest = CollisionUtils::getTriangleClosestPoint(triangle1, triangle2, triangle3, sphereCenter, &closestCategory);
+	vec4f v = sphereCenter - closest;
+	v.w = 0;
+	float vv = vec4f::dot(v, v);
+
+	if (vv > sphereRadius * sphereRadius)
+		return false;
+
+	if (report)
+	{
+
+		d = std::sqrt(vv);
+		if (d < COLLISION_EPSILON)
+		{
+			report->normal = tnormal;
+			report->depths.push_back(sphereRadius);
+		}
+		else if (vec4f::dot(v, tnormal) < 0.f)
+		{
+			if (closestCategory != CollisionUtils::ClosestPointCategory::eInside)
+				return false;
+
+			report->normal = tnormal;
+			report->depths.push_back(sphereRadius + d);
+		}
+		else
+		{
+			report->normal = (1.f / d) * v;
+			report->depths.push_back(sphereRadius - d);
+		}
+
+		report->collision = true;
+		report->points.push_back(sphereCenter - sphereRadius * report->normal);
+	}
+
+	return true;
+}
+
+bool Collision::raycast_Sphere(const vec4f& rayOrigin, const vec4f& rayDirection, const vec4f& sphereCenter, const float& sphereRadius, RaycastReport* report)
+{
+	// test if already intersecting
+	vec4f v = rayOrigin - sphereCenter;
+	float vv = v.getNorm2();
+	if (vv < sphereRadius * sphereRadius)
+	{
+		if (report)
+		{
+			report->m_intersection = rayOrigin;
+			report->m_distance = 0.f;
+			report->m_normal = vv > COLLISION_EPSILON ? v.getNormal() : vec4f(0, 1, 0, 0);
+		}
+		return true;
+	}
+
+	// test if ray intersect sphere
+	vec4f rayEnd = rayOrigin + rayDirection.w * rayDirection;
+	rayEnd.w = 1.f;
+	vec4f closest = CollisionUtils::getSegmentClosestPoint(rayOrigin, rayEnd, sphereCenter);
+	v = closest - sphereCenter; v.w = 0.f;
+	vv = v.getNorm2();
+
+	if (vv > sphereRadius * sphereRadius)
+		return false;
+
+	if (rayDirection.w < COLLISION_EPSILON)
+		return false;
+
+	// compute closest point on ray
+	float d = std::sqrt(sphereRadius * sphereRadius - vv);
+	closest = closest - d * rayDirection;
+	v = closest - rayOrigin;
+	vv = v.getNorm2();
+	if (vv > rayDirection.w * rayDirection.w)
+		return false;
+
+	if (report)
+	{
+		report->m_intersection = closest;
+		report->m_intersection.w = 1;
+		report->m_distance = std::sqrt(vv);
+		report->m_normal = closest - sphereCenter;
+		report->m_normal.w = 0;
+		d = report->m_normal.getNorm();
+		if (d < COLLISION_EPSILON)
+			report->m_normal.normalize();
+		else
+			report->m_normal = vec4f(0, 1, 0, 0);
+	}
+	return true;
 }
 
 

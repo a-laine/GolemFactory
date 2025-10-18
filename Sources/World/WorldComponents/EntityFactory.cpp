@@ -16,6 +16,7 @@
 #include <Utiles/ConsoleColor.h>
 #include <Animation/Animator.h>
 #include <Utiles/ProfilerConfig.h>
+#include <GameSpecific/CharacterController.h>
 
 
 
@@ -90,7 +91,12 @@ void EntityFactory::addToScene(Entity* object)
 {
 	RigidBody* rigidbody = object->getComponent<RigidBody>();
 	if (rigidbody)
-		rigidbody->initialize(rigidbody->getMass());
+	{
+		if (rigidbody->getMass() > 1E-04f)
+			rigidbody->initialize(true, rigidbody->getMass());
+		else
+			rigidbody->initialize(false, 800.f);
+	}
 	world->addToScene(object);
 }
 
@@ -411,6 +417,24 @@ void EntityFactory::tryLoadComponents(Entity* object, Variant* variant)
 			if (animator->load(it0->second, object->getName()))
 				object->addComponent(animator);
 			else delete animator;
+		}
+
+		// rigidbody
+		it0 = variant->getMap().find("rigidbody");
+		if (it0 != variant->getMap().end() && it0->second.getType() == Variant::MAP)
+		{
+			RigidBody* rigidbody = object->getComponent<RigidBody>();
+			if (!rigidbody)
+			{
+				rigidbody = new RigidBody();
+				if (rigidbody->load(it0->second, object->getName()))
+					object->addComponent(rigidbody);
+				else delete rigidbody;
+			}
+			else
+			{
+				printError(messageHeader, "Object already have a Rigidbody component");
+			}
 		}
 	}
 }

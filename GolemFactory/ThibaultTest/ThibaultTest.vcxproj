@@ -124,7 +124,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_ITERATOR_DEBUG_LEVEL=0;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -156,13 +156,16 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\Sources\GameSpecific\PlayerMovement.cpp" />
+    <ClCompile Include="..\..\Sources\GameSpecific\CharacterController.cpp" />
     <ClCompile Include="..\..\Sources\GameSpecific\TPSCameraComponent.cpp" />
     <ClCompile Include="..\..\Sources\GolemFactoryApplicationThibault.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Sources\GameSpecific\PlayerMovement.h" />
+    <ClInclude Include="..\..\Sources\GameSpecific\CharacterController.h" />
     <ClInclude Include="..\..\Sources\GameSpecific\TPSCameraComponent.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\Resources\Config\RPG Key mapping.json" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

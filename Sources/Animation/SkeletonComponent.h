@@ -35,6 +35,7 @@ class SkeletonComponent : public Component
         bool isValid() const;
 
 		bool load(Variant& jsonObject, const std::string& objectName) override;
+		bool load(const std::string& skeletonName);
 		void save(Variant& jsonObject) override;
 
 		void onAddToEntity(Entity* entity) override;

@@ -36,6 +36,7 @@ class Shape
 		virtual Shape& operator=(const Shape& s);
 		virtual Shape* duplicate() const;
 
+		virtual float  computeVolume() const;
 		virtual mat4f computeInertiaMatrix() const;
 
 		virtual void transform(const vec4f& position, const vec4f& scale, const quatf& orientation);

@@ -66,7 +66,7 @@ class DrawableComponent : public Component
 		//std::vector<Texture*> m_textureOverride;
 
 		//int m_shadowMaxCascade;
-		bool m_ClockWise;
+		bool m_ClockWise = true;
 
 #ifdef USE_IMGUI
 		bool m_drawMeshBoundingBox = false;

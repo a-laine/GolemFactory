@@ -179,6 +179,7 @@ GLuint Renderer::renderMeshOverview(Mesh* mesh, float angle0, float angle1, floa
 	glDisable(GL_BLEND);
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
+	glFrontFace(GL_CW);
 
 	Shader* shader = defaultShader[DEFAULT];
 	if (mesh->getNormals()->empty())

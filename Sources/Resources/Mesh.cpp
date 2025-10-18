@@ -21,7 +21,7 @@ std::string Mesh::defaultName;
 Mesh::Mesh(const std::string& meshName)
     : ResourceVirtual(meshName, ResourceVirtual::ResourceType::MESH)
     , boundingBox(vec4f::zero, vec4f::zero)
-    , vao(0), verticesBuffer(0), uvsBuffer(0), normalsBuffer(0), facesBuffer(0)
+    , vao(0), verticesBuffer(0), uvsBuffer(0), colorsBuffer(0), normalsBuffer(0), facesBuffer(0)
     , faceType(GL_UNSIGNED_BYTE), faceIndicesCount(0), faceIndicesElementSize(0), faceIndicesArray(nullptr)
     , BBoxVao(0), vBBoxBuffer(0), fBBoxBuffer(0)
     , weightsBuffer(0), bonesBuffer(0)
@@ -38,7 +38,7 @@ Mesh::~Mesh()
 
 //	Public functions
 void Mesh::initialize(const std::vector<vec4f>& verticesArray, const std::vector<vec4f>& normalsArray,
-    const std::vector<vec4f>& uvArray, const std::vector<unsigned int>& facesArray,
+    const std::vector<vec4f>& uvArray, const std::vector<vec4f>& colorArray, const std::vector<unsigned int>& facesArray,
     const std::vector<vec4i>& bonesArray, const std::vector<vec4f>& weightsArray)
 {
     GF_ASSERT(state == INVALID);
@@ -54,6 +54,7 @@ void Mesh::initialize(const std::vector<vec4f>& verticesArray, const std::vector
     vertices = verticesArray;
     normals = normalsArray;
     uvs = uvArray;
+    colors = colorArray;
     bones = bonesArray;
     weights = weightsArray;
 
@@ -94,7 +95,7 @@ void Mesh::initialize(const std::vector<vec4f>& verticesArray, const std::vector
 }
 
 void Mesh::initialize(std::vector<vec4f>* verticesArray, std::vector<vec4f>* normalsArray,
-    std::vector<vec4f>* uvArray, std::vector<unsigned int>* facesArray,
+    std::vector<vec4f>* uvArray, std::vector<vec4f>* colorArray, std::vector<unsigned int>* facesArray,
     std::vector<vec4i>* bonesArray, std::vector<vec4f>* weightsArray)
 {
     GF_ASSERT(state == INVALID);
@@ -110,6 +111,7 @@ void Mesh::initialize(std::vector<vec4f>* verticesArray, std::vector<vec4f>* nor
     vertices = *verticesArray;
     normals = *normalsArray;
     uvs = *uvArray;
+    colors = *colorArray;
     bones = *bonesArray;
     weights = *weightsArray;
 
@@ -221,6 +223,13 @@ void Mesh::initializeVBO()
 	    glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(vec4f), uvs.data(), GL_STATIC_DRAW);
     }
 
+    if (!colors.empty())
+    {
+	    glGenBuffers(1, &colorsBuffer);
+	    glBindBuffer(GL_ARRAY_BUFFER, colorsBuffer);
+	    glBufferData(GL_ARRAY_BUFFER, colors.size() * sizeof(vec4f), colors.data(), GL_STATIC_DRAW);
+    }
+
     glGenBuffers(1, &facesBuffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, facesBuffer);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, faceIndicesCount * faceIndicesElementSize, faceIndicesArray, GL_STATIC_DRAW);
@@ -271,12 +280,20 @@ void Mesh::initializeVAO()
         glBindBuffer(GL_ARRAY_BUFFER, normalsBuffer);
         glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, NULL);
     }
+    else
+    {
+        glDisableVertexAttribArray(1);
+    }
 
     if (!uvs.empty())
     {
         glEnableVertexAttribArray(2);
         glBindBuffer(GL_ARRAY_BUFFER, uvsBuffer);
         glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, NULL);
+    }
+    else
+    {
+        glDisableVertexAttribArray(2);
     }
 
     if (hasSkeleton())
@@ -288,6 +305,22 @@ void Mesh::initializeVAO()
         glEnableVertexAttribArray(4);
         glBindBuffer(GL_ARRAY_BUFFER, weightsBuffer);
         glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, 0, NULL);
+    }
+    else
+    {
+        glDisableVertexAttribArray(3);
+        glDisableVertexAttribArray(4);
+    }
+
+    if (!colors.empty())
+    {
+        glEnableVertexAttribArray(5);
+        glBindBuffer(GL_ARRAY_BUFFER, colorsBuffer);
+        glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, 0, NULL);
+    }
+    else
+    {
+        glDisableVertexAttribArray(5);
     }
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, facesBuffer);
@@ -435,6 +468,7 @@ void Mesh::clear()
     vertices.clear();
     normals.clear();
     uvs.clear();
+    colors.clear();
 
     faceIndicesCount = 0;
     if (faceIndicesArray)
@@ -446,12 +480,14 @@ void Mesh::clear()
     glDeleteBuffers(1, &verticesBuffer);
     glDeleteBuffers(1, &normalsBuffer);
     glDeleteBuffers(1, &uvsBuffer);
+    glDeleteBuffers(1, &colorsBuffer);
     glDeleteBuffers(1, &facesBuffer);
     glDeleteVertexArrays(1, &vao);
 
 	verticesBuffer = 0;
 	normalsBuffer = 0;
     uvsBuffer = 0;
+    colorsBuffer = 0;
 	facesBuffer = 0;
 	vao = 0;
 
@@ -501,6 +537,11 @@ void Mesh::checkValidity()
         clear();
         state = INVALID;
     }
+    else if (!colors.empty() && !glIsBuffer(colorsBuffer))
+    {
+        clear();
+        state = INVALID;
+    }
     else
         state = VALID;
 }
@@ -525,6 +566,7 @@ void Mesh::onDrawImGui()
         ImGui::Text("indiceType : SHORT");
     else
         ImGui::Text("indiceType : INT");
+    ImGui::Text("Has vertex color : %s", colors.empty() ? "false" : "TRUE");
     ImGui::Spacing();
 
     // overview

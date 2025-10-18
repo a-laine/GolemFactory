@@ -365,6 +365,7 @@ namespace detail
 		static tvec4<bool, P> lessThan(const tvec4<T, P>& a, const tvec4<T, P>& b);
 		static tvec4<bool, P> greaterThan(const tvec4<T, P>& a, const tvec4<T, P>& b);
 		static bool any(const tvec4<T, P>& b);
+		static bool all(const tvec4<T, P>& b);
 		static tvec4<T, P> clamp(const tvec4<T, P>& a, const tvec4<T, P>& min, const tvec4<T, P>& max);
 
 		static tvec4<T, P> zero;

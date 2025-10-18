@@ -308,14 +308,14 @@ void EventHandlerEnum::loadKeyMapping(const std::string& path, std::string event
         dragAndDropListeners.swap(dragAndDropListenersBuffer);
     mutex.unlock();
 }
-bool EventHandlerEnum::isActivated(int eventName)
+bool EventHandlerEnum::isActivated(int eventName, Event::EventType flag)
 {
     bool b = false;
     mutex.lock();
     auto it = userMapping.find(eventName);
     while(it!=userMapping.end() && it->first==eventName)
     {
-        if(it->second->isActivated())
+        if(it->second->isActivated(flag))
 		{
             b = true;
             break;

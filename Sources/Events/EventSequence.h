@@ -47,7 +47,7 @@ class EventSequence : public Event
 		*
 		*	\return false.
 		*/
-        bool isActivated() const override;
+        bool isActivated(Event::EventType checkFlag) const override;
 
 		/*!
 		*	\brief Update function called by the EventHandler.

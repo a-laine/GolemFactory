@@ -1,11 +1,5 @@
 #pragma once
 
-/*!
-*	\file Mutex.h
-*	\brief Declaration of the Mutex class for plateform independant uses.
-*	\author Aurelien & Thibault LAINE
-*/
-
 #include "System.h"
 
 #if defined(GF_OS_WINDOWS)
@@ -23,75 +17,24 @@
 	{
 		public:
 			//  Miscellaneous
-			/*!
-			*	\typedef native_handle_type
-			*	\brief 
-			*/
 			typedef CRITICAL_SECTION* native_handle_type;
 			//
 
-			//  Default
-			/*!
-			*  \brief Constructor
-			*/
-			Mutex()
-			{
-				InitializeCriticalSection(&_M_mutex);
-			};
+			// Default
+			Mutex() { InitializeCriticalSection(&_M_mutex); };
+			~Mutex() { DeleteCriticalSection(&_M_mutex); };
 
-			/*!
-			*  \brief Destructor
-			*/
-			~Mutex()
-			{
-				DeleteCriticalSection(&_M_mutex);
-			};
-
-			/*!
-			*  \brief Constructor by coppy forbiden
-			*/
 			Mutex(const Mutex&) = delete;
-
-			/*!
-			*  \brief Assignment operator forbiden
-			*/
 			Mutex& operator=(const Mutex&) = delete;
 			//
 
 			//  Public functions
-			/*!
-			*	\brief Lock the mutex
-			*/
-			void lock()
-			{
-				EnterCriticalSection(&_M_mutex);
-			}
-
-			/*!
-			*	\brief Lock the mutex if possible
-			*	\return true if successfully lock, false otherwise
-			*/
-			bool try_lock()
-			{
-				return TryEnterCriticalSection(&_M_mutex) == TRUE;
-			}
-
-			/*!
-			*  \brief Unlock the mutex
-			*/
-			void unlock()
-			{
-				LeaveCriticalSection(&_M_mutex);
-			}
+			void lock() { EnterCriticalSection(&_M_mutex); }
+			bool try_lock() { return TryEnterCriticalSection(&_M_mutex) == TRUE; }
+			void unlock() { LeaveCriticalSection(&_M_mutex); }
 			
-			/*!
-			*	\brief ????????????????????????
-			*	\return ???????????????????????
-			*/
-			native_handle_type native_handle()
-			{
-				return &_M_mutex;
-			}
+			//????????????????????????
+			native_handle_type native_handle() { return &_M_mutex; }
 			//
 
 		protected:
@@ -103,10 +46,6 @@
 #else
     #include <mutex>
 
-	/*!
-	*	\typedef Mutex
-	*	\brief std::mutex redefinition
-	*/
     typedef std::mutex Mutex;
 #endif
 

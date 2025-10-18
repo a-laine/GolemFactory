@@ -67,7 +67,7 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
 
     //	usefull parameters for next
     unsigned int facesOffset = 0;
-    vec4f meshColor;
+    bool hasMeshColor = false;
     bool hasSkeleton = false;
     std::vector<int> meshVertexOffset;
     bool hasPrintedNotTriangle = false;
@@ -76,7 +76,16 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
     bool hasPrintedNoUV = false;
 
     //if (fileName.find("Characters/Character_Skeleton_Soldier_02") != std::string::npos) { int toto = 0; }
-
+    // first pass
+    for (unsigned int i = 0; i < scene->mNumMeshes; i++)
+    {
+        aiMesh* mesh = scene->mMeshes[i];
+        if (mesh->HasVertexColors(0))
+        {
+            hasMeshColor = true;
+            break;
+        }
+    }
 
     //	Load mesh
     for(unsigned int i = 0; i < scene->mNumMeshes; i++)
@@ -123,6 +132,17 @@ bool AssimpLoader::load(const std::string& resourceDirectory, const std::string&
             {
                 hasPrintedNoUV = true;
                 PrintWarning(fileName.c_str(), "No valid UV (maybe your mesh doesn't have materials)");
+            }
+
+            if (hasMeshColor)
+            {
+                if (mesh->HasVertexColors(0))
+                {
+                    aiColor4D col = mesh->mColors[0][j];
+                    colors.push_back(vec4f(col.r, col.g, col.b, col.a));
+                }
+                else
+                    colors.push_back(vec4f::one);
             }
         }
 
@@ -361,7 +381,7 @@ void AssimpLoader::initialize(ResourceVirtual* resource)
         case ResourceType::MESH:
         {
             Mesh* mesh = static_cast<Mesh*>(resource);
-            mesh->initialize(vertices, normales, uvs, faces, bones, weights);
+            mesh->initialize(vertices, normales, uvs, colors, faces, bones, weights);
             if (!bones.empty() || !weights.empty())
             {
                 std::vector<std::string> boneNames;
@@ -409,6 +429,7 @@ void AssimpLoader::clear()
     vertices.clear();
     normales.clear();
     uvs.clear();
+    colors.clear();
     bones.clear();
     weights.clear();
     faces.clear();

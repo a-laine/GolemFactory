@@ -41,7 +41,9 @@ class Event
 
             UP_FLAG = 1<<3,				//!< Flag for raise event on released (EventHandler will publish an event)
             DOWN_FLAG = 1<<4,			//!< Flag for raise event on pressed (EventHandler will publish an event)
-            ACTIVATED_FLAG = 1<<5		//!< Flag to keep event state
+            ACTIVATED_FLAG = 1<<5,		//!< Flag to keep event state
+			ACTIVATED_BUTTON_DOWN = 1 << 6,
+			ACTIVATED_BUTTON_UP = 1 << 7
         };
 		
 		/*!
@@ -97,7 +99,7 @@ class Event
 		 *
 		 *	\return true if activated, false otherwise
 		 */
-        virtual bool isActivated() const;
+        virtual bool isActivated(Event::EventType checkFlag) const;
 
 		/*!
 		 *	\brief Update function called by the EventHandler.
@@ -134,7 +136,7 @@ class Event
         //
 
         //  Attributes
-        uint8_t configuration;							//!< A configuration byte. To unpack variable see the enumeration type #EventType.
+        uint32_t configuration;							//!< A configuration byte. To unpack variable see the enumeration type #EventType.
         std::vector<std::pair<Input,bool> > inputList;	//!< The list of all input attached to the event. the boolean is to track the input state (true = activated)
         //
 };

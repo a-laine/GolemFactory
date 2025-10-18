@@ -72,6 +72,21 @@ bool Animator::load(Variant& jsonObject, const std::string& objectName)
 	return false;
 }
 
+bool Animator::load(const std::string& graphName, const std::string& variantName)
+{
+	m_graph = ResourceManager::getInstance()->getResource<AnimationGraph>(graphName);
+	if (m_graph)
+		m_data = (GraphData*)m_graph->getVariant(variantName);
+	if (m_graph && m_data)
+	{
+		m_variantName = variantName;
+		m_graph->getRuntime(*m_data, m_runtime);
+		m_graphParameters = m_graph->getParametersCopy();
+		return true;
+	}
+	return false;
+}
+
 void Animator::save(Variant& jsonObject)
 {
 
@@ -203,7 +218,7 @@ void Animator::onDrawImGui()
 	const ImVec4 componentColor = ImVec4(0.7f, 0.7f, 0.5f, 1.f);
 	std::ostringstream unicName;
 	unicName << "Animator##" << (uintptr_t)this;
-	if (ImGui::TreeNodeEx(unicName.str().c_str(), ImGuiTreeNodeFlags_DefaultOpen))
+	if (ImGui::TreeNodeEx(unicName.str().c_str()))
 	{
 		ImGui::TextColored(componentColor, "Animation graph");
 		ImGui::Indent();

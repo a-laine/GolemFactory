@@ -35,10 +35,10 @@ class Mesh : public ResourceVirtual
 		void computeBoundingBox();
 
         void initialize(const std::vector<vec4f>& verticesArray, const std::vector<vec4f>& normalsArray,
-            const std::vector<vec4f>& uvArray, const std::vector<unsigned int>& facesArray,
+            const std::vector<vec4f>& uvArray, const std::vector<vec4f>& colorArray, const std::vector<unsigned int>& facesArray,
             const std::vector<vec4i>& bonesArray, const std::vector<vec4f>& weightsArray);
         void initialize(std::vector<vec4f>* verticesArray, std::vector<vec4f>* normalsArray,
-            std::vector<vec4f>* uvArray, std::vector<unsigned int>* facesArray,
+            std::vector<vec4f>* uvArray, std::vector<vec4f>* colorArray, std::vector<unsigned int>* facesArray,
             std::vector<vec4i>* bonesArray, std::vector<vec4f>* weightsArray);
 		virtual void initializeVBO();
 		virtual void initializeVAO();
@@ -96,12 +96,14 @@ class Mesh : public ResourceVirtual
 		GLuint  vao,
 				verticesBuffer,
 				uvsBuffer,
+				colorsBuffer,
 				normalsBuffer,
 				facesBuffer;
 
         std::vector<vec4f> vertices;
 		std::vector<vec4f> normals;
 		std::vector<vec4f> uvs;
+		std::vector<vec4f> colors;
 
 		GLuint faceType;
 		unsigned int faceIndicesElementSize;

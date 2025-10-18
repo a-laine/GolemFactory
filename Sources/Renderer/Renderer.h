@@ -217,12 +217,12 @@ class Renderer : public Singleton<Renderer>
 				VirtualEntityCollector collector;
 				float m_frustrumFar = 10000.f;
 				int m_queryMaxDepth = 1000;
-				RenderOption renderOption; 
+				RenderOption renderOption;
 		#pragma endregion
 
 		#pragma region Grid
 
-				bool m_drawGrid;
+				bool m_drawGrid = false;
 				unsigned int vboGridSize;
 				GLuint gridVAO, vertexbuffer, arraybuffer, colorbuffer, normalbuffer;
 				vec4f m_gridColor;
@@ -230,20 +230,20 @@ class Renderer : public Singleton<Renderer>
 
 		#pragma region OpenGL_States
 
-				GLuint lastVAO;
-				Shader* lastShader;
-				Material* lastMaterial;
-				Skeleton* lastSkeleton;
+				GLuint lastVAO = 0;
+				Shader* lastShader = nullptr;
+				Material* lastMaterial = nullptr;
+				Skeleton* lastSkeleton = nullptr;
 
-				Shader* fullscreenTriangle;
+				Shader* fullscreenTriangle = nullptr;
 
 				#ifdef USE_IMGUI
-					Shader* occlusionResultDraw;
+					Shader* occlusionResultDraw = nullptr;
 				#endif
 
-				GLuint fullscreenVAO;
-				bool m_cwFrontFace;
-				bool shaderJustActivated;
+				GLuint fullscreenVAO = 0;
+				bool m_cwFrontFace = true;
+				bool shaderJustActivated = true;
 				std::vector<Texture*> m_bindedTextures;
 				int m_bindedMaxShadowCascade;
 				int m_bindedOmniLayer;
@@ -276,13 +276,13 @@ class Renderer : public Singleton<Renderer>
 				GLuint m_globalMatricesID;
 				GlobalMatrices m_globalMatrices;
 				GLint m_maxUniformSize;
-				bool m_enableInstancing = true;
+				bool m_enableInstancing = false;
 				bool m_hasShadowCaster = false;
 		#pragma endregion
 
 		#pragma region Occlusion_Culling
 
-				bool m_enableOcclusionCulling = true;
+				bool m_enableOcclusionCulling = false;
 				vec2i m_occlusionBufferSize;
 				std::vector<std::pair<float, OccluderComponent*>> m_occluders;
 				float* m_occlusionCenterX = nullptr;
@@ -345,7 +345,7 @@ class Renderer : public Singleton<Renderer>
 				Mesh* m_skyboxMesh;
 				Material* m_skyboxMaterial;
 				Shader* m_atmosphericScattering;
-				bool m_enableAtmosphericScattering;
+				bool m_enableAtmosphericScattering = false;
 		#pragma endregion
 
 		#pragma region Shadows

@@ -23,6 +23,7 @@ Default
 		layout(location = 0) in vec4 position;
 		layout(location = 1) in vec4 normal;
 		layout(location = 2) in vec4 uv;
+		layout(location = 5) in vec4 vColor;
 		
 		#ifdef INSTANCING
 			#define MAX_INSTANCE 32
@@ -38,10 +39,12 @@ Default
 			out vec4 fragmentPosition_gs;
 			out vec4 fragmentNormal_gs;
 			out vec4 fragmentUv_gs;
+			out vec4 fragmentVColor_gs;
 		#else
 			out vec4 fragmentPosition;
 			out vec4 fragmentNormal;
 			out vec4 fragmentUv;
+			out vec4 fragmentVColor;
 		#endif
 		
 		// program
@@ -54,13 +57,14 @@ Default
 				fragmentPosition_gs = model * position;
 				gl_Position = projection * view * fragmentPosition_gs;
 				fragmentUv_gs = uv;
+				fragmentVColor_gs = vColor;
 				fragmentNormal_gs = normalize(normalMatrix * normal);
 			#else
 				fragmentPosition = model * position;
 				gl_Position = projection * view * fragmentPosition;
 				fragmentNormal = normalize(normalMatrix * normal);
 				fragmentUv = uv;
-				
+				fragmentVColor = vColor;
 			#endif
 		}
 	};
@@ -77,11 +81,13 @@ Default
 		in vec4 fragmentPosition_gs[];
 		in vec4 fragmentNormal_gs[];
 		in vec4 fragmentUv_gs[];
+		in vec4 fragmentVColor_gs[];
 
 		// output
 		out vec4 fragmentNormal;
 		out vec4 fragmentPosition;
 		out vec4 fragmentUv;
+		out vec4 fragmentVColor;
 		out vec3 barycentricCoord;
 
 		void main()
@@ -90,6 +96,7 @@ Default
 			fragmentPosition = fragmentPosition_gs[0];
 			fragmentNormal = fragmentNormal_gs[0];
 			fragmentUv = fragmentUv_gs[0];
+			fragmentVColor = fragmentVColor_gs[0];
 			barycentricCoord = vec3(1.0 , 0.0 , 0.0);
 			EmitVertex();
 			
@@ -97,6 +104,7 @@ Default
 			fragmentPosition = fragmentPosition_gs[1];
 			fragmentNormal = fragmentNormal_gs[1];
 			fragmentUv = fragmentUv_gs[1];
+			fragmentVColor = fragmentVColor_gs[1];
 			barycentricCoord = vec3(0.0 , 1.0 , 0.0);
 			EmitVertex();
 			
@@ -104,6 +112,7 @@ Default
 			fragmentPosition = fragmentPosition_gs[2];
 			fragmentNormal = fragmentNormal_gs[2];
 			fragmentUv = fragmentUv_gs[2];
+			fragmentVColor = fragmentVColor_gs[2];
 			barycentricCoord = vec3(0.0 , 0.0 , 1.0);
 			EmitVertex();
 			
@@ -122,6 +131,7 @@ Default
 		in vec4 fragmentPosition;
 		in vec4 fragmentNormal;
 		in vec4 fragmentUv;
+		in vec4 fragmentVColor;
 			
 		#ifdef WIRED_MODE
 			in vec3 barycentricCoord;
@@ -262,7 +272,7 @@ Default
 			}
 			else if (overrideColor.x >= 0.0)
 			{
-				fragmentColor = (0.5 * diffuseDot + 0.3) * overrideColor;
+				fragmentColor = (0.5 * diffuseDot + 0.3) * overrideColor * (1.0 - fragmentVColor);
 				fragmentColor.w = 1.0;
 			}
 			

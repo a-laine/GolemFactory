@@ -140,7 +140,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_ITERATOR_DEBUG_LEVEL=0;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <WarningVersion>
@@ -295,6 +295,7 @@
     <ClCompile Include="..\..\Sources\Utiles\FileWatcher.cpp" />
     <ClCompile Include="..\..\Sources\Utiles\GiftWrapping.cpp" />
     <ClCompile Include="..\..\Sources\Utiles\IncrementalHull.cpp" />
+    <ClCompile Include="..\..\Sources\Utiles\JobSystem.cpp" />
     <ClCompile Include="..\..\Sources\Utiles\OpenSaveFileDialog.cpp" />
     <ClCompile Include="..\..\Sources\Utiles\Parser\Reader.cpp" />
     <ClCompile Include="..\..\Sources\Utiles\Parser\Variant.cpp" />
@@ -435,6 +436,7 @@
     <ClInclude Include="..\..\Sources\Terrain\TerrainDetailDrawableComponent.h" />
     <ClInclude Include="..\..\Sources\Terrain\TerrainVirtualTexture.h" />
     <ClInclude Include="..\..\Sources\Utiles\Assert.hpp" />
+    <ClInclude Include="..\..\Sources\Utiles\BankArray.h" />
     <ClInclude Include="..\..\Sources\Utiles\ConsoleColor.h" />
     <ClInclude Include="..\..\Sources\Utiles\Debug.h" />
     <ClInclude Include="..\..\Sources\Utiles\DirectoryWatcher.h" />
@@ -442,6 +444,8 @@
     <ClInclude Include="..\..\Sources\Utiles\GiftWrapping.h" />
     <ClInclude Include="..\..\Sources\Utiles\ImguiConfig.h" />
     <ClInclude Include="..\..\Sources\Utiles\IncrementalHull.h" />
+    <ClInclude Include="..\..\Sources\Utiles\JobSystem.h" />
+    <ClInclude Include="..\..\Sources\Utiles\MixedArray.h" />
     <ClInclude Include="..\..\Sources\Utiles\Mutex.h" />
     <ClInclude Include="..\..\Sources\Utiles\ObjectPool.h" />
     <ClInclude Include="..\..\Sources\Utiles\OpenSaveFileDialog.h" />
@@ -453,6 +457,7 @@
     <ClInclude Include="..\..\Sources\Utiles\SafeFoxwardList.h" />
     <ClInclude Include="..\..\Sources\Utiles\Singleton.h" />
     <ClInclude Include="..\..\Sources\Utiles\System.h" />
+    <ClInclude Include="..\..\Sources\Utiles\ThreadSafeRingBuffer.h" />
     <ClInclude Include="..\..\Sources\Utiles\ToolBox.h" />
     <ClInclude Include="..\..\Sources\Utiles\WorkerThread.h" />
     <ClInclude Include="..\..\Sources\Utiles\Xoshiro256.h" />

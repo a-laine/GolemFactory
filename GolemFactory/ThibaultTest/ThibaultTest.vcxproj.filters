@@ -24,7 +24,7 @@
     <ClCompile Include="..\..\Sources\GameSpecific\TPSCameraComponent.cpp">
       <Filter>Fichiers sources\GameSpecific</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Sources\GameSpecific\PlayerMovement.cpp">
+    <ClCompile Include="..\..\Sources\GameSpecific\CharacterController.cpp">
       <Filter>Fichiers sources\GameSpecific</Filter>
     </ClCompile>
   </ItemGroup>
@@ -32,8 +32,13 @@
     <ClInclude Include="..\..\Sources\GameSpecific\TPSCameraComponent.h">
       <Filter>Fichiers sources\GameSpecific</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Sources\GameSpecific\PlayerMovement.h">
+    <ClInclude Include="..\..\Sources\GameSpecific\CharacterController.h">
       <Filter>Fichiers sources\GameSpecific</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\Resources\Config\RPG Key mapping.json">
+      <Filter>Fichiers de ressources</Filter>
+    </None>
   </ItemGroup>
 </Project>

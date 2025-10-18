@@ -1,9 +1,5 @@
-#include "CollisionTriangle.h"
-#include "CollisionPoint.h"
-#include "CollisionSegment.h"
 #include "CollisionUtils.h"
-
-#include <iostream>
+#include <Physics/Collision.h>
 
 
 //	Specialized functions : triangle
@@ -101,4 +97,6 @@ bool Collision2::collide_TrianglevsCapsule(const vec4f& triangle1, const vec4f& 
 
 	return false;
 }*/
+
+
 //

@@ -56,7 +56,7 @@ bool MeshLoader::load(const std::string& resourceDirectory, const std::string& f
 void MeshLoader::initialize(ResourceVirtual* resource)
 {
     Mesh* mesh = static_cast<Mesh*>(resource);
-    mesh->initialize(std::move(vertices), std::move(normals), std::move(uvs), std::move(faces), std::move(bones), std::move(weights));
+    mesh->initialize(std::move(vertices), std::move(normals), std::move(uvs), std::move(colors), std::move(faces), std::move(bones), std::move(weights));
 }
 
 

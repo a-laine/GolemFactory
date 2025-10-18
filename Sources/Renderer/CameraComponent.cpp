@@ -16,7 +16,11 @@ void CameraComponent::onAddToEntity(Entity* entity)
 
 mat4f CameraComponent::getViewMatrix() const
 {
-	return getParentEntity()->getInverseWorldTransformMatrix();
+	// because opengl forward is -z and left is -x !!!
+	mat4f view = getParentEntity()->getInverseWorldTransformMatrix();
+	mat4f rot(1.f);
+	rot[0][0] = rot[2][2] = -1.f;
+	return rot * view;
 }
 
 
@@ -25,7 +29,7 @@ mat4f CameraComponent::getModelMatrix() const
 	return getParentEntity()->getWorldTransformMatrix();
 }
 
-vec4f CameraComponent::getRight() const
+vec4f CameraComponent::getLeft() const
 {
 	return getParentEntity()->getWorldOrientation() * vec4f(1, 0, 0, 0);
 }
@@ -37,7 +41,7 @@ vec4f CameraComponent::getUp() const
 
 vec4f CameraComponent::getForward() const
 {
-	return getParentEntity()->getWorldOrientation() * vec4f(0, 0, -1, 0);
+	return getParentEntity()->getWorldOrientation() * vec4f(0, 0, 1, 0);
 }
 
 vec4f CameraComponent::getPosition() const
@@ -45,11 +49,11 @@ vec4f CameraComponent::getPosition() const
 	return getParentEntity()->getWorldPosition();
 }
 
-void CameraComponent::getFrustrum(vec4f& position, vec4f& forward, vec4f& right, vec4f& up) const
+void CameraComponent::getFrustrum(vec4f& position, vec4f& forward, vec4f& left, vec4f& up) const
 {
 	position = getPosition();
 	forward = getForward();
-	right = getRight();
+	left = getLeft();
 	up = getUp();
 }
 
@@ -57,11 +61,6 @@ quatf CameraComponent::getOrientation() const
 {
 	return getParentEntity()->getWorldOrientation();
 }
-
-/*float CameraComponent::getFieldOfView() const
-{
-	return m_fov;
-}*/
 
 float CameraComponent::getVerticalFieldOfView() const
 {
@@ -94,10 +93,10 @@ void CameraComponent::setDirection(vec4f direction)
 	
 	GF_ASSERT((std::abs(direction.y) < 1.f - (float)EPSILON), "direction too close to vertical !");
 
-	vec4f right = vec4f::cross(direction, vec4f(0, 1, 0, 0)).getNormal();
-	vec4f up = vec4f::cross(right, direction);
+	vec4f left = vec4f::cross(vec4f(0, 1, 0, 0), direction).getNormal();
+	vec4f up = vec4f::cross(direction, left);
 
-	mat4f view(direction, up, right, vec4f(0, 0, 0, 1));
+	mat4f view(left, up, direction, vec4f(0, 0, 0, 1));
 	quatf q = view.extractRotation();
 	q.normalize();
 	//getParentEntity()->setWorldTransformation(getParentEntity()->getWorldPosition(), getParentEntity()->getWorldScale(), q);
@@ -116,24 +115,22 @@ void CameraComponent::rotate(const quatf& rotation)
 
 void CameraComponent::rotate(float verticalDelta, float horizontalDelta)
 {
-	//quatf orientation = getParentEntity()->getWorldOrientation();
-	vec4f front = getForward();
+	vec4f left = getLeft();
 	vec4f up = getUp();
-	vec4f right = getRight();
+	vec4f front = getForward();
 
-	front = front + horizontalDelta * right;
-	//vec4f newfront = front - verticalDelta * up;
-	//if (std::abs(newfront.y) < 0.97f)
-	//	front = newfront;
+	front = front + horizontalDelta * left;
+	vec4f newfront = front + verticalDelta * up;
+	if (std::abs(newfront.y) < 0.97f)
+		front = newfront;
 
 	front.normalize();
-	right = vec4f::cross(vec4f(0, 1, 0, 0), front).getNormal();
-	up = vec4f::cross(front, right);
+	left = vec4f::cross(vec4f(0, 1, 0, 0), front).getNormal();
+	up = vec4f::cross(front, left);
 
-	mat4f view(right, up, front, vec4f(0, 0, 0, 1));
+	mat4f view(left, up, front, vec4f(0, 0, 0, 1));
 	quatf q = view.extractRotation();
 	q.normalize();
-	//getParentEntity()->setWorldTransformation(getParentEntity()->getWorldPosition(), getParentEntity()->getWorldScale(), q);
 	getParentEntity()->setWorldOrientation(q);
 }
 
@@ -209,7 +206,7 @@ void CameraComponent::drawDebug(float viewportRatio, float farDistance, float ne
 	// aliases
 	vec4f p = getPosition();
 	vec4f dir = getForward();
-	vec4f left = -getRight();
+	vec4f left = getLeft();
 	vec4f up = getUp();
 	float a1 = 0.5f * m_verticalFov;
 	float ca1 = cos(a1);

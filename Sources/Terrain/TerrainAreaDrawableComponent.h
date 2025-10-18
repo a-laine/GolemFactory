@@ -41,6 +41,7 @@ class TerrainAreaDrawableComponent : public DrawableComponent
 		//void setWaterShader(Shader* _shader);
 		bool hasWater() const;
 		AxisAlignedBox getBoundingBox() const;
+		const TerrainArea* getArea();
 
 	protected:
 		TerrainAreaData m_data;

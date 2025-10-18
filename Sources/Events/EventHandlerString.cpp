@@ -240,14 +240,14 @@ void EventHandlerString::loadKeyMapping(const std::string& path, std::string fil
 		dragAndDropListeners.swap(dragAndDropListenersBuffer);
 	mutex.unlock();
 }
-bool EventHandlerString::isActivated(std::string eventName)
+bool EventHandlerString::isActivated(std::string eventName, Event::EventType flag)
 {
 	bool b = false;
 	mutex.lock();
 	auto it = userMapping.find(eventName);
 	while (it != userMapping.end() && it->first == eventName)
 	{
-		if (it->second->isActivated())
+		if (it->second->isActivated(flag))
 		{
 			b = true;
 			break;

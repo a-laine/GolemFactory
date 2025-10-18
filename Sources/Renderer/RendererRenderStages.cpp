@@ -20,12 +20,12 @@ void Renderer::CollectEntitiesBindLights()
 {
 	SCOPED_CPU_MARKER("Collect entities");
 
-	vec4f camPos, camFwd, camUp, camRight;
-	camera->getFrustrum(camPos, camFwd, camRight, camUp);
+	vec4f camPos, camFwd, camUp, camLeft;
+	camera->getFrustrum(camPos, camFwd, camLeft, camUp);
 	sceneQuery.getResult().clear();
 	collector.getResult().clear();
 
-	sceneQuery.Set(camPos, camFwd, camUp, -camRight, camera->getVerticalFieldOfView(), context->getViewportRatio(), m_frustrumFar);
+	sceneQuery.Set(camPos, camFwd, camUp, camLeft, camera->getVerticalFieldOfView(), context->getViewportRatio(), m_frustrumFar);
 	sceneQuery.maxDepth = m_queryMaxDepth;
 	collector.m_flags = (uint64_t)Entity::Flags::Fl_Drawable | (uint64_t)Entity::Flags::Fl_Light;
 	if (m_enableOcclusionCulling)

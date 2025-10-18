@@ -108,7 +108,7 @@ bool GJK::collide(const Shape& a, const Shape& b, CollisionReport* report)
 								MinkowskiPoint p = simplex[2];
 								simplex.clear();
 								simplex.push_back(p);
-								direction = -simplex[2].p;
+								direction = -p.p;
 								//simplex = std::vector<MinkowskiPoint>{ simplex[2] };
 							}
 						}
@@ -212,6 +212,7 @@ bool GJK::collide(const Shape& a, const Shape& b, CollisionReport* report)
 					std::cout << "GJK : error : simplex size not supported" << std::endl;
 				break;
 		}
+		direction.w = 0;
 	}
 
 	if (verbose)
@@ -280,14 +281,16 @@ void GJK::expandSimplex(const Shape& a, const Shape& b, CollisionReport* report,
 	if (vec4f::dot(report->normal, proj) < 0.f)
 		report->normal *= -1.f;
 
+	report->normal = -report->normal; // because why not
+
 	if (report->computeManifoldContacts)
 		computeManifoldContacts(a, b, report);
 }
 void GJK::computeManifoldContacts(const Shape& a, const Shape& b, CollisionReport* report)
 {
 	// the two feature faces
-	a.getFacingFace(report->normal, report->shape1face);
-	b.getFacingFace(-report->normal, report->shape2face);
+	a.getFacingFace(-report->normal, report->shape1face);
+	b.getFacingFace(report->normal, report->shape2face);
 	if (report->shape1face.size() < 3 || report->shape2face.size() < 3)
 		return;
 
@@ -321,7 +324,7 @@ void GJK::computeManifoldContacts(const Shape& a, const Shape& b, CollisionRepor
 	std::vector<vec4f> projection;
 	for (unsigned int i = 0; i < report->shape1face.size(); i++)
 	{
-		float depth = vec4f::dot(report->normal, report->shape1face[i] - report->shape2face[0]);
+		float depth = vec4f::dot(report->normal, report->shape2face[0] - report->shape1face[i]);
 		vec4f p = report->shape1face[i] - depth * report->normal;
 		projection.push_back(p);
 
@@ -461,6 +464,11 @@ bool GJK::inside(std::vector<vec4f>& hull, const vec4f& point)
 //	Nested classes
 GJK::MinkowskiPoint::MinkowskiPoint(const vec4f& _a, const vec4f& _b) : 
 	a(_a), b(_b), p(_a - _b) 
+{
+
+}
+GJK::MinkowskiPoint::MinkowskiPoint() : 
+	a(0), b(0), p(0) 
 {
 
 }

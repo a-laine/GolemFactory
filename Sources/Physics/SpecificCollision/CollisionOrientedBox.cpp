@@ -1,6 +1,5 @@
-#include "CollisionOrientedBox.h"
-#include "CollisionPoint.h"
 #include "CollisionUtils.h"
+#include <Physics/Collision.h>
 
 
 //	Specialized functions : oriented box
@@ -118,5 +117,154 @@ bool Collision2::collide_OrientedBoxvsCapsule(const glm::mat4& boxTranform, cons
 
 	return glm::length(closestBoxPoint - closestSegmentPoint) <= capsuleRadius;
 }*/
+
+
+bool Collision::raycast_OrientedBox(const vec4f& worldRayOrigin, const vec4f& worldRayDirection, const mat4f& boxTransform, const vec4f& boxMin, const vec4f& boxMax, RaycastReport* report)
+{
+	mat4f invTransform = mat4f::inverse(boxTransform);
+	vec4f rayEnd = worldRayOrigin + worldRayDirection.w * worldRayDirection;
+	rayEnd.w = 1.f;
+	vec4f s1 = invTransform * worldRayOrigin;
+	vec4f s2 = invTransform * rayEnd;
+
+	// test if already in box
+	if (vec4b::all(vec4f::greaterThan(s1, boxMin)) && vec4b::all(vec4f::lessThan(s1, boxMax)))
+	{
+		if (report)
+		{
+			report->m_distance = 0.f;
+			report->m_intersection = worldRayOrigin;
+			report->m_intersection.w = 1;
+
+			vec4f center = 0.5f * (boxMax + boxMin);
+			vec4f size = 0.5f * vec4f::abs(boxMax - boxMin);
+			vec4f v = s1 - center;
+			vec4f delta = size - vec4f::abs(v);
+
+			if (delta.x < delta.y&& delta.x < delta.z)
+				report->m_normal = v.x > 0.f ? vec4f(1, 0, 0, 0) : vec4f(-1, 0, 0, 0);
+			else if (delta.y < delta.x && delta.y < delta.z)
+				report->m_normal = v.y > 0.f ? vec4f(0, 1, 0, 0) : vec4f(0, -1, 0, 0);
+			else
+				report->m_normal = v.z > 0.f ? vec4f(0, 0, 1, 0) : vec4f(0, 0, -1, 0);
+			report->m_normal = boxTransform * report->m_normal;
+		}
+		return true;
+	}
+
+	vec4f s = s2 - s1;
+	float rayLength = s.getNorm();
+	if (rayLength < COLLISION_EPSILON)
+		return false;
+
+	// ray box regular
+	vec4f rayDirection = s * (1.f / rayLength);
+	vec4f rayInvDirection = vec4f::zero;
+	rayInvDirection.x = std::abs(rayDirection.x) > COLLISION_EPSILON * COLLISION_EPSILON ? 1.f / rayDirection.x : 1E12f;
+	rayInvDirection.y = std::abs(rayDirection.y) > COLLISION_EPSILON * COLLISION_EPSILON ? 1.f / rayDirection.y : 1E12f;
+	rayInvDirection.z = std::abs(rayDirection.z) > COLLISION_EPSILON * COLLISION_EPSILON ? 1.f / rayDirection.z : 1E12f;
+
+	vec4f t0 = (boxMax - s1) * rayInvDirection;
+	vec4f t1 = (boxMin - s1) * rayInvDirection;
+	vec4f tmin = vec4f::min(t0, t1);
+	vec4f tmax = vec4f::max(t0, t1);
+	float distanceB = std::min(std::min(tmax.x, tmax.y), tmax.z);
+	float distanceA = std::max(std::max(tmin.x, tmin.y), tmin.z);
+	if (distanceB < distanceA + COLLISION_EPSILON || distanceA > rayLength)
+		return false;
+
+	if (report)
+	{
+		vec4f localIntersection = s1 + distanceA * rayDirection;
+		report->m_intersection = boxTransform * localIntersection;
+		report->m_intersection.w = 1;
+		report->m_distance = (report->m_intersection - worldRayOrigin).getNorm();
+
+		vec4f center = 0.5f * (boxMax + boxMin);
+		vec4f size = 0.5f * vec4f::abs(boxMax - boxMin);
+		vec4f v = localIntersection - center;
+		vec4f delta = size - vec4f::abs(v);
+
+		if (delta.x < delta.y && delta.x < delta.z)
+			report->m_normal = v.x > 0.f ? vec4f(1, 0, 0, 0) : vec4f(-1, 0, 0, 0);
+		else if (delta.y < delta.x && delta.y < delta.z)
+			report->m_normal = v.y > 0.f ? vec4f(0, 1, 0, 0) : vec4f(0, -1, 0, 0);
+		else
+			report->m_normal = v.z > 0.f ? vec4f(0, 0, 1, 0) : vec4f(0, 0, -1, 0);
+		report->m_normal = boxTransform * report->m_normal;
+	}
+	return true;
+}
+
+bool Collision::raycast_Triangle(const vec4f& rayOrigin, const vec4f& rayDirection, const vec4f& triangle1, const vec4f& triangle2, const vec4f& triangle3, bool discardBackface, RaycastReport* report)
+{
+	constexpr float eps = 1E-06f;
+	vec4f direction = rayDirection;         direction.w = 0.f;
+	vec4f edge1 = triangle2 - triangle1;    edge1.w = 0.f;
+	vec4f edge2 = triangle3 - triangle1;    edge2.w = 0.f;
+	vec4f h = vec4f::cross(direction, edge2);
+	float a = vec4f::dot(h, edge1);
+	if ((discardBackface ? a : std::abs(a)) < eps)
+		return false;
+
+	float f = 1.f / a;
+	vec4f s = rayOrigin - triangle1;
+	s.w = 0.f;
+	float u = f * vec4f::dot(s, h);
+	if (u < 0.f || u > 1.f)
+		return false;
+
+	vec4f q = vec4f::cross(s, edge1);
+	float v = f * vec4f::dot(q, direction);
+	if (v < 0.f || u + v > 1.f)
+		return false;
+
+	float t = f * vec4f::dot(edge2, q);
+	if (t < 0.f || t >= rayDirection.w)
+		return false;
+
+	if (report)
+	{
+		report->m_normal = vec4f::cross(edge1, edge2);
+		report->m_normal.normalize();
+		report->m_distance = t;
+		report->m_intersection = rayOrigin + t * direction;
+	}
+	return true;
+
+	/*vec4f v1 = triangle2 - triangle1;
+	vec4f v2 = triangle3 - triangle1;
+	vec4f n = vec4f::cross(v1, v2);
+
+	vec4f s = segment2 - segment1;
+	float dot = vec4f::dot(n, s);
+	if (std::abs(dot) < COLLISION_EPSILON * COLLISION_EPSILON)
+		return false; // segment parallel to triangle plane
+
+	vec4f u = s.getNormal();
+	n = dot > 0.f ? n : -n;
+	n.normalize();
+
+	float depth = vec4f::dot(n, triangle1 - segment1) / vec4f::dot(n, u);
+	if (depth * depth > s.getNorm2() || depth < 0.f)
+		return false; // too far or beind
+
+	vec4f intersection = segment1 + depth * u - triangle1;
+
+	//	checking barycentric coordinates
+	vec2f bary = CollisionUtils::getBarycentricCoordinates(v1, v2, intersection);
+	if (bary.x < 0.f || bary.y < 0.f || bary.x + bary.y > 1.f)
+		return false;
+	else
+	{
+		if (report)
+		{
+			report->m_normal = n;
+			report->m_intersection = segment1 + depth * u;
+			report->m_distance = depth;
+		}
+		return true;
+	}*/
+}
 //
 

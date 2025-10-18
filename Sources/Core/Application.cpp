@@ -125,7 +125,11 @@ RenderContext* Application::createFullscreenWindow(const char* title, GLFWmonito
 	height = (height == 0) ? videoMode->height : height;
 
 	glfwWindowHint(GLFW_VISIBLE, GL_TRUE);
-	GLFWwindow* window = glfwCreateWindow(width, height, title, nullptr, m_mainWindow);
+	GLFWwindow* window = nullptr;
+	if (width == 0 && height == 0 && monitor) // full screen no title bar
+		window = glfwCreateWindow(width, height, title, monitor, nullptr);
+	else
+		window = glfwCreateWindow(width, height, title, nullptr, m_mainWindow);
 	RenderContext* context = nullptr;
 
 	if (window != nullptr)

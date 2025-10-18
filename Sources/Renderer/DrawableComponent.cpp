@@ -192,9 +192,9 @@ void DrawableComponent::pushConstantData(Shader* _shader) const {}
 void DrawableComponent::pushInstanceData(Shader* _shader) const {}
 void DrawableComponent::writeInstanceData(vec4f* _destination) const {}
 
-void DrawableComponent::setClockWise(bool ccwEnable)
+void DrawableComponent::setClockWise(bool cwEnable)
 {
-	m_ClockWise = ccwEnable;
+	m_ClockWise = cwEnable;
 }
 bool DrawableComponent::isClockWise() const
 {
@@ -214,7 +214,7 @@ void DrawableComponent::onDrawImGui()
 	std::ostringstream unicName;
 	unicName << "Drawable component##" << (uintptr_t)this;
 
-	if (ImGui::TreeNodeEx(unicName.str().c_str(), ImGuiTreeNodeFlags_DefaultOpen))
+	if (ImGui::TreeNodeEx(unicName.str().c_str()))
 	{
 		ImGui::TextColored(componentColor, "Mesh");
 		ImGui::Indent();

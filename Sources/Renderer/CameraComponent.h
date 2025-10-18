@@ -16,12 +16,12 @@ public:
 	mat4f getViewMatrix() const;
 	mat4f getModelMatrix() const;
 	vec4f getForward() const;
-	vec4f getRight() const;
+	vec4f getLeft() const;
 	vec4f getUp() const;
 	vec4f getPosition() const;
 	quatf getOrientation() const;
 	float getVerticalFieldOfView() const;
-	void getFrustrum(vec4f& position, vec4f& forward, vec4f& right, vec4f& up) const;
+	void getFrustrum(vec4f& position, vec4f& forward, vec4f& left, vec4f& up) const;
 
 	void setPosition(const vec4f& position);
 	void setOrientation(const quatf& orientation);

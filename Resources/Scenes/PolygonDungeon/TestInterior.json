@@ -24416,7 +24416,7 @@
             "scale": 1.0,
             "drawableComponent": {
                 "meshName": "PolygonDungeon/Characters/Character_Hero_Knight_Male",
-                "shaderName": "skinnedTextured"
+                "materialName": "dungeon01skinned"
             },
 			"skeletonComponent" : {
 				"skeletonName" : "PolygonDungeonCharacters"
@@ -24424,6 +24424,20 @@
 			"animator" : {
 				"graphName" : "humanoid",
 				"variant" : "male",
+			},
+			"colliderComponent" :{
+				"shapeType" : "Capsule",
+				"center1" : [0, 0.4, 0],
+				"center2" : [0, 1.4, 0],
+				"radius" : 0.4
+			},
+			"rigidbody" :{
+				"type" : "kinematic",
+				"bouncyness" : 0,
+				"friction" : 0.2,
+				"damping" : 0.001,
+				"gravityFactor" : 1,
+				"mass" : 80.0
 			}
         }
 	]

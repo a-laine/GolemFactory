@@ -58,10 +58,12 @@ DefaultTextured
 		layout(location = 1) in vec4 normal;
 		layout(location = 2) in vec4 uv;
 		layout(location = 3) in uvec4 instanceData;
+		layout(location = 5) in vec4 vColor;
 		
 		layout(rgba16ui) readonly uniform uimage2D terrainVirtualTexture;	// image unit 1
 		
 		uniform vec4 constantData[16];
+		//vec3 waveHarmonic[4] = vec3[]( vec3(0.0,0.2, 1.0), vec3(-0.3,0.0, 0.7), vec3(0.9,0.42, 0.5), vec3(-1.0,0.0, 3.0) );
 		
 		// output
 		#ifdef WIRED_MODE
@@ -149,8 +151,14 @@ DefaultTextured
 			mask = (1 << 9) - 1;
 			vec4 modeldata = vec4((instanceData.z & mask) / float(mask));
 			
+			// small movement from wind
+			vec4 p = model * position;
+			float windFactor = clamp(position.y, 0, 1);
+			p.xyz += (windFactor * 0.1 * sin(animatedTime * 1.0 + dot(vec3(0.99 , -0.1 , 0), p.xyz))) * vec3(0.99 , -0.1 , 0);
+			p.xyz += (windFactor * 0.03 * sin(animatedTime * 3.0 + dot(vec3(0.9 , -0.3 , 0.6), p.xyz))) * vec3(0.9 , -0.3 , 0.6);
+			
 			#ifdef WIRED_MODE
-				fragmentPosition_gs = model * position;
+				fragmentPosition_gs = p;
 				gl_Position = projection * view * fragmentPosition_gs;
 				fragmentNormal_gs = normalize(model * normal);
 				fragmentUv_gs = uv;
@@ -158,9 +166,9 @@ DefaultTextured
 			#else
 				#ifdef SHADOW_PASS
 					fragmentUv_gs = uv;
-					gl_Position = model * position;
+					gl_Position = p;
 				#else
-					fragmentPosition = model * position;
+					fragmentPosition = p;
 					gl_Position = projection * view * fragmentPosition;
 					fragmentNormal = normalize(model * normal);
 					fragmentUv = uv;

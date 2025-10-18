@@ -30351,6 +30351,43 @@
 				"meshName" : "PolygonDungeon/Plane",
 				"materialName" : "fogDark",
 			},
-		}
+		},
+        {
+            "name": "CharacterTest",
+            "id": 3540,
+            "position": [5.0, -3.2, 80.5],
+            "rotation": [0.0, 1.0, 0.0, 0.0],
+            "scale": [1.0, 1.0, 1.0],
+            "drawableComponent": {
+                "meshName": "PolygonDungeon/Characters/Character_Hero_Knight_Female",
+                "materialName": "dungeon01skinned"
+            },
+			"skeletonComponent" : {
+				"skeletonName" : "PolygonDungeonCharacters"
+			},
+			"animationComponent" : {
+				"animationName" : "male_move_walk_front_left",
+				"looped" : true,
+				"speed" : 1.0,
+			}
+        },
+        {
+            "name": "CharacterTest2",
+            "id": 3541,
+            "position": [0.0, -3.2, 80.5],
+            "rotation": [0.0, 1.0, 0.0, 0.0],
+            "scale": 1.0,
+            "drawableComponent": {
+                "meshName": "PolygonDungeon/Characters/Character_Hero_Knight_Male",
+                "materialName": "dungeon01skinned"
+            },
+			"skeletonComponent" : {
+				"skeletonName" : "PolygonDungeonCharacters"
+			},
+			"animator" : {
+				"graphName" : "humanoid",
+				"variant" : "male",
+			}
+        }
 	]
 }

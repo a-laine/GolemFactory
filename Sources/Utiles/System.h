@@ -6,6 +6,7 @@
 *	\author Aurelien LAINE
 */
 
+
 #if   defined(_WIN32)
     #define GF_OS_WINDOWS
 	#define NOMINMAX		//!< if not declared on windows plateforms collision occur with STL min and max functions

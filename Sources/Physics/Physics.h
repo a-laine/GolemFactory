@@ -12,6 +12,7 @@
 
 #include <set>
 #include <Physics/Shapes/ShapeCacheContainer.h>
+#include <Utiles/BankArray.h>
 
 class Physics
 {
@@ -22,6 +23,40 @@ class Physics
 		static bool drawCollisions;
 		//
 
+		//	Miscellaneous
+		class CollisionCache
+		{
+			public:
+				class Element
+				{
+					public:
+						Shape* m_shape;
+						Entity* m_entity;
+				};
+
+				AxisAlignedBox m_aabb;
+				BankArray<Triangle> m_triangles;
+				BankArray<Sphere> m_spheres;
+				BankArray<OrientedBox> m_boxes;
+				BankArray<Capsule> m_capsules;
+				//BankArray<Hull> m_hulls;
+
+				std::vector<Element> m_elements;
+
+				void clear();
+				void debugDraw(bool wireframe, vec4f baseColor) const;
+		};
+		class Cluster
+		{
+			public:
+				std::vector<RigidBody*> dynamicEntities;
+				//std::vector<Entity*> staticEntities;
+				std::vector<Constraint> constraints;
+
+				CollisionCache cache;
+		};
+		//
+
 		//  Default
 		Physics();
 		~Physics();
@@ -30,7 +65,15 @@ class Physics
 		//	Public functions
 		void stepSimulation(const float& elapsedTime, SceneManager* scene);
 
-		bool collisionTest(const Shape& _shape, SceneManager* scene, uint64_t flags, uint64_t noFlags, CollisionReport* _report = nullptr);
+		bool raycast(Segment ray, SceneManager* scene, uint64_t flags, uint64_t noFlags, bool skipTriggers = true, RaycastReport* _report = nullptr);
+
+		bool raycastInCache(const CollisionCache& cache, Segment ray, SceneManager* scene, uint64_t flags, uint64_t noFlags, RaycastReport* _report = nullptr);
+		bool collisionInCache(const CollisionCache& cache, Shape* shape, SceneManager* scene, uint64_t flags, uint64_t noFlags, CollisionReport* _report = nullptr);
+
+		void getCollisionCache(SceneManager* scene, CollisionCache& cache, uint64_t flags, uint64_t noFlags);
+
+
+		//bool collisionTest(const Shape& _shape, SceneManager* scene, uint64_t flags, uint64_t noFlags, CollisionReport* _report = nullptr);
 
 		void debugDraw();
 		void drawImGui(World& world);
@@ -45,6 +88,7 @@ class Physics
 
 		void addMovingEntity(Entity* e);
 		void removeMovingEntity(Entity* e);
+		Cluster* getCLuster(int clusterIndex);
 		//
 
 	private:
@@ -62,19 +106,12 @@ class Physics
 
 				std::map<Entity*, std::pair<std::set<Entity*>, bool> > graph;
 		};
-		class Cluster
-		{
-			public:
-				std::vector<RigidBody*> dynamicEntities;
-				std::vector<Entity*> staticEntities;
-				std::vector<Constraint> constraints;
-		};
 		//
 
 		//	Pipeline steps
 		void predictTransform(const float& elapsedTime);
 		void computeBoundingShapesAndDetectPairs(const float& elapsedTime, SceneManager* scene);
-		void computeDynamicClusters();
+		void computeDynamicClusters(SceneManager* scene);
 		void createConstraint(const unsigned int& clusterIndex, const float& deltaTime);
 		void clearTempoaryStruct(SceneManager* scene);
 		//
@@ -99,8 +136,8 @@ class Physics
 			/// Second broad phase and cluster computing
 			std::set<std::pair<Entity*, Entity*> > dynamicPairs;
 			std::map<Entity*, std::vector<Entity*> > dynamicCollisions;
-			std::map<Entity*, std::vector<Entity*> > staticCollisions;
-			std::vector<Cluster> clusters;
+			//std::map<Entity*, std::vector<Entity*> > staticCollisions;
+			BankArray<Cluster> m_clusters;
 			EntityGraph clusterFinder;
 
 		//

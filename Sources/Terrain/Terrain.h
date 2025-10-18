@@ -7,6 +7,7 @@
 #include <vector>
 #include <Resources/Mesh.h>
 #include <Resources/Material.h>
+#include <Physics/Physics.h>
 
 class World;
 class Terrain
@@ -54,7 +55,9 @@ class Terrain
 		void addLodRadius(float _radiusIncrement);
 		void update(vec4f _cameraPosition);
 
-		float getHeight(const vec4f& position, vec4f* normal = nullptr);
+		//float getHeight(const vec4f& position, vec4f* normal = nullptr);
+
+		bool getCollisionInCache(Physics::CollisionCache& cache);
 		//
 
 		//
@@ -66,6 +69,7 @@ class Terrain
 		const std::vector<float>& getRadius() const;
 		const std::vector<AreaDetails>& getAreaDetails();
 		Material* getDetailMaterial() const;
+		Material* getWaterMaterial() const;
 
 		void drawImGui(World& world);
 		//

@@ -21,6 +21,7 @@ class Animator : public Component
 		virtual ~Animator() override;
 
 		bool load(Variant& jsonObject, const std::string& objectName) override;
+		bool load(const std::string& graphName, const std::string& variantName);
 		void save(Variant& jsonObject) override;
 		void onAddToEntity(Entity* entity) override;
 		void onDrawImGui() override;

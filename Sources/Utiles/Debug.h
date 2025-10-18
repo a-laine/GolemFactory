@@ -35,6 +35,7 @@ class Debug : public Singleton<Debug>
 
 		static void drawPoint(const vec4f& p);
 		static void drawCube(const mat4f& transform, const vec4f& size) { Debug::mesh(This->cubeMesh, mat4f::scale(transform, size), This->defaultShader); };
+		static void drawCube(const mat4f& transform, const vec4f& min, const vec4f& max) { Debug::mesh(This->cubeMesh, mat4f::scale(mat4f::translate(mat4f::identity, 0.5f * (max + min)) * transform, 0.5f * (max - min)), This->defaultShader); };
 		static void drawSphere(const vec4f& center, const float& radius) { Debug::mesh(This->sphereMesh, mat4f::scale(mat4f::translate(mat4f::identity, center), vec4f(radius)), This->defaultShader); };
 		static void drawLine(const vec4f& point1, const vec4f& point2);
 		static void drawCapsule(const vec4f& point1, const vec4f& point2, const float& radius) { Debug::capsule(point1, point2, radius, This->defaultShader); };
@@ -43,20 +44,15 @@ class Debug : public Singleton<Debug>
 		static void drawMultiplePrimitive(const Vertex* vertices, const unsigned int& verticesCount, const mat4f& model, unsigned int drawMode);
 
 		static void drawWiredCube(const mat4f& transform, const vec4f& size) { Debug::mesh(This->cubeMesh, mat4f::scale(transform, size), This->wiredShader); };
-		static void drawWiredCube(const mat4f& transform, const vec4f& min, const vec4f& max)
-		{
-			Debug::mesh(This->cubeMesh, mat4f::scale(mat4f::translate(mat4f::identity, 0.5f * (max + min)) * transform, 0.5f * (max - min)), This->wiredShader);
-		};
+		static void drawWiredCube(const mat4f& transform, const vec4f& min, const vec4f& max){ Debug::mesh(This->cubeMesh, mat4f::scale(mat4f::translate(mat4f::identity, 0.5f * (max + min)) * transform, 0.5f * (max - min)), This->wiredShader);};
 		static void drawWiredSphere(const vec4f& center, const float& radius) { Debug::mesh(This->sphereMesh, mat4f::scale(mat4f::translate(mat4f::identity, center), vec4f(radius)), This->wiredShader); };
 		static void drawWiredCapsule(const vec4f& point1, const vec4f& point2, const float& radius) { Debug::capsule(point1, point2, radius, This->wiredShader); };
 		static void drawWiredMesh(const Mesh* const mesh, const mat4f& transform) { Debug::mesh(mesh, transform, This->wiredShader); };
 
 		static void drawLineCube(const mat4f& transform, const vec4f& size);
-		static void drawLineCube(const mat4f& transform, const vec4f& min, const vec4f& max)
-		{
-			Debug::drawLineCube(transform * mat4f::translate(mat4f::identity, 0.5f * (max + min)), 0.5f * (max - min));
-		}
+		static void drawLineCube(const mat4f& transform, const vec4f& min, const vec4f& max){ Debug::drawLineCube(transform * mat4f::translate(mat4f::identity, 0.5f * (max + min)), 0.5f * (max - min));}
 		static void drawLineCapsule(const vec4f& point1, const vec4f& point2, const float& radius);
+		static void drawLineSphere(const vec4f& center, const float& radius, vec4f upaxis = vec4f(0, 1, 0, 0));
 
 		static void reinterpreteTexture(const Texture* in, Texture* out, float layer = 0.f);
 		//

@@ -24,6 +24,7 @@ class Collider : public Component
 
 		//	Attributes
 		Shape* m_shape;
+		bool m_isTrigger = false;
 		//
 
 	protected:

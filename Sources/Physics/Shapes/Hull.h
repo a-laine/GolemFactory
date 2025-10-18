@@ -22,7 +22,7 @@ class Hull : public Shape
 		virtual Shape& operator=(const Shape& s) override;
 		virtual Shape* duplicate() const override;
 
-		//virtual glm::mat3 computeInertiaMatrix() const override;
+		virtual float computeVolume() const override;
 
 		virtual void transform(const vec4f& position, const vec4f& scale, const quatf& orientation) override;
 

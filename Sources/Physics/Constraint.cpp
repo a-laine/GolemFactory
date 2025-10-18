@@ -42,7 +42,7 @@ void Constraint::createFromReport(CollisionReport& report, const int& pointIndex
 
 	axisCount = 3;
 
-	axis[0] = -report.normal.getNormal();
+	axis[0] = report.normal.getNormal();
 	axis[1] = (std::abs(axis[0].x) > std::abs(axis[0].z) ? vec4f(-axis[0].y, axis[0].x, 0, 0) : vec4f(0, -axis[0].z, axis[0].y, 0)).getNormal();
 	axis[2] = vec4f::cross(axis[0], axis[1]);
 
@@ -50,12 +50,12 @@ void Constraint::createFromReport(CollisionReport& report, const int& pointIndex
 	if (body2)
 		localPoint2 = worldPoint - body2->getPosition();
 
-	float bouncyness = body2 ? 0.5f * (body1->bouncyness + body2->bouncyness) : body1->bouncyness;
+	float bouncyness = body2 ? 0.5f * (body1->m_bouncyness + body2->m_bouncyness) : body1->m_bouncyness;
 	float closingVelocity = vec4f::dot(computeClosingVelocity(), axis[0]);
-	targetLinearVelocity = vec4f(0.75f * depth / deltaTime - bouncyness * closingVelocity, 0.f, 0.f, 0.f);
+	targetLinearVelocity = vec4f(depth / deltaTime - bouncyness * closingVelocity, 0.f, 0.f, 0.f);
 
 	frictionLimit = true;
-	friction = body2 ? std::min(body1->friction, body2->friction) : body1->friction;
+	friction = body2 ? std::min(body1->m_friction, body2->m_friction) : body1->m_friction;
 	accumulationLinearMin = vec4f(0.f, -100000.f, -100000.f, 0.f);
 	accumulationLinearMax = vec4f(100000.f, 100000.f, 100000.f, 0.f);
 

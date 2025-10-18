@@ -151,11 +151,11 @@ Mesh* QuickHull::getConvexHull(Mesh* m)
 
 	//	prepare mesh from hull data
 	Mesh* mesh = new Mesh("hull_" + m->name);
+	std::vector<vec4f> dummy;
 	if (degenerated)
 	{
 		std::cout << "  degenerated mesh !" << std::endl;
-		std::vector<vec4f> dummy;
-		mesh->initialize(dummy, dummy, dummy, std::vector<unsigned int>(), std::vector<vec4i>(), dummy);
+		mesh->initialize(dummy, dummy, dummy, dummy, std::vector<unsigned int>(), std::vector<vec4i>(), dummy);
 	}
 	else
 	{
@@ -181,7 +181,7 @@ Mesh* QuickHull::getConvexHull(Mesh* m)
 			normales.push_back(normales.back());
 		}
 		ToolBox::optimizeStaticMesh(vertices, normales, colors, faces);
-		mesh->initialize(vertices, normales, colors, faces, std::vector<vec4i>(), std::vector<vec4f>());
+		mesh->initialize(vertices, normales, dummy, colors, faces, std::vector<vec4i>(), dummy);
 	}
 	return mesh;
 }

@@ -1,20 +1,11 @@
 {
     "sceneEntities": [
         {
-            "name": "Main Camera",
-            "id": 0,
-            "position": [
-                6.927793025970459,
-                -0.36265504360198977,
-                24.410024642944337
-            ],
-            "rotation": [
-                -0.05051761865615845,
-                0.16897276043891908,
-                -0.007021650671958923,
-                -0.9843001961708069
-            ],
-            "scale": 1.0,
+			"name" : "Main Camera",
+			"id" : 0,
+			"position" : [6.927793, -0.362655, 24.41002],
+			"rotation" : [-0.05051762, 0.1689728, -0.007021651, -0.9843002],
+			"scale" : [1, 1, 1],
         },
         {
             "name": "Lighting",
@@ -77389,7 +77380,7 @@
             ],
             "scale": 2.2984964847564699,
             "prefabName": "",
-            "drawableComponent": {
+            "drawableComponent2": {
                 "meshName": "PolygonDungeon/Plane",
                 "materialName": "fog"
             }
@@ -77410,7 +77401,7 @@
             ],
             "scale": 3.5,
             "prefabName": "",
-            "drawableComponent": {
+            "drawableComponent2": {
                 "meshName": "PolygonDungeon/Plane",
                 "materialName": "fog"
             }
@@ -77431,7 +77422,7 @@
             ],
             "scale": 3.5,
             "prefabName": "",
-            "drawableComponent": {
+            "drawableComponent2": {
                 "meshName": "PolygonDungeon/Plane",
                 "materialName": "fog"
             }
@@ -77452,7 +77443,7 @@
             ],
             "scale": 4.994878768920898,
             "prefabName": "",
-            "drawableComponent": {
+            "drawableComponent2": {
                 "meshName": "PolygonDungeon/Plane",
                 "materialName" : "fog"
             }
@@ -77473,7 +77464,7 @@
             ],
             "scale": 7.113111972808838,
             "prefabName": "",
-            "drawableComponent": {
+            "drawableComponent2": {
                 "meshName": "PolygonDungeon/Plane",
                 "materialName" : "fog"
             }
@@ -77494,7 +77485,7 @@
             ],
             "scale": 0.5,
             "prefabName": "",
-            "drawableComponent": {
+            "drawableComponent2": {
                 "meshName": "PolygonDungeon/Plane",
                 "materialName" : "fog"
             }
@@ -77514,7 +77505,7 @@
                 0.0
             ],
             "scale": 1.0,
-            "drawableComponent": {
+            "drawableComponent2": {
                 "meshName": "PolygonDungeon/Characters/Character_Hero_Knight_Female",
                 "shaderName": "skinnedTextured"
             },
@@ -77542,7 +77533,7 @@
                 0.0
             ],
             "scale": 1.0,
-            "drawableComponent": {
+            "drawableComponent2": {
                 "meshName": "PolygonDungeon/Characters/Character_Hero_Knight_Male",
                 "shaderName": "skinnedTextured"
             },

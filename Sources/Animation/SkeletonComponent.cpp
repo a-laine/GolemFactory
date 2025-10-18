@@ -61,6 +61,17 @@ bool SkeletonComponent::load(Variant& jsonObject, const std::string& objectName)
 	return false;
 }
 
+bool SkeletonComponent::load(const std::string& skeletonName)
+{
+	m_skeleton = ResourceManager::getInstance()->getResource<Skeleton>(skeletonName);
+	if (m_skeleton)
+	{
+		pose = m_skeleton->getBindPose();
+		return true;
+	}
+	return false;
+}
+
 void SkeletonComponent::save(Variant& jsonObject)
 {
 
@@ -144,6 +155,12 @@ vec4f SkeletonComponent::getBonePosition(const std::string& jointName)
 
 const AxisAlignedBox& SkeletonComponent::getBoundingBox() const
 {
+	if (skinnedBoundingRadius < 0.f)
+	{
+		DrawableComponent* drawable = getParentEntity()->getComponent<DrawableComponent>();
+		if (drawable)
+			return drawable->getMesh()->getBoundingBox();
+	}
 	return boundingBox;
 }
 void SkeletonComponent::recomputeBoundingBox()
@@ -235,7 +252,7 @@ void SkeletonComponent::onDrawImGui()
 	std::ostringstream unicName;
 	unicName << "Skeleton component##" << (uintptr_t)this;
 
-	if (ImGui::TreeNodeEx(unicName.str().c_str(), ImGuiTreeNodeFlags_DefaultOpen))
+	if (ImGui::TreeNodeEx(unicName.str().c_str()))
 	{
 		ImGui::TextColored(componentColor, "Skeleton");
 		ImGui::Indent();

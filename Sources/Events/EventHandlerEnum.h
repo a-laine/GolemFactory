@@ -54,7 +54,7 @@ class EventHandlerEnum : public EventHandlerImpl, public Singleton<EventHandlerE
 		*	\param eventName : The event to check. In user defined enumeration.
 		*	\return true if event is activated, false otherwise
 		*/
-        bool isActivated(int eventName);
+        bool isActivated(int eventName, Event::EventType flag = Event::EventType::ACTIVATED_FLAG);
 
 		/*!
 		*	\brief Fill a container with all event published since last frame.

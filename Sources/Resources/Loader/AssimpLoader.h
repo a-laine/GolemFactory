@@ -67,6 +67,7 @@ class AssimpLoader : public IResourceLoader
 
         std::vector<vec4f> vertices;
         std::vector<vec4f> normales;
+        std::vector<vec4f> colors;
         std::vector<vec4f> uvs;
         std::vector<vec4i> bones;
         std::vector<vec4f> weights;

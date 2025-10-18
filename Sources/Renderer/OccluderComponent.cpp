@@ -109,7 +109,7 @@ void OccluderComponent::onDrawImGui()
 	std::ostringstream unicName;
 	unicName << "Occluder component##" << (uintptr_t)this;
 
-	if (ImGui::TreeNodeEx(unicName.str().c_str(), ImGuiTreeNodeFlags_DefaultOpen))
+	if (ImGui::TreeNodeEx(unicName.str().c_str()))
 	{
 		ImGui::TextColored(componentColor, "Mesh");
 		ImGui::Indent();

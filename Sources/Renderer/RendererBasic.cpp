@@ -197,7 +197,11 @@ void Renderer::initializeLightClusterBuffer(int width, int height, int depth)
 	uint16_t config = (uint16_t)TC::TEXTURE_3D | (uint16_t)TC::MIN_NEAREST | (uint16_t)TC::MAG_NEAREST | (uint16_t)TC::WRAP_CLAMP;
 	m_lightClusterTexture.initialize("lightClusterTexture", imageSize, buffer, config, GL_RGBA32UI, GL_RGBA_INTEGER, GL_UNSIGNED_INT);
 	ResourceManager::getInstance()->addResource(&m_lightClusterTexture);
+
+#ifdef USE_IMGUI
 	m_lightClusterTexture.isEnginePrivate = true;
+#endif
+
 	delete[] buffer;
 
 	m_sceneLights.m_near = 2.f;
@@ -205,7 +209,7 @@ void Renderer::initializeLightClusterBuffer(int width, int height, int depth)
 	float logRatio = imageSize.z / log(m_sceneLights.m_far / m_sceneLights.m_near);
 	m_sceneLights.m_clusterDepthScale = logRatio;
 	m_sceneLights.m_clusterDepthBias = logRatio * log(m_sceneLights.m_near);
-	m_sceneLights.m_shadingConfiguration = (1 << eUseLightClustering) |(1 << eUseShadow);
+	m_sceneLights.m_shadingConfiguration = (1 << eUseLightClustering) | (1 << eUseShadow);
 }
 void Renderer::initializeOcclusionBuffers(int width, int height)
 {
@@ -257,7 +261,7 @@ void Renderer::initGlobalUniformBuffers()
 	glBindBufferRange(GL_UNIFORM_BUFFER, 0, m_globalMatricesID, 0, sizeof(m_globalMatrices));
 
 	// environment lighting settings
-	m_environementLighting.m_directionalLightDirection = vec4f(1, -0.46f, -0.85f, 0);
+	m_environementLighting.m_directionalLightDirection = vec4f(1, -6.46f, -0.85f, 0);
 	m_environementLighting.m_directionalLightColor = vec4f(1.f);// vec4f(0.15, 0.15, 0.15, 1.0);
 	m_environementLighting.m_ambientColor = vec3f(0.34f);// 0.05, 0.05, 0.05, 1.0);
 	m_environementLighting.m_fogDensity = 0.001f;
@@ -332,7 +336,10 @@ void Renderer::initializeShadows(int cascadesWidth, int cascadesHeight, int omni
 	uint16_t config = (uint16_t)TC::TEXTURE_ARRAY | (uint16_t)TC::WRAP_CLAMP;
 	shadowCascadeTexture.initialize("shadowCascadeTexture", vec3i(cascadesWidth, cascadesHeight, 4),
 		nullptr, config, GL_DEPTH_COMPONENT32F, GL_DEPTH_COMPONENT, GL_FLOAT);
+
+#ifdef USE_IMGUI
 	shadowCascadeTexture.isEnginePrivate = true;
+#endif
 
 	glBindTexture(GL_TEXTURE_2D_ARRAY, shadowCascadeTexture.getTextureId());
 	glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE); CheckError("cascade : GL_TEXTURE_COMPARE_MODE");
@@ -354,7 +361,10 @@ void Renderer::initializeShadows(int cascadesWidth, int cascadesHeight, int omni
 	config = (uint16_t)TC::CUBEMAP_ARRAY | (uint16_t)TC::WRAP_CLAMP;
 	shadowOmniTextures.initialize("shadowOmniTextures", vec3i(omniWidth, omniHeight, MAX_OMNILIGHT_SHADOW_COUNT),
 		nullptr, config, GL_DEPTH_COMPONENT32F, GL_DEPTH_COMPONENT, GL_FLOAT);
+
+#ifdef USE_IMGUI
 	shadowOmniTextures.isEnginePrivate = true;
+#endif
 
 	ResourceManager::getInstance()->addResource(&shadowOmniTextures);
 
@@ -531,16 +541,40 @@ void Renderer::initializeTerrainMaterialCollection(const std::string& textureNam
 }
 void Renderer::initializeSkybox(const std::string& textureName)
 {
+	std::string header = "initializeSkybox : ";
+	const auto CheckError = [header](const char* label)
+		{
+			GLenum error = glGetError();
+			if (!label)
+				return false;
+			switch (error)
+			{
+				case GL_INVALID_ENUM: std::cout << header << label << " : GL_INVALID_ENUM" << std::endl; break;
+				case GL_INVALID_VALUE: std::cout << header << label << " : GL_INVALID_VALUE" << std::endl; break;
+				case GL_INVALID_OPERATION: std::cout << header << label << " : GL_INVALID_OPERATION" << std::endl; break;
+				case GL_INVALID_FRAMEBUFFER_OPERATION: std::cout << header << label << " : GL_INVALID_FRAMEBUFFER_OPERATION" << std::endl; break;
+				case GL_OUT_OF_MEMORY: std::cout << header << label << " : GL_OUT_OF_MEMORY" << std::endl; break;
+				case GL_STACK_UNDERFLOW: std::cout << header << label << " : GL_STACK_UNDERFLOW" << std::endl; break;
+				case GL_STACK_OVERFLOW: std::cout << header << label << " : GL_STACK_OVERFLOW" << std::endl; break;
+				default: break;
+			}
+			return error != GL_NO_ERROR;
+		};
+
 	if (m_skyboxTexture)
 		ResourceManager::getInstance()->release(m_skyboxTexture);
 	m_skyboxTexture = ResourceManager::getInstance()->getResource<Texture>(textureName);
+	CheckError("texture");
 
 	if (!m_skyboxMesh)
 		m_skyboxMesh = ResourceManager::getInstance()->getResource<Mesh>("Shapes/box");
+	CheckError("mesh");
 	if (!m_skyboxMaterial)
 		m_skyboxMaterial = ResourceManager::getInstance()->getResource<Material>("skybox");
+	CheckError("material");
 	if (!m_atmosphericScattering)
 		m_atmosphericScattering = ResourceManager::getInstance()->getResource<Shader>("atmosphericScattering");
+	CheckError("shader");
 }
 void Renderer::setVirtualTexture(TerrainVirtualTexture* virtualTexture)
 {
@@ -557,8 +591,11 @@ void Renderer::initializeOverviewRenderer(int width, int height)
 		nullptr, config, GL_RGBA8, GL_RGBA, GL_UNSIGNED_BYTE);
 	ResourceManager::getInstance()->addResource(&overviewDepth);
 	ResourceManager::getInstance()->addResource(&overviewTexture);
+
+#ifdef USE_IMGUI
 	overviewDepth.isEnginePrivate = true;
 	overviewTexture.isEnginePrivate = true;
+#endif
 
 	glGenFramebuffers(1, &overviewFBO);
 	glBindFramebuffer(GL_FRAMEBUFFER, overviewFBO);
@@ -595,7 +632,7 @@ void Renderer::updateShadowCascadeMatrices(CameraComponent* renderCam, float vie
 	{
 		pos = camera->getPosition();
 		vec4f dir = camera->getForward();
-		vec4f left = -camera->getRight();
+		vec4f left = camera->getLeft();
 		vec4f up = camera->getUp();
 		float a1 = 0.5f * camera->getVerticalFieldOfView();
 		float ca1 = cos(a1);
@@ -786,7 +823,7 @@ void Renderer::render(CameraComponent* renderCam)
 			glDisable(GL_BLEND);
 		blendingEnabled = state;
 	};
-	const auto SetCulling = [&faceCullingEnabled, &clockwise](bool state, bool cw)
+	const auto SetCulling = [&faceCullingEnabled, &clockwise](bool state, bool ccw)
 	{
 		if (!faceCullingEnabled && state)
 			glEnable(GL_CULL_FACE);
@@ -796,11 +833,11 @@ void Renderer::render(CameraComponent* renderCam)
 
 		if (state)
 		{
-			if (cw && !clockwise)
-				glFrontFace(GL_CW);
-			else if (!cw && clockwise)
+			if (ccw && !clockwise)
 				glFrontFace(GL_CCW);
-			clockwise = cw;
+			else if (!ccw && clockwise)
+				glFrontFace(GL_CW);
+			clockwise = ccw;
 		}
 	};
 

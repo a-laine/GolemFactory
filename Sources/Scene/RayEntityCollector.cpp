@@ -16,8 +16,13 @@ RayEntityCollector::RayEntityCollector(const vec4f& pos, const vec4f& dir, float
 bool RayEntityCollector::operator() (Entity* entity)
 {
 	DrawableComponent* drawableComp = entity->getComponent<DrawableComponent>();
-	if (!drawableComp || !drawableComp->isValid() || !drawableComp->visible()) 
+	if (!drawableComp || !drawableComp->isValid()) 
 		return false;
+
+#ifdef USE_IMGUI
+	if (!drawableComp->visible())
+		return false;
+#endif
 
 	const SkeletonComponent* skeletonComp = entity->getComponent<SkeletonComponent>();
 	bool animatable = drawableComp->hasSkeleton() && skeletonComp && skeletonComp->isValid();
