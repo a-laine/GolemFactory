@@ -1,6 +1,7 @@
 #include "Animator.h"
 
 #include <EntityComponent/Entity.hpp>
+#include <EntityComponent/ComponentUpdater.h>
 #include <Animation/AnimationComponent.h>
 #include <Animation/SkeletonComponent.h>
 #include <Resources/Skeleton.h>
@@ -8,7 +9,6 @@
 #include <Scene/SceneManager.h>
 #include <World/World.h>
 #include <Utiles/ProfilerConfig.h>
-#include <EntityComponent/ComponentUpdater.h>
 
 #ifdef USE_IMGUI
 	#include <imgui_internal.h>
