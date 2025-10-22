@@ -154,7 +154,7 @@
       <AdditionalLibraryDirectories>C:\Users\Thibault\Documents\Programmation\1-GLFW\lib 64;C:\Users\Thibault\Documents\Programmation\2-GLEW\lib\Release\x64;C:\Users\Thibault\Documents\Programmation\4-ASSIMP\lib 64\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Lib>
-      <AdditionalLibraryDirectories>C:\Users\Thibault\Documents\Programmation\1-GLFW\lib 64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\Externals\1-GLFW\lib 64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -179,7 +179,7 @@
       <AdditionalLibraryDirectories>C:\Users\Thibault\Documents\Programmation\1-GLFW\lib 64;C:\Users\Thibault\Documents\Programmation\2-GLEW\lib\Release\x64;C:\Users\Thibault\Documents\Programmation\4-ASSIMP\lib 64\Release;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Lib>
-      <AdditionalLibraryDirectories>C:\Users\Thibault\Documents\Programmation\1-GLFW\lib 64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)..\Externals\1-GLFW\lib 64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>

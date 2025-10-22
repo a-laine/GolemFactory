@@ -56,7 +56,7 @@ atmosphericScattering
 		{
 			return SphereIntersection(rayStart, rayDir, PLANET_CENTER, PLANET_RADIUS + ATMOSPHERE_HEIGHT);
 		}
-		float PhaseMie (float costh, float g = 0.85)
+		float PhaseMie (float costh, float g)
 		{
 			g = min(g, 0.9381);
 			float k = 1.55 * g - 0.55 * g * g * g;
@@ -108,7 +108,7 @@ atmosphericScattering
 
 			float  costh    = dot(rayDir, lightDir);
 			float  phaseR   = PhaseRayleigh(costh);
-			float  phaseM   = PhaseMie(costh);
+			float  phaseM   = PhaseMie(costh, 0.85);
 			int sampleCount  = 64;
 			vec3 opticalDepth = vec3(0);
 			vec3 rayleigh     = vec3(0);

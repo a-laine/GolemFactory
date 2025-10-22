@@ -4,7 +4,6 @@
 #include <Utiles/Assert.hpp>
 
 #ifdef USE_IMGUI
-    #define IMGUI_DEFINE_MATH_OPERATORS
     #include <imgui_internal.h>
 #endif
 

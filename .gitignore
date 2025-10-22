@@ -38,10 +38,9 @@ CMakeFiles/*
 #others
 bin/
 tmp/
-Debug/
-Release/
 x64/
+Debug/
 v16/
 
 #heavy binary files
-Terrain/
+Resources/Terrain/
