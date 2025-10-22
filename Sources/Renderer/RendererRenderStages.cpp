@@ -49,6 +49,8 @@ void Renderer::CollectEntitiesBindLights()
 
 #ifdef USE_IMGUI
 			if (ok)
+				ok = (object->getFlags() & m_drawExlusionFlags) == 0;
+			if (ok)
 				ok &= comp->visible();
 #endif
 
@@ -80,6 +82,8 @@ void Renderer::CollectEntitiesBindLights()
 			bool ok = comp;
 
 #ifdef USE_IMGUI
+			if (ok)
+				ok = (object->getFlags() & m_drawExlusionFlags) == 0;
 			if (ok && m_lightFrustrumCulling)
 				ok = sceneQuery.TestSphere(object->getWorldPosition(), comp->getRange());
 #else
@@ -448,7 +452,7 @@ void Renderer::OcclusionCulling()
 	}
 
 #ifdef USE_IMGUI
-	occlusionTexture.update(m_occlusionDepth, GL_RED, GL_FLOAT);
+	occlusionTexture.update(m_occlusionDepth);
 #endif
 
 	for (auto& it : renderQueue)
@@ -572,10 +576,7 @@ void Renderer::CreateBatches(std::vector<DrawElement>& _queue, int _shadowMode)
 
 void Renderer::ShadowCasting()
 {
-	glDisable(GL_BLEND);
-	glDisable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
-	glFrontFace(GL_CCW);// peter panning
+	resetDrawState(GL_CCW);// peter panning
 	bool ccw = true;
 	auto PeterPanningSwitch = [&ccw](bool _ccw)
 	{
@@ -644,9 +645,7 @@ void Renderer::ShadowCasting()
 
 	// omni shadows
 	shadowCascadeMax = -1;
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
-	glFrontFace(GL_CCW);// peter panning
+	resetDrawState(GL_CCW);// peter panning
 	ccw = true;
 	if (!shadowOmniCaster.empty())
 	{
@@ -738,6 +737,5 @@ void Renderer::ShadowCasting()
 		glBufferSubData(GL_UNIFORM_BUFFER, 0, 8, &m_sceneLights);
 	}
 
-	glFrontFace(GL_CW);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }

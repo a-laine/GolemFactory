@@ -71,11 +71,24 @@ void Application::exitProgram(int returnCode)
 	exit(returnCode);
 }
 
-RenderContext* Application::createWindow(const char* title, int width, int height)
+RenderContext* Application::createWindow(const char* title, GLFWmonitor* monitor, int width, int height)
 {
+	if (monitor)
+	{
+		const GLFWvidmode* videoMode = glfwGetVideoMode(monitor);
+		width = (width == 0) ? videoMode->width : width;
+		height = (height == 0) ? videoMode->height : height;
+	}
+
 	glfwWindowHint(GLFW_VISIBLE, GL_TRUE);
-	GLFWwindow* window = glfwCreateWindow(width, height, title, nullptr, m_mainWindow);
+	GLFWwindow* window = nullptr;
+	if (width == 0 && height == 0 && monitor) // full screen no title bar
+		window = glfwCreateWindow(width, height, title, monitor, nullptr);
+	else
+		window = glfwCreateWindow(width, height, title, nullptr, m_mainWindow);
 	RenderContext* context = nullptr;
+	//GLFWwindow* window = glfwCreateWindow(width, height, title, nullptr, m_mainWindow);
+	//RenderContext* context = nullptr;
 
 	if (window != nullptr)
 	{
@@ -115,12 +128,14 @@ RenderContext* Application::createWindow(const char* title, int width, int heigh
 
 RenderContext* Application::createFullscreenWindow(const char* title, int width, int height)
 {
-	return createFullscreenWindow(title, glfwGetPrimaryMonitor(), width, height);
+	return createWindow(title, glfwGetPrimaryMonitor(), width, height);
+	//return createFullscreenWindow(title, glfwGetPrimaryMonitor(), width, height);
 }
 
 RenderContext* Application::createFullscreenWindow(const char* title, GLFWmonitor* monitor, int width, int height)
 {
-	const GLFWvidmode* videoMode = glfwGetVideoMode(monitor);
+	return createWindow(title, monitor, width, height);
+	/*const GLFWvidmode* videoMode = glfwGetVideoMode(monitor);
 	width = (width == 0) ? videoMode->width : width;
 	height = (height == 0) ? videoMode->height : height;
 
@@ -164,7 +179,7 @@ RenderContext* Application::createFullscreenWindow(const char* title, GLFWmonito
 		m_contexts.push_back(context);
 	}
 
-	return context;
+	return context;*/
 }
 
 RenderContext* Application::createOffscreenContext()

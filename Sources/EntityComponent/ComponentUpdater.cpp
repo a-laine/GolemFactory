@@ -1,13 +1,41 @@
 #include "ComponentUpdater.h"
 
+#include <Utiles/ProfilerConfig.h>
+
 ComponentUpdater::ComponentUpdater()
 {}
 
 ComponentUpdater::~ComponentUpdater()
 {}
 
-void ComponentUpdater::update(float _dt)
+void ComponentUpdater::init()
 {
+#define BUCKET_MACRO(name,multithreaded)\
+	m_passInfos.push_back({"e"#name, ##multithreaded});\
+
+	#include "SchedulerBuckets.h"
+#undef BUCKET_MACRO
+}
+
+
+void ComponentUpdater::updateFromGameState(Component::UpdatePass _pass, float _dt)
+{
+	SCOPED_CPU_MARKER(m_passInfos[(int)_pass].m_name.c_str());
+
+	// add stuff
+	for (const auto& element : addList)
+	{
+		auto it = componentUpdateList.find(element.m_pass);
+		if (it != componentUpdateList.end())
+			it->second.push_back(element);
+		else
+		{
+			auto& list = componentUpdateList[element.m_pass];
+			list.push_back(element);
+		}
+	}
+	addList.clear();
+
 	// remove stuff
 	for (const auto& element : removeList)
 	{
@@ -16,7 +44,7 @@ void ComponentUpdater::update(float _dt)
 			continue;
 		int id = -1;
 		for (int i = 0; i < it->second.size(); i++)
-			if (it->second[i].component == element.m_component)
+			if (it->second[i].m_component == element.m_component)
 			{
 				id = i;
 				break;
@@ -26,36 +54,24 @@ void ComponentUpdater::update(float _dt)
 	}
 	removeList.clear();
 
-	// add stuff
-	for (const auto& element : addList)
+	auto list = componentUpdateList.find(_pass);
+	if (list != componentUpdateList.end())
 	{
-		auto it = componentUpdateList.find(element.m_pass);
-		if (it != componentUpdateList.end())
-			it->second.push_back({ element.m_callback, element.m_component });
-		else
+		for (auto& element : list->second)
 		{
-			auto& list = componentUpdateList[element.m_pass];
-			list.push_back({ element.m_callback, element.m_component });
+			element.m_callback(_pass, _dt);
 		}
 	}
-	addList.clear();
-
-	// updates
-	for (auto& it : componentUpdateList)
-	{
-		for (int i = 0; i < it.second.size(); i++)
-			(*it.second[i].updateFunction)(it.second[i].component, _dt);
-	}
 }
 
-void ComponentUpdater::add(Component::UpdatePass _pass, Component::UpdateCallback _callback, void* _component)
+void ComponentUpdater::add(Component::UpdatePass _pass, const Component::UpdateCallback& _callback, Component* _component, Entity* _entity)
 {
-	addList.push_back({ _pass, _callback, _component });
+	addList.push_back({ _pass, _callback, _component, _entity });
 }
 
-void ComponentUpdater::remove(Component::UpdatePass _pass, void* _component)
+void ComponentUpdater::remove(Component::UpdatePass _pass, Component* _component)
 {
-	removeList.push_back({ _pass, nullptr, _component });
+	removeList.push_back({ _pass, 0, _component, nullptr });
 }
 
 

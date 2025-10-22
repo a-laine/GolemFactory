@@ -18,7 +18,7 @@ class CharacterController : public Component
 
 		void setCamera(CameraComponent* _camera);
 
-		void update(float _dt);
+		void update(Component::UpdatePass updatePass, float _dt) override;
 
 		void onAddToEntity(Entity* entity) override;
 		void onDrawImGui() override;

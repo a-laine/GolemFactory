@@ -27,7 +27,7 @@ class Animator : public Component
 		void onDrawImGui() override;
 
 		bool isValid() const;
-		void update(float elapsedTime);
+		void update(Component::UpdatePass updatePass, float elapsedTime) override;
 
 		bool setParameter(const std::string& _name, float _value);
 		bool setParameter(const std::string& _name, bool _value);
@@ -42,15 +42,15 @@ class Animator : public Component
 			AG::BlendTree::BlendTreeRuntime& _runtime, bool isSubgraph);
 		void drawFullGraphWindow();
 
-		SkeletonComponent* m_skeletonComponent;
-		Skeleton* m_skeleton;
-		AnimationGraph* m_graph;
+		SkeletonComponent* m_skeletonComponent = nullptr;
+		Skeleton* m_skeleton = nullptr;
+		AnimationGraph* m_graph = nullptr;
 		std::string m_variantName;
-		GraphData* m_data;
+		GraphData* m_data = nullptr;
 		std::vector<AnimationGraph::LayerRuntime> m_runtime;
 		std::vector<AnimationParameter> m_graphParameters;
-		bool m_immutableData;
 		std::vector<BoneCurvesState> m_evaluation;
+		bool m_immutableData = true;
 
 #ifdef USE_IMGUI
 		bool m_fullGraphWindow = false;

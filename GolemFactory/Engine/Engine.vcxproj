@@ -319,6 +319,7 @@
     <ClInclude Include="..\..\Sources\EntityComponent\Entity.hpp" />
     <ClInclude Include="..\..\Sources\EntityComponent\EntityBase.hpp" />
     <ClInclude Include="..\..\Sources\EntityComponent\EntityFlags.h" />
+    <ClInclude Include="..\..\Sources\EntityComponent\SchedulerBuckets.h" />
     <ClInclude Include="..\..\Sources\Events\Event.h" />
     <ClInclude Include="..\..\Sources\Events\EventEnum.h" />
     <ClInclude Include="..\..\Sources\Events\EventHandler.h" />
@@ -333,6 +334,7 @@
     <ClInclude Include="..\..\Sources\HUD\Loader\WidgetSaver.h" />
     <ClInclude Include="..\..\Sources\HUD\WidgetBoard.h" />
     <ClInclude Include="..\..\Sources\HUD\WidgetConsole.h" />
+    <ClInclude Include="..\..\Sources\HUD\WidgetGLDebugger.h" />
     <ClInclude Include="..\..\Sources\HUD\WidgetImage.h" />
     <ClInclude Include="..\..\Sources\HUD\WidgetLabel.h" />
     <ClInclude Include="..\..\Sources\HUD\WidgetManager.h" />

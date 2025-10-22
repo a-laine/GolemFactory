@@ -160,6 +160,7 @@ class Renderer : public Singleton<Renderer>
 		void loadInstanceDatas(Shader* _shader, vec4f* _instanceDatas, unsigned short _dataSize, unsigned short _instanceCount = 1);
 		void drawObject(Entity* object, Shader* forceShader = nullptr);
 		void loadVAO(const GLuint& vao);
+		void resetDrawState(uint32_t frontFace = GL_CW);
 		// 
 		
 		//	Debug
@@ -276,7 +277,7 @@ class Renderer : public Singleton<Renderer>
 				GLuint m_globalMatricesID;
 				GlobalMatrices m_globalMatrices;
 				GLint m_maxUniformSize;
-				bool m_enableInstancing = false;
+				bool m_enableInstancing = true;
 				bool m_hasShadowCaster = false;
 		#pragma endregion
 
@@ -383,7 +384,8 @@ class Renderer : public Singleton<Renderer>
 					float animatedTime;
 				};
 
-				unsigned int m_timerQueryID;
+				uint64_t m_frameCounter = 0;
+				unsigned int m_timerQueryID[2];
 				unsigned int instanceDrawn, drawCalls, shadowDrawCalls, trianglesDrawn;
 				float m_GPUelapsedTime, m_GPUavgTime;
 				DebugShaderUniform m_debugShaderUniform;
@@ -415,6 +417,8 @@ class Renderer : public Singleton<Renderer>
 		bool m_lightFrustrumCulling = true;
 		bool m_drawClusters = false;
 		bool m_drawOcclusionBuffer = false;
+
+		uint64_t m_drawExlusionFlags = 0;
 #endif //USE_IMGUI
 		//
 };

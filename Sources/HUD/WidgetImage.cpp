@@ -1,4 +1,5 @@
 #include "WidgetImage.h"
+#include "WidgetGLDebugger.h"
 
 #define BATCH_INDEX_QUAD 0
 

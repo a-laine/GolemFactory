@@ -118,6 +118,17 @@ TerrainWater
 		
 		// program
 		vec3 waveHarmonic[4] = vec3[]( vec3(0.0,0.2, 1.0), vec3(-0.3,0.0, 0.7), vec3(0.9,0.42, 0.5), vec3(-1.0,0.0, 3.0) );
+		vec4 computeWaterDisplace(vec4 pos, vec4 normal, float waterDepth, float displacementRatio)
+		{
+			vec4 p = pos;
+			float amp = 0.1 * displacementRatio * clamp(waterDepth, 0.1, 1.0);
+			for (int i = 0; i < 4; i++)
+			{
+				float teta = animatedTime * waveHarmonic[i].z + dot(waveHarmonic[i].xy, p.xz);
+				p += (amp * sin(teta)) * normal;		
+			}
+			return p;
+		}
 		void main()
 		{
 			vec4 areaData0 = instanceDataArray[2 * gl_InstanceID];
@@ -146,22 +157,24 @@ TerrainWater
 				displacementRatio = 0.0;
 			
 			// small movement
-			if (displacementRatio > 0.0)
+			/*if (displacementRatio > 0.0)
 			{
-				vec2 dnormal = vec2(0.0);
+				//vec2 dnormal = vec2(0.0);
 				float amp = 0.1 * displacementRatio * clamp(waterDepth, 0.1, 1.0);
 				for (int i = 0; i < 4; i++)
 				{
 					float teta = animatedTime * waveHarmonic[i].z + dot(waveHarmonic[i].xy, p.xz);
 					p += (amp * sin(teta)) * normal;
-					dnormal -= (amp * cos(teta)) * waveHarmonic[i].xy;				
+					//dnormal -= (amp * cos(teta)) * waveHarmonic[i].xy;				
 				}
-				normal.xz += dnormal;
-			}
+				//normal.xz += dnormal;
+			}*/
+			if (displacementRatio > 0.0)
+				p = computeWaterDisplace(p, normal, waterDepth, displacementRatio);
 			normalize(normal);
 			
 			// morphing
-			/*if (uv.z != 0.0 || uv.w != 0.0)
+			if (uv.z != 0.0 || uv.w != 0.0)
 			{
 				if (morphRatio > 0.0)
 				{
@@ -174,15 +187,21 @@ TerrainWater
 					float uv2pos = 250.0 / 256.0;
 					vec4 p0 = vec4(position.x + areaData0.x, 0, position.z + areaData0.y, 1);
 					vec4 p1 = vec4(p0.x + uv.w * uv2pos, vertexData1.water,  p0.z + uv.z * uv2pos, 1.0);
-					vec4 d1 = hash(p1.x, p1.z);
-					p1 += d1 * displacementAmplitude * sin(animatedTime + d1.w + p1.x + 0.1 * p1.z);
 					vec4 p2 = vec4(p0.x - uv.w * uv2pos, vertexData2.water,  p0.z - uv.z * uv2pos, 1.0);
+					/*vec4 d1 = hash(p1.x, p1.z);
+					p1 += d1 * displacementAmplitude * sin(animatedTime + d1.w + p1.x + 0.1 * p1.z);
 					vec4 d2 = hash(p2.x, p2.z);
-					p2 += d2 * displacementAmplitude * sin(animatedTime + d2.w + p2.x + 0.1 * p2.z);
+					p2 += d2 * displacementAmplitude * sin(animatedTime + d2.w + p2.x + 0.1 * p2.z);*/
+					
+					if (displacementRatio > 0.0)
+					{
+						p1 = computeWaterDisplace(p1, vertexData1.normalWater, vertexData1.water - vertexData1.height, displacementRatio);
+						p2 = computeWaterDisplace(p2, vertexData2.normalWater, vertexData2.water - vertexData2.height, displacementRatio);
+					}
 					
 					p = mix(p, 0.5 * (p1 + p2), morphRatio);
 				}
-			}*/
+			}
 			
 			// color
 			vec4 waterColor = vec4(0.1 , 0.3 , 0.7 , 0.2);

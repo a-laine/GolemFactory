@@ -107,15 +107,16 @@ int main()
 {
 	std::cout << "Application start" << std::endl;
 	Application application;
-	context = application.createFullscreenWindow("Thibault test", 1600, 900);
-	//context = application.createFullscreenWindow("Thibault test", glfwGetPrimaryMonitor()); // full screen no title bar
+	//context = application.createFullscreenWindow("Thibault test", 1600, 900);							// windowed
+	//context = application.createFullscreenWindow("Thibault test", glfwGetPrimaryMonitor());			// full screen no title bar
+	context = application.createFullscreenWindow("Thibault test", glfwGetPrimaryMonitor());				// full screen + title bar (need maximize)
+	application.maximizeMainWindow();																	// if windowed, maximize
 	context->makeCurrent();
 	context->setVSync(true);
 	application.initGLEW(1);
 	THREAD_MARKER("MainThread");
 	initManagers();
 	application.changeIcon(ResourceManager::getInstance()->getRepository() + "Textures/cubeIcon.png");
-	//application.maximizeMainWindow();
 
 
 #ifdef USE_IMGUI
@@ -125,7 +126,7 @@ int main()
 
 	PhysicDebugWindowEnable = false;
 	HierarchyWindowEnable = false;
-	RenderingWindowEnable = false;
+	RenderingWindowEnable = true;
 #endif
 
 	//AnimationGraph* animgraph = ResourceManager::getInstance()->getResource<AnimationGraph>("humanoid");
@@ -225,8 +226,8 @@ int main()
 			playerController->setControlable(true);
 			playerController->setMale(true);
 			playerController->setCompanion(false);
-			playerController->setSpeeds(1, 2, 4);
-			playerController->setJumpForce(4);
+			//playerController->setSpeeds(1, 2, 4);
+			//playerController->setJumpForce(4);
 			player->addComponent(playerController);
 			world.getSceneManager().selectEntity(world, player);
 
@@ -265,6 +266,7 @@ int main()
 	double averageTime = 0;
 	long samples = 0;
 	double elapseTime = 16.;
+	float smoothedElapseTime = 16.;
 	double dummy = 0;
 
 
@@ -278,10 +280,9 @@ int main()
 	{
 		// begin loop
 		double startTime = glfwGetTime();
-
-		std::ostringstream unicFrameName;
-		unicFrameName << "Frame " << frameCount;
-		FRAME_MARKER(unicFrameName.str().c_str());
+		float gamedt = std::min(0.001f * smoothedElapseTime * physicsTimeSpeed, 0.016f);
+		FRAME_MARKER("MainThread"); // don't know why but this will be placed at thread name...
+		//std::cout << "Frame" << frameCount << std::endl;
 
 #ifdef USE_IMGUI
 		ImGui_ImplOpenGL3_NewFrame();
@@ -300,20 +301,25 @@ int main()
 		Debug::projection = mat4f::perspective(debugFreeflyCam->getVerticalFieldOfView(), context->getViewportRatio(), 0.1f, 10000.f);  //far = 1500.f
 
 		//	physics
-		float oneStepDt = 0.01f;//in sec
+		/*float oneStepDt = 0.016f;//in sec
 		float advanceTime = 0.f;
-		int substepCount = 0;// dt / std::max((float)elapseTime, 0.01f);
-		float maxDtUpdate = (float)elapseTime * 0.001f;
-		while (substepCount < 10 && advanceTime < maxDtUpdate)
+		int substepCount = 0;
+		while (substepCount < 10 && advanceTime < gamedt)
 		{
-			float dt = std::min(oneStepDt, maxDtUpdate - advanceTime);
-			world.getPhysics().stepSimulation(physicsTimeSpeed * oneStepDt, &world.getSceneManager());
+			float dt = std::min(oneStepDt, gamedt - advanceTime);
+			world.getPhysics().stepSimulation(dt, &world.getSceneManager());
+			ComponentUpdater::getInstance()->updateFromGameState(Component::UpdatePass::ePhysics, dt);
+
 			advanceTime += dt;
 			substepCount++;
-		}
+		}*/
 
-		//world.getPhysics().stepSimulation(physicsTimeSpeed * 0.005f, &world.getSceneManager());
-		//world.getPhysics().stepSimulation(physicsTimeSpeed * 0.005f, &world.getSceneManager());
+		world.getPhysics().stepSimulation2(gamedt, &world.getSceneManager());
+
+		if (physicsTimeSpeed != 0.f)
+		{
+			ComponentUpdater::getInstance()->updateFromGameState(Component::UpdatePass::eEndFrame, gamedt);
+		}
 
 		// Render scene & picking
 		/*if (WidgetManager::getInstance()->getBoolean("BBrendering"))
@@ -327,6 +333,7 @@ int main()
 		
 		// gizmos and hud
 #ifdef USE_IMGUI
+		Renderer::getInstance()->resetDrawState();
 		ImGuiMenuBar();
 		ImGuiSystemDraw();
 #endif
@@ -359,27 +366,6 @@ int main()
 #endif
 		{
 			SCOPED_CPU_MARKER("Swap buffers and clear");
-
-			std::string header = "End of frame : ";
-			const auto CheckError = [header](const char* label)
-				{
-					GLenum error = glGetError();
-					switch (error)
-					{
-						case GL_INVALID_ENUM: std::cout << header << label << " : GL_INVALID_ENUM" << std::endl; break;
-						case GL_INVALID_VALUE: std::cout << header << label << " : GL_INVALID_VALUE" << std::endl; break;
-						case GL_INVALID_OPERATION: std::cout << header << label << " : GL_INVALID_OPERATION" << std::endl; break;
-						case GL_INVALID_FRAMEBUFFER_OPERATION: std::cout << header << label << " : GL_INVALID_FRAMEBUFFER_OPERATION" << std::endl; break;
-						case GL_OUT_OF_MEMORY: std::cout << header << label << " : GL_OUT_OF_MEMORY" << std::endl; break;
-						case GL_STACK_UNDERFLOW: std::cout << header << label << " : GL_STACK_UNDERFLOW" << std::endl; break;
-						case GL_STACK_OVERFLOW: std::cout << header << label << " : GL_STACK_OVERFLOW" << std::endl; break;
-						default: break;
-					}
-					return error != GL_NO_ERROR;
-				};
-			if (CheckError("??"))
-				DebugBreak();
-
 			context->swapBuffers();
 			Renderer::getInstance()->swap();
 
@@ -388,6 +374,7 @@ int main()
 
 
 		elapseTime = 1000.0*(glfwGetTime() - startTime);
+		smoothedElapseTime = 0.95f * smoothedElapseTime + 0.05f * (float)elapseTime;
 	}
 
 	//	end
@@ -850,7 +837,7 @@ void initialzeTerrainScene()
 	terrain.load(ResourceManager::getInstance()->getRepository() + "Terrain");
 	terrain.getVirtualTexture()->syncroGPUTexture();
 
-	//return;
+	return;
 
 	Entity* e = world.getEntityFactory().createObject([](Entity* object)
 		{
@@ -888,27 +875,6 @@ void initManagers()
 	std::string resourceRepository = checkResourcesDirectory();
 	if (DEBUG_LEVEL) std::cout << "Found resources folder at : " << resourceRepository << std::endl;
 
-	std::string header = "initManagers : ";
-	const auto CheckError = [header](uint32_t line)
-		{
-			GLenum error = glGetError();
-			switch (error)
-			{
-				case GL_INVALID_ENUM: std::cout << header << "line : " << line << " : GL_INVALID_ENUM" << std::endl; break;
-				case GL_INVALID_VALUE: std::cout << header << "line : " << line << " : GL_INVALID_VALUE" << std::endl; break;
-				case GL_INVALID_OPERATION: std::cout << header << "line : " << line << " : GL_INVALID_OPERATION" << std::endl; break;
-				case GL_INVALID_FRAMEBUFFER_OPERATION: std::cout << header << "line : " << line << " : GL_INVALID_FRAMEBUFFER_OPERATION" << std::endl; break;
-				case GL_OUT_OF_MEMORY: std::cout << header << "line : " << line << " : GL_OUT_OF_MEMORY" << std::endl; break;
-				case GL_STACK_UNDERFLOW: std::cout << header << "line : " << line << " : GL_STACK_UNDERFLOW" << std::endl; break;
-				case GL_STACK_OVERFLOW: std::cout << header << "line : " << line << " : GL_STACK_OVERFLOW" << std::endl; break;
-				default: break;
-			}
-			if (error != GL_NO_ERROR)
-				DebugBreak();
-		};
-
-	CheckError(__LINE__);
-
 	// Init Event handler
 	EventHandler::getInstance()->addWindow(context->getParentWindow());
 	EventHandler::getInstance()->setRepository(resourceRepository);
@@ -919,7 +885,7 @@ void initManagers()
 	// Worker thread utility
 	//WorkerThread::initialize(6, 2);
 	JobSystem::getInstance()->init(true);
-	CheckError(__LINE__);
+	ComponentUpdater::getInstance()->init();
 
 	// Init Resources manager
 	ResourceVirtual::logVerboseLevel = ResourceVirtual::VerboseLevel::WARNINGS;
@@ -932,7 +898,6 @@ void initManagers()
     Material::setDefaultName("default");
     AnimationClip::setDefaultName("male_idle_breath");
 	AnimationGraph::setDefaultName("humanoid");
-	CheckError(__LINE__);
 
     ResourceManager::getInstance()->addNewResourceLoader(".animation", new AnimationLoader());
     ResourceManager::getInstance()->addNewResourceLoader(".font", new FontLoader());
@@ -945,7 +910,6 @@ void initManagers()
     ResourceManager::getInstance()->addNewResourceLoader("image", new ImageLoader());
     ResourceManager::getInstance()->addNewResourceLoader(".texture", new TextureLoader());
     ResourceManager::getInstance()->addNewResourceLoader(".animGraph", new AnimationGraphLoader());
-	CheckError(__LINE__);
 
 	// Init world -> 64*64Km²
 	const vec4f worldHalfSize = vec4f(64000, 64.f, 64000, 0);//vec4f(GRID_SIZE * GRID_ELEMENT_SIZE, 128.f, GRID_SIZE * GRID_ELEMENT_SIZE, 0) * 0.5f;
@@ -965,7 +929,6 @@ void initManagers()
 	world.setMaxObjectCount(400000);
 	world.getSceneManager().update(vec4f(0, 7, -30, 1), false);
 
-	CheckError(__LINE__);
 	
 	if(false)
 	{
@@ -1029,7 +992,6 @@ void initManagers()
 	//world.getMap().loadFromHeightmap(resourceRepository + "Textures/", "mountains512.png"); /// >> CREATE BUGS WITH TRANSPARENT ?
 
 	//	Renderer
-	CheckError(__LINE__);
 	Renderer::getInstance()->setContext(context);
 	Renderer::getInstance()->setWorld(&world);
 	Renderer::getInstance()->setShader(Renderer::DEFAULT, ResourceManager::getInstance()->getResource<Shader>("default"));
@@ -1038,17 +1000,16 @@ void initManagers()
 	Renderer::getInstance()->normalViewer = ResourceManager::getInstance()->getResource<Shader>("normalViewer");
 	Renderer::getInstance()->initializeGrid(GRID_SIZE, GRID_ELEMENT_SIZE, vec4f(24 / 255.f, 202 / 255.f, 230 / 255.f, 1.f));	// blue tron
 
-	Renderer::getInstance()->initializeConstants(); CheckError(__LINE__);
-	Renderer::getInstance()->initializeLightClusterBuffer(64, 36, 128); CheckError(__LINE__);
-	Renderer::getInstance()->initializeOcclusionBuffers(256, 144); CheckError(__LINE__);
-	Renderer::getInstance()->initializeShadows(1024, 1024, 1024, 1024); CheckError(__LINE__);
-	Renderer::getInstance()->initializeOverviewRenderer(512, 512); CheckError(__LINE__);
-	Renderer::getInstance()->initializeTerrainMaterialCollection("GroundTextures/TerrainMaterialCollection.texture"); CheckError(__LINE__);
-	Renderer::getInstance()->initializeSkybox("SkyBoxes/defaultSkybox.texture"); CheckError(__LINE__);  
+	Renderer::getInstance()->initializeConstants();
+	Renderer::getInstance()->initializeLightClusterBuffer(64, 36, 128);
+	Renderer::getInstance()->initializeOcclusionBuffers(256, 144);
+	Renderer::getInstance()->initializeShadows(1024, 1024, 1024, 1024);
+	Renderer::getInstance()->initializeOverviewRenderer(512, 512);
+	Renderer::getInstance()->initializeTerrainMaterialCollection("GroundTextures/TerrainMaterialCollection.texture");
+	Renderer::getInstance()->initializeSkybox("SkyBoxes/defaultSkybox.texture"); 
 
 	
 	// Debug
-	CheckError(__LINE__);
 	Debug::getInstance()->initialize("Shapes/box", "Shapes/sphere.obj", "Shapes/capsule", "default", "wired", "debug", "textureReinterpreter");
 	ResourceManager::getInstance()->getResource<Texture>("PolygonDungeon/Dungeons_Texture_01.png");
 	ResourceManager::getInstance()->getResource<Texture>("PolygonDungeon/Dungeons_Texture_02.png");
@@ -1061,7 +1022,6 @@ void initManagers()
 	//	HUD
 	WidgetManager::getInstance()->setInitialViewportRatio(context->getViewportRatio());
 	WidgetManager::getInstance()->loadHud("default");
-	CheckError(__LINE__);
 
 	// Terrain
 	terrain.setWorld(&world);
@@ -1101,7 +1061,7 @@ void initManagers()
 	/*grass detail*/ {
 		auto& detail = terrain.addDetail();
 		detail.m_name = "grass";
-		detail.m_lod = 2;
+		detail.m_lod = 1;
 		detail.m_colorTint0 = vec3f(0.08f, 0.25f, 0.05f);
 		detail.m_colorTint1 = vec3f(0.40f, 0.63f, 0.12f);
 		detail.m_density = 1.f;
@@ -1122,7 +1082,7 @@ void initManagers()
 	/*rocks detail*/ {
 		auto& detail = terrain.addDetail();
 		detail.m_name = "rocks";
-		detail.m_lod = 3;
+		detail.m_lod = 2;
 		detail.m_colorTint0 = vec3f(1.f);
 		detail.m_colorTint1 = vec3f(0.9f);
 		detail.m_density = 6.f;
@@ -1155,7 +1115,6 @@ void initManagers()
 	terrain.addLodRadius(375 * 3 + terrain.g_morphingRange);
 	terrain.addLodRadius(375 * 3 + terrain.g_morphingRange);
 	terrain.addLodRadius(375 * 3 + terrain.g_morphingRange);
-	CheckError(__LINE__);
 }
 void picking()
 {
@@ -1323,8 +1282,15 @@ void events()
 void updates(float elapseTime)
 {
 	SCOPED_CPU_MARKER("Updates");
+	float dt = 0.001f * elapseTime * physicsTimeSpeed;
+	if (physicsTimeSpeed != 0.f)
+	{
+		ComponentUpdater::getInstance()->updateFromGameState(Component::UpdatePass::eBeginFrame, dt);
+		ComponentUpdater::getInstance()->updateFromGameState(Component::UpdatePass::eAnimation, dt);
+	}
+
 	world.getSceneManager().update(debugFreeflyCam->getPosition());
-	terrain.update(currentCamera->getPosition());
+	terrain.update(currentCamera->getPosition(), currentCamera);
 
 	//	animate avatar
 	//if(avatar)
@@ -1455,25 +1421,7 @@ void updates(float elapseTime)
 	}
 
 	if (physicsTimeSpeed != 0.f)
-	{
-		float dt = 0.001f * elapseTime * physicsTimeSpeed;
-		ComponentUpdater::getInstance()->update(dt);
-
-		/*float dt = 0.001f * elapseTime;
-		extern std::vector<AnimationComponent*> g_allAnimations;
-		for (AnimationComponent* comp : g_allAnimations)
-		{
-			if (comp && comp->isValid())
-				comp->update(dt);
-		}
-		extern std::vector<Animator*> g_allAnimator;
-		for (Animator* comp : g_allAnimator)
-		{
-			if (comp && comp->isValid())
-				comp->update(dt);
-		}*/
-	}
-
+		ComponentUpdater::getInstance()->updateFromGameState(Component::UpdatePass::eCommon, dt);
 
 	// Map streaming
 	//world.getMapPtr()->update(freeflyCamera->getWorldPosition());
@@ -1486,6 +1434,7 @@ void ImGuiMenuBar()
 	extern bool SpatialPartitionningWindowEnable;
 	extern bool RenderingWindowEnable;
 	extern bool ResourcesWindowEnable;
+	extern bool TerrainWindowEnable;
 
 
 	if (EventHandler::getInstance()->isActivated(ALT))
@@ -1503,6 +1452,7 @@ void ImGuiMenuBar()
 			{
 				ImGui::MenuItem("Hierarchy", NULL, &HierarchyWindowEnable);
 				ImGui::MenuItem("Spatial partitionning", NULL, &SpatialPartitionningWindowEnable);
+				ImGui::MenuItem("Terrain debug", NULL, &TerrainWindowEnable);
 				ImGui::EndMenu();
 			}
 			ImGui::EndMainMenuBar();
@@ -1520,6 +1470,7 @@ void ImGuiSystemDraw()
 	extern bool SpatialPartitionningWindowEnable;
 	extern bool RenderingWindowEnable;
 	extern bool ResourcesWindowEnable;
+	extern bool TerrainWindowEnable;
 
 	if (PhysicDebugWindowEnable)
 	{
@@ -1534,6 +1485,8 @@ void ImGuiSystemDraw()
 		Renderer::getInstance()->drawImGui(world); 
 	if (ResourcesWindowEnable)
 		ResourceManager::getInstance()->drawImGui(world);
+	if (TerrainWindowEnable)
+		terrain.drawImGui(world);
 #endif
 }
 //

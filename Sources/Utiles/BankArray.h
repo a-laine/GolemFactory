@@ -35,13 +35,13 @@ class BankArray
 			m_banks.clear();
 			m_size = 0;
 		}
-		uint32_t size() const
+		int size() const
 		{
 			return m_size;
 		}
-		uint32_t range() const
+		int range() const
 		{
-			return 32u * m_banks.size();
+			return 32 * m_banks.size();
 		}
 		bool isValid(int i)
 		{
@@ -141,6 +141,6 @@ class BankArray
 			uint32_t m_occupancy;
 			T m_data[32];
 		};
-		uint32_t m_size = 0;
+		int m_size = 0;
 		std::vector<Bank*> m_banks;
 };

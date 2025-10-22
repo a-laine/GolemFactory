@@ -95,9 +95,9 @@ class MixedArray
 
 
 	private:
-		size_t m_staticSize = 0;
 		size_t m_dynamicSize = 0;
 		size_t m_dynamicCapacity = 0;
-		T m_staticData[t_stackCapacity];
 		T* m_dynamicArray = nullptr;
+		size_t m_staticSize = 0;
+		T m_staticData[t_stackCapacity];
 };

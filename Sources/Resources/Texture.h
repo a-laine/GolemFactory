@@ -2,7 +2,6 @@
 
 #include <vector>
 #include <GL/glew.h>
-//#include <glm/glm.hpp>
 
 #include "Math/TMath.h"
 #include "ResourceVirtual.h"
@@ -53,8 +52,7 @@ class Texture : public ResourceVirtual
         void initialize(const std::string& textureName, const vec3i& imageSize, const void* data, uint16_t config, unsigned int internalFormat,
             unsigned int pixelFormat, unsigned int colorFormat, bool immutable = false);
 
-        void update(const void* data, unsigned int pixelFormat, unsigned int colorFormat, 
-            vec3i offset = vec3i(0), vec3i subSize = vec3i(std::numeric_limits<uint16_t>::max()));
+        void update(const void* data, vec3i offset = vec3i(0), vec3i subSize = vec3i(std::numeric_limits<uint16_t>::max()));
 
         void onDrawImGui() override;
         //
@@ -72,8 +70,10 @@ class Texture : public ResourceVirtual
 
         //  Attributes
         vec3i size;                     //!< Texture size
-        unsigned int m_internalFormat;
-        unsigned int m_type;
+        unsigned int m_internalFormat = 0;
+        unsigned int m_pixelFormat = 0;
+        unsigned int m_colorFormat = 0;
+        unsigned int m_type = 0;
 
 #ifdef USE_IMGUI
         bool isEnginePrivate = false;
@@ -84,9 +84,9 @@ class Texture : public ResourceVirtual
         static std::string defaultName;
 
         //  Attributes
-        uint16_t configuration;         //!< Texture configuration byte
+        uint16_t configuration = 0;         //!< Texture configuration byte
         std::vector<std::string> m_layerDescriptor;
-        GLuint texture;                 //!< Texture Id
+        GLuint texture = 0;                 //!< Texture Id
 
 #ifdef USE_IMGUI
         int layerOverview;

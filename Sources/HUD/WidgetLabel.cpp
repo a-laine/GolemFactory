@@ -1,7 +1,7 @@
 #include "WidgetLabel.h"
-//#include <Physics/SpecificCollision/CollisionUtils.h>
-#include <Physics/Collision.h>
+#include "WidgetGLDebugger.h"
 
+#include <Physics/Collision.h>
 
 //	string define
 #define TEXT_MAX_CHAR			200
@@ -81,17 +81,30 @@ void WidgetLabel::draw(Shader* s, uint8_t& stencilMask, const mat4f& model)
 		drawClippingShape(BATCH_INDEX_CLIPPING, true, s, stencilMask);
 
 	//	texture related stuff
-	if (font) glBindTexture(GL_TEXTURE_2D, font->texture);
-	else glBindTexture(GL_TEXTURE_2D, 0);
+	if (font) 
+	{
+		glBindTexture(GL_TEXTURE_2D, font->texture);	CheckGLError("draw", "glBindTexture(texid)");
+	}
+	else 
+	{
+		glBindTexture(GL_TEXTURE_2D, 0);				CheckGLError("draw", "glBindTexture(0)");
+	}
 	int loc = s->getUniformLocation("useTexture");
-	if (loc >= 0) glUniform1i(loc, (font ? 1 : 0));
+	if (loc >= 0) 
+	{
+		glUniform1i(loc, (font ? 1 : 0));				CheckGLError("draw", "glUniform1i(useTexture)");
+	}
 
 	//	draw batch 0 (text)
 	loc = s->getUniformLocation("color");
-	if (loc >= 0) glUniform4fv(loc, 1, &colors[State::CURRENT].x);
+	if (loc >= 0) 
+	{
+		glUniform4fv(loc, 1, &colors[State::CURRENT].x);CheckGLError("draw", "glUniform4fv(color)");
+	}
 
-	glBindVertexArray(batchList[BATCH_INDEX_TEXT].vao);
+	glBindVertexArray(batchList[BATCH_INDEX_TEXT].vao);		CheckGLError("draw", "glBindVertexArray(vao)");
 	glDrawElements(GL_TRIANGLES, (int)batchList[BATCH_INDEX_TEXT].faces.size(), GL_UNSIGNED_SHORT, NULL);
+	CheckGLError("draw", "glDrawElements(BATCH_INDEX_TEXT)");
 
 	//	unclip zone (batch 1)
 	if (textConfiguration & CLIPPING)
@@ -173,20 +186,26 @@ float WidgetLabel::getSizeChar() const { return sizeChar; }
 //	Protected functions
 void WidgetLabel::initVBOtext()
 {
-	glGenBuffers(1, &batchList[BATCH_INDEX_TEXT].verticesBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, batchList[BATCH_INDEX_TEXT].verticesBuffer);
-	glBufferData(GL_ARRAY_BUFFER, TEXT_MAX_CHAR * 4 * sizeof(vec4f), nullptr, GL_DYNAMIC_DRAW);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, batchList[BATCH_INDEX_TEXT].vertices.size() * sizeof(vec4f), batchList[BATCH_INDEX_TEXT].vertices.data());
+	uint32_t maxbytesize = TEXT_MAX_CHAR * 4 * sizeof(vec4f);
+	uint32_t bytesize = batchList[BATCH_INDEX_TEXT].vertices.size() * sizeof(vec4f);
+	glGenBuffers(1, &batchList[BATCH_INDEX_TEXT].verticesBuffer);										CheckGLError("vbo vertex", "glGenBuffers()");
+	glBindBuffer(GL_ARRAY_BUFFER, batchList[BATCH_INDEX_TEXT].verticesBuffer);							CheckGLError("vbo vertex", "glBindBuffer()");
+	glBufferData(GL_ARRAY_BUFFER, maxbytesize, nullptr, GL_DYNAMIC_DRAW);								CheckGLError("vbo vertex", "glBufferData()");
+	glBufferSubData(GL_ARRAY_BUFFER, 0, bytesize, batchList[BATCH_INDEX_TEXT].vertices.data());			CheckGLError("vbo vertex", "glBufferSubData()");
 
-	glGenBuffers(1, &batchList[BATCH_INDEX_TEXT].texturesBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, batchList[BATCH_INDEX_TEXT].texturesBuffer);
-	glBufferData(GL_ARRAY_BUFFER, TEXT_MAX_CHAR * 4 * sizeof(vec2f), nullptr, GL_DYNAMIC_DRAW);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, batchList[BATCH_INDEX_TEXT].textures.size() * sizeof(vec2f), batchList[BATCH_INDEX_TEXT].textures.data());
+	maxbytesize = TEXT_MAX_CHAR * 4 * sizeof(vec2f);
+	bytesize = batchList[BATCH_INDEX_TEXT].textures.size() * sizeof(vec2f);
+	glGenBuffers(1, &batchList[BATCH_INDEX_TEXT].texturesBuffer);										CheckGLError("vbo texture", "glGenBuffers()");
+	glBindBuffer(GL_ARRAY_BUFFER, batchList[BATCH_INDEX_TEXT].texturesBuffer);							CheckGLError("vbo texture", "glBindBuffer()");
+	glBufferData(GL_ARRAY_BUFFER, maxbytesize, nullptr, GL_DYNAMIC_DRAW);								CheckGLError("vbo texture", "glBufferData()");
+	glBufferSubData(GL_ARRAY_BUFFER, 0, bytesize, batchList[BATCH_INDEX_TEXT].textures.data());			CheckGLError("vbo texture", "glBufferSubData()");
 
-	glGenBuffers(1, &batchList[BATCH_INDEX_TEXT].facesBuffer);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, batchList[BATCH_INDEX_TEXT].facesBuffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, TEXT_MAX_CHAR * 6 * sizeof(unsigned short), nullptr, GL_DYNAMIC_DRAW);
-	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, batchList[BATCH_INDEX_TEXT].faces.size() * sizeof(unsigned short), batchList[BATCH_INDEX_TEXT].faces.data());
+	maxbytesize = TEXT_MAX_CHAR * 6 * sizeof(unsigned short);
+	bytesize = batchList[BATCH_INDEX_TEXT].faces.size() * sizeof(unsigned short);
+	glGenBuffers(1, &batchList[BATCH_INDEX_TEXT].facesBuffer);											CheckGLError("vbo indices", "glGenBuffers()");
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, batchList[BATCH_INDEX_TEXT].facesBuffer);						CheckGLError("vbo indices", "glBindBuffer()");
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, maxbytesize, nullptr, GL_DYNAMIC_DRAW);						CheckGLError("vbo indices", "glBufferData()");
+	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, bytesize, batchList[BATCH_INDEX_TEXT].faces.data());	CheckGLError("vbo indices", "glBufferSubData()");
 }
 void WidgetLabel::updateBuffers()
 {
@@ -266,16 +285,16 @@ void WidgetLabel::updateVBOs()
 {
 	for (unsigned int i = 0; i < batchList.size(); i++)
 	{
-		glBindVertexArray(0);
+		glBindVertexArray(0);																										CheckGLError("vbo update", "glBindVertexArray(0)");
 
-		glBindBuffer(GL_ARRAY_BUFFER, batchList[i].verticesBuffer);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, batchList[i].vertices.size() * sizeof(vec4f), batchList[i].vertices.data());
+		glBindBuffer(GL_ARRAY_BUFFER, batchList[i].verticesBuffer);																	CheckGLError("vbo update", "glBindBuffer(0)");
+		glBufferSubData(GL_ARRAY_BUFFER, 0, batchList[i].vertices.size() * sizeof(vec4f), batchList[i].vertices.data());			CheckGLError("vbo update", "glBufferSubData(0)");
 
-		glBindBuffer(GL_ARRAY_BUFFER, batchList[i].texturesBuffer);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, batchList[i].textures.size() * sizeof(vec2f), batchList[i].textures.data());
+		glBindBuffer(GL_ARRAY_BUFFER, batchList[i].texturesBuffer);																	CheckGLError("vbo update", "glBindBuffer(0)");
+		glBufferSubData(GL_ARRAY_BUFFER, 0, batchList[i].textures.size() * sizeof(vec2f), batchList[i].textures.data());			CheckGLError("vbo update", "glBufferSubData(0)");
 
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, batchList[i].facesBuffer);
-		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, batchList[i].faces.size() * sizeof(unsigned short), batchList[i].faces.data());
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, batchList[i].facesBuffer);															CheckGLError("vbo update", "glBindBuffer(0)");
+		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, batchList[i].faces.size() * sizeof(unsigned short), batchList[i].faces.data());	CheckGLError("vbo update", "glBufferSubData(0)");
 	}
 }
 void WidgetLabel::parseText()

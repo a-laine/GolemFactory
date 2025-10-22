@@ -24,7 +24,7 @@ class Application
 		bool shouldExit();
 		void exitProgram(int returnCode);
 
-		RenderContext* createWindow(const char* title, int width, int height);
+		RenderContext* createWindow(const char* title, GLFWmonitor* monitor, int width = 0, int height = 0);
 		RenderContext* createFullscreenWindow(const char* title, int width = 0, int height = 0);
 		RenderContext* createFullscreenWindow(const char* title, GLFWmonitor* monitor, int width = 0, int height = 0);
 		RenderContext* createOffscreenContext();

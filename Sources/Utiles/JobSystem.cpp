@@ -3,16 +3,22 @@
 #include <glm/detail/func_common.hpp>
 #include <iostream>
 #include <chrono>
+#include "Assert.hpp"
 
 
 
 
 Job2::Job2(JobPriority priority, Task task, uint32_t dependancyCount) : m_jobPriority(priority), m_task(task),
-	m_dependancyCounter(dependancyCount), m_readingThreadCount(0)
+	m_dependancyCounter(dependancyCount), m_readingThreadCount(0), m_finishedJob(false)
 {
 
 }
-void Job2::waitCompletion(bool allowGrabInstances)
+Job2::~Job2()
+{
+	GF_ASSERT(m_finishedJob.load(), "Job destroyed before finished !");
+	GF_ASSERT(m_readingThreadCount.load() == 0, "Job destroyed while some thread are accessing it !");
+}
+void Job2::waitCompletion(bool allowGrabInstances, bool blockWaiting)
 {
 	// wait for dependancy to finish
 	JobSystem* system = JobSystem::getInstance();
@@ -62,14 +68,22 @@ void Job2::waitCompletion(bool allowGrabInstances)
 		}
 	}
 
-	if (!pollCompletion())
+	if (blockWaiting && !pollCompletion())
 	{
 		SCOPED_CPU_MARKER("wait finished");
 
 		constexpr int wakeupFrameCount = 20;
 		int wakeuptimer = wakeupFrameCount;
 		system->notifyWorkers(m_jobPriority);
-		while (!pollCompletion())
+
+		while (!m_finishedJob.load() && !pollCompletion())
+		{
+			for (int i = 0; i < 4; i++)
+				_mm_pause();
+			system->notifyWorkers(m_jobPriority, false);
+		}
+
+		/*while (!pollCompletion())
 		{
 			wakeuptimer--;
 			if (wakeuptimer == 0)
@@ -81,7 +95,7 @@ void Job2::waitCompletion(bool allowGrabInstances)
 			std::unique_lock<std::mutex> lock(m_finishedLock);
 			auto now = std::chrono::system_clock::now();
 			m_finishedSignal.wait_until(lock, now + std::chrono::microseconds(10));
-		}
+		}*/
 	}
 }
 bool Job2::pollCompletion(int* optionalRemainingInstances)
@@ -123,8 +137,8 @@ std::atomic_uint32_t* Job2::getDependancyCounter()
 JobSystem::JobSystem()
 {
 	unsigned int coreCount = std::thread::hardware_concurrency();
-	m_workerCount = glm::clamp(coreCount, 1u, 10u);
-	m_longWorkerCount = glm::clamp(coreCount, 1u, 4u);
+	m_workerCount = glm::clamp(coreCount - 1, 1u, 10u);
+	m_longWorkerCount = glm::clamp(coreCount - 1, 1u, 4u);
 	m_keepWorkersRunning = true;
 	for (int i = 0; i < m_workerCount + m_longWorkerCount; i++)
 	{
@@ -169,14 +183,13 @@ JobSystem::JobSystem()
 						std::unique_lock<std::mutex> lock(m_lock);
 						auto now = std::chrono::system_clock::now();
 						if (isLongWorker)
-							m_wakeupLongWorker.wait_until(lock, now + std::chrono::microseconds(200));
+							m_wakeupLongWorker.wait_until(lock, now + std::chrono::microseconds(1000));
 						else
 							m_wakeupWorker.wait_until(lock, now + std::chrono::microseconds(400));
 					}
 				}
 			});
 
-		//m_workers.push_back(worker);
 		worker.detach();
 	}
 }
@@ -203,8 +216,10 @@ void JobSystem::pushJob(Job2& job, void* data, std::atomic_uint32_t* dependancy)
 }
 void JobSystem::dispatchJob(Job2& job, int count, int groupSize, void* data, std::atomic_uint32_t* dependancy)
 {
+	GF_ASSERT(count > 0, "Empty job !");
+
 	job.m_data = data;
-	job.m_instanceGroup = groupSize;
+	job.m_instanceGroup = std::max(1, groupSize);
 	job.m_instanceCount = count;
 	job.m_dependancy = dependancy;
 
@@ -221,7 +236,7 @@ bool JobSystem::grabJobInstance(bool onlyLongJob, Job2** job, int& instanceStart
 	std::unique_lock<std::mutex> lock(m_lock);
 	for (int i = poolStart; i < poolStop; i++)
 	{
-		for (uint32_t j = 0; j < m_jobPools[i].range(); j++)
+		for (int j = 0; j < m_jobPools[i].range(); j++)
 		{
 			if (!m_jobPools[i].isValid(j))
 				continue;
@@ -245,7 +260,7 @@ void JobSystem::removeJob(Job2* job)
 	MutexGuard guard(job->m_lock);
 	m_jobPools[(int)job->m_jobPriority].remove(job->m_jobIndex);
 	job->m_jobIndex = -1;
-	job->m_finishedSignal.notify_all();
+	job->m_finishedJob = true;
 }
 
 void JobSystem::notifyWorkers(Job2::JobPriority type, bool all)

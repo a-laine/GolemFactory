@@ -15,25 +15,11 @@
 	#include <imgui_internal.h>
 #endif
 
-extern std::map<Component::UpdatePass, std::vector<Component::ComponentUpdateData>> gComponentUpdateList;
-
-void AnimatorUpdate(void* componentPtr, float dt)
-{
-	Animator* animator = (Animator * )componentPtr;
-	animator->update(dt);
-}
+//extern std::map<Component::UpdatePass, std::vector<Component::ComponentUpdateData>> gComponentUpdateList;
 
 Animator::Animator()
 {
-	m_skeleton = nullptr;
-	m_skeletonComponent = nullptr;
-	m_graph = nullptr;
-	//m_graphData = nullptr;
-	//m_runtimeData.m_currentTransition = nullptr;
-	//m_runtimeData.m_stateTime = 0.f;
-	//m_runtimeData.m_transitionTime = 0.f;
-	//m_runtimeData.m_currentStateIndex = 0;
-	m_immutableData = true;
+
 }
 
 Animator::~Animator()
@@ -94,6 +80,7 @@ void Animator::save(Variant& jsonObject)
 
 void Animator::onAddToEntity(Entity* entity)
 {
+	using uPass = Component::UpdatePass;
 	Component::onAddToEntity(entity);
 	if (entity)
 	{
@@ -101,7 +88,7 @@ void Animator::onAddToEntity(Entity* entity)
 		if (m_skeletonComponent)
 			m_skeleton = m_skeletonComponent->getSkeleton();
 
-		ComponentUpdater::getInstance()->add(Component::eCommon, &AnimatorUpdate, this);
+		ComponentUpdater::getInstance()->add(uPass::eAnimation, [this](uPass pass, float dt) {update(pass, dt); }, this, entity);
 	}
 }
 
@@ -159,7 +146,7 @@ bool Animator::setParameter(const std::string& _name, int _value)
 	return false;
 }
 
-void Animator::update(float elapsedTime)
+void Animator::update(Component::UpdatePass updatePass, float elapsedTime)
 {
 	SCOPED_CPU_MARKER("Animator");
 

@@ -1,7 +1,7 @@
 #include "WidgetConsole.h"
-//#include <Physics/SpecificCollision/CollisionUtils.h>
-#include <Physics/Collision.h>
+#include "WidgetGLDebugger.h"
 
+#include <Physics/Collision.h>
 
 //	string define
 #define MAX_LINE				40			//	max nb of line in text string

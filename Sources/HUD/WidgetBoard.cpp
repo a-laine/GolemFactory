@@ -1,5 +1,7 @@
 #include "WidgetBoard.h"
 
+#include "WidgetGLDebugger.h"
+
 #define BATCH_INDEX_BORDER 0
 #define BATCH_INDEX_CENTER 1
 

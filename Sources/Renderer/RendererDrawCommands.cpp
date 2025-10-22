@@ -172,6 +172,7 @@ GLuint Renderer::renderMeshOverview(Mesh* mesh, float angle0, float angle1, floa
 	m_globalMatrices.cameraPosition = camPosition;
 	glBindBuffer(GL_UNIFORM_BUFFER, m_globalMatricesID);
 	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(m_globalMatrices), &m_globalMatrices);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, overviewFBO);
 	glViewport(0, 0, overviewTexture.size.x, overviewTexture.size.y);

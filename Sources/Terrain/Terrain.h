@@ -10,6 +10,7 @@
 #include <Physics/Physics.h>
 
 class World;
+class CameraComponent;
 class Terrain
 {
 	public:
@@ -53,7 +54,7 @@ class Terrain
 		void load(const std::string& directory);
 
 		void addLodRadius(float _radiusIncrement);
-		void update(vec4f _cameraPosition);
+		void update(vec4f _cameraPosition, CameraComponent* _currentCamera = nullptr);
 
 		//float getHeight(const vec4f& position, vec4f* normal = nullptr);
 
@@ -114,6 +115,8 @@ class Terrain
 		vec2i m_gridSize, m_gridMinIndex;
 		vec2i m_currentStreamingMin, m_currentStreamingMax;
 		vec2f m_currentPlayerPosInTile;
+		vec2f m_currentCameraDirection = vec2f(0, 1);
+		float m_currentCameraFov = 1.f;
 		TerrainArea*** m_grid;
 		std::set<TerrainArea*> m_previousAreas;
 		std::vector<float> m_lodRadius;

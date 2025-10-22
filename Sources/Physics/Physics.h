@@ -64,6 +64,7 @@ class Physics
 
 		//	Public functions
 		void stepSimulation(const float& elapsedTime, SceneManager* scene);
+		void stepSimulation2(const float& elapsedTime, SceneManager* scene);
 
 		bool raycast(Segment ray, SceneManager* scene, uint64_t flags, uint64_t noFlags, bool skipTriggers = true, RaycastReport* _report = nullptr);
 
@@ -110,8 +111,10 @@ class Physics
 
 		//	Pipeline steps
 		void predictTransform(const float& elapsedTime);
+		void predictTransform2(const unsigned int& clusterIndex, const float& deltaTime);
 		void computeBoundingShapesAndDetectPairs(const float& elapsedTime, SceneManager* scene);
 		void computeDynamicClusters(SceneManager* scene);
+		void computeBoundingPairsClusters2(const float& elapsedTime, SceneManager* scene);
 		void createConstraint(const unsigned int& clusterIndex, const float& deltaTime);
 		void clearTempoaryStruct(SceneManager* scene);
 		//
@@ -128,10 +131,11 @@ class Physics
 		vec4f gravity;
 		float defaultFriction;
 		std::set<Entity*> movingEntity;
+		BankArray<RigidBody*> m_physicObjList;
 
 			/// Broad phase
-			BoxSceneQuerry proximityTest;
-			VirtualEntityCollector proximityList;
+			//BoxSceneQuerry proximityTest;
+			//VirtualEntityCollector proximityList;
 
 			/// Second broad phase and cluster computing
 			std::set<std::pair<Entity*, Entity*> > dynamicPairs;
@@ -147,14 +151,15 @@ class Physics
 			// options
 			bool m_drawCollidersAround = false;
 			bool m_drawCollidersWired = false;
+			bool m_autoSelectThrowedObject = true;
 			bool m_enableZtest = true;
 			float m_drawCollidersQuerySize = 100.f;
 			BoxSceneQuerry m_collidersQuery;
 			VirtualEntityCollector m_colliderColector;
-			Entity* mainCameraEntity;
+			Entity* mainCameraEntity = nullptr;
 
 			// obj thrower
-			int m_shapeCode;
+			int m_shapeCode = 0;
 			float m_velocity = 20;
 			vec3f m_size = vec3f(0.5f);
 

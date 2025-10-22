@@ -70,12 +70,7 @@ void Texture::initialize(const vec3i& imageSize, const uint8_t* data, uint16_t c
 int Texture::getType() { return (configuration & (uint16_t)TextureConfiguration::TYPE_MASK); }
 GLenum Texture::getGLenumType()
 {
-    switch((TextureConfiguration)(configuration & (uint16_t)TextureConfiguration::TYPE_MASK))
-    {
-        case TextureConfiguration::TEXTURE_1D: return GL_TEXTURE_1D;
-        case TextureConfiguration::TEXTURE_3D: return GL_TEXTURE_3D;
-        default: return GL_TEXTURE_2D;
-    }
+    return m_type;
 }
 std::string Texture::getIdentifier(const std::string& resourceName)
 {
@@ -111,32 +106,42 @@ GLuint* Texture::getTextureIdPointer() { return &texture; }
 void Texture::initialize(const std::string& textureName, const vec3i& imageSize, const void* data, uint16_t config, unsigned int internalFormat,
     unsigned int pixelFormat, unsigned int colorFormat, bool immutable)
 {
+    constexpr bool fullVerbose = false;
     GF_ASSERT(state == INVALID);
     name = textureName;
     state = LOADING;
     size = imageSize;
     configuration = config;
+    m_internalFormat = internalFormat;
+    m_pixelFormat = pixelFormat;
+    m_colorFormat = colorFormat;
 
-    const auto CheckError = [textureName](const char* label)
+    const auto CheckError = [textureName, fullVerbose](const std::string& label)
     {
         GLenum error = glGetError();
-        if (!label)
+        if (label.empty())
             return false;
-        switch (error)
+        if (error != GL_NO_ERROR)
         {
-            case GL_INVALID_ENUM: std::cout << textureName << " : " << label << " : GL_INVALID_ENUM" << std::endl; break;
-            case GL_INVALID_VALUE: std::cout << textureName << " : " << label << " : GL_INVALID_VALUE" << std::endl; break;
-            case GL_INVALID_OPERATION: std::cout << textureName << " : " << label << " : GL_INVALID_OPERATION" << std::endl; break;
-            case GL_INVALID_FRAMEBUFFER_OPERATION: std::cout << textureName << " : " << label << " : GL_INVALID_FRAMEBUFFER_OPERATION" << std::endl; break;
-            case GL_OUT_OF_MEMORY: std::cout << textureName << " : " << label << " : GL_OUT_OF_MEMORY" << std::endl; break;
-            case GL_STACK_UNDERFLOW: std::cout << textureName << " : " << label << " : GL_STACK_UNDERFLOW" << std::endl; break;
-            case GL_STACK_OVERFLOW: std::cout << textureName << " : " << label << " : GL_STACK_OVERFLOW" << std::endl; break;
-            default: break;
+            std::cout << textureName << " : " << label << " : ";
+            switch (error)
+            {
+                case GL_INVALID_ENUM: std::cout << "GL_INVALID_ENUM" << std::endl; break;
+                case GL_INVALID_VALUE: std::cout << "GL_INVALID_VALUE" << std::endl; break;
+                case GL_INVALID_OPERATION: std::cout << "GL_INVALID_OPERATION" << std::endl; break;
+                case GL_INVALID_FRAMEBUFFER_OPERATION: std::cout << "GL_INVALID_FRAMEBUFFER_OPERATION" << std::endl; break;
+                case GL_OUT_OF_MEMORY: std::cout << "GL_OUT_OF_MEMORY" << std::endl; break;
+                case GL_STACK_UNDERFLOW: std::cout << "GL_STACK_UNDERFLOW" << std::endl; break;
+                case GL_STACK_OVERFLOW: std::cout << "GL_STACK_OVERFLOW" << std::endl; break;
+                default: break;
+            }
+            return true;
         }
-        return error != GL_NO_ERROR;
+        else if (fullVerbose) std::cout << "---" << textureName << " : " << label << std::endl;
+        return false;
     };
 
-    CheckError(nullptr);
+    CheckError("previous check");
     glGenTextures(1, &texture); CheckError("glGenTextures");
     unsigned int type = GL_TEXTURE_2D;
     bool checkForTextureview = false;
@@ -176,11 +181,8 @@ void Texture::initialize(const std::string& textureName, const vec3i& imageSize,
                 {
                     const uint8_t* layerPtr = (const uint8_t*)data + (i * offset);
                     glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, internalFormat, (int)size.x, (int)size.y, 0, pixelFormat, colorFormat, layerPtr);
+                    CheckError("glTexImage2D");
                 }
-                /*glTexImage3D(GL_TEXTURE_CUBE_MAP, 0, internalFormat, (int)size.x, (int)size.y, (int)size.z,
-                    0, pixelFormat, colorFormat, data);*/
-
-                CheckError("glTexImage3D");
                 type = GL_TEXTURE_CUBE_MAP;
                 checkForTextureview = true;                
             }
@@ -190,6 +192,7 @@ void Texture::initialize(const std::string& textureName, const vec3i& imageSize,
             glBindTexture(GL_TEXTURE_2D_ARRAY, texture); CheckError("glBindTexture");
             glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, internalFormat, (int)size.x, (int)size.y, (int)size.z,
                 0, pixelFormat, colorFormat, data);
+            CheckError("glTexImage3D");
             type = GL_TEXTURE_2D_ARRAY;
             checkForTextureview = true;
             break;
@@ -198,13 +201,14 @@ void Texture::initialize(const std::string& textureName, const vec3i& imageSize,
             glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, texture); CheckError("glBindTexture");
             glTexImage3D(GL_TEXTURE_CUBE_MAP_ARRAY, 0, internalFormat, (int)size.x, (int)size.y, 6 * (int)size.z,
                 0, pixelFormat, colorFormat, data);
+            CheckError("glTexImage3D");
             type = GL_TEXTURE_CUBE_MAP_ARRAY;
             break;
 
         default:
             if (logVerboseLevel >= ResourceVirtual::VerboseLevel::ERRORS)
                 std::cerr << "ERROR : loading texture : " << textureName << " : unknown type" << std::endl;
-            glDeleteTextures(1, &texture);
+            glDeleteTextures(1, &texture); CheckError("glDeleteTextures");
             texture = 0;
             state = INVALID;
             return;
@@ -213,8 +217,7 @@ void Texture::initialize(const std::string& textureName, const vec3i& imageSize,
 
     if (configuration & (uint16_t)TextureConfiguration::USE_MIPMAP)
     {
-        glGenerateMipmap(type);
-        CheckError("glGenerateMipmap");
+        glGenerateMipmap(type);     CheckError("glGenerateMipmap");
     }
 
     //  MAG & MIN filter parameter
@@ -251,37 +254,26 @@ void Texture::initialize(const std::string& textureName, const vec3i& imageSize,
     unsigned int wrapMode = 0;
     switch ((TextureConfiguration)(configuration & (uint16_t)TextureConfiguration::WRAP_MASK))
     {
-        case TextureConfiguration::WRAP_CLAMP:
-            wrapMode = GL_CLAMP_TO_EDGE;
-            break;
-
-        case TextureConfiguration::WRAP_REPEAT:
-            wrapMode = GL_REPEAT;
-            break;
-
-        case TextureConfiguration::WRAP_MIRROR:
-            wrapMode = GL_MIRRORED_REPEAT;
-            break;
+        case TextureConfiguration::WRAP_CLAMP:      wrapMode = GL_CLAMP_TO_EDGE; break;
+        case TextureConfiguration::WRAP_REPEAT:     wrapMode = GL_REPEAT; break;
+        case TextureConfiguration::WRAP_MIRROR:     wrapMode = GL_MIRRORED_REPEAT; break;
+        default: break;
     }
 
     if (wrapMode)
     {
-        glTexParameteri(type, GL_TEXTURE_WRAP_S, wrapMode);
-        CheckError("glTexParameteri WRAP S");
+        glTexParameteri(type, GL_TEXTURE_WRAP_S, wrapMode);         CheckError("glTexParameteri WRAP S");
         if (type != GL_TEXTURE_1D)
         {
-            glTexParameteri(type, GL_TEXTURE_WRAP_T, wrapMode);
-            CheckError("glTexParameteri WRAP T");
+            glTexParameteri(type, GL_TEXTURE_WRAP_T, wrapMode);     CheckError("glTexParameteri WRAP T");
         }
         if (type == GL_TEXTURE_3D || type == GL_TEXTURE_CUBE_MAP)
         {
-            glTexParameteri(type, GL_TEXTURE_WRAP_R, wrapMode);
-            CheckError("glTexParameteri WRAP R");
+            glTexParameteri(type, GL_TEXTURE_WRAP_R, wrapMode);     CheckError("glTexParameteri WRAP R");
         }
     }
 
 #ifdef USE_IMGUI
-    m_internalFormat = internalFormat;
 
     GLint isImmutable;
     glGetTexParameteriv(type, GL_TEXTURE_IMMUTABLE_FORMAT, &isImmutable);
@@ -295,77 +287,86 @@ void Texture::initialize(const std::string& textureName, const vec3i& imageSize,
             glTextureView(textureLayers[i], GL_TEXTURE_2D, texture, GL_RGBA, 0, 1, i, 1);
             if (!printedError)
                 CheckError("glTextureView");
+            else
+            {
+                // clear error queue anyway
+                GLenum error = glGetError();
+            }
         }
-        CheckError(nullptr);
     }
 #endif
 
     //  End
-    glBindTexture(type, 0);
+    glBindTexture(type, 0); CheckError("glBindTexture(0)");
     if (glIsTexture(texture))
         state = VALID;
     else state = INVALID;
 }
 
-void Texture::update(const void* data, unsigned int pixelFormat, unsigned int colorFormat, vec3i offset, vec3i subSize)
+void Texture::update(const void* data, vec3i offset, vec3i subSize)
 {
-    auto& n = name;
-    const auto CheckError = [n](const char* label)
-    {
-        GLenum error = glGetError();
-        if (!label)
-            return false;
-        switch (error)
+    constexpr bool fullVerbose = false;
+    const auto& textureName = name;
+    const auto CheckError = [textureName, fullVerbose](const std::string& label)
         {
-            case GL_INVALID_ENUM: std::cout << n << " : " << label << " : GL_INVALID_ENUM" << std::endl; break;
-            case GL_INVALID_VALUE: std::cout << n << " : " << label << " : GL_INVALID_VALUE" << std::endl; break;
-            case GL_INVALID_OPERATION: std::cout << n << " : " << label << " : GL_INVALID_OPERATION (or called out of render thread)" << std::endl; break;
-            case GL_INVALID_FRAMEBUFFER_OPERATION: std::cout << n << label << " : GL_INVALID_FRAMEBUFFER_OPERATION" << std::endl; break;
-            case GL_OUT_OF_MEMORY: std::cout << n << " : " << label << " : GL_OUT_OF_MEMORY" << std::endl; break;
-            case GL_STACK_UNDERFLOW: std::cout << n << " : " << label << " : GL_STACK_UNDERFLOW" << std::endl; break;
-            case GL_STACK_OVERFLOW: std::cout << n << " : " << label << " : GL_STACK_OVERFLOW" << std::endl; break;
-            default: break;
-        }
-        return error != GL_NO_ERROR;
-    };
+            GLenum error = glGetError();
+            if (label.empty())
+                return false;
+            if (error != GL_NO_ERROR)
+            {
+                std::cout << textureName << " : " << label << " : ";
+                switch (error)
+                {
+                    case GL_INVALID_ENUM: std::cout << "GL_INVALID_ENUM" << std::endl; break;
+                    case GL_INVALID_VALUE: std::cout << "GL_INVALID_VALUE" << std::endl; break;
+                    case GL_INVALID_OPERATION: std::cout << "GL_INVALID_OPERATION" << std::endl; break;
+                    case GL_INVALID_FRAMEBUFFER_OPERATION: std::cout << "GL_INVALID_FRAMEBUFFER_OPERATION" << std::endl; break;
+                    case GL_OUT_OF_MEMORY: std::cout << "GL_OUT_OF_MEMORY" << std::endl; break;
+                    case GL_STACK_UNDERFLOW: std::cout << "GL_STACK_UNDERFLOW" << std::endl; break;
+                    case GL_STACK_OVERFLOW: std::cout << "GL_STACK_OVERFLOW" << std::endl; break;
+                    default: break;
+                }
+                return true;
+            }
+            else if (fullVerbose) std::cout << "+--" << textureName << " : " << label << std::endl;
+            return false;
+        };
 
-    vec3i updateSize = vec3i::min(size, subSize);
+    vec3i maxCornerUpdate = vec3i::clamp(offset + subSize, vec3i::zero, size);
+    vec3i updateSize = maxCornerUpdate - offset;
+
+    glBindTexture(m_type, texture); CheckError("glBindTexture(type)");
     switch ((TextureConfiguration)(configuration & (uint16_t)TextureConfiguration::TYPE_MASK))
     {
         case TextureConfiguration::TEXTURE_1D:
-            glBindTexture(GL_TEXTURE_1D, texture);
-            glTexSubImage1D(GL_TEXTURE_1D, 0, offset.x, updateSize.x, pixelFormat, colorFormat, data);
+            glTexSubImage1D(GL_TEXTURE_1D, 0, offset.x, updateSize.x, m_pixelFormat, m_colorFormat, data);
             CheckError("glTexSubImage1D");
             break;
 
         case TextureConfiguration::TEXTURE_2D:
-            glBindTexture(GL_TEXTURE_2D, texture);
-            glTexSubImage2D(GL_TEXTURE_2D, 0, offset.x, offset.y, updateSize.x, updateSize.y, pixelFormat, colorFormat, data);
+            glTexSubImage2D(GL_TEXTURE_2D, 0, offset.x, offset.y, updateSize.x, updateSize.y, m_pixelFormat, m_colorFormat, data);
             CheckError("glTexSubImage2D");
             break;
 
         case TextureConfiguration::TEXTURE_3D:
-            glBindTexture(GL_TEXTURE_3D, texture);
-            glTexSubImage3D(GL_TEXTURE_3D, 0, offset.x, offset.y, offset.z, updateSize.x, updateSize.y, updateSize.z, pixelFormat, colorFormat, data);
+            glTexSubImage3D(GL_TEXTURE_3D, 0, offset.x, offset.y, offset.z, updateSize.x, updateSize.y, updateSize.z, m_pixelFormat, m_colorFormat, data);
             CheckError("glTexSubImage3D");
             break;
 
         case TextureConfiguration::CUBEMAP:
-            glBindTexture(GL_TEXTURE_CUBE_MAP, texture);
-            glTexSubImage3D(GL_TEXTURE_CUBE_MAP, 0, offset.x, offset.y, offset.z, updateSize.x, updateSize.y, updateSize.z, pixelFormat, colorFormat, data);
+            glTexSubImage3D(GL_TEXTURE_CUBE_MAP, 0, offset.x, offset.y, offset.z, updateSize.x, updateSize.y, updateSize.z, m_pixelFormat, m_colorFormat, data);
             CheckError("glTexSubImage3D");
             break;
 
         case TextureConfiguration::TEXTURE_ARRAY:
-            glBindTexture(GL_TEXTURE_2D_ARRAY, texture);
-            glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, offset.x, offset.y, offset.z, updateSize.x, updateSize.y, updateSize.z, pixelFormat, colorFormat, data);
+            glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, offset.x, offset.y, offset.z, updateSize.x, updateSize.y, updateSize.z, m_pixelFormat, m_colorFormat, data);
             CheckError("glTexSubImage3D");
             break;
 
         default:
             return;
     }
-    glBindTexture(m_type, 0);
+    glBindTexture(m_type, 0); CheckError("glBindTexture(0)");
 }
 
 

@@ -12,7 +12,7 @@ class TPSCameraComponent : public CameraComponent
 
 		void setTargetCharacter(Entity* _targetCharacter);
 
-		void update(float _dt);
+		void update(Component::UpdatePass updatePass, float _dt) override;
 
 		void onAddToEntity(Entity* entity) override;
 		void onDrawImGui() override;

@@ -11,7 +11,7 @@
 RigidBody::RigidBody(const RigidBodyType& type, const SolverType& solver) : 
 	m_type(type), m_solver(solver),
 	m_gravityFactor(1.f), m_bouncyness(0.5f), m_friction(0.1f), m_damping(0.f),
-	m_mass(1.f), m_inverseMass(1.f), m_volumicMass(800.f), m_inertia(1.f), m_inverseInertia(1.f),
+	m_mass(1.f), m_inverseMass(1.f), m_volumicMass(800.f), m_volume(1.f), m_inertia(1.f), m_inverseInertia(1.f),
 	m_externalForces(0.f), m_externalTorques(0.f), m_linearVelocity(0.f), m_linearAcceleration(0.f), m_angularVelocity(0.f), m_angularAcceleration(0.f)
 {
 
@@ -33,17 +33,27 @@ void RigidBody::initialize(bool explicitMass, float _mass)
 
 	if (!m_colliders.empty())
 	{
-		float volume = 0.f;
+		m_volume = 0.f;
 		m_inertia = mat4f(0.f);
 		for (int i = 0; i < m_colliders.size(); i++)
 		{
 			Collider* collider = static_cast<Collider*>(m_colliders[i]);
 			m_inertia += collider->m_shape->computeInertiaMatrix();
-			volume += collider->m_shape->computeVolume();
+			m_volume += collider->m_shape->computeVolume();
+		}
+		m_volume = std::max(m_volume, 0.001f);
+
+		if (explicitMass)
+		{
+			m_mass = std::max(_mass, 0.001f);
+			m_volumicMass = m_mass / m_volume;
+		}
+		else
+		{
+			m_mass = std::max(_mass * m_volume, 0.001f);
+			m_volumicMass = _mass;
 		}
 
-		m_mass = std::max(explicitMass ? _mass : _mass * volume, 0.001f);
-		m_volumicMass = volume > 0.001f ? m_mass / volume : m_mass;
 		m_inverseMass = 1.f / m_mass;
 		m_inertia *= m_mass;
 		m_inverseInertia = mat4f::inverse(m_inertia);
@@ -243,6 +253,19 @@ quatf RigidBody::getOrientation() const
 }
 
 
+void RigidBody::suscribeFixedUpdate(const Component::UpdateCallback& _callback, const Component* _component)
+{
+	m_fixedUpdateSuscribers.push_back({Component::UpdatePass::ePhysics, _callback, (Component*)_component, _component->getParentEntity() });
+}
+void RigidBody::unsuscribeFixedUpdate(const Component* _component)
+{
+	for (int i = m_fixedUpdateSuscribers.size() - 1; i >= 0; i--)
+	{
+		if (m_fixedUpdateSuscribers[i].m_component == _component)
+			m_fixedUpdateSuscribers.erase(m_fixedUpdateSuscribers.begin() + i);
+	}
+}
+
 
 /*glm::vec3 RigidBody::getDeltaPosition() const { return deltaPosition; }
 glm::fquat RigidBody::getDeltaRotation() const { return deltaRotation; }*/
@@ -324,8 +347,10 @@ void RigidBody::onDrawImGui()
 		{
 			m_inertia *= m_mass / m;
 			m_inverseInertia = mat4f::inverse(m_inertia);
+			m_inverseMass = 1.f / m_mass;
 		}
 
+		ImGui::Text("Volume : %fKg, VolumicMass : %fKg/m3", m_volume, m_volumicMass);
 		ImGui::DragFloat("GravityFactor", &m_gravityFactor, 0.1f);
 		ImGui::SliderFloat("Bouncyness", &m_bouncyness, 0.f, 1.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
 		ImGui::SliderFloat("Friction", &m_friction, 0.f, 1.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
@@ -353,6 +378,16 @@ void RigidBody::onDrawImGui()
 	if (m_drawColliders)
 	{
 		drawColliders(vec4f(componentColor.x, componentColor.y, componentColor.z, componentColor.w));
+
+		constexpr float ptssize = 0.015f;
+		vec4f gcenter = m_position;
+		Debug::Vertex tmpBuffer[6];
+		tmpBuffer[0].m_position = tmpBuffer[3].m_position = gcenter + vec4f(ptssize, 0, 0, 0);         tmpBuffer[0].m_color = Debug::darkGreen;
+		tmpBuffer[2].m_position = tmpBuffer[4].m_position = gcenter + vec4f(-ptssize, 0, ptssize, 0);  tmpBuffer[2].m_color = Debug::darkGreen;
+		tmpBuffer[1].m_position = tmpBuffer[5].m_position = gcenter - vec4f(ptssize, 0, ptssize, 0);   tmpBuffer[1].m_color = Debug::darkGreen;
+		Debug::setDepthTest(false);
+		Debug::drawMultiplePrimitive(tmpBuffer, 6, mat4f::identity, GL_TRIANGLES);
+		Debug::setDepthTest(true);
 	}
 	if (m_drawClusterCollisionCache && m_clusterIndex >=0)
 	{

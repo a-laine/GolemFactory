@@ -925,6 +925,12 @@
     <ClInclude Include="..\..\Sources\Utiles\MixedArray.h">
       <Filter>Fichiers sources\Utiles\Containers</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\Sources\HUD\WidgetGLDebugger.h">
+      <Filter>Fichiers sources\HUD</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\EntityComponent\SchedulerBuckets.h">
+      <Filter>Fichiers sources\EntityComponent</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\DefaultProperties.props">

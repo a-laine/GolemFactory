@@ -11,10 +11,21 @@ class ComponentUpdater : public Singleton<ComponentUpdater>
 	friend class Singleton<ComponentUpdater>;
 
 	public:
+		struct UpdateElement
+		{
+			Component::UpdatePass m_pass;
+			Component::UpdateCallback m_callback;
+			Component* m_component;
+			Entity* m_entity;
+		};
+
 		//  Public functions
-		void update(float _dt);
-		void add(Component::UpdatePass _pass, Component::UpdateCallback _callback, void* _component);
-		void remove(Component::UpdatePass _pass, void* _component);
+		void init();
+		void updateFromGameState(Component::UpdatePass _pass, float _dt);
+		void add(Component::UpdatePass _pass, const Component::UpdateCallback& _callback, Component* _component, Entity* _entity);
+		void remove(Component::UpdatePass _pass, Component* _component);
+		void remove(Component::UpdatePass _pass, Entity* _entity);
+		void removeAll(Entity* _entity);
 
 	private:
 		//  Default
@@ -22,13 +33,14 @@ class ComponentUpdater : public Singleton<ComponentUpdater>
 		~ComponentUpdater();
 		//
 
-		struct TmpElement
+		std::map<Component::UpdatePass, std::vector<UpdateElement>> componentUpdateList;
+		std::vector<UpdateElement> addList;
+		std::vector<UpdateElement> removeList;
+
+		struct PassInfos
 		{
-			Component::UpdatePass m_pass;
-			Component::UpdateCallback m_callback;
-			void* m_component;
+			std::string m_name;
+			bool m_isMultithreadable;
 		};
-		std::map<Component::UpdatePass, std::vector<Component::ComponentUpdateData>> componentUpdateList;
-		std::vector<TmpElement> addList;
-		std::vector<TmpElement> removeList;
+		std::vector<PassInfos> m_passInfos;
 };

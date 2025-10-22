@@ -1,6 +1,8 @@
 #include "WidgetRadioButton.h"
-//#include <Physics/SpecificCollision/CollisionUtils.h>
+#include "WidgetGLDebugger.h"
+
 #include <Physics/Collision.h>
+
 
 //	string define
 #define TEXT_MAX_CHAR			40
@@ -82,17 +84,30 @@ void WidgetRadioButton::draw(Shader* s, uint8_t& stencilMask, const mat4f& model
 		drawClippingShape(BATCH_INDEX_CLIPPING, true, s, stencilMask);
 
 	//	texture related stuff
-	if (font) glBindTexture(GL_TEXTURE_2D, font->texture);
-	else glBindTexture(GL_TEXTURE_2D, 0);
+	if (font) 
+	{
+		glBindTexture(GL_TEXTURE_2D, font->texture);		CheckGLError("draw", "glBindTexture(texid)");
+	}
+	else 
+	{
+		glBindTexture(GL_TEXTURE_2D, 0);					CheckGLError("draw", "glBindTexture(0)");
+	}	
 	int loc = s->getUniformLocation("useTexture");
-	if (loc >= 0) glUniform1i(loc, (font ? 1 : 0));
+	if (loc >= 0) 
+	{
+		glUniform1i(loc, (font ? 1 : 0));					CheckGLError("draw", "glUniform1i(useTexture)");
+	}
 
 	//	draw batch 0 (text)
 	loc = s->getUniformLocation("color");
-	if (loc >= 0) glUniform4fv(loc, 1, &colors[State::CURRENT].x);
+	if (loc >= 0) 
+	{
+		glUniform4fv(loc, 1, &colors[State::CURRENT].x);	CheckGLError("draw", "glUniform4fv(color)");
+	}
 
-	glBindVertexArray(batchList[BATCH_INDEX_TEXT].vao);
+	glBindVertexArray(batchList[BATCH_INDEX_TEXT].vao);		CheckGLError("draw", "glBindVertexArray(vao)");
 	glDrawElements(GL_TRIANGLES, (int)batchList[BATCH_INDEX_TEXT].faces.size(), GL_UNSIGNED_SHORT, NULL);//BATCH_INDEX_TEXT
+	CheckGLError("draw", "glDrawElements(BATCH_INDEX_TEXT)");
 
 	//	unclip zone (batch 1)
 	if (textConfiguration & CLIPPING)
@@ -101,29 +116,41 @@ void WidgetRadioButton::draw(Shader* s, uint8_t& stencilMask, const mat4f& model
 	//	texture related stuff
 	if (checked && onTexture)
 	{
-		glBindTexture(GL_TEXTURE_2D, onTexture->getTextureId());
+		glBindTexture(GL_TEXTURE_2D, onTexture->getTextureId()); CheckGLError("draw", "glBindTexture(texid)");
 		loc = s->getUniformLocation("useTexture");
-		if (loc >= 0) glUniform1i(loc, 1);
+		if (loc >= 0) 
+		{
+			glUniform1i(loc, 1); CheckGLError("draw", "glUniform1i(useTexture)");
+		}
 	}
 	else if (!checked && offTexture)
 	{
-		glBindTexture(GL_TEXTURE_2D, offTexture->getTextureId());
+		glBindTexture(GL_TEXTURE_2D, offTexture->getTextureId()); CheckGLError("draw", "glBindTexture(texid)");
 		loc = s->getUniformLocation("useTexture");
-		if (loc >= 0) glUniform1i(loc, 1);
+		if (loc >= 0) 
+		{
+			glUniform1i(loc, 1); CheckGLError("draw", "glUniform1i(useTexture)");
+		}
 	}
 	else
 	{
-		glBindTexture(GL_TEXTURE_2D, 0);
+		glBindTexture(GL_TEXTURE_2D, 0); CheckGLError("draw", "glBindTexture(0)");
 		loc = s->getUniformLocation("useTexture");
-		if (loc >= 0) glUniform1i(loc, 0);
+		if (loc >= 0) 
+		{
+			glUniform1i(loc, 0); CheckGLError("draw", "glUniform1i(useTexture)");
+		}
 	}
 
 	//	draw checked or not sprite
-	vec4f white = vec4f::one;
 	loc = s->getUniformLocation("color");
-	if (loc >= 0) glUniform4fv(loc, 1, &white.x);
-	glBindVertexArray(batchList[BATCH_INDEX_CHECKBOX].vao);
+	if (loc >= 0) 
+	{
+		glUniform4fv(loc, 1, &vec4f::one.x); CheckGLError("draw", "glUniform4fv(white)");
+	}
+	glBindVertexArray(batchList[BATCH_INDEX_CHECKBOX].vao);	CheckGLError("draw", "glBindVertexArray(vao)");
 	glDrawElements(GL_TRIANGLES, (int)batchList[BATCH_INDEX_CHECKBOX].faces.size(), GL_UNSIGNED_SHORT, NULL);
+	CheckGLError("draw", "glDrawElements(BATCH_INDEX_CHECKBOX)");
 }
 bool WidgetRadioButton::intersect(const mat4f& base, const vec4f& ray)
 {

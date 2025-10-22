@@ -9,7 +9,7 @@
 //	Specialized functions : sphere
 bool Collision::collide_SpherevsSphere(const vec4f& sphere1Center, const float& sphere1Radius, const vec4f& sphere2Center, const float& sphere2Radius, CollisionReport* report)
 {
-	vec4f v = sphere2Center - sphere1Center;
+	vec4f v = sphere1Center - sphere2Center;
 	float radiusSum = sphere1Radius + sphere2Radius;
 	float vv = v.getNorm2();
 
@@ -28,43 +28,13 @@ bool Collision::collide_SpherevsSphere(const vec4f& sphere1Center, const float& 
 			else
 				report->normal = vec4f(0, 1, 0, 0);
 
-			report->points.push_back(sphere1Center + sphere1Radius * report->normal);
+			report->points.push_back(sphere1Center - sphere1Radius * report->normal);
 		}
 		return true;
 	}
 }
 
 bool Collision::collide_SpherevsCapsule(const vec4f& sphereCenter, const float& sphereRadius, const vec4f& capsule1, const vec4f& capsule2, const float& capsuleRadius, CollisionReport* report)
-{
-	vec4f closest = CollisionUtils::getSegmentClosestPoint(capsule1, capsule2, sphereCenter);
-	float radiusSum = sphereRadius + capsuleRadius;
-	vec4f v = closest - sphereCenter; v.w = 0.f;
-	float vv = v.getNorm2();
-
-	if (vv > radiusSum * radiusSum)
-		return false;
-	else
-	{
-		if (report)
-		{
-			float length = std::sqrt(vv);
-			report->collision = true;
-			report->depths.push_back(radiusSum - length);
-
-			if (length > COLLISION_EPSILON)
-				report->normal = v / length;
-			else
-			{
-				vec4f s = capsule1 - capsule2;
-				report->normal = std::abs(s.x) > std::abs(s.z) ? vec4f(-s.y, s.x, 0.f, 0.f) : vec4f(0.f, -s.z, s.y, 0.f);
-				report->normal.normalize();
-			}
-			report->points.push_back(sphereCenter + sphereRadius * report->normal);
-		}
-		return true;
-	}
-}
-bool Collision::collide_CapsulevsSphere(const vec4f& sphereCenter, const float& sphereRadius, const vec4f& capsule1, const vec4f& capsule2, const float& capsuleRadius, CollisionReport* report)
 {
 	vec4f closest = CollisionUtils::getSegmentClosestPoint(capsule1, capsule2, sphereCenter);
 	float radiusSum = sphereRadius + capsuleRadius;
@@ -89,7 +59,37 @@ bool Collision::collide_CapsulevsSphere(const vec4f& sphereCenter, const float& 
 				report->normal = std::abs(s.x) > std::abs(s.z) ? vec4f(-s.y, s.x, 0.f, 0.f) : vec4f(0.f, -s.z, s.y, 0.f);
 				report->normal.normalize();
 			}
-			report->points.push_back(closest + capsuleRadius * report->normal);
+			report->points.push_back(sphereCenter - sphereRadius * report->normal);
+		}
+		return true;
+	}
+}
+bool Collision::collide_CapsulevsSphere(const vec4f& sphereCenter, const float& sphereRadius, const vec4f& capsule1, const vec4f& capsule2, const float& capsuleRadius, CollisionReport* report)
+{
+	vec4f closest = CollisionUtils::getSegmentClosestPoint(capsule1, capsule2, sphereCenter);
+	float radiusSum = sphereRadius + capsuleRadius;
+	vec4f v = closest - sphereCenter; v.w = 0.f;
+	float vv = v.getNorm2();
+
+	if (vv > radiusSum * radiusSum)
+		return false;
+	else
+	{
+		if (report)
+		{
+			float length = std::sqrt(vv);
+			report->collision = true;
+			report->depths.push_back(radiusSum - length);
+
+			if (length > COLLISION_EPSILON)
+				report->normal = v / length;
+			else
+			{
+				vec4f s = capsule1 - capsule2;
+				report->normal = std::abs(s.x) > std::abs(s.z) ? vec4f(-s.y, s.x, 0.f, 0.f) : vec4f(0.f, -s.z, s.y, 0.f);
+				report->normal.normalize();
+			}
+			report->points.push_back(closest - capsuleRadius * report->normal);
 		}
 		return true;
 	}
@@ -126,24 +126,24 @@ bool Collision::collide_SpherevsOrientedBox(const vec4f& sphereCenter, const flo
 				if (delta.x < delta.y && delta.x < delta.z)
 				{
 					report->depths.push_back(sphereRadius + delta.x);
-					report->normal = px > 0.f ? -bx : bx;
+					report->normal = px > 0.f ? bx : -bx;
 				}
 				else if (delta.y < delta.x&& delta.y < delta.z)
 				{
 					report->depths.push_back(sphereRadius + delta.y);
-					report->normal = py > 0.f ? -by : by;
+					report->normal = py > 0.f ? by : -by;
 				}
 				else
 				{
 					report->depths.push_back(sphereRadius + delta.z);
-					report->normal = pz > 0.f ? -bz : bz;
+					report->normal = pz > 0.f ? bz : -bz;
 				}
 				report->points.push_back(sphereCenter - sphereRadius * report->normal);
 			}
 			else
 			{
 				float distance = sqrt(distance2);
-				report->normal = (-1.f / distance) * delta;
+				report->normal = (1.f / distance) * delta;
 				report->depths.push_back(sphereRadius - distance);
 				report->points.push_back(sphereCenter + sphereRadius * report->normal);
 			}
@@ -169,7 +169,7 @@ bool Collision::collide_OrientedBoxvsSphere(const vec4f& sphereCenter, const flo
 	float py = clamp(vec4f::dot(p, by), -1.f, 1.f);
 	float pz = clamp(vec4f::dot(p, bz), -1.f, 1.f);
 	vec4f closest = center + bx * px + by * py + bz * pz;
-	vec4f delta = sphereCenter - closest;
+	vec4f delta = closest - sphereCenter;
 	float distance2 = delta.getNorm2();
 
 	if (distance2 > sphereRadius * sphereRadius)
@@ -187,21 +187,21 @@ bool Collision::collide_OrientedBoxvsSphere(const vec4f& sphereCenter, const flo
 				if (delta.x < delta.y && delta.x < delta.z)
 				{
 					report->depths.push_back(sphereRadius + delta.x);
-					report->normal = px > 0.f ? bx : -bx;
+					report->normal = px > 0.f ? -bx : bx;
 					report->normal.normalize();
 					report->points.push_back(center - halfSize.x * report->normal);
 				}
 				else if (delta.y < delta.x&& delta.y < delta.z)
 				{
 					report->depths.push_back(sphereRadius + delta.y);
-					report->normal = py > 0.f ? by : -by;
+					report->normal = py > 0.f ? -by : by;
 					report->normal.normalize();
 					report->points.push_back(center - halfSize.y * report->normal);
 				}
 				else
 				{
 					report->depths.push_back(sphereRadius + delta.z);
-					report->normal = pz > 0.f ? bz : -bz;
+					report->normal = pz > 0.f ? -bz : bz;
 					report->normal.normalize();
 					report->points.push_back(center - halfSize.z * report->normal);
 				}

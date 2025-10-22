@@ -26,21 +26,21 @@ void CharacterController::setCamera(CameraComponent* _camera)
 	m_camera = _camera;
 }
 
-void CharacterControllerUpdate(void* _This, float dt)
+void CharacterController::update(Component::UpdatePass updatePass, float _dt)
 {
-	CharacterController* This = (CharacterController*)_This;
-	This->update(dt);
-}
-
-void CharacterController::update(float _dt)
-{
+	SCOPED_CPU_MARKER("CharacterController");
 	if (!m_camera || !m_animator)
 		return;
 
+	// update called in fixed update
+	if (updatePass == Component::UpdatePass::ePhysics)
+	{
+		m_rigidbody->setLinearVelocity(vec4f(m_previousMovement.x, m_rigidbody->getLinearVelocity().y, m_previousMovement.z, 0));
+		return;
+	}
+
 	// aliases
 	Entity* entity = getParentEntity();
-	SCOPED_CPU_MARKER("CharacterController");
-
 	vec4f direction = vec4f::zero;
 	vec4f cameraForward = m_camera->getForward();
 	cameraForward.y = 0.f;
@@ -363,91 +363,6 @@ void CharacterController::update(float _dt)
 
 	m_animator->setParameter("grounded", m_isGrounded);
 
-	/*vec4f playerFwd = (entity->getWorldOrientation() * vec4f(0, 0, 1, 0)).getNormal();
-	vec4f playerRight = (entity->getWorldOrientation() * vec4f(1, 0, 0, 0)).getNormal();
-	vec4f playerPosition = entity->getWorldPosition();
-
-	// inputs
-	float speed = 2.f;
-	if (EventHandler::getInstance()->isActivated(EventEnum::FORWARD)) direction += forward;
-	if (EventHandler::getInstance()->isActivated(BACKWARD)) direction -= forward;
-	if (EventHandler::getInstance()->isActivated(LEFT)) direction += left;
-	if (EventHandler::getInstance()->isActivated(RIGHT)) direction -= left;
-	if (EventHandler::getInstance()->isActivated(SNEAKY)) speed = 1.f;
-
-	if (std::abs(direction.x) > 0.001f || std::abs(direction.z) > 0.001f)
-	{
-		direction.normalize();
-		m_immobileDuration = 0.f;
-		float dot = vec4f::dot(playerFwd, direction);
-
-		if (EventHandler::getInstance()->isActivated(RUN))
-		{
-			float tolerance = 0.8f;
-			speed += std::max((dot - tolerance) / (1.f - tolerance), 0.f);
-		}
-
-		float angle = acos(clamp(dot, -1.f, 1.f));
-		float sign = playerFwd.x * direction.z - playerFwd.z * direction.x;
-		if (sign > 0.f)
-			angle = -angle;
-
-		const float angleChange = speed * _dt;
-		if (std::abs(angle) > angleChange)
-			angle *= angleChange / std::abs(angle);
-
-		quatf dq = quatf(vec3f(0, angle, 0));
-		entity->setWorldOrientation(dq * entity->getWorldOrientation());
-	}
-	else
-	{
-		speed = 0.f;
-		m_immobileDuration += _dt;
-	}
-
-	m_grounded = true;
-
-	World* world = entity->getParentWorld();
-	if (world)
-	{
-		Sphere sphere;
-		sphere.center = playerPosition + vec4f(0, m_groundedOffset, 0, 0);
-		sphere.radius = m_groundedCastRadius;
-		m_grounded = world->getPhysics().collisionTest(sphere, &world->getSceneManager(), (uint64_t)Entity::Flags::Fl_Collision,
-			(uint64_t)Entity::Flags::Fl_Player);
-	}
-
-	if (m_grounded)
-	{
-		if (EventHandler::getInstance()->isActivated(JUMP))
-		{
-			m_grounded = false;
-			m_smoothedVelocity.y = m_jumpImpulse;
-			m_immobileDuration = 0.f;
-			m_animator->setParameter("jump", true);
-			vec4f v = m_rigidbody->getLinearVelocity() + vec4f(0, m_jumpImpulse, 0, 0);
-			m_rigidbody->setLinearVelocity(m_smoothedVelocity);
-		}
-		else m_smoothedVelocity.y = 0.f;
-	}
-
-	// change velocity
-	const float velocityChange = m_acceleration * _dt;
-	m_velocity = speed * direction;
-	vec4f delta = m_velocity - m_smoothedVelocity;
-	delta.y = 0;
-	float deltaMag = delta.getNorm();
-	if (deltaMag > velocityChange)
-		delta *= velocityChange / deltaMag;
-	m_smoothedVelocity += delta;
-
-	// send to animator
-	m_animator->setParameter("moveX", vec4f::dot(m_smoothedVelocity, playerRight));
-	m_animator->setParameter("moveZ", vec4f::dot(m_smoothedVelocity, playerFwd));
-	m_animator->setParameter("immobileDuration", m_immobileDuration);
-	m_animator->setParameter("grounded", m_grounded);
-
-	// integrate velocity*/
 	m_rigidbody->setGravityFactor((m_isGrounded && m_characterState != CharacterState::eJumping) ? 6.f : 1.f);
 	m_rigidbody->setLinearVelocity(vec4f(m_previousMovement.x, m_rigidbody->getLinearVelocity().y, m_previousMovement.z, 0));
 }
@@ -523,17 +438,26 @@ bool CharacterController::isMale() const { return m_isMale; }
 
 void CharacterController::onAddToEntity(Entity* entity)
 {
+	using uPass = Component::UpdatePass;
 	Component::onAddToEntity(entity);
-	ComponentUpdater::getInstance()->add(Component::ePlayer, &CharacterControllerUpdate, this);
 
 	m_animator = entity->getComponent<Animator>();
 	m_rigidbody = entity->getComponent<RigidBody>();
 	m_collider = entity->getComponent<Collider>();
+
+	ComponentUpdater::getInstance()->add(uPass::eBeginFrame, [this](uPass updatePass, float _dt) {update(updatePass, _dt);}, this, entity);
+	m_rigidbody->suscribeFixedUpdate([this](uPass updatePass, float _dt) {update(updatePass, _dt); }, this);
+
+	//ComponentUpdater::getInstance()->add(uPass::ePhysics, [this](uPass updatePass, float _dt) {update(updatePass, _dt);}, this);
+
+
 }
 
 void CharacterController::onDrawImGui()
 {
 #ifdef USE_IMGUI
+	static vec4f g_cacheColor = Debug::blue;
+
 	const ImVec4 componentColor = ImVec4(0.7f, 0.f, 0.f, 1.f);
 	std::ostringstream unicName;
 	unicName << "Player movement##" << (uintptr_t)this;
@@ -544,8 +468,10 @@ void CharacterController::onDrawImGui()
 		ImGui::DragFloat("Walk speed", &m_walkSpeed);
 		ImGui::DragFloat("Run speed", &m_runSpeed);
 		ImGui::DragFloat("Sprint speed", &m_sprintSpeed);
+		ImGui::DragFloat("Jump force", &m_jumpForce);
 
 		ImGui::Checkbox("Draw collision cache", &m_drawCollisionCache);
+		ImGui::ColorEdit4("Cache color", &g_cacheColor.x);
 		ImGui::Checkbox("m_drawGroundTestShapes", &m_drawGroundTestShapes);
 
 		ImGui::TreePop();
@@ -553,7 +479,10 @@ void CharacterController::onDrawImGui()
 
 	if (m_drawCollisionCache)
 	{
-		m_collisionCache.debugDraw(false, Debug::blue);
+		if (g_cacheColor.w > 0.001f)
+			m_collisionCache.debugDraw(false, g_cacheColor);
+		if (g_cacheColor.w < 0.9f)
+			m_collisionCache.debugDraw(true, g_cacheColor);
 	}
 	if (m_drawGroundTestShapes)
 	{

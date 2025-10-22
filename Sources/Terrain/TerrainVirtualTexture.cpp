@@ -115,7 +115,7 @@ void TerrainVirtualTexture::updateGPUTexture()
 		{
 			if (tile->m_lod == 0)
 			{
-				m_GPUTexture.update(tile->m_owner->getRawData(), GL_RGBA_INTEGER, GL_UNSIGNED_SHORT,
+				m_GPUTexture.update(tile->m_owner->getRawData(),
 					vec3i(tile->m_min.y, tile->m_min.x, 0),
 					vec3i(tile->m_size.x, tile->m_size.y, 0));
 			}
@@ -141,7 +141,7 @@ void TerrainVirtualTexture::updateGPUTexture()
 			for (int i = 0; i < size.x; i++)
 				for (int j = 0; j < size.y; j++)
 					tmp[i * size.y + j] = cputex64[(minmax.x + i) * m_physicalTextureSize.y + (minmax.y + j)];
-			m_GPUTexture.update(tmp, GL_RGBA_INTEGER, GL_UNSIGNED_SHORT, vec3i(minmax.y, minmax.x, 0), vec3i(size.y, size.x, 0));
+			m_GPUTexture.update(tmp, vec3i(minmax.y, minmax.x, 0), vec3i(size.y, size.x, 0));
 		}
 		m_pendingTiles.clear();
 	}
@@ -150,7 +150,7 @@ void TerrainVirtualTexture::updateGPUTexture()
 void TerrainVirtualTexture::syncroGPUTexture()
 {
 	m_mutexPhysicalTexture.lock();
-	m_GPUTexture.update(m_CPUTexture, GL_RGBA_INTEGER, GL_UNSIGNED_SHORT);
+	m_GPUTexture.update(m_CPUTexture);
 	m_mutexPhysicalTexture.unlock();
 }
 

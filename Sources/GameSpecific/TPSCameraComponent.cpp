@@ -6,13 +6,6 @@
 #include <Events/EventHandler.h>
 #include "HUD/WidgetManager.h"
 
-
-void TPSCameraComponentUpdate(void* componentPtr, float dt)
-{
-	TPSCameraComponent* camera = (TPSCameraComponent*)componentPtr;
-	camera->update(dt);
-}
-
 TPSCameraComponent::TPSCameraComponent() : CameraComponent(true)
 {
 	m_targetCharacter = nullptr;
@@ -29,7 +22,7 @@ void TPSCameraComponent::setTargetCharacter(Entity* _targetCharacter)
 	m_targetCharacter = _targetCharacter;
 }
 
-void TPSCameraComponent::update(float _dt)
+void TPSCameraComponent::update(Component::UpdatePass updatePass, float _dt)
 {
 	if (!m_targetCharacter)
 		return;
@@ -55,8 +48,9 @@ void TPSCameraComponent::update(float _dt)
 
 void TPSCameraComponent::onAddToEntity(Entity* entity)
 {
+	using uPass = Component::UpdatePass;
 	CameraComponent::onAddToEntity(entity);
-	ComponentUpdater::getInstance()->add(Component::ePlayer, &TPSCameraComponentUpdate, this);
+	ComponentUpdater::getInstance()->add(uPass::eEndFrame, [this](uPass updatePass, float _dt) {update(updatePass, _dt);}, this, entity);
 }
 
 void TPSCameraComponent::onDrawImGui()

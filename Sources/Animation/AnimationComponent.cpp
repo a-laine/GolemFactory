@@ -133,14 +133,9 @@ AnimationClip* AnimationComponent::getCurrentAnimation() const
 	return m_animation;
 }
 
-void AnimationComponentUpdate(void* componentPtr, float dt)
-{
-	AnimationComponent* animation = (AnimationComponent*)componentPtr;
-	animation->update(dt);
-}
-
 void AnimationComponent::onAddToEntity(Entity* entity)
 {
+	using uPass = Component::UpdatePass;
 	Component::onAddToEntity(entity);
 	if (entity)
 	{
@@ -149,7 +144,7 @@ void AnimationComponent::onAddToEntity(Entity* entity)
 			m_skeleton = m_skeletonComponent->getSkeleton();
 		TryInitSkeletonPose();
 
-		ComponentUpdater::getInstance()->add(Component::eCommon, &AnimationComponentUpdate, this);
+		ComponentUpdater::getInstance()->add(uPass::eAnimation, [this](uPass pass, float dt) {update(pass, dt);}, this, entity);
 	}
 }
 
@@ -197,7 +192,7 @@ const std::vector<mat4f>& AnimationComponent::getSkeletonPose() const
 
 
 
-void AnimationComponent::update(float elapsedTime)
+void AnimationComponent::update(Component::UpdatePass updatePass, float elapsedTime)
 {
 	SCOPED_CPU_MARKER("AnimationComponent");
 	if (!m_running)

@@ -7,6 +7,7 @@
 
 #include "EntityComponent/Component.hpp"
 #include "Physics/Shapes/AxisAlignedBox.h"
+#include <EntityComponent/ComponentUpdater.h>
 
 //class Cluster;
 class RigidBody : public Component
@@ -61,6 +62,8 @@ class RigidBody : public Component
 		void setFriction(const float& f);
 		void setDamping(const float& f);
 
+		void suscribeFixedUpdate(const Component::UpdateCallback& _callback, const Component* _component);
+		void unsuscribeFixedUpdate(const Component* _component);
 
 
 		RigidBodyType getType() const;
@@ -98,7 +101,7 @@ class RigidBody : public Component
 		RigidBodyType m_type;
 		SolverType m_solver;
 
-		float m_mass, m_inverseMass, m_volumicMass;
+		float m_mass, m_inverseMass, m_volumicMass, m_volume;
 		float m_gravityFactor;
 		float m_bouncyness;
 		float m_friction;
@@ -113,11 +116,16 @@ class RigidBody : public Component
 		vec4f m_angularAcceleration;
 		vec4f m_linearVelocity;
 		vec4f m_angularVelocity;
+
+		std::vector<ComponentUpdater::UpdateElement> m_fixedUpdateSuscribers;
 		//
 
 	private:
 		//	Internal (used by Physics engine)
+		int m_indexInList = -1;
 		AxisAlignedBox m_sweptBox;
+		vec4f m_position;
+		quatf m_orientation;
 		vec4f m_previousPosition;
 		quatf m_previousOrientation;
 

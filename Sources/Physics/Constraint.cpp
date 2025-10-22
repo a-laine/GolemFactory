@@ -51,8 +51,8 @@ void Constraint::createFromReport(CollisionReport& report, const int& pointIndex
 		localPoint2 = worldPoint - body2->getPosition();
 
 	float bouncyness = body2 ? 0.5f * (body1->m_bouncyness + body2->m_bouncyness) : body1->m_bouncyness;
-	float closingVelocity = vec4f::dot(computeClosingVelocity(), axis[0]);
-	targetLinearVelocity = vec4f(depth / deltaTime - bouncyness * closingVelocity, 0.f, 0.f, 0.f);
+	float closingVelocity = std::min(vec4f::dot(computeClosingVelocity(), axis[0]), 0.f);
+	targetLinearVelocity = vec4f(30 * depth - bouncyness * closingVelocity, 0.f, 0.f, 0.f);
 
 	frictionLimit = true;
 	friction = body2 ? std::min(body1->m_friction, body2->m_friction) : body1->m_friction;

@@ -108,9 +108,9 @@ int main()
 	std::cout << ConsoleColor::getColorString(ConsoleColor::Color::GREEN) << "Application start";
 	std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
 	Application application;
-	context = application.createWindow("GolemFactory : Editor", 1600, 900);
+	context = application.createWindow("GolemFactory : Editor", glfwGetPrimaryMonitor(), 1600, 900);
 	context->makeCurrent();
-	context->setVSync(true);
+	context->setVSync(false);
 	application.initGLEW(1);
 	initManagers();
 	application.changeIcon(ResourceManager::getInstance()->getRepository() + "Textures/cubeIcon.png");

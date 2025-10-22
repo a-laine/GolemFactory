@@ -33,12 +33,12 @@ class AnimationComponent : public Component
 		void startAnimation(float speed, bool loop = true);
 		void stopAnimation();
 		void resumeAnimation();
-		void update(float elapsedTime);
 		bool isAnimationRunning();
 
 		const std::vector<mat4f>& getSkeletonPose() const;
 		bool hasSkeletonAnimation() const;
 
+		void update(Component::UpdatePass updatePass, float elapsedTime) override;
 		bool load(Variant& jsonObject, const std::string& objectName) override;
 		void save(Variant& jsonObject) override;
 		void onAddToEntity(Entity* entity) override;

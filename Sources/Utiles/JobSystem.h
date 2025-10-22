@@ -25,16 +25,17 @@ class Job2
 		class ReaderCounter
 		{
 			public:
-				ReaderCounter(std::atomic_uint32_t& c) : m_counter(&c) { m_counter->fetch_add(1); };
+				ReaderCounter(std::atomic_uint16_t& c) : m_counter(&c) { m_counter->fetch_add(1); };
 				~ReaderCounter() { m_counter->fetch_sub(1); };
 
 			protected:
-				std::atomic_uint32_t* m_counter;
+				std::atomic_uint16_t* m_counter;
 		};
 
 		Job2(JobPriority priority, Task task, uint32_t dependancyCount = 0);
+		~Job2();
 
-		void waitCompletion(bool allowGrabInstances);
+		void waitCompletion(bool allowGrabInstances, bool blockWaiting = true);
 		bool pollCompletion(int* optionalRemainingInstances = nullptr);
 		bool grabInstanceGroup(int& instanceStart, int& instanceCount);
 
@@ -54,10 +55,8 @@ class Job2
 		std::atomic_uint32_t* m_dependancy = nullptr;	// dependancyCounter pointer of an other job depending on me
 		volatile int m_jobIndex = -1;					// job index in the pool
 
-		std::atomic_uint32_t m_readingThreadCount;
-
-		std::mutex m_finishedLock;
-		std::condition_variable m_finishedSignal;
+		std::atomic_uint16_t m_readingThreadCount;		// incremented just when a thread enter this job, even before lock
+		std::atomic_bool m_finishedJob;
 };
 
 class JobSystem : public Singleton<JobSystem>
@@ -72,12 +71,6 @@ class JobSystem : public Singleton<JobSystem>
 
 		void pushJob(Job2& job, void* data = nullptr, std::atomic_uint32_t* dependancy = nullptr);
 		void dispatchJob(Job2& job, int count, int groupSize, void* data = nullptr, std::atomic_uint32_t* dependancy = nullptr);
-
-		/*Job2* pushJob(Job2::JobPriority priority, Job2::Task task, void* data,
-			uint32_t dependancyCount = 0, std::atomic_uint32_t* dependancy = nullptr);
-		Job2* dispatchJob(Job2::JobPriority priority, Job2::Task task, void* data, int count, int groupSize, 
-			uint32_t dependancyCount = 0, std::atomic_uint32_t* dependancy = nullptr);*/
-
 		void notifyWorkers(Job2::JobPriority type = Job2::JobPriority::COUNT, bool all = true);
 
 	private:
@@ -85,14 +78,10 @@ class JobSystem : public Singleton<JobSystem>
 		void removeJob(Job2* job);
 
 		std::mutex m_lock; // has to be STD one due to conditions
-		//ThreadSafeRingBuffer<Job2*, 256> m_jobPools[Job2::JobPriority::COUNT];
-
 		BankArray<Job2*> m_jobPools[Job2::JobPriority::COUNT];
 		std::condition_variable m_wakeupWorker;
 		std::condition_variable m_wakeupLongWorker;
 		int m_workerCount = 0;
 		int m_longWorkerCount = 0;
 		std::atomic_bool m_keepWorkersRunning;
-
-		//std::vector<std::thread*> m_workers;
 };

@@ -4,6 +4,7 @@
 #include <Resources/ResourceManager.h>
 #include <World/World.h>
 #include <World/WorldComponents/EntityFactory.h>
+#include <Renderer/CameraComponent.h>
 #include <Utiles/ProfilerConfig.h>
 
 #include <filesystem>
@@ -304,7 +305,7 @@ void Terrain::addLodRadius(float _radiusIncrement)
 	else
 		m_lodRadius.push_back(_radiusIncrement);
 }
-void Terrain::update(vec4f _cameraPosition)
+void Terrain::update(vec4f _cameraPosition, CameraComponent* _currentCamera)
 {
 	SCOPED_CPU_MARKER("Terrain::updates");
 	if (m_lodRadius.empty() || !m_grid || !m_areaContainer)
@@ -319,6 +320,13 @@ void Terrain::update(vec4f _cameraPosition)
 	std::vector<AreaJobData> jobLodDatas;
 	std::vector<AreaJobData> jobDetailDatas;
 
+	if (_currentCamera)
+	{
+		vec4f d = _currentCamera->getForward();
+		m_currentCameraDirection = vec2f(d.x, d.z);
+		m_currentCameraDirection.normalize();
+		m_currentCameraFov = _currentCamera->getVerticalFieldOfView() * Debug::viewportRatio;
+	}
 	m_currentPlayerPosInTile.x = (AREA_WORLDSCALE * 0.5f * m_gridSize.x + _cameraPosition.x) / AREA_WORLDSCALE;
 	m_currentPlayerPosInTile.y = (AREA_WORLDSCALE * 0.5f * m_gridSize.y + _cameraPosition.z) / AREA_WORLDSCALE;
 	vec2i camAreaIndex;
@@ -422,7 +430,7 @@ void Terrain::update(vec4f _cameraPosition)
 		SCOPED_CPU_MARKER("Area LOD change");
 		std::sort(jobLodDatas.begin(), jobLodDatas.end(), [](const AreaJobData& a, const AreaJobData& b) { return a.priority < b.priority; });
 
-#if 1
+#if 0
 		Job2 updateLodJob(Job2::JobPriority::HIGH, [&jobLodDatas](int _jobId, void* _data) {
 				SCOPED_CPU_MARKER("TerrainArea::updateLodJob");
 				TerrainArea* area = jobLodDatas[_jobId].m_area;
@@ -857,13 +865,13 @@ void Terrain::drawImGui(World& world)
 	static ImVec2 dragScrollInit;
 	static bool centerOnPlayer = false;
 
-	static std::string txt1 = "";
+	//static std::string txt1 = "";
 	//static std::string txt2 = "";
 	//static std::string txt3 = "";
 
 	ImGui::SliderFloat("Area size", &areaSize, 5.f, 100.f, "%.3f");
 	ImGui::Checkbox("Center on player", &centerOnPlayer);
-	ImGui::TextDisabled(txt1.c_str());
+	//ImGui::TextDisabled(txt1.c_str());
 	//ImGui::TextDisabled(txt2.c_str());
 	//ImGui::TextDisabled(txt3.c_str());
 
@@ -997,11 +1005,21 @@ void Terrain::drawImGui(World& world)
 			}
 		}
 
+	float coneLength = 50.f;
+	float tanA = tanf(0.5f * m_currentCameraFov);
+	vec2f d = m_currentCameraDirection;
+	vec2f n = vec2f(d.y, -d.x);
+	drawList->AddLine(playerPos, playerPos + ImVec2(coneLength * (d.x + tanA * n.x), coneLength * (d.y + tanA * n.y)), 0xFF2020FF);
+	drawList->AddLine(playerPos, playerPos + ImVec2(coneLength * (d.x - tanA * n.x), coneLength * (d.y - tanA * n.y)), 0xFF2020FF);
 	drawList->AddCircleFilled(playerPos, 5, 0xFF202080);
 	drawList->AddCircle(playerPos, 5, 0xFF2020FF);
 
 	ImGui::Dummy(ImVec2(frameSizeX, frameSizeY));
 	ImGui::EndChild();
+
+	// other debug options
+
+
 	ImGui::PopID();
 	ImGui::End();
 #endif

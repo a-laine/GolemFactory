@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <string>
+#include <functional>
 #include <Utiles/ImguiConfig.h>
 
 
@@ -41,15 +42,11 @@ class Component
 	public:
 		enum UpdatePass
 		{
-			ePlayer,
-			eCommon
+			#define BUCKET_MACRO(name,multithreaded) e##name,
+			#include "SchedulerBuckets.h"
+			#undef BUCKET_MACRO
 		};
-		typedef void(*UpdateCallback)(void*, float);
-		struct ComponentUpdateData
-		{
-			UpdateCallback updateFunction;
-			void* component;
-		};
+		using UpdateCallback = std::function<void(UpdatePass,float)>;
 
 		static ClassID getStaticClassID() { return 0; }
 
@@ -76,6 +73,7 @@ class Component
 		virtual void onRemoveFromEntity(Entity* entity) { m_parent = nullptr; }
 		virtual bool load(Variant& jsonObject, const std::string& objectName) { return false; };
 		virtual void save(Variant& jsonObject) {};
+		virtual void update(Component::UpdatePass updatePass, float elapsedTime) {};
 		virtual void onDrawImGui() {};
 
 	protected:
