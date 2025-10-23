@@ -43,19 +43,21 @@ class TerrainDetailDrawableComponent : public DrawableComponent
 		void setDoubleSidedFaces(bool enable);
 		void setColorTintGradient(vec3f c0, vec3f c1);
 		void setAlphaClipThs(float ths);
+		void setDetailIndex(uint16_t index);
 
 		void onDrawImGui() override;
 
 	protected:
-		AxisAlignedBox m_boundingBox;
 		TerrainArea* m_area;
-		GLuint  m_vao, m_instancesBuffer;
-		float normalWorldWeight;
-		float fullModelScale;
-		float modelOffset;
-		bool forceDoublesided;
-		vec3f color0, color1;
-		float alphaThs;
-
+		AxisAlignedBox m_boundingBox;
 		std::vector<vec4ui> m_instancesDatas;
+		GLuint  m_vao, m_instancesBuffer;
+		float m_normalWorldWeight;
+		float m_fullModelScale;
+		float m_modelOffset;
+		vec3f m_color0, m_color1;
+		float m_alphaThs;
+		uint16_t m_detailIndex;
+		bool m_forceDoublesided;
+
 };

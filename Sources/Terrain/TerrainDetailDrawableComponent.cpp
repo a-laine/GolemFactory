@@ -10,9 +10,9 @@
 
 TerrainDetailDrawableComponent::TerrainDetailDrawableComponent(TerrainArea* _area) : m_area(_area), m_vao(0), m_instancesBuffer(0)
 {
-	forceDoublesided = false;
-	color0 = color1 = vec3f(1.f);
-	alphaThs = -1.f;
+	m_forceDoublesided = false;
+	m_color0 = m_color1 = vec3f(1.f);
+	m_alphaThs = -1.f;
 }
 TerrainDetailDrawableComponent::~TerrainDetailDrawableComponent()
 {
@@ -44,12 +44,12 @@ void TerrainDetailDrawableComponent::pushConstantData(Shader* _shader) const
 		for (int i = 0; i < allRadius.size(); i++)
 			constant.morphRadius[i] = allRadius[i];
 
-		constant.normalWorldWeight = normalWorldWeight;
-		constant.fullModelScale = fullModelScale;
-		constant.modelOffset = modelOffset;
-		constant.color0 = color0;
-		constant.color1 = color1;
-		constant.alphaThs = alphaThs;
+		constant.normalWorldWeight = m_normalWorldWeight;
+		constant.fullModelScale = m_fullModelScale;
+		constant.modelOffset = m_modelOffset;
+		constant.color0 = m_color0;
+		constant.color1 = m_color1;
+		constant.alphaThs = m_alphaThs;
 
 		int loc = _shader->getUniformLocation("constantData");
 		if (loc >= 0)
@@ -64,6 +64,11 @@ void TerrainDetailDrawableComponent::onAddToEntity(Entity* entity)
 
 void TerrainDetailDrawableComponent::pushDraw(std::vector<Renderer::DrawElement>& drawQueue, uint32_t distance, bool isShadowPass)
 {
+#ifdef USE_IMGUI
+	if (!m_area->getTerrain()->getAreaDetails()[m_detailIndex].m_visible)
+		return;
+#endif
+
 	Renderer::DrawElement element;
 	element.material = m_material;
 	element.mesh = m_mesh;
@@ -72,7 +77,7 @@ void TerrainDetailDrawableComponent::pushDraw(std::vector<Renderer::DrawElement>
 
 	uint64_t queue = m_material->getShader()->getRenderQueue();
 	queue = queue << 48;
-	if (forceDoublesided)
+	if (m_forceDoublesided)
 		queue &= ~FaceCullingMask;
 	if (!isShadowPass && (queue & TransparentMask))
 	{
@@ -80,7 +85,7 @@ void TerrainDetailDrawableComponent::pushDraw(std::vector<Renderer::DrawElement>
 		distance = ~distance;
 		distance++;
 	}
-	if (alphaThs > 0.f)
+	if (m_alphaThs > 0.f)
 		queue |= TransparentMask;
 
 	if (isShadowPass)
@@ -138,32 +143,36 @@ void TerrainDetailDrawableComponent::setInstanceData(std::vector<vec4ui>& data)
 
 void TerrainDetailDrawableComponent::setFullModelScale(float scale)
 {
-	fullModelScale = scale;
+	m_fullModelScale = scale;
 }
 float TerrainDetailDrawableComponent::getFullModelScale() const
 {
-	return fullModelScale;
+	return m_fullModelScale;
 }
 void TerrainDetailDrawableComponent::setWorldNormalWeight(float weight)
 {
-	normalWorldWeight = weight;
+	m_normalWorldWeight = weight;
 }
 void TerrainDetailDrawableComponent::setModelOffset(float offset)
 {
-	modelOffset = offset;
+	m_modelOffset = offset;
 }
 void TerrainDetailDrawableComponent::setDoubleSidedFaces(bool enable)
 {
-	forceDoublesided = enable;
+	m_forceDoublesided = enable;
 }
 void TerrainDetailDrawableComponent::setColorTintGradient(vec3f c0, vec3f c1)
 {
-	color0 = c0;
-	color1 = c1;
+	m_color0 = c0;
+	m_color1 = c1;
 }
 void TerrainDetailDrawableComponent::setAlphaClipThs(float ths)
 {
-	alphaThs = ths;
+	m_alphaThs = ths;
+}
+void TerrainDetailDrawableComponent::setDetailIndex(uint16_t index) 
+{
+	m_detailIndex = index;
 }
 
 void TerrainDetailDrawableComponent::initializeVBO()
@@ -268,10 +277,10 @@ void TerrainDetailDrawableComponent::onDrawImGui()
 		ImGui::Spacing();
 		ImGui::TextColored(componentColor, "Constant data");
 		ImGui::Indent();
-		ImGui::SliderFloat("NormalWorldWeight", &normalWorldWeight, 0.f, 1.f);
-		ImGui::SliderFloat("FullModelScale", &fullModelScale, 0.01f, 30.f);
-		ImGui::ColorEdit3("Tint 0", &color0.x);
-		ImGui::ColorEdit3("Tint 1", &color1.x);
+		ImGui::SliderFloat("NormalWorldWeight", &m_normalWorldWeight, 0.f, 1.f);
+		ImGui::SliderFloat("FullModelScale", &m_fullModelScale, 0.01f, 30.f);
+		ImGui::ColorEdit3("Tint 0", &m_color0.x);
+		ImGui::ColorEdit3("Tint 1", &m_color1.x);
 		ImGui::Unindent();
 
 		ImGui::Spacing();

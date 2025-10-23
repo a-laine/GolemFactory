@@ -560,8 +560,9 @@ void Terrain::update(vec4f _cameraPosition, CameraComponent* _currentCamera)
 }
 void Terrain::addRemoveDetails(TerrainArea* area, int lod)
 {
-	for (const AreaDetails& terrainDetail : m_areaDetails)
+	for (int i = 0; i < m_areaDetails.size(); i++)
 	{
+		const AreaDetails& terrainDetail = m_areaDetails[i];
 		if (lod < terrainDetail.m_lod)
 		{
 			// search if area has detail
@@ -597,6 +598,7 @@ void Terrain::addRemoveDetails(TerrainArea* area, int lod)
 				drawable->setDoubleSidedFaces(terrainDetail.m_doubleSided);
 				drawable->setColorTintGradient(terrainDetail.m_colorTint0, terrainDetail.m_colorTint1);
 				drawable->setAlphaClipThs(terrainDetail.m_alphaCLipThs);
+				drawable->setDetailIndex(i);
 				//drawable->setMaxShadowCascade(terrainDetail.m_maxShadow);
 
 				areaDetail.m_detailEntities.push_back(massentity);
@@ -636,8 +638,9 @@ void Terrain::addRemoveDetails(TerrainArea* area, int lod)
 void Terrain::addRemoveDetails2(TerrainArea* area)
 {
 	int identifier = 0;
-	for (const AreaDetails& terrainDetail : m_areaDetails)
+	for (int i = 0; i < m_areaDetails.size(); i++)
 	{
+		const AreaDetails& terrainDetail = m_areaDetails[i];
 		if (area->getLod() <= terrainDetail.m_lod)
 		{
 			// search if area has detail
@@ -670,6 +673,7 @@ void Terrain::addRemoveDetails2(TerrainArea* area)
 				drawable->setDoubleSidedFaces(terrainDetail.m_doubleSided);
 				drawable->setColorTintGradient(terrainDetail.m_colorTint0, terrainDetail.m_colorTint1);
 				drawable->setAlphaClipThs(terrainDetail.m_alphaCLipThs);
+				drawable->setDetailIndex(i);
 
 				//if (terrainDetail.m_lod == 4)
 				//	massentity->setFlags((uint64_t)Entity::Flags::Fl_Hide);
@@ -863,6 +867,17 @@ void Terrain::drawImGui(World& world)
 	static ImVec2 dragMouseInit;
 	static ImVec2 dragScrollInit;
 	static bool centerOnPlayer = false;
+	static int areaColorMode = 1;
+
+	const ImU32 cGreen = 0xFF408040;
+	const ImU32 cYellow = 0xFF40A0A0;
+	const ImU32 cOrange = 0xFF4070A0;
+	const ImU32 cRed = 0xFF404080;
+	const ImU32 cPurple = 0xFFA040A0;
+	const ImU32 cBlue = 0xFF904040;
+	const ImU32 cWhite = 0xFFA0A0A0;
+	const ImU32 cGrey = 0xFF505050;
+	const auto& u32saturate = [](ImU32 _c) { return _c | ((_c & 0x00FFFFFF) >> 1); };
 
 	//static std::string txt1 = "";
 	//static std::string txt2 = "";
@@ -875,9 +890,10 @@ void Terrain::drawImGui(World& world)
 	//ImGui::TextDisabled(txt3.c_str());
 
 	ImGuiWindow* window = ImGui::GetCurrentWindow();
-	const float availableSizeX = ImGui::GetContentRegionAvail().x;
-	const float availableSizeY = ImGui::GetContentRegionAvail().y;
-	ImGui::BeginChild("##TerrainPreview", ImVec2(availableSizeX, availableSizeY), false, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoMove);
+	const float mapSizeX = ImGui::GetContentRegionAvail().x;
+	const float mapSizeY = std::min(mapSizeX, ImGui::GetContentRegionAvail().y);
+	ImGui::BeginChild("##TerrainPreview", ImVec2(mapSizeX, mapSizeY), false,
+		ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoMove);
 
 	window = ImGui::GetCurrentWindow();
 	float frameSizeX = m_gridSize.x * areaSize;
@@ -902,7 +918,7 @@ void Terrain::drawImGui(World& world)
 	if (centerOnPlayer)
 	{
 		dragging = false;
-		ImVec2 delta = playerPos - cp - ImVec2(0.5f * availableSizeX, 0.5f * availableSizeY);
+		ImVec2 delta = playerPos - cp - ImVec2(0.5f * mapSizeX, 0.5f * mapSizeY);
 		ImGui::SetScrollX(delta.x);
 		ImGui::SetScrollY(delta.y);
 	}
@@ -957,9 +973,29 @@ void Terrain::drawImGui(World& world)
 			};
 
 			if (ComputeError())
-				drawList->AddRectFilled(m + ImVec2(1, 1), M - ImVec2(1, 1), 0xFF404080);
+				drawList->AddRectFilled(m + ImVec2(1, 1), M - ImVec2(1, 1), cRed);
 			else if (inStreaming)
-				drawList->AddRectFilled(m + ImVec2(1, 1), M - ImVec2(1, 1), 0xFF408040);
+			{
+				if (areaColorMode == 1)
+				{
+					ImU32 color = 0xFF408040;
+					switch (area->m_lod)
+					{
+						case 0: color = cGreen; break;
+						case 1: color = cYellow; break;
+						case 2: color = cOrange; break;
+						case 3: color = cRed; break;
+						case 4: color = cPurple; break;
+						case 5: color = cBlue; break;
+						case 6: color = cWhite; break;
+						case 7: color = cGrey; break;
+						default: color = 0xFF000000; textColor = 0xFFFFFFFF; break;
+					}
+					drawList->AddRectFilled(m + ImVec2(1, 1), M - ImVec2(1, 1), color);
+				}
+				else
+					drawList->AddRectFilled(m + ImVec2(1, 1), M - ImVec2(1, 1), 0xFF408040);
+			}
 			
 			std::string idx, idy;
 			if (areaSize >= 50.f)
@@ -1016,7 +1052,34 @@ void Terrain::drawImGui(World& world)
 	ImGui::Dummy(ImVec2(frameSizeX, frameSizeY));
 	ImGui::EndChild();
 
-	// other debug options
+	// color mode and legend
+	ImGui::Combo("Color mode", &areaColorMode, "Streaming\0Lod\0\0");
+	if (areaColorMode == 1)
+	{
+		ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(u32saturate(cGreen)), "Lod0");
+		ImGui::SameLine();
+		ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(u32saturate(cYellow)), "Lod1");
+		ImGui::SameLine();
+		ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(u32saturate(cOrange)), "Lod2");
+		ImGui::SameLine();
+		ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(u32saturate(cRed)), "Lod3");
+		ImGui::SameLine();
+		ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(u32saturate(cPurple)), "Lod4");
+		ImGui::SameLine();
+		ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(u32saturate(cBlue)), "Lod5");
+		ImGui::SameLine();
+		ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(u32saturate(cWhite)), "Lod6");
+		ImGui::SameLine();
+		ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(u32saturate(cGrey)), "Lod7");
+	}
+	else
+	{
+		ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(u32saturate(cGreen)), "Streaming");
+		ImGui::SameLine();
+		ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(u32saturate(cRed)), "Not in scene");
+	}
+
+	// details
 
 
 	ImGui::PopID();

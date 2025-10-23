@@ -30,7 +30,11 @@ class Terrain
 			vec2f m_sizeRange;
 			float m_density, m_normalWeight, m_alphaCLipThs;
 			int m_lod, m_maxShadow;
-			bool m_doubleSided;
+			bool m_doubleSided = false;
+
+		#ifdef USE_IMGUI
+			bool m_visible = true;
+		#endif
 		};
 		//
 		

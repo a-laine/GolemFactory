@@ -143,7 +143,7 @@ int main()
 		freeflyCamera = world.getEntityFactory().createObject([](Entity* object)
 			{
 				object->setName("FreeFlyCam");
-				object->setWorldPosition(vec4f(2.5, 0.08, 62, 1));
+				object->setWorldPosition(vec4f(2.5, 1.08, 62, 1));
 
 				Collider* collider = new Collider(new Sphere(vec4f(0.f), 0.01f));
 				object->addComponent(collider);
