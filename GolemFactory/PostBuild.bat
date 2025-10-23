@@ -20,7 +20,7 @@ echo copy assimp-vc140-mt.dll
 robocopy "%3\4-ASSIMP\lib %5 %4" %2 assimp-vc140-mt.dll /w:2 /log+:%2log.txt >nul
 
 echo copy OptickCore.dll
-robocopy "%3\OptickProfiler\lib\x64\release" %2 OptickCore.dll /w:2 /log+:%2log.txt >nul
+robocopy "%3\6-OPTICK_PROFILER\lib_x64_release" %2 OptickCore.dll /w:2 /log+:%2log.txt >nul
 
 Rem this error is just for devellopement of this script (to avoid recompiling the project)
 Rem EXIT /B 1
