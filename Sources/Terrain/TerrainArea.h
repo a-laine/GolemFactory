@@ -26,7 +26,7 @@ class TerrainArea
 		void generate(const std::string& directory);
 		std::vector<vec4ui> generateDetails(float density, vec2f probability, vec2f scaleRange, const std::vector<int>& allowedMaterials, const uint64_t* dataPtr = nullptr);
 		Entity* addDetailsInstance(const std::string& meshName, float density, const std::vector<int>& allowedMaterials, vec2f probability, vec2f scaleRange, float worldNormalWeight, float modelOffset);
-		Entity* addDetailsInstance(Mesh* mesh, int identifier, float worldNormalWeight, float modelOffset);
+		Entity* addDetailsInstance(Mesh* mesh, int identifier);
 		void setLod(int lod);
 		void loadInstanceData();
 		void unloadInstanceData();
@@ -37,7 +37,9 @@ class TerrainArea
 		const TerrainVirtualTexture::TextureTile& getTileData(int lod) const;
 		Terrain* getTerrain() const;
 		bool hasWater() const;
+		bool hasDataForDetail(int identifier) const;
 		const AxisAlignedBox& getBoundingBox() const;
+		vec2i getGridIndex() const;
 
 		bool getCollisionInCache(Physics::CollisionCache& cache) const;
 		//
@@ -69,8 +71,9 @@ class TerrainArea
 
 		struct Details
 		{
-			std::string m_name;
-			int m_lod;
+			//std::string m_name;
+			//int m_lod;
+			int m_terrainDetailIndex = -1;
 			std::vector<Entity*> m_detailEntities;
 		};
 		std::vector<Details> m_details;

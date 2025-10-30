@@ -56,10 +56,10 @@ Shape& OrientedBox::operator=(const Shape& s)
 }
 void OrientedBox::transform(const vec4f& position, const vec4f& scale, const quatf& orientation)
 {
-	mat4f m = mat4f::TRS(position, orientation, scale);
+	mat4f m = mat4f::TRS(position, orientation, vec4f::one);
 	base = m * base;
-	min = min;
-	max = max;
+	min = min * scale;
+	max = max * scale;
 }
 Shape* OrientedBox::duplicate() const { return new OrientedBox(*this); }
 vec4f OrientedBox::support(const vec4f& direction) const

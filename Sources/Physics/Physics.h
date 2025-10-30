@@ -13,6 +13,7 @@
 #include <set>
 #include <Physics/Shapes/ShapeCacheContainer.h>
 #include <Utiles/BankArray.h>
+#include <Utiles/Debug.h>
 
 class Physics
 {
@@ -151,7 +152,7 @@ class Physics
 			// options
 			bool m_drawCollidersAround = false;
 			bool m_drawCollidersWired = false;
-			bool m_autoSelectThrowedObject = true;
+			bool m_autoSelectThrowedObject = false;
 			bool m_enableZtest = true;
 			float m_drawCollidersQuerySize = 100.f;
 			BoxSceneQuerry m_collidersQuery;
@@ -159,9 +160,9 @@ class Physics
 			Entity* mainCameraEntity = nullptr;
 
 			// obj thrower
-			int m_shapeCode = 0;
-			float m_velocity = 20;
-			vec3f m_size = vec3f(0.5f);
+			int m_shapeCode = 1;
+			float m_velocity = 1;
+			vec3f m_size = vec3f(0.1f);
 
 #endif
 };

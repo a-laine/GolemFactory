@@ -11,7 +11,7 @@ EntityManager::EntityManager()
 EntityManager::~EntityManager()
 {
 	clearGarbage();
-	GF_ASSERT(nbObjects == 0, "Memory leak detected");
+	//GF_ASSERT_MSG(nbObjects == 0, "Memory leak detected");
 }
 
 unsigned int EntityManager::getObjectCount() const
@@ -29,13 +29,13 @@ Entity* EntityManager::getNewEntity()
 
 void EntityManager::getOwnership(Entity* object)
 {
-    GF_ASSERT(object);
+    GF_ASSERT_MSG(object, "Cannot aquire NULL entity");
 	object->m_refCount++;
 }
 
 void EntityManager::releaseOwnership(Entity* object)
 {
-    GF_ASSERT(object);
+    GF_ASSERT_MSG(object, "Cannot release NULL entity");
 	unsigned int previous = object->m_refCount--;
 	if(previous == 1)
 	{

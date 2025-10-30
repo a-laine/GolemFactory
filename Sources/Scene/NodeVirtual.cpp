@@ -25,7 +25,7 @@ NodeVirtual::~NodeVirtual()
 
 void NodeVirtual::init(const vec4f bbMin, const vec4f bbMax, const vec3i& nodeDivision)
 {
-	GF_ASSERT(children.empty());
+	GF_ASSERT_MSG(children.empty(), "NodeVirtual has children, cannot initialize");
 	m_depth = 0;
 	position = (bbMax + bbMin) * 0.5f;
 	position.w = 1.f;

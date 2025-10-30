@@ -19,7 +19,7 @@ Skeleton::~Skeleton() {}
 
 /*void Skeleton::initialize(const std::vector<unsigned int>& rootsList, const std::vector<Joint>& jointsList)
 {
-    GF_ASSERT(state == INVALID);
+    GF_ASSERT_MSG(state == INVALID);
     if(!rootsList.empty() && !jointsList.empty())
     {
         state = LOADING;
@@ -39,7 +39,7 @@ Skeleton::~Skeleton() {}
 
 void Skeleton::initialize(std::vector<unsigned int>&& rootsList, std::vector<Joint>&& jointsList)
 {
-    GF_ASSERT(state == INVALID);
+    GF_ASSERT_MSG(state == INVALID);
     if(!rootsList.empty() && !jointsList.empty())
     {
         state = LOADING;

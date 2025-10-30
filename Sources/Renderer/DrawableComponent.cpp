@@ -140,19 +140,19 @@ bool DrawableComponent::castShadow() const
 
 bool DrawableComponent::hasSkeleton() const
 {
-    GF_ASSERT(isValid());
+    GF_ASSERT_MSG(isValid(), "Invalid drawable component");
     return m_mesh->hasSkeleton();
 }
 
 vec4f DrawableComponent::getMeshBBMax() const
 {
-    GF_ASSERT(isValid());
+    GF_ASSERT_MSG(isValid(), "Invalid drawable component");
 	return m_mesh->getBoundingBox().max;
 }
 
 vec4f DrawableComponent::getMeshBBMin() const
 {
-    GF_ASSERT(isValid());
+    GF_ASSERT_MSG(isValid(), "Invalid drawable component");
 	return m_mesh->getBoundingBox().min;
 }
 

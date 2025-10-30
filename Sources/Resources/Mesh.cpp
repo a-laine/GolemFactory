@@ -41,7 +41,7 @@ void Mesh::initialize(const std::vector<vec4f>& verticesArray, const std::vector
     const std::vector<vec4f>& uvArray, const std::vector<vec4f>& colorArray, const std::vector<unsigned int>& facesArray,
     const std::vector<vec4i>& bonesArray, const std::vector<vec4f>& weightsArray)
 {
-    GF_ASSERT(state == INVALID);
+    GF_ASSERT_MSG(state == INVALID, "Mesh already initialized !");
     state = LOADING;
 
     /*if (verticesArray.size() > 65000)
@@ -98,7 +98,7 @@ void Mesh::initialize(std::vector<vec4f>* verticesArray, std::vector<vec4f>* nor
     std::vector<vec4f>* uvArray, std::vector<vec4f>* colorArray, std::vector<unsigned int>* facesArray,
     std::vector<vec4i>* bonesArray, std::vector<vec4f>* weightsArray)
 {
-    GF_ASSERT(state == INVALID);
+    GF_ASSERT_MSG(state == INVALID, "Mesh already initialized !");
     state = LOADING;
 
     /*if (verticesArray->size() > 65000)
@@ -591,7 +591,8 @@ void Mesh::onDrawImGui()
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0, 0, 0, 0));
 
     float ratio = (ImGui::GetContentRegionAvail().x - 5) / texSize.x;
-    ImGui::ImageButton((void*)texid, ImVec2(texSize.x * ratio, texSize.y * ratio), ImVec2(0, 0), ImVec2(1, 1), -1, ImColor(25, 25, 25, 255), ImColor(255,255,255,255));
+    ImGui::ImageButton((void*)(intptr_t)texid, ImVec2(texSize.x * ratio, texSize.y * ratio), ImVec2(0, 0), ImVec2(1, 1), -1, 
+        ImColor(25, 25, 25, 255), ImColor(255,255,255,255));
     ImGui::PopStyleColor(3);
 
     ImVec2 mousePositionAbsolute = ImGui::GetMousePos();

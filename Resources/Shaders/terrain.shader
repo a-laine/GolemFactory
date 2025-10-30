@@ -125,7 +125,6 @@ Terrain
 		void main()
 		{
 			vec4 areaData0 = instanceDataArray[2 * gl_InstanceID];
-			vec4 areaData1 = instanceDataArray[2 * gl_InstanceID + 1];
 			
 			//int lod = int(constantData[0].x);
 			//int tileSize = int(constantData[0].y);
@@ -169,7 +168,6 @@ Terrain
 				fragmentNormal_gs = normal;
 				fragmentUv_gs = vertexCoordFloat;
 				terrainData0_gs = areaData0;
-				terrainData1_gs = areaData1;
 			#else
 				#ifdef SHADOW_PASS
 					gl_Position = p;
@@ -179,7 +177,6 @@ Terrain
 					fragmentNormal = normal;
 					fragmentUv = vertexCoordFloat;
 					terrainData0 = areaData0;
-					terrainData1 = areaData1;
 				#endif
 			#endif
 		}
@@ -208,7 +205,6 @@ Terrain
 			out vec4 fragmentUv;
 			out vec3 barycentricCoord;
 			out vec4 terrainData0;
-			out vec4 terrainData1;
 
 			void main()
 			{
@@ -218,7 +214,6 @@ Terrain
 				fragmentUv = fragmentUv_gs[0];
 				barycentricCoord = vec3(1.0 , 0.0 , 0.0);
 				terrainData0 = terrainData0_gs[0];
-				terrainData1 = terrainData1_gs[0];
 				EmitVertex();
 				
 				gl_Position = gl_in[1].gl_Position;
@@ -227,7 +222,6 @@ Terrain
 				fragmentUv = fragmentUv_gs[1];
 				barycentricCoord = vec3(0.0 , 1.0 , 0.0);
 				terrainData0 = terrainData0_gs[1];
-				terrainData1 = terrainData1_gs[1];
 				EmitVertex();
 				
 				gl_Position = gl_in[2].gl_Position;
@@ -236,7 +230,6 @@ Terrain
 				fragmentUv = fragmentUv_gs[2];
 				barycentricCoord = vec3(0.0 , 0.0 , 1.0);
 				terrainData0 = terrainData0_gs[2];
-				terrainData1 = terrainData1_gs[2];
 				EmitVertex();
 				
 				EndPrimitive();
@@ -299,7 +292,6 @@ Terrain
 		in vec4 fragmentNormal;
 		in vec4 fragmentUv;
 		in vec4 terrainData0;
-		in vec4 terrainData1;
 			
 		#ifdef WIRED_MODE
 			in vec3 barycentricCoord;
@@ -319,7 +311,7 @@ Terrain
 		bool isHole = false;
 		
 		// debug
-		vec4 lodcolors[8] = vec4[]( vec4(1,1,1,1), vec4(1,0,0,1), vec4(1,1,0,1), vec4(0,1,0,1), vec4(0,1,1,1), vec4(0,0,1,1), vec4(1,0,1,1), vec4(1,1,1,1) );
+		vec4 lodcolors[8] = vec4[]( vec4(0,1,0,1), vec4(1,1,0,1), vec4(1,0.5,0,1), vec4(1,0,0,1), vec4(1,0,1,1), vec4(0,0,1,1), vec4(1,1,1,1), vec4(0.5,0.5,0.5,1) );
 		
 		float map(float value, float min1, float max1, float min2, float max2)
 		{
@@ -342,6 +334,26 @@ Terrain
 			float y = mix(c, d, t);
 			return mix(x, y, s);
 		}
+		
+		float ComputeMorphingRatio(float camDistance)
+		{
+			int meshLod = int(constantData[0].x);
+			float allRadius[8] = float[](constantData[1].x, constantData[1].y, constantData[1].z, constantData[1].w, constantData[2].x, constantData[2].y, constantData[2].z, constantData[2].w);
+			float morphRange = constantData[3].x;
+			for (int i = 0; i < 8; i++)
+			{
+				if (camDistance < allRadius[i])
+				{
+					if (meshLod < i)
+						return 1.0;
+					else if (camDistance > allRadius[i] - morphRange)
+						return (camDistance - (allRadius[i] - morphRange)) / morphRange;
+					return 0.0;
+				}
+			}
+			return 1.0;
+		}
+		
 		ivec3 ComputeClusterIndex()
 		{
 			ivec3 clusterSize = imageSize(lightClusters);
@@ -706,12 +718,32 @@ Terrain
 			
 			// debug override
 			if ((shadingConfiguration & 0x02) != 0)
-				fragColor = 0.5 * fragmentColor + 0.5 * clusterColor;
+				fragColor = mix(fragmentColor, clusterColor, 0.5);
 			else if((shadingConfiguration & 0x08) != 0)
-				fragColor = 0.5 * fragmentColor + 0.5 * cascadeColor;
+				fragColor = mix(fragmentColor, cascadeColor, 0.5);
+			else if ((floatBitsToInt(constantData[3].z) & 0x01) != 0)//eDrawCheckboardPatern
+			{
+				vec2 areaCorner = vec2(terrainData0.xy + 125.0) / 250.0;
+				int odd = ((int(areaCorner.x) + int(areaCorner.y))+200) & 0x000001;
+				fragColor = mix(fragmentColor, vec4(odd, 0, 0 , 1.0), 0.2);
+			}
+			else if ((floatBitsToInt(constantData[3].z) & 0x02) != 0)//eDrawLodColor
+			{
+				int lod = int(constantData[0].x);
+				fragColor = mix(fragmentColor, lodcolors[lod], 0.3);
+			}
+			else if ((floatBitsToInt(constantData[3].z) & 0x04) != 0)//eShowMorphingBand
+			{
+				vec4 delta = cameraPosition - fragmentPosition;
+				float camDistance = sqrt(delta.x * delta.x + delta.z * delta.z);
+				float ratio = ComputeMorphingRatio(camDistance);
+				float band = smoothstep(0.95,1.0,ratio);
+				vec4 col = mix(vec4(ratio, 0, 0, 1), vec4(1, 1, 1, 1), 2*band*(1.0-band));
+				fragColor = mix(fragmentColor, col, 0.5);
+			}
 			else
 				fragColor = fragmentColor;
-				
+								
 			//fragColor.xyz = normal.xyz - newnormal.xyz;
 			fragColor.w = 1.0;
 				

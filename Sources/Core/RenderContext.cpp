@@ -60,13 +60,13 @@ void RenderContext::makeCurrent()
 
 void RenderContext::swapBuffers()
 {
-	GF_ASSERT(isCurrentContext());
+	GF_ASSERT_MSG(isCurrentContext(), "Cannot swap buffer if not mapped as current");
 	glfwSwapBuffers(m_window);
 }
 
 void RenderContext::setVSync(bool enable)
 {
-	GF_ASSERT(isCurrentContext());
+	GF_ASSERT_MSG(isCurrentContext(), "Cannot set VSync if not mapped as current");
 	glfwSwapInterval(enable ? 1 : 0);
 }
 

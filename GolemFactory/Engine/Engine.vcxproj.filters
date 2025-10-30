@@ -925,11 +925,11 @@
     <ClInclude Include="..\..\Sources\Utiles\MixedArray.h">
       <Filter>Fichiers sources\Utiles\Containers</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\Sources\HUD\WidgetGLDebugger.h">
-      <Filter>Fichiers sources\HUD</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\Sources\EntityComponent\SchedulerBuckets.h">
       <Filter>Fichiers sources\EntityComponent</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\Sources\Renderer\GLDebugger.h">
+      <Filter>Fichiers sources\Renderer</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

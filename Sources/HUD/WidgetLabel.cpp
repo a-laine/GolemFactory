@@ -1,6 +1,6 @@
 #include "WidgetLabel.h"
-#include "WidgetGLDebugger.h"
 
+#include <Renderer/GLDebugger.h>
 #include <Physics/Collision.h>
 
 //	string define
@@ -83,26 +83,26 @@ void WidgetLabel::draw(Shader* s, uint8_t& stencilMask, const mat4f& model)
 	//	texture related stuff
 	if (font) 
 	{
-		glBindTexture(GL_TEXTURE_2D, font->texture);	CheckGLError("draw", "glBindTexture(texid)");
+		glBindTexture(GL_TEXTURE_2D, font->texture);	CheckGLError("WidgetLabel::draw", "glBindTexture(texid)");
 	}
 	else 
 	{
-		glBindTexture(GL_TEXTURE_2D, 0);				CheckGLError("draw", "glBindTexture(0)");
+		glBindTexture(GL_TEXTURE_2D, 0);				CheckGLError("WidgetLabel::draw", "glBindTexture(0)");
 	}
 	int loc = s->getUniformLocation("useTexture");
 	if (loc >= 0) 
 	{
-		glUniform1i(loc, (font ? 1 : 0));				CheckGLError("draw", "glUniform1i(useTexture)");
+		glUniform1i(loc, (font ? 1 : 0));				CheckGLError("WidgetLabel::draw", "glUniform1i(useTexture)");
 	}
 
 	//	draw batch 0 (text)
 	loc = s->getUniformLocation("color");
 	if (loc >= 0) 
 	{
-		glUniform4fv(loc, 1, &colors[State::CURRENT].x);CheckGLError("draw", "glUniform4fv(color)");
+		glUniform4fv(loc, 1, &colors[State::CURRENT].x);CheckGLError("WidgetLabel::draw", "glUniform4fv(color)");
 	}
 
-	glBindVertexArray(batchList[BATCH_INDEX_TEXT].vao);		CheckGLError("draw", "glBindVertexArray(vao)");
+	glBindVertexArray(batchList[BATCH_INDEX_TEXT].vao);		CheckGLError("WidgetLabel::draw", "glBindVertexArray(vao)");
 	glDrawElements(GL_TRIANGLES, (int)batchList[BATCH_INDEX_TEXT].faces.size(), GL_UNSIGNED_SHORT, NULL);
 	CheckGLError("draw", "glDrawElements(BATCH_INDEX_TEXT)");
 

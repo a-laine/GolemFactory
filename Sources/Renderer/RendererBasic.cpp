@@ -1,6 +1,8 @@
 #include "Renderer.h"
 #include "CameraComponent.h"
-#include "imgui_internal.h"
+#include "GLDebugger.h"
+#include "DrawableComponent.h"
+#include "Lighting/LightComponent.h"
 
 #include <iostream>
 #include <sstream>
@@ -12,13 +14,13 @@
 #include <Resources/ResourceManager.h>
 #include <Resources/Skeleton.h>
 #include <Resources/Material.h>
-#include <Renderer/DrawableComponent.h>
 #include <Animation/SkeletonComponent.h>
-#include <Renderer/Lighting/LightComponent.h>
 #include <Utiles/Debug.h>
 #include <Utiles/Parser/Reader.h>
 
+
 #ifdef USE_IMGUI
+#include "imgui_internal.h"
 bool RenderingWindowEnable = true;
 #endif
 #include <Utiles/ConsoleColor.h>
@@ -26,39 +28,6 @@ bool RenderingWindowEnable = true;
 #define QUERY_ELAPSED_TIME 1
 //#define CHECK_GL_ERRORS
 
-#ifdef CHECK_GL_ERRORS
-inline bool __CheckGLError(const std::string& header, const std::string& label, const std::string& functionName, uint32_t line)
-{
-	constexpr bool verbose = false;
-	GLenum error = glGetError();
-	if (error != GL_NO_ERROR)
-	{
-		std::string code = "";
-		switch (error)
-		{
-			case GL_INVALID_ENUM: code = "GL_INVALID_ENUM"; break;
-			case GL_INVALID_VALUE: code = "GL_INVALID_VALUE"; break;
-			case GL_INVALID_OPERATION: code = "GL_INVALID_OPERATION"; break;
-			case GL_INVALID_FRAMEBUFFER_OPERATION: code = "GL_INVALID_FRAMEBUFFER_OPERATION"; break;
-			case GL_OUT_OF_MEMORY: code = "GL_OUT_OF_MEMORY"; break;
-			case GL_STACK_UNDERFLOW: code = "GL_STACK_UNDERFLOW"; break;
-			case GL_STACK_OVERFLOW: code = "GL_STACK_OVERFLOW"; break;
-			default: break;
-		}
-		std::cout << header << " " << label << " in Renderer::" << functionName << "(line:" << line << ") : " << code << std::endl;
-		DebugBreak();
-		return true;
-	}
-	else if (verbose)
-	{
-		std::cout << "---" << header << " " << label << std::endl;
-	}
-	return false;
-}
-	#define CheckGLError(header,label) __CheckGLError(header,label,__func__,__LINE__)
-#else
-	#define CheckGLError(header,label)
-#endif // CHECK_GL_ERRORS
 
 //  Default
 Renderer::Renderer() : 
@@ -758,7 +727,7 @@ void Renderer::render(CameraComponent* renderCam)
 
 #if defined(QUERY_ELAPSED_TIME) && QUERY_ELAPSED_TIME
 	int queryIndex = m_frameCounter & 0x01;
-	glBeginQuery(GL_TIME_ELAPSED, m_timerQueryID[queryIndex]);
+	glBeginQuery(GL_TIME_ELAPSED, m_timerQueryID[queryIndex]); CheckGLError("query", "glBeginQuery(GL_TIME_ELAPSED)");
 #endif
 
 	if (!context || !camera || !world || !renderCam)
@@ -1042,7 +1011,7 @@ void Renderer::bindMaterial(Material* _material, Shader* _shader)
 			// bind textures
 			const std::vector<Shader::TextureInfos>&  shaTextures = _shader->getTextures();
 			const std::vector<Texture*>& matTextures = _material->getTextures();
-			GF_ASSERT(shaTextures.size() == matTextures.size(), "Texture array missmatch in material");
+			GF_ASSERT_MSG(shaTextures.size() == matTextures.size(), "Texture array missmatch in material");
 
 			for (int i = 0; i < shaTextures.size(); i++)
 			{

@@ -25,7 +25,6 @@ void TerrainAreaDrawableComponent::updateData(TerrainVirtualTexture::TextureTile
 	vec4f position = getParentEntity()->getWorldPosition();
 	m_data.position = vec2f(position.x, position.z);
 	m_data.textureOffset = vec2f(tile.m_min.y, tile.m_min.x);
-	m_data.morphingCase = 0;
 }
 void TerrainAreaDrawableComponent::pushInstanceData(Shader* _shader) const
 {
@@ -56,8 +55,9 @@ void TerrainAreaDrawableComponent::pushConstantData(Shader* _shader) const
 		constant.textureSize = (float)TerrainArea::g_lodPixelCount[m_area->getLod()];
 		constant.heightAmplitude = TerrainArea::g_heightAmplitude / 65535.f;
 		constant.seeLevel = TerrainArea::g_seeLevel;
-
+		constant.debug = m_area->getTerrain()->getDebugConstant();
 		constant.morphDistance = m_area->getTerrain()->g_morphingRange;
+
 		auto allRadius = m_area->getTerrain()->getRadius();
 		for (int i = 0; i < allRadius.size(); i++)
 			constant.morphRadius[i] = allRadius[i];

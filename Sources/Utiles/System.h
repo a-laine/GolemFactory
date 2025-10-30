@@ -13,11 +13,17 @@
 
 	#include <windows.h>
 
+    #define GF_FUNCTION __FUNCSIG__
+
 #elif defined(__APPLE__) && defined(__MACH__)
     #define GF_OS_MACOS
 
+    #define GF_FUNCTION __func__
+
 #elif defined(__linux__)
     #define GF_OS_LINUX
+
+    #define GF_FUNCTION __PRETTY_FUNCTION__
 
 #else
     #error Operating system not supported

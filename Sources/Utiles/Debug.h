@@ -1,11 +1,21 @@
 #pragma once
 
-#include <glm/glm.hpp>
+//#include <glm/glm.hpp>
 
+#include <string>
+#include <vector>
+#include <list>
+
+#include "Math/TMath.h"
 #include "Singleton.h"
-#include <Resources/ResourceManager.h>
-#include <Renderer/Renderer.h>
 
+//#include <Resources/ResourceManager.h>
+//#include <Renderer/Renderer.h>
+
+class Texture; 
+class Shader; 
+class Mesh; 
+class Renderer;
 
 class Debug : public Singleton<Debug>
 {
@@ -113,13 +123,13 @@ class Debug : public Singleton<Debug>
 
 		struct VertexVBO
 		{
-			GLuint vbo, vao;
+			unsigned int vbo, vao;
 			int offset;
 		};
 		std::list<VertexVBO> vertexScratchBuffers;
 
 
 		Shader* textureReinterpreter;
-		GLuint textureReinterpreterFBO;
+		unsigned int textureReinterpreterFBO;
 		//
 };

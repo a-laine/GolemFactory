@@ -1,7 +1,7 @@
 #include "WidgetConsole.h"
-#include "WidgetGLDebugger.h"
 
 #include <Physics/Collision.h>
+#include <Renderer/GLDebugger.h>
 
 //	string define
 #define MAX_LINE				40			//	max nb of line in text string
@@ -253,20 +253,23 @@ float WidgetConsole::getMargin() const { return margin; }
 //	Protected functions
 void WidgetConsole::initVBOtext()
 {
-	glGenBuffers(1, &batchList[BATCH_INDEX_TEXT].verticesBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, batchList[BATCH_INDEX_TEXT].verticesBuffer);
-	glBufferData(GL_ARRAY_BUFFER, TEXT_MAX_CHAR * 4 * sizeof(vec4f), nullptr, GL_DYNAMIC_DRAW);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, batchList[BATCH_INDEX_TEXT].vertices.size() * sizeof(vec4f), batchList[BATCH_INDEX_TEXT].vertices.data());
+	glGenBuffers(1, &batchList[BATCH_INDEX_TEXT].verticesBuffer);										CheckGLError("text vertice", "glGenBuffers()");
+	glBindBuffer(GL_ARRAY_BUFFER, batchList[BATCH_INDEX_TEXT].verticesBuffer);							CheckGLError("text vertice", "glBindBuffer()");
+	glBufferData(GL_ARRAY_BUFFER, TEXT_MAX_CHAR * 4 * sizeof(vec4f), nullptr, GL_DYNAMIC_DRAW);			CheckGLError("text vertice", "glBufferData()");
+	uint32_t size = batchList[BATCH_INDEX_TEXT].vertices.size() * sizeof(vec4f);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, size, batchList[BATCH_INDEX_TEXT].vertices.data());				CheckGLError("text vertice", "glBufferSubData()");
 
-	glGenBuffers(1, &batchList[BATCH_INDEX_TEXT].texturesBuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, batchList[BATCH_INDEX_TEXT].texturesBuffer);
-	glBufferData(GL_ARRAY_BUFFER, TEXT_MAX_CHAR * 4 * sizeof(vec2f), nullptr, GL_DYNAMIC_DRAW);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, batchList[BATCH_INDEX_TEXT].textures.size() * sizeof(vec2f), batchList[BATCH_INDEX_TEXT].textures.data());
+	glGenBuffers(1, &batchList[BATCH_INDEX_TEXT].texturesBuffer);										CheckGLError("text texture", "glGenBuffers()");
+	glBindBuffer(GL_ARRAY_BUFFER, batchList[BATCH_INDEX_TEXT].texturesBuffer);							CheckGLError("text texture", "glBindBuffer()");
+	glBufferData(GL_ARRAY_BUFFER, TEXT_MAX_CHAR * 4 * sizeof(vec2f), nullptr, GL_DYNAMIC_DRAW);			CheckGLError("text texture", "glBufferData()");
+	size = batchList[BATCH_INDEX_TEXT].textures.size() * sizeof(vec2f);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, size, batchList[BATCH_INDEX_TEXT].textures.data());				CheckGLError("text texture", "glBufferSubData()");
 
-	glGenBuffers(1, &batchList[BATCH_INDEX_TEXT].facesBuffer);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, batchList[BATCH_INDEX_TEXT].facesBuffer);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, TEXT_MAX_CHAR * 6 * sizeof(unsigned short), nullptr, GL_DYNAMIC_DRAW);
-	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, batchList[BATCH_INDEX_TEXT].faces.size() * sizeof(unsigned short), batchList[BATCH_INDEX_TEXT].faces.data());
+	glGenBuffers(1, &batchList[BATCH_INDEX_TEXT].facesBuffer);											CheckGLError("text faces", "glGenBuffers()");
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, batchList[BATCH_INDEX_TEXT].facesBuffer);						CheckGLError("text faces", "glBindBuffer()");
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, TEXT_MAX_CHAR * 6 * sizeof(unsigned short), nullptr, GL_DYNAMIC_DRAW); CheckGLError("text faces", "glBufferData()");
+	size = batchList[BATCH_INDEX_TEXT].faces.size() * sizeof(unsigned short);
+	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, size, batchList[BATCH_INDEX_TEXT].faces.data());		CheckGLError("text faces", "glBufferSubData()");
 }
 void WidgetConsole::updateBuffers(const bool& firstInit)
 {
@@ -411,11 +414,11 @@ void WidgetConsole::updateBuffers(const bool& firstInit)
 		//	circle
 		elevator.vertices.push_back(vec4f(p.x, TEXT_DEPTH_OFFSET, p.y, 1.f));
 		elevator.textures.push_back(vec2f::zero);
+		float f = 0.4f * ELEVATOR_MARGIN_FACTOR * borderWidth;
 		for (int i = 0; i < 16; i++)
 		{
-			elevator.vertices.push_back(vec4f(p.x + 0.4f * ELEVATOR_MARGIN_FACTOR * borderWidth * cos(i * pi / 8.f),
-												  TEXT_DEPTH_OFFSET,
-												  p.y + 0.4f * ELEVATOR_MARGIN_FACTOR * borderWidth * sin(i * pi / 8.f), 1.f));
+
+			elevator.vertices.push_back(vec4f(p.x + f * cos(i * pi / 8.f), TEXT_DEPTH_OFFSET, p.y + f * sin(i * pi / 8.f), 1.f));
 			elevator.textures.push_back(vec2f::zero);
 
 			if (i != 0)

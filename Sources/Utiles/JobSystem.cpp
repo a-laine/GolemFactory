@@ -9,14 +9,14 @@
 
 
 Job2::Job2(JobPriority priority, Task task, uint32_t dependancyCount) : m_jobPriority(priority), m_task(task),
-	m_dependancyCounter(dependancyCount), m_readingThreadCount(0), m_finishedJob(false)
+	m_dependancyCounter(dependancyCount), m_finishedJob(false)
 {
 
 }
 Job2::~Job2()
 {
-	GF_ASSERT(m_finishedJob.load(), "Job destroyed before finished !");
-	GF_ASSERT(m_readingThreadCount.load() == 0, "Job destroyed while some thread are accessing it !");
+	GF_ASSERT_MSG(m_finishedJob.load() == true, "Job destroyed before finished !");
+	GF_ASSERT_MSG(m_jobIndex < 0, "Job still in list !");
 }
 void Job2::waitCompletion(bool allowGrabInstances, bool blockWaiting)
 {
@@ -42,7 +42,6 @@ void Job2::waitCompletion(bool allowGrabInstances, bool blockWaiting)
 			grabing = grabInstanceGroup(start, count);
 			if (grabing)
 			{
-				Job2::ReaderCounter readerguard(m_readingThreadCount);
 				for (int i = 0; i < count; i++)
 					m_task(start + i, m_data);
 
@@ -76,40 +75,29 @@ void Job2::waitCompletion(bool allowGrabInstances, bool blockWaiting)
 		int wakeuptimer = wakeupFrameCount;
 		system->notifyWorkers(m_jobPriority);
 
-		while (!m_finishedJob.load() && !pollCompletion())
+		while (!m_finishedJob.load())// && !pollCompletion() && m_readingThreadCount.load())
 		{
 			for (int i = 0; i < 4; i++)
 				_mm_pause();
-			system->notifyWorkers(m_jobPriority, false);
+			//system->notifyWorkers(m_jobPriority, false);
 		}
 
-		/*while (!pollCompletion())
-		{
-			wakeuptimer--;
-			if (wakeuptimer == 0)
-			{
-				wakeuptimer = wakeupFrameCount;
-				system->notifyWorkers(m_jobPriority);
-			}
-
-			std::unique_lock<std::mutex> lock(m_finishedLock);
-			auto now = std::chrono::system_clock::now();
-			m_finishedSignal.wait_until(lock, now + std::chrono::microseconds(10));
-		}*/
+		MutexGuard dummyLocker(m_lock); // we wait the realeaser unlock the mutex
+		GF_ASSERT_MSG(m_finishedJob.load() == true, "Job destroyed before finished !");
+		GF_ASSERT_MSG(m_jobIndex < 0, "Job is still in list !");
 	}
 }
 bool Job2::pollCompletion(int* optionalRemainingInstances)
 {
 	MutexGuard guard(m_lock);
 	int remaining = m_instanceCount - m_instanceFinishedCount;
-	bool finished = (remaining == 0 && m_jobIndex >= -1 && m_readingThreadCount.load() == 0);
+	bool finished = (remaining == 0 && m_jobIndex < 0 && m_finishedJob.load());
 	if (optionalRemainingInstances)
 		*optionalRemainingInstances = remaining;
 	return finished;
 }
 bool Job2::grabInstanceGroup(int& instanceStart, int& instanceCount)
 {
-	ReaderCounter readerguard(m_readingThreadCount);
 	MutexGuard guard(m_lock);
 	if (m_dependancyCounter.load() != 0)
 		return false;
@@ -153,8 +141,6 @@ JobSystem::JobSystem()
 				{
 					if (grabJobInstance(isLongWorker, &job, start, count))
 					{
-						Job2::ReaderCounter readerguard(job->m_readingThreadCount);
-
 						SCOPED_CPU_MARKER("Working");
 						for (int i = 0; i < count; i++)
 							job->m_task(start + i, job->m_data);
@@ -216,7 +202,7 @@ void JobSystem::pushJob(Job2& job, void* data, std::atomic_uint32_t* dependancy)
 }
 void JobSystem::dispatchJob(Job2& job, int count, int groupSize, void* data, std::atomic_uint32_t* dependancy)
 {
-	GF_ASSERT(count > 0, "Empty job !");
+	GF_ASSERT_MSG(count > 0, "Empty job !");
 
 	job.m_data = data;
 	job.m_instanceGroup = std::max(1, groupSize);
@@ -255,7 +241,6 @@ bool JobSystem::grabJobInstance(bool onlyLongJob, Job2** job, int& instanceStart
 }
 void JobSystem::removeJob(Job2* job)
 {
-	Job2::ReaderCounter readerguard(job->m_readingThreadCount);
 	std::unique_lock<std::mutex> lock(m_lock);
 	MutexGuard guard(job->m_lock);
 	m_jobPools[(int)job->m_jobPriority].remove(job->m_jobIndex);

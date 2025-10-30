@@ -3,7 +3,8 @@
 #include "SpecificCollision/CollisionUtils.h"
 
 #include <Utiles/Debug.h>
-//#include <glm/gtx/simd_vec4.hpp>
+#include <Utiles/MixedArray.h>
+#include <Utiles/Mutex.h>
 
 #include <iostream>
 
@@ -11,15 +12,39 @@
 //#define EPSILON 0.00001f
 
 //int GJK::max_iteration = 50;
-bool GJK::verbose = false;
-bool GJK::gizmos = false;
+constexpr bool verbose = false;
+constexpr bool gizmos = false;
+
+extern Mutex m_debugParallelDrawLock;
+extern std::vector<Debug::Vertex> m_debugFaceList;
+extern std::vector<Debug::Vertex> m_debugLineList;
+
+void pushDrawPoint(vec4f _p, vec4f _color)
+{
+	MutexGuard guard(m_debugParallelDrawLock);
+
+	constexpr float s = 0.01f;
+	m_debugFaceList.push_back({ _p - vec4f(s, 0, 0, 0) , _color });
+	m_debugFaceList.push_back({ _p - vec4f(-s, 0, s, 0) , _color });
+	m_debugFaceList.push_back({ _p + vec4f(s, 0, s, 0) , _color });
+
+	m_debugFaceList.push_back({ _p - vec4f(s, 0, 0, 0) , _color });
+	m_debugFaceList.push_back({ _p + vec4f(s, 0, s, 0) , _color });
+	m_debugFaceList.push_back({ _p - vec4f(-s, 0, s, 0) , _color });
+}
+void pushDrawLine(vec4f _p0, vec4f _p1, vec4f _color)
+{
+	MutexGuard guard(m_debugParallelDrawLock);
+	m_debugLineList.push_back({ _p0 , _color });
+	m_debugLineList.push_back({ _p1 , _color });
+}
 
 
 //	Public functions
 bool GJK::collide(const Shape& a, const Shape& b, CollisionReport* report)
 {
 	// initialize GJK search
-	vec4f direction = vec4f(1, 0, 0, 0);
+	vec4f direction = a.toSphere().center - b.toSphere().center;
 	std::vector<MinkowskiPoint> simplex;
 	simplex.reserve(4);
 
@@ -39,14 +64,20 @@ bool GJK::collide(const Shape& a, const Shape& b, CollisionReport* report)
 		{
 			if (report)
 			{
-				report->collision = true;
-				report->shape1 = (Shape*)&a;
-				report->shape2 = (Shape*)&b;
-
 				if (simplex.size() >= 4)
 				{
-					expandSimplex(a, b, report, simplex);
-					return report->collision;
+					if (!expandSimplex(a, b, report, simplex))
+					{
+						if (verbose)
+							std::cout << "expandSimplex failure" << std::endl;// error
+						report->clear();
+						return false;
+					}
+
+					report->collision = true;
+					report->shape1 = (Shape*)&a;
+					report->shape2 = (Shape*)&b;
+					return true;
 				}
 				else
 				{
@@ -219,7 +250,7 @@ bool GJK::collide(const Shape& a, const Shape& b, CollisionReport* report)
 		std::cout << "GJK : error : no solution found after maximum iteration (" << MAX_ITERATION << ")" << std::endl;
 	return false;
 }
-void GJK::expandSimplex(const Shape& a, const Shape& b, CollisionReport* report, const std::vector<MinkowskiPoint>& simplex)
+bool GJK::expandSimplex(const Shape& a, const Shape& b, CollisionReport* report, const std::vector<MinkowskiPoint>& simplex)
 {
 	GJKHull hull;
 	hull.initFromTetrahedron(simplex);
@@ -227,7 +258,7 @@ void GJK::expandSimplex(const Shape& a, const Shape& b, CollisionReport* report,
 	{
 		// fatal error
 		report->collision = false;
-		return;
+		return false;
 	}
 
 	Face* closestFace;
@@ -242,87 +273,185 @@ void GJK::expandSimplex(const Shape& a, const Shape& b, CollisionReport* report,
 
 	float depth = vec4f::dot(closestFace->n, closestFace->p1.p);
 	vec4f proj = depth * closestFace->n;
-	report->depths.push_back(std::abs(depth));
+	report->depths.push_back(depth);
 
 	vec2f barr = CollisionUtils::getBarycentricCoordinates(closestFace->p2.p - closestFace->p1.p, closestFace->p3.p - closestFace->p1.p, proj - closestFace->p1.p, true);
-
-	vec4f at1 = closestFace->p1.a;
-	vec4f at2 = closestFace->p2.a;
-	vec4f at3 = closestFace->p3.a;
-
-	vec4f u1 = at2 - at1;	float l1 = u1.getNorm();
-	vec4f u2 = at3 - at1;	float l2 = u2.getNorm();
-	vec4f u3 = at2 - at3;	float l3 = u3.getNorm();
-
-	vec4f pa = at1 + barr.x * u1 + barr.y * u2;
-	vec4f pb = closestFace->p1.b + barr.x * (closestFace->p2.b - closestFace->p1.b) + barr.y * (closestFace->p3.b - closestFace->p1.b);
+	vec4f pa = closestFace->p1.a + barr.x * (closestFace->p2.a - closestFace->p1.a) + barr.y * (closestFace->p3.a - closestFace->p1.a);
 	report->points.push_back(pa);
 
-	if (l1 > COLLISION_EPSILON && l2 > COLLISION_EPSILON && l3 > COLLISION_EPSILON)
-		report->normal = vec4f::cross(u1, u2).getNormal();
-	else
-	{
-		vec4f edge;
-		if (l1 > l2 && l1 > l3)
-			edge = u1;
-		else if (l2 > l1 && l2 > l3)
-			edge = u2;
-		else edge = u3;
+	vec4f bt1 = closestFace->p1.b;
+	vec4f bt2 = closestFace->p2.b;
+	vec4f bt3 = closestFace->p3.b;
 
-		if (edge.getNorm2() > COLLISION_EPSILON)
-		{
-			edge.normalize();
-			report->normal = (proj - vec4f::dot(proj, edge) * edge).getNormal();
-		}
-		else
-			report->normal = proj.getNormal();
+	vec4f v1 = bt2 - bt1;
+	vec4f v2 = bt3 - bt1;
+	vec4f v3 = bt2 - bt3;
+	vec4f pb = bt1 + barr.x * v1 + barr.y * v2;
+	vec4f n = vec4f::cross(v2, v1);
+
+	if (gizmos)
+	{
+		pushDrawPoint(pa, Debug::red);
+		pushDrawPoint(pb, Debug::green);
+		pushDrawLine(pb, pa, Debug::yellow);
 	}
 
-	if (vec4f::dot(report->normal, proj) < 0.f)
-		report->normal *= -1.f;
+	bool foundNormal = false;
 
-	report->normal = -report->normal; // because why not
+	// try compute normal of shape b face
+	float nn = vec4f::dot(n, n);
+	if (!foundNormal && nn > COLLISION_EPSILON)
+	{
+		foundNormal = true;
+		report->normal = n.getNormal();
+		if (vec4f::dot(report->normal, proj) > 0.f)
+			report->normal *= -1.f;
+	}
+
+	// if fail, try compute from delta
+	if (!foundNormal && depth > COLLISION_EPSILON)
+	{
+		foundNormal = true;
+		report->normal = (pb - pa).getNormal();
+		if (vec4f::dot(report->normal, proj) > 0.f)
+			report->normal *= -1.f;
+	}
+
+	// if event delta is too small, get mink face normal
+	if (!foundNormal)
+		report->normal = -closestFace->n;
 
 	if (report->computeManifoldContacts)
 		computeManifoldContacts(a, b, report);
+	return true;
 }
 void GJK::computeManifoldContacts(const Shape& a, const Shape& b, CollisionReport* report)
 {
 	// the two feature faces
 	a.getFacingFace(-report->normal, report->shape1face);
 	b.getFacingFace(report->normal, report->shape2face);
-	if (report->shape1face.size() < 3 || report->shape2face.size() < 3)
+	if (report->shape1face.size() < 2 || report->shape2face.size() < 2)
 		return;
 
 	if (gizmos)
 	{
 		const float pointRadius = 0.01f;
-		Debug::color = Debug::green;
 		for (unsigned int i = 0; i < report->shape1face.size(); i++)
-			Debug::drawSphere(report->shape1face[i], pointRadius);
-
-		Debug::color = Debug::blue;
+			pushDrawPoint(report->shape1face[i], 0.5f * Debug::red);
 		for (unsigned int i = 0; i < report->shape2face.size(); i++)
-			Debug::drawSphere(report->shape2face[i], pointRadius);
+			pushDrawPoint(report->shape2face[i], 0.5f * Debug::green);
 	}
 
+	// compute faces normals
+	vec4f n1, n2;
+	if (report->shape1face.size() >= 3)
+	{
+		n1 = vec4f::cross(report->shape1face[1] - report->shape1face[0], report->shape1face[2] - report->shape1face[0]);
+		n1.w = 0.f;
+		n1.normalize();
+		if (vec4f::dot(n1, report->normal) < 0.f)
+			n1 *= -1.f;
+	}
+	else n1 = report->normal;
+
+	if (report->shape2face.size() >= 3)
+	{
+		n2 = vec4f::cross(report->shape2face[1] - report->shape2face[0], report->shape2face[2] - report->shape2face[0]);
+		n2.w = 0.f;
+		n2.normalize();
+		if (vec4f::dot(n2, report->normal) < 0.f)
+			n2 *= -1.f;
+	}
+	else n2 = report->normal;
+
+	// compute cosA and return if too small (not almost // faces)
+	float dot = vec4f::dot(n1, n2);
+	if (dot < 0.7f)
+		return;
+
+	// prepare
 	vec4f originalPoint = report->points.back();
 	float originalDepth = report->depths.back();
 	report->points.clear();
 	report->depths.clear();
+	int inserted1 = 0;
+	int inserted2 = 0;
 
-	// compute faces normals
-	vec4f n1 = vec4f::cross(report->shape1face[1]- report->shape1face[0], report->shape1face[2] - report->shape1face[0]).getNormal();
-	if (vec4f::dot(n1, report->normal) < 0.f)
-		n1 *= -1.f;
-	vec4f n2 = vec4f::cross(report->shape2face[1] - report->shape2face[0], report->shape2face[2] - report->shape2face[0]).getNormal();
-	if (vec4f::dot(n2, report->normal) < 0.f)
-		n2 *= -1.f;
-	float dot = vec4f::dot(n1, n2);
+	// project faces 2 along n2 on face1
+	float invdot = 1.f / dot;
+	MixedArray<vec4f, 32> projected2on1;
+	MixedArray<float, 32> projectedDepth;
+	for (uint32_t i = 0; i < report->shape2face.size(); i++)
+	{
+		float depth = vec4f::dot(n1, report->shape2face[i] - report->shape1face[0]);
+		float d = depth * invdot;
+		vec4f p = report->shape2face[i] + d * n2;
+		projected2on1.push_back(p);
+		projectedDepth.push_back(d);
 
-	// project face1 on face2 -> if corner is inside hull, it's a contact point
-	std::vector<vec4f> projection;
-	for (unsigned int i = 0; i < report->shape1face.size(); i++)
+		if (inside(report->shape1face.data(), report->shape1face.size(), p))
+		{
+			inserted2++;
+			if (d > 0.f)
+			{
+				report->points.push_back(p);
+				report->depths.push_back(d);
+			}
+		}
+	}
+
+	// project faces 1 along n2
+	if (inserted2 != report->shape2face.size())
+	{
+		for (uint32_t i = 0; i < report->shape1face.size(); i++)
+		{
+			if (inside(projected2on1.data(), projected2on1.size(), report->shape1face[i]))
+			{
+				inserted1++;
+				float depth = vec4f::dot(report->shape2face[0] - report->shape1face[i], n2);
+				if (depth > 0.f)
+				{
+					report->points.push_back(report->shape1face[i]);
+					report->depths.push_back(depth);
+				}
+			}
+		}
+	}
+
+	// edge x edge intersections
+	if (inserted2 != report->shape2face.size() && inserted1 != report->shape1face.size())
+	{
+		vec4f intersection;
+		int maxInsert = 2;
+		for (uint32_t i = 0; i < projected2on1.size() && maxInsert; i++)
+		{
+			vec4f& s2a = projected2on1[i];
+			vec4f& s2b = projected2on1[i == projected2on1.size() - 1 ? 0 : i + 1];
+
+			for (uint32_t j = 0; j < report->shape1face.size() && maxInsert; j++)
+			{
+				vec4f& s1a = report->shape1face[j];
+				vec4f& s1b = report->shape1face[j == report->shape1face.size() - 1 ? 0 : j + 1];
+
+				if (collide(s1a, s1b, s2a, s2b, intersection))
+				{
+					maxInsert--;
+					float depth = vec4f::dot(intersection - report->shape1face[0], n1);
+					if (depth > 0.f)
+					{
+						report->points.push_back(intersection);
+						report->depths.push_back(depth);
+					}
+				}
+			}
+		}
+	}
+
+	// face 1 (shape A) is reference, output points have to be on A
+
+	// project face2 on face1 -> if corner is inside hull, it's a contact point
+	/*std::vector<vec4f> projection;
+	for (unsigned int i = 0; i < report->shape2face.size(); i++)
 	{
 		float depth = vec4f::dot(report->normal, report->shape2face[0] - report->shape1face[i]);
 		vec4f p = report->shape1face[i] - depth * report->normal;
@@ -364,13 +493,17 @@ void GJK::computeManifoldContacts(const Shape& a, const Shape& b, CollisionRepor
 				report->depths.push_back(depth);
 			}
 		}
-	}
+	}*/
 
 	// end
 	if (report->points.empty())
 	{
 		report->points.push_back(originalPoint);
 		report->depths.push_back(originalDepth);
+	}
+	else
+	{
+		report->normal = n2;
 	}
 }
 //
@@ -424,9 +557,9 @@ bool GJK::collide(const vec4f& s1a, const vec4f& s1b, const vec4f& s2a, const ve
 	vec4f v = s2b - s2a;
 	vec4f w = s1a - s2a;
 
-	float a = u.getNorm2();
+	float a = vec4f::dot(u, u);
 	float b = vec4f::dot(u, v);
-	float c = v.getNorm2();
+	float c = vec4f::dot(v, v);
 	float d = vec4f::dot(u, w);
 	float e = vec4f::dot(v, w);
 
@@ -443,12 +576,16 @@ bool GJK::collide(const vec4f& s1a, const vec4f& s1b, const vec4f& s2a, const ve
 	intersection = s1a + t1 * u;
 	return true;
 }
-bool GJK::inside(std::vector<vec4f>& hull, const vec4f& point)
+bool GJK::inside(const vec4f* hull, int ptsCount, const vec4f& point)
 {
+	if (ptsCount < 3)
+		return false;
+
 	vec4f sign;
-	for (unsigned int i = 0; i < hull.size(); i++)
+	for (int i = 0; i < ptsCount; i++)
 	{
-		vec4f u = hull[(i + 1) % hull.size()] - hull[i];
+		//vec4f u = hull[(i + 1) % ptsCount] - hull[i];
+		vec4f u = hull[i == ptsCount - 1 ? 0 : i + 1] - hull[i];
 		vec4f v = point - hull[i];
 		vec4f n = vec4f::cross(u, v);
 
@@ -494,7 +631,10 @@ bool GJK::MinkowskiPoint::operator< (const MinkowskiPoint& _other) const
 GJK::Face::Face(const MinkowskiPoint& _p1, const MinkowskiPoint& _p2, const MinkowskiPoint& _p3, const vec4f& _n) :
 	p1(_p1), p2(_p2), p3(_p3), n(_n),
 	onHull(true), e1(nullptr), e2(nullptr), e3(nullptr)
-{}
+{
+	if (vec4f::dot(n, -p1.p) > 0.f)
+		n *= -1.f;
+}
 GJK::Edge::Edge(const MinkowskiPoint& _p1, const MinkowskiPoint& _p2) :
 	p1(_p1), p2(_p2), horizonCheck(2), f1(nullptr), f2(nullptr)
 {}
@@ -584,8 +724,8 @@ bool GJK::GJKHull::add(const MinkowskiPoint& point)
 		vec4f n = vec4f::cross((*it)->p2.p - (*it)->p1.p, point.p - (*it)->p1.p).getNormal();
 		faces.insert(faces.end(), Face((*it)->p1, (*it)->p2, point, n));
 		Face* face = &faces.back();
-		if (checkFaceNormal(*face))
-			face->n *= -1.f;
+		//if (checkFaceNormal(*face))
+		//	face->n *= -1.f;
 
 		//  create new horizon edge
 		if (!(*it)->f1) 
@@ -660,7 +800,7 @@ GJK::Face* GJK::GJKHull::getClosestFaceToOrigin()
 
 	for (auto it = faces.begin(); it != faces.end(); it++)
 	{
-		float d = std::abs(vec4f::dot(it->n, -it->p1.p));
+		float d = vec4f::dot(it->n, it->p1.p);
 		if (d < dmin)
 		{
 			dmin = d;

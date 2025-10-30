@@ -216,7 +216,7 @@ void Material::onDrawImGui()
                     float ratio = (ImGui::GetContentRegionAvail().x - 5) / m_textures[i]->size.x;
                     ImGui::Spacing();
                     ImGui::TextColored(ResourceVirtual::titleColorDraw, "Overview");
-                    ImGui::Image((void*)m_textures[i]->getTextureId(), ImVec2(m_textures[i]->size.x * ratio, m_textures[i]->size.y * ratio),
+                    ImGui::Image((void*)(intptr_t)m_textures[i]->getTextureId(), ImVec2(m_textures[i]->size.x * ratio, m_textures[i]->size.y * ratio),
                         ImVec2(0.f, 0.f), ImVec2(1.f, 1.f), ImColor(255, 255, 255, 255), ImColor(255, 255, 255, 128));
                 }
 

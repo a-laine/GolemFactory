@@ -39,10 +39,6 @@ class TerrainVirtualTexture
 
 
 	protected:
-		// Protected fnctions
-
-		//
-
 		// Members
 		Mutex m_mutexPool;
 		std::vector<std::vector<TextureTile>> m_freeTilesPools;

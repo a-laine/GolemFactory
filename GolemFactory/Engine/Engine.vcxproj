@@ -334,7 +334,6 @@
     <ClInclude Include="..\..\Sources\HUD\Loader\WidgetSaver.h" />
     <ClInclude Include="..\..\Sources\HUD\WidgetBoard.h" />
     <ClInclude Include="..\..\Sources\HUD\WidgetConsole.h" />
-    <ClInclude Include="..\..\Sources\HUD\WidgetGLDebugger.h" />
     <ClInclude Include="..\..\Sources\HUD\WidgetImage.h" />
     <ClInclude Include="..\..\Sources\HUD\WidgetLabel.h" />
     <ClInclude Include="..\..\Sources\HUD\WidgetManager.h" />
@@ -388,6 +387,7 @@
     <ClInclude Include="..\..\Sources\Physics\SpecificIntersection\IntersectionTriangle.h" />
     <ClInclude Include="..\..\Sources\Renderer\CameraComponent.h" />
     <ClInclude Include="..\..\Sources\Renderer\DrawableComponent.h" />
+    <ClInclude Include="..\..\Sources\Renderer\GLDebugger.h" />
     <ClInclude Include="..\..\Sources\Renderer\Lighting\LightComponent.h" />
     <ClInclude Include="..\..\Sources\Renderer\OccluderComponent.h" />
     <ClInclude Include="..\..\Sources\Renderer\Renderer.h" />

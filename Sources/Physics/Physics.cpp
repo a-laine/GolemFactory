@@ -11,7 +11,6 @@
 #include <EntityComponent/ComponentUpdater.h>
 #include <Utiles/Debug.h>
 
-#include <Utiles/Debug.h>
 #include <Utiles/ImguiConfig.h>
 #include <Physics/Shapes/Collider.h>
 #include <Renderer/CameraComponent.h>
@@ -19,6 +18,9 @@
 #include <Terrain/TerrainAreaDrawableComponent.h>
 #include <Utiles/JobSystem.h>
 #include <Utiles/MixedArray.h>
+#include <Utiles/Assert.hpp>
+#include <Utiles/ConsoleColor.h>
+#include <Resources/ResourceManager.h>
 
 //#define APPROXIMATION_FACTOR 10.f
 //#define SUPERSAMPLING_DELTA 0.01f
@@ -35,10 +37,13 @@
 #endif // USE_IMGUI
 
 
-
 bool Physics::drawSweptBoxes = false;
 bool Physics::drawCollisions = false;
 bool Physics::drawClustersAABB = false;
+
+Mutex m_debugParallelDrawLock;
+std::vector<Debug::Vertex> m_debugFaceList;
+std::vector<Debug::Vertex> m_debugLineList;
 
 thread_local BoxSceneQuerry g_proximityTest;
 thread_local VirtualEntityCollector g_proximityList;
@@ -94,6 +99,8 @@ void Physics::stepSimulation2(const float& elapsedTime, SceneManager* scene)
 		return;
 
 	// prepare
+	m_debugFaceList.clear();
+	m_debugLineList.clear();
 	clusterFinder.clear();
 	dynamicPairs.clear();
 	dynamicCollisions.clear();
@@ -141,7 +148,7 @@ void Physics::stepSimulation2(const float& elapsedTime, SceneManager* scene)
 		for (int i = 0; i < m_physicObjList.size(); i++)
 		{
 			RigidBody* rbA = m_physicObjList[i];
-			rbA->computeWorldShapes();
+			//rbA->computeWorldShapes();
 			const AxisAlignedBox& boxA = rbA->m_sweptBox;
 
 			for (int j = i + 1; j < m_physicObjList.size(); j++)
@@ -264,6 +271,7 @@ void Physics::stepSimulation2(const float& elapsedTime, SceneManager* scene)
 				while (substepCount < 10 && advanceTime < elapsedTime)
 				{
 					float dt = std::min(oneStepDt, elapsedTime - advanceTime);
+					cluster.constraints.clear();
 
 					predictTransform2(clusterIndex, dt);
 					createConstraint(clusterIndex, dt);
@@ -829,6 +837,7 @@ void Physics::predictTransform2(const unsigned int& clusterIndex, const float& d
 			rigidbody->m_orientation = rigidbody->m_previousOrientation + (0.5f * deltaTime) * dq * rigidbody->m_previousOrientation;
 			rigidbody->m_orientation.normalize();
 		}
+		rigidbody->computeWorldShapes();
 	}
 }
 void Physics::computeBoundingShapesAndDetectPairs(const float& elapsedTime, SceneManager* scene)
@@ -1100,57 +1109,6 @@ void Physics::createConstraint(const unsigned int& clusterIndex, const float& de
 				}
 		}
 
-		/*for (unsigned int j = 0; j < cluster->staticEntities.size(); j++)
-		{
-			Entity* entity2 = cluster->staticEntities[j];
-			//entityColliders.clear();
-			//entity2->getAllComponents<Collider>(entityColliders);
-
-
-			auto colliderVisitor = [&](Component* componentCollider)
-			{
-				const Collider* collider = static_cast<const Collider*>(componentCollider);
-				if (collider && !collider->m_isTrigger)
-				{
-					Shape* tmp = collider->m_shape->duplicate();
-					tmp->transform(entity2->getWorldPosition(), vec4f(entity2->getWorldScale()), entity2->getWorldOrientation());
-
-					for (unsigned int k = 0; k < body1->m_worldShapes.size(); k++)
-					{
-						if (Collision::collide(body1->m_worldShapes[k], tmp, &report))
-						{
-							report.entity1 = body1->getParentEntity();
-							report.entity2 = entity2;
-							report.body1 = body1;
-							report.body2 = nullptr;
-
-							for (int k = 0; k < report.points.size(); k++)
-							{
-								if (report.depths[k] > 0.f)
-								{
-									Constraint constraint;
-									constraint.createFromReport(report, k, deltaTime);
-									cluster->constraints.push_back(constraint);
-								}
-							}
-						}
-						report.clear();
-					}
-						
-
-					delete tmp;
-				}
-				return false;
-			};
-
-			entity2->componentsVisitor(Collider::getStaticClassID(), colliderVisitor);
-
-
-			TerrainAreaDrawableComponent* terrainArea = entity2->getComponent<TerrainAreaDrawableComponent>();
-			//if (terrainArea)
-			//	terrainArea->getArea()->getCollisionInCache(cache);
-		}*/
-
 		for (int i = 0; i < cluster->cache.m_elements.size(); i++)
 		{
 			const Shape* shape = cluster->cache.m_elements[i].m_shape;
@@ -1159,6 +1117,9 @@ void Physics::createConstraint(const unsigned int& clusterIndex, const float& de
 			{
 				if (Collision::collide(body1->m_worldShapes[k], shape, &report))
 				{
+					//extern float physicsTimeSpeed;
+					//physicsTimeSpeed = 0.f;
+
 					report.entity1 = body1->getParentEntity();
 					report.entity2 = entity;
 					report.body1 = body1;
@@ -1219,14 +1180,13 @@ void Physics::solveConstraint(const unsigned int& clusterIndex, const float& del
 					constraint.body2->m_angularVelocity -= impulseLength * constraint.rotationPerUnitImpulse2[0];
 				}
 
-				maxImpulseCorrection = std::max(maxImpulseCorrection, std::abs(impulseLength));
+				maxImpulseCorrection = std::max(maxImpulseCorrection, std::abs(impulseLength * constraint.velocityChangePerAxis[0]));
 			}
 
-			error = constraint.targetLinearVelocity[1] - vec4f::dot(velocity, constraint.axis[1]);
-			float impulseLength1 = g_contactTangentRelaxation * error / constraint.velocityChangePerAxis[1];
-
-			error = constraint.targetLinearVelocity[2] - vec4f::dot(velocity, constraint.axis[2]);
-			float impulseLength2 = g_contactTangentRelaxation * error / constraint.velocityChangePerAxis[2];
+			float errorTan = constraint.targetLinearVelocity[1] - vec4f::dot(velocity, constraint.axis[1]);
+			float impulseLength1 = g_contactTangentRelaxation * errorTan / constraint.velocityChangePerAxis[1];
+			float errorBitan = constraint.targetLinearVelocity[2] - vec4f::dot(velocity, constraint.axis[2]);
+			float impulseLength2 = g_contactTangentRelaxation * errorBitan / constraint.velocityChangePerAxis[2];
 
 			if (constraint.frictionLimit)
 			{
@@ -1259,6 +1219,7 @@ void Physics::solveConstraint(const unsigned int& clusterIndex, const float& del
 				impulseLength2 = totalImpulse2 - constraint.accumulationLinear[2];
 				constraint.accumulationLinear[2] = totalImpulse2;
 			}
+			
 
 			if (std::abs(impulseLength1) > SOLVER_ITERATION_THRESHOLD)
 			{
@@ -1270,7 +1231,7 @@ void Physics::solveConstraint(const unsigned int& clusterIndex, const float& del
 					constraint.body2->m_angularVelocity -= impulseLength1 * constraint.rotationPerUnitImpulse2[1];
 				}
 
-				maxImpulseCorrection = std::max(maxImpulseCorrection, std::abs(impulseLength1));
+				maxImpulseCorrection = std::max(maxImpulseCorrection, std::abs(impulseLength1 * constraint.velocityChangePerAxis[1]));
 			}
 
 			if (std::abs(impulseLength2) > SOLVER_ITERATION_THRESHOLD)
@@ -1283,7 +1244,7 @@ void Physics::solveConstraint(const unsigned int& clusterIndex, const float& del
 					constraint.body2->m_angularVelocity -= impulseLength2 * constraint.rotationPerUnitImpulse2[2];
 				}
 
-				maxImpulseCorrection = std::max(maxImpulseCorrection, std::abs(impulseLength2));
+				maxImpulseCorrection = std::max(maxImpulseCorrection, std::abs(impulseLength2 * constraint.velocityChangePerAxis[2]));
 			}
 		}
 
@@ -1292,35 +1253,58 @@ void Physics::solveConstraint(const unsigned int& clusterIndex, const float& del
 	}
 
 	//return;
-	for (int i = 0; i < g_maxIterationCount; i++)
+
+	for (int i = 0; i < 1; i++)
 	{
 		float maxCorrection = 0.f;
 		for (unsigned int j = 0; j < cluster->constraints.size(); j++)
 		{
 			Constraint& constraint = cluster->constraints[j];
 			vec4f p1 = constraint.body1->m_position + constraint.body1->m_orientation * constraint.localPoint1;
-			vec4f p2 = constraint.worldPoint + constraint.depth * constraint.axis[0];
+			vec4f p2 = constraint.worldPoint;
 			if (constraint.body2)
 				p2 = constraint.body2->m_position + constraint.body2->m_orientation * constraint.localPoint2;
 
-			float error = vec4f::dot(p2 - p1, constraint.axis[0]);
+			float error;
+			vec4f delta = p2 - p1;
+			vec4f axis;
+			if (constraint.body2)
+			{
+				float dd = delta.getNorm();
+				if (dd > 1E-04f)
+				{
+					axis = (1.f / dd) * delta;
+					error = dd;
+				}
+				else
+				{
+					axis = constraint.axis[0];
+					error = vec4f::dot(delta, axis);
+				}
+			}
+			else
+			{
+				axis = constraint.axis[0];
+				error = vec4f::dot(delta, axis);
+			}
+
 			if (error < SOLVER_ITERATION_THRESHOLD)
 				continue;
 
 			float invMassSum = constraint.body1->m_inverseMass;
 			if (constraint.body2)
 				invMassSum += constraint.body2->m_inverseMass;
-			if (invMassSum < 10E-06f)
+			if (invMassSum < 1E-08f)
 				continue;
 
-			float correction = error * g_contactNormalRelaxation / invMassSum;
-			maxCorrection = std::max(maxCorrection, std::abs(correction));
+			float correction = error * 0.075 / invMassSum;
+			maxCorrection = std::max(maxCorrection, std::abs(error));
 			float slack = correction * constraint.body1->m_inverseMass;
-			constraint.body1->m_position += slack * constraint.axis[0];
+			constraint.body1->m_position += slack * axis;
 			if (constraint.body2)
 			{
 				slack = correction * constraint.body2->m_inverseMass;
-				constraint.body2->m_position -= slack * constraint.axis[0];
+				constraint.body2->m_position -= slack * axis;
 			}
 		}
 
@@ -1414,20 +1398,24 @@ void Physics::CollisionCache::debugDraw(bool wireframe, vec4f baseColor) const
 			break;
 		case Shape::ShapeType::ORIENTED_BOX:
 			{
+				Debug::setFaceCulling(false);
 				const OrientedBox* box = (const OrientedBox*)element.m_shape;
 				if (wireframe)
 					Debug::drawLineCube(box->base, box->min, box->max);
 				else
 					Debug::drawCube(box->base, box->min, box->max);
+				Debug::setFaceCulling(false);
 			}
 			break;
 		case Shape::ShapeType::AXIS_ALIGNED_BOX:
 			{
+				Debug::setFaceCulling(false);
 				const AxisAlignedBox* box = (const AxisAlignedBox*)element.m_shape;
 				if (wireframe)
 					Debug::drawLineCube(mat4f::identity, box->min, box->max);
 				else
 					Debug::drawCube(mat4f::identity, box->min, box->max);
+				Debug::setFaceCulling(false);
 			}
 			break;
 		case Shape::ShapeType::CAPSULE:
@@ -1622,6 +1610,21 @@ void Physics::debugDraw()
 		}
 	}
 
+	Debug::setDepthTest(false);
+	if (!m_debugFaceList.empty())
+	{
+		GF_ASSERT_MSG((m_debugFaceList.size() % 3) == 0, "Error, not a multiple of triangle vertex count");
+		Debug::drawMultiplePrimitive(m_debugFaceList.data(), m_debugFaceList.size(), mat4f::identity, GL_TRIANGLES);
+	}
+
+	if (!m_debugLineList.empty())
+	{
+		GF_ASSERT_MSG((m_debugLineList.size() & 0x01) == 0, "Error, not a multiple of line vertex count");
+		Debug::drawMultiplePrimitive(m_debugLineList.data(), m_debugLineList.size(), mat4f::identity, GL_LINES);
+	}
+	Debug::setDepthTest(true);
+
+
 #ifdef USE_IMGUI
 	if (m_drawCollidersAround && PhysicDebugWindowEnable)
 	{
@@ -1683,25 +1686,47 @@ void Physics::drawImGui(World& world)
 
 	if (ImGui::Button("One frame update"))
 	{
-		stepSimulation2(0.016f, &world.getSceneManager());
-		//stepSimulation(0.005f, &world.getSceneManager());
-		//stepSimulation(0.005f, &world.getSceneManager());
+		stepSimulation2(0.001f, &world.getSceneManager());
 	}
 
 	ImGui::Spacing(); ImGui::Spacing(); ImGui::Spacing();
 	ImGui::TextColored(titleColor, "Object thrower");
 
-	ImGui::Combo("Shape code", &m_shapeCode, "Sphere\0Box\0\0");
+	ImGui::Combo("Shape code", &m_shapeCode, "Sphere\0Box\0Capsule\0Rock\0\0");
 	ImGui::DragFloat("Velocity", &m_velocity, 0.01f, 0.f, 100000.f, "%.3f", ImGuiSliderFlags_AlwaysClamp);
 	ImGui::DragFloat3("Size", &m_size[0], 0.01f, 0.00001f, 10.f);
 	ImGui::Checkbox("Select trowed object", &m_autoSelectThrowedObject);
 	if (ImGui::Button("Throw object !") && mainCamera)
 	{
 		std::string type;
+		vec4f finalSize = vec4f::one;
+		bool proceduralMesh = false;
+
 		switch (m_shapeCode)
 		{
-			case 1: type = "cube"; break;
-			default: type = "sphere"; break;
+			case 0: 
+				type = "sphere";
+				finalSize = vec4f(m_size.x, m_size.x, m_size.x, 1.f);
+				break;
+			case 1: 
+				type = "cube";
+				finalSize = vec4f(m_size, 1.f);
+				break;
+			case 2: 
+				type = "capsule";
+				finalSize = vec4f(m_size, 1.f);
+				proceduralMesh = true;
+				break;
+			case 3: 
+				type = "rock";
+				finalSize = vec4f(m_size, 1.f);
+				break;
+			default:
+				std::cout << ConsoleColor::getColorString(ConsoleColor::Color::RED) << "Unknown shape type, fallback to sphere" << std::endl;
+				std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
+				type = "sphere";
+				finalSize = vec4f(m_size.x, m_size.x, m_size.x, 1.f);
+				break;
 		}
 
 		if (!g_GeneratedObjContainer)
@@ -1712,26 +1737,176 @@ void Physics::drawImGui(World& world)
 			world.getSceneManager().addToRootList(g_GeneratedObjContainer);
 		}
 
-		world.getEntityFactory().createObject(type, [&](Entity* object)
-			{
-				float radius = m_size.x;
-				object->setName("Throwed " + type + " (" + std::to_string(g_GeneratedEntitiesIdCount++) + ")");
-				g_GeneratedObjContainer->addChild(object);
-				object->setLocalTransformation(mainCamera->getParentEntity()->getWorldPosition() + mainCamera->getForward(), vec4f(radius, radius, radius, 1.f), quatf::identity);
+		Entity* throwed;
+		if (!proceduralMesh)
+		{
+			throwed = world.getEntityFactory().createObject(type, [&](Entity* object)
+				{
+					object->setName("Throwed " + type + " (" + std::to_string(g_GeneratedEntitiesIdCount++) + ")");
+					g_GeneratedObjContainer->addChild(object);
+					object->setLocalTransformation(mainCamera->getParentEntity()->getWorldPosition() + mainCamera->getForward(), finalSize, quatf::identity);
+				});
+		}
+		else
+		{
+			throwed = world.getEntityFactory().createObject([&](Entity* object)
+				{
+					object->setName("Throwed " + type + " (" + std::to_string(g_GeneratedEntitiesIdCount++) + ")");
+					g_GeneratedObjContainer->addChild(object);
+					object->setLocalTransformation(mainCamera->getParentEntity()->getWorldPosition() + mainCamera->getForward(), vec4f::one, quatf::identity);
 
-				RigidBody* rb = new RigidBody(RigidBody::DYNAMIC);
-				rb->setMass(1000);// radius* radius* radius);
-				rb->setBouncyness(0.01f);
-				rb->setFriction(0.2f);
-				rb->setDamping(0.001f);
-				rb->setGravityFactor(1.f);
-				rb->setLinearVelocity(m_velocity * mainCamera->getForward());
-				object->addComponent(rb);
+					switch (m_shapeCode)
+					{
+						case 2:
+							{
+								Mesh* mesh = new Mesh("Mesh of " + object->getName());
+								std::vector<vec4f> dummy;
+								std::vector<vec4f> vertices;
+								std::vector<vec4f> normals;
+								std::vector<vec4f> colors;
+								std::vector<uint32_t> faces;
 
-				if (m_autoSelectThrowedObject)
-					world.getSceneManager().selectEntity(world, object);
-			});
+								constexpr unsigned int quadrature = 32;
+								constexpr unsigned int quadratureModulo = quadrature - 1;
+								constexpr unsigned int cylinderFaces = quadrature;
+								constexpr float stepAngle = 2.f * PI / quadrature;
+								constexpr unsigned int quarterQuadrature = quadrature / 4;
+								constexpr bool smoothNormal = true;
 
+								float radius = m_size.x;
+								float height = 0.5f * m_size.y;
+								vec4f center1 = vec4f(0, -height, 0, 1);
+								vec4f center2 = vec4f(0, height, 0, 1);
+								vec4f axis = vec4f(0, 1, 0, 0);
+								vec4f axis_n0 = vec4f(1, 0, 0, 0); //(std::abs(axis.x) > std::abs(axis.z) ? vec4f(-axis.y, axis.x, 0, 0) : vec4f(0, -axis.z, axis.y, 0)).getNormal();
+								vec4f axis_n1 = vec4f(0, 0, 1, 0); //vec4f::cross(axis, axis_n0);
+								vec4f color = Debug::orange;
+
+								//std::vector<Vertex> vertices;
+								vertices.reserve(6 * quadrature + 8 * quadrature + quarterQuadrature);
+								for (int i = 0; i < quadrature; i++)
+								{
+									float a1 = i * stepAngle;
+									float a2 = ((i + 1) & quadratureModulo) * stepAngle;
+									float ca1 = cos(a1);
+									float sa1 = sin(a1);
+									float ca2 = cos(a2);
+									float sa2 = sin(a2);
+
+									vec4f n1 = ca1 * axis_n0 + sa1 * axis_n1;
+									vec4f n2 = ca2 * axis_n0 + sa2 * axis_n1;
+
+									vec4f p0 = center1 + radius * n1;
+									vec4f p1 = center1 + radius * n2;
+									vec4f p2 = center2 + radius * n1;
+									vec4f p3 = center2 + radius * n2;
+
+									if (smoothNormal)
+									{
+										n1 = 0.5f * (n1 + n2);
+										n1.normalize();
+										n2 = n1;
+									}
+
+									vertices.push_back(p0); normals.push_back(n1); colors.push_back(color);
+									vertices.push_back(p1); normals.push_back(n2); colors.push_back(color);
+									vertices.push_back(p3); normals.push_back(n2); colors.push_back(color);
+
+									vertices.push_back(p0); normals.push_back(n1); colors.push_back(color);
+									vertices.push_back(p3); normals.push_back(n2); colors.push_back(color);
+									vertices.push_back(p2); normals.push_back(n1); colors.push_back(color);
+
+
+									for (int j = 0; j < quarterQuadrature; j++)
+									{
+										float b1 = j * stepAngle;
+										float b2 = ((j + 1) & quadratureModulo) * stepAngle;
+										float cb1 = cos(b1);
+										float sb1 = sin(b1);
+										float cb2 = cos(b2);
+										float sb2 = sin(b2);
+										
+										vec4f n4 = (cb1 * ca1) * axis_n0 + (cb1 * sa1) * axis_n1 - sb1 * axis;
+										vec4f n5 = (cb1 * ca2) * axis_n0 + (cb1 * sa2) * axis_n1 - sb1 * axis;
+										vec4f n6 = (cb2 * ca1) * axis_n0 + (cb2 * sa1) * axis_n1 - sb2 * axis;
+										vec4f n7 = (cb2 * ca2) * axis_n0 + (cb2 * sa2) * axis_n1 - sb2 * axis;
+
+										vec4f n8  = (cb1 * ca1) * axis_n0 + (cb1 * sa1) * axis_n1 + sb1 * axis;
+										vec4f n9  = (cb1 * ca2) * axis_n0 + (cb1 * sa2) * axis_n1 + sb1 * axis;
+										vec4f n10 = (cb2 * ca1) * axis_n0 + (cb2 * sa1) * axis_n1 + sb2 * axis;
+										vec4f n11 = (cb2 * ca2) * axis_n0 + (cb2 * sa2) * axis_n1 + sb2 * axis;
+
+										vec4f p4 = center1 + radius * n4;
+										vec4f p5 = center1 + radius * n5;
+										vec4f p6 = center1 + radius * n6;
+										vec4f p7 = center1 + radius * n7;
+
+										vec4f p8  = center2 + radius * n8;
+										vec4f p9  = center2 + radius * n9;
+										vec4f p10 = center2 + radius * n10;
+										vec4f p11 = center2 + radius * n11;
+
+										if (smoothNormal)
+										{
+											n4 = 0.25f * (n4 + n5 + n6 + n7);
+											n8 = 0.25f * (n8 + n9 + n10 + n11);
+											n4.normalize();
+											n8.normalize();
+											n7 = n6 = n5 = n4;
+											n11 = n10 = n9 = n8;
+										}
+
+										vertices.push_back(p4); normals.push_back(n4); colors.push_back(color);
+										vertices.push_back(p7); normals.push_back(n7); colors.push_back(color);
+										vertices.push_back(p5); normals.push_back(n5); colors.push_back(color);
+
+										vertices.push_back(p4); normals.push_back(n4); colors.push_back(color);
+										vertices.push_back(p6); normals.push_back(n6); colors.push_back(color);
+										vertices.push_back(p7); normals.push_back(n7); colors.push_back(color);
+
+										vertices.push_back(p8);  normals.push_back(n8);  colors.push_back(color);
+										vertices.push_back(p9);  normals.push_back(n9);  colors.push_back(color);
+										vertices.push_back(p11); normals.push_back(n11); colors.push_back(color);
+
+										vertices.push_back(p8);  normals.push_back(n8);  colors.push_back(color);
+										vertices.push_back(p11); normals.push_back(n11); colors.push_back(color);
+										vertices.push_back(p10); normals.push_back(n10); colors.push_back(color);
+									}
+								}
+								for (int i = 0; i < vertices.size(); i++)
+									faces.push_back(i);
+
+								mesh->initialize(vertices, normals, dummy, colors, faces, std::vector<vec4i>(), dummy);
+								ResourceManager::getInstance()->addResource(mesh);
+
+								DrawableComponent* drawable = new DrawableComponent(mesh->name, "default");
+								object->addComponent(drawable);
+
+								Collider* collider = new Collider(new Capsule(center1, center2, radius));
+								object->addComponent(collider);
+								object->recomputeBoundingBox();
+							}
+							break;
+
+						default:
+							std::cout << ConsoleColor::getColorString(ConsoleColor::Color::RED) << "No procedural generate for shape " << type << std::endl;
+							std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
+							break;
+					}
+				});
+		}
+
+		RigidBody* rb = new RigidBody(RigidBody::DYNAMIC);
+		rb->setVolumicMass(1000);
+		rb->setBouncyness(0.01f);
+		rb->setFriction(0.2f);
+		rb->setDamping(0.001f);
+		rb->setGravityFactor(1.f);
+		rb->setLinearVelocity(m_velocity * mainCamera->getForward());
+		throwed->addComponent(rb);
+
+		if (m_autoSelectThrowedObject)
+			world.getSceneManager().selectEntity(world, throwed);
 	}
 
 	ImGui::PopID();

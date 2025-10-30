@@ -1,6 +1,6 @@
 #include "WidgetBoard.h"
 
-#include "WidgetGLDebugger.h"
+#include <Renderer/GLDebugger.h>
 
 #define BATCH_INDEX_BORDER 0
 #define BATCH_INDEX_CENTER 1
@@ -43,25 +43,40 @@ void WidgetBoard::initialize(const float& bThickness, const float& bWidth, const
 void WidgetBoard::draw(Shader* s, uint8_t& stencilMask, const mat4f& model)
 {
 	//	texture related stuff
-	if (texture) glBindTexture(GL_TEXTURE_2D, texture->getTextureId());
-	else glBindTexture(GL_TEXTURE_2D, 0);
+	if (texture) 
+	{
+		glBindTexture(GL_TEXTURE_2D, texture->getTextureId());		CheckGLError("board draw prepare", "glBindTexture()");
+	}
+	else 
+	{
+		glBindTexture(GL_TEXTURE_2D, 0);							CheckGLError("board draw prepare", "glBindTexture(0)");
+	}
 	int loc = s->getUniformLocation("useTexture");
-	if (loc >= 0) glUniform1i(loc, (texture ? 1 : 0));
+	if (loc >= 0) 
+	{
+		glUniform1i(loc, (texture ? 1 : 0));						CheckGLError("board draw prepare", "glUniform1i(useTexture)");
+	}
 
 	//	draw border
 	loc = s->getUniformLocation("color");
-	if (loc >= 0) glUniform4fv(loc, 1, &colors[State::CURRENT].x);
+	if (loc >= 0) 
+	{
+		glUniform4fv(loc, 1, &colors[State::CURRENT].x);			CheckGLError("board draw", "glBufferSubData()");
+	}
 
-	glBindVertexArray(batchList[BATCH_INDEX_BORDER].vao);
-	glDrawElements(GL_TRIANGLES, (int)batchList[BATCH_INDEX_BORDER].faces.size(), GL_UNSIGNED_SHORT, NULL);
+	glBindVertexArray(batchList[BATCH_INDEX_BORDER].vao);			CheckGLError("board draw", "glBindVertexArray()");
+	glDrawElements(GL_TRIANGLES, (int)batchList[BATCH_INDEX_BORDER].faces.size(), GL_UNSIGNED_SHORT, NULL);		CheckGLError("board draw", "glDrawElements()");
 
 	//	draw center at different alpha
 	glm::vec4 color(colors[State::CURRENT].x, colors[State::CURRENT].y, colors[State::CURRENT].z, 0.5f * colors[State::CURRENT].w);
 	loc = s->getUniformLocation("color");
-	if (loc >= 0) glUniform4fv(loc, 1, &color.x);
+	if (loc >= 0) 
+	{
+		glUniform4fv(loc, 1, &color.x);		CheckGLError("board draw", "glUniform4fv()");
+	}
 
-	glBindVertexArray(batchList[BATCH_INDEX_CENTER].vao);
-	glDrawElements(GL_TRIANGLES, (int)batchList[BATCH_INDEX_CENTER].faces.size(), GL_UNSIGNED_SHORT, NULL);
+	glBindVertexArray(batchList[BATCH_INDEX_CENTER].vao);			CheckGLError("board draw", "glBindVertexArray()");
+	glDrawElements(GL_TRIANGLES, (int)batchList[BATCH_INDEX_CENTER].faces.size(), GL_UNSIGNED_SHORT, NULL);		CheckGLError("board draw", "glDrawElements()");
 }
 void WidgetBoard::update(const float& elapseTime)
 {
@@ -458,16 +473,22 @@ void WidgetBoard::updateVBOs()
 {
 	for (unsigned int i = 0; i < batchList.size(); i++)
 	{
-		glBindVertexArray(0);
+		glBindVertexArray(0);															CheckGLError("update prepare", "glBindVertexArray(0)");
 
-		glBindBuffer(GL_ARRAY_BUFFER, batchList[i].verticesBuffer);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, batchList[i].vertices.size() * sizeof(vec4f), batchList[i].vertices.data());
+		glBindBuffer(GL_ARRAY_BUFFER, batchList[i].verticesBuffer);						CheckGLError("vertice update", "glBindBuffer()");
+		uint32_t size = batchList[i].vertices.size() * sizeof(vec4f);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, size, batchList[i].vertices.data());		CheckGLError("vertice update", "glBufferSubData()");
 
-		glBindBuffer(GL_ARRAY_BUFFER, batchList[i].texturesBuffer);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, batchList[i].textures.size() * sizeof(vec2f), batchList[i].textures.data());
+		glBindBuffer(GL_ARRAY_BUFFER, batchList[i].texturesBuffer);						CheckGLError("texture update", "glBindBuffer()");
+		size = batchList[i].textures.size() * sizeof(vec2f);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, size, batchList[i].textures.data());		CheckGLError("texture update", "glBufferSubData()");
+		glBindBuffer(GL_ARRAY_BUFFER, 0);												CheckGLError("update clear state", "glBindBuffer()");
 
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, batchList[i].facesBuffer);
-		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, batchList[i].faces.size() * sizeof(unsigned short), batchList[i].faces.data());
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, batchList[i].facesBuffer);				CheckGLError("faces update", "glBindBuffer()");
+		size = batchList[i].faces.size() * sizeof(unsigned short);
+		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, size, batchList[i].faces.data());	CheckGLError("faces update", "glBufferSubData()");
+
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);										CheckGLError("update clear state", "glBindBuffer(0)");
 	}
 }
 //

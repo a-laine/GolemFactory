@@ -1,8 +1,13 @@
 #include "Debug.h"
-#include <Resources/Shader.h>
+#include <Resources/ResourceManager.h>
+#include <Renderer/Renderer.h>
 #include <Renderer/DrawableComponent.h>
+#include <Resources/Shader.h>
+#include <Resources/Mesh.h>
 
-#include <glm/gtx/vector_angle.hpp>
+#include <Renderer/GLDebugger.h>
+
+//#include <glm/gtx/vector_angle.hpp>
 
 
 // Static initialization
@@ -29,7 +34,7 @@ const vec4f Debug::darkGreen = vec4f(0.f, 0.25f, 0.f, 1.f);
 Debug::Debug() : renderer(nullptr),  cubeMesh(nullptr), sphereMesh(nullptr), capsuleMesh(nullptr), 
 	 defaultShader(nullptr), wiredShader(nullptr), debug(nullptr), textureReinterpreter(nullptr)
 {
-	glGenFramebuffers(1, &textureReinterpreterFBO);
+	glGenFramebuffers(1, &textureReinterpreterFBO);			CheckGLError("Debug init", "glGenFramebuffers");
 }
 Debug::~Debug()
 {
@@ -43,7 +48,7 @@ Debug::~Debug()
 
 	for (auto& it : This->vertexScratchBuffers)
 	{
-		glDeleteBuffers(1, &it.vbo);
+		glDeleteBuffers(1, &it.vbo);						CheckGLError("Debug shut", "glDeleteBuffers");
 	}
 }
 //
@@ -67,25 +72,37 @@ void Debug::initialize(const std::string& cubeMeshName, const std::string& spher
 void Debug::setDepthTest(bool enable)
 {
 	if (enable)
-		glEnable(GL_DEPTH_TEST);
+	{
+		glEnable(GL_DEPTH_TEST);			CheckGLError("Debug change depthTest", "glEnable(GL_DEPTH_TEST)");
+	}
 	else
-		glDisable(GL_DEPTH_TEST);
+	{
+		glDisable(GL_DEPTH_TEST);			CheckGLError("Debug change depthTest", "glDisable(GL_DEPTH_TEST)");
+	}
 }
 void Debug::setFaceCulling(bool enable)
 {
 	if (enable)
-		glEnable(GL_CULL_FACE);
+	{
+		glEnable(GL_CULL_FACE);				CheckGLError("Debug change culling", "glEnable(GL_CULL_FACE)");
+	}
 	else
-		glDisable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
-	glFrontFace(GL_CW);
+	{
+		glDisable(GL_CULL_FACE);			CheckGLError("Debug change culling", "glDisable(GL_CULL_FACE)");
+	}
+	glCullFace(GL_BACK);					CheckGLError("Debug change culling", "glCullFace(GL_BACK)");
+	glFrontFace(GL_CW);						CheckGLError("Debug change culling", "glFrontFace(GL_CW)");
 }
 void Debug::setBlending(bool enable)
 {
 	if (enable)
-		glEnable(GL_BLEND);
+	{
+		glEnable(GL_BLEND);					CheckGLError("Debug change blending", "glEnable(GL_BLEND)");
+	}
 	else
-		glDisable(GL_BLEND);
+	{
+		glDisable(GL_BLEND);				CheckGLError("Debug change blending", "glDisable(GL_BLEND)");
+	}
 }
 
 void Debug::drawPoint(const vec4f& p)
@@ -247,10 +264,7 @@ void Debug::capsule(const vec4f& point1, const vec4f& point2, const float& radiu
 	{
 		// prepare transform
 		vec4f center = 0.5f * (point1 + point2);
-		mat4f base = mat4f::identity;// = mat4f::translate(mat4f::identity, center);
-		//vec4f tmp = base[1];
-		//base[1] = base[2];
-		//base[2] = tmp;
+		mat4f base = mat4f::identity;
 		mat4f rotMat = mat4f::identity;
 		vec4f axis = (point1 - point2).getNormal();
 		vec4f v = vec4f::cross(vec4f(0, 0, 1, 0), axis);
@@ -271,7 +285,10 @@ void Debug::capsule(const vec4f& point1, const vec4f& point2, const float& radiu
 
 		//	override mesh color
 		int loc = shader->getUniformLocation("overrideColor");
-		if (loc >= 0) glUniform4fv(loc, 1, (float*)&color);
+		if (loc >= 0) 
+		{
+			glUniform4fv(loc, 1, (float*)&color); CheckGLError("Debug set color", "glUniform4fv()");
+		}
 
 		//	draw meshes
 		float length = 0.5f * (point1 - point2).getNorm();
@@ -282,6 +299,7 @@ void Debug::capsule(const vec4f& point1, const vec4f& point2, const float& radiu
 		This->renderer->bindMaterial(nullptr, shader);
 		This->renderer->loadMatrices(shader, (float*)&modelMatrix);
 		glDrawElements(GL_TRIANGLES, cylinderFaces, GL_UNSIGNED_SHORT, NULL);
+		CheckGLError("Debug draw", "glDrawElements()");
 
 		model = mat4f::translate(base, vec4f(0, 0, length, 0.f));
 		model = mat4f::scale(model, vec4f(radius, radius, radius, 1.f));
@@ -289,6 +307,7 @@ void Debug::capsule(const vec4f& point1, const vec4f& point2, const float& radiu
 		This->renderer->bindMaterial(nullptr, shader);
 		This->renderer->loadMatrices(shader, (float*)&modelMatrix);
 		glDrawElements(GL_TRIANGLES, hemisphereFaces, GL_UNSIGNED_SHORT, (void*)(cylinderFaces * sizeof(unsigned short)));
+		CheckGLError("Debug draw", "glDrawElements()");
 
 		model = mat4f::translate(base, vec4f(0, 0, -length, 0.f));
 		model = mat4f::scale(model, vec4f(radius, radius, radius, 1.f));
@@ -296,8 +315,12 @@ void Debug::capsule(const vec4f& point1, const vec4f& point2, const float& radiu
 		This->renderer->bindMaterial(nullptr, shader);
 		This->renderer->loadMatrices(shader, (float*)&modelMatrix);
 		glDrawElements(GL_TRIANGLES, hemisphereFaces, GL_UNSIGNED_SHORT, (void*)((cylinderFaces + hemisphereFaces) * sizeof(unsigned short)));
+		CheckGLError("Debug draw", "glDrawElements()");
 
-		if (loc >= 0) glUniform4fv(loc, 1, &defaultColorUniform[0]);
+		if (loc >= 0) 
+		{
+			glUniform4fv(loc, 1, &defaultColorUniform[0]); CheckGLError("Debug set color", "glUniform4fv()");
+		}
 	}
 }
 void Debug::mesh(const Mesh* const mesh, const mat4f& transform, Shader* shader)
@@ -313,14 +336,19 @@ void Debug::mesh(const Mesh* const mesh, const mat4f& transform, Shader* shader)
 		//	override mesh color
 		int loc = shader->getUniformLocation("overrideColor");
 		if (loc >= 0) 
-			glUniform4fv(loc, 1, (float*)&color);
+		{
+			glUniform4fv(loc, 1, (float*)&color); CheckGLError("Debug set color", "glUniform4fv()");
+		}
 
 		//	Draw mesh
 		//glBindVertexArray(mesh->getVAO());
 		This->renderer->loadVAO(mesh->getVAO());
 		glDrawElements(GL_TRIANGLES, mesh->getNumberIndices(), mesh->getIndicesType(), NULL);
 
-		if (loc >= 0) glUniform4fv(loc, 1, &defaultColorUniform[0]);
+		if (loc >= 0) 
+		{
+			glUniform4fv(loc, 1, &defaultColorUniform[0]); CheckGLError("Debug set color", "glUniform4fv()");
+		}
 	}
 }
 void Debug::drawMultiplePrimitive(const Vertex* vertices, const unsigned int& verticesCount, const mat4f& model, unsigned int drawMode)
@@ -335,13 +363,26 @@ void Debug::drawMultiplePrimitive(const Vertex* vertices, const unsigned int& ve
 	constexpr size_t vboSize = sizeof(Vertex) * 4096;
 	uint8_t* startPtr = (uint8_t*)vertices;
 	uint8_t* endPtr = startPtr + sizeof(Vertex) * verticesCount;
+	int neededSize = sizeof(Vertex);
+	switch (drawMode)
+	{
+		case GL_POINTS: case GL_POINT: neededSize = 1 * sizeof(Vertex); break;
+		case GL_LINES: case GL_LINE: neededSize = 2 * sizeof(Vertex); break;
+		case GL_LINE_LOOP: neededSize = verticesCount * sizeof(Vertex); break;
+		case GL_TRIANGLES: neededSize = 3 * sizeof(Vertex); break;
+		default:
+			GF_ASSERT_MSG(false, "Invalid primitive type");
+			break;
+	}
+
+	GF_ASSERT_MSG(neededSize < vboSize, "Too many primitive, cannot fit in one scartch buffer page ! (try split it)");
 
 	while (startPtr < endPtr)
 	{
 		VertexVBO* buffer = nullptr;
 		for (auto& it : This->vertexScratchBuffers)
 		{
-			if (it.offset < vboSize)
+			if (it.offset < vboSize && vboSize > neededSize + it.offset)
 			{
 				buffer = &it;
 				break;
@@ -353,34 +394,42 @@ void Debug::drawMultiplePrimitive(const Vertex* vertices, const unsigned int& ve
 			buffer = &This->vertexScratchBuffers.back();
 			buffer->offset = 0;
 
-			glGenBuffers(1, &buffer->vbo);
-			glBindBuffer(GL_ARRAY_BUFFER, buffer->vbo);
-			glBufferData(GL_ARRAY_BUFFER, vboSize, nullptr, GL_DYNAMIC_DRAW);
+			glGenBuffers(1, &buffer->vbo);										CheckGLError("extendScratchBuffer", "glGenBuffers()");
+			glBindBuffer(GL_ARRAY_BUFFER, buffer->vbo);							CheckGLError("extendScratchBuffer", "glBindBuffer()");
+			glBufferData(GL_ARRAY_BUFFER, vboSize, nullptr, GL_DYNAMIC_DRAW);	CheckGLError("extendScratchBuffer", "glBufferData()");
 
-			glGenVertexArrays(1, &buffer->vao);
-			glBindVertexArray(buffer->vao);
+			glGenVertexArrays(1, &buffer->vao);									CheckGLError("extendScratchBuffer", "glGenVertexArrays()");
+			glBindVertexArray(buffer->vao);										CheckGLError("extendScratchBuffer", "glBindVertexArray()");
 
-			glEnableVertexAttribArray(0);
-			glBindBuffer(GL_ARRAY_BUFFER, buffer->vbo);
-			glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), NULL);
+			glEnableVertexAttribArray(0);										CheckGLError("extendScratchBuffer", "glEnableVertexAttribArray()");
+			glBindBuffer(GL_ARRAY_BUFFER, buffer->vbo);							CheckGLError("extendScratchBuffer", "glBindBuffer()");
+			glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), NULL); CheckGLError("extendScratchBuffer", "glVertexAttribPointer()");
 
-			glEnableVertexAttribArray(1);
-			glBindBuffer(GL_ARRAY_BUFFER, buffer->vbo);
-			glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)sizeof(vec4f));
+			glEnableVertexAttribArray(1);										CheckGLError("extendScratchBuffer", "glEnableVertexAttribArray()");
+			glBindBuffer(GL_ARRAY_BUFFER, buffer->vbo);							CheckGLError("extendScratchBuffer", "glBindBuffer()");
+			glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)sizeof(vec4f)); CheckGLError("extendScratchBuffer", "glVertexAttribPointer()");
+			glBindBuffer(GL_ARRAY_BUFFER, 0);									CheckGLError("extendScratchBuffer", "glBindBuffer()");
+			glBindVertexArray(0);												CheckGLError("extendScratchBuffer", "glBindVertexArray()");
 		}
 
-		glBindVertexArray(0);
+		glBindVertexArray(0);													CheckGLError("debug multiDraw", "glBindVertexArray()");
+
 		int range = (int)std::min((size_t)(endPtr - startPtr), vboSize - buffer->offset);
+		range = ((int)(range / neededSize)) * neededSize;
+		GF_ASSERT_MSG(range > 0, "Error");
 
-		glBindBuffer(GL_ARRAY_BUFFER, buffer->vbo);
-		glBufferSubData(GL_ARRAY_BUFFER, buffer->offset, range, startPtr);
+		glBindBuffer(GL_ARRAY_BUFFER, buffer->vbo);								CheckGLError("debug multiDraw", "glBindBuffer()");
+		glBufferSubData(GL_ARRAY_BUFFER, buffer->offset, range, startPtr);		CheckGLError("debug multiDraw", "glBufferSubData()");
+		glBindBuffer(GL_ARRAY_BUFFER, 0);										CheckGLError("debug multiDraw", "glBindBuffer()");
 
-		glBindVertexArray(buffer->vao);
-		glDrawArrays(drawMode, (int)(buffer->offset / sizeof(Vertex)), (int)(range / sizeof(Vertex)));
+		glBindVertexArray(buffer->vao);											CheckGLError("debug multiDraw", "glBindVertexArray()");
+		glDrawArrays(drawMode, (int)(buffer->offset / sizeof(Vertex)), (int)(range / sizeof(Vertex))); CheckGLError("debug multiDraw", "glDrawArrays()");
+		glBindVertexArray(0);													CheckGLError("debug multiDraw", "glBindVertexArray()");
 
 		startPtr += range;
 		buffer->offset += range;
 	}
+	GF_ASSERT_MSG(startPtr == endPtr, "what?");
 }
 
 
@@ -395,16 +444,17 @@ void Debug::reinterpreteTexture(const Texture* in, Texture* out, float layer)
 		out->size.x = in->size.x;
 		out->size.y = in->size.y;
 
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, out->getTextureId());
+		glActiveTexture(GL_TEXTURE0);						CheckGLError("reinterpreteTexture", "glActiveTexture()");
+		glBindTexture(GL_TEXTURE_2D, out->getTextureId());	CheckGLError("reinterpreteTexture", "glBindTexture()");
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, in->size.x, in->size.y, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+		CheckGLError("reinterpreteTexture", "glTexImage2D()");
 	}
 
 	// bing framebuffer
-	glBindFramebuffer(GL_FRAMEBUFFER, This->textureReinterpreterFBO);
-	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, out->getTextureId(), 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, This->textureReinterpreterFBO);					CheckGLError("reinterpreteTexture", "glBindFramebuffer()");
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, out->getTextureId(), 0);	CheckGLError("reinterpreteTexture", "glFramebufferTexture()");
 	GLenum DrawBuffers[1] = { GL_COLOR_ATTACHMENT0 };
-	glDrawBuffers(1, DrawBuffers);
+	glDrawBuffers(1, DrawBuffers);														CheckGLError("reinterpreteTexture", "glDrawBuffers()");
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 	{
 		std::cout << "Debug::reinterpreteTexture" << std::endl;
@@ -412,7 +462,7 @@ void Debug::reinterpreteTexture(const Texture* in, Texture* out, float layer)
 	}
 
 	// draw
-	glViewport(0, 0, in->size.x, in->size.y);
+	glViewport(0, 0, in->size.x, in->size.y);											CheckGLError("reinterpreteTexture", "glViewport()");
 	This->renderer->lastShader = This->textureReinterpreter;
 	This->renderer->lastVAO = This->renderer->fullscreenVAO;
 	This->textureReinterpreter->enable();
@@ -423,33 +473,39 @@ void Debug::reinterpreteTexture(const Texture* in, Texture* out, float layer)
 		{
 			if (in->m_type == GL_TEXTURE_2D_ARRAY)
 			{
-				glActiveTexture(GL_TEXTURE0);
-				glBindTexture(GL_TEXTURE_2D_ARRAY, in->getTextureId());
+				glActiveTexture(GL_TEXTURE0);											CheckGLError("reinterpreteTexture", "glActiveTexture()");
+				glBindTexture(GL_TEXTURE_2D_ARRAY, in->getTextureId());					CheckGLError("reinterpreteTexture", "glBindTexture()");
 
 				int loc = This->textureReinterpreter->getUniformLocation("type");
 				if (loc >= 0)
-					glUniform1f(loc, 0);
+				{
+					glUniform1f(loc, 0);												CheckGLError("reinterpreteTexture", "glUniform1f(type)");
+				}
 			}
 			else if (in->m_type == GL_TEXTURE_CUBE_MAP_ARRAY)
 			{
-				glActiveTexture(GL_TEXTURE1);
-				glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, in->getTextureId());
+				glActiveTexture(GL_TEXTURE1);											CheckGLError("reinterpreteTexture", "glActiveTexture()");
+				glBindTexture(GL_TEXTURE_CUBE_MAP_ARRAY, in->getTextureId());			CheckGLError("reinterpreteTexture", "glBindTexture()");
 
 				int loc = This->textureReinterpreter->getUniformLocation("type");
 				if (loc >= 0)
-					glUniform1f(loc, 1);
+				{
+					glUniform1f(loc, 1);												CheckGLError("reinterpreteTexture", "glUniform1f(type)");
+				}
 			}
 		}
 		else
 		{
 			if (in->m_type == GL_TEXTURE_2D)
 			{
-				glActiveTexture(GL_TEXTURE2);
-				glBindTexture(GL_TEXTURE_2D, in->getTextureId());
+				glActiveTexture(GL_TEXTURE2);											CheckGLError("reinterpreteTexture", "glActiveTexture()");
+				glBindTexture(GL_TEXTURE_2D, in->getTextureId());						CheckGLError("reinterpreteTexture", "glBindTexture()");
 
 				int loc = This->textureReinterpreter->getUniformLocation("type");
 				if (loc >= 0)
-					glUniform1f(loc, 2);
+				{
+					glUniform1f(loc, 2);												CheckGLError("reinterpreteTexture", "glUniform1f(type)");
+				}
 			}
 		}
 	}
@@ -457,44 +513,51 @@ void Debug::reinterpreteTexture(const Texture* in, Texture* out, float layer)
 	{
 		if (in->m_type == GL_TEXTURE_2D)
 		{
-
-			glActiveTexture(GL_TEXTURE0);
-			glBindImageTexture(0, in->getTextureId(), 0, GL_TRUE, 0, GL_READ_ONLY, in->m_internalFormat);
+			glActiveTexture(GL_TEXTURE0);												CheckGLError("reinterpreteTexture", "glActiveTexture()");
+			glBindImageTexture(0, in->getTextureId(), 0, GL_TRUE, 0, GL_READ_ONLY, in->m_internalFormat); CheckGLError("reinterpreteTexture", "glBindImageTexture()");
 
 			int loc = This->textureReinterpreter->getUniformLocation("type");
 			if (loc >= 0)
-				glUniform1f(loc, 3);
+			{
+				glUniform1f(loc, 3);													CheckGLError("reinterpreteTexture", "glUniform1f(type)");
+			}
 		}
 	}
 	else if (in->m_type == GL_TEXTURE_2D_ARRAY)
 	{
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D_ARRAY, in->getTextureId());
+		glActiveTexture(GL_TEXTURE0);													CheckGLError("reinterpreteTexture", "glActiveTexture()");
+		glBindTexture(GL_TEXTURE_2D_ARRAY, in->getTextureId());							CheckGLError("reinterpreteTexture", "glBindTexture()");
 
 		int loc = This->textureReinterpreter->getUniformLocation("type");
 		if (loc >= 0)
-			glUniform1f(loc, 4);
+		{
+			glUniform1f(loc, 4);														CheckGLError("reinterpreteTexture", "glUniform1f(type)");
+		}
 	}
 	else if (in->m_type == GL_TEXTURE_CUBE_MAP)
 	{
-		glActiveTexture(GL_TEXTURE3);
-		glBindTexture(GL_TEXTURE_CUBE_MAP, in->getTextureId());
+		glActiveTexture(GL_TEXTURE3);													CheckGLError("reinterpreteTexture", "glActiveTexture()");
+		glBindTexture(GL_TEXTURE_CUBE_MAP, in->getTextureId());							CheckGLError("reinterpreteTexture", "glBindTexture()");
 
 		int loc = This->textureReinterpreter->getUniformLocation("type");
 		if (loc >= 0)
-			glUniform1f(loc, 5);
+		{
+			glUniform1f(loc, 5);														CheckGLError("reinterpreteTexture", "glUniform1f(type)");
+		}
 	}
 
 	int loc = This->textureReinterpreter->getUniformLocation("layer");
 	if (loc >= 0)
-		glUniform1f(loc, layer);
+	{
+		glUniform1f(loc, layer);														CheckGLError("reinterpreteTexture", "glUniform1f(layer)");
+	}
 
 
-	glBindVertexArray(This->renderer->lastVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 3);
+	glBindVertexArray(This->renderer->lastVAO);											CheckGLError("reinterpreteTexture", "glBindVertexArray()");
+	glDrawArrays(GL_TRIANGLES, 0, 3);													CheckGLError("reinterpreteTexture", "glDrawArrays()");
 
 	// end
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);												CheckGLError("reinterpreteTexture", "glBindFramebuffer(0)");
 }
 //
 

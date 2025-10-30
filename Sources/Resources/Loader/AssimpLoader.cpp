@@ -404,7 +404,7 @@ void AssimpLoader::initialize(ResourceVirtual* resource)
             break;
         }*/
         default:
-            GF_ASSERT(0);
+            GF_ASSERT_MSG(false, "AssimpLoader, unknown or unsuported resource type");
     }
 }
 

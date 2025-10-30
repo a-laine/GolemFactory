@@ -22,16 +22,7 @@ class Job2
 			LONG,
 			COUNT
 		};
-		class ReaderCounter
-		{
-			public:
-				ReaderCounter(std::atomic_uint16_t& c) : m_counter(&c) { m_counter->fetch_add(1); };
-				~ReaderCounter() { m_counter->fetch_sub(1); };
-
-			protected:
-				std::atomic_uint16_t* m_counter;
-		};
-
+		
 		Job2(JobPriority priority, Task task, uint32_t dependancyCount = 0);
 		~Job2();
 
@@ -55,8 +46,7 @@ class Job2
 		std::atomic_uint32_t* m_dependancy = nullptr;	// dependancyCounter pointer of an other job depending on me
 		volatile int m_jobIndex = -1;					// job index in the pool
 
-		std::atomic_uint16_t m_readingThreadCount;		// incremented just when a thread enter this job, even before lock
-		std::atomic_bool m_finishedJob;
+		std::atomic_bool m_finishedJob;					// simple bit to see if it's done
 };
 
 class JobSystem : public Singleton<JobSystem>

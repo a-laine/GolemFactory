@@ -108,7 +108,7 @@ Skeleton* SkeletonComponent::getSkeleton() const
 
 unsigned int SkeletonComponent::getNbBones() const
 {
-    GF_ASSERT(isValid());
+    GF_ASSERT_MSG(isValid(), "Invalid skeleton component");
 	return (unsigned int) m_skeleton->m_bones.size();
 }
 
@@ -129,13 +129,13 @@ void SkeletonComponent::swapPose(std::vector<mat4f>& _pose)
 
 const std::vector<mat4f>& SkeletonComponent::getInverseBindPose() const
 {
-    GF_ASSERT(isValid());
+    GF_ASSERT_MSG(isValid(), "Invalid skeleton component");
     return m_skeleton->getInverseBindPose();
 }
 
 vec4f SkeletonComponent::getBonePosition(const std::string& jointName)
 {
-    GF_ASSERT(isValid());
+    GF_ASSERT_MSG(isValid(), "Invalid skeleton component");
 	vec4f result = vec4f::zero;
 
 	locker.lock();

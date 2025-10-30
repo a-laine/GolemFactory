@@ -165,19 +165,18 @@ void TerrainArea::generate(const std::string& directory)
 	DetailInstanceDataHeader header;
 	std::vector<std::vector<vec4ui>> instanceDatas;
 	auto& areaDetails = m_terrain->getAreaDetails();
-	int identifier = 0;
-	for (const auto& areaDetail : areaDetails)
+	for (int i = 0; i < areaDetails.size(); i++)//const auto& areaDetail : areaDetails)
 	{
-		for (int k = 0; k < areaDetail.m_meshNames.size(); k++)
+		const Terrain::AreaDetails& detail = areaDetails[i];
+		for (int k = 0; k < detail.m_meshNames.size(); k++)
 		{
-			std::vector<vec4ui> insdata = generateDetails(areaDetail.m_density, areaDetail.m_probability[k], areaDetail.m_sizeRange, areaDetail.m_allowedMaterials, texture.data());
+			std::vector<vec4ui> insdata = generateDetails(detail.m_density, detail.m_probability[k], detail.m_sizeRange, detail.m_allowedMaterials, texture.data());
 			if (insdata.size() > 0)
 			{
-				header.m_arrayIdentifier.push_back(identifier);
+				header.m_arrayIdentifier.push_back((i << 16) | k);
 				header.m_arraySizes.push_back((int)insdata.size());
 				instanceDatas.push_back(insdata);
 			}
-			identifier++;
 		}
 	}
 	header.m_arrayCount = (int)header.m_arrayIdentifier.size();
@@ -320,9 +319,18 @@ std::vector<vec4ui> TerrainArea::generateDetails(float density, vec2f probabilit
 
 	return instanceDatas;
 }
+bool TerrainArea::hasDataForDetail(int identifier) const
+{
+	for (int i = 0; i < m_instanceHeader.m_arrayIdentifier.size(); i++)
+	{
+		if (m_instanceHeader.m_arrayIdentifier[i] == identifier)
+			return !m_instanceDatas[i].empty();
+	}
+	return false;
+}
 Entity* TerrainArea::addDetailsInstance(const std::string& meshName, float density, const std::vector<int>& allowedMaterials, vec2f probability, vec2f scaleRange, float worldNormalWeight, float modelOffset)
 {
-	GF_ASSERT(m_data, "No data !");
+	GF_ASSERT_MSG(m_data, "No data !");
 
 	ResourceManager* resmgr = ResourceManager::getInstance();
 	std::vector<vec4ui> instanceDatas = generateDetails(density, probability, scaleRange, allowedMaterials);
@@ -352,34 +360,37 @@ Entity* TerrainArea::addDetailsInstance(const std::string& meshName, float densi
 	m_entity->getParentWorld()->addToScene(massInstance);
 	return massInstance;
 }
-Entity* TerrainArea::addDetailsInstance(Mesh* mesh, int identifier, float worldNormalWeight, float modelOffset)
+Entity* TerrainArea::addDetailsInstance(Mesh* mesh, int identifier)
 {
 	const float fullModelScale = 10.f;
 
-	std::vector<vec4ui> instanceDatas;
+	std::vector<vec4ui>* instanceDatas = nullptr;
 	for (int i = 0; i < m_instanceHeader.m_arrayIdentifier.size(); i++)
 	{
 		if (m_instanceHeader.m_arrayIdentifier[i] == identifier)
 		{
-			instanceDatas = m_instanceDatas[i];
+			instanceDatas = &m_instanceDatas[i];
 			break;
 		}
 	}
+	if (!instanceDatas)
+		return nullptr;
 
+	const Terrain::AreaDetails& detail = getTerrain()->getAreaDetails()[identifier >> 16];
+	const std::string detailName = detail.m_name;
 	Entity* massInstance = m_entity->getParentWorld()->getEntityFactory().createObject([&](Entity* object)
 		{
-			object->setName("MassInstancing id" + std::to_string(identifier));
+			object->setName("MassInstancing " + detailName + " mesh" + std::to_string(identifier & 0xFFFF));
 			object->setWorldPosition(getCenter());
 
 			TerrainDetailDrawableComponent* drawable = new TerrainDetailDrawableComponent(this);
 			drawable->setMaterial(m_terrain->getDetailMaterial());
 
-
 			drawable->setMesh(mesh);
-			drawable->setInstanceData(instanceDatas);
+			drawable->setInstanceData(*instanceDatas);
 			drawable->setFullModelScale(fullModelScale);
-			drawable->setWorldNormalWeight(worldNormalWeight);
-			drawable->setModelOffset(modelOffset);
+			drawable->setWorldNormalWeight(detail.m_normalWeight);
+			drawable->setModelOffset(detail.m_modelOffset[identifier & 0xFFFF]);
 			drawable->initializeVBO();
 			drawable->initializeVAO();
 			object->addComponent(drawable);
@@ -400,7 +411,7 @@ void TerrainArea::loadInstanceData()
 
 	std::string filename = getNameFromIndex() + ".areaDetails";
 	std::ifstream file(m_terrain->getDirectory() + "/" + filename, std::ios::binary);
-	//GF_ASSERT(file, "No instance datas file found !");
+	//GF_ASSERT_MSG(file, "No instance datas file found !");
 
 	if (file)
 	{
@@ -460,7 +471,7 @@ void TerrainArea::setLod(int lod)
 		m_data = new uint64_t[257 * 257];
 		std::string filename = getNameFromIndex() + ".area";
 		std::ifstream file(m_terrain->getDirectory() + "/" + filename, std::ios::binary);
-		GF_ASSERT(file, "No heightmap file found !");
+		GF_ASSERT_MSG(file, "No heightmap file found !");
 
 		if (file)
 		{
@@ -513,7 +524,7 @@ void TerrainArea::setLod(int lod)
 				if (m_tiles[l].m_lod < 0)
 				{
 					m_tiles[l] = vtexture->getFreeTextureTile(l);
-					GF_ASSERT(m_tiles[l].m_lod >= 0, "No virtual texture tile found !");
+					GF_ASSERT_MSG(m_tiles[l].m_lod >= 0, "No virtual texture tile found !");
 
 					if (m_tiles[l].m_lod >= 0)
 					{
@@ -545,6 +556,10 @@ bool TerrainArea::hasWater() const
 const AxisAlignedBox& TerrainArea::getBoundingBox() const
 {
 	return m_boundingBox;
+}
+vec2i TerrainArea::getGridIndex() const
+{
+	return m_gridIndex;
 }
 
 

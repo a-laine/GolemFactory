@@ -91,7 +91,7 @@ void CameraComponent::setDirection(vec4f direction)
 
 	direction.normalize();
 	
-	GF_ASSERT((std::abs(direction.y) < 1.f - (float)EPSILON), "direction too close to vertical !");
+	GF_ASSERT_MSG((std::abs(direction.y) < 1.f - (float)EPSILON), "direction too close to vertical !");
 
 	vec4f left = vec4f::cross(vec4f(0, 1, 0, 0), direction).getNormal();
 	vec4f up = vec4f::cross(direction, left);
@@ -163,9 +163,7 @@ void CameraComponent::onDrawImGui()
 {
 #ifdef USE_IMGUI
 	const ImVec4 componentColor = ImVec4(0.5f, 0.5f, 0.7f, 1.f);
-	std::ostringstream unicName;
-	unicName << "Camera component##" << (uintptr_t)this;
-	if (ImGui::TreeNodeEx(unicName.str().c_str(), ImGuiTreeNodeFlags_DefaultOpen))
+	if (ImGui::TreeNodeEx(("Camera component##" + std::to_string((uintptr_t)this)).c_str(), ImGuiTreeNodeFlags_DefaultOpen))
 	{
 		internalImGuiDraw();
 		ImGui::TreePop();

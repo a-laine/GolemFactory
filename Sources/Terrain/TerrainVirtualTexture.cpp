@@ -18,6 +18,7 @@ TerrainVirtualTexture::~TerrainVirtualTexture()
 void TerrainVirtualTexture::initialize(int _physicalTextureSize)
 {
 	// CPU & GPU buffer
+	const vec2i poolData[] = { vec2i(257, 3), vec2i(129, 4), vec2i(65, 5), vec2i(33, 5), vec2i(17, 5), vec2i(9, 5), vec2i(5, 4), vec2i(3, 4) };
 	m_physicalTextureSize = vec3i(_physicalTextureSize, _physicalTextureSize, 0);
 	int length = m_physicalTextureSize.x * m_physicalTextureSize.y * 4;
 	m_CPUTexture = new uint16_t[length];
@@ -30,7 +31,6 @@ void TerrainVirtualTexture::initialize(int _physicalTextureSize)
 
 #ifdef USE_IMGUI
 	m_GPUTexture.isEnginePrivate = true;
-#endif
 
 	auto& layerDescriptor = m_GPUTexture.getLayerDescriptor();
 	layerDescriptor.push_back("Terrain heightmap");
@@ -40,8 +40,19 @@ void TerrainVirtualTexture::initialize(int _physicalTextureSize)
 	layerDescriptor.push_back("Terrain material index");
 	layerDescriptor.push_back("Terrain and water holes");
 
+	m_GPUTexture.addAdditionnalDrawInfosCallbacks([this, poolData](ImVec4 sectionColor) {
+			ImGui::TextColored(sectionColor, "Virtual texture infos");
+			ImGui::Text("Free tile infos");
+			ImGui::Indent();
+			for (int i = 0; i < m_freeTilesPools.size(); i++)
+			{
+				ImGui::Text("- Lod %d (%dx%d) : count %d", i, poolData[i].x, poolData[i].x, m_freeTilesPools[i].size());
+			}
+			ImGui::Unindent();
+		});
+#endif
+
 	// Generate tiles
-	const vec2i poolData[] = { vec2i(256, 2), vec2i(128, 4), vec2i(64, 5), vec2i(32, 5), vec2i(16, 5), vec2i(8, 5), vec2i(4, 4), vec2i(2, 4) };
 	constexpr int poolDataSize = sizeof(poolData) / sizeof(vec2i);
 	m_freeTilesPools.resize(poolDataSize);
 	int startPixel = 0;
@@ -52,7 +63,7 @@ void TerrainVirtualTexture::initialize(int _physicalTextureSize)
 		TextureTile tile;
 		tile.m_owner = nullptr;
 		tile.m_lod = i;
-		tile.m_size = vec2i(poolData[i].x + 1);
+		tile.m_size = vec2i(poolData[i].x);
 		int columnCount = poolData[i].y;
 		int rowCount = _physicalTextureSize / tile.m_size.x;
 		pool.reserve(columnCount * rowCount);
@@ -160,7 +171,7 @@ TerrainVirtualTexture::TextureTile TerrainVirtualTexture::getFreeTextureTile(int
 	TextureTile freetile;
 	freetile.m_lod = -1;
 	bool hasTile = !m_freeTilesPools[_lod].empty();
-	GF_ASSERT(hasTile, "No virtual texture tile found !");
+	GF_ASSERT_MSG(hasTile, "No virtual texture tile found !");
 
 	if (hasTile)
 	{

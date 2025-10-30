@@ -1,6 +1,6 @@
 #include "WidgetRadioButton.h"
-#include "WidgetGLDebugger.h"
 
+#include <Renderer/GLDebugger.h>
 #include <Physics/Collision.h>
 
 

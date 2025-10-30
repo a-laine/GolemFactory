@@ -11,8 +11,7 @@ class TerrainAreaDrawableComponent : public DrawableComponent
 		{
 			vec2f position;
 			vec2f textureOffset;
-			float morphingCase;
-			vec3f padding;
+			vec4f padding;
 		};
 		struct alignas(16) TerrainConstantData
 		{
@@ -23,6 +22,7 @@ class TerrainAreaDrawableComponent : public DrawableComponent
 			float morphRadius[8];
 			float morphDistance;
 			float animatedTime;
+			uint32_t debug;
 		};
 
 		TerrainAreaDrawableComponent(TerrainArea* _area); 
@@ -37,8 +37,6 @@ class TerrainAreaDrawableComponent : public DrawableComponent
 		void pushDraw(std::vector<Renderer::DrawElement>& drawQueue, uint32_t distance, bool isShadowPass) override;
 		void updateData(TerrainVirtualTexture::TextureTile& tile);
 
-		//Shader* getWaterShader() const;
-		//void setWaterShader(Shader* _shader);
 		bool hasWater() const;
 		AxisAlignedBox getBoundingBox() const;
 		const TerrainArea* getArea();
@@ -46,6 +44,5 @@ class TerrainAreaDrawableComponent : public DrawableComponent
 	protected:
 		TerrainAreaData m_data;
 		TerrainArea* m_area;
-		//Shader* m_waterShader;
 };
 

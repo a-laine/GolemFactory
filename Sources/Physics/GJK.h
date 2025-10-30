@@ -21,11 +21,6 @@ class GJK
 			bool operator<(const MinkowskiPoint& _other) const;
 		};
 
-		//	Debug
-		static bool verbose;
-		static bool gizmos;
-		//
-
 		//	Public functions
 		static bool collide(const Shape& a, const Shape& b, CollisionReport* report = nullptr);
 		//
@@ -80,9 +75,9 @@ class GJK
 		static bool isNewPoint(const std::vector<MinkowskiPoint>& simplex, const MinkowskiPoint& p);
 		static bool containOrigin(const std::vector<MinkowskiPoint>& simplex, const bool& earlyExit = true);
 		static bool collide(const vec4f& s1a, const vec4f& s1b, const vec4f& s2a, const vec4f& s2b, vec4f& intersection);
-		static bool inside(std::vector<vec4f>& hull, const vec4f& point);
+		static bool inside(const vec4f* hull, int ptsCount, const vec4f& point);
 
-		static void expandSimplex(const Shape& a, const Shape& b, CollisionReport* report, const std::vector<MinkowskiPoint>& simplex);
+		static bool expandSimplex(const Shape& a, const Shape& b, CollisionReport* report, const std::vector<MinkowskiPoint>& simplex);
 		static void computeManifoldContacts(const Shape& a, const Shape& b, CollisionReport* report);
 		//
 };

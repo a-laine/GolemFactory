@@ -77,6 +77,20 @@ class MixedArray
 			else
 				return m_dynamicSize;
 		}
+		T* data()
+		{
+			if (m_staticSize <= t_stackCapacity)
+				return m_staticData;
+			else
+				return m_dynamicArray;
+		}
+		const T* data() const
+		{
+			if (m_staticSize <= t_stackCapacity)
+				return m_staticData;
+			else
+				return m_dynamicArray;
+		}
 
 		T& operator[](int i)
 		{

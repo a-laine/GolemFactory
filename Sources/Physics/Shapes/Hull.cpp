@@ -92,7 +92,7 @@ float Hull::computeVolume() const
 
 	barycenter /= barycenter.w;
 	float volume = 0.f;
-	for (int i = 0; i < mesh->getNumberFaces(); i++)
+	for (uint32_t i = 0; i < mesh->getNumberFaces(); i++)
 	{
 		unsigned int i0 = mesh->getFaceIndiceAt(3 * i + 0);
 		unsigned int i1 = mesh->getFaceIndiceAt(3 * i + 1);

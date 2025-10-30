@@ -12,6 +12,9 @@
 #include <Utiles/ProfilerConfig.h>
 #include <Utiles/ObjectPool.h>
 #include <Utiles/MixedArray.h>
+#include <World/World.h>
+
+#include <sstream>
 
 
 #ifdef USE_IMGUI
@@ -55,7 +58,7 @@ SceneManager& SceneManager::operator=(SceneManager&& other)
 
 void SceneManager::init(const vec4f& bbMin, const vec4f& bbMax, const vec3i& nodeDivision)
 {
-	GF_ASSERT(world.empty());
+	GF_ASSERT_MSG(world.empty(), "No node into world, cannot initialize");
 
 	NodeVirtual* root = g_nodePool.getFreeObject();
 	root->init(bbMin, bbMax, nodeDivision);
@@ -135,7 +138,7 @@ void SceneManager::update(vec4f playerPosition, bool continueOnUpdate)
 
 bool SceneManager::addObject(Entity* object, int maxDepth)
 {
-	GF_ASSERT(object);
+	GF_ASSERT_MSG(object, "Cannot add NULL entity");
 	if (world.empty() || instanceTracking.count(object) != 0)
 		return false;
 
@@ -159,7 +162,7 @@ bool SceneManager::addObject(Entity* object, int maxDepth)
 
 bool SceneManager::removeObject(Entity* object)
 {
-	GF_ASSERT(object);
+	GF_ASSERT_MSG(object, "Cannot remove NULL entity");
 	if (world.empty() || instanceTracking.count(object) == 0)
 		return false;
 
@@ -172,7 +175,7 @@ bool SceneManager::removeObject(Entity* object)
 
 bool SceneManager::updateObject(Entity* object)
 {
-	GF_ASSERT(object);
+	GF_ASSERT_MSG(object, "Cannot update NULL entity");
 	if (world.empty() || instanceTracking.count(object) == 0)
 		return false;
 
@@ -650,12 +653,11 @@ void SceneManager::drawRecursiveImGuiSceneNode(World& _world, std::map<const Nod
 	{
 		if (node->getObjectCount() != 0)
 		{
-			std::ostringstream label;
-			label << "Objects (" << node->getObjectCount() <<  ")";
+			std::string label = "Objects (" + std::to_string(node->getObjectCount()) + ")";
 
 			if (m_printEntities)
 			{
-				if (ColoredTreeNode(sectionColor, label.str().c_str(), (void*)(intptr_t)(node + 1)))
+				if (ColoredTreeNode(sectionColor, label.c_str(), (void*)(intptr_t)(node + 1)))
 				{
 					for (int i = 0; i < node->objectList.size(); i++)
 					{
@@ -694,7 +696,7 @@ void SceneManager::drawRecursiveImGuiSceneNode(World& _world, std::map<const Nod
 			}
 			else
 			{
-				ImGui::TextColored(sectionColor, "   %s", label.str().c_str());
+				ImGui::TextColored(sectionColor, "   %s", label.c_str());
 			}
 		}
 	};

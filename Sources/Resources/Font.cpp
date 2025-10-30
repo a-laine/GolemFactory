@@ -23,7 +23,7 @@ Font::~Font()
 //  Public functions
 void Font::initialize(uint8_t* image, const vec2f& imageSize, unsigned short beginC, unsigned short endC, unsigned short defaultC, const std::vector<Patch>& table)
 {
-    GF_ASSERT(state == INVALID);
+    GF_ASSERT_MSG(state == INVALID, "Font already initialized !");
     state = LOADING;
 
     if(!initOpenGL(image, (int) imageSize.x, (int) imageSize.y))
@@ -44,7 +44,7 @@ void Font::initialize(uint8_t* image, const vec2f& imageSize, unsigned short beg
 
 void Font::initialize(uint8_t* image, const vec2f& imageSize, unsigned short beginC, unsigned short endC, unsigned short defaultC, std::vector<Patch>&& table)
 {
-    GF_ASSERT(state == INVALID);
+    GF_ASSERT_MSG(state == INVALID, "Font already initialized !");
     state = LOADING;
 
     if(!initOpenGL(image, (int) imageSize.x, (int) imageSize.y))
@@ -141,6 +141,6 @@ void Font::onDrawImGui()
     float ratio = (ImGui::GetContentRegionAvail().x - 5) / size.x;
     ImGui::Spacing();
     ImGui::TextColored(ResourceVirtual::titleColorDraw, "Overview");
-    ImGui::Image((void*)texture, ImVec2(size.x * ratio, size.y * ratio), ImVec2(0, 0), ImVec2(1, 1), ImColor(255, 255, 255, 255), ImColor(255, 255, 255, 128));
+    ImGui::Image((void*)(intptr_t)texture, ImVec2(size.x * ratio, size.y * ratio), ImVec2(0, 0), ImVec2(1, 1), ImColor(255, 255, 255, 255), ImColor(255, 255, 255, 128));
 #endif
 }

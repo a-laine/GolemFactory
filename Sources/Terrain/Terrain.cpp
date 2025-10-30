@@ -11,7 +11,7 @@
 
 #ifdef USE_IMGUI
 	#include <imgui_internal.h>
-	bool TerrainWindowEnable = true;
+	bool TerrainWindowEnable = false;
 #endif
 #include <Utiles/Debug.h>
 #include <Terrain/TerrainDetailDrawableComponent.h>
@@ -391,7 +391,7 @@ void Terrain::update(vec4f _cameraPosition, CameraComponent* _currentCamera)
 				m_world->addToScene(area->m_entity, 0);
 				m_areaContainer->addChild(area->m_entity);
 			}
-			GF_ASSERT(area->m_entity, "No entity for area !");
+			GF_ASSERT_MSG(area->m_entity, "No entity for area !");
 
 			// compute desired lod
 			vec4f delta = _cameraPosition - area->m_center;
@@ -413,14 +413,16 @@ void Terrain::update(vec4f _cameraPosition, CameraComponent* _currentCamera)
 			int currentLod = area->getLod();
 			if (currentLod != lod)
 			{
-				//TerrainAreaDrawableComponent* drawable = area->m_entity->getComponent<TerrainAreaDrawableComponent>();
-				//drawable->setMesh(m_clipmapMeshes[lod]);
 				int priority = std::min(std::abs(camAreaIndex.x - i), std::abs(camAreaIndex.y - j));
 				if (currentLod < lod)
 					priority += 100;
 				jobLodDatas.push_back({ area, lod, priority });
 				jobDetailDatas.push_back({ area, detailMaxLod, 0 });
 			}
+#ifdef USE_IMGUI
+			else if (m_forceDetailRefresh)
+				jobDetailDatas.push_back({ area, detailMaxLod, 0 });
+#endif
 			m_previousAreas.insert(area);
 		}
 
@@ -557,10 +559,15 @@ void Terrain::update(vec4f _cameraPosition, CameraComponent* _currentCamera)
 		}
 #endif
 	}
+
+#ifdef USE_IMGUI
+	m_forceDetailRefresh = false;
+#endif
+
 }
 void Terrain::addRemoveDetails(TerrainArea* area, int lod)
 {
-	for (int i = 0; i < m_areaDetails.size(); i++)
+	/*for (int i = 0; i < m_areaDetails.size(); i++)
 	{
 		const AreaDetails& terrainDetail = m_areaDetails[i];
 		if (lod < terrainDetail.m_lod)
@@ -632,12 +639,11 @@ void Terrain::addRemoveDetails(TerrainArea* area, int lod)
 				area->m_details[index] = area->m_details[last];
 			area->m_details.pop_back();
 		}
-	}
+	}*/
 }
 
 void Terrain::addRemoveDetails2(TerrainArea* area)
 {
-	int identifier = 0;
 	for (int i = 0; i < m_areaDetails.size(); i++)
 	{
 		const AreaDetails& terrainDetail = m_areaDetails[i];
@@ -647,7 +653,7 @@ void Terrain::addRemoveDetails2(TerrainArea* area)
 			bool hasDetail = false;
 			for (auto& areaDetail : area->m_details)
 			{
-				if (areaDetail.m_lod == terrainDetail.m_lod && areaDetail.m_name == terrainDetail.m_name)
+				if (areaDetail.m_terrainDetailIndex == i)
 				{
 					hasDetail = true;
 					break;
@@ -659,31 +665,25 @@ void Terrain::addRemoveDetails2(TerrainArea* area)
 			// create detail entities
 			SCOPED_CPU_MARKER("add area detail");
 			auto& areaDetail = area->m_details.emplace_back();
-			areaDetail.m_name = terrainDetail.m_name;
-			areaDetail.m_lod = terrainDetail.m_lod;
+			areaDetail.m_terrainDetailIndex = i;
 			for (int k = 0; k < terrainDetail.m_meshResources.size(); k++)
 			{
+				int identifier = (i << 16) | k;
+				if (!area->hasDataForDetail(identifier))
+					continue;
+
 				Entity* massentity = area->addDetailsInstance(
 					terrainDetail.m_meshResources[k],
-					identifier + k,
-					terrainDetail.m_normalWeight,
-					terrainDetail.m_modelOffset[k]);
+					identifier);
+
+				if (!massentity)
+					continue;
 
 				TerrainDetailDrawableComponent* drawable = massentity->getComponent<TerrainDetailDrawableComponent>();
 				drawable->setDoubleSidedFaces(terrainDetail.m_doubleSided);
 				drawable->setColorTintGradient(terrainDetail.m_colorTint0, terrainDetail.m_colorTint1);
 				drawable->setAlphaClipThs(terrainDetail.m_alphaCLipThs);
 				drawable->setDetailIndex(i);
-
-				//if (terrainDetail.m_lod == 4)
-				//	massentity->setFlags((uint64_t)Entity::Flags::Fl_Hide);
-
-				//if (terrainDetail.m_lod == 2)
-				//	drawable->setFullModelScale(0.5f * drawable->getFullModelScale());
-
-				//drawable->setMaxShadowCascade(terrainDetail.m_maxShadow);
-				//for (auto it = terrainDetail.m_shaderTextureOverride.begin(); it != terrainDetail.m_shaderTextureOverride.end(); it++)
-				//	drawable->setTextureOverride(it->first, it->second);
 
 				areaDetail.m_detailEntities.push_back(massentity);
 			}
@@ -695,7 +695,7 @@ void Terrain::addRemoveDetails2(TerrainArea* area)
 			for (int k = 0; k < area->m_details.size(); k++)
 			{
 				auto& areaDetail = area->m_details[k];
-				if (areaDetail.m_lod == terrainDetail.m_lod && areaDetail.m_name == terrainDetail.m_name)
+				if (areaDetail.m_terrainDetailIndex == i)
 				{
 					index = k;
 					break;
@@ -716,7 +716,6 @@ void Terrain::addRemoveDetails2(TerrainArea* area)
 				area->m_details[index] = area->m_details[last];
 			area->m_details.pop_back();
 		}
-		identifier += (int)terrainDetail.m_meshResources.size();
 	}
 }
 const std::vector<Terrain::AreaDetails>& Terrain::getAreaDetails()
@@ -746,7 +745,23 @@ Material* Terrain::getDetailMaterial() const
 }
 Material* Terrain::getWaterMaterial() const
 {
+#ifdef USE_IMGUI
+	if (m_waterVisible)
+		return m_waterMaterial;
+	else
+		return nullptr;
+#else
 	return m_waterMaterial;
+#endif
+}
+
+uint32_t Terrain::getDebugConstant() const
+{
+#ifdef USE_IMGUI
+	return m_shaderDebugConstant;
+#else
+	return 0;
+#endif
 }
 
 std::string Terrain::getDirectory() const
@@ -861,13 +876,15 @@ void Terrain::drawImGui(World& world)
 
 	ImGui::Begin("Terrain");
 	ImGui::PushID(this);
-	const ImVec4 sectionColor = ImVec4(1, 1, 0, 1);
 	static float areaSize = 17.f;
 	static bool dragging = false;
 	static ImVec2 dragMouseInit;
 	static ImVec2 dragScrollInit;
 	static bool centerOnPlayer = false;
 	static int areaColorMode = 1;
+	static std::vector<float> initialLodRadius;
+	if (initialLodRadius.empty())
+		initialLodRadius = m_lodRadius;
 
 	const ImU32 cGreen = 0xFF408040;
 	const ImU32 cYellow = 0xFF40A0A0;
@@ -879,25 +896,19 @@ void Terrain::drawImGui(World& world)
 	const ImU32 cGrey = 0xFF505050;
 	const auto& u32saturate = [](ImU32 _c) { return _c | ((_c & 0x00FFFFFF) >> 1); };
 
-	//static std::string txt1 = "";
-	//static std::string txt2 = "";
-	//static std::string txt3 = "";
-
 	ImGui::SliderFloat("Area size", &areaSize, 5.f, 100.f, "%.3f");
 	ImGui::Checkbox("Center on player", &centerOnPlayer);
-	//ImGui::TextDisabled(txt1.c_str());
-	//ImGui::TextDisabled(txt2.c_str());
-	//ImGui::TextDisabled(txt3.c_str());
-
+	
 	ImGuiWindow* window = ImGui::GetCurrentWindow();
-	const float mapSizeX = ImGui::GetContentRegionAvail().x;
-	const float mapSizeY = std::min(mapSizeX, ImGui::GetContentRegionAvail().y);
+	float frameSizeX = m_gridSize.x * areaSize;
+	float frameSizeY = m_gridSize.y * areaSize;
+	const float minAvailable = std::min(ImGui::GetContentRegionAvail().x, ImGui::GetContentRegionAvail().y);
+	const float mapSizeX = std::min(minAvailable, frameSizeX);
+	const float mapSizeY = std::min(minAvailable, frameSizeY);
 	ImGui::BeginChild("##TerrainPreview", ImVec2(mapSizeX, mapSizeY), false,
 		ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoMove);
 
 	window = ImGui::GetCurrentWindow();
-	float frameSizeX = m_gridSize.x * areaSize;
-	float frameSizeY = m_gridSize.y * areaSize;
 
 	const ImVec2 cp = window->DC.CursorPos;
 	const ImVec2 mouse = ImGui::GetIO().MousePos;
@@ -907,9 +918,6 @@ void Terrain::drawImGui(World& world)
 	const ImVec2 areaMargin = ImVec2(1, 1);
 	const ImVec2 halfAreaSize = ImVec2(0.5f * areaSize, 0.5f * areaSize);
 	ImVec2 playerPos = cp + ImVec2(m_currentPlayerPosInTile.x * areaSize, m_currentPlayerPosInTile.y * areaSize);
-
-	//ImU32 diskColor = ImGui::ColorConvertFloat4ToU32(ImVec4(0.4f, 0.4f, 1.f, 1.f));
-	//ImU32 ramColor = ImGui::ColorConvertFloat4ToU32(ImVec4(0.4f, 1.f, 0.4f, 1.f));
 
 	bool tooltipEnabled = GImGui->HoveredWindow == window && 
 		windowMousePos.x > 0 && windowMousePos.x < ImGui::GetContentRegionAvail().x && 
@@ -938,9 +946,6 @@ void Terrain::drawImGui(World& world)
 			ImGui::SetScrollY(dragScrollInit.y - delta.y);
 		}
 	}
-
-	//ImGui::RenderFrame(cp, cp + ImVec2(m_gridSize.x * areaSize, m_gridSize.y * areaSize), 0xFF404080, true, false);
-	//ImGui::InvisibleButton("##canvas", ImVec2(m_gridSize.x * areaSize, m_gridSize.y * areaSize));
 
 	SceneManager& scenemanager = m_world->getSceneManager();
 
@@ -1076,11 +1081,119 @@ void Terrain::drawImGui(World& world)
 	{
 		ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(u32saturate(cGreen)), "Streaming");
 		ImGui::SameLine();
-		ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(u32saturate(cRed)), "Not in scene");
+		ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(u32saturate(cRed)), "Error");
+		ImGui::SameLine();
+		ImGui::TextColored(ImGui::ColorConvertU32ToFloat4(u32saturate(cGrey)), "Not in scene");
 	}
 
 	// details
+	const ImVec4 sectionColor = ImVec4(1.f, 0.9f, 0.5f, 1.f);
+	if (ImGui::CollapsingHeader("Lod radius"))
+	{
+		float margin = 375;
+		bool edited = false;
+		std::string label;
+		for (int i = 0; i < m_lodRadius.size() - 1; i++)
+		{
+			label = "Radius " + std::to_string(i);
+			float f = m_lodRadius[i];
+			if (ImGui::SliderFloat(label.c_str(), &f, 0, m_lodRadius.back()))
+			{
+				float minrange = i > 0 ? m_lodRadius[i - 1] + margin : 0.f;
+				float maxrange = std::max(minrange, m_lodRadius[i + 1]);
+				m_lodRadius[i] = clamp(f, minrange, maxrange);
+				edited = true;
+			}
+		}
+		label = "Radius " + std::to_string(m_lodRadius.size() - 1);
+		edited |= ImGui::DragFloat(label.c_str(), &m_lodRadius.back());
 
+		if (ImGui::Button("Reset"))
+		{
+			m_lodRadius = initialLodRadius;
+			edited = true;
+		}
+
+		if (edited)
+		{
+			for (int i = 0; i < m_lodRadius.size() - 1; i++)
+			{
+				float minrange = i > 0 ? m_lodRadius[i - 1] + margin : 0.f;
+				float maxrange = std::max(minrange, m_lodRadius[i + 1]);
+				m_lodRadius[i] = clamp(m_lodRadius[i], minrange, maxrange);
+			}
+			m_lodRadius.back() = std::max(m_lodRadius.back(), m_lodRadius[m_lodRadius.size() - 2] + margin);
+		}
+	}
+	if (ImGui::CollapsingHeader("Terrain details"))
+	{
+		ImGui::Checkbox("Water visible", &m_waterVisible);
+		for (AreaDetails& detail : m_areaDetails)
+		{
+			ImGui::PushID(&detail);
+			ImGui::PushStyleColor(ImGuiCol_Text, sectionColor);
+			ImGui::BulletText(detail.m_name.c_str());
+			ImGui::PopStyleColor();
+			ImGui::Indent();
+
+			ImGui::Checkbox("Visible", &detail.m_visible);
+			m_forceDetailRefresh |= ImGui::SliderInt("Maximum lod", &detail.m_lod, 0, m_lodRadius.size());
+			ImGui::Text("Meshes :");
+			ImGui::Indent();
+
+			for (Mesh* mesh : detail.m_meshResources)
+			{
+				ImGui::Text(("-" + mesh->name).c_str());
+			}
+
+			ImGui::Unindent();
+			ImGui::Unindent();
+			ImGui::PopID();
+		}
+	}
+
+	enum ShaderFlags
+	{
+		eDrawCheckboardPatern = 0,
+		eDrawLodColor = 1,
+		eShowMorphingBand = 2,
+	};
+
+	if (ImGui::CollapsingHeader("Shader debug"))
+	{
+		bool needUpdate = false;
+		const auto& CheckboxFlag = [&](const char* label, int flag, unsigned int mask = 0xFFFFFFFF)
+		{
+			bool b = m_shaderDebugConstant & (1 << flag);
+			if (ImGui::Checkbox(label, &b))
+			{
+				needUpdate = true;
+				m_shaderDebugConstant &= mask;
+				if (b)
+					m_shaderDebugConstant |= 1 << flag;
+				else
+					m_shaderDebugConstant &= ~(1 << flag);
+			}
+		};
+
+		CheckboxFlag("Checkboard patern", eDrawCheckboardPatern);
+		CheckboxFlag("Lod color", eDrawLodColor);
+		CheckboxFlag("Morphing band", eShowMorphingBand);
+
+		if (needUpdate)
+		{
+			for (int i = 0; i < m_gridSize.x; i++)
+				for (int j = 0; j < m_gridSize.y; j++)
+				{
+					TerrainArea* area = m_grid[i][j];
+					if (!area || !area->m_entity)
+						continue;
+
+					TerrainAreaDrawableComponent* comp = area->m_entity->getComponent<TerrainAreaDrawableComponent>();
+					if (comp) comp->updateData(area->m_tiles[area->m_lod]);
+				}
+		}
+	}
 
 	ImGui::PopID();
 	ImGui::End();

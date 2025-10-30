@@ -33,18 +33,18 @@ Entity::~Entity()
 
 void Entity::addComponent(Component* component, ClassID type)
 {
-	GF_ASSERT(component->getParentEntity() == nullptr, "Bad m_parentEntity entity. A component can't have multiple m_parentEntity entities.");
+	GF_ASSERT_MSG(component->getParentEntity() == nullptr, "Bad m_parentEntity entity. A component can't have multiple m_parentEntity entities.");
 	EntityBase::addComponent(component, type);
 	component->onAddToEntity(this);
-	GF_ASSERT(component->getParentEntity() == this, "Bad m_parentEntity entity. You should call Component::onAddToEntity when reimplementing the method.");
+	GF_ASSERT_MSG(component->getParentEntity() == this, "Bad m_parentEntity entity. You should call Component::onAddToEntity when reimplementing the method.");
 }
 
 void Entity::removeComponent(Component* component)
 {
-	GF_ASSERT(component->getParentEntity() == this, "Bad m_parentEntity entity. The component has a different m_parentEntity entity than the one he's beeing removed.");
+	GF_ASSERT_MSG(component->getParentEntity() == this, "Bad m_parentEntity entity. The component has a different m_parentEntity entity than the one he's beeing removed.");
 	EntityBase::removeComponent(component);
 	component->onRemoveFromEntity(this);
-	GF_ASSERT(component->getParentEntity() == nullptr, "Bad m_parentEntity entity. You should call Component::onRemoveFromEntity when reimplementing the method.");
+	GF_ASSERT_MSG(component->getParentEntity() == nullptr, "Bad m_parentEntity entity. You should call Component::onRemoveFromEntity when reimplementing the method.");
 }
 
 
@@ -442,17 +442,15 @@ bool Entity::drawImGui(World& world, bool inChildWindow)
 #ifdef USE_IMGUI
 	// new window
 	ImGui::PushID(this);
-	std::ostringstream unicName;
-	unicName << m_name << "##" << (uintptr_t)this;
 	if (inChildWindow)
 	{
-		ImGui::BeginChild(unicName.str().c_str());
+		ImGui::BeginChild((m_name + "##" + std::to_string((uintptr_t)this)).c_str());
 		//ImGui::SeparatorText("Child windows");
 	}
 	else
 	{
 		ImGui::SetNextWindowSize(ImVec2(500, 800), ImGuiCond_FirstUseEver);
-		ImGui::Begin(unicName.str().c_str(), &m_isDebugSelected);
+		ImGui::Begin((m_name + "##" + std::to_string((uintptr_t)this)).c_str(), &m_isDebugSelected);
 	}
 
 	// base
@@ -563,7 +561,7 @@ bool Entity::drawImGui(World& world, bool inChildWindow)
 	}
 
 	// components
-	if (getNbComponents() && ColoredTreeNode(sectionColor, "Components", (void*)4))
+	if (getNbComponents() && ColoredTreeNode(sectionColor, "Components", (void*)4, ImGuiTreeNodeFlags_DefaultOpen))
 	{
 		const auto DrawComp = [](EntityBase::Element& elem) { elem.comp->onDrawImGui(); return false; };
 		allComponentsVisitor(DrawComp);

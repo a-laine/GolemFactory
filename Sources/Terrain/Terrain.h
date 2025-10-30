@@ -76,6 +76,8 @@ class Terrain
 		Material* getDetailMaterial() const;
 		Material* getWaterMaterial() const;
 
+		uint32_t getDebugConstant() const;
+
 		void drawImGui(World& world);
 		//
 
@@ -129,5 +131,10 @@ class Terrain
 		Material* m_waterMaterial;
 		Material* m_terrainDetailMaterial;
 		std::vector<AreaDetails> m_areaDetails;
-		//
+
+#ifdef USE_IMGUI
+		bool m_forceDetailRefresh = false;
+		bool m_waterVisible = false;
+		uint32_t m_shaderDebugConstant = 0x00;
+#endif // USE_IMGUI
 };

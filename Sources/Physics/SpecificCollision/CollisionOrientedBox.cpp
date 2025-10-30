@@ -183,7 +183,7 @@ bool Collision::raycast_OrientedBox(const vec4f& worldRayOrigin, const vec4f& wo
 		vec4f center = 0.5f * (boxMax + boxMin);
 		vec4f size = 0.5f * vec4f::abs(boxMax - boxMin);
 		vec4f v = localIntersection - center;
-		vec4f delta = size - vec4f::abs(v);
+		vec4f delta = vec4f::abs(v) / size;
 
 		if (delta.x < delta.y && delta.x < delta.z)
 			report->m_normal = v.x > 0.f ? vec4f(1, 0, 0, 0) : vec4f(-1, 0, 0, 0);
@@ -192,6 +192,7 @@ bool Collision::raycast_OrientedBox(const vec4f& worldRayOrigin, const vec4f& wo
 		else
 			report->m_normal = v.z > 0.f ? vec4f(0, 0, 1, 0) : vec4f(0, 0, -1, 0);
 		report->m_normal = boxTransform * report->m_normal;
+		report->m_normal.normalize();
 	}
 	return true;
 }

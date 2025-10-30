@@ -6,7 +6,7 @@
 #include <iostream>
 #include <Utiles/System.h>
 
-#define CHECK_GL_ERRORS
+//#define CHECK_GL_ERRORS
 
 #ifdef CHECK_GL_ERRORS
 inline bool __CheckGLError(const std::string& header, const std::string& label, const std::string& functionName, uint32_t line)
@@ -27,7 +27,8 @@ inline bool __CheckGLError(const std::string& header, const std::string& label, 
 			case GL_STACK_OVERFLOW: code = "GL_STACK_OVERFLOW"; break;
 			default: break;
 		}
-		std::cout << header << " : " << label << " in WidgetXX::" << functionName << "(line:" << line << ") : " << code << std::endl;
+		std::cout << header << " : " << label << std::endl;
+		std::cout << functionName << "(line:" << line << ") : " << code << std::endl;
 		DebugBreak();
 		return true;
 	}
@@ -37,7 +38,7 @@ inline bool __CheckGLError(const std::string& header, const std::string& label, 
 	}
 	return false;
 }
-#define CheckGLError(header,label) __CheckGLError(header,label,__func__,__LINE__)
+#define CheckGLError(header,label) __CheckGLError(header,label,GF_FUNCTION,__LINE__)
 #else
 #define CheckGLError(header,label)
 #endif // CHECK_GL_ERRORS

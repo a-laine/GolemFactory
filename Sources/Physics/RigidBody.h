@@ -46,7 +46,8 @@ class RigidBody : public Component
 
 		//	Set / get / test
 		void setType(const RigidBodyType& t);
-		void setMass(const float& m);
+		void setMass(float m);
+		void setVolumicMass(float vm);
 		void setGravityFactor(const float& f);
 
 		void setExternalForces(const vec4f& f);
@@ -135,8 +136,8 @@ class RigidBody : public Component
 		int m_clusterIndex = -1;
 
 #ifdef USE_IMGUI
-		bool m_drawColliders = false;
-		int m_drawClusterCollisionCache = 0;
+		bool m_drawColliders = true;
+		int m_drawClusterCollisionCache = 1;//1;
 		vec4f m_cacheColor = vec4f(1, 0.5f, 0, 0);
 #endif
 };

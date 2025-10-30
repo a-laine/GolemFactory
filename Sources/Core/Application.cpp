@@ -34,7 +34,7 @@ Application::~Application()
 
 void Application::initGLEW(int verbose)
 {
-	GF_ASSERT(m_mainWindow, "Create an OpenGL context before initializing GLEW");
+	GF_ASSERT_MSG(m_mainWindow, "Create an OpenGL context before initializing window");
 
 	glewExperimental = GL_TRUE;
 	GLenum err = glewInit();

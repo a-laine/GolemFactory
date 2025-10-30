@@ -1,4 +1,6 @@
 #include "Renderer.h"
+#include "GLDebugger.h"
+#include "DrawableComponent.h"
 
 #include <iostream>
 #include <sstream>
@@ -11,7 +13,6 @@
 #include <Resources/ResourceManager.h>
 #include <Resources/Skeleton.h>
 #include <Resources/Material.h>
-#include <Renderer/DrawableComponent.h>
 #include <Animation/SkeletonComponent.h>
 
 #include <Animation/AnimationComponent.h>
@@ -45,7 +46,10 @@ void Renderer::drawObject(Entity* object, Shader* forceShader)
 		//	Load skeleton pose matrix list for vertex skinning calculation
 		const std::vector<mat4f>& pose = skeletonComp->getPose();
 		int loc = shader->getUniformLocation("skeletonPose");
-		if (loc >= 0) glUniformMatrix4fv(loc, (int)pose.size(), FALSE, (float*)pose.data());
+		if (loc >= 0) 
+		{
+			glUniformMatrix4fv(loc, (int)pose.size(), FALSE, (float*)pose.data()); CheckGLError("skeleton bind", "glUniformMatrix4fv()");
+		}
 
 		if (skeletonComp->getSkeleton() != lastSkeleton)
 		{
@@ -53,7 +57,10 @@ void Renderer::drawObject(Entity* object, Shader* forceShader)
 			lastSkeleton = skeletonComp->getSkeleton();
 			const std::vector<mat4f>& bind = skeletonComp->getInverseBindPose();
 			loc = shader->getUniformLocation("inverseBindPose");
-			if (loc >= 0) glUniformMatrix4fv(loc, (int)bind.size(), FALSE, (float*)bind.data());
+			if (loc >= 0) 
+			{
+				glUniformMatrix4fv(loc, (int)bind.size(), FALSE, (float*)bind.data()); CheckGLError("inv skeleton bind", "glUniformMatrix4fv()");
+			}
 		}
 	}
 
@@ -66,7 +73,7 @@ void Renderer::drawObject(Entity* object, Shader* forceShader)
 	else
 	{
 		loadVAO(mesh->getVAO());
-		glDrawElements(GL_TRIANGLES, mesh->getNumberIndices(), mesh->getIndicesType(), NULL);
+		glDrawElements(GL_TRIANGLES, mesh->getNumberIndices(), mesh->getIndicesType(), NULL); CheckGLError("draw", "glDrawElements()");
 		trianglesDrawn += mesh->getNumberFaces();
 		instanceDrawn++;
 		drawCalls++;
@@ -77,7 +84,7 @@ void Renderer::drawObject(Entity* object, Shader* forceShader)
 			loadMatrices(normalViewer, (float*)&modelMatrix);
 
 			loadVAO(mesh->getVAO());
-			glDrawElements(GL_TRIANGLES, mesh->getNumberIndices(), mesh->getIndicesType(), NULL);
+			glDrawElements(GL_TRIANGLES, mesh->getNumberIndices(), mesh->getIndicesType(), NULL); CheckGLError("draw", "glDrawElements()");
 
 			drawCalls++;
 			instanceDrawn++;
@@ -98,14 +105,14 @@ void Renderer::drawInstancedObject(Material* _material, Shader* _shader, Mesh* _
 
 	//	Draw instanced
 	loadVAO(_mesh->getVAO());
-	glDrawElementsInstanced(GL_TRIANGLES, _mesh->getNumberIndices(), _mesh->getIndicesType(), NULL, _instanceCount);
+	glDrawElementsInstanced(GL_TRIANGLES, _mesh->getNumberIndices(), _mesh->getIndicesType(), NULL, _instanceCount); CheckGLError("draw", "glDrawElementsInstanced()");
 
 	if (renderOption == RenderOption::NORMALS && normalViewer)
 	{
 		bindMaterial(nullptr, normalViewer);
 		loadMatrices(normalViewer, _matrices, _instanceCount);
 		loadVAO(_mesh->getVAO());
-		glDrawElementsInstanced(GL_TRIANGLES, _mesh->getNumberIndices(), _mesh->getIndicesType(), NULL, _instanceCount);
+		glDrawElementsInstanced(GL_TRIANGLES, _mesh->getNumberIndices(), _mesh->getIndicesType(), NULL, _instanceCount); CheckGLError("draw", "glDrawElementsInstanced()");
 
 		drawCalls++;
 		instanceDrawn += _instanceCount;
@@ -127,23 +134,26 @@ void Renderer::fullScreenDraw(const Texture* texture, Shader* shader, float alph
 	lastVAO = fullscreenVAO;
 	lastShader->enable();
 
-	glEnable(GL_BLEND);
-	glActiveTexture(GL_TEXTURE0);
+	glEnable(GL_BLEND);					CheckGLError("fullScreenDraw", "glEnable(GL_BLEND)");
+	glActiveTexture(GL_TEXTURE0);		CheckGLError("fullScreenDraw", "glActiveTexture(GL_TEXTURE0)");
 	if (bindIntoImage)
 	{
-		glBindImageTexture(0, texture->getTextureId(), 0, texture->size.z > 0, 0, GL_READ_ONLY, texture->m_internalFormat);
+		glBindImageTexture(0, texture->getTextureId(), 0, texture->size.z > 0, 0, GL_READ_ONLY, texture->m_internalFormat); 
+		CheckGLError("fullScreenDraw", "glBindImageTexture()");
 	}
 	else
 	{
-		glBindTexture(GL_TEXTURE_2D, texture->getTextureId());
+		glBindTexture(GL_TEXTURE_2D, texture->getTextureId()); CheckGLError("fullScreenDraw", "glBindTexture()");
 	}
 
 	int loc = lastShader->getUniformLocation("alpha");
 	if (loc >= 0)
-		glUniform1f(loc, alpha);
+	{
+		glUniform1f(loc, alpha); CheckGLError("fullScreenDraw", "glUniform1f(alpha)");
+	}
 
-	glBindVertexArray(fullscreenVAO);
-	glDrawArrays(GL_TRIANGLES, 0, 3);
+	glBindVertexArray(fullscreenVAO); CheckGLError("fullScreenDraw", "glBindVertexArray()");
+	glDrawArrays(GL_TRIANGLES, 0, 3); CheckGLError("fullScreenDraw", "glDrawArrays()");
 
 	drawCalls++;
 	instanceDrawn++;
@@ -170,17 +180,17 @@ GLuint Renderer::renderMeshOverview(Mesh* mesh, float angle0, float angle1, floa
 	m_globalMatrices.view = view;
 	m_globalMatrices.projection = mat4f::perspective((float)DEG2RAD * 90.f, (float)overviewTexture.size.x / overviewTexture.size.y, 0.01f, 3 * trackballRadius);
 	m_globalMatrices.cameraPosition = camPosition;
-	glBindBuffer(GL_UNIFORM_BUFFER, m_globalMatricesID);
-	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(m_globalMatrices), &m_globalMatrices);
-	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+	glBindBuffer(GL_UNIFORM_BUFFER, m_globalMatricesID);								CheckGLError("overview prepare", "glBindBuffer()");
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(m_globalMatrices), &m_globalMatrices);	CheckGLError("overview prepare", "glBufferSubData()");
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);													CheckGLError("overview prepare", "glBindBuffer()");
 
-	glBindFramebuffer(GL_FRAMEBUFFER, overviewFBO);
-	glViewport(0, 0, overviewTexture.size.x, overviewTexture.size.y);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	glDisable(GL_BLEND);
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
-	glFrontFace(GL_CW);
+	glBindFramebuffer(GL_FRAMEBUFFER, overviewFBO);										CheckGLError("overview prepare", "glBindFramebuffer()");
+	glViewport(0, 0, overviewTexture.size.x, overviewTexture.size.y);					CheckGLError("overview prepare", "glViewport()");
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);									CheckGLError("overview prepare", "glClear()");
+	glDisable(GL_BLEND);																CheckGLError("overview prepare", "glDisable(GL_BLEND)");
+	glEnable(GL_CULL_FACE);																CheckGLError("overview prepare", "glEnable(GL_CULL_FACE)");
+	glCullFace(GL_BACK);																CheckGLError("overview prepare", "glCullFace(GL_BACK)");
+	glFrontFace(GL_CW);																	CheckGLError("overview prepare", "glFrontFace(GL_CW)");
 
 	Shader* shader = defaultShader[DEFAULT];
 	if (mesh->getNormals()->empty())
@@ -193,13 +203,18 @@ GLuint Renderer::renderMeshOverview(Mesh* mesh, float angle0, float angle1, floa
 	vec4f color = vec4f(1, 1, 1, 1);
 	int loc = shader->getUniformLocation("overrideColor");
 	if (loc >= 0)
-		glUniform4fv(loc, 1, (float*)&color);
+	{
+		glUniform4fv(loc, 1, (float*)&color);												CheckGLError("overview prepare", "glUniform4fv(color)");
+	}
 
-	glBindVertexArray(mesh->getVAO());
-	glDrawElements(GL_TRIANGLES, mesh->getNumberIndices(), mesh->getIndicesType(), NULL);
+	glBindVertexArray(mesh->getVAO());														CheckGLError("overview draw", "glBindVertexArray()");
+	glDrawElements(GL_TRIANGLES, mesh->getNumberIndices(), mesh->getIndicesType(), NULL);	CheckGLError("overview draw", "glDrawElements()");
 
-	if (loc >= 0) glUniform4fv(loc, 1, (float*)&vec4f(-1.f, 0.f, 0.f, 1.f)[0]);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	if (loc >= 0) 
+	{
+		glUniform4fv(loc, 1, (float*)&vec4f(-1.f, 0.f, 0.f, 1.f)[0]);						CheckGLError("overview end", "glBindFramebuffer(0)");
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);													CheckGLError("overview end", "glBindFramebuffer(0)");
 	return overviewTexture.getTextureId();
 }
 //

@@ -5,7 +5,11 @@
 #include <Utiles/Debug.h>
 #include <Utiles/Parser/Variant.h>
 #include <Utiles/ConsoleColor.h>
+#include <EntityComponent/Entity.hpp>
+
+#ifdef USE_IMGUI
 #include <imgui_internal.h>
+#endif
 
 
 OccluderComponent::OccluderComponent(const std::string& meshName)
@@ -106,10 +110,7 @@ void OccluderComponent::onDrawImGui()
 {
 #ifdef USE_IMGUI
 	const ImVec4 componentColor = ImVec4(1, 0.5, 0, 1);
-	std::ostringstream unicName;
-	unicName << "Occluder component##" << (uintptr_t)this;
-
-	if (ImGui::TreeNodeEx(unicName.str().c_str()))
+	if (ImGui::TreeNodeEx(("Occluder component##" + std::to_string((uintptr_t)this)).c_str()))
 	{
 		ImGui::TextColored(componentColor, "Mesh");
 		ImGui::Indent();

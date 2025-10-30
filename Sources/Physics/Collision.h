@@ -51,6 +51,7 @@ class Collision
 
 		static bool _CapsulevsTriangle(const Shape* a, const Shape* b, CollisionReport* report);
 		static bool _CapsulevsSphere(const Shape* a, const Shape* b, CollisionReport* report);
+		static bool _CapsulevsCapsule(const Shape* a, const Shape* b, CollisionReport* report);
 
 		static bool _OrientedBoxvsSphere(const Shape* a, const Shape* b, CollisionReport* report);
 
@@ -100,6 +101,7 @@ class Collision
 		static bool collide_SpherevsTriangle(const vec4f& sphereCenter, const float& sphereRadius, const vec4f& triangle1, const vec4f& triangle2, const vec4f& triangle3, CollisionReport* report = nullptr);
 		static bool collide_CapsulevsSphere(const vec4f& sphereCenter, const float& sphereRadius, const vec4f& capsule1, const vec4f& capsule2, const float& capsuleRadius, CollisionReport* report = nullptr);
 		static bool collide_CapsulevsTriangle(const vec4f& capsule1, const vec4f& capsule2, const float& capsuleRadius, const vec4f& triangle1, const vec4f& triangle2, const vec4f& triangle3, CollisionReport* report = nullptr);
+		static bool collide_CapsulevsCapsule(const vec4f& capsule1a, const vec4f& capsule1b, const float& capsule1Radius, const vec4f& capsule2a, const vec4f& capsule2b, const float& capsule2Radius, CollisionReport* report = nullptr);
 
 		static bool collide_SpherevsAxisAlignedBox(const vec4f& boxMin, const vec4f& boxMax, const vec4f& sphereCenter, const float& sphereRadius, CollisionReport* report = nullptr);
 		static bool collide_AxisAlignedBoxvsSphere(const vec4f& boxMin, const vec4f& boxMax, const vec4f& sphereCenter, const float& sphereRadius, CollisionReport* report = nullptr);

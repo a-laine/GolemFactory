@@ -68,15 +68,15 @@ void ResourceManager::clearGarbage()
 
 void ResourceManager::addResource(ResourceVirtual* resource)
 {
-    GF_ASSERT(resource);
+    GF_ASSERT_MSG(resource, "Cannot add NULL resource");
     bool inserted = addResource_internal(resource);
-    GF_ASSERT(!inserted, "Resource with same name doesn't correspond");
+    GF_ASSERT_MSG(inserted, "Resource with same name doesn't correspond");
     resource->count++;
 }
 
 void ResourceManager::addNewResourceLoader(const std::string& id, IResourceLoader* loader)
 {
-    GF_ASSERT(loader);
+    GF_ASSERT_MSG(loader, "Cannot add NULL resource loader");
     auto it = loaders.find(id);
     if(it != loaders.end())
     {

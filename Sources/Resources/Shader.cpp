@@ -46,7 +46,7 @@ Shader::~Shader()
 void Shader::initialize(GLuint  vertexSh, GLuint fragSh, GLuint geomShr, GLuint tessControlSh, GLuint tessEvalSh, GLuint prog,
     const std::map<std::string, std::string>& attType, const std::vector<std::pair<std::string, std::string>>& textures, uint16_t queue)
 {
-    GF_ASSERT(state == INVALID);
+    GF_ASSERT_MSG(state == INVALID, "Shader already initialized !");
     state = LOADING;
     m_isComputeShader = false;
 
@@ -130,7 +130,7 @@ void Shader::initialize(GLuint  vertexSh, GLuint fragSh, GLuint geomShr, GLuint 
 
 void Shader::initialize(GLuint computeSh, GLuint prog, const std::map<std::string, std::string>& attType, const std::vector<std::pair<std::string, std::string>>& textures)
 {
-    GF_ASSERT(state == INVALID);
+    GF_ASSERT_MSG(state == INVALID, "Shader already initialized !");
     state = LOADING;
     m_isComputeShader = true;
 
@@ -426,8 +426,8 @@ void Shader::onDrawImGui()
                     float ratio = (ImGui::GetContentRegionAvail().x - 5) / m_textures[i].texture->size.x;
                     ImGui::Spacing();
                     ImGui::TextColored(ResourceVirtual::titleColorDraw, "Overview");
-                    ImGui::Image((void*)m_textures[i].texture->getTextureId(), ImVec2(m_textures[i].texture->size.x * ratio, m_textures[i].texture->size.y * ratio),
-                        ImVec2(0.f, 0.f), ImVec2(1.f, 1.f), ImColor(255, 255, 255, 255), ImColor(255, 255, 255, 128));
+                    ImGui::Image((void*)(intptr_t)m_textures[i].texture->getTextureId(), ImVec2(m_textures[i].texture->size.x * ratio, 
+                        m_textures[i].texture->size.y * ratio), ImVec2(0.f, 0.f), ImVec2(1.f, 1.f), ImColor(255, 255, 255, 255), ImColor(255, 255, 255, 128));
                 }
 
                 ImGui::TreePop();

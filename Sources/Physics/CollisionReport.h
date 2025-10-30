@@ -21,7 +21,7 @@ class CollisionReport
 
 		// base infos
 		bool collision;
-		bool computeManifoldContacts;	
+		bool computeManifoldContacts = false;	
 		RigidBody *body1, *body2;		
 		Entity *entity1, *entity2;
 		Shape *shape1, *shape2;

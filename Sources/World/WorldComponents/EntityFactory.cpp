@@ -83,7 +83,7 @@ Entity* EntityFactory::createByType(const std::string& type)
 		createDrawable(object, "firTree1.obj", "default", true);
 	else if(type == "rock")
 		createDrawable(object, "rock1.obj", "default", true);
-	else { GF_ASSERT(0); }
+	else { GF_ASSERT_MSG(false, "Unsuported object type !"); }
 	return object;
 }
 

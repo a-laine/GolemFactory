@@ -1,9 +1,10 @@
 #include "Renderer.h"
+#include "GLDebugger.h"
 #include "CameraComponent.h"
+#include "DrawableComponent.h"
+#include "Lighting/LightComponent.h"
+#include "OccluderComponent.h"
 
-#include <Renderer/DrawableComponent.h>
-#include <Renderer/Lighting/LightComponent.h>
-#include <Renderer/OccluderComponent.h>
 #include <Utiles/Debug.h>
 #include <Animation/SkeletonComponent.h>
 #include <Resources/Material.h>
@@ -143,13 +144,15 @@ void Renderer::CollectEntitiesBindLights()
 	}
 
 	// bind lights and omni proj
-	glBindBuffer(GL_UNIFORM_BUFFER, m_lightsID);
-	glBufferSubData(GL_UNIFORM_BUFFER, 0, m_sceneLights.m_lightCount * sizeof(Light) + 32, &m_sceneLights);
+	glBindBuffer(GL_UNIFORM_BUFFER, m_lightsID);					CheckGLError("light update", "glBindBuffer(m_lightsID)");
+	uint32_t size = m_sceneLights.m_lightCount * sizeof(Light) + 32;
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, size, &m_sceneLights);	CheckGLError("light update", "glBufferSubData()");
 
-	glBindBuffer(GL_UNIFORM_BUFFER, m_omniShadowsID);
-	glBufferSubData(GL_UNIFORM_BUFFER, 0, shadowOmniCaster.size() * 6 * sizeof(mat4f) + MAX_OMNILIGHT_SHADOW_COUNT * 8, &m_OmniShadows);
-
-	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+	glBindBuffer(GL_UNIFORM_BUFFER, m_omniShadowsID);				CheckGLError("light update", "glBindBuffer(m_omniShadowsID)");
+	size = shadowOmniCaster.size() * 6 * sizeof(mat4f) + MAX_OMNILIGHT_SHADOW_COUNT * 8;
+	glBufferSubData(GL_UNIFORM_BUFFER, 0, size, &m_OmniShadows);	CheckGLError("light update", "glBufferSubData()");
+		
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);								CheckGLError("light update", "glBindBuffer(0)");
 }
 
 void Renderer::CollectTerrainQueueData()
@@ -163,36 +166,38 @@ void Renderer::LightClustering()
 
 	m_lightClustering->enable();
 
-	GLint lightClusterLocation = glGetUniformLocation(m_lightClustering->getProgram(), "lightClusters");
+	GLint lightClusterLocation = glGetUniformLocation(m_lightClustering->getProgram(), "lightClusters"); CheckGLError("light cluster update", "glGetUniformLocation()");
 	if (lightClusterLocation >= 0)
 	{
-		glUniform1i(lightClusterLocation, 0);
-		glActiveTexture(GL_TEXTURE0);
+		glUniform1i(lightClusterLocation, 0);						CheckGLError("light cluster update", "glUniform1i()");
+		glActiveTexture(GL_TEXTURE0);								CheckGLError("light cluster update", "glActiveTexture()");
 		glBindImageTexture(0, m_lightClusterTexture.getTextureId(), 0, GL_TRUE, 0, GL_READ_ONLY, GL_RGBA32UI);
+		CheckGLError("light cluster update", "glBindImageTexture()");
 	}
 
-	glDispatchCompute(16, 12, 16);
-	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+	glDispatchCompute(16, 12, 16);									CheckGLError("light cluster update", "glDispatchCompute()");
+	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);			CheckGLError("light cluster update", "glMemoryBarrier()");
 	lastShader = nullptr;
-	glUseProgram(0);
+	glUseProgram(0);												CheckGLError("light cluster update", "glUseProgram(0)");
 }
 
 void Renderer::AtmosphericScattering()
 {
 	m_atmosphericScattering->enable();
 
-	GLint lightClusterLocation = glGetUniformLocation(m_atmosphericScattering->getProgram(), "skybox");
+	GLint lightClusterLocation = glGetUniformLocation(m_atmosphericScattering->getProgram(), "skybox"); CheckGLError("skybox update", "glGetUniformLocation()");
 	if (lightClusterLocation >= 0)
 	{
-		glUniform1i(lightClusterLocation, 0);
-		glActiveTexture(GL_TEXTURE0);
+		glUniform1i(lightClusterLocation, 0);						CheckGLError("skybox update", "glUniform1i()");
+		glActiveTexture(GL_TEXTURE0);								CheckGLError("skybox update", "glActiveTexture()");
 		glBindImageTexture(0, m_skyboxTexture->getTextureId(), 0, GL_TRUE, 0, GL_WRITE_ONLY, GL_RGBA8);
+		CheckGLError("skybox update", "glBindImageTexture()");
 	}
 
-	glDispatchCompute((int)m_skyboxTexture->size.x, (int)m_skyboxTexture->size.y, 6);
-	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+	glDispatchCompute((int)m_skyboxTexture->size.x, (int)m_skyboxTexture->size.y, 6); CheckGLError("skybox update", "glDispatchCompute(0)");
+	glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);			CheckGLError("skybox update", "glMemoryBarrier(0)");
 	lastShader = nullptr;
-	glUseProgram(0);
+	glUseProgram(0);												CheckGLError("skybox update", "glUseProgram(0)");
 }
 
 void Renderer::OcclusionCulling()
@@ -581,9 +586,13 @@ void Renderer::ShadowCasting()
 	auto PeterPanningSwitch = [&ccw](bool _ccw)
 	{
 		if (_ccw && !ccw)
-			glFrontFace(GL_CCW);
+		{
+			glFrontFace(GL_CCW);			CheckGLError("PeterPanningSwitch", "glFrontFace(GL_CCW)");
+		}
 		else if (!_ccw && ccw)
-			glFrontFace(GL_CW);
+		{
+			glFrontFace(GL_CW);				CheckGLError("PeterPanningSwitch", "glFrontFace(GL_CW)");
+		}
 		ccw = _ccw;
 	};
 
@@ -595,9 +604,9 @@ void Renderer::ShadowCasting()
 		Sphere shadowSphere = Sphere(shadowAreaBoxes[3].base[3], shadowAreaBoxes[3].max.x);
 
 		// draw shadows
-		glViewport(0, 0, shadowCascadeTexture.size.x, shadowCascadeTexture.size.y);
-		glBindFramebuffer(GL_FRAMEBUFFER, m_ShadowCascadeFBO);
-		glClear(GL_DEPTH_BUFFER_BIT);
+		glViewport(0, 0, shadowCascadeTexture.size.x, shadowCascadeTexture.size.y);	CheckGLError("shadow cascade prepare", "glViewport()");
+		glBindFramebuffer(GL_FRAMEBUFFER, m_ShadowCascadeFBO);						CheckGLError("shadow cascade prepare", "glBindFramebuffer()");
+		glClear(GL_DEPTH_BUFFER_BIT);												CheckGLError("shadow cascade prepare", "glClear()");
 
 		// batching cascade
 		if (m_enableInstancing)
@@ -654,12 +663,12 @@ void Renderer::ShadowCasting()
 		int shadowCode = Shader::computeVariantCode(false, 2, false);
 		unsigned int omniShadowPassMask = 1 << eOmniShadowPass;
 		m_sceneLights.m_shadingConfiguration |= omniShadowPassMask;
-		glBindBuffer(GL_UNIFORM_BUFFER, m_lightsID);
-		glBufferSubData(GL_UNIFORM_BUFFER, 0, 8, &m_sceneLights);
+		glBindBuffer(GL_UNIFORM_BUFFER, m_lightsID);							CheckGLError("shadow omni prepare", "glBindBuffer(m_lightsID)");
+		glBufferSubData(GL_UNIFORM_BUFFER, 0, 8, &m_sceneLights);				CheckGLError("shadow omni prepare", "glBufferSubData()");
 
-		glViewport(0, 0, shadowOmniTextures.size.x, shadowOmniTextures.size.y);
-		glBindFramebuffer(GL_FRAMEBUFFER, m_ShadowOmniFBO);
-		glClear(GL_DEPTH_BUFFER_BIT);
+		glViewport(0, 0, shadowOmniTextures.size.x, shadowOmniTextures.size.y); CheckGLError("shadow omni prepare", "glViewport()");
+		glBindFramebuffer(GL_FRAMEBUFFER, m_ShadowOmniFBO);						CheckGLError("shadow omni prepare", "glBindFramebuffer()");
+		glClear(GL_DEPTH_BUFFER_BIT);											CheckGLError("shadow omni prepare", "glClear()");
 
 		for (int i = 0; i < shadowOmniCaster.size(); i++)
 		{
@@ -733,9 +742,9 @@ void Renderer::ShadowCasting()
 
 		shadowOmniLayerUniform = -1;
 		m_sceneLights.m_shadingConfiguration &= ~omniShadowPassMask;
-		glBindBuffer(GL_UNIFORM_BUFFER, m_lightsID);
-		glBufferSubData(GL_UNIFORM_BUFFER, 0, 8, &m_sceneLights);
+		glBindBuffer(GL_UNIFORM_BUFFER, m_lightsID);						CheckGLError("shadow omni end", "glBindBuffer()");
+		glBufferSubData(GL_UNIFORM_BUFFER, 0, 8, &m_sceneLights);			CheckGLError("shadow omni end", "glBufferSubData()");
 	}
 
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);									CheckGLError("shadow end", "glBindFramebuffer(0)");
 }

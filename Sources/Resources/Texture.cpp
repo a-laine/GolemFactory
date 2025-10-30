@@ -4,6 +4,7 @@
 
 #include <Utiles/Assert.hpp>
 #include <Utiles/Debug.h>
+#include <Resources/ResourceManager.h>
 
 //  Static attributes
 char const * const Texture::directory = "Textures/";
@@ -88,10 +89,17 @@ std::string Texture::getLoaderId(const std::string& resourceName) const
     else
         return extension;
 }
+
+#ifdef USE_IMGUI
 std::vector<std::string>& Texture::getLayerDescriptor()
 {
     return m_layerDescriptor;
 }
+void Texture::addAdditionnalDrawInfosCallbacks(std::function<void(ImVec4)> _callback)
+{
+    m_additionnalDrawInfos.push_back(_callback);
+}
+#endif
 
 const std::string& Texture::getDefaultName() { return defaultName; }
 void Texture::setDefaultName(const std::string& name) { defaultName = name; }
@@ -107,7 +115,7 @@ void Texture::initialize(const std::string& textureName, const vec3i& imageSize,
     unsigned int pixelFormat, unsigned int colorFormat, bool immutable)
 {
     constexpr bool fullVerbose = false;
-    GF_ASSERT(state == INVALID);
+    GF_ASSERT_MSG(state == INVALID, "Texture already initialized !");
     name = textureName;
     state = LOADING;
     size = imageSize;
@@ -538,6 +546,12 @@ void Texture::onDrawImGui()
             break;
     }
 
+    // additionnal infos
+    for (auto& callback : m_additionnalDrawInfos)
+    {
+        callback(ResourceVirtual::titleColorDraw);
+    }
+
     // overview
     float ratio = (ImGui::GetContentRegionAvail().x - 5) / size.x;
     ImGui::Spacing();
@@ -546,12 +560,12 @@ void Texture::onDrawImGui()
     if (type == Texture::TextureConfiguration::TEXTURE_2D && IsInternalFormatOverviewable(m_internalFormat))
     {
         Debug::setBlending(false);
-        ImGui::Image((void*)texture, ImVec2(size.x * ratio, size.y * ratio), ImVec2(0, 0), ImVec2(1, 1), ImColor(255, 255, 255, 255), ImColor(255, 255, 255, 128));
+        ImGui::Image((void*)(intptr_t)texture, ImVec2(size.x * ratio, size.y * ratio), ImVec2(0, 0), ImVec2(1, 1), ImColor(255, 255, 255, 255), ImColor(255, 255, 255, 128));
     }
     else if (textureLayers)
     {
         ImGui::SliderInt("Layer", &layerOverview, 0, size.z - 1);
-        ImGui::Image((void*)textureLayers[layerOverview], ImVec2(size.x * ratio, size.y * ratio), ImVec2(0, 0), ImVec2(1, 1), ImColor(255, 255, 255, 255), ImColor(255, 255, 255, 128));
+        ImGui::Image((void*)(intptr_t)textureLayers[layerOverview], ImVec2(size.x * ratio, size.y * ratio), ImVec2(0, 0), ImVec2(1, 1), ImColor(255, 255, 255, 255), ImColor(255, 255, 255, 128));
     }
     else
     {
@@ -587,7 +601,8 @@ void Texture::onDrawImGui()
         }
 
         Debug::reinterpreteTexture(this, sharedTextureOverview, layer);
-        ImGui::Image((void*)sharedTextureOverview->getTextureId(), ImVec2(size.x * ratio, size.y * ratio), ImVec2(0, 0), ImVec2(1, 1), ImColor(255, 255, 255, 255), ImColor(255, 255, 255, 128));
+        ImGui::Image((void*)(intptr_t)sharedTextureOverview->getTextureId(), ImVec2(size.x * ratio, size.y * ratio), 
+            ImVec2(0, 0), ImVec2(1, 1), ImColor(255, 255, 255, 255), ImColor(255, 255, 255, 128));
     }
 
     if (enableExport)

@@ -96,7 +96,7 @@ T* ResourceManager::getResource(const std::string& name, Args&&... args)
     {
         resource = new T(realName, std::forward<Args>(args) ...);
         bool inserted = addResource_internal(resource);
-        GF_ASSERT(!inserted, "Resource with same name doesn't correspond");
+        GF_ASSERT_MSG(inserted, "Resource with same name doesn't correspond");
 
         std::string loaderId = resource->getLoaderId(realName);
 		loadResource_internal(resource, realName, loaderId);
@@ -136,9 +136,9 @@ bool ResourceManager::loadableResource(const std::string& name)
 template<typename T>
 T* ResourceManager::getResource(T* resource)
 {
-    GF_ASSERT(resource);
+    GF_ASSERT_MSG(resource, "Cannot aquire NULL resource");
     bool inserted = addResource_internal(resource);
-    GF_ASSERT(!inserted, "Resource with same name doesn't correspond or 'emplace' error");
+    GF_ASSERT_MSG(inserted, "Resource with same name doesn't correspond or 'emplace' error");
     resource->count++;
     return resource;
 }
@@ -148,7 +148,7 @@ void ResourceManager::addDefaultResource(const std::string& name, Args&&... args
 {
     T* resource = new T(name, std::forward<Args>(args) ...);
     bool inserted = addResource_internal(resource);
-    GF_ASSERT(!inserted, "Resource with same name doesn't correspond");
+    GF_ASSERT_MSG(inserted, "Resource with same name doesn't correspond");
     resource->count++;
 
     std::string loaderId = resource->getLoaderId(name);

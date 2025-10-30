@@ -8,7 +8,8 @@
 #include <Events/EventEnum.h>
 #include <ConsoleColor.h>
 
-
+#include <Utiles/ProfilerConfig.h>
+#include <World/World.h>
 
 
 CharacterController::CharacterController()
@@ -35,7 +36,7 @@ void CharacterController::update(Component::UpdatePass updatePass, float _dt)
 	// update called in fixed update
 	if (updatePass == Component::UpdatePass::ePhysics)
 	{
-		m_rigidbody->setLinearVelocity(vec4f(m_previousMovement.x, m_rigidbody->getLinearVelocity().y, m_previousMovement.z, 0));
+		//m_rigidbody->setLinearVelocity(vec4f(m_previousMovement.x, m_rigidbody->getLinearVelocity().y, m_previousMovement.z, 0));
 		return;
 	}
 
@@ -149,6 +150,8 @@ void CharacterController::update(Component::UpdatePass updatePass, float _dt)
 	direction = vec4f(horizontal, 0, vertical, 0);
 	if (inputMovement)
 		direction.normalize();
+	bool applyMovement = false;
+	bool doAirControl = true;
 
 	switch (m_characterState)
 	{
@@ -188,6 +191,7 @@ void CharacterController::update(Component::UpdatePass updatePass, float _dt)
 					m_leanValue = (1.f - m_leanSmoothGain) * m_leanValue + m_leanSmoothGain * curvingAngle;
 
 					m_previousMovement = newSpeed;
+					applyMovement = true;
 					move_x = (isSprinting && vertical != 0.f) ? 0.f : m_run * m_smoothedHorizontal;
 					move_z = m_run * m_smoothedVertical;
 
@@ -214,6 +218,7 @@ void CharacterController::update(Component::UpdatePass updatePass, float _dt)
 					move_x = m_run * m_smoothedHorizontal;
 					move_z = m_run * m_smoothedVertical;
 					m_previousMovement = vec4f::zero;
+					applyMovement = true;
 					m_leanValue = (1.f - m_leanSmoothGain) * m_leanValue;
 
 					if (wannaJump)
@@ -254,6 +259,7 @@ void CharacterController::update(Component::UpdatePass updatePass, float _dt)
 					m_characterState = CharacterState::eMoveIdle;
 				}
 
+				applyMovement = false;
 				m_animator->setParameter("moveX", move_x);
 				m_animator->setParameter("moveZ", move_z);
 				m_animator->setParameter("locomotionFloat", move_z* m_localSlopeAngle);
@@ -281,10 +287,18 @@ void CharacterController::update(Component::UpdatePass updatePass, float _dt)
 						m_characterState = CharacterState::eFalling;
 				}
 
+				applyMovement = false;
 				m_animator->setParameter("moveX", 0.f);
 				m_animator->setParameter("moveZ", m_run);
 				m_animator->setParameter("locomotionFloat", groundDistance);
 				m_leanValue = (1.f - m_leanSmoothGain) * m_leanValue;
+
+				if (doAirControl)
+				{
+					vec4f error = m_rigidbody->getLinearVelocity() - m_previousMovement.getNorm() * (direction.z * cameraForward + direction.x * left);
+					error.y = 0;
+					m_rigidbody->setLinearVelocity(m_rigidbody->getLinearVelocity() - 0.1f * error);
+				}
 			}
 			break;
 
@@ -307,10 +321,18 @@ void CharacterController::update(Component::UpdatePass updatePass, float _dt)
 					}
 				}
 
+				applyMovement = false;
 				m_animator->setParameter("moveX", 0.f);
 				m_animator->setParameter("moveZ", m_run);
 				m_animator->setParameter("locomotionFloat", groundDistance);
 				m_leanValue = (1.f - m_leanSmoothGain) * m_leanValue;
+
+				if (doAirControl)
+				{
+					vec4f error = m_rigidbody->getLinearVelocity() - m_previousMovement.getNorm() * (direction.z * cameraForward + direction.x * left);
+					error.y = 0;
+					m_rigidbody->setLinearVelocity(m_rigidbody->getLinearVelocity() - 0.1f * error);
+				}
 			}
 			break;
 
@@ -345,6 +367,7 @@ void CharacterController::update(Component::UpdatePass updatePass, float _dt)
 					m_run = 0.f;
 				}
 
+				applyMovement = true;
 				m_leanValue = (1.f - m_leanSmoothGain) * m_leanValue;
 			}
 			break;
@@ -355,6 +378,7 @@ void CharacterController::update(Component::UpdatePass updatePass, float _dt)
 				PrintError("Unhandled state !" + getCharacterStateString(m_characterState));
 				m_characterState = CharacterState::eMoveIdle;
 				m_run = 0.f;
+				applyMovement = true;
 				m_animator->setParameter("moveX", 0);
 				m_animator->setParameter("moveZ", 0);
 			}
@@ -364,7 +388,9 @@ void CharacterController::update(Component::UpdatePass updatePass, float _dt)
 	m_animator->setParameter("grounded", m_isGrounded);
 
 	m_rigidbody->setGravityFactor((m_isGrounded && m_characterState != CharacterState::eJumping) ? 6.f : 1.f);
-	m_rigidbody->setLinearVelocity(vec4f(m_previousMovement.x, m_rigidbody->getLinearVelocity().y, m_previousMovement.z, 0));
+
+	if (m_rigidbody->getFriction() > 0.f && applyMovement)
+		m_rigidbody->setLinearVelocity(vec4f(m_previousMovement.x, m_rigidbody->getLinearVelocity().y, m_previousMovement.z, 0));
 }
 
 float CharacterController::computeSpeed(bool isWalking, bool isSprinting, float forwardDirection, float dt)

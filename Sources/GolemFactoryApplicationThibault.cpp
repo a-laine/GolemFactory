@@ -105,7 +105,8 @@ Entity* testEntity = nullptr;
 // program
 int main()
 {
-	std::cout << "Application start" << std::endl;
+	std::cout << ConsoleColor::getColorString(ConsoleColor::Color::GREEN) << "Application start";
+	std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
 	Application application;
 	//context = application.createFullscreenWindow("Thibault test", 1600, 900);							// windowed
 	//context = application.createFullscreenWindow("Thibault test", glfwGetPrimaryMonitor());			// full screen no title bar
@@ -124,9 +125,9 @@ int main()
 	extern bool HierarchyWindowEnable;
 	extern bool RenderingWindowEnable;
 
-	PhysicDebugWindowEnable = false;
-	HierarchyWindowEnable = false;
-	RenderingWindowEnable = true;
+	PhysicDebugWindowEnable = true;
+	HierarchyWindowEnable = true;
+	RenderingWindowEnable = false;
 #endif
 
 	//AnimationGraph* animgraph = ResourceManager::getInstance()->getResource<AnimationGraph>("humanoid");
@@ -275,7 +276,8 @@ int main()
 
 	//	game loop
 	unsigned long frameCount = 0;
-	std::cout << "game loop initiated" << std::endl;
+	std::cout << ConsoleColor::getColorString(ConsoleColor::Color::GREEN) << "Game loop initiated";
+	std::cout << ConsoleColor::getColorString(ConsoleColor::Color::CLASSIC) << std::endl;
 	while (!application.shouldExit())
 	{
 		// begin loop
@@ -869,7 +871,7 @@ std::string checkResourcesDirectory()
 
 void initManagers()
 {
-	FRAME_MARKER("Frame -1");
+	FRAME_MARKER("Main Thread");
 	SCOPED_CPU_MARKER("initManagers");
 
 	std::string resourceRepository = checkResourcesDirectory();
@@ -1031,6 +1033,7 @@ void initManagers()
 	/*trees detail*/ {
 		auto& detail = terrain.addDetail();
 		detail.m_name = "trees";
+		detail.m_visible = false;
 		detail.m_lod = 4;
 		detail.m_colorTint0 = vec3f(1.f);
 		detail.m_colorTint1 = vec3f(0.9f);
@@ -1061,6 +1064,7 @@ void initManagers()
 	/*grass detail*/ {
 		auto& detail = terrain.addDetail();
 		detail.m_name = "grass";
+		detail.m_visible = false;
 		detail.m_lod = 1;
 		detail.m_colorTint0 = vec3f(0.08f, 0.25f, 0.05f);
 		detail.m_colorTint1 = vec3f(0.40f, 0.63f, 0.12f);
@@ -1082,6 +1086,7 @@ void initManagers()
 	/*rocks detail*/ {
 		auto& detail = terrain.addDetail();
 		detail.m_name = "rocks";
+		detail.m_visible = false;
 		detail.m_lod = 2;
 		detail.m_colorTint0 = vec3f(1.f);
 		detail.m_colorTint1 = vec3f(0.9f);
@@ -1106,8 +1111,8 @@ void initManagers()
 	terrain.setVirtualTexture(&world.getTerrainVirtualTexture());
 	Renderer::getInstance()->setVirtualTexture(&world.getTerrainVirtualTexture());
 
-	terrain.g_morphingRange = 50.f;
-	terrain.addLodRadius(70);//lod0
+	terrain.g_morphingRange = 30.f;
+	terrain.addLodRadius(200);//lod0
 	terrain.addLodRadius(375 + terrain.g_morphingRange);
 	terrain.addLodRadius(375 + terrain.g_morphingRange);
 	terrain.addLodRadius(375 + terrain.g_morphingRange);

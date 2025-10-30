@@ -224,7 +224,7 @@ Tquat<T> Tmat4<T>::extractRotation() const
 		break;
 
 	default:					// Silence a -Wswitch-default warning in GCC. Should never actually get here. Assert is just for sanity.
-		GF_ASSERT(false);
+		GF_ASSERT_MSG(false, "Rot extract failure");
 		break;
 	}
 	return Result;

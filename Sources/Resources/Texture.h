@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <functional>
 #include <GL/glew.h>
 
 #include "Math/TMath.h"
@@ -65,7 +66,6 @@ class Texture : public ResourceVirtual
 
         std::string getIdentifier() const override;
         std::string getLoaderId(const std::string& resourceName) const;
-        std::vector<std::string>& getLayerDescriptor();
         //
 
         //  Attributes
@@ -76,6 +76,9 @@ class Texture : public ResourceVirtual
         unsigned int m_type = 0;
 
 #ifdef USE_IMGUI
+        std::vector<std::string>& getLayerDescriptor();
+        void addAdditionnalDrawInfosCallbacks(std::function<void(ImVec4)> _callback);
+
         bool isEnginePrivate = false;
         bool enableExport = false;
 #endif
@@ -85,12 +88,13 @@ class Texture : public ResourceVirtual
 
         //  Attributes
         uint16_t configuration = 0;         //!< Texture configuration byte
-        std::vector<std::string> m_layerDescriptor;
         GLuint texture = 0;                 //!< Texture Id
 
 #ifdef USE_IMGUI
         int layerOverview;
         GLuint* textureLayers;
+        std::vector<std::string> m_layerDescriptor;
+        std::vector<std::function<void(ImVec4)>> m_additionnalDrawInfos;
         static Texture* sharedTextureOverview;
 #endif
         //

@@ -1,6 +1,7 @@
 #include "Collision.h"
 #include "Utiles/Assert.hpp"
 #include "Resources/Mesh.h"
+#include <Utiles/ProfilerConfig.h>
 
 
 
@@ -16,8 +17,8 @@ Collision::CollisionTest Collision::dispatchMatrix[8][8] = {
 
 bool Collision::collide(const Shape* a, const Shape* b, CollisionReport* report)
 {
-	GF_ASSERT(((int)a->type >= 0 && (int)a->type <= (int)Shape::ShapeType::HULL), "Collision not in dispatch matrix");
-	GF_ASSERT(((int)b->type >= 0 && (int)b->type <= (int)Shape::ShapeType::HULL), "Collision not in dispatch matrix");
+	GF_ASSERT_MSG(((int)a->type >= 0 && (int)a->type <= (int)Shape::ShapeType::HULL), "Collision not in dispatch matrix");
+	GF_ASSERT_MSG(((int)b->type >= 0 && (int)b->type <= (int)Shape::ShapeType::HULL), "Collision not in dispatch matrix");
 
 	return (dispatchMatrix[(int)(a->type)][(int)(b->type)])(a, b, report);
 }
@@ -105,6 +106,7 @@ void Collision::DispatchMatrixInit()
 	dispatchMatrix[(int)Shape::ShapeType::SPHERE][(int)Shape::ShapeType::TRIANGLE] = _SpherevsTriangle;
 
 	dispatchMatrix[(int)Shape::ShapeType::CAPSULE][(int)Shape::ShapeType::SPHERE] = _CapsulevsSphere;
+	dispatchMatrix[(int)Shape::ShapeType::CAPSULE][(int)Shape::ShapeType::CAPSULE] = _CapsulevsCapsule;
 	dispatchMatrix[(int)Shape::ShapeType::CAPSULE][(int)Shape::ShapeType::TRIANGLE] = _CapsulevsTriangle;
 
 	dispatchMatrix[(int)Shape::ShapeType::ORIENTED_BOX][(int)Shape::ShapeType::SPHERE] = _OrientedBoxvsSphere;
@@ -117,6 +119,7 @@ void Collision::DispatchMatrixInit()
 
 bool Collision::_GJKCollision(const Shape* a, const Shape* b, CollisionReport* report)
 {
+	SCOPED_CPU_MARKER("GJK");
 	return GJK::collide(*a, *b, report);
 }
 
@@ -258,6 +261,12 @@ bool Collision::_CapsulevsSphere(const Shape* a, const Shape* b, CollisionReport
 	const Capsule& capsule = *(Capsule*)a;
 	const Sphere& sphere = *(Sphere*)b;
 	return collide_CapsulevsSphere(sphere.center, sphere.radius, capsule.p1, capsule.p2, capsule.radius, report);
+}
+bool Collision::_CapsulevsCapsule(const Shape* a, const Shape* b, CollisionReport* report)
+{
+	const Capsule& capsule1 = *(Capsule*)a;
+	const Capsule& capsule2 = *(Capsule*)b;
+	return collide_CapsulevsCapsule(capsule1.p1, capsule1.p2, capsule1.radius, capsule2.p1, capsule2.p2, capsule2.radius, report);
 }
 
 // OrientedBox dispatch

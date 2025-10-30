@@ -71,6 +71,7 @@ std::atomic_bool loading = false;
 
 double completeTime = 16.;
 double averageCompleteTime = 16.;
+float physicsTimeSpeed = 0.f;
 
 float avatarZeroHeight;
 vec4f avatarspeed(0.f);
@@ -926,7 +927,7 @@ void updates(float elapseTime)
 
 	world.getSceneManager().update(currentCamera->getPosition());
 	if (!loading)
-		terrain.update(currentCamera->getPosition());
+		terrain.update(currentCamera->getPosition(), currentCamera);
 
 	//	Compute HUD picking parameters
 	if (EventHandler::getInstance()->getCursorMode())

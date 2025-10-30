@@ -1,10 +1,11 @@
 #include <GameSpecific/TPSCameraComponent.h>
 #include <EntityComponent/ComponentUpdater.h>
-#include "Utiles/Assert.hpp"
+#include <Utiles/Assert.hpp>
 #include <Utiles/Debug.h>
+#include <EntityComponent/Entity.hpp>
 
 #include <Events/EventHandler.h>
-#include "HUD/WidgetManager.h"
+#include <HUD/WidgetManager.h>
 
 TPSCameraComponent::TPSCameraComponent() : CameraComponent(true)
 {

@@ -6,6 +6,9 @@
 #include <sstream>
 #include <Utiles/Debug.h>
 #include <Utiles/ConsoleColor.h>
+#include <Resources/ResourceVirtual.h>
+#include <Utiles/Parser/Variant.h>
+#include <World/World.h>
 
 //	Default
 RigidBody::RigidBody(const RigidBodyType& type, const SolverType& solver) : 
@@ -188,12 +191,16 @@ void RigidBody::computeWorldShapes()
 
 //	Set / get / test
 void RigidBody::setType(const RigidBodyType& t) { m_type = t; }
-void RigidBody::setMass(const float& m)
+void RigidBody::setMass(float m)
 {
 	m_inertia *= m / m_mass;
 	m_inverseInertia *= m_mass / m;
 	m_mass = m;
 	m_inverseMass = 1.f / m_mass;
+}
+void RigidBody::setVolumicMass(float vm)
+{
+	m_volumicMass = vm;
 }
 void RigidBody::setGravityFactor(const float& f) { m_gravityFactor = f; }
 void RigidBody::setBouncyness(const float& b) { m_bouncyness = b; }
@@ -382,9 +389,7 @@ void RigidBody::onDrawImGui()
 		constexpr float ptssize = 0.015f;
 		vec4f gcenter = m_position;
 		Debug::Vertex tmpBuffer[6];
-		tmpBuffer[0].m_position = tmpBuffer[3].m_position = gcenter + vec4f(ptssize, 0, 0, 0);         tmpBuffer[0].m_color = Debug::darkGreen;
-		tmpBuffer[2].m_position = tmpBuffer[4].m_position = gcenter + vec4f(-ptssize, 0, ptssize, 0);  tmpBuffer[2].m_color = Debug::darkGreen;
-		tmpBuffer[1].m_position = tmpBuffer[5].m_position = gcenter - vec4f(ptssize, 0, ptssize, 0);   tmpBuffer[1].m_color = Debug::darkGreen;
+
 		Debug::setDepthTest(false);
 		Debug::drawMultiplePrimitive(tmpBuffer, 6, mat4f::identity, GL_TRIANGLES);
 		Debug::setDepthTest(true);
@@ -398,30 +403,53 @@ void RigidBody::onDrawImGui()
 		{
 			Debug::setDepthTest(ztest);
 			cluster->cache.debugDraw(wireframe, m_cacheColor);
-
 			Debug::setDepthTest(false);
 
-			int bufferSize = 0;
-			Debug::Vertex tmpBuffer[64 * 3];
-			constexpr float ptssize = 0.015f;
+			constexpr int ptsMaxSize = 64 * 3;
+			int ptcount = 0; int linecount = 0;
+			Debug::Vertex ptsBuffer[ptsMaxSize];
+			Debug::Vertex lineBuffer[ptsMaxSize];
+			constexpr float ptsSize = 0.015f;
 			for (const Constraint& c : cluster->constraints)
 			{
-				tmpBuffer[bufferSize].m_position = c.worldPoint + vec4f(ptssize, 0, 0, 0);             tmpBuffer[bufferSize].m_color = Debug::yellow;
-				tmpBuffer[bufferSize + 2].m_position = c.worldPoint + vec4f(-ptssize, 0, ptssize, 0);  tmpBuffer[bufferSize + 2].m_color = Debug::yellow;
-				tmpBuffer[bufferSize + 1].m_position = c.worldPoint - vec4f(ptssize, 0, ptssize, 0);   tmpBuffer[bufferSize + 1].m_color = Debug::yellow;
-				bufferSize += 3;
-				Debug::color = Debug::red;
-				Debug::drawLine(c.worldPoint, c.worldPoint + c.axis[0]);
-				if (bufferSize == 64 * 3)
+				ptsBuffer[ptcount].m_position = c.worldPoint + vec4f(ptsSize, 0, 0, 0);
+				ptsBuffer[ptcount + 2].m_position = c.worldPoint - vec4f(ptsSize, 0, ptsSize, 0);
+				ptsBuffer[ptcount + 1].m_position = c.worldPoint + vec4f(-ptsSize, 0, ptsSize, 0);
+				ptsBuffer[ptcount].m_color = ptsBuffer[ptcount + 1].m_color = ptsBuffer[ptcount + 2].m_color = Debug::yellow;
+				ptcount += 3;
+
+				vec4f wp1 = c.body1->m_position + c.body1->m_orientation * c.localPoint1;
+				ptsBuffer[ptcount].m_position = wp1 + vec4f(ptsSize, 0, 0, 0);
+				ptsBuffer[ptcount + 2].m_position = wp1 - vec4f(ptsSize, 0, ptsSize, 0);
+				ptsBuffer[ptcount + 1].m_position = wp1 + vec4f(-ptsSize, 0, ptsSize, 0);
+				ptsBuffer[ptcount].m_color = ptsBuffer[ptcount + 1].m_color = ptsBuffer[ptcount + 2].m_color = Debug::darkGreen;
+				ptcount += 3;
+
+				lineBuffer[linecount].m_position = c.worldPoint;
+				lineBuffer[linecount + 1].m_position = c.worldPoint + c.axis[0];
+				lineBuffer[linecount].m_color = lineBuffer[linecount + 1].m_color = Debug::red;
+				linecount += 2;
+
+				if (ptcount == ptsMaxSize)
 				{
-					Debug::drawMultiplePrimitive(tmpBuffer, bufferSize, mat4f::identity, GL_TRIANGLES);
-					bufferSize = 0;
+					Debug::drawMultiplePrimitive(ptsBuffer, ptcount, mat4f::identity, GL_TRIANGLES);
+					ptcount = 0;
+				}
+				if (linecount == ptsMaxSize)
+				{
+					Debug::drawMultiplePrimitive(lineBuffer, linecount, mat4f::identity, GL_LINES);
+					linecount = 0;
 				}
 			}
-			if (bufferSize)
+			if (ptcount)
 			{
-				Debug::drawMultiplePrimitive(tmpBuffer, bufferSize, mat4f::identity, GL_TRIANGLES);
-				bufferSize = 0;
+				Debug::drawMultiplePrimitive(ptsBuffer, ptcount, mat4f::identity, GL_TRIANGLES);
+				ptcount = 0;
+			}
+			if (linecount)
+			{
+				Debug::drawMultiplePrimitive(lineBuffer, linecount, mat4f::identity, GL_LINES);
+				linecount = 0;
 			}
 			Debug::setDepthTest(true);
 		}
