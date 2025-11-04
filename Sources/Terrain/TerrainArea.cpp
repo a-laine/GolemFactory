@@ -94,13 +94,10 @@ void TerrainArea::generate(const std::string& directory)
 	};
 	const auto materialSelect = [&](const MapData& data, int i, int j)
 	{
-		if (data.normalTerrain.y < 0.85f)
-			return 9;//cliff
-
-		float height = data.heightTerrain + 3.f * hash((float)i, (float)j);
-		if (std::min(height, data.heightTerrain) < 0.1)
+		float height = data.height + 3.f * hash((float)i, (float)j);
+		if (std::min(height, data.height) < 0.1)
 			return (hash((float)j, (float)i) > 0.2f ? 4 : 5);    // sand
-		else if (std::min(height, data.heightTerrain) < 0.7)
+		else if (std::min(height, data.height) < 0.7)
 			return 7;    // dirt
 		else if (height > g_snowLevel)
 			return 8;	  // snow
@@ -116,13 +113,28 @@ void TerrainArea::generate(const std::string& directory)
 		for (int j = 0; j < 257; j++)
 		{
 			vec3f n = noised(m_gridIndex.x * AREA_WORLDSCALE + faceScale * i, m_gridIndex.y * AREA_WORLDSCALE + faceScale * j, 8);
-			data[i][j].heightTerrain = clamp(n.x, -g_seeLevel, g_heightAmplitude - g_seeLevel);
-			data[i][j].heightWater = 0.f;
-			data[i][j].holeTerrain = false;
-			data[i][j].holeWater = data[i][j].heightTerrain > data[i][j].heightWater + 2.f;
-			data[i][j].normalTerrain = vec4f(n.y, 2, n.z, 0).getNormal();
-			data[i][j].normalWater = vec4f(0, 1, 0, 0);
-			data[i][j].material = materialSelect(data[i][j], 256 * m_gridIndex.x + i, 256 * m_gridIndex.y + j);
+			data[i][j].height = clamp(n.x, -g_seeLevel, g_heightAmplitude - g_seeLevel);
+			data[i][j].hole = false;
+			data[i][j].normal = vec4f(n.y, 2, n.z, 0).getNormal();
+			data[i][j].material0 = materialSelect(data[i][j], 256 * m_gridIndex.x + i, 256 * m_gridIndex.y + j);
+
+			float cliffFactor = smoothstep(0.75f, 0.9f, data[i][j].normal.y);
+			if (cliffFactor < 0.01f)
+			{
+				data[i][j].material0 = 9;
+				data[i][j].material1 = 0xFF;
+				data[i][j].material0weight = 1.f;
+			}
+			else if (cliffFactor > 0.99f)
+			{
+				data[i][j].material1 = 0xFF;
+				data[i][j].material0weight = 1.f;
+			}
+			else
+			{
+				data[i][j].material1 = 9;
+				data[i][j].material0weight = cliffFactor;
+			}
 		}
 
 	// write to texture
@@ -276,32 +288,27 @@ std::vector<vec4ui> TerrainArea::generateDetails(float density, vec2f probabilit
 
 			int iposx = clamp((int)(tileuv.x * 256), 0, 256);
 			int iposy = clamp((int)(tileuv.y * 256), 0, 256);
+			float uvx = clamp(tileuv.x * 256 - iposx, 0.f, 1.f);
+			float uvy = clamp(tileuv.y * 256 - iposy, 0.f, 1.f);
+
 			MapData data0; data0.unpack(data[257 * iposx + iposy]);
 			MapData data1; data1.unpack(data[257 * (iposx + 1) + iposy]);
 			MapData data2; data2.unpack(data[257 * iposx + iposy + 1]);
 			MapData data3; data3.unpack(data[257 * (iposx + 1) + iposy + 1]);
 
-			// discard all patch not on allowed materials
-			if (data0.material == data1.material && data0.material == data2.material && data0.material == data3.material)
-			{
-				if (!isAllowedMaterial(data0.material))
-					continue;
-			}
-			else
-			{
-				if (!isAllowedMaterial(data0.material) || !isAllowedMaterial(data1.material) || !isAllowedMaterial(data2.material) || !isAllowedMaterial(data3.material))
-					continue;
-			}
-
-			float uvx = clamp(tileuv.x * 256 - iposx, 0.f, 1.f);
-			float uvy = clamp(tileuv.y * 256 - iposy, 0.f, 1.f);
-			//float heightTerrain = biLerpf(data0.heightTerrain, data1.heightTerrain, data2.heightTerrain, data3.heightTerrain, uvx, uvy);
-			//float heightWater = biLerpf(data0.heightWater, data1.heightWater, data2.heightWater, data3.heightWater, uvx, uvy);
-
-			vec4f normal = biLerpv(data0.normalTerrain, data1.normalTerrain, data2.normalTerrain, data3.normalTerrain, uvx, uvy).getNormal();
+			vec4f normal = biLerpv(data0.normal, data1.normal, data2.normal, data3.normal, uvx, uvy).getNormal();
 
 			// discard too stiff slopes
 			if (normal.y < 0.95f)
+				continue;
+
+			// discard all patch not on allowed materials
+			float proba0 = (isAllowedMaterial(data0.material0) ? data0.material0weight : 0.f) + (isAllowedMaterial(data0.material1) ? 1.f - data0.material0weight : 0.f);
+			float proba1 = (isAllowedMaterial(data1.material0) ? data1.material0weight : 0.f) + (isAllowedMaterial(data1.material1) ? 1.f - data1.material0weight : 0.f);
+			float proba2 = (isAllowedMaterial(data2.material0) ? data2.material0weight : 0.f) + (isAllowedMaterial(data2.material1) ? 1.f - data2.material0weight : 0.f);
+			float proba3 = (isAllowedMaterial(data3.material0) ? data3.material0weight : 0.f) + (isAllowedMaterial(data3.material1) ? 1.f - data3.material0weight : 0.f);
+			float matProba = biLerpf(proba0, proba1, proba2, proba3, uvx, uvy);
+			if (matProba < 0.01f)
 				continue;
 
 			vec3f random2 = hash3(random.x, random.y);
@@ -487,13 +494,8 @@ void TerrainArea::setLod(int lod)
 		for (int i = 0; i < 257 * 257; i++)
 		{
 			data.unpack(m_data[i]);
-			if (data.heightWater > data.heightTerrain)
-				m_hasWater = true;
-
-			minHeight = std::min(minHeight, data.heightWater);
-			minHeight = std::min(minHeight, data.heightTerrain);
-			maxHeight = std::max(maxHeight, data.heightWater);
-			maxHeight = std::max(maxHeight, data.heightTerrain);
+			minHeight = std::min(minHeight, data.height);
+			maxHeight = std::max(maxHeight, data.height);
 		}
 
 		m_boundingBox.min = vec4f(-125.f, minHeight, -125.f, 0.f);
@@ -596,25 +598,25 @@ bool TerrainArea::getCollisionInCache(Physics::CollisionCache& cache) const
 			AxisAlignedBox quadaabb;
 			if (((i + j) & 0x01) == 0)
 			{
-				t0.p1 = t1.p1 = corner + vec4f(i * id2world, data0.heightTerrain, j * id2world, 0);
-				t0.p2 = corner + vec4f(i * id2world, data1.heightTerrain, (j + 1) * id2world, 0);
-				t0.p3 = t1.p2 = corner + vec4f((i + 1) * id2world, data2.heightTerrain, (j + 1) * id2world, 0);
-				t1.p3 = corner + vec4f((i + 1) * id2world, data3.heightTerrain, j * id2world, 0);
+				t0.p1 = t1.p1 = corner + vec4f(i * id2world, data0.height, j * id2world, 0);
+				t0.p2 = corner + vec4f(i * id2world, data1.height, (j + 1) * id2world, 0);
+				t0.p3 = t1.p2 = corner + vec4f((i + 1) * id2world, data2.height, (j + 1) * id2world, 0);
+				t1.p3 = corner + vec4f((i + 1) * id2world, data3.height, j * id2world, 0);
 				quadaabb.min = t0.p1;
 				quadaabb.max = t0.p3;
 			}
 			else
 			{
-				t0.p1 = corner + vec4f(i * id2world, data0.heightTerrain, j * id2world, 0);
-				t0.p2 = t1.p1 = corner + vec4f(i * id2world, data1.heightTerrain, (j + 1) * id2world, 0);
-				t1.p2 = corner + vec4f((i + 1) * id2world, data2.heightTerrain, (j + 1) * id2world, 0);
-				t0.p3 = t1.p3 = corner + vec4f((i + 1) * id2world, data3.heightTerrain, j * id2world, 0);
+				t0.p1 = corner + vec4f(i * id2world, data0.height, j * id2world, 0);
+				t0.p2 = t1.p1 = corner + vec4f(i * id2world, data1.height, (j + 1) * id2world, 0);
+				t1.p2 = corner + vec4f((i + 1) * id2world, data2.height, (j + 1) * id2world, 0);
+				t0.p3 = t1.p3 = corner + vec4f((i + 1) * id2world, data3.height, j * id2world, 0);
 				quadaabb.min = t0.p1;
 				quadaabb.max = t1.p2;
 			}
 
-			quadaabb.min.y = std::min(std::min(data0.heightTerrain, data1.heightTerrain), std::min(data2.heightTerrain, data3.heightTerrain));
-			quadaabb.max.y = std::max(std::max(data0.heightTerrain, data1.heightTerrain), std::max(data2.heightTerrain, data3.heightTerrain));
+			quadaabb.min.y = std::min(std::min(data0.height, data1.height), std::min(data2.height, data3.height));
+			quadaabb.max.y = std::max(std::max(data0.height, data1.height), std::max(data2.height, data3.height));
 
 			if (Collision::collide(&cache.m_aabb, &quadaabb))
 			{
@@ -637,27 +639,41 @@ uint64_t TerrainArea::MapData::pack()
 {
 	float scaleFactor = 65535.f / TerrainArea::g_heightAmplitude;
 
-	uint64_t theight = (uint64_t)((uint16_t)((heightTerrain + g_seeLevel) * scaleFactor));
-	uint64_t wheight = (uint64_t)((uint16_t)((heightWater + g_seeLevel) * scaleFactor));
-	uint64_t tnormal = octahedralPack(normalTerrain, 7);
-	uint64_t wnormal = octahedralPack(normalWater, 5);
-	uint64_t mat = (uint64_t)material;
-	uint64_t thole = holeTerrain ? 0x01 : 0x00;
-	uint64_t whole = holeWater ? 0x01 : 0x00;
+	uint64_t theight = (uint64_t)((uint16_t)((height + g_seeLevel) * scaleFactor));
+	uint64_t tnormal = octahedralPack(normal, 8);
+	uint64_t mat0 = (uint64_t)material0;
+	uint64_t mat1 = (uint64_t)material1;
+	uint64_t wmat0 = (uint64_t)(255 * material0weight);
+	uint64_t h = hole ? 0x01 : 0x00;
 
-	return theight | (wheight << 16) | (tnormal << 32) | (thole << 46) | (whole << 47) | (wnormal << 48) | (mat << 58);
+	/*
+	_________________________________
+	|F|E|D|C|B|A|9|8|7|6|5|4|3|2|1|0|
+	=================================
+
+	_________________________________
+	|            height             |
+	=================================
+	|     normal1   |     normal0   |
+	=================================
+	|   material1   |   material0   |
+	=================================
+	|h|             |   matWeight0  |  h=hole
+	=================================
+	*/
+
+	return theight | (tnormal << 16) | (mat0 << 32) | (mat1 << 40) | (wmat0 << 48) | (h << 63);
 }
 void TerrainArea::MapData::unpack(uint64_t data)
 {
 	float scaleFactor = TerrainArea::g_heightAmplitude / 65535.f;
 
-	heightTerrain = (data & 0xFFFF) * scaleFactor - g_seeLevel;
-	heightWater = ((data >> 16) & 0xFFFF) * scaleFactor - g_seeLevel;
-	normalTerrain = octahedralUnpack(data >> 32, 7);
-	normalWater = octahedralUnpack(data >> 48, 5);
-	material = data >> 58;
-	holeTerrain = (data & ((uint64_t)1 << 46));
-	holeWater = (data & ((uint64_t)1 << 47));
+	height = (data & 0xFFFF) * scaleFactor - g_seeLevel;
+	normal = octahedralUnpack(data >> 16, 8);
+	material0 = (data >> 32) & 0xFF;
+	material1 = (data >> 40) & 0xFF;
+	material0weight = ((data >> 48) & 0xFF) * (1.f / 255.f);
+	hole = (data & ((uint64_t)1 << 63));
 }
 
 uint64_t TerrainArea::MapData::octahedralPack(vec4f n, int bits)

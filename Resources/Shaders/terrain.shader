@@ -34,12 +34,11 @@ Terrain
 		struct VertexData
 		{
 			vec4 normalTerrain;
-			vec4 normalWater;
 			float height;
-			float water;
-			uint material;
+			uint material0;
+			uint material1;
+			float material0weight;
 			bool holeTerrain;
-			bool holeWater;
 		};
 		vec4 octahedralUnpack(uint n, uint bits)
 		{
@@ -50,6 +49,29 @@ Terrain
 			vec4 nor = vec4(v.x, 1.0 - abs(v.x) - abs(v.y), v.y, 0.0);
 			return normalize(nor);
 		}
+		
+		layout(rgba16ui) readonly uniform uimage2D terrainVirtualTexture;	// image unit 1
+		
+		VertexData GetVertexData(ivec2 vertexCoord, float heightAmplitude, float seeLevel)
+		{
+			uvec4 data = imageLoad(terrainVirtualTexture, vertexCoord);
+			
+			VertexData vdata;
+			vdata.height = data.x * heightAmplitude - seeLevel;
+			vdata.normalTerrain = octahedralUnpack(data.y, 8);
+			vdata.material0 = data.z & 0xFF;
+			vdata.material1 = (data.z >> 8) & 0xFF;
+			vdata.material0weight = (data.w & 0xFF) / 256.0;
+			vdata.holeTerrain = (data.w & (1 << 15)) != 0;
+			return vdata;
+		}
+		bool GetVertexHoleData(ivec2 vertexCoord, float heightAmplitude, float seeLevel)
+		{
+			uvec4 data = imageLoad(terrainVirtualTexture, vertexCoord);
+			return (data.w & (1 << 15)) != 0;
+		}
+		
+		#define ALLOW_DEBUG
 	};
 	vertex :
 	{
@@ -58,8 +80,6 @@ Terrain
 		// input
 		layout(location = 0) in vec4 position;
 		layout(location = 2) in vec4 uv;
-		
-		layout(rgba16ui) readonly uniform uimage2D terrainVirtualTexture;	// image unit 1
 		
 		#define INSTANCING
 		// following cannot exceed 1024
@@ -71,8 +91,7 @@ Terrain
 			out vec4 fragmentPosition_gs;
 			out vec4 fragmentNormal_gs;
 			out vec4 fragmentUv_gs;
-			out vec4 terrainData0_gs;
-			out vec4 terrainData1_gs;
+			flat out vec4 terrainData0_gs;
 		#else
 			#ifdef SHADOW_PASS
 				// nothing to out more than 'gl_Position'
@@ -80,27 +99,10 @@ Terrain
 				out vec4 fragmentPosition;
 				out vec4 fragmentNormal;
 				out vec4 fragmentUv;
-				out vec4 terrainData0;
-				out vec4 terrainData1;
+				flat out vec4 terrainData0;
 			#endif
 		#endif
 		
-		VertexData GetVertexData(ivec2 vertexCoord)
-		{
-			float heightAmplitude = constantData[0].z;
-			float seeLevel = constantData[0].w;
-			uvec4 data = imageLoad(terrainVirtualTexture, vertexCoord);
-			
-			VertexData vdata;
-			vdata.height = data.x * heightAmplitude - seeLevel;
-			vdata.water = data.y * heightAmplitude - seeLevel;
-			vdata.normalTerrain = octahedralUnpack(data.z, 7);
-			vdata.normalWater = octahedralUnpack(data.w, 5);
-			vdata.material = (data.w >> 10) & 0xFF;
-			vdata.holeTerrain = (data.z & (1 << 14)) != 0;
-			vdata.holeWater = (data.z & (1 << 15)) != 0;
-			return vdata;
-		}
 		float ComputeMorphingRatio(float camDistance)
 		{
 			int meshLod = int(constantData[0].x);
@@ -125,13 +127,9 @@ Terrain
 		void main()
 		{
 			vec4 areaData0 = instanceDataArray[2 * gl_InstanceID];
-			
-			//int lod = int(constantData[0].x);
-			//int tileSize = int(constantData[0].y);
-			
 			vec4 vertexCoordFloat = areaData0.zwzw + uv.xyxy;
 			vertexCoordFloat.z = 0.0;
-			VertexData vertexData0 = GetVertexData(ivec2(vertexCoordFloat.x , vertexCoordFloat.y));
+			VertexData vertexData0 = GetVertexData(ivec2(vertexCoordFloat.x , vertexCoordFloat.y), constantData[0].z, constantData[0].w);
 			vec4 p = vec4(position.x + areaData0.x, vertexData0.height,  position.z + areaData0.y, 1.0);
 			vec4 normal = vertexData0.normalTerrain;
 			
@@ -143,21 +141,12 @@ Terrain
 				
 				if (ratio > 0.0)
 				{
-					VertexData vertexData1 = GetVertexData(ivec2(vertexCoordFloat.x + uv.z , vertexCoordFloat.y + uv.w));
-					VertexData vertexData2 = GetVertexData(ivec2(vertexCoordFloat.x - uv.z , vertexCoordFloat.y - uv.w));
+					VertexData vertexData1 = GetVertexData(ivec2(vertexCoordFloat.x + uv.z , vertexCoordFloat.y + uv.w), constantData[0].z, constantData[0].w);
+					VertexData vertexData2 = GetVertexData(ivec2(vertexCoordFloat.x - uv.z , vertexCoordFloat.y - uv.w), constantData[0].z, constantData[0].w);
 					vertexCoordFloat.z = ratio;
 					
 					p.y = mix(vertexData0.height, 0.5 * (vertexData1.height + vertexData2.height), ratio);
 					normal = mix(vertexData0.normalTerrain, 0.5 * (vertexData1.normalTerrain + vertexData2.normalTerrain), ratio);
-					
-					/*if (uv.z == -1.0 && uv.w == 1.0)
-						areaData0 = mix(areaData0, vec4(1.0,0.0,0.0,1.0), ratio);
-					else if (uv.z == 1.0 && uv.w == 1.0)
-						areaData0 = mix(areaData0, vec4(0.0,1.0,0.0,1.0), ratio);
-					else if (uv.z == 0.0 && uv.w == 1.0)
-						areaData0 = mix(areaData0, vec4(0.2,0.2,1.0,1.0), ratio);
-					else
-						areaData0 = mix(areaData0, vec4(1.0,1.0,0.0,1.0), ratio);*/
 				}
 			}
 			
@@ -196,15 +185,14 @@ Terrain
 			in vec4 fragmentPosition_gs[];
 			in vec4 fragmentNormal_gs[];
 			in vec4 fragmentUv_gs[];
-			in vec4 terrainData0_gs[];
-			in vec4 terrainData1_gs[];
+			flat in vec4 terrainData0_gs[];
 
 			// output
 			out vec4 fragmentNormal;
 			out vec4 fragmentPosition;
 			out vec4 fragmentUv;
 			out vec3 barycentricCoord;
-			out vec4 terrainData0;
+			flat out vec4 terrainData0;
 
 			void main()
 			{
@@ -221,7 +209,7 @@ Terrain
 				fragmentNormal = fragmentNormal_gs[1];
 				fragmentUv = fragmentUv_gs[1];
 				barycentricCoord = vec3(0.0 , 1.0 , 0.0);
-				terrainData0 = terrainData0_gs[1];
+				//terrainData0 = terrainData0_gs[1];
 				EmitVertex();
 				
 				gl_Position = gl_in[2].gl_Position;
@@ -229,7 +217,7 @@ Terrain
 				fragmentNormal = fragmentNormal_gs[2];
 				fragmentUv = fragmentUv_gs[2];
 				barycentricCoord = vec3(0.0 , 0.0 , 1.0);
-				terrainData0 = terrainData0_gs[2];
+				//terrainData0 = terrainData0_gs[2];
 				EmitVertex();
 				
 				EndPrimitive();
@@ -275,23 +263,35 @@ Terrain
 	{
 		#include "UniformBuffers.cginc"
 		
+		// input
+		in vec4 fragmentPosition;
+		in vec4 fragmentUv;
+		
+		uniform vec4 constantData[16];
+		
 	#ifdef SHADOW_PASS
-		void main(){}
+		void main()
+		{
+			vec2 samplinguv = fragmentPosition.xz;
+			ivec2 corner = ivec2(int(fragmentUv.x), int(fragmentUv.y));
+			bool hole0 = GetVertexHoleData(corner, constantData[0].z, constantData[0].w);
+			bool hole1 = GetVertexHoleData(corner + ivec2(0, 1), constantData[0].z, constantData[0].w);
+			bool hole2 = GetVertexHoleData(corner + ivec2(1, 0), constantData[0].z, constantData[0].w);
+			bool hole3 = GetVertexHoleData(corner + ivec2(1, 1), constantData[0].z, constantData[0].w);
+			if (hole0 && hole1 && hole2 && hole3)
+				discard;
+		}
 	#else
 		uniform sampler2DArray materialCollection;
 		uniform sampler2DArrayShadow cascadedShadow;
 		uniform samplerCubeArray omniShadowArray;
-		uniform vec4 constantData[16];
 		
 		// images
 		layout(rgba32ui) readonly uniform uimage3D lightClusters;			// image unit 0
-		layout(rgba16ui) readonly uniform uimage2D terrainVirtualTexture;	// image unit 1
 		
 		// input
-		in vec4 fragmentPosition;
 		in vec4 fragmentNormal;
-		in vec4 fragmentUv;
-		in vec4 terrainData0;
+		flat in vec4 terrainData0;
 			
 		#ifdef WIRED_MODE
 			in vec3 barycentricCoord;
@@ -309,6 +309,14 @@ Terrain
 		vec4 cascadeIndexAll = vec4(0,1,2,3);
 		vec4 cascadeColor = vec4(0.0);
 		bool isHole = false;
+		
+		struct MaterialSamplingResult
+		{
+			vec4 m_albedo;
+			vec4 m_normal;
+			float m_metalic;
+			int m_index;
+		};
 		
 		// debug
 		vec4 lodcolors[8] = vec4[]( vec4(0,1,0,1), vec4(1,1,0,1), vec4(1,0.5,0,1), vec4(1,0,0,1), vec4(1,0,1,1), vec4(0,0,1,1), vec4(1,1,1,1), vec4(0.5,0.5,0.5,1) );
@@ -455,6 +463,7 @@ Terrain
 		{
 			// only cascade 3 for terrain
 			//float dist = abs(view * fragmentPosition).z;
+			
 			if (cascadeIndex >= 4)
 				return 1.0;
 			//if (shadowFarPlanes[3] > dist) cascadeIndex = 3;
@@ -476,41 +485,21 @@ Terrain
 			shadow /= 9.0;
 			return shadow;
 		}
-		VertexData GetVertexData(ivec2 vertexCoord)
-		{
-			float heightAmplitude = constantData[0].z;
-			float seeLevel = constantData[0].w;
-			uvec4 data = imageLoad(terrainVirtualTexture, vertexCoord);
-			
-			VertexData vdata;
-			vdata.height = data.x * heightAmplitude - seeLevel;
-			vdata.water = data.y * heightAmplitude - seeLevel;
-			vdata.normalTerrain = octahedralUnpack(data.z, 7);
-			vdata.normalWater = octahedralUnpack(data.w, 5);
-			vdata.material = (data.w >> 10) & 0xFF;
-			vdata.holeTerrain = (data.z & (1 << 14)) != 0;
-			vdata.holeWater = (data.z & (1 << 15)) != 0;
-			return vdata;
-		}
+		
 		vec4 SampleQuadMaterials()
 		{
 			vec2 samplinguv = fragmentPosition.xz;
 			ivec2 corner = ivec2(int(fragmentUv.x), int(fragmentUv.y));
-			VertexData data0 = GetVertexData(corner);
-			VertexData data1 = GetVertexData(corner + ivec2(0, 1));
-			VertexData data2 = GetVertexData(corner + ivec2(1, 0));
-			VertexData data3 = GetVertexData(corner + ivec2(1, 1));
-			if (data0.holeTerrain && data1.holeTerrain && data2.holeTerrain && data3.holeTerrain)
+			VertexData data[4];
+			data[0] = GetVertexData(corner, constantData[0].z, constantData[0].w);
+			data[1] = GetVertexData(corner + ivec2(0, 1), constantData[0].z, constantData[0].w);
+			data[2] = GetVertexData(corner + ivec2(1, 0), constantData[0].z, constantData[0].w);
+			data[3] = GetVertexData(corner + ivec2(1, 1), constantData[0].z, constantData[0].w);
+			if (data[0].holeTerrain && data[1].holeTerrain && data[2].holeTerrain && data[3].holeTerrain)
 			{
 				isHole = true;
 				return normal;
 			}
-			
-			float inter_metalic;
-			vec4 inter_albedo;
-			vec4 inter_normal;
-			TerrainMaterial t0 = terrainMaterials[data0.material];
-			float metalic0 = t0.m_metalic;
 			float mipmapLevel = 0.0;
 			{
 				float d = 0.2 * length(cameraPosition - fragmentPosition);
@@ -518,103 +507,95 @@ Terrain
 				float lowermip = floor(mipmapLevel);
 				mipmapLevel = mix(lowermip, lowermip + 1.0, smoothstep(0.0, 1.0, 3.0 * fract(mipmapLevel) - 1.0));
 			}
-			vec2 tmpuv = t0.m_tiling * samplinguv;
-			vec4 albedo0 = textureLod(materialCollection, vec3(tmpuv, t0.m_albedo), mipmapLevel);
-			vec4 normal0 = textureLod(materialCollection, vec3(tmpuv, t0.m_normal), mipmapLevel);
 			
-			if (data0.material == data1.material && data0.material == data2.material && data0.material == data3.material)
+			MaterialSamplingResult quadMaterials[4];
+			MaterialSamplingResult sampresult[8];
+			int sampresLength = 0;
+			for (int i = 0; i < 4; i++)
 			{
-				inter_metalic = metalic0;
-				inter_albedo = albedo0;
-				inter_normal = normal0;
+				// search and sample if necessary material 0
+				int material0 = int(data[i].material0);
+				int index = -1;
+				for (int j = 0; j < sampresLength; j++)
+				{
+					if (sampresult[j].m_index == material0)
+					{
+						index = j;
+						break;
+					}
+				}
+				if (index < 0)
+				{
+					index = sampresLength;
+					sampresLength++;
+					
+					TerrainMaterial tmat = terrainMaterials[material0];
+					sampresult[index].m_index = material0;
+					sampresult[index].m_metalic = tmat.m_metalic;
+					vec2 tmpuv = tmat.m_tiling * samplinguv;
+					sampresult[index].m_albedo = textureLod(materialCollection, vec3(tmpuv, tmat.m_albedo), mipmapLevel);
+					sampresult[index].m_normal = textureLod(materialCollection, vec3(tmpuv, tmat.m_normal), mipmapLevel);
+				}
+				quadMaterials[i] = sampresult[index];
+				
+				
+				// if mat 1 is not assign, job done
+				int material1 = int(data[i].material1);
+				if (material1 == 0xFF)
+					continue;
+					
+				// search and sample if necessary material 0
+				index = -1;
+				for (int j = 0; j < sampresLength; j++)
+				{
+					if (sampresult[j].m_index == material1)
+					{
+						index = j;
+						break;
+					}
+				}
+				if (index < 0)
+				{
+					index = sampresLength;
+					sampresLength++;
+					
+					TerrainMaterial tmat = terrainMaterials[material1];
+					sampresult[index].m_index = material1;
+					sampresult[index].m_metalic = tmat.m_metalic;
+					vec2 tmpuv = tmat.m_tiling * samplinguv;
+					sampresult[index].m_albedo = textureLod(materialCollection, vec3(tmpuv, tmat.m_albedo), mipmapLevel);
+					sampresult[index].m_normal = textureLod(materialCollection, vec3(tmpuv, tmat.m_normal), mipmapLevel);
+				}
+				
+				// blend vertex materials
+				float weight = data[i].material0weight;
+				quadMaterials[i].m_metalic = mix(quadMaterials[i].m_metalic, sampresult[index].m_metalic, weight);
+				quadMaterials[i].m_albedo = mix(quadMaterials[i].m_albedo, sampresult[index].m_albedo, weight);
+				quadMaterials[i].m_normal = mix(quadMaterials[i].m_normal, sampresult[index].m_normal, weight);
 			}
-			else
-			{
-				float metalic1, metalic2, metalic3;
-				vec4 albedo1, albedo2, albedo3;
-				vec4 normal1, normal2, normal3;
-				
-				if (data1.material == data0.material)
-				{
-					metalic1 = metalic0;
-					albedo1 = albedo0;
-					normal1 = normal0;
-				}
-				else
-				{
-					TerrainMaterial t1 = terrainMaterials[data1.material];
-					metalic1 = t1.m_metalic;
-					tmpuv = t1.m_tiling * samplinguv;
-					albedo1 = textureLod(materialCollection, vec3(tmpuv, t1.m_albedo), mipmapLevel);
-					normal1 = textureLod(materialCollection, vec3(tmpuv, t1.m_normal), mipmapLevel);
-				}
-				
-				if (data2.material == data0.material)
-				{
-					metalic2 = metalic0;
-					albedo2 = albedo0;
-					normal2 = normal0;
-				}
-				else if (data2.material == data1.material)
-				{
-					metalic2 = metalic1;
-					albedo2 = albedo1;
-					normal2 = normal1;
-				}
-				else
-				{
-					TerrainMaterial t2 = terrainMaterials[data2.material];
-					metalic2 = t2.m_metalic;
-					tmpuv = t2.m_tiling * samplinguv;
-					albedo2 = textureLod(materialCollection, vec3(tmpuv, t2.m_albedo), mipmapLevel);
-					normal2 = textureLod(materialCollection, vec3(tmpuv, t2.m_normal), mipmapLevel);
-				}
-				
-				if (data3.material == data0.material)
-				{
-					metalic3 = metalic0;
-					albedo3 = albedo0;
-					normal3 = normal0;
-				}
-				else if (data3.material == data1.material)
-				{
-					metalic3 = metalic1;
-					albedo3 = albedo1;
-					normal3 = normal1;
-				}
-				else if (data3.material == data2.material)
-				{
-					metalic3 = metalic2;
-					albedo3 = albedo2;
-					normal3 = normal2;
-				}
-				else
-				{
-					TerrainMaterial t3 = terrainMaterials[data3.material];
-					metalic3 = t3.m_metalic;
-					tmpuv = t3.m_tiling * samplinguv;
-					albedo3 = textureLod(materialCollection, vec3(tmpuv, t3.m_albedo), mipmapLevel);
-					normal3 = textureLod(materialCollection, vec3(tmpuv, t3.m_normal), mipmapLevel);
-				}
-				
-				vec2 subuv = fragmentUv.xy - vec2(corner.x, corner.y);
-				subuv = smoothstep(vec2(0.0), vec2(1.0), subuv);
-				inter_metalic = biLerpf(metalic0, metalic1, metalic2, metalic3, subuv.x, subuv.y);
-				inter_albedo = biLerp(albedo0, albedo1, albedo2, albedo3, subuv.x, subuv.y);
-				inter_normal = biLerp(normal0, normal1, normal2, normal3, subuv.x, subuv.y);
-			}
-		
-			// normal mapping and end
-			albedoColor = inter_albedo;
-			metalicParam = vec4(inter_metalic, 0, 0, 0);
-			inter_normal = 2.0 * inter_normal - vec4(1.0);
+			
+			vec2 subuv = fragmentUv.xy - vec2(corner.x, corner.y);
+			//subuv = smoothstep(vec2(0.0), vec2(1.0), subuv);
+			float finalMetalic = biLerpf(quadMaterials[0].m_metalic, quadMaterials[1].m_metalic, quadMaterials[2].m_metalic, quadMaterials[3].m_metalic, subuv.x, subuv.y);
+			albedoColor = biLerp(quadMaterials[0].m_albedo, quadMaterials[1].m_albedo, quadMaterials[2].m_albedo, quadMaterials[3].m_albedo, subuv.x, subuv.y);
+			vec4 texNormal = biLerp(quadMaterials[0].m_normal, quadMaterials[1].m_normal, quadMaterials[2].m_normal, quadMaterials[3].m_normal, subuv.x, subuv.y);
+			
+			metalicParam = vec4(finalMetalic, 0, 0, 0);
+			texNormal = 2.0 * texNormal - vec4(1.0);
 			vec3 tangent = normalize(cross(vec3(1.0, 0.0, 0.0), normal.xyz));
 			vec3 bitangent = cross(normal.xyz, tangent);
 			vec4 newNormal;
-			newNormal.xyz = inter_normal.x * bitangent + inter_normal.y * tangent + inter_normal.z * normal.xyz;
+			newNormal.xyz = texNormal.x * bitangent + texNormal.y * tangent + texNormal.z * normal.xyz;
 			newNormal.w = 0.0;
+			
+		#ifdef ALLOW_DEBUG
+			if ((floatBitsToInt(constantData[3].z) & 0x08) != 0)//eMaterialSampling
+				albedoColor = mix(albedoColor, lodcolors[sampresLength - 1], 0.3);
+		#endif
+			
 			return normalize(newNormal);
 		}
+		
 		vec4 ApplyFog(float fragmentDistance, vec4 viewDir, vec4 lightDir)
 		{
 			float fogAmount = 1.0 - exp(-fragmentDistance * m_ambientColor.w);
@@ -697,52 +678,59 @@ Terrain
 					}
 				}
 				
-				if (shadingConfiguration != 0)
-				{
-					if ((shadingConfiguration & 0x02) != 0)
+				#ifdef ALLOW_DEBUG
+					if (shadingConfiguration != 0)
 					{
-						if (lightSum == 0.0)
-							clusterColor = vec4(0.0);
-						else if (lightSum <= 8)
-							clusterColor = vec4(0.0 , 1.0 , 0.0 , 0.0);
-						else if (lightSum <= 14)
-							clusterColor = vec4(1.0 , 1.0 , 0.0 , 0.0);
-						else
-							clusterColor = vec4(1.0 , 0.0 , 0.0 , 0.0);				
+						if ((shadingConfiguration & 0x02) != 0)
+						{
+							if (lightSum == 0.0)
+								clusterColor = vec4(0.0);
+							else if (lightSum <= 8)
+								clusterColor = vec4(0.0 , 1.0 , 0.0 , 0.0);
+							else if (lightSum <= 14)
+								clusterColor = vec4(1.0 , 1.0 , 0.0 , 0.0);
+							else
+								clusterColor = vec4(1.0 , 0.0 , 0.0 , 0.0);				
+						}
 					}
-				}
+				#endif
 			}
 
 			// fog
 			fragmentColor = ApplyFog(fragmentDistance, viewDir, lightDir);
 			
 			// debug override
-			if ((shadingConfiguration & 0x02) != 0)
-				fragColor = mix(fragmentColor, clusterColor, 0.5);
-			else if((shadingConfiguration & 0x08) != 0)
-				fragColor = mix(fragmentColor, cascadeColor, 0.5);
-			else if ((floatBitsToInt(constantData[3].z) & 0x01) != 0)//eDrawCheckboardPatern
-			{
-				vec2 areaCorner = vec2(terrainData0.xy + 125.0) / 250.0;
-				int odd = ((int(areaCorner.x) + int(areaCorner.y))+200) & 0x000001;
-				fragColor = mix(fragmentColor, vec4(odd, 0, 0 , 1.0), 0.2);
-			}
-			else if ((floatBitsToInt(constantData[3].z) & 0x02) != 0)//eDrawLodColor
-			{
-				int lod = int(constantData[0].x);
-				fragColor = mix(fragmentColor, lodcolors[lod], 0.3);
-			}
-			else if ((floatBitsToInt(constantData[3].z) & 0x04) != 0)//eShowMorphingBand
-			{
-				vec4 delta = cameraPosition - fragmentPosition;
-				float camDistance = sqrt(delta.x * delta.x + delta.z * delta.z);
-				float ratio = ComputeMorphingRatio(camDistance);
-				float band = smoothstep(0.95,1.0,ratio);
-				vec4 col = mix(vec4(ratio, 0, 0, 1), vec4(1, 1, 1, 1), 2*band*(1.0-band));
-				fragColor = mix(fragmentColor, col, 0.5);
-			}
-			else
+			#ifdef ALLOW_DEBUG
+				if ((shadingConfiguration & 0x02) != 0)
+					fragColor = mix(fragmentColor, clusterColor, 0.5);
+				else if((shadingConfiguration & 0x08) != 0)
+					fragColor = mix(fragmentColor, cascadeColor, 0.5);
+				else if ((floatBitsToInt(constantData[3].z) & 0x01) != 0)//eDrawCheckboardPatern
+				{
+					vec2 areaCorner = vec2(terrainData0.xy + 125.0) / 250.0;
+					int odd = ((int(areaCorner.x) + int(areaCorner.y))+200) & 0x000001;
+					fragColor = mix(fragmentColor, vec4(odd, 0, 0 , 1.0), 0.2);
+				}
+				else if ((floatBitsToInt(constantData[3].z) & 0x02) != 0)//eDrawLodColor
+				{
+					int lod = int(constantData[0].x);
+					fragColor = mix(fragmentColor, lodcolors[lod], 0.3);
+				}
+				else if ((floatBitsToInt(constantData[3].z) & 0x04) != 0)//eShowMorphingBand
+				{
+					vec4 delta = cameraPosition - fragmentPosition;
+					float camDistance = sqrt(delta.x * delta.x + delta.z * delta.z);
+					float ratio = ComputeMorphingRatio(camDistance);
+					float band = smoothstep(0.95,1.0,ratio);
+					vec4 col = mix(vec4(ratio, 0, 0, 1), vec4(1, 1, 1, 1), 2*band*(1.0-band));
+					fragColor = mix(fragmentColor, col, 0.5);
+				}
+				else
+					fragColor = fragmentColor;
+			#else
 				fragColor = fragmentColor;
+			#endif
+			
 								
 			//fragColor.xyz = normal.xyz - newnormal.xyz;
 			fragColor.w = 1.0;

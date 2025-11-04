@@ -539,6 +539,13 @@ T smoothDamped(const T& current, const T& target, T& velocity, float smoothTime,
 	return target + (delta + temp) * exp;
 }
 
+template<typename T>
+T smoothstep(T edge0, T edge1, T x) 
+{
+	x = clamp((x - edge0) / (edge1 - edge0), T(0.0f), T(1.0f));
+	return x * x * (3 - 2 * x);
+}
+
 #else
 //#define USE_AVX
 

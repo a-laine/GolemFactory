@@ -1157,6 +1157,7 @@ void Terrain::drawImGui(World& world)
 		eDrawCheckboardPatern = 0,
 		eDrawLodColor = 1,
 		eShowMorphingBand = 2,
+		eMaterialSampling = 3,
 	};
 
 	if (ImGui::CollapsingHeader("Shader debug"))
@@ -1179,6 +1180,7 @@ void Terrain::drawImGui(World& world)
 		CheckboxFlag("Checkboard patern", eDrawCheckboardPatern);
 		CheckboxFlag("Lod color", eDrawLodColor);
 		CheckboxFlag("Morphing band", eShowMorphingBand);
+		CheckboxFlag("Material sampling count", eMaterialSampling);
 
 		if (needUpdate)
 		{

@@ -790,8 +790,8 @@ void initManagers()
 	terrain.setVirtualTexture(&world.getTerrainVirtualTexture());
 	Renderer::getInstance()->setVirtualTexture(&world.getTerrainVirtualTexture());
 
-	terrain.g_morphingRange = 50.f;
-	terrain.addLodRadius(70);//lod0
+	terrain.g_morphingRange = 30.f;
+	terrain.addLodRadius(200);//lod0
 	terrain.addLodRadius(375 + terrain.g_morphingRange);
 	terrain.addLodRadius(375 + terrain.g_morphingRange);
 	terrain.addLodRadius(375 + terrain.g_morphingRange);

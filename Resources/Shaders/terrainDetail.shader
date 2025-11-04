@@ -32,12 +32,11 @@ DefaultTextured
 		struct VertexData
 		{
 			vec4 normalTerrain;
-			vec4 normalWater;
 			float height;
-			float water;
-			uint material;
+			uint material0;
+			uint material1;
+			float material0weight;
 			bool holeTerrain;
-			bool holeWater;
 		};
 		vec4 octahedralUnpack(uint n, uint bits)
 		{
@@ -70,7 +69,7 @@ DefaultTextured
 			out vec4 fragmentPosition_gs;
 			out vec4 fragmentNormal_gs;
 			out vec4 fragmentUv_gs;
-			out vec4 insData_gs;
+			flat out vec4 insData_gs;
 		#else
 			#ifdef SHADOW_PASS
 				out vec4 fragmentUv_gs;
@@ -79,25 +78,22 @@ DefaultTextured
 				out vec4 fragmentPosition;
 				out vec4 fragmentNormal;
 				out vec4 fragmentUv;
-				out vec4 insData;
+				flat out vec4 insData;
 			#endif
 		#endif
 		
 		// program
-		VertexData GetVertexData(ivec2 vertexCoord)
+		VertexData GetVertexData(ivec2 vertexCoord, float heightAmplitude, float seeLevel)
 		{
-			float heightAmplitude = constantData[0].z;
-			float seeLevel = constantData[0].w;
 			uvec4 data = imageLoad(terrainVirtualTexture, vertexCoord);
 			
 			VertexData vdata;
 			vdata.height = data.x * heightAmplitude - seeLevel;
-			vdata.water = data.y * heightAmplitude - seeLevel;
-			vdata.normalTerrain = octahedralUnpack(data.z, 7);
-			vdata.normalWater = octahedralUnpack(data.w, 5);
-			vdata.material = (data.w >> 10) & 0xFF;
-			vdata.holeTerrain = (data.z & (1 << 14)) != 0;
-			vdata.holeWater = (data.z & (1 << 15)) != 0;
+			vdata.normalTerrain = octahedralUnpack(data.y, 8);
+			vdata.material0 = data.z & 0xFF;
+			vdata.material1 = (data.z >> 8) & 0xFF;
+			vdata.material0weight = (data.w & 0xFF) / 256.0;
+			vdata.holeTerrain = (data.w & (1 << 15)) != 0;
 			return vdata;
 		}
 		vec4 biLerp(vec4 a, vec4 b, vec4 c, vec4 d, float s, float t)
@@ -123,10 +119,10 @@ DefaultTextured
 			float tilescale = constantData[0].y - 1.0;
 			vec2 terrainuv = constantData[4].xy + vec2(tilescale * ipos.y * invmask, tilescale * ipos.x * invmask);
 			ivec2 corner = clamp(ivec2(int(terrainuv.x), int(terrainuv.y)), ivec2(constantData[4].xy), ivec2(constantData[4].xy + constantData[0].yy) - ivec2(1));
-			VertexData data0 = GetVertexData(corner);
-			VertexData data1 = GetVertexData(corner + ivec2(0, 1));
-			VertexData data2 = GetVertexData(corner + ivec2(1, 0));
-			VertexData data3 = GetVertexData(corner + ivec2(1, 1));
+			VertexData data0 = GetVertexData(corner, constantData[0].z, constantData[0].w);
+			VertexData data1 = GetVertexData(corner + ivec2(0, 1), constantData[0].z, constantData[0].w);
+			VertexData data2 = GetVertexData(corner + ivec2(1, 0), constantData[0].z, constantData[0].w);
+			VertexData data3 = GetVertexData(corner + ivec2(1, 1), constantData[0].z, constantData[0].w);
 			
 			vec2 subuv = clamp(terrainuv - vec2(corner.x, corner.y), vec2(0.0), vec2(1.0));
 			float height = biLerpf(data0.height, data1.height, data2.height, data3.height, subuv.x, subuv.y);
@@ -147,15 +143,19 @@ DefaultTextured
 			model[1] = scale * vec4(normalTerrain.xyz, 0.0);
 			model[2] = scale * vec4(sina * bitangent.xyz + cosa * tangent.xyz, 0.0);
 			model[3] = center + lpos + constantData[5].x * model[1];
+			float sqDistance = distance(model[3], cameraPosition);
 			
 			mask = (1 << 9) - 1;
 			vec4 modeldata = vec4((instanceData.z & mask) / float(mask));
 			
 			// small movement from wind
 			vec4 p = model * position;
-			float windFactor = clamp(position.y, 0, 1);
-			p.xyz += (windFactor * 0.1 * sin(animatedTime * 1.0 + dot(vec3(0.99 , -0.1 , 0), p.xyz))) * vec3(0.99 , -0.1 , 0);
-			p.xyz += (windFactor * 0.03 * sin(animatedTime * 3.0 + dot(vec3(0.9 , -0.3 , 0.6), p.xyz))) * vec3(0.9 , -0.3 , 0.6);
+			if (sqDistance < 100)
+			{
+				float windFactor = clamp(position.y, 0, 1);
+				p.xyz += (windFactor * 0.1 * sin(animatedTime * 1.0 + dot(vec3(0.99 , -0.1 , 0), p.xyz))) * vec3(0.99 , -0.1 , 0);
+				p.xyz += (windFactor * 0.03 * sin(animatedTime * 3.0 + dot(vec3(0.9 , -0.3 , 0.6), p.xyz))) * vec3(0.9 , -0.3 , 0.6);
+			}
 			
 			#ifdef WIRED_MODE
 				fragmentPosition_gs = p;
@@ -192,14 +192,14 @@ DefaultTextured
 			in vec4 fragmentPosition_gs[];
 			in vec4 fragmentNormal_gs[];
 			in vec4 fragmentUv_gs[];
-			in vec4 insData_gs[];
+			flat in vec4 insData_gs[];
 
 			// output
 			out vec4 fragmentNormal;
 			out vec4 fragmentPosition;
 			out vec4 fragmentUv;
 			out vec3 barycentricCoord;
-			out vec4 insData;
+			flat out vec4 insData;
 
 			void main()
 			{
@@ -215,7 +215,6 @@ DefaultTextured
 				fragmentPosition = fragmentPosition_gs[1];
 				fragmentNormal = fragmentNormal_gs[1];
 				fragmentUv = fragmentUv_gs[1];
-				insData = insData_gs[1];
 				barycentricCoord = vec3(0.0 , 1.0 , 0.0);
 				EmitVertex();
 				
@@ -223,7 +222,6 @@ DefaultTextured
 				fragmentPosition = fragmentPosition_gs[2];
 				fragmentNormal = fragmentNormal_gs[2];
 				fragmentUv = fragmentUv_gs[2];
-				insData = insData_gs[2];
 				barycentricCoord = vec3(0.0 , 0.0 , 1.0);
 				EmitVertex();
 				
@@ -310,7 +308,7 @@ DefaultTextured
 		in vec4 fragmentPosition;
 		in vec4 fragmentNormal;
 		//in vec4 fragmentUv;
-		in vec4 insData;
+		flat in vec4 insData;
 			
 		#ifdef WIRED_MODE
 			in vec3 barycentricCoord;
